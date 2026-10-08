@@ -40,9 +40,11 @@ export class Session {
 
   constructor(
     readonly seed: number,
+    readonly weapon: string,
     private readonly controls: Controls,
   ) {
-    this.run = createRun({ seed, tuning: tuningStore.get(), rooms: roomTemplates });
+    // One weapon per run: it is part of the run config and never changes mid-run.
+    this.run = createRun({ seed, tuning: tuningStore.get(), rooms: roomTemplates, weapon });
     this.unsubscribe = tuningStore.subscribe((t) => {
       if (this.run.state.status === 'playing') setRunTuning(this.run, t);
     });

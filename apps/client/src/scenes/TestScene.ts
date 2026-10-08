@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
 import { resolveServerUrl } from '../config.js';
 import { connect, type Connection } from '../net.js';
+import { css, Palette } from '../palette.js';
 
-const SELF_COLOR = 0x5ad1a4;
-const OTHER_COLOR = 0xf2c14e;
+const SELF_COLOR = Palette.spark;
+const OTHER_COLOR = Palette.floorEdge;
 
 /** M0 smoke-test scene: connect to the test room, show peers, click to move. */
 export class TestScene extends Phaser.Scene {
@@ -18,9 +19,9 @@ export class TestScene extends Phaser.Scene {
 
   create(): void {
     this.add
-      .text(16, 16, 'Islands of the One — M0 test scene', { fontSize: '20px', color: '#ffffff' })
+      .text(16, 16, 'Islands of the One — M0 test scene', { fontSize: '20px', color: css(Palette.uiInk) })
       .setScrollFactor(0);
-    this.status = this.add.text(16, 44, 'connecting…', { fontSize: '14px', color: '#9fb3c8' });
+    this.status = this.add.text(16, 44, 'connecting…', { fontSize: '14px', color: css(Palette.uiInkMuted) });
 
     const url = resolveServerUrl(
       import.meta.env.VITE_SERVER_URL,

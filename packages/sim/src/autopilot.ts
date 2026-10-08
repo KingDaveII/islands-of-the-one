@@ -1,7 +1,7 @@
 import { huskParams } from './combat.js';
 import { idiv, length, TILE, TURN } from './fixed.js';
 import { Button, encodeInput, MOVE_DIRS, MOVE_MAG_MAX } from './input.js';
-import { playerAttackPhase } from './player.js';
+import { playerAttackPhase } from './moves.js';
 import { isSolid, tileAt, tileOf } from './rooms.js';
 import type { HuskState, RunState } from './state.js';
 import { atan2 } from './trig.js';
@@ -86,10 +86,10 @@ function threat(s: RunState, P: Params, h: HuskState): boolean {
     const reach = P.player.radius + pe.radius + pe.hitPad;
     // Dodge as the lunge is about to connect (within ~2 ticks of travel).
     if (h.action === 'attack' && !h.attackHit) return d <= reach + pe.lungeSpeed * 2;
-    return h.action === 'windup' && pe.windup - h.t <= 0 && d <= reach + pe.lungeSpeed;
+    return h.action === 'windup' && pe.startup - h.t <= 0 && d <= reach + pe.lungeSpeed;
   }
   const nu = P.husks.nutshell;
-  return h.action === 'windup' && nu.windup - h.t <= 2 && d <= nu.slamRadius + nu.slamOffset + P.player.radius;
+  return h.action === 'windup' && nu.startup - h.t <= 2 && d <= nu.slamRadius + nu.slamOffset + P.player.radius;
 }
 
 export function autopilot(s: RunState, P: Params, opts: AutopilotOptions = {}): number {
@@ -154,8 +154,10 @@ export function autopilot(s: RunState, P: Params, opts: AutopilotOptions = {}): 
 
   if (best > reach + tr) {
     move = goTo(s, target.x, target.y);
-    const lungeReady = (p.cooldowns[0] ?? 1) === 0 && P.weapon.slots[0] === 'lunge';
-    if (lungeReady && best < 90 * 256 && best > 50 * 256 && lineClear(s, p.x, p.y, target.x, target.y)) {
+    // Lunge after a target out of reach; from a light/heavy recovery this is a cancel.
+    const lunge = P.weapon.abilities[0];
+    const lungeReady = (p.cooldowns[0] ?? 1) === 0 && lunge !== undefined && !lunge.locked;
+    if (lungeReady && best < 90 * 256 && best > 36 * 256 && lineClear(s, p.x, p.y, target.x, target.y)) {
       buttons |= Button.Ability1;
     }
   } else {

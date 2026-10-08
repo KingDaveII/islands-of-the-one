@@ -1,63 +1,109 @@
 import Phaser from 'phaser';
-import { Controls } from '../game/controls.js';
+import { isWeaponAvailable, type Tuning } from '@iot/sim';
+import { Controls, KEY_HINTS } from '../game/controls.js';
 import { parseSeed, randomSeed } from '../game/seed.js';
+import { tuningStore } from '../game/tuningStore.js';
 import { Palette } from '../palette.js';
-import { pixelText, registerPixelFont, textWidth } from '../render/pixelFont.js';
+import { groundShadow } from '../render/pixels.js';
+import { body, label, place } from '../render/text.js';
+import { abilitySlot, divider, panel, tierPips } from '../render/ui.js';
+import { drawKindled } from '../render/world.js';
+import type { GameData } from './GameScene.js';
 import { VIEW_H, VIEW_W } from './GameScene.js';
 
 const MAX_SEED_LEN = 16;
+const CARD_W = 136;
+const CARD_H = 104;
+const CARD_GAP = 8;
+const CARD_Y = 62;
 
-/** Start screen: "Start run", the current seed, and a field to type a seed. */
+/**
+ * Start screen: pick the run's weapon (one per run; only the Hookblade is
+ * available yet, the rest show as locked), keep or type a seed, start.
+ */
 export class StartScene extends Phaser.Scene {
   seedText = '';
-  private field!: Phaser.GameObjects.BitmapText;
+  weapon = 'hookblade';
+  private field!: Phaser.GameObjects.Text;
   private caret!: Phaser.GameObjects.Rectangle;
+  private cards!: Phaser.GameObjects.Graphics;
   private pad = { pad: true };
+  /** Divider y per card (between stats and lore). */
+  private dividers: number[] = [];
 
   constructor() {
     super('start');
   }
 
   create(): void {
-    registerPixelFont(this);
-    this.cameras.main.setBackgroundColor(Palette.wall);
+    this.cameras.main.setBackgroundColor(Palette.void);
     this.seedText = String(randomSeed());
     this.pad = { pad: true };
+    const t: Tuning = tuningStore.get();
+    const roster = t.weaponRoster;
+    this.weapon = roster.find((w) => isWeaponAvailable(t, w.id))?.id ?? 'hookblade';
     const cx = VIEW_W / 2;
 
-    const g = this.add.graphics();
-    g.fillStyle(Palette.floor, 1).fillRect(0, VIEW_H - 60, VIEW_W, 60);
-    g.fillStyle(Palette.wallEdge, 1).fillRect(0, VIEW_H - 64, VIEW_W, 4);
-    // A Husk silhouette and a Sparkglass shard for mood.
-    g.fillStyle(Palette.pearl, 0.35).fillCircle(cx + 150, 66, 18);
-    g.fillStyle(Palette.core, 1).fillCircle(cx + 150, 66, 5);
-    g.fillStyle(Palette.sparkDeep, 1).fillTriangle(cx - 150, 54, cx - 144, 66, cx - 156, 66).fillTriangle(cx - 150, 78, cx - 144, 66, cx - 156, 66);
+    const bg = this.add.graphics();
+    bg.fillStyle(Palette.floor, 1).fillRect(0, VIEW_H - 34, VIEW_W, 34);
+    bg.fillStyle(Palette.floorEdge, 1);
+    for (let x = 0; x < VIEW_W; x++) if (x % 2 === 0) bg.fillRect(x, VIEW_H - 34, 1, 1);
+    bg.fillRect(0, VIEW_H - 35, VIEW_W, 1);
 
-    pixelText(this, cx, 40, 'ISLANDS OF THE ONE', Palette.sail, 2).setOrigin(0.5);
-    pixelText(this, cx, 60, 'M1 COMBAT PROTOTYPE', Palette.locked).setOrigin(0.5);
+    place(label(this, 0, 0, 'ISLANDS OF THE ONE', Palette.uiInk, 24), cx, 10, 0.5);
+    place(label(this, 0, 0, 'M1 COMBAT PROTOTYPE', Palette.uiInkMuted), cx, 36, 0.5);
+    place(label(this, 0, 0, 'CHOOSE YOUR WEAPON', Palette.uiInk), cx, 50, 0.5);
 
-    pixelText(this, cx - 92, 98, 'SEED', Palette.pearl);
-    g.fillStyle(Palette.ink, 1).fillRect(cx - 60, 94, 150, 15);
-    g.lineStyle(1, Palette.wallEdge, 1).strokeRect(cx - 60.5, 93.5, 151, 16);
-    this.field = pixelText(this, cx - 56, 98, '', Palette.spark);
-    this.caret = this.add.rectangle(0, 98, 5, 7, Palette.spark).setOrigin(0, 0);
-    this.tweens.add({ targets: this.caret, alpha: 0, duration: 400, yoyo: true, repeat: -1 });
-    pixelText(this, cx, 116, 'TYPE A SEED OR KEEP THIS ONE', Palette.locked).setOrigin(0.5);
-
-    const start = this.button(cx - 64, 136, 'START RUN', () => {
-      this.startRun();
+    // Weapon cards.
+    this.cards = this.add.graphics();
+    const x0 = Math.round(cx - (roster.length * CARD_W + (roster.length - 1) * CARD_GAP) / 2);
+    roster.forEach((entry, i) => {
+      const x = x0 + i * (CARD_W + CARD_GAP);
+      const weapon = t.weapons[entry.id];
+      const available = isWeaponAvailable(t, entry.id);
+      if (available && weapon) {
+        place(label(this, 0, 0, weapon.name.toUpperCase()), x + 32, CARD_Y + 9);
+        // Stats first; lore last, muted, below a divider (never italic).
+        const stats = body(this, x + 10, CARD_Y + 32, weapon.blurb, Palette.uiInk, CARD_W - 20);
+        this.dividers[i] = Math.round(stats.y + stats.height + 3);
+        body(this, x + 10, (this.dividers[i] ?? 0) + 4, weapon.lore, Palette.uiInkMuted, CARD_W - 20);
+      } else {
+        place(label(this, 0, 0, entry.name, Palette.uiInkMuted), x + 32, CARD_Y + 9);
+        body(this, x + 10, CARD_Y + 33, 'Not found yet.', Palette.uiInkMuted, CARD_W - 20);
+      }
+      const zone = this.add.zone(x, CARD_Y, CARD_W, CARD_H).setOrigin(0, 0).setInteractive({ useHandCursor: available });
+      zone.on('pointerdown', () => {
+        if (available) this.weapon = entry.id;
+      });
     });
-    this.button(cx + 64, 136, 'NEW SEED', () => {
+
+    // Seed.
+    const seedY = CARD_Y + CARD_H + 10;
+    place(label(this, 0, 0, 'SEED', Palette.uiInk), cx - 120, seedY + 4);
+    const g = this.add.graphics();
+    panel(g, cx - 84, seedY, 128, 16, { plain: true });
+    this.field = label(this, cx - 79, seedY + 4, '', Palette.spark);
+    this.caret = this.add.rectangle(0, seedY + 4, 1, 8, Palette.spark).setOrigin(0, 0);
+    this.tweens.add({ targets: this.caret, alpha: 0, duration: 400, yoyo: true, repeat: -1 });
+    this.button(cx + 50, seedY, 'NEW SEED', false, () => {
       this.seedText = String(randomSeed());
     });
-    this.tweens.add({ targets: start, alpha: 0.7, duration: 700, yoyo: true, repeat: -1 });
 
-    const help = [
-      'WASD MOVE   MOUSE AIM   LMB/J LIGHT   RMB/K HOLD HEAVY',
-      'SPACE/SHIFT DODGE   Q LUNGE   F2 TUNING   F3 DEBUG',
-      'GAMEPAD: L-STICK MOVE  R-STICK AIM  X LIGHT  Y/RT HEAVY  A DODGE  B LUNGE',
+    const start = this.button(cx - 40, seedY + 26, 'START RUN', true, () => {
+      this.startRun();
+    });
+    this.tweens.add({ targets: start, alpha: 0.75, duration: 700, yoyo: true, repeat: -1 });
+
+    // Mood: the Kindled facing a Husk at the shore.
+    const mood = this.add.graphics();
+    groundShadow(mood, 60, VIEW_H - 22, 5, 2);
+    drawKindled(mood, 60, VIEW_H - 27, 2);
+
+    const hints = [
+      `WASD move  ·  mouse aim  ·  ${KEY_HINTS.light} light  ·  hold ${KEY_HINTS.heavy} heavy  ·  ${KEY_HINTS.dodge} dodge  ·  ${KEY_HINTS.abilities[0]} lunge`,
+      'Gamepad: sticks move/aim · X light · Y/RT heavy · A dodge · B lunge · F2 tuning · F3 debug',
     ];
-    help.forEach((line, i) => pixelText(this, cx, VIEW_H - 46 + i * 12, line, Palette.pearl).setOrigin(0.5));
+    hints.forEach((line, i) => place(body(this, 0, 0, line, Palette.uiBevel), cx + 20, VIEW_H - 28 + i * 11, 0.5));
 
     // Text entry reads DOM key events directly (Phaser's key queue is for game controls).
     const onKey = (e: KeyboardEvent) => {
@@ -78,25 +124,65 @@ export class StartScene extends Phaser.Scene {
     });
   }
 
-  private button(x: number, y: number, label: string, onClick: () => void): Phaser.GameObjects.Container {
-    const w = textWidth(label) + 16;
-    const bg = this.add.rectangle(0, 0, w, 16, Palette.sailDark).setStrokeStyle(1, Palette.sail);
-    const text = pixelText(this, 0, 0, label, Palette.white).setOrigin(0.5);
-    const c = this.add.container(x, y, [bg, text]);
-    bg.setInteractive({ useHandCursor: true }).on('pointerdown', onClick);
-    bg.on('pointerover', () => bg.setFillStyle(Palette.sailShade));
-    bg.on('pointerout', () => bg.setFillStyle(Palette.sailDark));
+  private drawCards(): void {
+    const t: Tuning = tuningStore.get();
+    const roster = t.weaponRoster;
+    const g = this.cards;
+    g.clear();
+    const x0 = Math.round(VIEW_W / 2 - (roster.length * CARD_W + (roster.length - 1) * CARD_GAP) / 2);
+    roster.forEach((entry, i) => {
+      const x = x0 + i * (CARD_W + CARD_GAP);
+      const weapon = t.weapons[entry.id];
+      const available = isWeaponAvailable(t, entry.id) && weapon !== undefined;
+      const selected = available && entry.id === this.weapon;
+      panel(g, x, CARD_Y, CARD_W, CARD_H, selected ? {} : { rim: Palette.uiBevel, plain: !available });
+      abilitySlot(g, x + 8, CARD_Y + 7, { icon: 'hookblade', cooldown: 0, locked: !available, ready: selected });
+      if (available) {
+        tierPips(g, x + 32, CARD_Y + 21, weapon.tier);
+        divider(g, x + 10, this.dividers[i] ?? CARD_Y + 63, CARD_W - 20);
+      }
+    });
+  }
+
+  /** Primary (spark-amber face) or secondary (bevel face) button. */
+  private button(x: number, y: number, text: string, primary: boolean, onClick: () => void): Phaser.GameObjects.Container {
+    const t = label(this, 0, 0, text, primary ? Palette.uiInkOnGlow : Palette.uiInk);
+    const w = Math.round(t.width) + 14;
+    const h = 15;
+    const g = this.add.graphics();
+    const draw = (hover: boolean): void => {
+      g.clear();
+      g.fillStyle(Palette.uiOutline, 1).fillRect(1, 0, w - 2, h + 1).fillRect(0, 1, w, h - 1);
+      const face = primary ? (hover ? Palette.healthFill : Palette.spark) : hover ? Palette.floorEdge : Palette.uiBevel;
+      const bevel = primary ? Palette.healthFill : Palette.floorEdge;
+      g.fillStyle(face, 1).fillRect(1, 1, w - 2, h - 2);
+      g.fillStyle(bevel, 1).fillRect(1, 1, w - 2, 1).fillRect(1, 1, 1, h - 2);
+    };
+    draw(false);
+    place(t, w / 2, 4, 0.5);
+    const c = this.add.container(Math.round(x), Math.round(y), [g, t]);
+    const zone = this.add.zone(0, 0, w, h).setOrigin(0, 0).setInteractive({ useHandCursor: true });
+    c.add(zone);
+    zone.on('pointerdown', onClick);
+    zone.on('pointerover', () => {
+      draw(true);
+    });
+    zone.on('pointerout', () => {
+      draw(false);
+    });
     return c;
   }
 
   startRun(): void {
     const seed = parseSeed(this.seedText || '0');
-    this.scene.start('game', { seed });
+    const data: GameData = { seed, weapon: this.weapon };
+    this.scene.start('game', data);
   }
 
   override update(): void {
+    this.drawCards();
     this.field.setText(this.seedText);
-    this.caret.setX(VIEW_W / 2 - 56 + textWidth(this.seedText) + (this.seedText ? 2 : 0));
+    this.caret.setX(Math.round(this.field.x + this.field.width + 1));
     if (Controls.confirmPressed(this.pad)) this.startRun();
   }
 }

@@ -5,12 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Islands of the One</title>
     <link rel="icon" href="data:," />
+    <link rel="preload" href="/fonts/Silkscreen-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/Tiny5-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <style>
+      /* Self-hosted pixel faces (SIL OFL 1.1, licenses in public/fonts). */
+      @font-face {
+        font-family: 'Silkscreen';
+        src: url('/fonts/Silkscreen-Regular.woff2') format('woff2');
+        font-display: block;
+      }
+      @font-face {
+        font-family: 'Tiny5';
+        src: url('/fonts/Tiny5-Regular.woff2') format('woff2');
+        font-display: block;
+      }
+      /* Design-system tokens (see apps/client/src/palette.ts). */
+      :root {
+        --hollow-light: #f4efe6;
+        --hollow-dusk: #a99fc4;
+        --hollow-below: #5b5478;
+        --hollow-deep: #2a2540;
+        --spark-amber: #f2b65a;
+        --dream-night: #1c2147;
+      }
       html,
       body {
         margin: 0;
         height: 100%;
-        background: #1a1628;
+        background: var(--hollow-deep);
         overflow: hidden;
       }
       #game {
@@ -23,6 +45,7 @@
       #game canvas {
         image-rendering: pixelated;
       }
+      /* Dev panels use the Panel look: dark fired clay, a raised bevel, a thin glowing rim. */
       .overlay-panel {
         position: fixed;
         top: 8px;
@@ -30,10 +53,12 @@
         width: 380px;
         max-height: calc(100% - 16px);
         overflow: auto;
-        background: rgba(20, 17, 31, 0.94);
-        color: #e8e2d6;
+        background: var(--hollow-deep);
+        color: var(--hollow-light);
         font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace;
-        border: 1px solid #3a3354;
+        border: 1px solid var(--spark-amber);
+        outline: 2px solid var(--dream-night);
+        box-shadow: inset 2px 2px 0 var(--hollow-below);
         padding: 8px;
         z-index: 10;
       }
@@ -43,31 +68,34 @@
         gap: 6px;
         align-items: center;
         margin-bottom: 6px;
+        font-family: 'Silkscreen', monospace;
+        font-size: 16px;
       }
       .overlay-panel header span {
-        color: #8f87a8;
+        color: var(--hollow-dusk);
+        font: 12px ui-monospace, monospace;
       }
       .overlay-panel .status {
         width: 100%;
-        color: #ffe7a3;
+        color: var(--spark-amber);
       }
       .overlay-panel button {
-        background: #7d5236;
-        color: #fff;
-        border: 1px solid #ead9b6;
-        font: inherit;
+        background: var(--hollow-below);
+        color: var(--hollow-light);
+        border: 1px solid var(--dream-night);
+        font: 12px ui-monospace, monospace;
         cursor: pointer;
       }
       .overlay-panel textarea {
         width: 100%;
         height: 120px;
-        background: #0f0d18;
-        color: #ffe7a3;
+        background: var(--dream-night);
+        color: var(--spark-amber);
         font: 11px ui-monospace, monospace;
       }
       .overlay-panel summary {
         cursor: pointer;
-        color: #f2b65a;
+        color: var(--spark-amber);
         margin-top: 4px;
       }
       .overlay-panel .row {
@@ -81,22 +109,33 @@
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+      .overlay-panel .row select {
+        background: var(--hollow-below);
+        color: var(--hollow-light);
+        border: 1px solid var(--dream-night);
+        font: inherit;
+      }
+      .overlay-panel .row.readonly output {
+        color: var(--hollow-dusk);
+      }
       .overlay-panel output {
         text-align: right;
       }
       .overlay-panel output.changed {
-        color: #ffe7a3;
+        color: var(--spark-amber);
       }
       #debug-overlay {
         position: fixed;
-        bottom: 8px;
-        left: 8px;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
         margin: 0;
         padding: 6px 8px;
-        background: rgba(20, 17, 31, 0.85);
-        color: #fff4c7;
+        background: var(--hollow-deep);
+        color: var(--hollow-light);
         font: 12px/1.3 ui-monospace, Menlo, Consolas, monospace;
-        border: 1px solid #3a3354;
+        border: 1px solid var(--hollow-below);
+        outline: 1px solid var(--dream-night);
         z-index: 10;
         pointer-events: none;
       }

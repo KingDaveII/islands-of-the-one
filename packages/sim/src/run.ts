@@ -9,12 +9,14 @@ import { randInt, shuffle } from './rng.js';
 import { collideWalls, findTiles, roomFromTemplate, tileAt, tileOf, type RoomTemplate } from './rooms.js';
 import type { PlayerState, RunState, SimEvent } from './state.js';
 import { atan2, dirX, dirY } from './trig.js';
-import { compileTuning, type Params, type Tuning } from './tuning.js';
+import { compileTuning, isWeaponAvailable, type Params, type Tuning } from './tuning.js';
 
 export interface RunConfig {
   seed: number;
   tuning: Tuning;
   rooms: RoomTemplate[];
+  /** One weapon per run, picked on the start screen; it can't change mid-run. */
+  weapon: string;
 }
 
 /** Everything needed to replay a run exactly. */
@@ -22,6 +24,7 @@ export interface RunRecord {
   seed: number;
   tuning: Tuning;
   rooms: RoomTemplate[];
+  weapon: string;
   /** Packed input per tick (see encodeInput). */
   inputs: number[];
   /** Live tuning changes; each applies before the step at `tick`. */
@@ -62,14 +65,16 @@ function newPlayer(P: Params, x: number, y: number): PlayerState {
     nextCombo: 0,
     comboTimer: 0,
     charge: 0,
+    abilitySlot: 0,
     hitIds: [],
+    swingHitstop: 0,
     dodgeCooldown: 0,
     iframes: 0,
     dodgeAge: 600,
     perfectUsed: false,
     hurtInvuln: 0,
     hitstop: 0,
-    cooldowns: P.weapon.slots.map(() => 0),
+    cooldowns: P.weapon.abilities.map(() => 0),
     heavyHeld: false,
     buffer: 'none',
     bufferAge: 0,
@@ -96,8 +101,9 @@ function enterRoom(ctx: Ctx, templates: RoomTemplate[], index: number): void {
 
 export function createRun(config: RunConfig): Run {
   if (config.rooms.length === 0) throw new Error('no room templates');
+  if (!isWeaponAvailable(config.tuning, config.weapon)) throw new Error(`weapon "${config.weapon}" is not available`);
   const tuning = clone(config.tuning);
-  const P = compileTuning(tuning);
+  const P = compileTuning(tuning, config.weapon);
   const placeholderRoom = roomFromTemplate(0, config.rooms[0] as RoomTemplate);
   const s: RunState = {
     tick: 0,
@@ -126,17 +132,28 @@ export function createRun(config: RunConfig): Run {
     params: P,
     tuning,
     templates: clone(config.rooms),
-    record: { seed: config.seed >>> 0, tuning: clone(tuning), rooms: clone(config.rooms), inputs: [], tuningChanges: [] },
+    record: {
+      seed: config.seed >>> 0,
+      tuning: clone(tuning),
+      rooms: clone(config.rooms),
+      weapon: config.weapon,
+      inputs: [],
+      tuningChanges: [],
+    },
     events: [],
   };
   enterRoom({ s, P, events: run.events }, run.templates, 0);
   return run;
 }
 
-/** Replace the run's tuning from the next step on (recorded for replays). */
+/**
+ * Replace the run's tuning from the next step on (recorded for replays). The
+ * run keeps its weapon: tuning edits change the weapon's numbers, never which
+ * weapon is held.
+ */
 export function setRunTuning(run: Run, tuning: Tuning): void {
   const t = clone(tuning);
-  run.params = compileTuning(t);
+  run.params = compileTuning(t, run.record.weapon);
   run.tuning = t;
   run.record.tuningChanges.push({ tick: run.state.tick, tuning: clone(t) });
 }
@@ -203,18 +220,18 @@ function updateRoom(ctx: Ctx, templates: RoomTemplate[]): void {
   }
 }
 
-/** Push overlapping bodies apart, split by weight. Dodging/lunging players pass through. */
+/** Push overlapping bodies apart, split by mass. Dodging players and abilities pass through. */
 function separate(ctx: Ctx): void {
   const { s, P } = ctx;
   const bodies: { b: { x: number; y: number }; r: number; w: number }[] = [];
   const p = s.player;
-  if (p.action !== 'dodge' && p.action !== 'lunge' && p.action !== 'dead') {
-    bodies.push({ b: p, r: P.player.radius, w: P.player.weight });
+  if (p.action !== 'dodge' && p.action !== 'ability' && p.action !== 'dead') {
+    bodies.push({ b: p, r: P.player.radius, w: P.player.mass });
   }
   for (const h of s.husks) {
     if (h.action === 'spawn' || h.core <= 0) continue;
     const hp = huskParams(P, h.kind);
-    bodies.push({ b: h, r: hp.radius, w: hp.weight });
+    bodies.push({ b: h, r: hp.radius, w: hp.mass });
   }
   for (let i = 0; i < bodies.length; i++) {
     for (let j = i + 1; j < bodies.length; j++) {
@@ -291,7 +308,7 @@ export function stepRun(run: Run, packedInput: number): SimEvent[] {
 
 /** Re-run a recorded run from scratch. */
 export function replayRun(record: RunRecord): Run {
-  const run = createRun({ seed: record.seed, tuning: record.tuning, rooms: record.rooms });
+  const run = createRun({ seed: record.seed, tuning: record.tuning, rooms: record.rooms, weapon: record.weapon });
   run.record.tuningChanges = [];
   let change = 0;
   for (const input of record.inputs) {

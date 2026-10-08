@@ -12,7 +12,7 @@ import {
   type Tuning,
 } from '../src/index.js';
 import golden from './fixtures/golden-tuning.json' with { type: 'json' };
-import { cloneTuning, retune, step, steps, stepUntil, tuning } from './helpers.js';
+import { cloneTuning, retune, step, steps, stepUntil, tuning, WEAPON } from './helpers.js';
 
 function drive(run: Run, maxTicks: number, reckless = false): void {
   for (let i = 0; i < maxTicks && run.state.status === 'playing'; i++) {
@@ -22,20 +22,20 @@ function drive(run: Run, maxTicks: number, reckless = false): void {
 
 describe('run flow', () => {
   it('rooms come from the templates in a seed-chosen order', () => {
-    const a = createRun({ seed: 1, tuning, rooms: roomTemplates });
-    const b = createRun({ seed: 1, tuning, rooms: roomTemplates });
+    const a = createRun({ seed: 1, tuning, rooms: roomTemplates, weapon: WEAPON });
+    const b = createRun({ seed: 1, tuning, rooms: roomTemplates, weapon: WEAPON });
     expect(a.state.roomOrder).toEqual(b.state.roomOrder);
     expect(a.state.roomOrder).toHaveLength(3);
     expect(new Set(a.state.roomOrder).size).toBe(3);
     const orders = new Set<string>();
     for (let seed = 0; seed < 20; seed++) {
-      orders.add(createRun({ seed, tuning, rooms: roomTemplates }).state.roomOrder.join());
+      orders.add(createRun({ seed, tuning, rooms: roomTemplates, weapon: WEAPON }).state.roomOrder.join());
     }
     expect(orders.size).toBeGreaterThan(5);
   });
 
   it('spawns waves, opens the door when cleared, and moves to the next room', () => {
-    const run = createRun({ seed: 3, tuning, rooms: roomTemplates });
+    const run = createRun({ seed: 3, tuning, rooms: roomTemplates, weapon: WEAPON });
     const s = run.state;
     stepUntil(run, () => s.husks.length > 0);
     expect(s.room.phase).toBe('fighting');
@@ -64,7 +64,7 @@ describe('run flow', () => {
   });
 
   it('a clear keeps all Sparkglass', () => {
-    const run = createRun({ seed: 11, tuning, rooms: roomTemplates });
+    const run = createRun({ seed: 11, tuning, rooms: roomTemplates, weapon: WEAPON });
     drive(run, 60 * 60 * 5);
     expect(run.state.status).toBe('cleared');
     const r = runResults(run);
@@ -75,7 +75,7 @@ describe('run flow', () => {
   });
 
   it('death ends the run and keeps half the Sparkglass', () => {
-    const run = createRun({ seed: 5, tuning, rooms: roomTemplates });
+    const run = createRun({ seed: 5, tuning, rooms: roomTemplates, weapon: WEAPON });
     drive(run, 60 * 20);
     run.state.sparkglass = 9;
     // Stop fighting back.
@@ -91,8 +91,8 @@ describe('run flow', () => {
   });
 
   it('carrying Sparkglass makes Husks pursue faster', () => {
-    const calm = createRun({ seed: 2, tuning, rooms: roomTemplates });
-    const eager = createRun({ seed: 2, tuning, rooms: roomTemplates });
+    const calm = createRun({ seed: 2, tuning, rooms: roomTemplates, weapon: WEAPON });
+    const eager = createRun({ seed: 2, tuning, rooms: roomTemplates, weapon: WEAPON });
     eager.state.sparkglass = 50;
     const dist = (r: Run) => {
       stepUntil(r, () => r.state.husks.some((h) => h.action === 'chase'));
@@ -106,7 +106,7 @@ describe('run flow', () => {
 
 describe('replay determinism', () => {
   it('same seed + inputs => identical final state hash', () => {
-    const run = createRun({ seed: 1234, tuning, rooms: roomTemplates });
+    const run = createRun({ seed: 1234, tuning, rooms: roomTemplates, weapon: WEAPON });
     drive(run, 60 * 60 * 5);
     expect(run.record.inputs.length).toBe(run.state.tick);
     const again = replayRun(run.record);
@@ -115,15 +115,15 @@ describe('replay determinism', () => {
   });
 
   it('a different seed diverges', () => {
-    const a = createRun({ seed: 1, tuning, rooms: roomTemplates });
-    const b = createRun({ seed: 2, tuning, rooms: roomTemplates });
+    const a = createRun({ seed: 1, tuning, rooms: roomTemplates, weapon: WEAPON });
+    const b = createRun({ seed: 2, tuning, rooms: roomTemplates, weapon: WEAPON });
     drive(a, 600);
     drive(b, 600);
     expect(hashRunState(a.state)).not.toBe(hashRunState(b.state));
   });
 
   it('live tuning changes are part of the record and replay exactly', () => {
-    const run = createRun({ seed: 99, tuning, rooms: roomTemplates });
+    const run = createRun({ seed: 99, tuning, rooms: roomTemplates, weapon: WEAPON });
     drive(run, 400);
     retune(run, (t) => {
       t.player.moveSpeed *= 1.5;
@@ -131,7 +131,7 @@ describe('replay determinism', () => {
     });
     drive(run, 900);
     retune(run, (t) => {
-      t.dodge.iframesMs = 50;
+      t.dodge.activeMs = 50;
     });
     drive(run, 900);
     expect(run.record.tuningChanges).toHaveLength(2);
@@ -144,7 +144,7 @@ describe('replay determinism', () => {
   });
 
   it('records survive a JSON round trip', () => {
-    const run = createRun({ seed: 42, tuning, rooms: roomTemplates });
+    const run = createRun({ seed: 42, tuning, rooms: roomTemplates, weapon: WEAPON });
     drive(run, 1500);
     const record = JSON.parse(JSON.stringify(run.record)) as typeof run.record;
     expect(hashRunState(replayRun(record).state)).toBe(hashRunState(run.state));
@@ -152,9 +152,9 @@ describe('replay determinism', () => {
 
   it('is pinned to a golden hash (frozen tuning fixture; update only for intentional sim changes)', () => {
     const t: Tuning = golden;
-    const run = createRun({ seed: 2024, tuning: t, rooms: roomTemplates });
+    const run = createRun({ seed: 2024, tuning: t, rooms: roomTemplates, weapon: WEAPON });
     drive(run, 60 * 30);
-    expect(hashRunState(run.state)).toMatchInlineSnapshot(`967887538`);
+    expect(hashRunState(run.state)).toMatchInlineSnapshot(`4196271051`);
   });
 
   it('cloneTuning does not alias the data file', () => {

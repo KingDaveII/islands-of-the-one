@@ -14,17 +14,32 @@ import {
  *
  * Shapes are kept JSON-friendly (no tuples, no discriminated unions) so the
  * imported JSON type-checks against this interface structurally.
+ *
+ * Every move has a startup / active / recovery timing in milliseconds; the
+ * sim converts them to ticks when the tuning is compiled.
  */
-export interface StrikeTuning {
+export interface MoveTiming {
   startupMs: number;
   activeMs: number;
   recoveryMs: number;
+}
+
+/**
+ * Armor frames: ticks of the move (counted from its start, in ms) during which
+ * the player still takes damage but is not interrupted. 0/0 means none.
+ */
+export interface ArmorTiming {
+  armorStartMs: number;
+  armorEndMs: number;
+}
+
+export interface StrikeTuning extends MoveTiming, ArmorTiming {
   reachPx: number;
   arcDeg: number;
   damage: number;
   shellDamage: number;
-  /** Knockback impulse, px/s. */
-  knockback: number;
+  /** Knockback distance for a light-class enemy, px (scaled by weight class). */
+  knockbackPx: number;
   hitstopMs: number;
   /** Screen-shake strength reported with the hit (presentation only). */
   shake: number;
@@ -32,20 +47,17 @@ export interface StrikeTuning {
   stepSpeed: number;
 }
 
-export interface HeavyTuning {
+export interface HeavyTuning extends MoveTiming, ArmorTiming {
   fullChargeMs: number;
   chargeMoveFactor: number;
-  startupMs: number;
-  activeMs: number;
-  recoveryMs: number;
   reachPx: number;
   arcDeg: number;
   damageMin: number;
   damageMax: number;
   shellDamageMin: number;
   shellDamageMax: number;
-  knockbackMin: number;
-  knockbackMax: number;
+  knockbackMinPx: number;
+  knockbackMaxPx: number;
   hitstopMinMs: number;
   hitstopMaxMs: number;
   shakeMin: number;
@@ -53,33 +65,55 @@ export interface HeavyTuning {
   stepSpeed: number;
 }
 
-export interface AbilitySlotTuning {
-  /** Key into `abilities` (e.g. "lunge"). */
+/** Ability kinds the sim knows how to run. */
+export const ABILITY_KINDS = ['dash-strike', 'spin', 'none'] as const;
+export type AbilityKind = (typeof ABILITY_KINDS)[number];
+
+/**
+ * One of a weapon's three ability slots. Each slot has its own cooldown; there
+ * is no mana/energy resource. During `active` the player moves along the aim
+ * at `speed` and hits everything within `hitRadiusPx`.
+ */
+export interface AbilityTuning extends MoveTiming, ArmorTiming {
+  id: string;
+  name: string;
+  /** Locked slots exist in data but never execute. */
+  locked: boolean;
+  /** One of ABILITY_KINDS. */
+  kind: string;
+  cooldownMs: number;
+  /** Travel speed during active, px/s (0 = stationary). */
+  speed: number;
+  hitRadiusPx: number;
+  damage: number;
+  shellDamage: number;
+  knockbackPx: number;
+  hitstopMs: number;
+  shake: number;
+}
+
+export interface WeaponTuning {
+  name: string;
+  /** Rarity tier (1–5), shown as pips. */
+  tier: number;
+  blurb: string;
+  lore: string;
+  comboResetMs: number;
+  light: StrikeTuning[];
+  heavy: HeavyTuning;
+  abilities: AbilityTuning[];
+}
+
+/** Weapons offered on the start screen. Locked entries are placeholders. */
+export interface WeaponRosterEntry {
   id: string;
   name: string;
   locked: boolean;
 }
 
-export interface WeaponTuning {
-  name: string;
-  comboResetMs: number;
-  light: StrikeTuning[];
-  heavy: HeavyTuning;
-  abilities: AbilitySlotTuning[];
-}
-
-export interface LungeTuning {
-  cooldownMs: number;
-  dashSpeed: number;
-  dashMs: number;
-  recoveryMs: number;
-  hitRadiusPx: number;
-  damage: number;
-  shellDamage: number;
-  knockback: number;
-  hitstopMs: number;
-  shake: number;
-}
+/** Enemy weight classes: how far pulls and knockback move them. */
+export const WEIGHT_CLASSES = ['light', 'medium', 'heavy'] as const;
+export type WeightClass = (typeof WEIGHT_CLASSES)[number];
 
 export interface HuskTuning {
   radiusPx: number;
@@ -89,17 +123,18 @@ export interface HuskTuning {
   speed: number;
   acceleration: number;
   friction: number;
-  /** Knockback resistance: knockback is divided by this. */
-  weight: number;
+  /** Body mass for pushing apart overlapping bodies (not knockback). */
+  mass: number;
+  /** One of WEIGHT_CLASSES. */
+  weightClass: string;
   attackRangePx: number;
-  windupMs: number;
+  /** startup = wind-up (telegraph), active = lunge/slam, recovery = recover. */
+  attack: MoveTiming;
   /** Part of the wind-up during which the attack still tracks the player. */
   trackMs: number;
-  recoverMs: number;
   cooldownMs: number;
   cooldownJitterMs: number;
   damage: number;
-  knockback: number;
   hitstopMs: number;
   shake: number;
   /** Stagger after a shell layer breaks (interrupts attacks). */
@@ -114,14 +149,12 @@ export interface HuskTuning {
 
 export interface PeelingTuning extends HuskTuning {
   lungeSpeed: number;
-  lungeMs: number;
   hitPadPx: number;
 }
 
 export interface NutshellTuning extends HuskTuning {
   slamRadiusPx: number;
   slamOffsetPx: number;
-  slamActiveMs: number;
 }
 
 export interface WaveTuning {
@@ -136,16 +169,14 @@ export interface Tuning {
     moveSpeed: number;
     acceleration: number;
     friction: number;
-    weight: number;
+    mass: number;
     hurtStunMs: number;
     hurtInvulnMs: number;
     hurtKnockback: number;
-    weapon: string;
   };
-  dodge: {
+  /** startup = no i-frames yet, active = i-frames, recovery = still sliding. */
+  dodge: MoveTiming & {
     speed: number;
-    durationMs: number;
-    iframesMs: number;
     cooldownMs: number;
     exitSpeedFactor: number;
   };
@@ -159,15 +190,17 @@ export interface Tuning {
   input: {
     bufferMs: number;
   };
+  weaponRoster: WeaponRosterEntry[];
   weapons: Record<string, WeaponTuning>;
-  abilities: {
-    lunge: LungeTuning;
-  };
   husks: {
     aggroPerSparkglass: number;
     aggroMax: number;
     /** Fraction of a hit's core damage that lands on the hit that breaks a shell layer. */
     shellBreakCoreFactor: number;
+    /** Fraction of a pull/knockback distance applied per weight class. */
+    weightClasses: Record<WeightClass, number>;
+    /** Time a knockback slide takes. */
+    knockbackMs: number;
     peeling: PeelingTuning;
     nutshell: NutshellTuning;
   };
@@ -185,10 +218,16 @@ export interface Tuning {
 
 // --- Compiled (integer) parameters used by the sim -------------------------
 
-export interface Strike {
+export interface Timing {
   startup: number;
   active: number;
   recovery: number;
+  /** Armored while armorStart < t <= armorEnd (t = ticks since the move started). */
+  armorStart: number;
+  armorEnd: number;
+}
+
+export interface Strike extends Timing {
   reach: number;
   halfArc: number;
   damage: number;
@@ -199,6 +238,21 @@ export interface Strike {
   step: number;
 }
 
+export interface Ability extends Timing {
+  id: string;
+  name: string;
+  locked: boolean;
+  kind: AbilityKind;
+  cooldown: number;
+  speed: number;
+  radius: number;
+  damage: number;
+  shellDamage: number;
+  knockback: number;
+  hitstop: number;
+  shake: number;
+}
+
 export interface HuskParams {
   radius: number;
   shell: number[];
@@ -206,15 +260,17 @@ export interface HuskParams {
   speed: number;
   accel: number;
   friction: number;
-  weight: number;
+  mass: number;
+  /** Permille of a pull/knockback distance this husk actually moves. */
+  kbScale: number;
   attackRange: number;
-  windup: number;
+  startup: number;
+  active: number;
+  recovery: number;
   track: number;
-  recover: number;
   cooldown: number;
   cooldownJitter: number;
   damage: number;
-  knockback: number;
   hitstop: number;
   shake: number;
   stagger: number;
@@ -231,23 +287,21 @@ export interface Params {
     speed: number;
     accel: number;
     friction: number;
-    weight: number;
+    mass: number;
     hurtStun: number;
     hurtInvuln: number;
     hurtKnockback: number;
   };
-  dodge: { speed: number; duration: number; iframes: number; cooldown: number; exitSpeed: number };
+  dodge: { startup: number; active: number; recovery: number; speed: number; cooldown: number; exitSpeed: number };
   perfect: { window: number; margin: number; slowmo: number; slowmoScale: number; bonus: number };
   bufferTicks: number;
   weapon: {
+    id: string;
     comboReset: number;
     light: Strike[];
-    heavy: {
+    heavy: Timing & {
       fullCharge: number;
       chargeMove: number;
-      startup: number;
-      active: number;
-      recovery: number;
       reach: number;
       halfArc: number;
       damage: [number, number];
@@ -257,27 +311,16 @@ export interface Params {
       shake: [number, number];
       step: number;
     };
-    /** Ability id per slot, or null when the slot is locked. */
-    slots: (string | null)[];
-  };
-  lunge: {
-    cooldown: number;
-    speed: number;
-    dash: number;
-    recovery: number;
-    radius: number;
-    damage: number;
-    shellDamage: number;
-    knockback: number;
-    hitstop: number;
-    shake: number;
+    /** Always three slots. */
+    abilities: Ability[];
   };
   husks: {
     aggroPer: number;
     aggroMax: number;
     breakCore: number;
-    peeling: HuskParams & { lungeSpeed: number; lunge: number; hitPad: number };
-    nutshell: HuskParams & { slamRadius: number; slamOffset: number; slamActive: number };
+    knockbackTicks: number;
+    peeling: HuskParams & { lungeSpeed: number; hitPad: number };
+    nutshell: HuskParams & { slamRadius: number; slamOffset: number };
   };
   run: {
     rooms: { waves: WaveTuning[] }[];
@@ -291,27 +334,65 @@ export interface Params {
   };
 }
 
+export const ABILITY_SLOTS = 3;
+
 function int(v: number): number {
   return Math.round(v);
 }
 
+function timing(m: MoveTiming & ArmorTiming): Timing {
+  return {
+    startup: msToTicks(m.startupMs),
+    active: Math.max(1, msToTicks(m.activeMs)),
+    recovery: msToTicks(m.recoveryMs),
+    armorStart: msToTicks(m.armorStartMs),
+    armorEnd: msToTicks(m.armorEndMs),
+  };
+}
+
 function strike(s: StrikeTuning): Strike {
   return {
-    startup: msToTicks(s.startupMs),
-    active: Math.max(1, msToTicks(s.activeMs)),
-    recovery: msToTicks(s.recoveryMs),
+    ...timing(s),
     reach: pxToUnits(s.reachPx),
     halfArc: degToAngle(s.arcDeg) >> 1,
     damage: int(s.damage),
     shellDamage: int(s.shellDamage),
-    knockback: speedToUnits(s.knockback),
+    knockback: pxToUnits(s.knockbackPx),
     hitstop: msToTicks(s.hitstopMs),
     shake: int(s.shake),
     step: speedToUnits(s.stepSpeed),
   };
 }
 
-function husk(h: HuskTuning): HuskParams {
+function isAbilityKind(k: string): k is AbilityKind {
+  return (ABILITY_KINDS as readonly string[]).includes(k);
+}
+
+function isWeightClass(k: string): k is WeightClass {
+  return (WEIGHT_CLASSES as readonly string[]).includes(k);
+}
+
+function ability(a: AbilityTuning): Ability {
+  if (!isAbilityKind(a.kind)) throw new Error(`unknown ability kind "${a.kind}"`);
+  return {
+    ...timing(a),
+    id: a.id,
+    name: a.name,
+    locked: a.locked || a.kind === 'none',
+    kind: a.kind,
+    cooldown: msToTicks(a.cooldownMs),
+    speed: speedToUnits(a.speed),
+    radius: pxToUnits(a.hitRadiusPx),
+    damage: int(a.damage),
+    shellDamage: int(a.shellDamage),
+    knockback: pxToUnits(a.knockbackPx),
+    hitstop: msToTicks(a.hitstopMs),
+    shake: int(a.shake),
+  };
+}
+
+function husk(h: HuskTuning, classes: Record<WeightClass, number>): HuskParams {
+  if (!isWeightClass(h.weightClass)) throw new Error(`unknown weight class "${h.weightClass}"`);
   return {
     radius: pxToUnits(h.radiusPx),
     shell: h.shell.map(int),
@@ -319,15 +400,16 @@ function husk(h: HuskTuning): HuskParams {
     speed: speedToUnits(h.speed),
     accel: accelToUnits(h.acceleration),
     friction: accelToUnits(h.friction),
-    weight: Math.max(1, toPermille(h.weight)),
+    mass: Math.max(1, toPermille(h.mass)),
+    kbScale: Math.max(0, toPermille(classes[h.weightClass])),
     attackRange: pxToUnits(h.attackRangePx),
-    windup: Math.max(1, msToTicks(h.windupMs)),
+    startup: Math.max(1, msToTicks(h.attack.startupMs)),
+    active: Math.max(1, msToTicks(h.attack.activeMs)),
+    recovery: msToTicks(h.attack.recoveryMs),
     track: msToTicks(h.trackMs),
-    recover: msToTicks(h.recoverMs),
     cooldown: msToTicks(h.cooldownMs),
     cooldownJitter: msToTicks(h.cooldownJitterMs),
     damage: int(h.damage),
-    knockback: speedToUnits(h.knockback),
     hitstop: msToTicks(h.hitstopMs),
     shake: int(h.shake),
     stagger: msToTicks(h.staggerMs),
@@ -338,16 +420,22 @@ function husk(h: HuskTuning): HuskParams {
   };
 }
 
-/** Convert tuning (human units) into integer sim parameters. */
-export function compileTuning(t: Tuning): Params {
-  const weapon = t.weapons[t.player.weapon];
-  if (!weapon) throw new Error(`unknown weapon "${t.player.weapon}"`);
+/** True when the roster offers this weapon and it has data. */
+export function isWeaponAvailable(t: Tuning, weaponId: string): boolean {
+  return t.weaponRoster.some((w) => w.id === weaponId && !w.locked) && weaponId in t.weapons;
+}
+
+/** Convert tuning (human units) into integer sim parameters for one weapon. */
+export function compileTuning(t: Tuning, weaponId: string): Params {
+  const weapon = t.weapons[weaponId];
+  if (!weapon) throw new Error(`unknown weapon "${weaponId}"`);
   if (weapon.light.length === 0) throw new Error('weapon needs at least one light strike');
+  if (weapon.abilities.length !== ABILITY_SLOTS) throw new Error(`weapon needs exactly ${ABILITY_SLOTS} ability slots`);
   if (t.run.rooms.length === 0) throw new Error('run needs at least one room');
   const h = weapon.heavy;
-  const l = t.abilities.lunge;
   const pTun = t.husks.peeling;
   const nTun = t.husks.nutshell;
+  const classes = t.husks.weightClasses;
   return {
     player: {
       radius: pxToUnits(t.player.radiusPx),
@@ -355,15 +443,16 @@ export function compileTuning(t: Tuning): Params {
       speed: speedToUnits(t.player.moveSpeed),
       accel: accelToUnits(t.player.acceleration),
       friction: accelToUnits(t.player.friction),
-      weight: Math.max(1, toPermille(t.player.weight)),
+      mass: Math.max(1, toPermille(t.player.mass)),
       hurtStun: msToTicks(t.player.hurtStunMs),
       hurtInvuln: msToTicks(t.player.hurtInvulnMs),
       hurtKnockback: speedToUnits(t.player.hurtKnockback),
     },
     dodge: {
+      startup: msToTicks(t.dodge.startupMs),
+      active: msToTicks(t.dodge.activeMs),
+      recovery: msToTicks(t.dodge.recoveryMs),
       speed: speedToUnits(t.dodge.speed),
-      duration: Math.max(1, msToTicks(t.dodge.durationMs)),
-      iframes: msToTicks(t.dodge.iframesMs),
       cooldown: msToTicks(t.dodge.cooldownMs),
       exitSpeed: toPermille(t.dodge.exitSpeedFactor),
     },
@@ -377,52 +466,38 @@ export function compileTuning(t: Tuning): Params {
     },
     bufferTicks: msToTicks(t.input.bufferMs),
     weapon: {
+      id: weaponId,
       comboReset: msToTicks(weapon.comboResetMs),
       light: weapon.light.map(strike),
       heavy: {
+        ...timing(h),
         fullCharge: Math.max(1, msToTicks(h.fullChargeMs)),
         chargeMove: toPermille(h.chargeMoveFactor),
-        startup: msToTicks(h.startupMs),
-        active: Math.max(1, msToTicks(h.activeMs)),
-        recovery: msToTicks(h.recoveryMs),
         reach: pxToUnits(h.reachPx),
         halfArc: degToAngle(h.arcDeg) >> 1,
         damage: [int(h.damageMin), int(h.damageMax)],
         shellDamage: [int(h.shellDamageMin), int(h.shellDamageMax)],
-        knockback: [speedToUnits(h.knockbackMin), speedToUnits(h.knockbackMax)],
+        knockback: [pxToUnits(h.knockbackMinPx), pxToUnits(h.knockbackMaxPx)],
         hitstop: [msToTicks(h.hitstopMinMs), msToTicks(h.hitstopMaxMs)],
         shake: [int(h.shakeMin), int(h.shakeMax)],
         step: speedToUnits(h.stepSpeed),
       },
-      slots: weapon.abilities.map((s) => (s.locked ? null : s.id)),
-    },
-    lunge: {
-      cooldown: msToTicks(l.cooldownMs),
-      speed: speedToUnits(l.dashSpeed),
-      dash: Math.max(1, msToTicks(l.dashMs)),
-      recovery: msToTicks(l.recoveryMs),
-      radius: pxToUnits(l.hitRadiusPx),
-      damage: int(l.damage),
-      shellDamage: int(l.shellDamage),
-      knockback: speedToUnits(l.knockback),
-      hitstop: msToTicks(l.hitstopMs),
-      shake: int(l.shake),
+      abilities: weapon.abilities.map(ability),
     },
     husks: {
       aggroPer: toPermille(t.husks.aggroPerSparkglass),
       aggroMax: toPermille(t.husks.aggroMax),
       breakCore: toPermille(t.husks.shellBreakCoreFactor),
+      knockbackTicks: Math.max(1, msToTicks(t.husks.knockbackMs)),
       peeling: {
-        ...husk(pTun),
+        ...husk(pTun, classes),
         lungeSpeed: speedToUnits(pTun.lungeSpeed),
-        lunge: Math.max(1, msToTicks(pTun.lungeMs)),
         hitPad: pxToUnits(pTun.hitPadPx),
       },
       nutshell: {
-        ...husk(nTun),
+        ...husk(nTun, classes),
         slamRadius: pxToUnits(nTun.slamRadiusPx),
         slamOffset: pxToUnits(nTun.slamOffsetPx),
-        slamActive: Math.max(1, msToTicks(nTun.slamActiveMs)),
       },
     },
     run: {

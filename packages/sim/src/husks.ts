@@ -1,5 +1,5 @@
 import { accelerate, brake, moveBody } from './body.js';
-import { huskAttackPlayer, huskParams, type Ctx } from './combat.js';
+import { huskAttackPlayer, huskParams, stepPush, type Ctx } from './combat.js';
 import { idiv, length, QUARTER_TURN } from './fixed.js';
 import { randInt } from './rng.js';
 import type { HuskKind, HuskState } from './state.js';
@@ -33,6 +33,9 @@ export function createHusk(ctx: Ctx, kind: HuskKind, x: number, y: number): Husk
     cooldown: 0,
     hitstop: 0,
     strafe: randInt(s, 0, 1) === 0 ? 1 : -1,
+    pushX: 0,
+    pushY: 0,
+    pushT: 0,
   };
   ctx.events.push({ type: 'spawn', id: h.id, kind, x, y });
   return h;
@@ -64,6 +67,7 @@ export function updateHusk(ctx: Ctx, h: HuskState): void {
     h.hitstop--;
     return;
   }
+  stepPush(h);
   if (h.cooldown > 0) h.cooldown--;
   h.t++;
   const dx = p.x - h.x;
@@ -103,10 +107,11 @@ export function updateHusk(ctx: Ctx, h: HuskState): void {
       accelerate(h, dirX(angle, speed), dirY(angle, speed), hp.accel);
       break;
     }
+    // Attack timing: startup = wind-up (telegraph), active = lunge/slam, recovery = recover.
     case 'windup':
       brake(h, hp.friction);
       if (h.t <= hp.track && playerAlive) h.attackDir = toward;
-      if (h.t >= hp.windup) {
+      if (h.t >= hp.startup) {
         h.action = 'attack';
         h.t = 0;
         h.attackHit = false;
@@ -125,7 +130,7 @@ export function updateHusk(ctx: Ctx, h: HuskState): void {
         if (!h.attackHit) {
           h.attackHit = huskAttackPlayer(ctx, h, dist, P.player.radius + pe.radius + pe.hitPad);
         }
-        if (h.t >= pe.lunge) {
+        if (h.t >= hp.active) {
           h.action = 'recover';
           h.t = 0;
         }
@@ -137,7 +142,7 @@ export function updateHusk(ctx: Ctx, h: HuskState): void {
           const d = length(p.x - c.x, p.y - c.y);
           h.attackHit = huskAttackPlayer(ctx, h, d, nu.slamRadius + P.player.radius);
         }
-        if (h.t >= nu.slamActive) {
+        if (h.t >= hp.active) {
           h.action = 'recover';
           h.t = 0;
         }
@@ -145,7 +150,7 @@ export function updateHusk(ctx: Ctx, h: HuskState): void {
       break;
     case 'recover':
       brake(h, hp.friction);
-      if (h.t >= hp.recover) toChase(h, rolledCooldown(ctx, h));
+      if (h.t >= hp.recovery) toChase(h, rolledCooldown(ctx, h));
       break;
     case 'stagger':
       brake(h, hp.friction);

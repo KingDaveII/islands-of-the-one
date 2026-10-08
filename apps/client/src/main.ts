@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { replayRun, hashRunState, type AutopilotOptions, type RunRecord } from '@iot/sim';
 import { Palette } from './palette.js';
-import { GameScene, VIEW_H, VIEW_W } from './scenes/GameScene.js';
+import { loadFonts } from './render/text.js';
+import { GameScene, VIEW_H, VIEW_W, type GameData } from './scenes/GameScene.js';
 import { ResultsScene } from './scenes/ResultsScene.js';
 import { StartScene } from './scenes/StartScene.js';
 import { TestScene } from './scenes/TestScene.js';
@@ -20,11 +21,16 @@ if (params.has('net')) {
   new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'game',
-    backgroundColor: '#0b1d2a',
+    backgroundColor: Palette.void,
     scale: { mode: Phaser.Scale.RESIZE, width: window.innerWidth, height: window.innerHeight },
     scene: [TestScene],
   });
 } else {
+  // Text uses the self-hosted pixel fonts, so they must be ready before any scene draws.
+  void loadFonts().then(startGame, startGame);
+}
+
+function startGame(): void {
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'game',
@@ -63,9 +69,10 @@ if (params.has('net')) {
   const hooks = {
     game,
     scene: activeGame,
-    startRun(seed: number): void {
+    startRun(seed: number, weapon = 'hookblade'): void {
       game.scene.getScenes(true).forEach((s) => game.scene.stop(s.scene.key));
-      game.scene.start('game', { seed });
+      const data: GameData = { seed, weapon };
+      game.scene.start('game', data);
     },
     setAutopilot(opts: AutopilotOptions | null): void {
       const s = activeGame();

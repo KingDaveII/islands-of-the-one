@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import type { JuiceTuning } from '@iot/shared';
 import { Palette } from '../palette.js';
-import { pixelText } from './pixelFont.js';
+import { label, place, withShadow } from './text.js';
 
 interface Particle {
   x: number;
@@ -27,9 +27,10 @@ interface Ring {
 }
 
 interface Floater {
-  text: Phaser.GameObjects.BitmapText;
+  text: Phaser.GameObjects.Text;
   life: number;
   max: number;
+  y: number;
   vy: number;
 }
 
@@ -54,8 +55,9 @@ export class Fx {
     layer.add(this.gfx);
   }
 
-  flash(key: string, ms: number): void {
-    this.flashes.set(key, this.now + ms);
+  /** Hit flash: the struck target turns signal-hit white for `frames` 60 Hz frames (1-2). */
+  flash(key: string, frames: number): void {
+    this.flashes.set(key, this.now + (frames * 1000) / 60);
   }
 
   isFlashing(key: string): boolean {
@@ -93,10 +95,11 @@ export class Fx {
     this.rings.push({ x, y, r0, r1, life: ms, max: ms, color, width });
   }
 
-  float(x: number, y: number, text: string, color: number, ms = 700, scale = 1): void {
-    const t = pixelText(this.scene, x, y, text, color, scale).setOrigin(0.5, 1);
+  float(x: number, y: number, text: string, color: number, ms = 700): void {
+    const t = withShadow(label(this.scene, 0, 0, text, color));
+    place(t, x, y, 0.5, 1);
     this.layer.add(t);
-    this.floaters.push({ text: t, life: ms, max: ms, vy: -18 });
+    this.floaters.push({ text: t, y: t.y, life: ms, max: ms, vy: -18 });
   }
 
   update(dtWorldMs: number, dtRealMs: number): void {
@@ -131,7 +134,8 @@ export class Fx {
         f.text.destroy();
         return false;
       }
-      f.text.y += f.vy * (dtRealMs / 1000);
+      f.y += f.vy * (dtRealMs / 1000);
+      f.text.y = Math.round(f.y);
       f.text.setAlpha(Math.min(1, (f.life / f.max) * 2));
       return true;
     });
@@ -140,15 +144,16 @@ export class Fx {
   /** Chipped-pixel shards off a Husk shell. */
   chips(x: number, y: number, dir: number, count: number): void {
     const j = this.juice();
-    this.burst(x, y, count, Palette.pearl, j.particleSpeed, { dir, spread: Math.PI * 0.9 });
+    this.burst(x, y, count, Palette.shell, j.particleSpeed, { dir, spread: Math.PI * 0.9 });
+    this.burst(x, y, Math.ceil(count / 2), Palette.huskOutline, j.particleSpeed * 0.8, { dir, spread: Math.PI * 0.9 });
   }
 
   /** Core flare when a Husk dies. */
   coreFlare(x: number, y: number): void {
     const j = this.juice();
     this.ring(x, y, 2, 22, 380, Palette.core, 3);
-    this.ring(x, y, 1, 12, 220, Palette.white, 2);
+    this.ring(x, y, 1, 12, 220, Palette.spark, 2);
     this.burst(x, y, j.coreFlareParticles, Palette.core, j.particleSpeed * 1.4, { size: 2 });
-    this.burst(x, y, Math.round(j.coreFlareParticles / 2), Palette.pearl, j.particleSpeed);
+    this.burst(x, y, Math.round(j.coreFlareParticles / 2), Palette.huskOutline, j.particleSpeed);
   }
 }

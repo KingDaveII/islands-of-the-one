@@ -17,13 +17,15 @@ import {
 /** The real data file must satisfy the sim's tuning type. */
 export const tuning: Tuning = defaultTuning;
 
+export const WEAPON = 'hookblade';
+
 export function cloneTuning(): Tuning {
   return JSON.parse(JSON.stringify(tuning)) as Tuning;
 }
 
 /** A run in its first room with wave spawning disabled, so tests control the husks. */
 export function arena(t: Tuning = tuning, seed = 7): Run {
-  const run = createRun({ seed, tuning: t, rooms: roomTemplates });
+  const run = createRun({ seed, tuning: t, rooms: roomTemplates, weapon: WEAPON });
   run.state.room.timer = -1_000_000;
   return run;
 }
@@ -72,6 +74,9 @@ export function addHusk(run: Run, kind: HuskKind, distPx: number, patch: Partial
     cooldown: 10_000,
     hitstop: 0,
     strafe: 1,
+    pushX: 0,
+    pushY: 0,
+    pushT: 0,
     ...patch,
   };
   s.husks.push(h);
