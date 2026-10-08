@@ -1,0 +1,20 @@
+{
+  "name": "islands-of-the-one",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+  "forwardPorts": [5173, 2567],
+  "portsAttributes": {
+    "5173": { "label": "client (vite)", "onAutoForward": "openBrowser" },
+    "2567": { "label": "server (fastify + colyseus)" }
+  },
+  "postCreateCommand": "npm install -g pnpm@10.34.6 && pnpm install --frozen-lockfile",
+  "customizations": {
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "vitest.explorer"]
+    }
+  }
+}
