@@ -25,26 +25,61 @@ dev/test/typecheck never need a prior build. Production builds compile each pack
 
 ## Rules
 
-1. **Keep `pnpm check` green.** Never skip, disable or `.only` a test to get there; fix the cause.
-2. **Strict TypeScript.** No `any`, no `@ts-ignore`/`@ts-expect-error` without a comment explaining why,
-   no non-null `!` on values that can really be missing. Use `import type` for type-only imports.
-3. **Protocol lives in `packages/shared`.** Every client↔server message type, payload and room name is
-   defined there and used by both sides. Never hard-code message strings in apps. Bump
-   `PROTOCOL_VERSION` on any breaking wire change.
-4. **The server is authoritative.** Treat every client message as untrusted: validate with a guard from
-   `shared` before use, clamp/limit values, ignore malformed input.
-5. **`packages/sim` stays deterministic.** No `Math.random`, `Date.now`, `performance.now`, timers, I/O,
-   or iteration over unordered/insertion-dependent data where order affects results. All randomness comes
-   from the seeded `Rng`; all inputs come through the input log. Any sim change keeps the replay tests
-   passing; update golden hashes only for intentional behavior changes, and say so in the commit.
-6. **Database changes go through Drizzle migrations.** Edit `apps/server/src/db/schema.ts`, run
-   `db:generate`, commit the generated SQL + `meta/`. Never edit an already-merged migration. Tests use
-   in-memory PGlite (`createDb()` with no URL); production uses Postgres via `DATABASE_URL`.
-7. **Tests with features.** New server behavior gets a Vitest test (rooms can be tested over a real
-   WebSocket — see `apps/server/test/room.test.ts`); new sim logic gets determinism/replay coverage.
-8. **Dependencies:** add to the package that uses them (`pnpm --filter <pkg> add`), commit the lockfile,
-   prefer what's already in the tree. Keep `shared` and `sim` dependency-free.
-9. **Small, focused commits and PRs** with a clear message saying what changed and why.
+### Authority
+
+- The server decides everything of value: items, xp, currency, loot, positions that matter.
+- The client only sends intents ("craft X", "sail to Y", "input log for run Z"). Treat every client
+  message as untrusted: validate it with a guard from `packages/shared`, clamp/limit values, and ignore
+  malformed input.
+- The protocol lives in `packages/shared`. Every client↔server message type, payload and room name is
+  defined there and used by both sides; never hard-code message strings in apps. Bump
+  `PROTOCOL_VERSION` on any breaking wire change.
+
+### Items and currency
+
+- Every item or currency change goes through one function, `inventory.apply(changes, reason)`.
+- It runs in one DB transaction and writes to an `item_ledger` table. No other code touches item tables.
+- Trades and purchases lock both sides in the same transaction.
+
+### Determinism (`packages/sim`)
+
+- No `Math.random`, `Date.now`, `performance.now`, timers, I/O or floating-point time. Use the seeded
+  `Rng` and a fixed tick. Don't let iteration order of unordered data affect results.
+- Any sim change needs a replay test: same seed + inputs => same result. Update golden hashes only for
+  intentional behavior changes, and say so in the commit.
+- `packages/sim` stays dependency-free.
+
+### Idle progress
+
+- Never tick in the background. Store start time + action; compute progress on load or on the next
+  action.
+- Offline progress is capped (configurable in game data).
+
+### Data and balance
+
+- Game balance numbers live in `packages/shared/data`, never hardcoded in apps or the sim.
+
+### Database
+
+- Schema changes only through Drizzle migrations: edit `apps/server/src/db/schema.ts`, run
+  `db:generate`, commit the generated SQL + `meta/`. Never edit an applied migration.
+- Tests use in-memory PGlite (`createDb()` with no URL); production uses Postgres via `DATABASE_URL`.
+
+### Code quality
+
+- Strict TypeScript. No `any`, and no `@ts-ignore`/`@ts-expect-error` without a comment saying why. No
+  non-null `!` on values that can really be missing. Use `import type` for type-only imports.
+- New server behavior gets a Vitest test. Rooms can be tested over a real WebSocket; see
+  `apps/server/test/room.test.ts`.
+- Add dependencies to the package that uses them (`pnpm --filter <pkg> add`) and commit the lockfile.
+  Keep `packages/shared` free of runtime dependencies.
+
+### Workflow
+
+- One feature per branch, end to end (data, server, client, test).
+- Run `pnpm check` (lint + typecheck + tests) before declaring a task done. Never skip, disable or
+  `.only` a test to get it green; fix the cause.
+- Small, focused commits with a message saying what changed and why.
 
 ## Environment notes
 
