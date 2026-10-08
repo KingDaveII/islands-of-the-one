@@ -19,7 +19,9 @@ RUN pnpm --filter @iot/server... build \
  && pnpm --filter @iot/server deploy --prod --legacy /out
 
 FROM node:${NODE_VERSION}-slim AS runtime
-ENV NODE_ENV=production PORT=2567 HOST=0.0.0.0
+# Git SHA of the build; reported by /health so deploys can verify what's live.
+ARG APP_VERSION=dev
+ENV NODE_ENV=production PORT=2567 HOST=0.0.0.0 APP_VERSION=${APP_VERSION}
 WORKDIR /app
 COPY --from=build --chown=node:node /out/package.json ./
 COPY --from=build --chown=node:node /out/node_modules ./node_modules

@@ -19,7 +19,7 @@ describe('TestRoom over a real WebSocket', () => {
   beforeAll(async () => {
     db = await createDb();
     await db.migrate();
-    app = await createApp({ db });
+    app = await createApp({ db, devCors: true });
     const address = await app.listen(0, '127.0.0.1');
     client = new Client(address.replace(/^http/, 'ws'));
   });

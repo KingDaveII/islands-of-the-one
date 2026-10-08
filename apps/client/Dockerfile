@@ -14,7 +14,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 COPY tsconfig.base.json vitest.shared.ts ./
 COPY packages/shared packages/shared
 COPY apps/client apps/client
-# Baked in at build time; when empty the client uses ws(s)://<page host>:2567.
+# Baked in at build time; when empty the client connects to the page's own
+# origin (wss://<host>), which is how the Caddy deployment serves it.
 ARG VITE_SERVER_URL=""
 ENV VITE_SERVER_URL=${VITE_SERVER_URL}
 RUN pnpm --filter @iot/client build

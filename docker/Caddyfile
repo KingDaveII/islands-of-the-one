@@ -1,0 +1,30 @@
+# Staging reverse proxy. One origin for client and server, automatic HTTPS
+# (Let's Encrypt; sslip.io hostnames resolve to the VPS IP).
+{$STAGING_DOMAIN} {
+	# Game server: matchmaking HTTP, health, and WebSocket upgrades
+	# (Colyseus connects to /<processId>/<roomId>?sessionId=...).
+	@server {
+		path /matchmake/* /health
+	}
+	@websocket {
+		header Connection *Upgrade*
+		header Upgrade websocket
+	}
+	handle @websocket {
+		reverse_proxy server:2567
+	}
+	handle @server {
+		reverse_proxy server:2567
+	}
+
+	# Everything else: the static client (nginx).
+	handle {
+		encode zstd gzip
+		reverse_proxy client:80
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
