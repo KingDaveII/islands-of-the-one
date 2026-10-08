@@ -11,7 +11,7 @@ Browser multiplayer game (idle / co-op / action MMORPG). pnpm monorepo, TypeScri
 | `packages/shared`      | Wire protocol (types/guards) and game data. No runtime deps.                   |
 | `packages/shared/data` | `tuning.json` (every balance/feel number), `rooms.json` (room templates).      |
 | `packages/sim`         | Deterministic combat sim: 60 Hz integer ticks, seeded RNG, replayable runs.    |
-| `docs/design`          | Design rules (`combat.md`): read before changing combat.                       |
+| `docs/design`          | Design rules: `combat.md` (combat), `readability.md` (how it's drawn).         |
 
 Workspace packages are consumed from source via the custom `source` export condition
 (tsconfig `customConditions`, Vite `resolve.conditions`, `tsx --conditions=source`), so
@@ -66,6 +66,8 @@ dev/test/typecheck never need a prior build. Production builds compile each pack
 - Game balance numbers live in `packages/shared/data`, never hardcoded in apps or the sim. The sim
   takes the tuning as part of each run's config (live F2 edits are recorded in the run).
 - Combat rules: `docs/design/combat.md`. Keep it in sync when the rules change.
+- Visuals: every client color is a token from `apps/client/src/palette.ts`. The signal colors (hit
+  white, telegraph pink, perfect-dodge glow) are reserved; see `docs/design/readability.md`.
 
 ### Database
 
