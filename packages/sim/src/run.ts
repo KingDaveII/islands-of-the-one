@@ -1,0 +1,336 @@
+import { brake, moveBody } from './body.js';
+import { huskParams, type Ctx } from './combat.js';
+import { idiv, isqrt, length, SUB, TILE } from './fixed.js';
+import { hashValue } from './hash.js';
+import { createHusk, updateHusk } from './husks.js';
+import { decodeInput } from './input.js';
+import { updatePlayer } from './player.js';
+import { randInt, shuffle } from './rng.js';
+import { collideWalls, findTiles, roomFromTemplate, tileAt, tileOf, type RoomTemplate } from './rooms.js';
+import type { PlayerState, RunState, SimEvent } from './state.js';
+import { atan2, dirX, dirY } from './trig.js';
+import { compileTuning, type Params, type Tuning } from './tuning.js';
+
+export interface RunConfig {
+  seed: number;
+  tuning: Tuning;
+  rooms: RoomTemplate[];
+}
+
+/** Everything needed to replay a run exactly. */
+export interface RunRecord {
+  seed: number;
+  tuning: Tuning;
+  rooms: RoomTemplate[];
+  /** Packed input per tick (see encodeInput). */
+  inputs: number[];
+  /** Live tuning changes; each applies before the step at `tick`. */
+  tuningChanges: { tick: number; tuning: Tuning }[];
+}
+
+export interface Run {
+  state: RunState;
+  params: Params;
+  tuning: Tuning;
+  templates: RoomTemplate[];
+  record: RunRecord;
+  /** Events from the latest step. */
+  events: SimEvent[];
+}
+
+const PICKUP_RADIUS = 2 * SUB;
+const PICKUP_COLLECT = 6 * SUB;
+
+function clone<T>(v: T): T {
+  return JSON.parse(JSON.stringify(v)) as T;
+}
+
+function newPlayer(P: Params, x: number, y: number): PlayerState {
+  return {
+    x,
+    y,
+    vx: 0,
+    vy: 0,
+    hp: P.player.maxHp,
+    aim: 0,
+    moveAngle: 0,
+    moveMag: 0,
+    action: 'idle',
+    t: 0,
+    dir: 0,
+    comboStep: 0,
+    nextCombo: 0,
+    comboTimer: 0,
+    charge: 0,
+    hitIds: [],
+    dodgeCooldown: 0,
+    iframes: 0,
+    dodgeAge: 600,
+    perfectUsed: false,
+    hurtInvuln: 0,
+    hitstop: 0,
+    cooldowns: P.weapon.slots.map(() => 0),
+    heavyHeld: false,
+    buffer: 'none',
+    bufferAge: 0,
+  };
+}
+
+function enterRoom(ctx: Ctx, templates: RoomTemplate[], index: number): void {
+  const { s } = ctx;
+  const templateIndex = s.roomOrder[index] ?? 0;
+  const template = templates[templateIndex];
+  if (!template) throw new Error(`missing room template ${templateIndex}`);
+  s.roomIndex = index;
+  s.room = roomFromTemplate(templateIndex, template);
+  const start = findTiles(s.room, 'P')[0] ?? { x: TILE * 2, y: TILE * 2 };
+  const p = s.player;
+  p.x = start.x;
+  p.y = start.y;
+  p.vx = 0;
+  p.vy = 0;
+  s.husks = [];
+  s.pickups = [];
+  ctx.events.push({ type: 'roomEnter', index });
+}
+
+export function createRun(config: RunConfig): Run {
+  if (config.rooms.length === 0) throw new Error('no room templates');
+  const tuning = clone(config.tuning);
+  const P = compileTuning(tuning);
+  const placeholderRoom = roomFromTemplate(0, config.rooms[0] as RoomTemplate);
+  const s: RunState = {
+    tick: 0,
+    rng: config.seed >>> 0,
+    status: 'playing',
+    endTick: 0,
+    roomIndex: 0,
+    roomOrder: [],
+    room: placeholderRoom,
+    player: newPlayer(P, 0, 0),
+    husks: [],
+    pickups: [],
+    nextId: 1,
+    sparkglass: 0,
+    stats: { kills: 0, perfectDodges: 0, hitsLanded: 0, damageTaken: 0 },
+    slowmo: 0,
+    clearTimer: 0,
+  };
+  const order = shuffle(
+    s,
+    config.rooms.map((_, i) => i),
+  );
+  s.roomOrder = P.run.rooms.map((_, i) => order[i % order.length] ?? 0);
+  const run: Run = {
+    state: s,
+    params: P,
+    tuning,
+    templates: clone(config.rooms),
+    record: { seed: config.seed >>> 0, tuning: clone(tuning), rooms: clone(config.rooms), inputs: [], tuningChanges: [] },
+    events: [],
+  };
+  enterRoom({ s, P, events: run.events }, run.templates, 0);
+  return run;
+}
+
+/** Replace the run's tuning from the next step on (recorded for replays). */
+export function setRunTuning(run: Run, tuning: Tuning): void {
+  const t = clone(tuning);
+  run.params = compileTuning(t);
+  run.tuning = t;
+  run.record.tuningChanges.push({ tick: run.state.tick, tuning: clone(t) });
+}
+
+function spawnWave(ctx: Ctx): void {
+  const { s, P } = ctx;
+  const wave = P.run.rooms[s.roomIndex]?.waves[s.room.wave];
+  if (!wave) return;
+  const p = s.player;
+  const points = findTiles(s.room, 'S');
+  const far = points.filter((pt) => length(pt.x - p.x, pt.y - p.y) >= P.run.spawnMinDistance);
+  const pool = shuffle(s, far.length > 0 ? far : points);
+  if (pool.length === 0) return;
+  const kinds = [
+    ...Array.from({ length: wave.nutshell }, () => 'nutshell' as const),
+    ...Array.from({ length: wave.peeling }, () => 'peeling' as const),
+  ];
+  kinds.forEach((kind, i) => {
+    const pt = pool[i % pool.length] ?? { x: 0, y: 0 };
+    const jitter = 4 * SUB;
+    s.husks.push(createHusk(ctx, kind, pt.x + randInt(s, -jitter, jitter), pt.y + randInt(s, -jitter, jitter)));
+  });
+}
+
+function updateRoom(ctx: Ctx, templates: RoomTemplate[]): void {
+  const { s, P } = ctx;
+  const room = s.room;
+  const waves = P.run.rooms[s.roomIndex]?.waves ?? [];
+  const last = s.roomIndex >= P.run.rooms.length - 1;
+  switch (room.phase) {
+    case 'intro':
+      if (++room.timer >= P.run.waveDelay) {
+        room.phase = 'fighting';
+        room.timer = 0;
+        spawnWave(ctx);
+      }
+      break;
+    case 'fighting':
+      if (s.husks.length > 0) break;
+      if (room.wave + 1 < waves.length) {
+        room.wave++;
+        room.phase = 'intro';
+        room.timer = 0;
+      } else {
+        room.phase = 'cleared';
+        room.doorOpen = !last;
+        ctx.events.push({ type: 'roomCleared', index: s.roomIndex });
+        if (last) s.clearTimer = Math.max(1, P.run.clearDelay);
+      }
+      break;
+    case 'cleared': {
+      if (last) {
+        if (--s.clearTimer <= 0 && s.status === 'playing') {
+          s.status = 'cleared';
+          s.endTick = s.tick;
+          ctx.events.push({ type: 'runEnd', status: 'cleared' });
+        }
+        break;
+      }
+      const p = s.player;
+      if (tileAt(room, tileOf(p.x), tileOf(p.y)) === 'D') enterRoom(ctx, templates, s.roomIndex + 1);
+      break;
+    }
+  }
+}
+
+/** Push overlapping bodies apart, split by weight. Dodging/lunging players pass through. */
+function separate(ctx: Ctx): void {
+  const { s, P } = ctx;
+  const bodies: { b: { x: number; y: number }; r: number; w: number }[] = [];
+  const p = s.player;
+  if (p.action !== 'dodge' && p.action !== 'lunge' && p.action !== 'dead') {
+    bodies.push({ b: p, r: P.player.radius, w: P.player.weight });
+  }
+  for (const h of s.husks) {
+    if (h.action === 'spawn' || h.core <= 0) continue;
+    const hp = huskParams(P, h.kind);
+    bodies.push({ b: h, r: hp.radius, w: hp.weight });
+  }
+  for (let i = 0; i < bodies.length; i++) {
+    for (let j = i + 1; j < bodies.length; j++) {
+      const a = bodies[i];
+      const c = bodies[j];
+      if (!a || !c) continue;
+      const dx = c.b.x - a.b.x;
+      const dy = c.b.y - a.b.y;
+      const min = a.r + c.r;
+      const d2 = dx * dx + dy * dy;
+      if (d2 >= min * min) continue;
+      const d = isqrt(d2);
+      const overlap = min - d;
+      const nx = d === 0 ? SUB : idiv(dx * SUB, d);
+      const ny = d === 0 ? 0 : idiv(dy * SUB, d);
+      const total = a.w + c.w;
+      const pa = idiv(overlap * c.w, total);
+      const pc = overlap - pa;
+      a.b.x -= idiv(nx * pa, SUB);
+      a.b.y -= idiv(ny * pa, SUB);
+      c.b.x += idiv(nx * pc, SUB);
+      c.b.y += idiv(ny * pc, SUB);
+    }
+  }
+}
+
+function updatePickups(ctx: Ctx): void {
+  const { s, P } = ctx;
+  const p = s.player;
+  const alive = p.action !== 'dead';
+  const magnetAll = s.room.phase === 'cleared';
+  s.pickups = s.pickups.filter((k) => {
+    const dx = p.x - k.x;
+    const dy = p.y - k.y;
+    const d = length(dx, dy);
+    if (alive && d <= PICKUP_COLLECT + P.player.radius) {
+      s.sparkglass += k.value;
+      ctx.events.push({ type: 'pickup', x: k.x, y: k.y, value: k.value });
+      return false;
+    }
+    if (alive && (magnetAll || d <= P.run.magnetRadius)) {
+      const a = atan2(dy, dx);
+      k.vx = dirX(a, P.run.pickupSpeed);
+      k.vy = dirY(a, P.run.pickupSpeed);
+    } else {
+      brake(k, idiv(P.run.pickupScatter, 20) + 1);
+    }
+    moveBody(s.room, k, PICKUP_RADIUS);
+    return true;
+  });
+}
+
+/** Advance the run by one tick. Returns this tick's presentation events. */
+export function stepRun(run: Run, packedInput: number): SimEvent[] {
+  const s = run.state;
+  run.events = [];
+  if (s.status !== 'playing') return run.events;
+  run.record.inputs.push(packedInput >>> 0);
+  const ctx: Ctx = { s, P: run.params, events: run.events };
+  s.tick++;
+
+  updatePlayer(ctx, decodeInput(packedInput));
+  s.husks = s.husks.filter((h) => h.core > 0);
+  for (const h of s.husks) updateHusk(ctx, h);
+  s.husks = s.husks.filter((h) => h.core > 0);
+  separate(ctx);
+  collideWalls(s.room, s.player, run.params.player.radius);
+  for (const h of s.husks) collideWalls(s.room, h, huskParams(run.params, h.kind).radius);
+  updatePickups(ctx);
+  updateRoom(ctx, run.templates);
+  if (s.slowmo > 0) s.slowmo--;
+  return run.events;
+}
+
+/** Re-run a recorded run from scratch. */
+export function replayRun(record: RunRecord): Run {
+  const run = createRun({ seed: record.seed, tuning: record.tuning, rooms: record.rooms });
+  run.record.tuningChanges = [];
+  let change = 0;
+  for (const input of record.inputs) {
+    while (change < record.tuningChanges.length && (record.tuningChanges[change]?.tick ?? 0) <= run.state.tick) {
+      const c = record.tuningChanges[change];
+      if (c) setRunTuning(run, c.tuning);
+      change++;
+    }
+    stepRun(run, input);
+  }
+  return run;
+}
+
+export function hashRunState(state: RunState): number {
+  return hashValue(state);
+}
+
+export interface RunResults {
+  status: RunState['status'];
+  ticks: number;
+  kills: number;
+  perfectDodges: number;
+  sparkglassCollected: number;
+  sparkglassKept: number;
+  roomsCleared: number;
+}
+
+export function runResults(run: Run): RunResults {
+  const s = run.state;
+  const P = run.params;
+  const cleared = s.status === 'cleared';
+  const roomsCleared = s.roomIndex + (s.room.phase === 'cleared' ? 1 : 0);
+  return {
+    status: s.status,
+    ticks: s.endTick || s.tick,
+    kills: s.stats.kills,
+    perfectDodges: s.stats.perfectDodges,
+    sparkglassCollected: s.sparkglass,
+    sparkglassKept: cleared ? s.sparkglass : idiv(s.sparkglass * P.run.keptOnDeath, 1000),
+    roomsCleared,
+  };
+}
