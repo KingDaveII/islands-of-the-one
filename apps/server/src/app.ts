@@ -10,6 +10,10 @@ import { TestRoom } from './rooms/TestRoom.js';
 export interface AppOptions {
   db: DbHandle;
   logger?: boolean;
+  /** Add CORS headers to matchmaking responses (local dev only; see Config.devCors). */
+  devCors?: boolean;
+  /** Build identifier reported by /health. */
+  version?: string;
 }
 
 export interface App {
@@ -24,13 +28,18 @@ export interface App {
  * (`/matchmake/*`) are handled first, everything else falls through to Fastify,
  * and WebSocket upgrades go to the Colyseus transport.
  */
-export async function createApp({ db, logger = false }: AppOptions): Promise<App> {
+export async function createApp({
+  db,
+  logger = false,
+  devCors = false,
+  version = 'dev',
+}: AppOptions): Promise<App> {
   const matchmaking = createNodeMatchmakingMiddleware();
   const http = Fastify({
     logger,
     serverFactory: (handler) =>
       createServer((req: IncomingMessage, res: ServerResponse) => {
-        if (req.url?.startsWith(`/${matchMaker.controller.matchmakeRoute}/`)) {
+        if (devCors && req.url?.startsWith(`/${matchMaker.controller.matchmakeRoute}/`)) {
           setMatchmakeCorsHeaders(req, res);
         }
         void matchmaking(req, res, () => {
@@ -42,7 +51,7 @@ export async function createApp({ db, logger = false }: AppOptions): Promise<App
   http.get('/health', async (_req, reply) => {
     try {
       await db.ping();
-      return { status: 'ok', db: db.kind, protocolVersion: PROTOCOL_VERSION };
+      return { status: 'ok', db: db.kind, version, protocolVersion: PROTOCOL_VERSION };
     } catch (err) {
       http.log.error(err, 'health check: database unreachable');
       return reply.code(503).send({ status: 'error', db: db.kind });
@@ -73,8 +82,9 @@ export async function createApp({ db, logger = false }: AppOptions): Promise<App
 
 /**
  * The raw-node matchmaking adapter only adds CORS headers to preflight
- * responses (it was built for same-origin use under Vite). The client is
- * served from a different origin, so add them to every matchmake response.
+ * responses (it was built for same-origin use under Vite). In local dev the
+ * client is served from a different origin, so add them to every matchmake
+ * response. Deployed builds are same-origin and leave this off.
  */
 function setMatchmakeCorsHeaders(req: IncomingMessage, res: ServerResponse): void {
   const headers = new Headers();

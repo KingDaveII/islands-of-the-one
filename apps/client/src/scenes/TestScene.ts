@@ -22,7 +22,11 @@ export class TestScene extends Phaser.Scene {
       .setScrollFactor(0);
     this.status = this.add.text(16, 44, 'connecting…', { fontSize: '14px', color: '#9fb3c8' });
 
-    const url = resolveServerUrl(import.meta.env.VITE_SERVER_URL, window.location);
+    const url = resolveServerUrl(
+      import.meta.env.VITE_SERVER_URL,
+      window.location,
+      import.meta.env.PROD,
+    );
     connect(url)
       .then((conn) => {
         this.connection = conn;

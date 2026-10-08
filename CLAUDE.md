@@ -87,5 +87,8 @@ dev/test/typecheck never need a prior build. Production builds compile each pack
   starts local Postgres, ensures role/db `game`, and runs `pnpm install` only when the lockfile changed.
 - Without `DATABASE_URL` the server uses PGlite (`PGLITE_DIR` to persist, else in-memory).
 - The server applies pending migrations on start unless `SKIP_MIGRATIONS` is set.
+- Deployment: `docs/DEPLOY.md`. Staging is a compose stack behind Caddy on one origin; pushes to
+  `main` deploy automatically once CI passes. Never commit `.env`/`deploy.env` or put secrets in
+  `docker/`. The deployed client connects to its own origin; server CORS is local-dev only.
 - Colyseus 0.18 is embedded in Fastify manually (see `apps/server/src/app.ts`); don't call
   `gameServer.listen()`, which would install its own catch-all HTTP handler.

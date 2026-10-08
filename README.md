@@ -23,4 +23,6 @@ docker build -f apps/client/Dockerfile --build-arg VITE_SERVER_URL=ws://localhos
 docker run -p 8080:80 iot-client
 ```
 
+Staging deployment, secrets and rollback: [docs/DEPLOY.md](docs/DEPLOY.md).
+
 See [CLAUDE.md](CLAUDE.md) for layout and contribution rules, and `.env.example` for configuration.

@@ -1,0 +1,118 @@
+# Staging stack. Deployed to /opt/islands on the VPS by
+# .github/workflows/deploy-staging.yml; see docs/DEPLOY.md.
+#
+# Variables (interpolated by `docker compose`):
+#   /opt/islands/.env        POSTGRES_PASSWORD (host-managed, never committed)
+#   /opt/islands/deploy.env  SERVER_IMAGE, CLIENT_IMAGE, IMAGE_TAG, STAGING_DOMAIN
+#                            (written by the deploy workflow)
+#
+# Run as:
+#   docker compose -f compose.staging.yml --env-file .env --env-file deploy.env up -d
+#
+# The VPS hosts other stacks: no container_name, no host ports except Caddy's.
+name: islands
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      STAGING_DOMAIN: ${STAGING_DOMAIN:?set STAGING_DOMAIN in deploy.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - client
+      - server
+    logging: *logging
+
+  client:
+    image: ${CLIENT_IMAGE:?}:${IMAGE_TAG:?}
+    restart: unless-stopped
+    logging: *logging
+
+  server:
+    image: ${SERVER_IMAGE:?}:${IMAGE_TAG:?}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: '2567'
+      # Password via PGPASSWORD so special characters need no URL-encoding.
+      DATABASE_URL: postgres://game@postgres:5432/game
+      PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in /opt/islands/.env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging: *logging
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: game
+      POSTGRES_DB: game
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in /opt/islands/.env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U game -d game']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    logging: *logging
+
+  # Nightly logical backup at 03:00 UTC; keeps 7 days of dumps in the
+  # pgbackups volume. Restore steps: docs/DEPLOY.md.
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      PGHOST: postgres
+      PGUSER: game
+      PGDATABASE: game
+      PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in /opt/islands/.env}
+      BACKUP_HOUR_UTC: '3'
+      BACKUP_KEEP_DAYS: '7'
+    volumes:
+      - pgbackups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        set -eu
+        while true; do
+          now=$$(date -u +%s)
+          next=$$(( now / 86400 * 86400 + BACKUP_HOUR_UTC * 3600 ))
+          [ "$$next" -gt "$$now" ] || next=$$(( next + 86400 ))
+          echo "next backup in $$(( next - now ))s"
+          sleep $$(( next - now ))
+          file=/backups/game-$$(date -u +%Y%m%dT%H%M%SZ).dump
+          if pg_dump --format=custom --file="$$file.partial"; then
+            mv "$$file.partial" "$$file"
+            echo "wrote $$file"
+          else
+            rm -f "$$file.partial"
+            echo "pg_dump failed" >&2
+          fi
+          find /backups -name 'game-*.dump' -mtime +$$(( BACKUP_KEEP_DAYS - 1 )) -delete
+        done
+    logging: *logging
+
+volumes:
+  pgdata:
+  pgbackups:
+  caddy_data:
+  caddy_config:
