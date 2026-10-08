@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import type Phaser from 'phaser';
 import type { JuiceTuning } from '@iot/shared';
 import { Palette } from '../palette.js';
 import { pixelText } from './pixelFont.js';

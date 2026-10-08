@@ -78,15 +78,16 @@ export function registerPixelFont(scene: Phaser.Scene): void {
   if (!tex) throw new Error('could not create font texture');
   const ctx = tex.getContext();
   ctx.fillStyle = '#ffffff';
-  [...CHARS].forEach((ch, i) => {
+  // Glyph keys and rows are plain ASCII, so indexing by UTF-16 unit is exact.
+  for (let i = 0; i < CHARS.length; i++) {
     const ox = (i % PER_ROW) * CELL_W;
     const oy = Math.floor(i / PER_ROW) * CELL_H;
-    (GLYPHS[ch] ?? '').split('/').forEach((row, y) => {
-      [...row].forEach((px, x) => {
-        if (px === '#') ctx.fillRect(ox + x, oy + y, 1, 1);
-      });
+    (GLYPHS[CHARS.charAt(i)] ?? '').split('/').forEach((row, y) => {
+      for (let x = 0; x < row.length; x++) {
+        if (row.charAt(x) === '#') ctx.fillRect(ox + x, oy + y, 1, 1);
+      }
     });
-  });
+  }
   tex.refresh();
   const data = Phaser.GameObjects.RetroFont.Parse(scene, {
     image: `${FONT_KEY}-tex`,

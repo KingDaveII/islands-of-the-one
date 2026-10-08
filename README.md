@@ -11,7 +11,13 @@ pnpm check        # lint + typecheck + tests
 pnpm build
 ```
 
-Open http://localhost:5173 in two tabs and click to move.
+Open http://localhost:5173 and start a run (M1 solo combat prototype).
+
+Controls: WASD move, mouse aim, LMB/J light combo, hold RMB/K heavy, Space/Shift dodge, Q Lunge.
+Gamepad: left stick move, right stick aim, X light, Y/RT heavy, A dodge, B Lunge.
+F2 tuning panel (live sliders + Export JSON), F3 debug overlay. `?net` opens the M0 network test.
+
+Combat rules: [docs/design/combat.md](docs/design/combat.md).
 
 ## Docker
 

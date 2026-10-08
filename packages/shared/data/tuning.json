@@ -67,7 +67,7 @@
           "arcDeg": 160,
           "damage": 22,
           "shellDamage": 20,
-          "knockback": 260,
+          "knockback": 200,
           "hitstopMs": 75,
           "shake": 3,
           "stepSpeed": 140
@@ -86,7 +86,7 @@
         "shellDamageMin": 25,
         "shellDamageMax": 60,
         "knockbackMin": 200,
-        "knockbackMax": 420,
+        "knockbackMax": 320,
         "hitstopMinMs": 70,
         "hitstopMaxMs": 110,
         "shakeMin": 2,
@@ -94,9 +94,21 @@
         "stepSpeed": 120
       },
       "abilities": [
-        { "id": "lunge", "name": "Lunge", "locked": false },
-        { "id": "sweep", "name": "Spinning sweep", "locked": true },
-        { "id": "tbd", "name": "TBD", "locked": true }
+        {
+          "id": "lunge",
+          "name": "Lunge",
+          "locked": false
+        },
+        {
+          "id": "sweep",
+          "name": "Spinning sweep",
+          "locked": true
+        },
+        {
+          "id": "tbd",
+          "name": "TBD",
+          "locked": true
+        }
       ]
     }
   },
@@ -124,15 +136,15 @@
       "core": 16,
       "speed": 72,
       "acceleration": 650,
-      "friction": 900,
+      "friction": 1200,
       "weight": 0.6,
       "attackRangePx": 46,
       "windupMs": 450,
       "trackMs": 280,
       "recoverMs": 500,
-      "cooldownMs": 1200,
-      "cooldownJitterMs": 700,
-      "damage": 10,
+      "cooldownMs": 900,
+      "cooldownJitterMs": 600,
+      "damage": 12,
       "knockback": 0,
       "hitstopMs": 60,
       "shake": 3,
@@ -157,7 +169,7 @@
       "windupMs": 900,
       "trackMs": 360,
       "recoverMs": 700,
-      "cooldownMs": 1600,
+      "cooldownMs": 1300,
       "cooldownJitterMs": 600,
       "damage": 24,
       "knockback": 0,
@@ -175,9 +187,42 @@
   },
   "run": {
     "rooms": [
-      { "waves": [{ "peeling": 3, "nutshell": 0 }, { "peeling": 4, "nutshell": 0 }] },
-      { "waves": [{ "peeling": 4, "nutshell": 0 }, { "peeling": 5, "nutshell": 0 }] },
-      { "waves": [{ "peeling": 4, "nutshell": 1 }, { "peeling": 4, "nutshell": 2 }] }
+      {
+        "waves": [
+          {
+            "peeling": 3,
+            "nutshell": 0
+          },
+          {
+            "peeling": 4,
+            "nutshell": 0
+          }
+        ]
+      },
+      {
+        "waves": [
+          {
+            "peeling": 4,
+            "nutshell": 0
+          },
+          {
+            "peeling": 5,
+            "nutshell": 0
+          }
+        ]
+      },
+      {
+        "waves": [
+          {
+            "peeling": 4,
+            "nutshell": 1
+          },
+          {
+            "peeling": 4,
+            "nutshell": 2
+          }
+        ]
+      }
     ],
     "waveDelayMs": 700,
     "clearDelayMs": 1500,

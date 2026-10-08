@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import type Phaser from 'phaser';
 import { Button, encodeInput, type TickInput } from '@iot/sim';
 import { keyboardMove, quantizeAngle, quantizeMove } from './quantize.js';
 
@@ -118,12 +118,11 @@ export class Controls {
   }
 
   /** Any "confirm" press this frame (menus): Enter, Space or gamepad A/Start. */
-  static confirmPressed(scene: Phaser.Scene, prev: { pad: boolean }): boolean {
+  static confirmPressed(prev: { pad: boolean }): boolean {
     const pad = navigator.getGamepads().find((g): g is Gamepad => g !== null && g.connected);
     const now = Boolean(pad && ((pad.buttons[Pad.A]?.pressed ?? false) || (pad.buttons[9]?.pressed ?? false)));
     const edge = now && !prev.pad;
     prev.pad = now;
-    void scene;
     return edge;
   }
 }

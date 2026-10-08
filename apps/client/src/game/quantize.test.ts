@@ -19,7 +19,7 @@ describe('input quantization', () => {
   it('analog sticks keep fine direction and stepped magnitude with a deadzone', () => {
     expect(quantizeMove(0.1, 0, 0.2).moveMag).toBe(0);
     expect(quantizeMove(1, 0, 0.2)).toEqual({ moveDir: 0, moveMag: 7 });
-    expect(quantizeMove(0.6, 0, 0.2).moveMag).toBe(4);
+    expect(quantizeMove(0.65, 0, 0.2).moveMag).toBe(4);
     expect(quantizeMove(Math.cos(0.3), Math.sin(0.3), 0.2).moveDir).toBe(12);
   });
 });

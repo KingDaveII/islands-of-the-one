@@ -68,11 +68,15 @@ export class Session {
     for (const k of s.pickups) this.prev.set(`k${k.id}`, { x: k.x, y: k.y });
   }
 
+  isEnded(): boolean {
+    return this.run.state.status !== 'playing';
+  }
+
   /** Advance by real time; returns events from all steps taken. */
   update(dtMs: number): SimEvent[] {
     const events: SimEvent[] = [];
     this.stepsThisFrame = 0;
-    if (this.run.state.status !== 'playing') return events;
+    if (this.isEnded()) return events;
     this.acc += Math.min(dtMs, 250) * this.timeScale();
     while (this.acc >= TICK_MS && this.stepsThisFrame < MAX_STEPS_PER_FRAME) {
       this.snapshot();
@@ -83,7 +87,7 @@ export class Session {
       events.push(...stepRun(this.run, input));
       this.acc -= TICK_MS;
       this.stepsThisFrame++;
-      if (this.run.state.status !== 'playing') break;
+      if (this.isEnded()) break;
     }
     if (this.stepsThisFrame === MAX_STEPS_PER_FRAME) this.acc = 0;
     this.alpha = Math.min(1, this.acc / TICK_MS);

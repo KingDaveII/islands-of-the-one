@@ -79,12 +79,17 @@ function goTo(s: RunState, x: number, y: number): { moveDir: number; moveMag: nu
 }
 
 function threat(s: RunState, P: Params, h: HuskState): boolean {
-  if (h.action !== 'windup') return false;
-  const hp = huskParams(P, h.kind);
   const p = s.player;
   const d = length(p.x - h.x, p.y - h.y);
-  const reach = h.kind === 'peeling' ? hp.attackRange + 24 * 256 : P.husks.nutshell.slamRadius + 16 * 256;
-  return d <= reach && hp.windup - h.t <= 2;
+  if (h.kind === 'peeling') {
+    const pe = P.husks.peeling;
+    const reach = P.player.radius + pe.radius + pe.hitPad;
+    // Dodge as the lunge is about to connect (within ~2 ticks of travel).
+    if (h.action === 'attack' && !h.attackHit) return d <= reach + pe.lungeSpeed * 2;
+    return h.action === 'windup' && pe.windup - h.t <= 0 && d <= reach + pe.lungeSpeed;
+  }
+  const nu = P.husks.nutshell;
+  return h.action === 'windup' && nu.windup - h.t <= 2 && d <= nu.slamRadius + nu.slamOffset + P.player.radius;
 }
 
 export function autopilot(s: RunState, P: Params, opts: AutopilotOptions = {}): number {
