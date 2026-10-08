@@ -4,12 +4,14 @@ Browser multiplayer game (idle / co-op / action MMORPG). pnpm monorepo, TypeScri
 
 ## Layout
 
-| Path              | What                                                                             |
-| ----------------- | -------------------------------------------------------------------------------- |
-| `apps/client`     | Vite + Phaser 3. Connects to the server with `@colyseus/sdk`.                    |
-| `apps/server`     | Fastify (HTTP, `/health`) + Colyseus 0.18 (rooms, WebSocket) sharing one port.   |
-| `packages/shared` | Wire protocol: room names, message types, payload types/guards. No runtime deps. |
-| `packages/sim`    | Deterministic game simulation. Seeded RNG, replay tests. No I/O, no deps.        |
+| Path                   | What                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------ |
+| `apps/client`          | Vite + Phaser 3. Renders the sim, reads input, juice/HUD. No gameplay logic.   |
+| `apps/server`          | Fastify (HTTP, `/health`) + Colyseus 0.18 (rooms, WebSocket) sharing one port. |
+| `packages/shared`      | Wire protocol (types/guards) and game data. No runtime deps.                   |
+| `packages/shared/data` | `tuning.json` (every balance/feel number), `rooms.json` (room templates).      |
+| `packages/sim`         | Deterministic combat sim: 60 Hz integer ticks, seeded RNG, replayable runs.    |
+| `docs/design`          | Design rules (`combat.md`): read before changing combat.                       |
 
 Workspace packages are consumed from source via the custom `source` export condition
 (tsconfig `customConditions`, Vite `resolve.conditions`, `tsx --conditions=source`), so
@@ -47,7 +49,11 @@ dev/test/typecheck never need a prior build. Production builds compile each pack
   `Rng` and a fixed tick. Don't let iteration order of unordered data affect results.
 - Any sim change needs a replay test: same seed + inputs => same result. Update golden hashes only for
   intentional behavior changes, and say so in the commit.
-- `packages/sim` stays dependency-free.
+- No `Math.sin/cos/atan2/sqrt` either (they differ between browsers): use `trig.ts` / `isqrt` in
+  `fixed.ts`. All sim state is integers (sub-pixel units, 1/4096-turn angles, permille). ESLint
+  enforces these bans in `packages/sim/src`.
+- `packages/sim` stays dependency-free at runtime (its tests use `@iot/shared` data as a dev dep).
+- The client never decides gameplay: it sends quantized inputs and renders state/events.
 
 ### Idle progress
 
@@ -57,7 +63,9 @@ dev/test/typecheck never need a prior build. Production builds compile each pack
 
 ### Data and balance
 
-- Game balance numbers live in `packages/shared/data`, never hardcoded in apps or the sim.
+- Game balance numbers live in `packages/shared/data`, never hardcoded in apps or the sim. The sim
+  takes the tuning as part of each run's config (live F2 edits are recorded in the run).
+- Combat rules: `docs/design/combat.md`. Keep it in sync when the rules change.
 
 ### Database
 
@@ -90,5 +98,7 @@ dev/test/typecheck never need a prior build. Production builds compile each pack
 - Deployment: `docs/DEPLOY.md`. Staging is a compose stack behind Caddy on one origin; pushes to
   `main` deploy automatically once CI passes. Never commit `.env`/`deploy.env` or put secrets in
   `docker/`. The deployed client connects to its own origin; server CORS is local-dev only.
+- Playtesting: `window.__iot` in the client exposes `startRun(seed)`, `setAutopilot({})` (the sim's
+  deterministic bot), `record()`, `hash()` and `replayHash(record)` for headless browser runs.
 - Colyseus 0.18 is embedded in Fastify manually (see `apps/server/src/app.ts`); don't call
   `gameServer.listen()`, which would install its own catch-all HTTP handler.

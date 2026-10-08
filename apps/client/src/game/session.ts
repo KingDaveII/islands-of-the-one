@@ -1,0 +1,112 @@
+import { roomTemplates } from '@iot/shared';
+import {
+  autopilot,
+  createRun,
+  hashRunState,
+  runResults,
+  setRunTuning,
+  stepRun,
+  SUB,
+  TICK_HZ,
+  type AutopilotOptions,
+  type Run,
+  type RunResults,
+  type SimEvent,
+} from '@iot/sim';
+import type { Controls } from './controls.js';
+import { tuningStore } from './tuningStore.js';
+
+const TICK_MS = 1000 / TICK_HZ;
+const MAX_STEPS_PER_FRAME = 5;
+
+export interface Snapshot {
+  x: number;
+  y: number;
+}
+
+/**
+ * Runs the sim at a fixed 60 Hz from real time. The client never changes
+ * gameplay state: it only feeds inputs and reads state/events for rendering.
+ */
+export class Session {
+  readonly run: Run;
+  private acc = 0;
+  /** Positions before the latest step (by entity key), for render interpolation. */
+  prev = new Map<string, Snapshot>();
+  alpha = 0;
+  stepsThisFrame = 0;
+  autopilot: AutopilotOptions | null = null;
+  private unsubscribe: () => void;
+
+  constructor(
+    readonly seed: number,
+    private readonly controls: Controls,
+  ) {
+    this.run = createRun({ seed, tuning: tuningStore.get(), rooms: roomTemplates });
+    this.unsubscribe = tuningStore.subscribe((t) => {
+      if (this.run.state.status === 'playing') setRunTuning(this.run, t);
+    });
+  }
+
+  dispose(): void {
+    this.unsubscribe();
+  }
+
+  get state() {
+    return this.run.state;
+  }
+
+  /** Real-time multiplier (perfect-dodge slow-mo). */
+  timeScale(): number {
+    return this.run.state.slowmo > 0 ? this.run.params.perfect.slowmoScale / 1000 : 1;
+  }
+
+  private snapshot(): void {
+    const s = this.run.state;
+    this.prev.set('p', { x: s.player.x, y: s.player.y });
+    for (const h of s.husks) this.prev.set(`h${h.id}`, { x: h.x, y: h.y });
+    for (const k of s.pickups) this.prev.set(`k${k.id}`, { x: k.x, y: k.y });
+  }
+
+  isEnded(): boolean {
+    return this.run.state.status !== 'playing';
+  }
+
+  /** Advance by real time; returns events from all steps taken. */
+  update(dtMs: number): SimEvent[] {
+    const events: SimEvent[] = [];
+    this.stepsThisFrame = 0;
+    if (this.isEnded()) return events;
+    this.acc += Math.min(dtMs, 250) * this.timeScale();
+    while (this.acc >= TICK_MS && this.stepsThisFrame < MAX_STEPS_PER_FRAME) {
+      this.snapshot();
+      const p = this.run.state.player;
+      const input = this.autopilot
+        ? autopilot(this.run.state, this.run.params, this.autopilot)
+        : this.controls.sample(p.x / SUB, p.y / SUB);
+      events.push(...stepRun(this.run, input));
+      this.acc -= TICK_MS;
+      this.stepsThisFrame++;
+      if (this.isEnded()) break;
+    }
+    if (this.stepsThisFrame === MAX_STEPS_PER_FRAME) this.acc = 0;
+    this.alpha = Math.min(1, this.acc / TICK_MS);
+    return events;
+  }
+
+  /** Interpolated world-pixel position for an entity. */
+  lerp(key: string, x: number, y: number): { x: number; y: number } {
+    const prev = this.prev.get(key);
+    if (!prev || Math.abs(prev.x - x) > 32 * SUB || Math.abs(prev.y - y) > 32 * SUB) return { x: x / SUB, y: y / SUB };
+    const a = this.alpha;
+    return { x: (prev.x + (x - prev.x) * a) / SUB, y: (prev.y + (y - prev.y) * a) / SUB };
+  }
+
+  results(): RunResults {
+    return runResults(this.run);
+  }
+
+  hash(): number {
+    return hashRunState(this.run.state);
+  }
+}

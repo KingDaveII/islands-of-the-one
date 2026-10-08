@@ -44,6 +44,9 @@ importers:
       '@iot/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@iot/sim':
+        specifier: workspace:*
+        version: link:../../packages/sim
       phaser:
         specifier: ^3.90.0
         version: 3.90.0
@@ -97,7 +100,11 @@ importers:
 
   packages/shared: {}
 
-  packages/sim: {}
+  packages/sim:
+    devDependencies:
+      '@iot/shared':
+        specifier: workspace:*
+        version: link:../shared
 
 packages:
 

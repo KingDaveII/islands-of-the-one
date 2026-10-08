@@ -12,6 +12,7 @@
   "dependencies": {
     "@colyseus/sdk": "^0.18.5",
     "@iot/shared": "workspace:*",
+    "@iot/sim": "workspace:*",
     "phaser": "^3.90.0"
   },
   "devDependencies": {

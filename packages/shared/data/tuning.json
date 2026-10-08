@@ -1,0 +1,249 @@
+{
+  "player": {
+    "radiusPx": 6,
+    "maxHp": 100,
+    "moveSpeed": 112,
+    "acceleration": 1100,
+    "friction": 1500,
+    "weight": 1,
+    "hurtStunMs": 180,
+    "hurtInvulnMs": 550,
+    "hurtKnockback": 170,
+    "weapon": "hookblade"
+  },
+  "dodge": {
+    "speed": 290,
+    "durationMs": 260,
+    "iframesMs": 210,
+    "cooldownMs": 380,
+    "exitSpeedFactor": 0.45
+  },
+  "perfectDodge": {
+    "windowMs": 130,
+    "marginPx": 10,
+    "slowmoMs": 300,
+    "slowmoScale": 0.3,
+    "sparkglassBonus": 1
+  },
+  "input": {
+    "bufferMs": 120
+  },
+  "weapons": {
+    "hookblade": {
+      "name": "Hookblade",
+      "comboResetMs": 260,
+      "light": [
+        {
+          "startupMs": 70,
+          "activeMs": 50,
+          "recoveryMs": 200,
+          "reachPx": 26,
+          "arcDeg": 120,
+          "damage": 10,
+          "shellDamage": 10,
+          "knockback": 90,
+          "hitstopMs": 50,
+          "shake": 1,
+          "stepSpeed": 90
+        },
+        {
+          "startupMs": 60,
+          "activeMs": 50,
+          "recoveryMs": 200,
+          "reachPx": 26,
+          "arcDeg": 130,
+          "damage": 10,
+          "shellDamage": 10,
+          "knockback": 90,
+          "hitstopMs": 50,
+          "shake": 1,
+          "stepSpeed": 90
+        },
+        {
+          "startupMs": 110,
+          "activeMs": 70,
+          "recoveryMs": 330,
+          "reachPx": 30,
+          "arcDeg": 160,
+          "damage": 22,
+          "shellDamage": 20,
+          "knockback": 200,
+          "hitstopMs": 75,
+          "shake": 3,
+          "stepSpeed": 140
+        }
+      ],
+      "heavy": {
+        "fullChargeMs": 700,
+        "chargeMoveFactor": 0.45,
+        "startupMs": 90,
+        "activeMs": 80,
+        "recoveryMs": 380,
+        "reachPx": 36,
+        "arcDeg": 220,
+        "damageMin": 18,
+        "damageMax": 40,
+        "shellDamageMin": 25,
+        "shellDamageMax": 60,
+        "knockbackMin": 200,
+        "knockbackMax": 320,
+        "hitstopMinMs": 70,
+        "hitstopMaxMs": 110,
+        "shakeMin": 2,
+        "shakeMax": 6,
+        "stepSpeed": 120
+      },
+      "abilities": [
+        {
+          "id": "lunge",
+          "name": "Lunge",
+          "locked": false
+        },
+        {
+          "id": "sweep",
+          "name": "Spinning sweep",
+          "locked": true
+        },
+        {
+          "id": "tbd",
+          "name": "TBD",
+          "locked": true
+        }
+      ]
+    }
+  },
+  "abilities": {
+    "lunge": {
+      "cooldownMs": 2500,
+      "dashSpeed": 380,
+      "dashMs": 180,
+      "recoveryMs": 200,
+      "hitRadiusPx": 12,
+      "damage": 16,
+      "shellDamage": 18,
+      "knockback": 220,
+      "hitstopMs": 60,
+      "shake": 2
+    }
+  },
+  "husks": {
+    "aggroPerSparkglass": 0.03,
+    "aggroMax": 0.6,
+    "shellBreakCoreFactor": 0.5,
+    "peeling": {
+      "radiusPx": 5,
+      "shell": [8],
+      "core": 16,
+      "speed": 72,
+      "acceleration": 650,
+      "friction": 1200,
+      "weight": 0.6,
+      "attackRangePx": 46,
+      "windupMs": 450,
+      "trackMs": 280,
+      "recoverMs": 500,
+      "cooldownMs": 900,
+      "cooldownJitterMs": 600,
+      "damage": 12,
+      "knockback": 0,
+      "hitstopMs": 60,
+      "shake": 3,
+      "staggerMs": 380,
+      "flinchMs": 220,
+      "armoredKnockbackFactor": 0.4,
+      "sparkglassDrop": 1,
+      "spawnMs": 600,
+      "lungeSpeed": 260,
+      "lungeMs": 170,
+      "hitPadPx": 2
+    },
+    "nutshell": {
+      "radiusPx": 10,
+      "shell": [40, 40],
+      "core": 50,
+      "speed": 34,
+      "acceleration": 300,
+      "friction": 700,
+      "weight": 2.5,
+      "attackRangePx": 34,
+      "windupMs": 900,
+      "trackMs": 360,
+      "recoverMs": 700,
+      "cooldownMs": 1300,
+      "cooldownJitterMs": 600,
+      "damage": 24,
+      "knockback": 0,
+      "hitstopMs": 90,
+      "shake": 6,
+      "staggerMs": 700,
+      "flinchMs": 150,
+      "armoredKnockbackFactor": 0.3,
+      "sparkglassDrop": 3,
+      "spawnMs": 800,
+      "slamRadiusPx": 40,
+      "slamOffsetPx": 12,
+      "slamActiveMs": 70
+    }
+  },
+  "run": {
+    "rooms": [
+      {
+        "waves": [
+          {
+            "peeling": 3,
+            "nutshell": 0
+          },
+          {
+            "peeling": 4,
+            "nutshell": 0
+          }
+        ]
+      },
+      {
+        "waves": [
+          {
+            "peeling": 4,
+            "nutshell": 0
+          },
+          {
+            "peeling": 5,
+            "nutshell": 0
+          }
+        ]
+      },
+      {
+        "waves": [
+          {
+            "peeling": 4,
+            "nutshell": 1
+          },
+          {
+            "peeling": 4,
+            "nutshell": 2
+          }
+        ]
+      }
+    ],
+    "waveDelayMs": 700,
+    "clearDelayMs": 1500,
+    "spawnMinDistancePx": 90,
+    "sparkglassKeptOnDeath": 0.5,
+    "pickupMagnetRadiusPx": 44,
+    "pickupSpeed": 240,
+    "pickupScatter": 90
+  },
+  "juice": {
+    "shakeDurationMs": 120,
+    "shakePerStrength": 0.0016,
+    "hitFlashMs": 70,
+    "chipParticles": 5,
+    "shellBreakParticles": 16,
+    "coreFlareParticles": 24,
+    "particleSpeed": 110,
+    "particleLifeMs": 420,
+    "cameraLerp": 0.16,
+    "aimLeadPx": 18,
+    "telegraphBlinkHz": 12,
+    "hurtFlashMs": 160
+  }
+}

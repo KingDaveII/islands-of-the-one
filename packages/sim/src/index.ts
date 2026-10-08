@@ -1,2 +1,13 @@
+export * from './fixed.js';
+export * from './trig.js';
 export * from './rng.js';
-export * from './sim.js';
+export * from './input.js';
+export * from './tuning.js';
+export * from './state.js';
+export * from './rooms.js';
+export { huskParams } from './combat.js';
+export { huskAggro, slamCenter } from './husks.js';
+export { heavyHit, lightStrike, playerAttackPhase, strikePhase, type StrikePhase } from './player.js';
+export * from './hash.js';
+export * from './run.js';
+export { autopilot, type AutopilotOptions } from './autopilot.js';
