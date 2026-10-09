@@ -22,11 +22,11 @@ export class ResultsScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.setBackgroundColor(Palette.void);
+    this.cameras.main.setBackgroundColor(Palette.hollow);
     const { results: r, seed, weapon } = this.data_;
     const cleared = r.status === 'cleared';
     const cx = VIEW_W / 2;
-    place(label(this, 0, 0, cleared ? 'ISLAND CLEARED' : 'YOU FELL', cleared ? Palette.spark : Palette.healthLoss, 16), cx, 30, 0.5);
+    place(label(this, 0, 0, cleared ? 'SHARD CLEARED' : 'YOU FELL', cleared ? Palette.spark : Palette.healthLoss, 16), cx, 30, 0.5);
     place(label(this, 0, 0, `SEED ${seed} · ${weapon.toUpperCase()}`, Palette.uiInkMuted), cx, 52, 0.5);
 
     const rows: [string, string, number][] = [

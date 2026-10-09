@@ -126,7 +126,7 @@ export class WorldRenderer {
     g.clear();
     const { room } = s;
     const at = (c: number, r: number): string => (c < 0 || r < 0 || c >= room.cols || r >= room.rows ? '#' : tileAt(room, c, r));
-    // Wall tiles connected to the room's border are the outside (the Deep); the rest are free-standing blocks with a solid cap.
+    // Wall tiles connected to the room's border are the outside (the Hollow); the rest are free-standing blocks with a solid cap.
     const outside = new Uint8Array(room.cols * room.rows);
     const queue: number[] = [];
     for (let r = 0; r < room.rows; r++) {
@@ -159,8 +159,8 @@ export class WorldRenderer {
         const x = c * TILE_PX;
         const y = r * TILE_PX;
         if (isWall(t) || t === 'D') {
-          // Outside the floor is the Deep; a wall facing the floor shows its face.
-          g.fillStyle(Palette.void, 1).fillRect(x, y, TILE_PX, TILE_PX);
+          // Outside the floor is the Hollow; a wall facing the floor shows its face.
+          g.fillStyle(Palette.hollow, 1).fillRect(x, y, TILE_PX, TILE_PX);
           const faces = isWall(t) && !isWall(at(c, r + 1)) && at(c, r + 1) !== 'D';
           if (block(c, r) && !faces) {
             // Top of a free-standing block or pillar: a solid cap, not a hole.
@@ -241,7 +241,7 @@ export class WorldRenderer {
           g.fillStyle(Palette.spark, 1).fillRect(x + 3, y + 3, TILE_PX - 6, TILE_PX - 6);
           g.fillStyle(on ? Palette.floorFleck : Palette.sparkDeep, 1).fillRect(x + 6, y + 6, 4, 4);
         } else {
-          g.fillStyle(Palette.void, 1).fillRect(x, y, TILE_PX, TILE_PX);
+          g.fillStyle(Palette.hollow, 1).fillRect(x, y, TILE_PX, TILE_PX);
           g.fillStyle(Palette.wall, 1);
           for (let i = 2; i < TILE_PX; i += 5) g.fillRect(x + i, y + 1, 2, TILE_PX - 2);
         }
@@ -296,7 +296,7 @@ export class WorldRenderer {
     const x = Math.round(p.x);
     const y = Math.round(p.y);
     const tw = Math.sin(timeMs / 120 + p.x) > 0.6;
-    // Outlined Sparkglass shard.
+    // Outlined Sparkglass piece.
     g.fillStyle(Palette.uiPanel, 1).fillRect(x - 1, y - 4, 3, 9).fillRect(x - 2, y - 3, 5, 7).fillRect(x - 3, y - 1, 7, 3);
     g.fillStyle(Palette.spark, 1).fillRect(x, y - 3, 1, 7).fillRect(x - 1, y - 2, 3, 5).fillRect(x - 2, y, 5, 1);
     g.fillStyle(Palette.sparkDeep, 1).fillRect(x, y + 1, 1, 2).fillRect(x + 1, y, 1, 1);
@@ -590,7 +590,7 @@ export class WorldRenderer {
   }
 }
 
-/** Colors for a Kindled silhouette (afterimage, hit flash); default is the clay variant. */
+/** Colors for a Kindled silhouette (afterimage, hit flash); default is the Clay Remembrance. */
 interface KindledInk {
   outline: number;
   solid: number;

@@ -21,7 +21,7 @@ if (params.has('net')) {
   new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'game',
-    backgroundColor: Palette.void,
+    backgroundColor: Palette.hollow,
     scale: { mode: Phaser.Scale.RESIZE, width: window.innerWidth, height: window.innerHeight },
     scene: [TestScene],
   });
@@ -34,7 +34,7 @@ function startGame(): void {
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'game',
-    backgroundColor: Palette.void,
+    backgroundColor: Palette.hollow,
     pixelArt: true,
     roundPixels: true,
     input: { gamepad: false },

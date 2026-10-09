@@ -37,7 +37,7 @@ const T = Tokens;
 /** Role names used by the renderer and UI. */
 export const Palette = {
   // World
-  void: T.hollowDeep,
+  hollow: T.hollowDeep, // the Hollow around a room
   floor: T.hollowLavender,
   floorFleck: T.hollowLight,
   floorEdge: T.hollowDusk,
@@ -45,7 +45,7 @@ export const Palette = {
   wallLine: T.hollowDeep,
   wallTop: T.hollowDeep,
   ground: T.hollowDeep,
-  // Kindled (player, clay variant): the darkest outline in the room.
+  // Kindled (player, Clay Remembrance): the darkest outline in the room.
   playerOutline: T.dreamNight,
   playerShirt: T.sleeperOchre,
   playerSkin: T.sleeperFlesh,

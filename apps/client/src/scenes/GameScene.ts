@@ -57,7 +57,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.setBackgroundColor(Palette.void);
+    this.cameras.main.setBackgroundColor(Palette.hollow);
     this.worldLayer = this.add.layer();
     this.hudLayer = this.add.layer();
     const juice = () => tuningStore.get().juice;
@@ -66,7 +66,7 @@ export class GameScene extends Phaser.Scene {
     this.world = new WorldRenderer(this, this.worldLayer, juice);
     this.fx = new Fx(this, this.worldLayer, juice);
     // Slow-mo tint over the world, under the HUD.
-    this.tint = this.add.rectangle(0, 0, VIEW_W, VIEW_H, Palette.void, 0).setOrigin(0, 0);
+    this.tint = this.add.rectangle(0, 0, VIEW_W, VIEW_H, Palette.hollow, 0).setOrigin(0, 0);
     this.hudLayer.add(this.tint);
     const tuning: Tuning = tuningStore.get();
     const weaponName = tuning.weapons[this.weapon]?.name ?? this.weapon;
@@ -159,7 +159,7 @@ export class GameScene extends Phaser.Scene {
           if (e.index < P.run.rooms.length - 1) this.showBanner('CLEARED', 'THE DOOR IS OPEN');
           break;
         case 'runEnd':
-          this.showBanner(e.status === 'cleared' ? 'ISLAND CLEARED' : 'YOU FELL', '', END_DELAY_MS);
+          this.showBanner(e.status === 'cleared' ? 'SHARD CLEARED' : 'YOU FELL', '', END_DELAY_MS);
           this.endAt = this.time.now + END_DELAY_MS;
           break;
         default:
@@ -195,7 +195,7 @@ export class GameScene extends Phaser.Scene {
     this.followCamera(this.lastRoom !== s.roomIndex);
     this.lastRoom = s.roomIndex;
     const scale = this.session.timeScale();
-    this.tint.setFillStyle(Palette.void, scale < 1 ? 0.28 : 0);
+    this.tint.setFillStyle(Palette.hollow, scale < 1 ? 0.28 : 0);
     this.world.draw(this.session, this.fx, this.time.now, delta * scale, this.controls.crosshair());
     this.fx.update(delta * scale, delta);
     this.hud.draw(this.session.run, delta);
