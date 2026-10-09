@@ -36,7 +36,7 @@ export class StartScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.setBackgroundColor(Palette.void);
+    this.cameras.main.setBackgroundColor(Palette.hollow);
     this.seedText = String(randomSeed());
     this.pad = { pad: true };
     const t: Tuning = tuningStore.get();

@@ -141,7 +141,7 @@ export class Fx {
     });
   }
 
-  /** Chipped-pixel shards off a Husk shell. */
+  /** Chipped-pixel flakes off a Husk shell. */
   chips(x: number, y: number, dir: number, count: number): void {
     const j = this.juice();
     this.burst(x, y, count, Palette.shell, j.particleSpeed, { dir, spread: Math.PI * 0.9 });

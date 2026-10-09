@@ -144,7 +144,7 @@ export function abilitySlot(g: G, x: number, y: number, s: SlotState): void {
   const inner = size - 4;
   const ix = x + 2;
   const iy = y + 2;
-  g.fillStyle(s.locked ? Palette.void : Palette.uiPanel, 1).fillRect(ix, iy, inner, inner);
+  g.fillStyle(s.locked ? Palette.hollow : Palette.uiPanel, 1).fillRect(ix, iy, inner, inner);
   if (s.locked) {
     icon(g, 'lock', ix, iy, inner, Palette.uiInkMuted);
     return;
@@ -168,7 +168,7 @@ export function healthBar(g: G, x: number, y: number, hp: number, max: number, l
   const tx = x + 1;
   const ty = y + 1;
   g.fillStyle(Palette.uiPanel, 1).fillRect(tx, ty, width, trackH);
-  g.fillStyle(Palette.void, 1).fillRect(tx, ty, width, 1);
+  g.fillStyle(Palette.hollow, 1).fillRect(tx, ty, width, 1);
   const w = Math.round((width * Math.max(0, hp)) / max);
   const lw = Math.round((width * Math.max(0, lag)) / max);
   if (lw > w) g.fillStyle(Palette.healthLoss, 1).fillRect(tx + w, ty, lw - w, trackH);

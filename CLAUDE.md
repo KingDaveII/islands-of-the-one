@@ -11,7 +11,7 @@ Browser multiplayer game (idle / co-op / action MMORPG). pnpm monorepo, TypeScri
 | `packages/shared`      | Wire protocol (types/guards) and game data. No runtime deps.                   |
 | `packages/shared/data` | `tuning.json` (every balance/feel number), `rooms.json` (room templates).      |
 | `packages/sim`         | Deterministic combat sim: 60 Hz integer ticks, seeded RNG, replayable runs.    |
-| `docs/design`          | Design rules: `combat.md` (combat), `readability.md` (how it's drawn).         |
+| `docs/design`          | Design rules: `combat.md`, `readability.md` (how it's drawn), `glossary.md`.   |
 
 Workspace packages are consumed from source via the custom `source` export condition
 (tsconfig `customConditions`, Vite `resolve.conditions`, `tsx --conditions=source`), so
@@ -24,6 +24,15 @@ dev/test/typecheck never need a prior build. Production builds compile each pack
 - `pnpm dev` — server on :2567, client on :5173.
 - `pnpm --filter @iot/server db:generate` — generate a migration after editing `src/db/schema.ts`.
 - `pnpm --filter @iot/server db:migrate` — apply migrations to `DATABASE_URL` (or PGlite).
+
+## Design references
+
+- The Game Design Book (https://claude.ai/code/artifact/f0ab4f79-2543-4f82-aac4-6df69cc8f8bf) is the
+  design source of truth, maintained outside the repo. Don't implement from it directly; implement
+  from the task prompt and `docs/design/`.
+- If a task prompt conflicts with `docs/design/`, flag it in the PR description instead of guessing.
+- Names in code, data and player-facing text use the terms in `docs/design/glossary.md`, including
+  its banned names (checked by `packages/shared/test/names.test.ts`).
 
 ## Rules
 

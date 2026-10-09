@@ -189,8 +189,9 @@ picker, and:
 
 ## 8. Enemies: the Husks
 
-Hollow translucent shells with one bright core. They are drawn to the Sparkglass the player carries:
-pursuit speed and attack cadence scale by `aggroPerSparkglass` per shard, capped at `aggroMax`.
+Translucent hollow shells with one bright core. They are drawn to the Sparkglass the player carries:
+pursuit speed and attack cadence scale by `aggroPerSparkglass` per Sparkglass carried, capped at
+`aggroMax`.
 
 - **Peeling** (light class): a small, fast swarmer with a weak single-layer shell that comes in
   groups.
