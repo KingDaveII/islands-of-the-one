@@ -1,10 +1,22 @@
 import { defaultTuning, type TuningData } from '@iot/shared';
+import { ABILITY_KINDS, WEIGHT_CLASSES } from '@iot/sim';
 import { tuningStore } from '../game/tuningStore.js';
 
 type Path = (string | number)[];
+type Leaf = string | number | boolean;
 
-/** Slider range for a value: 0..3x (or 0..1 for zero), step by magnitude. */
-export function sliderSpec(v: number): { min: number; max: number; step: number } {
+/** String fields edited with a select; other strings (names, text) are not tunable. */
+const ENUMS: Record<string, readonly string[]> = {
+  weightClass: WEIGHT_CLASSES,
+  kind: ABILITY_KINDS,
+};
+
+/** Slider range for a value: 0..3x (or 0..1 for zero), step by magnitude. `key` refines ranges by unit. */
+export function sliderSpec(v: number, key = ''): { min: number; max: number; step: number } {
+  // Fractions that live in 0..1 (weight-class multipliers).
+  if (/^(light|medium|heavy)$/.test(key)) return { min: 0, max: 1, step: 0.05 };
+  // Millisecond fields that default to 0 (e.g. armor windows, dodge startup) still need a usable range.
+  if (v === 0 && key.endsWith('Ms')) return { min: 0, max: 1000, step: 10 };
   if (Number.isInteger(v)) {
     const max = v === 0 ? 10 : Math.max(Math.abs(v) * 3, Math.abs(v) + 5);
     return { min: Math.min(0, v * 3), max, step: 1 };
@@ -14,22 +26,25 @@ export function sliderSpec(v: number): { min: number; max: number; step: number 
   return { min: 0, max: Number((Math.abs(v) * 3).toPrecision(6)), step };
 }
 
-function setAt(obj: unknown, path: Path, value: number): void {
+function setAt(obj: unknown, path: Path, value: Leaf): void {
   let cur = obj as Record<string | number, unknown>;
   for (let i = 0; i < path.length - 1; i++) cur = cur[path[i] as string | number] as Record<string | number, unknown>;
   cur[path[path.length - 1] as string | number] = value;
 }
 
-function leaves(value: unknown, path: Path = []): { path: Path; value: number }[] {
-  if (typeof value === 'number') return [{ path, value }];
+function leaves(value: unknown, path: Path = []): { path: Path; value: Leaf }[] {
+  if (typeof value === 'number' || typeof value === 'boolean') return [{ path, value }];
+  if (typeof value === 'string') return String(path[path.length - 1]) in ENUMS ? [{ path, value }] : [];
   if (Array.isArray(value)) return value.flatMap((v, i) => leaves(v, [...path, i]));
   if (value && typeof value === 'object') return Object.entries(value).flatMap(([k, v]) => leaves(v, [...path, k]));
   return [];
 }
 
 /**
- * F2 tuning panel: a slider for every numeric value in tuning.json, applied
- * live. "Export JSON" copies the current values in the data file's shape.
+ * F2 tuning panel: a slider for every numeric value in tuning.json (timings,
+ * cooldowns, weight-class multipliers...), a select for enums (weight class,
+ * ability kind), and read-only flags (locked), applied live. "Export JSON"
+ * copies the current values in the data file's shape.
  */
 export class TuningPanel {
   private readonly root: HTMLDivElement;
@@ -109,33 +124,54 @@ export class TuningPanel {
         groups.set(group, body);
       }
       const original = leaves(defaultTuning).find((l) => l.path.join('.') === path.join('.'))?.value ?? value;
-      const spec = sliderSpec(original);
+      const key = String(path[path.length - 1]);
       const row = document.createElement('label');
       row.className = 'row';
       const name = document.createElement('span');
       name.textContent = path.slice(1).join('.');
-      const input = document.createElement('input');
-      input.type = 'range';
-      input.min = String(spec.min);
-      input.max = String(Math.max(spec.max, value));
-      input.step = String(spec.step);
-      input.value = String(value);
-      input.dataset.path = JSON.stringify(path);
       const num = document.createElement('output');
       num.textContent = String(value);
-      input.addEventListener('input', () => {
-        const v = Number(input.value);
-        num.textContent = String(v);
-        num.classList.toggle('changed', v !== original);
-        this.apply(path, v);
-      });
+      let input: HTMLInputElement | HTMLSelectElement;
+      if (typeof value === 'boolean') {
+        // Flags such as `locked` are game data, not feel: shown, not editable.
+        row.classList.add('readonly');
+        input = document.createElement('input');
+        input.type = 'checkbox';
+        input.checked = value;
+        input.disabled = true;
+      } else if (typeof value === 'string') {
+        const select = document.createElement('select');
+        for (const option of ENUMS[key] ?? []) select.add(new Option(option, option, false, option === value));
+        select.addEventListener('change', () => {
+          num.textContent = select.value;
+          num.classList.toggle('changed', select.value !== original);
+          this.apply(path, select.value);
+        });
+        input = select;
+      } else {
+        const spec = sliderSpec(typeof original === 'number' ? original : value, key);
+        const range = document.createElement('input');
+        range.type = 'range';
+        range.min = String(spec.min);
+        range.max = String(Math.max(spec.max, value));
+        range.step = String(spec.step);
+        range.value = String(value);
+        range.addEventListener('input', () => {
+          const v = Number(range.value);
+          num.textContent = String(v);
+          num.classList.toggle('changed', v !== original);
+          this.apply(path, v);
+        });
+        input = range;
+      }
+      input.dataset.path = JSON.stringify(path);
       row.append(name, input, num);
       body.append(row);
     }
   }
 
   /** Coalesce slider drags into one tuning change per animation frame. */
-  private apply(path: Path, value: number): void {
+  private apply(path: Path, value: Leaf): void {
     const next = this.pending ?? structuredClone(tuningStore.get());
     setAt(next, path, value);
     if (!this.pending) {
@@ -151,7 +187,7 @@ export class TuningPanel {
   private syncValues(): void {
     const t = tuningStore.get();
     const byPath = new Map(leaves(t).map((l) => [JSON.stringify(l.path), l.value]));
-    for (const input of this.root.querySelectorAll<HTMLInputElement>('input[type=range]')) {
+    for (const input of this.root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input[type=range], select')) {
       const v = byPath.get(input.dataset.path ?? '');
       if (v === undefined) continue;
       input.value = String(v);

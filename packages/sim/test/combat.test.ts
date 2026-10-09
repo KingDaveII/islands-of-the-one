@@ -124,7 +124,7 @@ describe('dodge', () => {
     const events = step(run, Button.Dodge);
     expect(p.action).toBe('dodge');
     expect(events.some((e) => e.type === 'dodge')).toBe(true);
-    expect(p.iframes).toBe(run.params.dodge.iframes);
+    expect(p.iframes).toBe(run.params.dodge.active);
   });
 
   it('cannot cancel startup or active frames (it is buffered until recovery)', () => {
@@ -146,7 +146,8 @@ describe('dodge', () => {
       if (p.iframes > 0) iframeTicks++;
       step(run);
     }
-    expect(iframeTicks).toBe(Math.min(run.params.dodge.iframes, run.params.dodge.duration));
+    const d = run.params.dodge;
+    expect(iframeTicks).toBe(Math.min(d.active, d.startup + d.active + d.recovery));
     expect(p.dodgeCooldown).toBeGreaterThan(0);
     step(run, Button.Dodge);
     expect(p.action).not.toBe('dodge');
@@ -204,7 +205,7 @@ describe('perfect dodge timing', () => {
     });
     const p = run.state.player;
     const P = run.params;
-    addHusk(run, 'peeling', 40, { action: 'windup', t: P.husks.peeling.windup - 3, attackDir: 2048 });
+    addHusk(run, 'peeling', 40, { action: 'windup', t: P.husks.peeling.startup - 3, attackDir: 2048 });
     const events: SimEvent[] = [];
     for (let i = 1; i <= 40; i++) {
       const press = hitTick !== undefined && dodgeTicksBeforeHit !== null && i === hitTick - dodgeTicksBeforeHit;
@@ -236,7 +237,7 @@ describe('perfect dodge timing', () => {
   it('dodging earlier still avoids damage with i-frames, but is not perfect', () => {
     const base = setup(null);
     const { window, } = base.P.perfect;
-    const iframes = base.P.dodge.iframes;
+    const iframes = base.P.dodge.active;
     expect(iframes).toBeGreaterThan(window + 1);
     const r = setup(window + 1, base.tick);
     expect(r.events.some((e) => e.type === 'perfectDodge')).toBe(false);
@@ -246,7 +247,7 @@ describe('perfect dodge timing', () => {
 
   it('dodging so early that i-frames ran out gets hit', () => {
     const base = setup(null);
-    const r = setup(base.P.dodge.iframes + 1, base.tick);
+    const r = setup(base.P.dodge.active + 1, base.tick);
     expect(r.events.some((e) => e.type === 'playerHurt')).toBe(true);
     expect(r.events.some((e) => e.type === 'perfectDodge')).toBe(false);
   });
@@ -267,11 +268,11 @@ describe('perfect dodge near-miss margin', () => {
     const offset = Math.round((Math.asin(missBy / 40) / (2 * Math.PI)) * 4096);
     const lockedDir = 2048 + offset;
     const base = arena();
-    addHusk(base, 'peeling', 40, { action: 'windup', t: base.params.husks.peeling.windup - 1, attackDir: lockedDir });
+    addHusk(base, 'peeling', 40, { action: 'windup', t: base.params.husks.peeling.startup - 1, attackDir: lockedDir });
     const whiff = steps(base, 30);
     expect(whiff.some((e) => e.type === 'playerHurt')).toBe(false);
 
-    addHusk(run, 'peeling', 40, { action: 'windup', t: P.husks.peeling.windup - 1, attackDir: lockedDir });
+    addHusk(run, 'peeling', 40, { action: 'windup', t: P.husks.peeling.startup - 1, attackDir: lockedDir });
     const events = steps(run, 3, Button.Dodge);
     events.push(...steps(run, 30));
     expect(events.some((e) => e.type === 'perfectDodge')).toBe(true);
@@ -308,16 +309,20 @@ describe('heavy and abilities', () => {
     const x0 = p.x;
     const h = addHusk(run, 'peeling', 40, { shell: [0], core: 100 });
     const events = step(run, Button.Ability1, 0);
-    expect(p.action).toBe('lunge');
-    expect(p.cooldowns[0]).toBe(run.params.lunge.cooldown);
+    expect([p.action, p.abilitySlot]).toEqual(['ability', 0]);
+    expect(p.cooldowns[0]).toBe(run.params.weapon.abilities[0]?.cooldown);
     events.push(...stepUntil(run, () => p.action === 'idle'));
     expect(p.x).toBeGreaterThan(x0);
     expect(h.core).toBeLessThan(100);
     expect(events.filter((e) => e.type === 'hit')).toHaveLength(1);
     step(run, Button.Ability1);
-    expect(p.action).not.toBe('lunge');
+    expect(p.action).not.toBe('ability');
 
-    expect(run.params.weapon.slots).toEqual(['lunge', null, null]);
+    expect(run.params.weapon.abilities.map((a) => [a.id, a.locked])).toEqual([
+      ['lunge', false],
+      ['sweep', true],
+      ['tbd', true],
+    ]);
     step(run, Button.Ability2);
     step(run, Button.Ability3);
     expect(p.action).toBe('idle');

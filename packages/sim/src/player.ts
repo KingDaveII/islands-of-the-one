@@ -2,24 +2,10 @@ import { accelerate, brake, moveBody } from './body.js';
 import { strikeArc, strikeCircle, type Ctx, type Hit } from './combat.js';
 import { idiv } from './fixed.js';
 import { Button, MOVE_MAG_MAX, moveDirToAngle, type TickInput } from './input.js';
+import { abilityAt, lightStrike, playerAttackPhase, strikePhase, type StrikePhase } from './moves.js';
 import type { Params, Strike } from './tuning.js';
 import type { BufferedAction, PlayerState } from './state.js';
 import { dirX, dirY } from './trig.js';
-
-export type StrikePhase = 'startup' | 'active' | 'recovery' | 'done';
-
-/** Phase of an attack `t` ticks after it started (t = 1 on the first tick after starting). */
-export function strikePhase(t: number, startup: number, active: number, recovery: number): StrikePhase {
-  if (t <= startup) return 'startup';
-  if (t <= startup + active) return 'active';
-  if (t <= startup + active + recovery) return 'recovery';
-  return 'done';
-}
-
-export function lightStrike(P: Params, step: number): Strike {
-  const strikes = P.weapon.light;
-  return strikes[Math.min(step, strikes.length - 1)] as Strike;
-}
 
 /** Linear interpolation by charge fraction (charge / fullCharge), integer result. */
 function byCharge(range: [number, number], charge: number, full: number): number {
@@ -37,31 +23,31 @@ export function heavyHit(P: Params, charge: number): Hit {
   };
 }
 
-/** Current phase of the player's attack, or null when not attacking. */
-export function playerAttackPhase(p: PlayerState, P: Params): StrikePhase | null {
+export type Intent = 'attack' | 'ability' | 'dodge';
+
+/**
+ * Cancel rules: what may start now, given the current move.
+ *
+ * - idle: anything.
+ * - light / heavy recovery: the next light, a heavy, an ability or a dodge.
+ * - ability recovery: only a dodge.
+ * - charging a heavy: only a dodge.
+ * - startup / active of any move, dodge, hurt: nothing (presses stay buffered).
+ */
+export function canStart(p: PlayerState, P: Params, intent: Intent): boolean {
   switch (p.action) {
-    case 'light': {
-      const s = lightStrike(P, p.comboStep);
-      return strikePhase(p.t, s.startup, s.active, s.recovery);
-    }
-    case 'heavy': {
-      const h = P.weapon.heavy;
-      return strikePhase(p.t, h.startup, h.active, h.recovery);
-    }
-    case 'lunge':
-      return strikePhase(p.t, 0, P.lunge.dash, P.lunge.recovery);
+    case 'idle':
+      return true;
+    case 'charge':
+      return intent === 'dodge';
+    case 'light':
+    case 'heavy':
+      return playerAttackPhase(p, P) === 'recovery';
+    case 'ability':
+      return intent === 'dodge' && playerAttackPhase(p, P) === 'recovery';
     default:
-      return null;
+      return false;
   }
-}
-
-/** Recovery is the cancel window: dodge, the next combo hit, heavy and abilities may start. */
-function canCancel(p: PlayerState, P: Params): boolean {
-  return playerAttackPhase(p, P) === 'recovery';
-}
-
-function isFree(p: PlayerState, P: Params): boolean {
-  return p.action === 'idle' || canCancel(p, P);
 }
 
 function resetCombo(p: PlayerState): void {
@@ -81,6 +67,7 @@ function startLight(ctx: Ctx): void {
   p.comboTimer = 0;
   p.dir = p.aim;
   p.hitIds = [];
+  p.swingHitstop = 0;
   ctx.events.push({ type: 'swing', attack: 'light', step, x: p.x, y: p.y, dir: p.dir });
 }
 
@@ -98,6 +85,7 @@ function startHeavy(ctx: Ctx): void {
   p.t = 0;
   p.dir = p.aim;
   p.hitIds = [];
+  p.swingHitstop = 0;
   ctx.events.push({ type: 'swing', attack: 'heavy', step: p.charge, x: p.x, y: p.y, dir: p.dir });
 }
 
@@ -107,24 +95,31 @@ function startDodge(ctx: Ctx): void {
   p.action = 'dodge';
   p.t = 0;
   p.dir = p.moveMag > 0 ? p.moveAngle : p.aim;
-  p.iframes = P.dodge.iframes;
-  p.dodgeAge = 0;
-  p.perfectUsed = false;
   p.charge = 0;
   resetCombo(p);
+  if (P.dodge.startup === 0) beginIframes(p, P);
   ctx.events.push({ type: 'dodge', x: p.x, y: p.y, dir: p.dir });
 }
 
-function startLunge(ctx: Ctx, slot: number): void {
-  const { s, P } = ctx;
-  const p = s.player;
-  p.action = 'lunge';
+/** The dodge's active phase: i-frames, and the perfect-dodge window opens. */
+function beginIframes(p: PlayerState, P: Params): void {
+  p.iframes = P.dodge.active;
+  p.dodgeAge = 0;
+  p.perfectUsed = false;
+}
+
+function startAbility(ctx: Ctx, slot: number, cooldown: number): void {
+  const p = ctx.s.player;
+  p.action = 'ability';
+  p.abilitySlot = slot;
   p.t = 0;
   p.dir = p.aim;
   p.hitIds = [];
-  p.cooldowns[slot] = P.lunge.cooldown;
+  p.swingHitstop = 0;
+  p.charge = 0;
+  p.cooldowns[slot] = cooldown;
   resetCombo(p);
-  ctx.events.push({ type: 'swing', attack: 'lunge', step: 0, x: p.x, y: p.y, dir: p.dir });
+  ctx.events.push({ type: 'swing', attack: 'ability', step: slot, x: p.x, y: p.y, dir: p.dir });
 }
 
 const ABILITY_SLOT: Partial<Record<BufferedAction, number>> = { ability1: 0, ability2: 1, ability3: 2 };
@@ -133,29 +128,28 @@ const ABILITY_SLOT: Partial<Record<BufferedAction, number>> = { ability1: 0, abi
 function tryAction(ctx: Ctx, action: BufferedAction): boolean {
   const { s, P } = ctx;
   const p = s.player;
-  const free = isFree(p, P);
   switch (action) {
     case 'none':
       return true;
     case 'dodge':
-      if (!(free || p.action === 'charge') || p.dodgeCooldown > 0) return false;
+      if (!canStart(p, P, 'dodge') || p.dodgeCooldown > 0) return false;
       startDodge(ctx);
       return true;
     case 'light':
-      if (!free) return false;
+      if (!canStart(p, P, 'attack')) return false;
       startLight(ctx);
       return true;
     case 'heavy':
-      if (!free) return false;
+      if (!canStart(p, P, 'attack')) return false;
       startCharge(p);
       return true;
     default: {
       const slot = ABILITY_SLOT[action] ?? 0;
-      const id = P.weapon.slots[slot];
+      const a = abilityAt(P, slot);
       // Locked slots swallow the press.
-      if (id !== 'lunge') return true;
-      if (!free || (p.cooldowns[slot] ?? 0) > 0) return false;
-      startLunge(ctx, slot);
+      if (!a || a.locked) return true;
+      if (!canStart(p, P, 'ability') || (p.cooldowns[slot] ?? 0) > 0) return false;
+      startAbility(ctx, slot, a.cooldown);
       return true;
     }
   }
@@ -222,7 +216,17 @@ function advanceAction(ctx: Ctx): void {
     case 'heavy': {
       const h = P.weapon.heavy;
       const hit = heavyHit(P, p.charge);
-      const st: Strike = { ...hit, startup: h.startup, active: h.active, recovery: h.recovery, reach: h.reach, halfArc: h.halfArc, step: h.step };
+      const st: Strike = {
+        ...hit,
+        startup: h.startup,
+        active: h.active,
+        recovery: h.recovery,
+        armorStart: h.armorStart,
+        armorEnd: h.armorEnd,
+        reach: h.reach,
+        halfArc: h.halfArc,
+        step: h.step,
+      };
       if (advanceStrike(ctx, st) === 'done') {
         p.action = 'idle';
         p.t = 0;
@@ -230,35 +234,43 @@ function advanceAction(ctx: Ctx): void {
       }
       break;
     }
-    case 'lunge': {
-      const L = P.lunge;
+    case 'ability': {
+      const a = abilityAt(P, p.abilitySlot);
       p.t++;
-      if (p.t <= L.dash) {
-        p.vx = dirX(p.dir, L.speed);
-        p.vy = dirY(p.dir, L.speed);
-        strikeCircle(ctx, p.x, p.y, L.radius, L, p.hitIds);
+      const ph = a ? strikePhase(p.t, a.startup, a.active, a.recovery) : 'done';
+      if (a && ph === 'active') {
+        p.vx = dirX(p.dir, a.speed);
+        p.vy = dirY(p.dir, a.speed);
+        strikeCircle(ctx, p.x, p.y, a.radius, a, p.hitIds);
       } else {
         brake(p, P.player.friction);
-        if (p.t > L.dash + L.recovery) {
-          p.action = 'idle';
-          p.t = 0;
-        }
+      }
+      if (ph === 'done') {
+        p.action = 'idle';
+        p.t = 0;
       }
       break;
     }
-    case 'dodge':
+    case 'dodge': {
+      const d = P.dodge;
       p.t++;
-      p.vx = dirX(p.dir, P.dodge.speed);
-      p.vy = dirY(p.dir, P.dodge.speed);
-      if (p.t >= P.dodge.duration) {
-        const exit = idiv(P.dodge.speed * P.dodge.exitSpeed, 1000);
+      if (p.t <= d.startup) {
+        brake(p, P.player.friction);
+        if (p.t === d.startup) beginIframes(p, P);
+      } else {
+        p.vx = dirX(p.dir, d.speed);
+        p.vy = dirY(p.dir, d.speed);
+      }
+      if (p.t >= d.startup + d.active + d.recovery) {
+        const exit = idiv(d.speed * d.exitSpeed, 1000);
         p.vx = dirX(p.dir, exit);
         p.vy = dirY(p.dir, exit);
         p.action = 'idle';
         p.t = 0;
-        p.dodgeCooldown = P.dodge.cooldown;
+        p.dodgeCooldown = d.cooldown;
       }
       break;
+    }
     case 'hurt':
       p.t++;
       brake(p, P.player.friction);

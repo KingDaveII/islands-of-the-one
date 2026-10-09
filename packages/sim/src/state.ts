@@ -4,7 +4,7 @@
  * and iteration order is always the array order.
  */
 
-export type PlayerAction = 'idle' | 'light' | 'charge' | 'heavy' | 'lunge' | 'dodge' | 'hurt' | 'dead';
+export type PlayerAction = 'idle' | 'light' | 'charge' | 'heavy' | 'ability' | 'dodge' | 'hurt' | 'dead';
 export type BufferedAction = 'none' | 'light' | 'heavy' | 'dodge' | 'ability1' | 'ability2' | 'ability3';
 
 export interface PlayerState {
@@ -31,8 +31,15 @@ export interface PlayerState {
   comboTimer: number;
   /** Charge ticks (while charging, and the charge used by the heavy). */
   charge: number;
+  /** Ability slot executing while action is 'ability'. */
+  abilitySlot: number;
   /** Husk ids already hit by the current attack. */
   hitIds: number[];
+  /**
+   * Strongest hitstop the current swing has played so far. A swing that hits
+   * several husks freezes once, at its strongest hit's level, never summed.
+   */
+  swingHitstop: number;
   dodgeCooldown: number;
   iframes: number;
   /** Ticks since the last dodge started (capped). */
@@ -68,6 +75,10 @@ export interface HuskState {
   hitstop: number;
   /** +1 / -1: which way it circles while waiting to attack. */
   strafe: number;
+  /** Knockback/pull displacement still to apply (units), spread over pushT ticks. */
+  pushX: number;
+  pushY: number;
+  pushT: number;
 }
 
 export interface PickupState {
@@ -125,7 +136,8 @@ export interface RunState {
 
 /** Things that happened this tick, for presentation (sound, particles, shake). Not hashed. */
 export type SimEvent =
-  | { type: 'swing'; attack: 'light' | 'heavy' | 'lunge'; step: number; x: number; y: number; dir: number }
+  /** `step`: combo step (light), charge ticks (heavy) or slot index (ability). */
+  | { type: 'swing'; attack: 'light' | 'heavy' | 'ability'; step: number; x: number; y: number; dir: number }
   | {
       type: 'hit';
       id: number;
@@ -140,7 +152,8 @@ export type SimEvent =
       broke: number;
       killed: boolean;
     }
-  | { type: 'playerHurt'; x: number; y: number; damage: number; shake: number; dir: number }
+  /** `armored`: the hit landed during armor frames (damage taken, no interrupt). */
+  | { type: 'playerHurt'; x: number; y: number; damage: number; shake: number; dir: number; armored: boolean }
   | { type: 'dodge'; x: number; y: number; dir: number }
   | { type: 'perfectDodge'; x: number; y: number; bonus: number }
   | { type: 'telegraph'; id: number; kind: HuskKind }

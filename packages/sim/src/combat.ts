@@ -1,4 +1,5 @@
 import { angleDiff, idiv } from './fixed.js';
+import { isArmored } from './moves.js';
 import { randInt } from './rng.js';
 import { atan2, dirX, dirY } from './trig.js';
 import type { HuskParams, Params } from './tuning.js';
@@ -14,6 +15,7 @@ export interface Ctx {
 export interface Hit {
   damage: number;
   shellDamage: number;
+  /** Knockback distance (units) for a light-class husk. */
   knockback: number;
   hitstop: number;
   shake: number;
@@ -26,6 +28,51 @@ export function huskParams(P: Params, kind: HuskKind): HuskParams {
 /** Husks that can be hit (alive and done materializing). */
 export function isHittable(h: HuskState): boolean {
   return h.core > 0 && h.action !== 'spawn';
+}
+
+/**
+ * Pull or knock a husk `dist` units along `dir` (a pull is a knockback aimed at
+ * the attacker). The weight class scales the distance: light husks move all of
+ * it, medium half, heavy not at all. The move is spread over a short slide.
+ */
+export function displace(ctx: Ctx, h: HuskState, dir: number, dist: number): void {
+  const moved = idiv(dist * huskParams(ctx.P, h.kind).kbScale, 1000);
+  if (moved === 0) return;
+  h.pushX += dirX(dir, moved);
+  h.pushY += dirY(dir, moved);
+  h.pushT = ctx.P.husks.knockbackTicks;
+}
+
+/** Apply one tick of a pending knockback/pull slide. */
+export function stepPush(h: HuskState): void {
+  if (h.pushT <= 0) return;
+  const sx = idiv(h.pushX, h.pushT);
+  const sy = idiv(h.pushY, h.pushT);
+  h.x += sx;
+  h.y += sy;
+  h.pushX -= sx;
+  h.pushY -= sy;
+  h.pushT--;
+}
+
+/**
+ * Hitstop for a player hit. One swing freezes the player once, at the level of
+ * its strongest hit so far: a weaker or equal hit adds nothing, a stronger one
+ * only tops the freeze up to its level. Struck husks freeze at that level too.
+ */
+function swingHitstop(ctx: Ctx, h: HuskState, level: number): void {
+  const p = ctx.s.player;
+  if (level > p.swingHitstop) {
+    p.hitstop += level - p.swingHitstop;
+    p.swingHitstop = level;
+  }
+  h.hitstop = Math.max(h.hitstop, p.swingHitstop);
+}
+
+/** Husks struck in the same tick share the swing's (strongest) hitstop. */
+function syncHitstop(ctx: Ctx, struck: HuskState[]): void {
+  const level = ctx.s.player.swingHitstop;
+  for (const h of struck) h.hitstop = Math.max(h.hitstop, level);
 }
 
 /**
@@ -58,10 +105,8 @@ export function hitHusk(ctx: Ctx, h: HuskState, hit: Hit, fromX: number, fromY: 
   h.core -= coreDamage;
   const killed = h.core <= 0;
 
-  let kb = idiv(hit.knockback * 1000, hp.weight);
-  if (absorbed) kb = idiv(kb * hp.armoredKb, 1000);
-  h.vx += dirX(dir, kb);
-  h.vy += dirY(dir, kb);
+  const kb = absorbed ? idiv(hit.knockback * hp.armoredKb, 1000) : hit.knockback;
+  displace(ctx, h, dir, kb);
 
   if (!killed) {
     if (broke >= 0) {
@@ -73,8 +118,7 @@ export function hitHusk(ctx: Ctx, h: HuskState, hit: Hit, fromX: number, fromY: 
     }
   }
 
-  h.hitstop = Math.max(h.hitstop, hit.hitstop);
-  s.player.hitstop = Math.max(s.player.hitstop, hit.hitstop);
+  swingHitstop(ctx, h, hit.hitstop);
   s.stats.hitsLanded++;
   ctx.events.push({
     type: 'hit',
@@ -116,6 +160,7 @@ export function strikeArc(
   hitIds: number[],
 ): void {
   const { s, P } = ctx;
+  const struck: HuskState[] = [];
   for (const h of s.husks) {
     if (!isHittable(h) || hitIds.includes(h.id)) continue;
     const r = huskParams(P, h.kind).radius;
@@ -127,8 +172,10 @@ export function strikeArc(
     const touch = P.player.radius + r;
     if (d2 > touch * touch && Math.abs(angleDiff(atan2(dy, dx), dir)) > halfArc) continue;
     hitIds.push(h.id);
+    struck.push(h);
     hitHusk(ctx, h, hit, x, y);
   }
+  syncHitstop(ctx, struck);
 }
 
 /** Circle hit test (dash strikes). */
@@ -141,6 +188,7 @@ export function strikeCircle(
   hitIds: number[],
 ): void {
   const { s, P } = ctx;
+  const struck: HuskState[] = [];
   for (const h of s.husks) {
     if (!isHittable(h) || hitIds.includes(h.id)) continue;
     const maxR = radius + huskParams(P, h.kind).radius;
@@ -148,8 +196,10 @@ export function strikeCircle(
     const dy = h.y - y;
     if (dx * dx + dy * dy > maxR * maxR) continue;
     hitIds.push(h.id);
+    struck.push(h);
     hitHusk(ctx, h, hit, x, y);
   }
+  syncHitstop(ctx, struck);
 }
 
 /**
@@ -178,15 +228,18 @@ export function huskAttackPlayer(ctx: Ctx, h: HuskState, dist: number, reach: nu
 
   const hp = huskParams(P, h.kind);
   const dir = atan2(p.y - h.y, p.x - h.x);
+  // Armor frames: the damage lands, but the move is not interrupted.
+  const armored = isArmored(p, P);
   p.hp -= hp.damage;
   s.stats.damageTaken += hp.damage;
   p.hurtInvuln = P.player.hurtInvuln;
-  p.vx = dirX(dir, P.player.hurtKnockback);
-  p.vy = dirY(dir, P.player.hurtKnockback);
+  if (!armored) {
+    p.vx = dirX(dir, P.player.hurtKnockback);
+    p.vy = dirY(dir, P.player.hurtKnockback);
+  }
   p.hitstop = Math.max(p.hitstop, hp.hitstop);
   h.hitstop = Math.max(h.hitstop, hp.hitstop);
-  p.hitIds = [];
-  ctx.events.push({ type: 'playerHurt', x: p.x, y: p.y, damage: hp.damage, shake: hp.shake, dir });
+  ctx.events.push({ type: 'playerHurt', x: p.x, y: p.y, damage: hp.damage, shake: hp.shake, dir, armored });
   if (p.hp <= 0) {
     p.hp = 0;
     p.action = 'dead';
@@ -194,9 +247,10 @@ export function huskAttackPlayer(ctx: Ctx, h: HuskState, dist: number, reach: nu
     s.status = 'dead';
     s.endTick = s.tick;
     ctx.events.push({ type: 'runEnd', status: 'dead' });
-  } else {
+  } else if (!armored) {
     p.action = 'hurt';
     p.t = 0;
+    p.hitIds = [];
     p.buffer = 'none';
     p.charge = 0;
     p.nextCombo = 0;

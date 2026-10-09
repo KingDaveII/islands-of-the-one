@@ -1,12 +1,12 @@
 import Phaser from 'phaser';
-import { SUB, TILE_PX, type RunResults, type SimEvent } from '@iot/sim';
+import { SUB, TILE_PX, type RunResults, type SimEvent, type Tuning } from '@iot/sim';
 import { Controls } from '../game/controls.js';
 import { Session } from '../game/session.js';
 import { tuningStore } from '../game/tuningStore.js';
 import { Palette } from '../palette.js';
 import { Fx } from '../render/fx.js';
 import { Hud } from '../render/hud.js';
-import { pixelText, registerPixelFont } from '../render/pixelFont.js';
+import { label, place, withShadow } from '../render/text.js';
 import { rad, WorldRenderer } from '../render/world.js';
 
 export const VIEW_W = 480;
@@ -15,7 +15,14 @@ const END_DELAY_MS = 1900;
 
 export interface ResultsData {
   seed: number;
+  weapon: string;
   results: RunResults;
+}
+
+export interface GameData {
+  seed: number;
+  /** One weapon per run, picked on the start screen. */
+  weapon: string;
 }
 
 export class GameScene extends Phaser.Scene {
@@ -26,11 +33,12 @@ export class GameScene extends Phaser.Scene {
   private hud!: Hud;
   private worldLayer!: Phaser.GameObjects.Layer;
   private hudLayer!: Phaser.GameObjects.Layer;
-  private banner!: Phaser.GameObjects.BitmapText;
-  private bannerSub!: Phaser.GameObjects.BitmapText;
+  private banner!: Phaser.GameObjects.Text;
+  private bannerSub!: Phaser.GameObjects.Text;
   private bannerLife = 0;
   private tint!: Phaser.GameObjects.Rectangle;
   private seed = 0;
+  private weapon = 'hookblade';
   private endAt = -1;
   private camX = 0;
   private camY = 0;
@@ -41,28 +49,32 @@ export class GameScene extends Phaser.Scene {
     super('game');
   }
 
-  init(data: { seed: number }): void {
+  init(data: GameData): void {
     this.seed = data.seed;
+    this.weapon = data.weapon;
     this.endAt = -1;
     this.lastRoom = -1;
   }
 
   create(): void {
-    registerPixelFont(this);
     this.cameras.main.setBackgroundColor(Palette.void);
     this.worldLayer = this.add.layer();
     this.hudLayer = this.add.layer();
     const juice = () => tuningStore.get().juice;
     this.controls = new Controls(this);
-    this.session = new Session(this.seed, this.controls);
+    this.session = new Session(this.seed, this.weapon, this.controls);
     this.world = new WorldRenderer(this, this.worldLayer, juice);
     this.fx = new Fx(this, this.worldLayer, juice);
-    this.hud = new Hud(this, this.hudLayer);
+    // Slow-mo tint over the world, under the HUD.
+    this.tint = this.add.rectangle(0, 0, VIEW_W, VIEW_H, Palette.void, 0).setOrigin(0, 0);
+    this.hudLayer.add(this.tint);
+    const tuning: Tuning = tuningStore.get();
+    const weaponName = tuning.weapons[this.weapon]?.name ?? this.weapon;
+    this.hud = new Hud(this, this.hudLayer, this.session.run, weaponName);
 
-    this.tint = this.add.rectangle(0, 0, VIEW_W, VIEW_H, 0x2a2540, 0).setOrigin(0, 0);
-    this.banner = pixelText(this, VIEW_W / 2, 92, '', Palette.white, 2).setOrigin(0.5).setAlpha(0);
-    this.bannerSub = pixelText(this, VIEW_W / 2, 114, '', Palette.pearl).setOrigin(0.5).setAlpha(0);
-    this.hudLayer.add([this.tint, this.banner, this.bannerSub]);
+    this.banner = withShadow(label(this, 0, 0, '', Palette.uiInk, 16)).setAlpha(0);
+    this.bannerSub = withShadow(label(this, 0, 0, '', Palette.uiInkMuted)).setAlpha(0);
+    this.hudLayer.add([this.banner, this.bannerSub]);
 
     const hudCam = this.cameras.add(0, 0, VIEW_W, VIEW_H);
     hudCam.ignore(this.worldLayer);
@@ -76,8 +88,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showBanner(text: string, sub = '', ms = 1400): void {
-    this.banner.setText(text).setAlpha(1);
-    this.bannerSub.setText(sub).setAlpha(sub ? 1 : 0);
+    place(this.banner.setText(text).setAlpha(1), VIEW_W / 2, 84, 0.5);
+    place(this.bannerSub.setText(sub).setAlpha(sub ? 1 : 0), VIEW_W / 2, 106, 0.5);
     this.bannerLife = ms;
   }
 
@@ -90,30 +102,32 @@ export class GameScene extends Phaser.Scene {
           const x = e.x / SUB;
           const y = e.y / SUB;
           this.fx.shake(e.shake);
-          this.fx.flash(`h${e.id}`, j.hitFlashMs);
+          // Hit flash: the struck target turns signal-hit white for 1-2 frames.
+          this.fx.flash(`h${e.id}`, j.hitFlashFrames);
           this.fx.chips(x, y, rad(e.dir), e.shell ? Math.ceil(j.chipParticles / 2) : j.chipParticles);
-          if (e.shell) this.fx.burst(x, y, 3, Palette.white, j.particleSpeed * 1.5, { dir: rad(e.dir) + Math.PI, spread: 1.4, life: 160 });
+          if (e.shell) this.fx.burst(x, y, 3, Palette.shell, j.particleSpeed * 1.5, { dir: rad(e.dir) + Math.PI, spread: 1.4, life: 160 });
           if (e.broke >= 0) {
             this.fx.chips(x, y, rad(e.dir), j.shellBreakParticles);
-            this.fx.ring(x, y, 4, 16, 260, Palette.pearl, 2);
-            this.fx.float(x, y - 10, e.broke === 0 && P.husks[e.kind].shell.length > 1 ? 'CRACK' : 'BREAK', Palette.pearl, 600);
+            this.fx.ring(x, y, 4, 16, 260, Palette.shellCrack, 1);
+            this.fx.float(x, y - 10, e.broke === 0 && P.husks[e.kind].shell.length > 1 ? 'CRACK' : 'BREAK', Palette.uiInk, 600);
           }
           break;
         }
         case 'playerHurt':
           this.fx.shake(e.shake);
-          this.fx.flash('p', j.hurtFlashMs);
-          this.fx.burst(e.x / SUB, e.y / SUB, 10, Palette.danger, j.particleSpeed, { dir: rad(e.dir), spread: 2 });
-          this.fx.float(e.x / SUB, e.y / SUB - 10, `-${e.damage}`, Palette.danger, 650);
+          this.fx.flash('p', j.hitFlashFrames);
+          this.fx.burst(e.x / SUB, e.y / SUB, 10, Palette.hurt, j.particleSpeed, { dir: rad(e.dir), spread: 2 });
+          this.fx.float(e.x / SUB, e.y / SUB - 14, `-${e.damage}`, Palette.healthLoss, 650);
+          if (e.armored) this.fx.ring(e.x / SUB, e.y / SUB - 4, 6, 12, 200, Palette.uiBevel, 1);
           break;
         case 'dodge':
-          this.fx.burst(e.x / SUB, e.y / SUB + 4, 5, Palette.floorLine, 40, { dir: rad(e.dir) + Math.PI, spread: 1.6, life: 260 });
+          this.fx.burst(e.x / SUB, e.y / SUB + 5, 5, Palette.floorEdge, 40, { dir: rad(e.dir) + Math.PI, spread: 1.6, life: 260 });
           break;
         case 'perfectDodge':
+          this.world.perfectDodge();
           this.fx.ring(e.x / SUB, e.y / SUB, 4, 34, 420, Palette.spark, 2);
-          this.fx.ring(e.x / SUB, e.y / SUB, 2, 18, 300, Palette.white, 1);
           this.fx.burst(e.x / SUB, e.y / SUB, 18, Palette.spark, j.particleSpeed * 1.2, { size: 2 });
-          this.fx.float(e.x / SUB, e.y / SUB - 12, `PERFECT +${e.bonus}`, Palette.spark, 900);
+          this.fx.float(e.x / SUB, e.y / SUB - 16, `PERFECT +${e.bonus}`, Palette.spark, 900);
           break;
         case 'huskAttack':
           if (e.kind === 'nutshell') {
@@ -122,8 +136,8 @@ export class GameScene extends Phaser.Scene {
               const r = P.husks.nutshell.slamRadius / SUB;
               const cx = h.x / SUB + Math.cos(rad(h.attackDir)) * (P.husks.nutshell.slamOffset / SUB);
               const cy = h.y / SUB + Math.sin(rad(h.attackDir)) * (P.husks.nutshell.slamOffset / SUB);
-              this.fx.ring(cx, cy, r * 0.4, r, 260, Palette.pearl, 3);
-              this.fx.burst(cx, cy, 10, Palette.floorLine, 70, { life: 300 });
+              this.fx.ring(cx, cy, r * 0.4, r, 260, Palette.shellCrack, 2);
+              this.fx.burst(cx, cy, 10, Palette.floorEdge, 70, { life: 300 });
               this.fx.shake(2);
             }
           }
@@ -133,7 +147,7 @@ export class GameScene extends Phaser.Scene {
           this.fx.shake(e.kind === 'nutshell' ? 5 : 2);
           break;
         case 'spawn':
-          this.fx.ring(e.x / SUB, e.y / SUB, 14, 2, 400, Palette.pearl, 1);
+          this.fx.ring(e.x / SUB, e.y / SUB, 14, 2, 400, Palette.floorEdge, 1);
           break;
         case 'pickup':
           this.fx.burst(e.x / SUB, e.y / SUB, 4, Palette.spark, 50, { life: 220 });
@@ -181,7 +195,7 @@ export class GameScene extends Phaser.Scene {
     this.followCamera(this.lastRoom !== s.roomIndex);
     this.lastRoom = s.roomIndex;
     const scale = this.session.timeScale();
-    this.tint.setFillStyle(0x2a2540, scale < 1 ? 0.28 : 0);
+    this.tint.setFillStyle(Palette.void, scale < 1 ? 0.28 : 0);
     this.world.draw(this.session, this.fx, this.time.now, delta * scale, this.controls.crosshair());
     this.fx.update(delta * scale, delta);
     this.hud.draw(this.session.run, delta);
@@ -194,7 +208,7 @@ export class GameScene extends Phaser.Scene {
     }
     if (this.endAt >= 0 && this.time.now >= this.endAt) {
       this.endAt = -1;
-      const data: ResultsData = { seed: this.seed, results: this.session.results() };
+      const data: ResultsData = { seed: this.seed, weapon: this.weapon, results: this.session.results() };
       this.scene.start('results', data);
     }
   }

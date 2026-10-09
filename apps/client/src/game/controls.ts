@@ -10,6 +10,14 @@ const Pad = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7 } as const;
 
 export type AimSource = 'mouse' | 'gamepad';
 
+/** Key hints shown in the HUD. Placeholders until the controls are final. */
+export const KEY_HINTS = {
+  light: 'LMB',
+  heavy: 'RMB',
+  dodge: 'SPC',
+  abilities: ['Q', 'E', 'R'],
+} as const;
+
 /**
  * Collects keyboard, mouse and gamepad (browser Gamepad API) input and turns
  * it into one packed sim input per tick. Presses are latched between ticks so
@@ -29,7 +37,7 @@ export class Controls {
   constructor(private readonly scene: Phaser.Scene) {
     const kb = scene.input.keyboard;
     if (!kb) throw new Error('keyboard input unavailable');
-    this.keys = kb.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,J,K,Q,SPACE,SHIFT', true) as Record<
+    this.keys = kb.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,J,K,Q,E,R,SPACE,SHIFT', true) as Record<
       string,
       Phaser.Input.Keyboard.Key
     >;
@@ -40,6 +48,8 @@ export class Controls {
     this.keys.SPACE?.on('down', press(Button.Dodge));
     this.keys.SHIFT?.on('down', press(Button.Dodge));
     this.keys.Q?.on('down', press(Button.Ability1));
+    this.keys.E?.on('down', press(Button.Ability2));
+    this.keys.R?.on('down', press(Button.Ability3));
 
     scene.input.mouse?.disableContextMenu();
     scene.input.on('pointerdown', (p: Phaser.Input.Pointer) => {

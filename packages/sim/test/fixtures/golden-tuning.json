@@ -5,16 +5,16 @@
     "moveSpeed": 112,
     "acceleration": 1100,
     "friction": 1500,
-    "weight": 1,
+    "mass": 1,
     "hurtStunMs": 180,
     "hurtInvulnMs": 550,
-    "hurtKnockback": 170,
-    "weapon": "hookblade"
+    "hurtKnockback": 170
   },
   "dodge": {
+    "startupMs": 0,
+    "activeMs": 210,
+    "recoveryMs": 50,
     "speed": 290,
-    "durationMs": 260,
-    "iframesMs": 210,
     "cooldownMs": 380,
     "exitSpeedFactor": 0.45
   },
@@ -28,20 +28,42 @@
   "input": {
     "bufferMs": 120
   },
+  "weaponRoster": [
+    {
+      "id": "hookblade",
+      "name": "Hookblade",
+      "locked": false
+    },
+    {
+      "id": "locked-2",
+      "name": "???",
+      "locked": true
+    },
+    {
+      "id": "locked-3",
+      "name": "???",
+      "locked": true
+    }
+  ],
   "weapons": {
     "hookblade": {
       "name": "Hookblade",
+      "tier": 1,
+      "blurb": "A hooked blade for close work. Three quick cuts, a held heavy, and a lunge.",
+      "lore": "It remembers a hand that was not yours.",
       "comboResetMs": 260,
       "light": [
         {
           "startupMs": 70,
           "activeMs": 50,
           "recoveryMs": 200,
+          "armorStartMs": 0,
+          "armorEndMs": 0,
           "reachPx": 26,
           "arcDeg": 120,
           "damage": 10,
           "shellDamage": 10,
-          "knockback": 90,
+          "knockbackPx": 10,
           "hitstopMs": 50,
           "shake": 1,
           "stepSpeed": 90
@@ -50,11 +72,13 @@
           "startupMs": 60,
           "activeMs": 50,
           "recoveryMs": 200,
+          "armorStartMs": 0,
+          "armorEndMs": 0,
           "reachPx": 26,
           "arcDeg": 130,
           "damage": 10,
           "shellDamage": 10,
-          "knockback": 90,
+          "knockbackPx": 10,
           "hitstopMs": 50,
           "shake": 1,
           "stepSpeed": 90
@@ -63,11 +87,13 @@
           "startupMs": 110,
           "activeMs": 70,
           "recoveryMs": 330,
+          "armorStartMs": 0,
+          "armorEndMs": 0,
           "reachPx": 30,
           "arcDeg": 160,
           "damage": 22,
           "shellDamage": 20,
-          "knockback": 260,
+          "knockbackPx": 40,
           "hitstopMs": 75,
           "shake": 3,
           "stepSpeed": 140
@@ -79,14 +105,16 @@
         "startupMs": 90,
         "activeMs": 80,
         "recoveryMs": 380,
+        "armorStartMs": 0,
+        "armorEndMs": 0,
         "reachPx": 36,
         "arcDeg": 220,
         "damageMin": 18,
         "damageMax": 40,
         "shellDamageMin": 25,
         "shellDamageMax": 60,
-        "knockbackMin": 200,
-        "knockbackMax": 420,
+        "knockbackMinPx": 24,
+        "knockbackMaxPx": 72,
         "hitstopMinMs": 70,
         "hitstopMaxMs": 110,
         "shakeMin": 2,
@@ -94,46 +122,95 @@
         "stepSpeed": 120
       },
       "abilities": [
-        { "id": "lunge", "name": "Lunge", "locked": false },
-        { "id": "sweep", "name": "Spinning sweep", "locked": true },
-        { "id": "tbd", "name": "TBD", "locked": true }
+        {
+          "id": "lunge",
+          "name": "Lunge",
+          "locked": false,
+          "kind": "dash-strike",
+          "cooldownMs": 2500,
+          "startupMs": 0,
+          "activeMs": 180,
+          "recoveryMs": 200,
+          "armorStartMs": 0,
+          "armorEndMs": 0,
+          "speed": 380,
+          "hitRadiusPx": 12,
+          "damage": 16,
+          "shellDamage": 18,
+          "knockbackPx": 36,
+          "hitstopMs": 60,
+          "shake": 2
+        },
+        {
+          "id": "sweep",
+          "name": "Spinning sweep",
+          "locked": true,
+          "kind": "spin",
+          "cooldownMs": 4000,
+          "startupMs": 120,
+          "activeMs": 300,
+          "recoveryMs": 300,
+          "armorStartMs": 0,
+          "armorEndMs": 0,
+          "speed": 0,
+          "hitRadiusPx": 28,
+          "damage": 14,
+          "shellDamage": 14,
+          "knockbackPx": 24,
+          "hitstopMs": 50,
+          "shake": 2
+        },
+        {
+          "id": "tbd",
+          "name": "TBD",
+          "locked": true,
+          "kind": "none",
+          "cooldownMs": 0,
+          "startupMs": 0,
+          "activeMs": 0,
+          "recoveryMs": 0,
+          "armorStartMs": 0,
+          "armorEndMs": 0,
+          "speed": 0,
+          "hitRadiusPx": 0,
+          "damage": 0,
+          "shellDamage": 0,
+          "knockbackPx": 0,
+          "hitstopMs": 0,
+          "shake": 0
+        }
       ]
-    }
-  },
-  "abilities": {
-    "lunge": {
-      "cooldownMs": 2500,
-      "dashSpeed": 380,
-      "dashMs": 180,
-      "recoveryMs": 200,
-      "hitRadiusPx": 12,
-      "damage": 16,
-      "shellDamage": 18,
-      "knockback": 220,
-      "hitstopMs": 60,
-      "shake": 2
     }
   },
   "husks": {
     "aggroPerSparkglass": 0.03,
     "aggroMax": 0.6,
     "shellBreakCoreFactor": 0.5,
+    "weightClasses": {
+      "light": 1,
+      "medium": 0.5,
+      "heavy": 0
+    },
+    "knockbackMs": 100,
     "peeling": {
       "radiusPx": 5,
       "shell": [8],
       "core": 16,
       "speed": 72,
       "acceleration": 650,
-      "friction": 900,
-      "weight": 0.6,
+      "friction": 1200,
+      "mass": 0.6,
+      "weightClass": "light",
       "attackRangePx": 46,
-      "windupMs": 450,
+      "attack": {
+        "startupMs": 450,
+        "activeMs": 170,
+        "recoveryMs": 500
+      },
       "trackMs": 280,
-      "recoverMs": 500,
-      "cooldownMs": 1200,
-      "cooldownJitterMs": 700,
-      "damage": 10,
-      "knockback": 0,
+      "cooldownMs": 900,
+      "cooldownJitterMs": 600,
+      "damage": 12,
       "hitstopMs": 60,
       "shake": 3,
       "staggerMs": 380,
@@ -142,7 +219,6 @@
       "sparkglassDrop": 1,
       "spawnMs": 600,
       "lungeSpeed": 260,
-      "lungeMs": 170,
       "hitPadPx": 2
     },
     "nutshell": {
@@ -152,15 +228,18 @@
       "speed": 34,
       "acceleration": 300,
       "friction": 700,
-      "weight": 2.5,
+      "mass": 2.5,
+      "weightClass": "heavy",
       "attackRangePx": 34,
-      "windupMs": 900,
+      "attack": {
+        "startupMs": 900,
+        "activeMs": 70,
+        "recoveryMs": 700
+      },
       "trackMs": 360,
-      "recoverMs": 700,
-      "cooldownMs": 1600,
+      "cooldownMs": 1300,
       "cooldownJitterMs": 600,
       "damage": 24,
-      "knockback": 0,
       "hitstopMs": 90,
       "shake": 6,
       "staggerMs": 700,
@@ -169,15 +248,47 @@
       "sparkglassDrop": 3,
       "spawnMs": 800,
       "slamRadiusPx": 40,
-      "slamOffsetPx": 12,
-      "slamActiveMs": 70
+      "slamOffsetPx": 12
     }
   },
   "run": {
     "rooms": [
-      { "waves": [{ "peeling": 3, "nutshell": 0 }, { "peeling": 4, "nutshell": 0 }] },
-      { "waves": [{ "peeling": 4, "nutshell": 0 }, { "peeling": 5, "nutshell": 0 }] },
-      { "waves": [{ "peeling": 4, "nutshell": 1 }, { "peeling": 4, "nutshell": 2 }] }
+      {
+        "waves": [
+          {
+            "peeling": 3,
+            "nutshell": 0
+          },
+          {
+            "peeling": 4,
+            "nutshell": 0
+          }
+        ]
+      },
+      {
+        "waves": [
+          {
+            "peeling": 4,
+            "nutshell": 0
+          },
+          {
+            "peeling": 5,
+            "nutshell": 0
+          }
+        ]
+      },
+      {
+        "waves": [
+          {
+            "peeling": 4,
+            "nutshell": 1
+          },
+          {
+            "peeling": 4,
+            "nutshell": 2
+          }
+        ]
+      }
     ],
     "waveDelayMs": 700,
     "clearDelayMs": 1500,
@@ -190,7 +301,7 @@
   "juice": {
     "shakeDurationMs": 120,
     "shakePerStrength": 0.0016,
-    "hitFlashMs": 70,
+    "hitFlashFrames": 2,
     "chipParticles": 5,
     "shellBreakParticles": 16,
     "coreFlareParticles": 24,
@@ -198,7 +309,6 @@
     "particleLifeMs": 420,
     "cameraLerp": 0.16,
     "aimLeadPx": 18,
-    "telegraphBlinkHz": 12,
-    "hurtFlashMs": 160
+    "telegraphBlinkHz": 12
   }
 }
