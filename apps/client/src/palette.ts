@@ -1,6 +1,10 @@
+import { paletteData, type PaletteToken } from '@iot/shared';
+
 /**
- * Design-system color tokens (art direction, not balance data). Every color
- * the client draws comes from here. See docs/design/readability.md.
+ * Design-system color tokens (art direction, not balance data), read from
+ * packages/shared/data/palette.json (the same file the sprite sheets are
+ * checked against). Every color the client draws comes from here. See
+ * docs/design/readability.md.
  *
  * Reserved signal colors, used for nothing else anywhere:
  * - `signalHit` (#FFFFFF, the only pure white): a struck target for 1-2 frames.
@@ -9,27 +13,30 @@
  *   `hollowDeep` outline). Places the design system would light in spark-glow
  *   (ready frames, full charge, broken poise) use `sparkAmber` / `hollowLight`.
  */
+const hex = (token: PaletteToken): number => parseInt(paletteData.tokens[token].slice(1), 16);
+
 export const Tokens = {
-  hollowLight: 0xf4efe6,
-  hollowLavender: 0xd9d2e9,
-  hollowDusk: 0xa99fc4,
-  hollowBelow: 0x5b5478,
-  hollowDeep: 0x2a2540,
-  sparkGlow: 0xffe7a3,
-  sparkAmber: 0xf2b65a,
-  sparkEmber: 0xc9733a,
-  sleeperFlesh: 0xc98f78,
-  sleeperOchre: 0x9c5b4a,
-  sleeperSoil: 0xe3c29e,
-  unwrittenTar: 0x5e5448,
-  huskShell: 0xe8e2d6,
-  huskCore: 0xfff4c7,
-  choirFlame: 0xf07a3a,
-  choirFlameDeep: 0xb5402e,
-  dreamNight: 0x1c2147,
-  signalHit: 0xffffff,
-  signalTelegraph: 0xe0457b,
-  signalTelegraphDark: 0x8e2550,
+  hollowLight: hex('hollow-light'),
+  hollowLavender: hex('hollow-lavender'),
+  hollowDusk: hex('hollow-dusk'),
+  hollowBelow: hex('hollow-below'),
+  hollowDeep: hex('hollow-deep'),
+  sparkGlow: hex('spark-glow'),
+  sparkAmber: hex('spark-amber'),
+  sparkEmber: hex('spark-ember'),
+  sleeperFlesh: hex('sleeper-flesh'),
+  sleeperOchre: hex('sleeper-ochre'),
+  sleeperSoil: hex('sleeper-soil'),
+  unwrittenTar: hex('unwritten-tar'),
+  clayGreyOchre: hex('clay-grey-ochre'),
+  huskShell: hex('husk-shell'),
+  huskCore: hex('husk-core'),
+  choirFlame: hex('choir-flame'),
+  choirFlameDeep: hex('choir-flame-deep'),
+  dreamNight: hex('dream-night'),
+  signalHit: hex('signal-hit'),
+  signalTelegraph: hex('signal-telegraph'),
+  signalTelegraphDark: hex('signal-telegraph-dark'),
 } as const;
 
 const T = Tokens;
