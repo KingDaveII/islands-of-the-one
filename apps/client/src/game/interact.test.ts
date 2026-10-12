@@ -11,7 +11,7 @@ describe('the interact prompt', () => {
   it('has nothing to prompt for in M1: chests open on contact and are never interactables', () => {
     const s = state();
     expect(s.chests.length).toBeGreaterThan(0);
-    expect(interactables(s)).toEqual([]);
+    expect(interactables()).toEqual([]);
     expect(promptTarget(s, 1000 * SUB)).toBeNull();
   });
 

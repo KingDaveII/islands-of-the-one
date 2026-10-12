@@ -1,5 +1,13 @@
 import Phaser from 'phaser';
-import { replayRun, hashRunState, type AutopilotOptions, type RunRecord } from '@iot/sim';
+import type { ClayTone } from '@iot/shared';
+import {
+  replayRun,
+  hashRunState,
+  type AutopilotOptions,
+  type Params,
+  type RunRecord,
+  type RunState,
+} from '@iot/sim';
 import { eventKeyFor, keyboardBinding } from './game/keyboard.js';
 import { Palette } from './palette.js';
 import { loadFonts } from './render/text.js';
@@ -8,6 +16,7 @@ import { ControlsScene } from './scenes/ControlsScene.js';
 import { ResultsScene } from './scenes/ResultsScene.js';
 import { StartScene } from './scenes/StartScene.js';
 import { TestScene } from './scenes/TestScene.js';
+import { debugFlags } from './ui/debugFlags.js';
 import { DebugOverlay } from './ui/debugOverlay.js';
 import { TuningPanel } from './ui/tuningPanel.js';
 
@@ -55,8 +64,10 @@ function startGame(): void {
       e.preventDefault();
       panel.toggle();
     } else if (e.key === 'F3') {
+      // F3: the stats overlay, and the old hitbox shapes drawn over the sprites.
       e.preventDefault();
       debug.toggle();
+      debugFlags.shapes = !debugFlags.shapes;
     }
   });
 
@@ -81,6 +92,16 @@ function startGame(): void {
       const s = activeGame();
       if (s) s.session.autopilot = opts;
     },
+    /** Scripted input for playtests: a packed input per tick from the state (null restores the controls). */
+    setInputSource(fn: ((state: RunState, params: Params) => number) | null): void {
+      const s = activeGame();
+      if (s) s.session.inputSource = fn;
+    },
+    /** Real-time pacing (1 = normal; 0.25 plays at quarter speed for screenshots). */
+    setSpeed(speed: number): void {
+      const s = activeGame();
+      if (s) s.session.speed = Math.max(0, speed);
+    },
     record(): RunRecord | null {
       return activeGame()?.session.run.record ?? null;
     },
@@ -90,6 +111,18 @@ function startGame(): void {
     },
     replayHash(record: RunRecord): number {
       return hashRunState(replayRun(record).state);
+    },
+    /** The Kindled's animation this frame (name, facing, frame), for playtests. */
+    pose() {
+      return activeGame()?.world.characters.pose ?? null;
+    },
+    /** Swap the Kindled to another clay tone (a palette swap built at load). */
+    setClayTone(tone: ClayTone): void {
+      activeGame()?.world.characters.setTone(tone);
+    },
+    /** Draw the old hitbox shapes over the sprites (also toggled by F3 with the overlay). */
+    setDebugShapes(on: boolean): void {
+      debugFlags.shapes = on;
     },
     panel,
     debug,

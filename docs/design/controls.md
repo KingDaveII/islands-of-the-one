@@ -5,7 +5,25 @@ buttons; [`combat.md`](combat.md) §1); everything here happens in the client
 (`apps/client/src/game/controls.ts`, `gamepad.ts`, `keyboard.ts`). Every binding is **data**:
 [`packages/shared/data/controls.json`](../../packages/shared/data/controls.json) holds the gamepad
 presets (`presets[]`) and the keyboard/mouse bindings (`keyboard`). A key or pad button is bound to
-**one action only** per layout (`packages/shared/test/controls.test.ts`).
+**one action only per input context** in each layout (`packages/shared/test/controls.test.ts`).
+
+## 0. Input contexts: Combat and Calm
+
+The sim computes an **input context** as part of its state (`state.context`,
+[`glossary.md`](glossary.md)):
+
+- **Combat**: at least one hostile enemy in the room is awake (spawned in and alive). An unstruck
+  Glowing Shell is not hostile.
+- **Calm**: everything else, including cleared rooms and haze-banks.
+
+A room turns Combat the instant a hostile wakes, and Calm `input.calmDelayMs` (500, `tuning.json`)
+after the last hostile dies. The client reads the context from the sim state and resolves a button
+to an action with it; the input log records the resolved action (Dodge or Interact), so replays
+stay deterministic and never need the context. The sim ignores an Interact sent in Combat.
+
+A binding in `controls.json` is a key, a list of alternates, or keys per context
+(`{ "combat": ["Cross", "L1"], "calm": "L1" }`; a context left out is unbound there). A key bound in
+both contexts must map to exactly one action in each.
 
 ## 1. Keyboard and mouse
 
@@ -17,11 +35,11 @@ The `keyboard` block, one key per action. Move and aim are not actions and stay 
 | Aim                    | mouse, 360°                             |
 | Light                  | LMB                                     |
 | Hook-thrust (heavy)    | hold RMB                                |
-| Dodge                  | Space                                   |
+| Dodge                  | Space (both contexts)                   |
 | Haul (ability 1)       | 1                                       |
 | Abilities 2 / 3        | 2 / 3 (locked for now)                  |
 | Item 1 / Item 2        | Q / F                                   |
-| Interact               | E (chests still open on contact)        |
+| Interact               | E, Calm only (chests open on contact)   |
 | Chart peek             | hold Tab (no function yet)              |
 | Journal                | J (no function yet)                     |
 | Menu                   | Esc (back, on the controls screen)      |
@@ -44,17 +62,17 @@ alternates) per action. No button is bound twice within a preset.
 | ---------------- | ---------------------- | ------------------------------- | -------------------- |
 | light            | R2                     | Square                          | R2                   |
 | heavy (hold)     | L2                     | Triangle, R2                    | L2                   |
-| dodge            | L1                     | Cross, L1                       | L1                   |
+| dodge            | L1                     | Cross (Combat), L1              | L1                   |
 | ability 1 (Haul) | R1                     | Circle, R1                      | R1                   |
 | ability 2 / 3    | Square / Triangle \*   | L2 / Up \*                      | Square / Triangle \* |
-| interact         | Cross                  | L3 (Cross is the dodge there)   | Cross                |
+| interact         | Cross (Calm)           | Cross (Calm)                    | Cross (Calm)         |
 | chart peek       | Circle                 | R3                              | Circle               |
 | journal          | Down                   | Down                            | Down                 |
 | item 1 / 2       | Left / Right           | Left / Right                    | Left / Right         |
 | aim              | right stick            | right stick                     | follows movement     |
 
-\* Abilities 2 and 3 on face buttons fire **only during an encounter** (a wave is up); outside one
-those buttons are free for menus and interaction.
+\* Abilities 2 and 3 on buttons fire **only in Combat**; in Calm those buttons are free for menus
+and interaction. In Faces, Cross is the dodge in Combat and interact in Calm; L3 is unbound.
 
 - The active preset is chosen on the **controls screen** (start screen → CONTROLS, or C; left/right
   or the D-pad to switch) or in the **F2 panel** (gamepad preset select), and remembered in
@@ -66,8 +84,11 @@ those buttons are free for menus and interaction.
   cells (`ps_*`); a pad whose id contains "Xbox" or "xinput" switches to the Xbox family (`xb_*`;
   the D-pad and stick cells serve both). A binding the sheet has no cell for (Select, F3) falls back
   to its text label. The mapping is `apps/client/src/render/glyphCells.ts`.
-- Interact, chart peek and journal are bound in data but do nothing yet (chests open on contact;
-  the interact prompt already shows over a closed chest in reach, `juice.promptRangePx`).
+- Chart peek and journal are bound in data but do nothing yet. Interact reaches the sim (Calm only)
+  but nothing in M1 needs it: chests, loot and traces open on contact with no prompt in both
+  contexts. The **interact prompt** (the interact glyph and a word over the target,
+  `juice.promptRangePx`) shows only in Calm, over things that need an interact press; the first is
+  the Glowing Shell pickup in hour two (`apps/client/src/game/interact.ts`).
 
 ## 3. Aim and the soft lock
 

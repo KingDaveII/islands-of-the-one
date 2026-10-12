@@ -56,7 +56,12 @@ export default tseslint.config(
     languageOptions: { globals: { ...globals.browser } },
   },
   {
-    files: ['**/*.js'],
+    files: ['**/*.js', '**/*.mjs'],
     extends: [tseslint.configs.disableTypeChecked],
+  },
+  {
+    // Playtest tooling drives the client in a browser: page scripts use browser globals.
+    files: ['tools/**/*.mjs'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
 );

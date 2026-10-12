@@ -9,7 +9,9 @@ import {
   SUB,
   TICK_HZ,
   type AutopilotOptions,
+  type Params,
   type Run,
+  type RunState,
   type RunResults,
   type SimEvent,
 } from '@iot/sim';
@@ -36,6 +38,10 @@ export class Session {
   alpha = 0;
   stepsThisFrame = 0;
   autopilot: AutopilotOptions | null = null;
+  /** A scripted input source for playtests (packed input per tick from the state); overrides the controls and the autopilot. */
+  inputSource: ((state: RunState, params: Params) => number) | null = null;
+  /** Real-time pacing for playtests and screenshots (1 = normal); presentation only, never part of the record. */
+  speed = 1;
   private unsubscribe: () => void;
 
   constructor(
@@ -91,13 +97,15 @@ export class Session {
     const events: SimEvent[] = [];
     this.stepsThisFrame = 0;
     if (this.isEnded()) return events;
-    this.acc += Math.min(dtMs, 250) * this.timeScale();
+    this.acc += Math.min(dtMs, 250) * this.timeScale() * this.speed;
     while (this.acc >= TICK_MS && this.stepsThisFrame < MAX_STEPS_PER_FRAME) {
       this.snapshot();
       const p = this.run.state.player;
-      const input = this.autopilot
-        ? autopilot(this.run.state, this.run.params, this.autopilot)
-        : this.controls.sample(p.x / SUB, p.y / SUB, this.sampleContext());
+      const input = this.inputSource
+        ? this.inputSource(this.run.state, this.run.params)
+        : this.autopilot
+          ? autopilot(this.run.state, this.run.params, this.autopilot)
+          : this.controls.sample(p.x / SUB, p.y / SUB, this.sampleContext());
       events.push(...stepRun(this.run, input));
       this.acc -= TICK_MS;
       this.stepsThisFrame++;

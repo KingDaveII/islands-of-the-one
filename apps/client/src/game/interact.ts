@@ -16,9 +16,8 @@ export interface Interactable {
   label: string;
 }
 
-/** Everything in the room that needs an interact press. Empty in M1 (the state is unread until the Glowing Shell). */
-export function interactables(s: RunState): Interactable[] {
-  void s;
+/** Everything in the room that needs an interact press. Empty in M1: the first is the Glowing Shell pickup (hour two). */
+export function interactables(): Interactable[] {
   return [];
 }
 
@@ -26,7 +25,7 @@ export function interactables(s: RunState): Interactable[] {
  * The interactable to prompt for: the nearest within `rangeUnits` of the
  * player, in Calm only, while the player is alive. Null otherwise.
  */
-export function promptTarget(s: RunState, rangeUnits: number, targets: readonly Interactable[] = interactables(s)): Interactable | null {
+export function promptTarget(s: RunState, rangeUnits: number, targets: readonly Interactable[] = interactables()): Interactable | null {
   if (s.context !== 'calm' || s.player.action === 'dead') return null;
   let best: { target: Interactable; d: number } | null = null;
   for (const t of targets) {
