@@ -84,6 +84,11 @@ export const Palette = {
   poiseFill: T.hollowLavender,
   poiseTrack: T.hollowBelow,
   hurt: T.sparkEmber,
+  // Writ letters (Old Letters), one color per letter state.
+  writLit: T.hollowLight,
+  writDim: T.hollowDusk,
+  writDark: T.hollowBelow,
+  writEmber: T.sparkEmber,
   rarity: [T.hollowLavender, T.hollowLight, T.sparkAmber, T.sparkEmber, T.choirFlameDeep],
 } as const;
 

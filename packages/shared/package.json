@@ -8,10 +8,17 @@
       "source": "./src/index.ts",
       "types": "./dist/src/index.d.ts",
       "default": "./dist/src/index.js"
-    }
+    },
+    "./safe-letters": {
+      "source": "./src/safe-letters.ts",
+      "types": "./dist/src/safe-letters.d.ts",
+      "default": "./dist/src/safe-letters.js"
+    },
+    "./assets/*": "./assets/*"
   },
   "files": [
-    "dist"
+    "dist",
+    "assets"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

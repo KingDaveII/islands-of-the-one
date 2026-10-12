@@ -31,18 +31,20 @@ All other religious and mythological names, symbols and scripts are allowed.
 
 ## The world
 
-| Term                        | Meaning                                                                      | In code                                       |
-| --------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------- |
-| the Hollow                  | The void-sea. Formal name: **Tehiru**.                                       | `hollow`                                      |
-| Shard                       | An island in the Hollow.                                                     | `shard`                                       |
-| holding                     | A player's own Shard.                                                        | `holding`                                     |
-| Writ                        | A Shard's tablet. "Tether" appears only as a verb in UI text, never in code. | `writ`                                        |
-| Writ lines                  | The tiers of a Writ; one is a Writ line.                                     | `writLine`                                    |
-| Pillar                      | Watcher-Pillar, Wheel-Pillar, Sleeper-Pillar.                                | `pillar`; kinds `watcher`, `wheel`, `sleeper` |
-| Pillared Cities             | One is a Pillared City.                                                      | `pillaredCity`                                |
-| Concord of Pillars          | Always the full name in text.                                                | `concord`                                     |
-| Scriptorium of Washed Names | Always the full name in text.                                                | `scriptorium`                                 |
-| Works                       | Community projects; one is a Work.                                           | `work`                                        |
+| Term                        | Meaning                                                                                               | In code                                       |
+| --------------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| the Hollow                  | The void-sea. Formal name: **Tehiru**.                                                                | `hollow`                                      |
+| Shard                       | An island in the Hollow.                                                                              | `shard`                                       |
+| holding                     | A player's own Shard.                                                                                 | `holding`                                     |
+| Writ                        | A Shard's tablet. "Tether" appears only as a verb in UI text, never in code.                          | `writ`                                        |
+| Writ lines                  | The tiers of a Writ; one is a Writ line.                                                              | `writLine`                                    |
+| Pillar                      | Watcher-Pillar, Wheel-Pillar, Sleeper-Pillar.                                                         | `pillar`; kinds `watcher`, `wheel`, `sleeper` |
+| Pillared Cities             | One is a Pillared City.                                                                               | `pillaredCity`                                |
+| Concord of Pillars          | Always the full name in text.                                                                         | `concord`                                     |
+| Scriptorium of Washed Names | Always the full name in text.                                                                         | `scriptorium`                                 |
+| Works                       | Community projects; one is a Work.                                                                    | `work`                                        |
+| Old Letters                 | The Hebrew alphabet, used for Writ Names, route waymarks and Veils. Spec: [`letters.md`](letters.md). | `oldLetters`; one is a `letter`               |
+| Name                        | A Writ Name: 2–5 Old Letters. Always passes the safe-letters filter.                                  | `name`                                        |
 
 ## The Kindled and their things
 

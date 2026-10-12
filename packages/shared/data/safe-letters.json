@@ -1,0 +1,26 @@
+{
+  "$comment": "Banned letter runs for the safe-letters filter (src/safe-letters.ts). Never spelled out: each run is a list of alphabet positions. `hebrew` runs are Old Letters positions (alef = 0 .. tav = 21, final forms folded, marks and spaces removed). `latin` runs are positions in the Latin alphabet (a = 0 .. z = 25) of the Choir-hand form: lowercase, i for j/y, u for v/w, c for k, letters only. Every run is matched forwards and reversed. `strictPairs` are only applied in strict mode (generated Names).",
+  "hebrew": {
+    "runs": [
+      [9, 4, 5, 4],
+      [0, 3, 13, 9]
+    ],
+    "strictPairs": [[9, 4]]
+  },
+  "latin": {
+    "runs": [
+      [8, 0, 7, 20, 4],
+      [8, 0, 7, 14, 20, 0],
+      [8, 0, 7, 20, 0, 7],
+      [8, 4, 7, 14, 20, 0],
+      [8, 7, 20, 7],
+      [0, 3, 14, 13, 0, 8],
+      [0, 3, 14, 13, 14, 8]
+    ]
+  },
+  "offensive": {
+    "$comment": "Offensive words, in the same encodings. Empty for now.",
+    "hebrew": [],
+    "latin": []
+  }
+}
