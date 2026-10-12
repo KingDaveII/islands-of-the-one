@@ -8,6 +8,8 @@ import {
   type RunRecord,
   type RunState,
 } from '@iot/sim';
+import { deviceStore, type Device } from './game/activeDevice.js';
+import { connectedPad, padSnapshot } from './game/gamepad.js';
 import { eventKeyFor, keyboardBinding } from './game/keyboard.js';
 import { Palette } from './palette.js';
 import { loadFonts } from './render/text.js';
@@ -54,6 +56,21 @@ function startGame(): void {
   });
   window.addEventListener('resize', () => {
     game.scale.setZoom(fitZoom());
+  });
+
+  // The active device (keyboard+mouse or gamepad): any key or mouse button, mouse motion past a
+  // few px, any pad button or stick. Everything that shows bindings follows it live.
+  window.addEventListener('keydown', () => {
+    deviceStore.key();
+  });
+  window.addEventListener('mousedown', () => {
+    deviceStore.key();
+  });
+  window.addEventListener('mousemove', (e) => {
+    deviceStore.mouseMove(e.movementX, e.movementY);
+  });
+  game.events.on(Phaser.Core.Events.PRE_STEP, () => {
+    deviceStore.pad(padSnapshot(connectedPad()));
   });
 
   const panel = new TuningPanel();
@@ -123,6 +140,10 @@ function startGame(): void {
     /** Draw the old hitbox shapes over the sprites (also toggled by F3 with the overlay). */
     setDebugShapes(on: boolean): void {
       debugFlags.shapes = on;
+    },
+    /** The active device the hints and the reticle follow. */
+    device(): Device {
+      return deviceStore.get();
     },
     panel,
     debug,

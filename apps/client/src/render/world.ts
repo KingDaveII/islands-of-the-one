@@ -17,6 +17,7 @@ import {
 import type { JuiceTuning } from '@iot/shared';
 import { SPRITE_FACINGS } from '@iot/shared';
 import { Palette } from '../palette.js';
+import type { Reticle } from '../game/controls.js';
 import type { Session } from '../game/session.js';
 import { debugFlags } from '../ui/debugFlags.js';
 import { chargeStage } from './charge.js';
@@ -259,7 +260,7 @@ export class WorldRenderer {
     timeMs: number,
     dtWorldMs: number,
     dtRealMs: number,
-    crosshair: { x: number; y: number } | null,
+    reticle: Reticle | null,
   ): void {
     const run = session.run;
     const s = run.state;
@@ -302,7 +303,11 @@ export class WorldRenderer {
     // Overlays: poise bars and the charge meter.
     for (const h of s.husks) this.drawPoise(g, run, h, huskPos.get(h.id) ?? h, timeMs);
     this.drawChargeMeter(g, run, player);
-    if (crosshair) this.drawReticle(g, crosshair.x, crosshair.y);
+    if (reticle?.kind === 'pad') this.drawHaulGuide(g, run, player, reticle.aim);
+    if (reticle) {
+      const at = this.reticleAt(reticle, s, player, huskPos);
+      this.drawReticle(g, at.x, at.y);
+    }
 
     if (debugFlags.shapes) {
       for (const h of s.husks) this.drawHuskShape(this.debug, run, h, huskPos.get(h.id) ?? h, fx, timeMs);
@@ -674,6 +679,42 @@ export class WorldRenderer {
     g.beginPath();
     g.arc(x, cy, reach - thick / 2, a0, a1);
     g.strokePath();
+  }
+
+  /**
+   * Where the reticle sits: on the mouse pointer, or (pad) on the soft-locked
+   * Husk when there is one, else `juice.padReticleDistPx` out along the aim.
+   */
+  private reticleAt(
+    reticle: Reticle,
+    s: RunState,
+    player: { x: number; y: number },
+    huskPos: Map<number, { x: number; y: number }>,
+  ): { x: number; y: number } {
+    if (reticle.kind === 'mouse') return reticle;
+    const target = reticle.targetId === null ? undefined : huskPos.get(reticle.targetId);
+    const husk = reticle.targetId === null ? undefined : s.husks.find((h) => h.id === reticle.targetId);
+    if (target && husk && husk.core > 0 && husk.action !== 'spawn') return { x: target.x, y: target.y - 3 };
+    const a = rad(reticle.aim);
+    const d = this.juice().padReticleDistPx;
+    return { x: player.x + Math.cos(a) * d, y: player.y - 3 + Math.sin(a) * d };
+  }
+
+  /**
+   * The Haul guide (pad only): a faint dotted line from the player along the
+   * aim to the Haul's range while the Haul is ready, so the throw can be seen
+   * before it is made. Hidden during the cooldown (and so while the hook is
+   * out) and when the slot is locked. Muted ink, never a signal color.
+   */
+  private drawHaulGuide(g: G, run: Run, player: { x: number; y: number }, aim: number): void {
+    const p = run.state.player;
+    const haul = run.params.weapon.abilities[0];
+    if (!haul || haul.locked || !haul.haul || (p.cooldowns[0] ?? 0) > 0 || p.action === 'dead') return;
+    const a = rad(aim);
+    const range = haul.haul.range / SUB;
+    const x = player.x;
+    const y = player.y - 3;
+    pixelLine(g, x + Math.cos(a) * 10, y + Math.sin(a) * 10, x + Math.cos(a) * range, y + Math.sin(a) * range, Palette.uiInkMuted, 4);
   }
 
   /** Aim reticle: four broken rims on the diagonals around a spark. Never a cross or plus. */

@@ -64,8 +64,14 @@ particles, text, dev panels):
 - **Chests.** A banded `hollow-below` box with a `dream-night` outline and a blinking
   `spark-amber` clasp; opened, the lid stands up and the inside is the Hollow.
 - **Aim.** The reticle marks the exact 360° aim: four broken rims on the diagonals around a spark,
-  `hollow-light` with a `ui-outline` outline (never a cross or plus). Sprites turn to the nearest of
-  8 facings, in sheet order **S, SE, E, NE, N, NW, W, SW** (`apps/client/src/render/facing.ts`).
+  `hollow-light` with a `ui-outline` outline (never a cross or plus). With the mouse it sits on the
+  pointer; on the gamepad (Playtest 2) it is drawn `juice.padReticleDistPx` (32) out along the aim,
+  and snaps onto the soft-locked Husk while there is one, so the stick's aim is always visible.
+  Sprites turn to the nearest of 8 facings, in sheet order **S, SE, E, NE, N, NW, W, SW**
+  (`apps/client/src/render/facing.ts`).
+- **Haul guide** (gamepad only). While the Haul is ready, a faint dotted line runs from the player
+  along the aim to the Haul's range: 1 px `hollow-dusk` dots every 4 px, never a signal color.
+  Hidden during the cooldown (so also while the hook is out) and when the slot is locked.
 - **Room.** Pale `hollow-lavender` floors with `hollow-light` flecks and a dithered edge where they
   meet walls; walls show a `hollow-below` face with `hollow-deep` lines; outside the room is
   `hollow-deep`.

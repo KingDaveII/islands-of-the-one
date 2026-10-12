@@ -1,7 +1,11 @@
 import Phaser from 'phaser';
-import { Controls } from '../game/controls.js';
+import { deviceStore } from '../game/activeDevice.js';
+import { MENU_BUTTONS, padEdges } from '../game/gamepad.js';
 import { formatTime } from '../game/seed.js';
 import { Palette } from '../palette.js';
+import { continueHint, menuCursor, padFamilyNow } from '../render/menus.js';
+import { HintRow } from '../render/hint.js';
+import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { label, place } from '../render/text.js';
 import { panel } from '../render/ui.js';
 import type { ResultsData } from './GameScene.js';
@@ -9,8 +13,9 @@ import { VIEW_H, VIEW_W } from './GameScene.js';
 
 export class ResultsScene extends Phaser.Scene {
   private data_!: ResultsData;
-  private pad = { pad: true };
+  private pad = { prev: [] as boolean[] };
   private ready = 0;
+  private hint!: HintRow;
 
   constructor() {
     super('results');
@@ -18,10 +23,15 @@ export class ResultsScene extends Phaser.Scene {
 
   init(data: ResultsData): void {
     this.data_ = data;
-    this.pad = { pad: true };
+    this.pad = { prev: [] };
+  }
+
+  preload(): void {
+    preloadSheets(this);
   }
 
   create(): void {
+    registerSheetFrames(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
     const { results: r, seed, weapon } = this.data_;
     const cleared = r.status === 'cleared';
@@ -44,8 +54,16 @@ export class ResultsScene extends Phaser.Scene {
       place(label(this, 0, 0, name, Palette.uiInk), cx - 114, y);
       place(label(this, 0, 0, value, color), cx + 114, y, 1);
     });
-    const hint = place(label(this, 0, 0, 'PRESS ENTER OR CLICK TO CONTINUE', Palette.uiInk), cx, VIEW_H - 34, 0.5);
-    this.tweens.add({ targets: hint, alpha: 0.3, duration: 600, yoyo: true, repeat: -1 });
+    // The continue hint follows the active device: Enter or a click, or Cross on the pad.
+    this.hint = new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInk });
+    this.tweens.add({ targets: this.hint.container, alpha: 0.3, duration: 600, yoyo: true, repeat: -1 });
+    const sync = (): void => {
+      this.hint.setItems(continueHint(deviceStore.get(), padFamilyNow())).place(cx, VIEW_H - 36, 0.5);
+      menuCursor(this);
+    };
+    sync();
+    const off = deviceStore.subscribe(sync);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, off);
 
     this.ready = this.time.now + 500;
     const back = () => {
@@ -56,7 +74,8 @@ export class ResultsScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-SPACE', back);
     this.input.on('pointerdown', back);
     this.events.on(Phaser.Scenes.Events.UPDATE, () => {
-      if (Controls.confirmPressed(this.pad)) back();
+      const edges = padEdges(this.pad);
+      if (MENU_BUTTONS.confirm.some((b) => edges.includes(b))) back();
     });
   }
 }

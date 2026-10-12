@@ -1,14 +1,15 @@
 import Phaser from 'phaser';
 import type { ControlAction } from '@iot/shared';
 import { isWeaponAvailable, type Tuning } from '@iot/sim';
-import { Controls } from '../game/controls.js';
+import { deviceStore } from '../game/activeDevice.js';
 import { controlsStore } from '../game/controlsStore.js';
-import { connectedPad, glyphsFor, padFamily, type PadFamily } from '../game/gamepad.js';
+import { glyphsFor, MENU_BUTTONS, padEdges, type PadFamily } from '../game/gamepad.js';
 import { keyboardBinding } from '../game/keyboard.js';
 import { parseSeed, randomSeed } from '../game/seed.js';
 import { tuningStore } from '../game/tuningStore.js';
 import { Palette } from '../palette.js';
 import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
+import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
 import { groundShadow } from '../render/pixels.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { body, label, place } from '../render/text.js';
@@ -33,9 +34,9 @@ export class StartScene extends Phaser.Scene {
   private field!: Phaser.GameObjects.Text;
   private caret!: Phaser.GameObjects.Rectangle;
   private cards!: Phaser.GameObjects.Graphics;
-  private pad = { pad: true };
-  /** The gamepad hint line and the pad family it is drawn in (re-drawn when a pad is swapped). */
-  private padHints: HintRow | null = null;
+  private pad = { prev: [] as boolean[] };
+  /** The two hint lines (the active device's bindings, then the menu keys) and the pad family they are drawn in. */
+  private hintRows: HintRow[] = [];
   private padFamily: PadFamily = 'ps';
   /** Divider y per card (between stats and lore). */
   private dividers: number[] = [];
@@ -52,7 +53,7 @@ export class StartScene extends Phaser.Scene {
     registerSheetFrames(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
     this.seedText = String(randomSeed());
-    this.pad = { pad: true };
+    this.pad = { prev: [] };
     const t: Tuning = tuningStore.get();
     const roster = t.weaponRoster;
     this.weapon = roster.find((w) => isWeaponAvailable(t, w.id))?.id ?? 'hookblade';
@@ -116,35 +117,20 @@ export class StartScene extends Phaser.Scene {
     groundShadow(mood, 60, VIEW_H - 22, 5, 2);
     drawKindled(mood, 60, VIEW_H - 27, 2);
 
-    // Key hints as controller glyphs: the keyboard line, then the active pad preset in the connected pad's family.
-    const key = (action: ControlAction): HintItem[] => glyphs([keyboardBinding(action)], 'keyboard');
-    const connected = connectedPad();
-    this.padFamily = connected ? padFamily(connected.id) : 'ps';
-    const lines: HintItem[][] = [
-      [
-        ...glyphs(['W', 'A', 'S', 'D'], 'keyboard'),
-        word('move  ·'),
-        ...glyphs(['Mouse'], 'keyboard'),
-        word('aim  ·'),
-        ...key('light'),
-        word('light  ·  hold'),
-        ...key('heavy'),
-        word('Hook-thrust  ·'),
-        ...key('dodge'),
-        word('dodge  ·'),
-        ...key('ability1'),
-        word('Haul  ·'),
-        ...key('item1'),
-        ...key('item2'),
-        word('items'),
-      ],
-      this.padHintItems(),
-    ];
-    lines.forEach((items, i) => {
-      const row = new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInkMuted })
-        .setItems(items)
-        .place(cx + 20, VIEW_H - 30 + i * 14, 0.5);
-      if (i === 1) this.padHints = row;
+    // Key hints as controller glyphs, for the active device (keyboard+mouse or the pad preset in
+    // the connected pad's family); they switch live with the device.
+    this.padFamily = padFamilyNow();
+    this.hintRows = [0, 1].map(() => new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInkMuted }));
+    this.syncHints();
+    const offDevice = deviceStore.subscribe(() => {
+      this.syncHints();
+    });
+    const offPreset = controlsStore.subscribe(() => {
+      this.syncHints();
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      offDevice();
+      offPreset();
     });
 
     // Text entry reads DOM key events directly (Phaser's key queue is for game controls).
@@ -167,23 +153,82 @@ export class StartScene extends Phaser.Scene {
     });
   }
 
-  /** The gamepad hint line: the active preset's buttons in the connected pad's glyph family. */
-  private padHintItems(): HintItem[] {
-    const pad = controlsStore.get();
-    const padKey = (action: ControlAction): HintItem[] => glyphs(glyphsFor(pad, action), this.padFamily);
+  /** The hint lines for the active device: its bindings, then the menu keys. */
+  private hintLines(): HintItem[][] {
+    if (deviceStore.get() === 'gamepad') {
+      const pad = controlsStore.get();
+      const padKey = (action: ControlAction): HintItem[] => glyphs(glyphsFor(pad, action), this.padFamily);
+      const menu = (index: number): HintItem[] => glyphs([menuGlyph(index)], this.padFamily);
+      return [
+        [
+          word(`${pad.name}:`),
+          ...padKey('light'),
+          word('light  ·  hold'),
+          ...padKey('heavy'),
+          word('Hook-thrust  ·'),
+          ...padKey('dodge'),
+          word('dodge  ·'),
+          ...padKey('ability1'),
+          word('Haul  ·'),
+          ...padKey('item1'),
+          ...padKey('item2'),
+          word('items  ·'),
+          word(pad.aim === 'left-stick' ? 'aim follows movement' : 'right stick aims'),
+        ],
+        [
+          ...menu(MENU_BUTTONS.confirm[0]),
+          word('start  ·'),
+          ...menu(MENU_BUTTONS.controls),
+          word('controls  ·'),
+          ...menu(MENU_BUTTONS.left),
+          ...menu(MENU_BUTTONS.right),
+          word('weapon'),
+        ],
+      ];
+    }
+    const key = (action: ControlAction): HintItem[] => glyphs([keyboardBinding(action)], 'keyboard');
     return [
-      word(`Gamepad (${pad.name}):`),
-      ...padKey('light'),
-      word('light  ·  hold'),
-      ...padKey('heavy'),
-      word('Hook-thrust  ·'),
-      ...padKey('dodge'),
-      word('dodge  ·'),
-      ...padKey('ability1'),
-      word('Haul  ·  C controls  ·'),
-      ...glyphs([keyboardBinding('tuning')], 'keyboard'),
-      word('tuning  ·  F3 debug'),
+      [
+        ...glyphs(['W', 'A', 'S', 'D'], 'keyboard'),
+        word('move  ·'),
+        ...glyphs(['Mouse'], 'keyboard'),
+        word('aim  ·'),
+        ...key('light'),
+        word('light  ·  hold'),
+        ...key('heavy'),
+        word('Hook-thrust  ·'),
+        ...key('dodge'),
+        word('dodge  ·'),
+        ...key('ability1'),
+        word('Haul  ·'),
+        ...key('item1'),
+        ...key('item2'),
+        word('items'),
+      ],
+      [
+        ...glyphs(['Enter'], 'keyboard'),
+        word('start  ·  C controls  ·'),
+        ...glyphs([keyboardBinding('tuning')], 'keyboard'),
+        word('tuning  ·  F3 debug'),
+      ],
     ];
+  }
+
+  /** Rebuild the hint lines for the device in use and set the cursor to match. */
+  private syncHints(): void {
+    this.hintLines().forEach((items, i) => {
+      this.hintRows[i]?.setItems(items).place(VIEW_W / 2 + 20, VIEW_H - 30 + i * 14, 0.5);
+    });
+    menuCursor(this);
+  }
+
+  /** Step the weapon choice through the roster's unlocked entries (D-pad). */
+  private cycleWeapon(delta: number): void {
+    const t: Tuning = tuningStore.get();
+    const open = t.weaponRoster.filter((w) => isWeaponAvailable(t, w.id)).map((w) => w.id);
+    if (open.length === 0) return;
+    const i = Math.max(0, open.indexOf(this.weapon));
+    this.weapon = open[(((i + delta) % open.length) + open.length) % open.length] ?? this.weapon;
   }
 
   private drawCards(): void {
@@ -243,14 +288,17 @@ export class StartScene extends Phaser.Scene {
 
   override update(): void {
     this.drawCards();
-    const connected = connectedPad();
-    const family: PadFamily = connected ? padFamily(connected.id) : 'ps';
-    if (family !== this.padFamily && this.padHints) {
+    const family = padFamilyNow();
+    if (family !== this.padFamily) {
       this.padFamily = family;
-      this.padHints.setItems(this.padHintItems()).place(VIEW_W / 2 + 20, VIEW_H - 30 + 14, 0.5);
+      this.syncHints();
     }
     this.field.setText(this.seedText);
     this.caret.setX(Math.round(this.field.x + this.field.width + 1));
-    if (Controls.confirmPressed(this.pad)) this.startRun();
+    const edges = padEdges(this.pad);
+    if (MENU_BUTTONS.confirm.some((b) => edges.includes(b))) this.startRun();
+    else if (edges.includes(MENU_BUTTONS.controls)) this.scene.start('controls');
+    else if (edges.includes(MENU_BUTTONS.left)) this.cycleWeapon(-1);
+    else if (edges.includes(MENU_BUTTONS.right)) this.cycleWeapon(1);
   }
 }

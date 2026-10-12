@@ -106,10 +106,35 @@ attacks on the right hand, the hook and the roll on the left. Faces is unchanged
   direction; with no movement the previous aim is kept.
 - The soft lock never touches the **dodge**: a dodge rolls in the raw move direction (the sim's
   rule; aim is only its fallback when standing still).
-- Mouse aim is unchanged and always direct; moving the mouse takes aim back from the stick.
+- Mouse aim is unchanged and always direct. Which one aims is decided by the **active device** (§5):
+  the pad in pad mode, the mouse otherwise.
+- **The aim you can see** (Playtest 2, [`readability.md`](readability.md) §2): the reticle is drawn
+  on the gamepad too, `juice.padReticleDistPx` (32) out along the aim, snapped onto the soft-locked
+  Husk while there is one. While the Haul is ready a faint dotted **Haul guide** runs from the
+  player along the aim to `haul.rangePx`, so the throw can be seen before it is made; it hides
+  during the cooldown. Both are pad-only: the mouse reticle sits on the pointer as before.
 
 ## 4. Presses and ticks
 
 Button presses are latched between sim ticks so none are lost when a frame runs zero or several
 ticks; Heavy is a held state (triggers by value). Light, dodge and ability presses are buffered by
 the sim (`input.bufferMs`); item presses are not (they are instant and never queued).
+
+## 5. The active device
+
+The client keeps **one active device**: keyboard+mouse or gamepad (`apps/client/src/game/activeDevice.ts`,
+tested in node). It switches on any key or mouse button, on mouse movement past a few px
+(`MOUSE_SWITCH_PX`, counted since the last pad activity, so a nudge never flips it), and on any pad
+button or a stick leaving its deadzone. A held button or a drifting stick is one event, not one per
+frame, so the device never flickers; a pad going away hands it back to the keyboard.
+
+- **Everything that shows bindings follows it live**, not on a scene change: the HUD's key hints,
+  the start screen's hint lines, the controls screen (its lit column header and footer) and the
+  results screen's continue hint. The pad glyphs follow the connected pad's family.
+- **The aim and the reticle follow it**: in a run the OS cursor is always hidden; the reticle sits
+  on the mouse in mouse mode and on the pad aim in pad mode (§3).
+- **Menus**: the OS cursor shows in mouse mode and hides in pad mode. They stay navigable on the
+  pad with a fixed convention (`MENU_BUTTONS` in `gamepad.ts`, not bindings): Cross or Start
+  confirms, Circle goes back, Triangle opens the controls screen from the start screen, the D-pad
+  (left/right) steps through choices (the weapon on the start screen, the preset on the controls
+  screen).

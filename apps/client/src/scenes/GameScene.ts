@@ -265,7 +265,7 @@ export class GameScene extends Phaser.Scene {
     this.lastRoom = s.roomIndex;
     const scale = this.session.timeScale();
     this.tint.setFillStyle(Palette.hollow, scale < 1 ? 0.28 : 0);
-    this.world.draw(this.session, this.fx, this.time.now, delta * scale, delta, this.controls.crosshair());
+    this.world.draw(this.session, this.fx, this.time.now, delta * scale, delta, this.controls.reticle());
     this.fx.update(delta * scale, delta);
     this.updatePrompt();
     this.hud.draw(this.session.run, delta);
