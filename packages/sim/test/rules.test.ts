@@ -13,7 +13,7 @@ import {
   type Run,
   type SimEvent,
 } from '../src/index.js';
-import { addHusk, arena, Button, cloneTuning, retune, step, steps, stepUntil, tuning, WEAPON } from './helpers.js';
+import { addHusk, arena, Button, cloneTuning, retune, step, steps, stepUntil, toChainPoint, tuning, WEAPON } from './helpers.js';
 
 const swings = (events: SimEvent[]) => events.filter((e) => e.type === 'swing');
 const hits = (events: SimEvent[]) => events.filter((e) => e.type === 'hit');
@@ -173,16 +173,20 @@ describe('cancel windows', () => {
     const run = arena();
     const p = run.state.player;
     const P = run.params;
-    const all = (): boolean[] => (['attack', 'ability', 'dodge'] as const).map((i) => canStart(p, P, i));
-    expect(all()).toEqual([true, true, true]);
+    const all = (): boolean[] => (['light', 'heavy', 'ability', 'dodge'] as const).map((i) => canStart(p, P, i));
+    expect(all()).toEqual([true, true, true, true]);
     step(run, Button.Light);
-    expect(all()).toEqual([false, false, false]);
+    expect(all()).toEqual([false, false, false, false]);
     toRecovery(run);
-    expect(all()).toEqual([true, true, true]);
+    // The first recovery tick: everything but the next light, which waits for the chain point.
+    expect(P.lightChainTicks).toBeGreaterThan(0);
+    expect(all()).toEqual([false, true, true, true]);
+    steps(run, P.lightChainTicks);
+    expect(all()).toEqual([true, true, true, true]);
     step(run, Button.Ability1);
-    expect(all()).toEqual([false, false, false]);
+    expect(all()).toEqual([false, false, false, false]);
     toRecovery(run);
-    expect(all()).toEqual([false, false, true]);
+    expect(all()).toEqual([false, false, false, true]);
   });
 });
 
@@ -211,7 +215,7 @@ describe('ability buffering', () => {
     // Combo step 3 has the longest startup.
     step(run, Button.Light);
     for (let k = 0; k < 2; k++) {
-      toRecovery(run);
+      toChainPoint(run);
       step(run, Button.Light);
     }
     const recoveryStart = (st?.startup ?? 0) + (st?.active ?? 0) + 1;

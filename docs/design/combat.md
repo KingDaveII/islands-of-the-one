@@ -91,23 +91,32 @@ when it was released from a full charge), and the arrival of a Haul on a heavy t
 
 What may start, given what the player is doing:
 
-| Current move                  | May start                                    |
-| ----------------------------- | -------------------------------------------- |
-| idle                          | anything                                     |
-| light or heavy, **recovery**  | the next light, a heavy, an ability, a dodge |
-| ability, **recovery**         | a dodge only                                 |
-| charging a heavy              | a dodge only                                 |
-| startup or active of any move | nothing                                      |
-| dodge (any phase)             | nothing                                      |
-| hurt                          | nothing                                      |
+| Current move                  | May start                                                                        |
+| ----------------------------- | -------------------------------------------------------------------------------- |
+| idle                          | anything                                                                         |
+| light, **recovery**           | a heavy, an ability, a dodge; the next light only from the **chain point** below |
+| heavy, **recovery**           | the next light, a heavy, an ability, a dodge                                     |
+| ability, **recovery**         | a dodge only                                                                     |
+| charging a heavy              | a dodge only                                                                     |
+| startup or active of any move | nothing                                                                          |
+| dodge (any phase)             | nothing                                                                          |
+| hurt                          | nothing                                                                          |
 
 - So an attack can always be finished with an ability ("cancel into Haul"), but an ability is a
   commitment that only a dodge can get you out of, and only once it has done its job.
+- **Light chain point** (Playtest 2). A light's recovery can be cancelled into the next light only
+  once `input.lightChainMs` (30) of that recovery has passed; dodge, heavy and abilities still
+  cancel on the first recovery tick. The delay is there so that a gamepad bumper and a mouse reach
+  the same top light cadence: mashing and tapping every 150 ms give the same number of lights
+  (`packages/sim/test/combat.test.ts`).
 - **Input buffer.** Light, heavy, dodge and ability presses are buffered for `input.bufferMs`
   (about 120 ms). A press made shortly before an action becomes possible fires on the first tick it
   is: an ability pressed during a light's active frames comes out on its first recovery tick.
   - The latest press wins.
   - Buffered presses don't age during hitstop.
+  - A buffered light waits for the chain point without aging, so it never expires in the gap
+    between the first recovery tick and the chain point, even when `lightChainMs` is longer than
+    `bufferMs`.
   - Getting hit (without armor) clears the buffer.
 
 ## 5. Weapons and abilities
@@ -160,7 +169,8 @@ picker, and:
     aim and within `haul.rangePx` is locked and the hook flies at it; with nothing in the cone it
     flies along the aim. It travels at `haul.speed` for at most `activeMs`, never beyond the range,
     and stops at the **first** Husk its head (`hitRadiusPx`) touches, or at a wall (a miss).
-    Only Husks are ever candidates: the Kindled, allies and pickups are never hooked.
+    Only Husks are ever candidates: the Kindled, allies and pickups are never hooked. The head is
+    `hitRadiusPx` wide (5 since Playtest 2, up from 4, so a hook thrown a touch off still lands).
   - **On hit:** the ability's damage/poise/hitstop land, then the pull by weight class:
     - **light:** the Husk slides along the chain to `haul.pullLightPx` from the player;
     - **medium:** `haul.pullMedium` of that distance;

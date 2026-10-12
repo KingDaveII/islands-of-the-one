@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { lightStrike, playerAttackPhase, type SimEvent } from '../src/index.js';
-import { addHusk, arena, Button, retune, step, steps, stepUntil } from './helpers.js';
+import { addHusk, arena, Button, retune, step, steps, stepUntil, toChainPoint } from './helpers.js';
 
 const swings = (events: SimEvent[]) => events.filter((e) => e.type === 'swing');
 
@@ -13,7 +13,7 @@ describe('light combo chaining', () => {
     step(run, Button.Light);
     expect([p.action, p.comboStep]).toEqual(['light', 0]);
     for (let k = 1; k <= n; k++) {
-      stepUntil(run, () => playerAttackPhase(p, run.params) === 'recovery');
+      toChainPoint(run);
       step(run, Button.Light);
       expect(p.action).toBe('light');
       expect(p.comboStep).toBe(k % n);
@@ -53,7 +53,7 @@ describe('light combo chaining', () => {
     stepUntil(run, () => p.hitIds.length > 0);
     const first = before - h.core;
     for (let k = 1; k <= 2; k++) {
-      stepUntil(run, () => playerAttackPhase(p, run.params) === 'recovery');
+      toChainPoint(run);
       step(run, Button.Light);
     }
     const mid = h.core;
@@ -63,12 +63,12 @@ describe('light combo chaining', () => {
 });
 
 describe('input buffering', () => {
-  it('a press shortly before recovery performs the action on the first recovery tick', () => {
+  it('a press shortly before recovery performs the action on the first recovery tick (a light: at the chain point)', () => {
     const run = arena();
     const p = run.state.player;
     const P = run.params;
     step(run, Button.Light);
-    stepUntil(run, () => playerAttackPhase(p, P) === 'recovery');
+    toChainPoint(run);
     step(run, Button.Light); // now in combo step 1
     const st = lightStrike(P, 1);
     const recoveryStart = st.startup + st.active + 1;
@@ -78,8 +78,21 @@ describe('input buffering', () => {
     expect([p.comboStep, p.buffer]).toEqual([1, 'light']);
     steps(run, P.bufferTicks - 1);
     expect(p.comboStep).toBe(1);
-    step(run); // first recovery tick: buffered press fires
+    step(run); // first recovery tick: a light still waits for the chain point, without aging
+    expect([p.action, p.comboStep, p.t, p.buffer, p.bufferAge]).toEqual(['light', 1, recoveryStart, 'light', P.bufferTicks]);
+    steps(run, P.lightChainTicks); // the chain point: the buffered press fires
     expect([p.action, p.comboStep, p.t, p.buffer]).toEqual(['light', 2, 0, 'none']);
+
+    // Any other press fires on the first recovery tick.
+    const r = arena();
+    const q = r.state.player;
+    step(r, Button.Light);
+    const first = lightStrike(P, 0);
+    stepUntil(r, () => q.t === first.startup + first.active - 1);
+    step(r, Button.Ability1);
+    expect([q.action, q.buffer]).toEqual(['light', 'ability1']);
+    step(r);
+    expect([q.action, q.t]).toEqual(['ability', 0]);
   });
 
   it('drops presses older than the buffer window', () => {
@@ -89,7 +102,7 @@ describe('input buffering', () => {
     // Get to combo step 2 (longest startup), then press dodge too early.
     step(run, Button.Light);
     for (let k = 0; k < 2; k++) {
-      stepUntil(run, () => playerAttackPhase(p, P) === 'recovery');
+      toChainPoint(run);
       step(run, Button.Light);
     }
     expect(p.comboStep).toBe(2);
@@ -112,6 +125,82 @@ describe('input buffering', () => {
     step(run, Button.Dodge);
     steps(run, stop - 1);
     expect([p.buffer, p.bufferAge]).toEqual(['dodge', 0]);
+  });
+});
+
+describe('light chain delay', () => {
+  /** Ticks from a light's start until its first recovery tick. */
+  const recoveryStart = (run: ReturnType<typeof arena>, step: number): number => {
+    const st = lightStrike(run.params, step);
+    return st.startup + st.active + 1;
+  };
+
+  it('the next light starts only once lightChainMs of the recovery has passed; a dodge cancels on the first recovery tick', () => {
+    const run = arena();
+    const p = run.state.player;
+    const P = run.params;
+    expect(P.lightChainTicks).toBe(2); // 30 ms
+    step(run, Button.Light);
+    const rs = recoveryStart(run, 0);
+    stepUntil(run, () => p.t === rs - 1);
+    // Held down from the first recovery tick: the press is buffered and fires exactly at the chain point.
+    for (let i = 0; i < P.lightChainTicks; i++) {
+      step(run, Button.Light);
+      expect(playerAttackPhase(p, P)).toBe('recovery');
+      expect([p.action, p.comboStep], `recovery tick ${i}`).toEqual(['light', 0]);
+    }
+    step(run, Button.Light);
+    expect([p.action, p.comboStep, p.t]).toEqual(['light', 1, 0]);
+
+    // Heavy, abilities and the dodge are not delayed.
+    for (const [button, action] of [
+      [Button.Dodge, 'dodge'],
+      [Button.Ability1, 'ability'],
+      [Button.Heavy, 'charge'],
+    ] as const) {
+      const r = arena();
+      step(r, Button.Light);
+      stepUntil(r, () => playerAttackPhase(r.state.player, r.params) === 'recovery');
+      step(r, button);
+      expect(r.state.player.action, action).toBe(action);
+    }
+  });
+
+  it('a buffered light waits for the chain point even when the wait is longer than the buffer', () => {
+    const run = arena();
+    retune(run, (t) => {
+      t.input.lightChainMs = 150;
+    });
+    const p = run.state.player;
+    const P = run.params;
+    expect(P.lightChainTicks).toBeGreaterThan(P.bufferTicks);
+    expect(P.lightChainTicks).toBeLessThan(lightStrike(P, 0).recovery);
+    step(run, Button.Light);
+    // Press during the active frames, inside the buffer window.
+    stepUntil(run, () => playerAttackPhase(p, P) === 'active');
+    step(run, Button.Light);
+    expect(p.buffer).toBe('light');
+    const chainPoint = recoveryStart(run, 0) + P.lightChainTicks;
+    stepUntil(run, () => p.t === chainPoint - 1);
+    expect([p.action, p.comboStep, p.buffer]).toEqual(['light', 0, 'light']);
+    step(run);
+    expect([p.action, p.comboStep, p.t]).toEqual(['light', 1, 0]);
+  });
+
+  it('a light held every tick and one tapped every 150 ms reach the same light count in 2 s (within one)', () => {
+    const lights = (period: number): number => {
+      const run = arena();
+      let count = 0;
+      for (let tick = 0; tick < 120; tick++) {
+        const press = tick % period === 0;
+        count += step(run, press ? Button.Light : 0).filter((e) => e.type === 'swing' && e.attack === 'light').length;
+      }
+      return count;
+    };
+    const mashed = lights(1);
+    const tapped = lights(9); // 150 ms
+    expect(mashed).toBeGreaterThanOrEqual(5);
+    expect(Math.abs(mashed - tapped)).toBeLessThanOrEqual(1);
   });
 });
 

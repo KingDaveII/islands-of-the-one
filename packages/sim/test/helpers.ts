@@ -4,6 +4,7 @@ import {
   createRun,
   encodeInput,
   huskParams,
+  lightStrike,
   setRunTuning,
   stepRun,
   SUB,
@@ -60,6 +61,18 @@ export function stepUntil(run: Run, pred: () => boolean, max = 600, buttons = 0,
     all.push(...step(run, buttons, aim));
   }
   throw new Error('stepUntil: condition not reached');
+}
+
+/**
+ * Run the current light to its chain point: the first recovery tick on which
+ * the next light may start (docs/design/combat.md §4). A light pressed on the
+ * next tick chains.
+ */
+export function toChainPoint(run: Run): void {
+  const p = run.state.player;
+  const st = lightStrike(run.params, p.comboStep);
+  const chain = st.startup + st.active + 1 + run.params.lightChainTicks;
+  stepUntil(run, () => p.action !== 'light' || p.t >= chain);
 }
 
 /** Place a husk `distPx` to the right of the player (aim 0 points at it). */
