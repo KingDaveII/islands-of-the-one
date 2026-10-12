@@ -368,14 +368,26 @@ async function main() {
       await page.waitForTimeout(900);
       await shot(page, `hud-corner-${name}`);
     }
-    // A Husk under the top-left panel: the panel fades.
+    // The player mid-room (floor under every panel) and a Husk under the top-left panel: that panel fades.
     await page.evaluate(() => {
       const s = window.__iot.scene().session.run.state;
-      s.player.x = (5 * 16 + 8) * 256;
-      s.player.y = (5 * 16 + 8) * 256;
+      s.player.x = (s.room.cols * 16 * 256) / 2;
+      s.player.y = (s.room.rows * 16 * 256) / 2;
+      s.player.aim = 0;
     });
     await page.waitForTimeout(900);
-    await page.evaluate(placeHusk, { kind: 'peeling', dx: -60, dy: -52 });
+    const panel = await page.evaluate(() => window.__iot.scene().hudRects().tl);
+    const offset = await page.evaluate(() => {
+      const scene = window.__iot.scene();
+      const cam = scene.cameras.main;
+      const s = scene.session.run.state;
+      return { x: s.player.x / 256 - cam.scrollX, y: s.player.y / 256 - cam.scrollY };
+    });
+    await page.evaluate(placeHusk, {
+      kind: 'peeling',
+      dx: Math.round(panel.x + panel.w / 2 - offset.x),
+      dy: Math.round(panel.y + panel.h / 2 - offset.y),
+    });
     await page.waitForTimeout(400);
     await shot(page, 'hud-panel-fades-behind-husk');
     console.log('F seed', seed);

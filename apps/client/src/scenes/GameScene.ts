@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { SUB, TILE_PX, type RunResults, type SimEvent, type Tuning } from '@iot/sim';
+import { huskParams, SUB, TILE_PX, type RunResults, type SimEvent, type Tuning } from '@iot/sim';
 import { Controls } from '../game/controls.js';
 import { promptTarget } from '../game/interact.js';
 import { Session } from '../game/session.js';
@@ -7,7 +7,8 @@ import { tuningStore } from '../game/tuningStore.js';
 import { Palette } from '../palette.js';
 import { Fx } from '../render/fx.js';
 import { hintItems, HintRow } from '../render/hint.js';
-import { Hud } from '../render/hud.js';
+import { Hud, type BodyRect, type Corner, type Rect } from '../render/hud.js';
+import { clampScroll } from '../render/camera.js';
 import { DEPTH } from '../render/depth.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { preloadSpriteSheets, registerSpriteSheets } from '../render/spriteSheets.js';
@@ -237,6 +238,12 @@ export class GameScene extends Phaser.Scene {
       .setVisible(true);
   }
 
+  /**
+   * The camera follows the player (led toward the aim) and may scroll past
+   * the room's edges by the HUD's safe margins (the corner panels' extents),
+   * so a player standing in a room corner is always in the clear area. A
+   * room that fits the area the HUD leaves free is centered in it.
+   */
   private followCamera(snap: boolean): void {
     const s = this.session.state;
     const j = tuningStore.get().juice;
@@ -246,14 +253,34 @@ export class GameScene extends Phaser.Scene {
     const ty = p.y + Math.sin(aim) * j.aimLeadPx - VIEW_H / 2;
     const roomW = s.room.cols * TILE_PX;
     const roomH = s.room.rows * TILE_PX;
-    const clampAxis = (v: number, size: number, view: number) =>
-      size <= view ? (size - view) / 2 : Math.max(0, Math.min(size - view, v));
-    const cx = clampAxis(tx, roomW, VIEW_W);
-    const cy = clampAxis(ty, roomH, VIEW_H);
+    const m = this.hud.safeMargins();
+    const cx = clampScroll(tx, roomW, VIEW_W, m.left, m.right);
+    const cy = clampScroll(ty, roomH, VIEW_H, m.top, m.bottom);
     const k = snap ? 1 : j.cameraLerp;
     this.camX += (cx - this.camX) * k;
     this.camY += (cy - this.camY) * k;
     this.cameras.main.setScroll(Math.round(this.camX), Math.round(this.camY));
+  }
+
+  /** The HUD's panel rectangles (playtests check what the camera keeps clear). */
+  hudRects(): Readonly<Record<Corner, Rect>> {
+    return this.hud.panelRects();
+  }
+
+  /** Screen rectangles of the player and the awake hostiles (a HUD panel one is behind fades). */
+  private bodyRects(): BodyRect[] {
+    const s = this.session.state;
+    const cam = this.cameras.main;
+    const rects: BodyRect[] = [];
+    const p = this.session.lerp('p', s.player.x, s.player.y);
+    rects.push({ x: Math.round(p.x) - cam.scrollX - 8, y: Math.round(p.y) - cam.scrollY - 14, w: 16, h: 24 });
+    for (const h of s.husks) {
+      if (h.action === 'spawn' || h.core <= 0) continue;
+      const r = huskParams(this.session.run.params, h.kind).radius / SUB;
+      const pos = this.session.lerp(`h${h.id}`, h.x, h.y);
+      rects.push({ x: Math.round(pos.x) - cam.scrollX - r - 2, y: Math.round(pos.y) - cam.scrollY - r - 4, w: 2 * r + 4, h: 2 * r + 6 });
+    }
+    return rects;
   }
 
   override update(_time: number, delta: number): void {
@@ -268,7 +295,7 @@ export class GameScene extends Phaser.Scene {
     this.world.draw(this.session, this.fx, this.time.now, delta * scale, delta, this.controls.reticle());
     this.fx.update(delta * scale, delta);
     this.updatePrompt();
-    this.hud.draw(this.session.run, delta);
+    this.hud.draw(this.session.run, delta, this.bodyRects());
 
     if (this.bannerLife > 0) {
       this.bannerLife -= delta;
