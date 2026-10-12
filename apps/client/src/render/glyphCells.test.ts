@@ -18,6 +18,8 @@ describe('controller glyph cells', () => {
     expect(glyphCell('RMB', 'keyboard')).toBe('mouse_right');
     expect(glyphCell('Space', 'keyboard')).toBe('key_space');
     expect(glyphCell('F2', 'keyboard')).toBe('key_f2');
+    expect(glyphCell('F3', 'keyboard')).toBe('key_f3');
+    expect(glyphCell('C', 'keyboard')).toBe('key_c');
     expect(GLYPH_SIZE).toBe(12);
   });
 
@@ -39,7 +41,7 @@ describe('controller glyph cells', () => {
   it('falls back to null for bindings without a cell', () => {
     expect(glyphCell('Select', 'ps')).toBeNull();
     expect(glyphCell('Shift', 'keyboard')).toBeNull();
-    expect(glyphCell('F3', 'keyboard')).toBeNull();
+    expect(glyphCell('F4', 'keyboard')).toBeNull();
   });
 
   it('picks the Xbox family from the pad id', () => {
