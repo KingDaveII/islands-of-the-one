@@ -45,10 +45,11 @@ Frame rates are per animation; `hold` means the last frame stays until the state
 | `heavy_thrust` | 2 | 20 | no | 8 | the line: hand forward, blade full length |
 | `heavy_hold` | 1 | — | hold | 8 | the pin: 150 ms, the enemy on the hook |
 | `heavy_recover` | 2 | 12 | no | 8 | |
-| `haul_throw` | 2 | 15 | hold last | 8 | arm out; chain and hook from `hookblade-fx` |
+| `haul_throw` | 2 | 15 | hold last | 8 | arm out; chain and hook from `hookblade-fx`; the last frame holds while the hook flies |
+| `haul_recover` | 2 | 12 | no | 8 | the arm comes back as the chain reels in, over the Haul's recovery (§9) |
 | `haul_pull` | 2 | 12 | yes | 8 | the brace: feet planted, both hands on the chain |
 | `haul_slide` | 2 | 12 | yes | 8 | the heavy branch: the player dragged, cloak streaming back |
-| `hit` | 1 | — | 100 ms | 4 | the engine flashes it #FFFFFF (the only pure white) |
+| `hit` | 2 | — | hold last | 4 | 0 = the flinch, 1 = the stagger held to the end of the hurt stun (§9); the engine flashes it #FFFFFF (the only pure white) |
 | `death` | 6 | 8 | no | 4 | the fall, then the freckles go out one by one on the last three frames |
 | `carry_idle`, `carry_walk` | 2, 6 | 2, 10 | yes | 4 | both arms round the Glowing Shell (hour two) |
 | `sit` | 1 | — | hold | 2 (S, E) | the ebb, by the post |
@@ -59,7 +60,8 @@ M2 adds the station animations (`chop`, `hoe`, `fish`, `knead`: 4 frames, 8 fps,
 
 | Name | Frames | fps | Loop | Notes |
 |---|---|---|---|---|
-| `idle` | 2 | 3 | yes | the curl breathes |
+| `spawn` | 4 | — | no | the curl gathering round its core, stretched over `spawnMs` (§9) |
+| `idle` | 2 | 3 | yes | the curl breathes; also its drift while it circles |
 | `telegraph` | 2 | 8 | hold last | tinted in the sheet already in #E0457B / #8E2550; no engine tint |
 | `lunge` | 3 | 15 | no | stretch, hit, settle |
 | `hit` | 1 | — | 100 ms | engine white flash |
@@ -71,9 +73,11 @@ M2 adds the station animations (`chop`, `hoe`, `fish`, `knead`: 4 frames, 8 fps,
 
 | Name | Frames | fps | Loop | Notes |
 |---|---|---|---|---|
+| `spawn` | 4 | — | no | the shell closing round its core, stretched over `spawnMs` (§9) |
 | `idle` | 2 | 2 | yes | |
+| `walk` | 4 | 6 | yes | the chase: the shell rocks forward on its hidden feet, 4 px per cycle (§9) |
 | `telegraph` | 2 | 8 | hold last | tinted in the sheet |
-| `roll` | 4 | 12 | yes | the charge |
+| `slam` | 2 | — | hold last | 0 = the shell dropping, 1 = the impact, held through the recovery; replaces `roll` (§9) |
 | `hit` | 1 | — | 100 ms | |
 | `chipped_outer` | 1 | — | hold | first poise bar broken: outer shell gone |
 | `chipped_inner` | 1 | — | hold | second bar broken: core exposed |
@@ -154,3 +158,22 @@ What `apps/client` does with a sheet (MAIN, M1 task 5). Nothing here is in the s
 - **F3** draws the old placeholder hitbox shapes over the sprites (with the stats overlay); `window.__iot.setDebugShapes(on)` does the same from the console.
 - **Palette.** `packages/shared/data/palette.json` holds the design system's 32 raw colours (`tokens`, copied from its `tokens.json`; role tokens like `ui-ink` are aliases and stay out) and the four clay tones. It changes only through an art/ PR; the sheet test and the client's `palette.ts` read it.
 - **Placeholders** come from `tools/placeholder-sheets.py` (Python/PIL, reads `packages/shared/data/palette.json`): run it after editing the script or the palette. `packages/shared/test/sprites.test.ts` is the test of §6; `tools/screenshots.mjs` takes the reference shots in `docs/screenshots/m1-task5/` through the `window.__iot` playtest hooks (`setInputSource`, `setSpeed`, `pose`).
+
+## 9. Answers to the PR #12 questions (ART, 2026-10-13)
+
+§4 above is the contract with these answers in it. Until MAIN brings the code to it (the lists in `packages/shared/src/sprites.ts`, `animState.ts`, `tools/placeholder-sheets.py` and the placeholders it writes), §8 describes the engine as it runs.
+
+1. **Husks get a `spawn` animation.** The spawn ring says *where*; the sprite should say *what*, rather than popping in when the Husk wakes. Peeling and Nutshell each get `spawn`, 4 frames, played once and stretched over the kind's `spawnMs` (600 / 800 ms) like any windowed animation: 0 = the core alone, a 2×2 spark; 1 = flakes circling it; 2 = the shell half closed; 3 = the shell closed, the same as `idle` frame 0. The ring stays under it. A Husk is still not awake until the spawn ends (as now); the sprite is just visible during it.
+2. **The Haul gets `haul_recover`**, 2 frames at 12 fps: the arm coming back to the body as the chain reels in. `haul_throw` covers the startup and holds its last frame only while the hook flies; `haul_recover` plays over the recovery (1:1), so the move ends where the light and heavy end, at rest. `haul_pull` and `haul_slide` are unchanged (they loop while the chain pulls).
+3. **`hit` covers the whole hurt stun** (already resolved in PR #12 for the engine; now the sheet matches): 2 frames. Frame 0, the flinch, shows for the first 100 ms; frame 1, the stagger, holds to the end of the stun (`hurtStunMs`, 180 ms). An armored hit that does not stun shows frame 0 alone for 100 ms. The white flash stays in the engine.
+4. **The Nutshell's `roll` was the wrong animation.** The sim's Nutshell walks slowly and slams in place for 70 ms; it never rolls. So `roll` goes and two take its place: `walk` (4 frames, 6 fps, loop) for the chase, chosen by velocity like the Kindled's walk, and `slam` (2 frames): frame 0 over the first half of the active ticks, frame 1 over the second half and held through the recovery. The slam's circle on the floor stays an engine decal.
+5. **`heavy_hold` vs hitstop: keep what the engine does.** The hold frame shows from the tick the thrust pins a Husk, through the hitstop, until the Husk is let go or the player cancels. The pin is the moment the heavy is for; it should be on screen while the world is frozen.
+
+**For MAIN** (one task, no new art needed to start: the placeholders carry the new names):
+
+- `KINDLED_ANIMS`: add `haul_recover` (2 frames, 12 fps, no loop, no hold, 8 facings) after `haul_throw`; `hit` becomes 2 frames with hold (4 facings).
+- `HUSK_ANIMS`: `peeling` gains `spawn` first; `nutshell` becomes `spawn, idle, walk, telegraph, slam, hit, chipped_outer, chipped_inner, regrow, death, drop`.
+- `animState.ts`: `spawn` over the spawn-in; `haul_throw` → `haul_recover` at the start of the recovery; `hit` frame 0 for 100 ms then frame 1 to the end of the stun; Nutshell `walk` from velocity in the chase and `slam` over active + recovery instead of `roll`.
+- `tools/placeholder-sheets.py`: write the new animations, rerun it, and keep `sprites.test.ts` green.
+
+The hand-drawn `kindled-ash`, `husk-peeling` and `husk-nutshell` sheets follow this contract.
