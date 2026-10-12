@@ -203,6 +203,27 @@ describe.each(SHEETS)('the %s sprite sheet', (name, sheet) => {
   }
 });
 
+describe('the palette', () => {
+  it("holds the design system's 32 raw colours, each once, and the drawn clay tone's values among them", () => {
+    const entries = Object.entries(paletteData.tokens);
+    expect(entries).toHaveLength(32);
+    const hexes = entries.map(([, h]) => h.toLowerCase());
+    expect(new Set(hexes).size).toBe(32);
+    for (const [name, hex] of entries) expect(hex, name).toMatch(/^#[0-9a-f]{6}$/);
+    expect(paletteData.signals.hit).toBe(paletteData.tokens['signal-hit']);
+    expect(paletteData.signals.telegraph).toEqual([
+      paletteData.tokens['signal-telegraph'],
+      paletteData.tokens['signal-telegraph-dark'],
+    ]);
+    const tones: Record<string, { skin: string; shade: string }> = paletteData.clay.tones;
+    for (const [tone, t] of Object.entries(tones)) {
+      expect(PALETTE.has(t.skin), `${tone} skin`).toBe(true);
+      expect(PALETTE.has(t.shade), `${tone} shade`).toBe(true);
+    }
+    expect(tones[paletteData.clay.drawn]?.skin).toBe(paletteData.tokens['unwritten-sail']);
+  });
+});
+
 describe('the sprite sheet table', () => {
   it('names the cell grid and origin of each M1 sheet (sprites.md §2)', () => {
     expect(spriteSheets['kindled-ash'].meta.cell).toEqual({ w: 48, h: 40 });

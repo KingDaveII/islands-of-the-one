@@ -53,7 +53,7 @@ export interface Clocks {
   regrowMs?: number;
 }
 
-/** The hit frame shows this long after a hit (sprites.md: hit, 100 ms). */
+/** The hit frame shows this long after a hit that did not stun (sprites.md: hit, 100 ms); a stun holds it for its whole length. */
 export const HIT_MS = 100;
 /** The player's walk cycle plays once the body moves faster than this (units per tick). */
 const WALK_THRESHOLD = SUB / 4;
@@ -174,7 +174,9 @@ function pinning(s: RunState): boolean {
  *   pin ends (through the hitstop) → heavy_recover over the rest of the recovery;
  * - Haul: haul_throw (arm out, then the last frame while the hook flies),
  *   haul_pull while the chain pulls a Husk, haul_slide while it pulls the player;
- * - hit for 100 ms after a hit, death at the sheet's rate after the sim stops.
+ * - hit held through the hurt stun (a longer hit animation plays at its rate and
+ *   holds its last frame), or for 100 ms after an armored hit; death at the
+ *   sheet's rate after the sim stops.
  */
 export function kindledPose(
   s: RunState,
@@ -190,11 +192,12 @@ export function kindledPose(
   // Standing, charging or stunned the Kindled faces the aim; a move faces the direction it locked at its start.
   const faceAngle =
     p.action === 'idle' || p.action === 'charge' || p.action === 'hurt' ? p.aim : p.dir;
+  // Stunned: `hit` plays at the sheet's rate and holds its last frame for the whole hurt stun.
+  if (p.action === 'hurt') return kindledPoseOf(sheet, 'hit', faceAngle, (a) => onceFrame(a, p.t));
+  // An armored hit (no stun) still shows the hit frame for 100 ms.
   if (clocks.hitMs >= 0 && clocks.hitMs < HIT_MS)
     return kindledPoseOf(sheet, 'hit', faceAngle, () => 0);
   switch (p.action) {
-    case 'hurt':
-      return kindledPoseOf(sheet, 'idle', faceAngle, () => 0);
     case 'dodge': {
       const d = P.dodge;
       return kindledPoseOf(sheet, 'dodge', p.dir, (a) =>

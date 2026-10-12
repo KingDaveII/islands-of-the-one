@@ -120,6 +120,12 @@ describe('the Kindled state machine', () => {
       anim: 'hit_W',
     });
     expect(kindledPose(s, run.params, KINDLED, { hitMs: 120 }).name).toBe('walk');
+    // Stunned: the hit frame holds for the whole hurt stun, whatever the hit clock says.
+    s.player.action = 'hurt';
+    s.player.t = 1;
+    expect(kindledPose(s, run.params, KINDLED, { hitMs: 120 })).toMatchObject({ name: 'hit', anim: 'hit_W', frame: 0 });
+    s.player.t = run.params.player.hurtStun;
+    expect(kindledPose(s, run.params, KINDLED, { hitMs: 500 })).toMatchObject({ name: 'hit', frame: 0 });
     s.player.action = 'dead';
     s.player.dir = deg(45);
     expect(kindledPose(s, run.params, KINDLED, { hitMs: -1, deathMs: 0 })).toMatchObject({

@@ -2,8 +2,9 @@ import { paletteData, type PaletteToken } from '@iot/shared';
 
 /**
  * Design-system color tokens (art direction, not balance data), read from
- * packages/shared/data/palette.json (the same file the sprite sheets are
- * checked against). Every color the client draws comes from here. See
+ * packages/shared/data/palette.json (the design system's 32 raw colours, the
+ * same list the sprite sheets are checked against; the client names the ones
+ * it draws with). Every color the client draws comes from here. See
  * docs/design/readability.md.
  *
  * Reserved signal colors, used for nothing else anywhere:
@@ -28,7 +29,7 @@ export const Tokens = {
   sleeperOchre: hex('sleeper-ochre'),
   sleeperSoil: hex('sleeper-soil'),
   unwrittenTar: hex('unwritten-tar'),
-  clayGreyOchre: hex('clay-grey-ochre'),
+  unwrittenSail: hex('unwritten-sail'),
   huskShell: hex('husk-shell'),
   huskCore: hex('husk-core'),
   choirFlame: hex('choir-flame'),
