@@ -21,6 +21,7 @@ describe('keyboard bindings (data-driven)', () => {
     expect(keyboardKeys('dodge', 'calm')).toEqual(['Space']);
     expect(keyboardKeys('dodge', 'combat')).toEqual(['Space']);
     expect(keyboardBinding('tuning')).toBe('F2');
+    expect([keyboardBinding('controls'), keyboardBinding('debug')]).toEqual(['C', 'F3']);
   });
 
   it('matches the design: LMB light, RMB heavy, Space dodge, MMB (or 1) Haul, 2-3 abilities, Q/F items, E interact', () => {
@@ -37,7 +38,9 @@ describe('keyboard bindings (data-driven)', () => {
       chartPeek: 'Tab',
       journal: 'J',
       menu: 'Esc',
+      controls: 'C',
       tuning: 'F2',
+      debug: 'F3',
     });
     // The old alternates are gone.
     expect(Object.values(KEYBOARD)).not.toContain('J/K');

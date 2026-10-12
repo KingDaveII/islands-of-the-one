@@ -98,7 +98,9 @@ describe('controls.json', () => {
       chartPeek: 'Tab',
       journal: 'J',
       menu: 'Esc',
+      controls: 'C',
       tuning: 'F2',
+      debug: 'F3',
     });
     expect(bindingKeys(KEYBOARD.interact, 'combat')).toEqual([]);
     expect(bindingKeys(KEYBOARD.dodge, 'combat')).toEqual(['Space']);
