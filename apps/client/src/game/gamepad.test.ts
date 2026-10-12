@@ -17,29 +17,42 @@ describe('gamepad presets (data-driven)', () => {
   it('Triggers is the default: R2 light, L2 heavy, L1 dodge, R1 ability 1, faces for the rest', () => {
     expect(DEFAULT_PRESET_ID).toBe('triggers');
     const t = presetById('triggers');
-    expect(buttonsFor(t, 'light')).toEqual([GLYPH_BUTTON.R2]);
-    expect(buttonsFor(t, 'heavy')).toEqual([GLYPH_BUTTON.L2]);
-    expect(buttonsFor(t, 'dodge')).toEqual([GLYPH_BUTTON.L1]);
-    expect(buttonsFor(t, 'ability1')).toEqual([GLYPH_BUTTON.R1]);
+    expect(buttonsFor(t, 'light', 'combat')).toEqual([GLYPH_BUTTON.R2]);
+    expect(buttonsFor(t, 'heavy', 'calm')).toEqual([GLYPH_BUTTON.L2]);
+    expect(buttonsFor(t, 'dodge', 'combat')).toEqual([GLYPH_BUTTON.L1]);
+    expect(buttonsFor(t, 'dodge', 'calm')).toEqual([GLYPH_BUTTON.L1]);
+    expect(buttonsFor(t, 'ability1', 'combat')).toEqual([GLYPH_BUTTON.R1]);
     expect([hintFor(t, 'ability2'), hintFor(t, 'ability3')]).toEqual(['Square', 'Triangle']);
     expect([hintFor(t, 'interact'), hintFor(t, 'chartPeek'), hintFor(t, 'journal')]).toEqual([
       'Cross',
       'Circle',
       'Down',
     ]);
+    // Per context: Cross interacts in Calm only; abilities 2/3 on the face buttons fire in Combat only.
+    expect(buttonsFor(t, 'interact', 'calm')).toEqual([GLYPH_BUTTON.Cross]);
+    expect(buttonsFor(t, 'interact', 'combat')).toEqual([]);
+    expect(buttonsFor(t, 'ability2', 'combat')).toEqual([GLYPH_BUTTON.Square]);
+    expect(buttonsFor(t, 'ability2', 'calm')).toEqual([]);
+    expect(hintFor(t, 'interact', 'combat')).toBe('');
     expect([hintFor(t, 'item1'), hintFor(t, 'item2')]).toEqual(['Left', 'Right']);
     expect(t.aim).toBe('right-stick');
   });
 
   it('Faces keeps the previous layout with its alternates; Left-stick aims with movement', () => {
     const f = presetById('faces');
-    expect(buttonsFor(f, 'light')).toEqual([GLYPH_BUTTON.Square]);
-    expect(buttonsFor(f, 'heavy')).toEqual([GLYPH_BUTTON.Triangle, GLYPH_BUTTON.R2]);
-    expect(buttonsFor(f, 'dodge')).toEqual([GLYPH_BUTTON.Cross, GLYPH_BUTTON.L1]);
+    expect(buttonsFor(f, 'light', 'combat')).toEqual([GLYPH_BUTTON.Square]);
+    expect(buttonsFor(f, 'heavy', 'combat')).toEqual([GLYPH_BUTTON.Triangle, GLYPH_BUTTON.R2]);
+    // Cross dodges in Combat and interacts in Calm; L1 dodges in both.
+    expect(buttonsFor(f, 'dodge', 'combat')).toEqual([GLYPH_BUTTON.Cross, GLYPH_BUTTON.L1]);
+    expect(buttonsFor(f, 'dodge', 'calm')).toEqual([GLYPH_BUTTON.L1]);
+    expect(buttonsFor(f, 'interact', 'calm')).toEqual([GLYPH_BUTTON.Cross]);
+    expect(buttonsFor(f, 'interact', 'combat')).toEqual([]);
+    expect(hintFor(f, 'dodge')).toBe('Cross/L1');
+    expect(hintFor(f, 'dodge', 'calm')).toBe('L1');
     expect(hintFor(f, 'ability1')).toBe('Circle/R1');
     const l = presetById('left-stick');
     expect(l.aim).toBe('left-stick');
-    expect(buttonsFor(l, 'light')).toEqual(buttonsFor(presetById('triggers'), 'light'));
+    expect(buttonsFor(l, 'light', 'combat')).toEqual(buttonsFor(presetById('triggers'), 'light', 'combat'));
     expect(PRESETS.map((p) => p.id)).toEqual(['triggers', 'faces', 'left-stick']);
   });
 
@@ -51,8 +64,11 @@ describe('gamepad presets (data-driven)', () => {
       dodge: 'Space',
       item1: 'Q',
       item2: 'F',
+      interact: 'E',
     });
+    expect(hints('keyboard', 'combat').interact).toBe('');
     expect(hints(presetById('triggers'))).toMatchObject({ light: 'R2', heavy: 'L2' });
+    expect(hints(presetById('triggers'), 'calm')).toMatchObject({ interact: 'Cross', ability2: '' });
   });
 });
 

@@ -1,17 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { controlsData } from '../src/index.js';
+import {
+  bindingContexts,
+  bindingKeys,
+  bindingKeysAll,
+  controlsData,
+  INPUT_CONTEXTS,
+  isContextual,
+  type BindingContext,
+  type ControlBinding,
+} from '../src/index.js';
 
 /**
  * controls.json: the gamepad presets and the keyboard bindings. A key or a
- * pad button may only be bound once per layout, so a press never has to
- * guess which action it means.
+ * pad button may map to one action only per input context (Combat, Calm)
+ * in each layout, so a press never has to guess which action it means; a
+ * key bound in both contexts must map to exactly one action in each.
  */
-type Binding = string | string[];
-
-const bindingsOf = (table: Record<string, Binding>): [string, string][] =>
-  Object.entries(table).flatMap(([action, b]) =>
-    (Array.isArray(b) ? b : [b]).map((key): [string, string] => [action, key]),
-  );
+const bindingsOf = (table: Record<string, ControlBinding>, context: BindingContext): [string, string][] =>
+  Object.entries(table).flatMap(([action, b]) => bindingKeys(b, context).map((key): [string, string] => [action, key]));
 
 function duplicates(pairs: [string, string][]): string[] {
   const seen = new Map<string, string>();
@@ -24,18 +30,61 @@ function duplicates(pairs: [string, string][]): string[] {
   return out;
 }
 
+const KEYBOARD: Record<string, ControlBinding> = controlsData.keyboard;
+
+describe('binding helpers', () => {
+  it('reads plain, list and per-context bindings', () => {
+    expect(bindingKeys('R2', 'combat')).toEqual(['R2']);
+    expect(bindingKeys(['Cross', 'L1'], 'calm')).toEqual(['Cross', 'L1']);
+    expect(bindingKeys({ combat: ['Cross', 'L1'], calm: 'L1' }, 'combat')).toEqual(['Cross', 'L1']);
+    expect(bindingKeys({ combat: ['Cross', 'L1'], calm: 'L1' }, 'calm')).toEqual(['L1']);
+    expect(bindingKeys({ calm: 'E' }, 'combat')).toEqual([]);
+    expect(bindingKeys(undefined, 'calm')).toEqual([]);
+    expect(bindingKeysAll({ combat: ['Cross', 'L1'], calm: 'L1' })).toEqual(['Cross', 'L1']);
+    expect(bindingContexts('Space')).toEqual(['combat', 'calm']);
+    expect(bindingContexts({ calm: 'E' })).toEqual(['calm']);
+    expect(isContextual({ calm: 'E' })).toBe(true);
+    expect(isContextual(['A', 'B'])).toBe(false);
+    expect(isContextual('A')).toBe(false);
+  });
+});
+
 describe('controls.json', () => {
-  it('binds every keyboard key to one action only', () => {
-    expect(duplicates(bindingsOf(controlsData.keyboard))).toEqual([]);
+  it('binds every keyboard key to one action only per context', () => {
+    for (const context of INPUT_CONTEXTS) expect(duplicates(bindingsOf(KEYBOARD, context)), context).toEqual([]);
   });
 
-  it('binds every pad button to one action only in each preset', () => {
+  it('one action per input per context in each preset', () => {
     for (const preset of controlsData.presets) {
-      expect(duplicates(bindingsOf(preset.bindings)), preset.id).toEqual([]);
+      const table: Record<string, ControlBinding> = preset.bindings;
+      for (const context of INPUT_CONTEXTS) {
+        expect(duplicates(bindingsOf(table, context)), `${preset.id} / ${context}`).toEqual([]);
+      }
     }
   });
 
-  it('has the keyboard layout from the design', () => {
+  it('a key bound in both contexts maps to exactly one action in each', () => {
+    const tables: [string, Record<string, ControlBinding>][] = [
+      ['keyboard', KEYBOARD],
+      ...controlsData.presets.map((p): [string, Record<string, ControlBinding>] => [p.id, p.bindings]),
+    ];
+    for (const [name, table] of tables) {
+      const actionsOf = (key: string, context: BindingContext) =>
+        bindingsOf(table, context)
+          .filter(([, k]) => k === key)
+          .map(([a]) => a);
+      const keys = new Set(Object.values(table).flatMap((b) => bindingKeysAll(b)));
+      for (const key of keys) {
+        const combat = actionsOf(key, 'combat');
+        const calm = actionsOf(key, 'calm');
+        expect(combat.length, `${name}: ${key} in combat`).toBeLessThanOrEqual(1);
+        expect(calm.length, `${name}: ${key} in calm`).toBeLessThanOrEqual(1);
+        expect(combat.length + calm.length, `${name}: ${key} is bound nowhere`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('has the keyboard layout from the design: E interacts in Calm only, Space dodges in both contexts', () => {
     expect(controlsData.keyboard).toEqual({
       light: 'LMB',
       heavy: 'RMB',
@@ -45,12 +94,41 @@ describe('controls.json', () => {
       ability3: '3',
       item1: 'Q',
       item2: 'F',
-      interact: 'E',
+      interact: { calm: 'E' },
       chartPeek: 'Tab',
       journal: 'J',
       menu: 'Esc',
       tuning: 'F2',
     });
+    expect(bindingKeys(KEYBOARD.interact, 'combat')).toEqual([]);
+    expect(bindingKeys(KEYBOARD.dodge, 'combat')).toEqual(['Space']);
+    expect(bindingKeys(KEYBOARD.dodge, 'calm')).toEqual(['Space']);
+  });
+
+  it('Faces: Cross dodges in Combat and interacts in Calm; L3 is unbound', () => {
+    const faces = controlsData.presets.find((p) => p.id === 'faces');
+    const b: Record<string, ControlBinding> = faces?.bindings ?? {};
+    expect(bindingKeys(b.dodge, 'combat')).toEqual(['Cross', 'L1']);
+    expect(bindingKeys(b.dodge, 'calm')).toEqual(['L1']);
+    expect(bindingKeys(b.interact, 'calm')).toEqual(['Cross']);
+    expect(bindingKeys(b.interact, 'combat')).toEqual([]);
+    expect(Object.values(b).flatMap((x) => bindingKeysAll(x))).not.toContain('L3');
+  });
+
+  it('Triggers and Left-stick: interact = Cross in Calm only; abilities 2/3 on buttons fire in Combat only', () => {
+    for (const id of ['triggers', 'left-stick']) {
+      const preset = controlsData.presets.find((p) => p.id === id);
+      const b: Record<string, ControlBinding> = preset?.bindings ?? {};
+      expect(bindingKeys(b.interact, 'calm'), id).toEqual(['Cross']);
+      expect(bindingKeys(b.interact, 'combat'), id).toEqual([]);
+      expect(bindingsOf(b, 'combat').some(([, k]) => k === 'Cross'), `${id}: Cross in combat`).toBe(false);
+    }
+    for (const preset of controlsData.presets) {
+      const b: Record<string, ControlBinding> = preset.bindings;
+      for (const action of ['ability2', 'ability3']) {
+        expect(bindingContexts(b[action]), `${preset.id}: ${action}`).toEqual(['combat']);
+      }
+    }
   });
 
   it('names a default preset that exists, with unique ids, each binding every pad action', () => {

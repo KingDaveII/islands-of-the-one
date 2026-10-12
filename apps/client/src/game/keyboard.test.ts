@@ -1,13 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { eventKeyFor, KEYBOARD, KEYBOARD_ACTIONS, keyboardBinding, keyCodeFor, MOUSE_BUTTONS } from './keyboard.js';
+import { eventKeyFor, KEYBOARD, KEYBOARD_ACTIONS, keyboardBinding, keyboardKeys, keyCodeFor, MOUSE_BUTTONS } from './keyboard.js';
 
 describe('keyboard bindings (data-driven)', () => {
   it('every keyboard binding is a mouse button or a key with a code', () => {
     for (const action of KEYBOARD_ACTIONS) {
-      const b = keyboardBinding(action);
-      const ok = MOUSE_BUTTONS[b] !== undefined || keyCodeFor(b) !== undefined;
-      expect(ok, `${action}: ${b}`).toBe(true);
+      const keys = keyboardKeys(action);
+      expect(keys.length, action).toBeGreaterThan(0);
+      for (const b of keys) {
+        const ok = MOUSE_BUTTONS[b] !== undefined || keyCodeFor(b) !== undefined;
+        expect(ok, `${action}: ${b}`).toBe(true);
+      }
     }
+  });
+
+  it('E interacts in Calm only; Space dodges in both contexts', () => {
+    expect(keyboardKeys('interact', 'calm')).toEqual(['E']);
+    expect(keyboardKeys('interact', 'combat')).toEqual([]);
+    expect(keyboardKeys('interact')).toEqual(['E']);
+    expect(keyboardBinding('interact')).toBe('E');
+    expect(keyboardKeys('dodge', 'calm')).toEqual(['Space']);
+    expect(keyboardKeys('dodge', 'combat')).toEqual(['Space']);
+    expect(keyboardBinding('tuning')).toBe('F2');
   });
 
   it('matches the design: LMB light, RMB heavy, Space dodge, 1-3 abilities, Q/F items, E interact', () => {
@@ -20,7 +33,7 @@ describe('keyboard bindings (data-driven)', () => {
       ability3: '3',
       item1: 'Q',
       item2: 'F',
-      interact: 'E',
+      interact: { calm: 'E' },
       chartPeek: 'Tab',
       journal: 'J',
       menu: 'Esc',

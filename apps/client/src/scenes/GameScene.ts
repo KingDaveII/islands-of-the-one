@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { SUB, TILE_PX, type RunResults, type SimEvent, type Tuning } from '@iot/sim';
 import { Controls } from '../game/controls.js';
+import { promptTarget } from '../game/interact.js';
 import { Session } from '../game/session.js';
 import { tuningStore } from '../game/tuningStore.js';
 import { Palette } from '../palette.js';
@@ -39,7 +40,7 @@ export class GameScene extends Phaser.Scene {
   private bannerSub!: Phaser.GameObjects.Text;
   private bannerLife = 0;
   private tint!: Phaser.GameObjects.Rectangle;
-  /** The interact prompt over the nearest closed chest in reach. */
+  /** The interact prompt (Calm only) over the nearest interactable in reach; nothing in M1 needs one. */
   private prompt!: HintRow;
   private seed = 0;
   private weapon = 'hookblade';
@@ -208,23 +209,22 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  /** The interact prompt: the interact glyph and "OPEN" over the nearest closed chest within reach. */
+  /**
+   * The interact prompt: the interact glyph and the target's word over the
+   * nearest interactable within reach, in Calm only (docs/design/controls.md).
+   * Chests open on contact and never prompt; M1 has no interactable, so this
+   * shows nothing yet.
+   */
   private updatePrompt(): void {
     const s = this.session.state;
-    const range = tuningStore.get().juice.promptRangePx * SUB;
-    let best: { x: number; y: number; d: number } | null = null;
-    for (const c of s.chests) {
-      if (c.opened) continue;
-      const d = Math.hypot(c.x - s.player.x, c.y - s.player.y);
-      if (d <= range && (!best || d < best.d)) best = { x: c.x, y: c.y, d };
-    }
-    if (!best || s.player.action === 'dead') {
+    const target = promptTarget(s, tuningStore.get().juice.promptRangePx * SUB);
+    if (!target) {
       this.prompt.setVisible(false);
       return;
     }
     this.prompt
-      .setItems([...hintItems(this.controls.hint('interact')), { text: 'OPEN' }])
-      .place(best.x / SUB, best.y / SUB - 12, 0.5, 1)
+      .setItems([...hintItems(this.controls.hint('interact')), { text: target.label }])
+      .place(target.x / SUB, target.y / SUB - 12, 0.5, 1)
       .setVisible(true);
   }
 

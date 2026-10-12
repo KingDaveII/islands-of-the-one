@@ -87,11 +87,12 @@ export class Hud {
     this.syncHints(run);
   }
 
-  /** Key hints follow the device in use (gamepad preset glyphs or keyboard keys); rebuilt only when that changes. */
+  /** Key hints follow the device in use (gamepad preset glyphs or keyboard keys) and the input context; rebuilt only when those change. */
   private syncHints(run: Run): void {
     const source = this.controls.hintSource();
     const key =
       (source === 'keyboard' ? 'keyboard' : `${source.family}:${source.preset.id}`) +
+      `:${this.controls.context}` +
       run.params.weapon.abilities.map((a) => (a.locked ? '-' : '+')).join('');
     if (key === this.hintKey) return;
     this.hintKey = key;

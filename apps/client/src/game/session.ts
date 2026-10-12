@@ -63,14 +63,14 @@ export class Session {
     return this.run.state.slowmo > 0 ? this.run.params.perfect.slowmoScale / 1000 : 1;
   }
 
-  /** What the input sampler needs from the world: enemy offsets (soft lock) and whether a fight is on. */
+  /** What the input sampler needs from the world: enemy offsets (soft lock) and the input context. */
   private sampleContext(): SampleContext {
     const s = this.run.state;
     const p = s.player;
     const soft = this.run.tuning.softlock;
     return {
       enemies: s.husks.filter((h) => h.core > 0 && h.action !== 'spawn').map((h) => ({ dx: (h.x - p.x) / SUB, dy: (h.y - p.y) / SUB })),
-      encounter: s.room.phase === 'fighting' || s.husks.length > 0,
+      context: s.context,
       softLockDeg: this.controls.preset.aim === 'left-stick' ? soft.leftStickAngleDeg : soft.angleDeg,
     };
   }
