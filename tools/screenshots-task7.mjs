@@ -321,6 +321,11 @@ async function main() {
   await waitFor(
     () => window.__iot.pose()?.anim.startsWith('hit') && window.__iot.pose()?.frame === 1,
   );
+  // The post-hit invulnerability flickers the sprite on alternate ticks: switch it off so the stagger frame is in the shot.
+  await page.evaluate(() => {
+    window.__iot.scene().session.run.state.player.hurtInvuln = 0;
+  });
+  await page.waitForTimeout(60);
   await shot('hit-1-stagger', await clipAroundPlayer(160, 110));
 
   // 5. The start screen: the menu keys as glyphs.
