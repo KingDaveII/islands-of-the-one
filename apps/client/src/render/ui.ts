@@ -14,14 +14,24 @@ type G = Phaser.GameObjects.Graphics;
  * (unless `plain`) a thin glowing rim cracked open at each corner. (x, y, w, h)
  * is the outer box including the outline; the shadow adds 1 px below.
  */
-export function panel(g: G, x: number, y: number, w: number, h: number, opts: { plain?: boolean; rim?: number } = {}): void {
+export function panel(
+  g: G,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  opts: { plain?: boolean; rim?: number; dither?: boolean } = {},
+): void {
+  // Dithered: every other pixel of the fill and frame is left out, so what is behind shows through
+  // (the HUD while a body is behind a panel; the ink on it stays solid). Colours stay in the palette.
+  const fill = opts.dither ? ditherRect : solidRect;
   // Outline + drop shadow, corners chamfered by 1 px.
-  g.fillStyle(Palette.uiOutline, 1);
-  g.fillRect(x + 1, y, w - 2, h + 1);
-  g.fillRect(x, y + 1, w, h - 1);
+  fill(g, x + 1, y, w - 2, h + 1, Palette.uiOutline);
+  fill(g, x, y + 1, w, h - 1, Palette.uiOutline);
   // Face with the bevel along the top and left.
-  g.fillStyle(Palette.uiPanel, 1).fillRect(x + 1, y + 1, w - 2, h - 2);
-  g.fillStyle(Palette.uiBevel, 1).fillRect(x + 1, y + 1, w - 2, 1).fillRect(x + 1, y + 1, 1, h - 2);
+  fill(g, x + 1, y + 1, w - 2, h - 2, Palette.uiPanel);
+  fill(g, x + 1, y + 1, w - 2, 1, Palette.uiBevel);
+  fill(g, x + 1, y + 1, 1, h - 2, Palette.uiBevel);
   if (opts.plain) return;
   // Rim: 1 px, inset, broken at the corners.
   const rx = x + 3;
@@ -35,24 +45,56 @@ export function panel(g: G, x: number, y: number, w: number, h: number, opts: { 
   g.fillRect(rx + rw - 1, ry + 2, 1, rh - 4);
 }
 
+function solidRect(g: G, x: number, y: number, w: number, h: number, color: number): void {
+  g.fillStyle(color, 1).fillRect(x, y, w, h);
+}
+
+/** A 50 % checkerboard of a rect: the pixels where (x + y) is even, on the screen's own grid. */
+export function ditherRect(g: G, x: number, y: number, w: number, h: number, color: number): void {
+  g.fillStyle(color, 1);
+  for (let py = y; py < y + h; py++) {
+    for (let px = x + ((x + py) & 1); px < x + w; px += 2) g.fillRect(px, py, 1, 1);
+  }
+}
+
 /** Rim divider between stats and lore: a line with a 2 px gap. */
 export function divider(g: G, x: number, y: number, w: number): void {
-  g.fillStyle(Palette.uiBevel, 1).fillRect(x, y, 4, 1).fillRect(x + 6, y, w - 6, 1);
+  g.fillStyle(Palette.uiBevel, 1)
+    .fillRect(x, y, 4, 1)
+    .fillRect(x + 6, y, w - 6, 1);
 }
 
 /** Tier pips: rarity shows as a count as well as a color. */
 export function tierPips(g: G, x: number, y: number, tier: number, max = 5): void {
-  const color = Palette.rarity[Math.max(0, Math.min(Palette.rarity.length - 1, tier - 1))] ?? Palette.uiInk;
+  const color =
+    Palette.rarity[Math.max(0, Math.min(Palette.rarity.length - 1, tier - 1))] ?? Palette.uiInk;
   for (let i = 0; i < max; i++) {
     g.fillStyle(Palette.uiOutline, 1).fillRect(x + i * 4 - 1, y - 1, 4, 4);
     g.fillStyle(i < tier ? color : Palette.uiBevel, 1).fillRect(x + i * 4, y, 2, 2);
   }
 }
 
-export type IconKind = 'haul' | 'catch' | 'sweep' | 'dodge' | 'lock' | 'hookblade' | 'spark' | 'slash' | 'thrust' | 'ration';
+export type IconKind =
+  | 'haul'
+  | 'catch'
+  | 'sweep'
+  | 'dodge'
+  | 'lock'
+  | 'hookblade'
+  | 'spark'
+  | 'slash'
+  | 'thrust'
+  | 'ration';
 
 /** Small pixel icons, drawn into a box of `size` px at (x, y). */
-export function icon(g: G, kind: IconKind, x: number, y: number, size: number, color: number): void {
+export function icon(
+  g: G,
+  kind: IconKind,
+  x: number,
+  y: number,
+  size: number,
+  color: number,
+): void {
   const c = (dx: number, dy: number, w = 1, h = 1): void => {
     g.fillRect(x + dx, y + dy, w, h);
   };
@@ -174,7 +216,20 @@ export function abilitySlot(g: G, x: number, y: number, s: SlotState): void {
     icon(g, 'lock', ix, iy, inner, Palette.uiInkMuted);
     return;
   }
-  icon(g, s.icon, ix, iy, inner, s.empty ? Palette.uiBevel : s.cooldown > 0 ? Palette.uiBevel : s.active ? Palette.uiFocus : Palette.uiInk);
+  icon(
+    g,
+    s.icon,
+    ix,
+    iy,
+    inner,
+    s.empty
+      ? Palette.uiBevel
+      : s.cooldown > 0
+        ? Palette.uiBevel
+        : s.active
+          ? Palette.uiFocus
+          : Palette.uiInk,
+  );
   if (s.cooldown > 0) {
     const half = inner / 2;
     const pts = squareSweep(ix + half, iy + half, half, 1 - s.cooldown, 1);
@@ -187,7 +242,15 @@ export function abilitySlot(g: G, x: number, y: number, s: SlotState): void {
  * every 10 HP, the recent loss in health-loss draining after hitstop, and the
  * whole fill in health-loss below 25%.
  */
-export function healthBar(g: G, x: number, y: number, hp: number, max: number, lag: number, width = 64): void {
+export function healthBar(
+  g: G,
+  x: number,
+  y: number,
+  hp: number,
+  max: number,
+  lag: number,
+  width = 64,
+): void {
   const trackH = 5;
   g.fillStyle(Palette.uiOutline, 1).fillRect(x, y, width + 2, trackH + 3);
   const tx = x + 1;
@@ -201,5 +264,6 @@ export function healthBar(g: G, x: number, y: number, hp: number, max: number, l
   g.fillStyle(low ? Palette.healthLoss : Palette.healthFill, 1).fillRect(tx, ty, w, trackH);
   g.fillStyle(low ? Palette.healthLow : Palette.healthShade, 1).fillRect(tx, ty + trackH - 1, w, 1);
   g.fillStyle(Palette.uiOutline, 1);
-  for (let v = 10; v < max; v += 10) g.fillRect(tx + Math.round((width * v) / max) - 1, ty, 1, trackH);
+  for (let v = 10; v < max; v += 10)
+    g.fillRect(tx + Math.round((width * v) / max) - 1, ty, 1, trackH);
 }

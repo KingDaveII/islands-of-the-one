@@ -21,7 +21,11 @@ const SLOT_GAP = 4;
 const HINT_H = GLYPH_SIZE;
 const READY_FLASH_MS = 200;
 
-const ABILITY_ICONS: Record<string, IconKind> = { haul: 'haul', 'the-catch': 'catch', 'turning-blade': 'sweep' };
+const ABILITY_ICONS: Record<string, IconKind> = {
+  haul: 'haul',
+  'the-catch': 'catch',
+  'turning-blade': 'sweep',
+};
 const ITEM_ICONS: Record<string, IconKind> = { ration: 'ration' };
 
 export type Corner = 'tl' | 'tr' | 'bl' | 'br';
@@ -35,9 +39,8 @@ export interface Rect {
 }
 /** The screen rectangle of a body (the player, a hostile) the panels must not hide. */
 export type BodyRect = Rect;
-/** A panel drops to this while the player or a hostile is behind it. */
-export const HUD_BEHIND_ALPHA = 0.4;
-const FADE_MS = 90;
+/** A panel stays dithered this long after a body was last behind it, so it never flickers at the edge. */
+const BEHIND_HOLD_MS = 120;
 
 /** How far the HUD's corner panels reach in from each screen edge: the camera keeps the room's corners outside them (GameScene). */
 export interface SafeMargins {
@@ -47,7 +50,8 @@ export interface SafeMargins {
   bottom: number;
 }
 
-const overlaps = (a: Rect, b: Rect): boolean => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+const overlaps = (a: Rect, b: Rect): boolean =>
+  a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
 /**
  * Screen-space HUD at the four corners (the center of the screen stays clear
@@ -61,10 +65,10 @@ const overlaps = (a: Rect, b: Rect): boolean => a.x < b.x + b.w && b.x < a.x + a
  * a binding with no glyph shows its label. Party portraits only show in a party.
  */
 export class Hud {
-  /** One Graphics per corner, so each panel can fade on its own. */
+  /** One Graphics per corner. */
   private readonly g: Record<Corner, Phaser.GameObjects.Graphics>;
-  /** Everything drawn in each corner (its graphics, texts and hint rows), for the fade. */
-  private readonly parts: Record<Corner, { setAlpha(a: number): unknown }[]>;
+  /** Until when each corner's panel is drawn dithered (a body was behind it). */
+  private readonly behindUntil: Record<Corner, number> = { tl: 0, tr: 0, bl: 0, br: 0 };
   /** The panel rectangle each corner drew last frame. */
   private readonly rects: Record<Corner, Rect> = {
     tl: { x: 0, y: 0, w: 0, h: 0 },
@@ -72,7 +76,6 @@ export class Hud {
     bl: { x: 0, y: 0, w: 0, h: 0 },
     br: { x: 0, y: 0, w: 0, h: 0 },
   };
-  private readonly alpha: Record<Corner, number> = { tl: 1, tr: 1, bl: 1, br: 1 };
   private readonly hpText: Phaser.GameObjects.Text;
   private readonly dodgeKey: HintRow;
   private readonly itemKeys: HintRow[];
@@ -97,23 +100,26 @@ export class Hud {
     weaponName: string,
     private readonly controls: Controls,
   ) {
-    this.g = { tl: scene.add.graphics(), tr: scene.add.graphics(), bl: scene.add.graphics(), br: scene.add.graphics() };
+    this.g = {
+      tl: scene.add.graphics(),
+      tr: scene.add.graphics(),
+      bl: scene.add.graphics(),
+      br: scene.add.graphics(),
+    };
     this.hpText = label(scene, 0, 0, '100');
     this.dodgeKey = new HintRow(scene);
     this.room = label(scene, 0, 0, 'ROOM 1/3');
     this.spark = label(scene, 0, 0, '0');
     this.weaponName = label(scene, 0, 0, weaponName.toUpperCase());
     const abilities = run.params.weapon.abilities;
-    this.keys = [new HintRow(scene), new HintRow(scene), ...abilities.map(() => new HintRow(scene))];
+    this.keys = [
+      new HintRow(scene),
+      new HintRow(scene),
+      ...abilities.map(() => new HintRow(scene)),
+    ];
     this.secs = abilities.map(() => label(scene, 0, 0, ''));
     this.itemKeys = run.state.player.items.map(() => new HintRow(scene));
     this.itemCounts = run.state.player.items.map(() => label(scene, 0, 0, ''));
-    this.parts = {
-      tl: [this.g.tl, this.hpText, this.dodgeKey.container, ...this.itemKeys.map((k) => k.container), ...this.itemCounts],
-      tr: [this.g.tr, this.room],
-      bl: [this.g.bl, this.weaponName, ...this.keys.map((k) => k.container), ...this.secs],
-      br: [this.g.br, this.spark],
-    };
     layer.add([
       ...CORNERS.map((c) => this.g[c]),
       this.hpText,
@@ -150,22 +156,23 @@ export class Hud {
     return this.rects;
   }
 
+  /**
+   * A corner's panel: solid, or a 50 % checkerboard dither of its fill and
+   * frame while the player or a hostile is behind it, so the room shows
+   * through. The ink, bars, icons and glyphs on it stay solid
+   * (docs/design/readability.md §3).
+   */
   private panelAt(corner: Corner, x: number, y: number, w: number, h: number): void {
     // The panel's drop shadow adds a pixel below.
     this.rects[corner] = { x, y, w, h: h + 1 };
-    panel(this.g[corner], x, y, w, h, { plain: true });
+    panel(this.g[corner], x, y, w, h, { plain: true, dither: this.behindUntil[corner] > this.now });
   }
 
-  /** Fade each corner toward 40 % while a body is behind its panel, back to full when clear. */
-  private fade(bodies: readonly BodyRect[], dtMs: number): void {
-    const k = Math.min(1, dtMs / FADE_MS);
+  /** Note which panels a body is behind this frame (against last frame's rectangles). */
+  private markBehind(bodies: readonly BodyRect[]): void {
     for (const c of CORNERS) {
-      const behind = bodies.some((b) => overlaps(b, this.rects[c]));
-      const target = behind ? HUD_BEHIND_ALPHA : 1;
-      const next = this.alpha[c] + (target - this.alpha[c]) * k;
-      if (Math.abs(next - this.alpha[c]) < 0.002 && next === target) continue;
-      this.alpha[c] = Math.abs(target - next) < 0.01 ? target : next;
-      for (const part of this.parts[c]) part.setAlpha(this.alpha[c]);
+      if (bodies.some((b) => overlaps(b, this.rects[c])))
+        this.behindUntil[c] = this.now + BEHIND_HOLD_MS;
     }
   }
 
@@ -198,15 +205,17 @@ export class Hud {
 
   /** Lights a slot's frame briefly when its cooldown comes back. */
   private ready(i: number, cooldown: number): boolean {
-    if (cooldown === 0 && (this.prevCooldown[i] ?? 0) > 0) this.readyUntil[i] = this.now + READY_FLASH_MS;
+    if (cooldown === 0 && (this.prevCooldown[i] ?? 0) > 0)
+      this.readyUntil[i] = this.now + READY_FLASH_MS;
     this.prevCooldown[i] = cooldown;
     return (this.readyUntil[i] ?? 0) > this.now;
   }
 
-  /** Draw the HUD. `bodies` are the screen rectangles of the player and the hostiles: a panel one is behind fades. */
+  /** Draw the HUD. `bodies` are the screen rectangles of the player and the hostiles: a panel one is behind is dithered. */
   draw(run: Run, dtMs: number, bodies: readonly BodyRect[] = []): void {
     this.now += dtMs;
     this.syncHints(run);
+    this.markBehind(bodies);
     const s = run.state;
     const P = run.params;
     const p = s.player;
@@ -229,7 +238,14 @@ export class Hud {
     const dodgeCd = dodging ? 1 : P.dodge.cooldown > 0 ? p.dodgeCooldown / P.dodge.cooldown : 0;
     const dodgeReady = this.ready(3, dodging ? 1 : p.dodgeCooldown);
     let x = INSET + PAD;
-    abilitySlot(g, x, rowY, { icon: 'dodge', cooldown: dodgeCd, locked: false, ready: dodgeReady, small: true, active: dodging });
+    abilitySlot(g, x, rowY, {
+      icon: 'dodge',
+      cooldown: dodgeCd,
+      locked: false,
+      ready: dodgeReady,
+      small: true,
+      active: dodging,
+    });
     this.dodgeKey.place(x + SMALL / 2, rowY + SMALL + 1, 0.5);
     x += SMALL + 3 + Math.round(this.dodgeKey.width / 2) + 6;
     // Consumable slots: icon, count and key hint; empty slots are sunken.
@@ -280,7 +296,14 @@ export class Hud {
 
     // --- Bottom left: weapon --------------------------------------------
     const abilities = P.weapon.abilities;
-    const blW = PAD + SLOT * 3 + SLOT_GAP * 2 + 6 + abilities.length * SLOT + (abilities.length - 1) * SLOT_GAP + PAD;
+    const blW =
+      PAD +
+      SLOT * 3 +
+      SLOT_GAP * 2 +
+      6 +
+      abilities.length * SLOT +
+      (abilities.length - 1) * SLOT_GAP +
+      PAD;
     const blH = PAD + 10 + SLOT + 1 + HINT_H + PAD;
     const blX = INSET;
     const blY = H - INSET - blH;
@@ -298,10 +321,23 @@ export class Hud {
     // Light: combo pips (filled = hits done in this chain).
     this.slotFrame(g, x, wy, p.action === 'light');
     const n = P.weapon.light.length;
-    const done = p.action === 'light' ? p.comboStep + 1 : p.comboTimer > 0 ? p.nextCombo : p.haulCombo > 0 ? n - 1 : 0;
+    const done =
+      p.action === 'light'
+        ? p.comboStep + 1
+        : p.comboTimer > 0
+          ? p.nextCombo
+          : p.haulCombo > 0
+            ? n - 1
+            : 0;
     icon(g, 'slash', x + 2, wy + 1, 12, p.action === 'light' ? Palette.uiFocus : Palette.uiInk);
     g.fillStyle(Palette.uiOutline, 1).fillRect(x + 3, wy + 13, 14, 4);
-    for (let i = 0; i < n; i++) g.fillStyle(i < done ? Palette.spark : Palette.uiBevel, 1).fillRect(x + 4 + i * 4, wy + 14, 3, 2);
+    for (let i = 0; i < n; i++)
+      g.fillStyle(i < done ? Palette.spark : Palette.uiBevel, 1).fillRect(
+        x + 4 + i * 4,
+        wy + 14,
+        3,
+        2,
+      );
     this.keys[0]?.place(x + SLOT / 2, wy + SLOT + 1, 0.5);
     x += SLOT + SLOT_GAP;
 
@@ -313,7 +349,10 @@ export class Hud {
     g.fillStyle(Palette.uiOutline, 1).fillRect(x + 3, wy + 13, 14, 4);
     for (let i = 0; i < 3; i++) {
       const on = i < stage;
-      g.fillStyle(on ? (stage === 3 ? Palette.healthFill : Palette.spark) : Palette.uiBevel, 1).fillRect(x + 4 + i * 4, wy + 14, 3, 2);
+      g.fillStyle(
+        on ? (stage === 3 ? Palette.healthFill : Palette.spark) : Palette.uiBevel,
+        1,
+      ).fillRect(x + 4 + i * 4, wy + 14, 3, 2);
     }
     this.keys[1]?.place(x + SLOT / 2, wy + SLOT + 1, 0.5);
     x += SLOT + 6;
@@ -342,14 +381,17 @@ export class Hud {
       this.keys[2 + i]?.place(x + SLOT / 2, wy + SLOT + 1, 0.5);
       x += SLOT + SLOT_GAP;
     });
-
-    this.fade(bodies, dtMs);
   }
 
   /** The frame of a non-ability weapon slot (light, heavy). */
   private slotFrame(g: Phaser.GameObjects.Graphics, x: number, y: number, lit: boolean): void {
     g.fillStyle(Palette.uiOutline, 1).fillRect(x, y, SLOT, SLOT);
-    g.fillStyle(lit ? Palette.uiFocus : Palette.uiBevel, 1).fillRect(x + 1, y + 1, SLOT - 2, SLOT - 2);
+    g.fillStyle(lit ? Palette.uiFocus : Palette.uiBevel, 1).fillRect(
+      x + 1,
+      y + 1,
+      SLOT - 2,
+      SLOT - 2,
+    );
     g.fillStyle(Palette.uiPanel, 1).fillRect(x + 2, y + 2, SLOT - 4, SLOT - 4);
   }
 }

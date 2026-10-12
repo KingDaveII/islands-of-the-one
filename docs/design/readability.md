@@ -69,8 +69,9 @@ particles, text, dev panels):
   and snaps onto the soft-locked Husk while there is one, so the stick's aim is always visible.
   Sprites turn to the nearest of 8 facings, in sheet order **S, SE, E, NE, N, NW, W, SW**
   (`apps/client/src/render/facing.ts`).
-- **Haul guide** (gamepad only). While the Haul is ready, a faint dotted line runs from the player
-  along the aim to the Haul's range: 1 px `hollow-dusk` dots every 4 px, never a signal color. It
+- **Haul guide** (gamepad only). While the Haul is ready, a dotted line runs from the player along
+  the aim to the Haul's range: 1 px `hollow-below` dots every 4 px (the wall-face colour, 4.8:1 on
+  the floor; `hollow-dusk` was 1.7:1 and vanished at couch distance), never a signal color. It
   stops at the first wall along the aim (the hook projectile's own wall test), so it never runs
   into the Hollow. Hidden during the cooldown (so also while the hook is out) and when the slot
   is locked.
@@ -103,12 +104,15 @@ of the screen where the fight happens:
 - **The HUD never hides the room** (Playtest 2). The camera may scroll past the room's edges by
   the panels' extents (their safe margins, read from the panels the HUD drew), so a player
   standing in a room corner is always drawn in the clear area between them; a room that fits the
-  area the HUD leaves free is centered in it (`apps/client/src/render/camera.ts`). And a panel
-  drops to about 40 % opacity while the player or a hostile is behind it, back to full once clear.
+  area the HUD leaves free is centered in it (`apps/client/src/render/camera.ts`). And while the
+  player or a hostile is behind a panel, the panel's fill and frame turn into a **50 % checkerboard
+  dither** of `ui-panel` (every other pixel shows the room) and its ink, bars, icons and glyphs
+  stay solid: the readout keeps its contrast and the colours stay in the palette, where an alpha
+  fade would blend off-palette and drop the ink to 2.4:1.
 - **Party portraits** are hidden in solo.
-- **Key hints** are text labels until a glyph sheet exists: the active gamepad preset's glyphs
-  (R2, L2, L1, …) while a pad is connected, else the keyboard keys (LMB, RMB, SPC, E, Q, F). See
-  [`controls.md`](controls.md).
+- **Key hints** are controller glyphs from the glyph sheet, for the active device
+  ([`controls.md`](controls.md) §5): the gamepad preset's buttons in pad mode, the keyboard keys
+  and mouse buttons otherwise. A binding the sheet has no cell for falls back to its text label.
 
 ## 4. Panels and type
 
