@@ -317,6 +317,11 @@ async function main() {
   await waitFor(
     () => window.__iot.pose()?.anim.startsWith('hit') && window.__iot.pose()?.frame === 0,
   );
+  // The post-hit invulnerability flickers the sprite on alternate ticks: switch it off so both hit frames are in the shots.
+  await page.evaluate(() => {
+    window.__iot.scene().session.run.state.player.hurtInvuln = 0;
+  });
+  await page.waitForTimeout(60);
   await shot('hit-0-flinch', await clipAroundPlayer(160, 110));
   await waitFor(
     () => window.__iot.pose()?.anim.startsWith('hit') && window.__iot.pose()?.frame === 1,
