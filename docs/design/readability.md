@@ -49,9 +49,9 @@ particles, text, dev panels):
   player's opening. The shell on the sprite shows the same state: one crack below 100%, three
   below 30%, fragments once broken.
 - **Hook-thrust (heavy).** The charge is a drawn-back stance (the sprite steps 2 px away from the
-  aim) with the **charge spark** from `hookblade-fx` at the hook tip: `spark_0` as the charge
-  starts, `spark_1` through the window, `spark_2` held at full charge; `spark-amber`, the full
-  charge in `husk-core` (never spark-glow). The thrust is a **straight line** hitbox
+  aim) with the **charge spark** from `hookblade-fx` at the hook tip, following the charge meter's
+  three stages: `spark_0` from the start through the first stage, `spark_1` in the second,
+  `spark_2` held at full charge; `spark-amber`, the full charge in `husk-core` (never spark-glow). The thrust is a **straight line** hitbox
   flash along the aim, as wide as the hitbox, in `hollow-light` with the player outline, where the
   light attack is an arc. A held Husk shows **pinned on the line**: the line runs out to it for the
   hold, and a `hollow-light` ring snaps shut on it.

@@ -1,5 +1,6 @@
 import { controlsData, type ControlAction, type ControlPreset } from '@iot/shared';
 import { TURN } from '@iot/sim';
+import { KEYBOARD } from './keyboard.js';
 
 /**
  * Gamepad presets are data (packages/shared/data/controls.json): which glyph
@@ -37,7 +38,11 @@ export const TRIGGER_BUTTONS: ReadonlySet<number> = new Set([
 
 export const PRESETS: readonly ControlPreset[] = controlsData.presets;
 export const DEFAULT_PRESET_ID: string = controlsData.defaultPreset;
-export const KEYBOARD_HINTS: Record<ControlAction, string> = controlsData.keyboard;
+
+/** The first connected pad (browser Gamepad API), or null. */
+export function connectedPad(): Gamepad | null {
+  return navigator.getGamepads().find((g): g is Gamepad => g !== null && g.connected) ?? null;
+}
 
 /** Which glyph family a hint is drawn in: keyboard caps and mouse buttons, DualSense (ps) or Xbox (xb). */
 export type GlyphFamily = 'keyboard' | 'ps' | 'xb';
@@ -87,16 +92,16 @@ export function hintFor(preset: ControlPreset, action: ControlAction): string {
 
 /** Text hints for every action, from the gamepad preset or the keyboard. */
 export function hints(source: 'keyboard' | ControlPreset): Record<ControlAction, string> {
-  if (source === 'keyboard') return { ...KEYBOARD_HINTS };
+  if (source === 'keyboard') return { ...KEYBOARD };
   const out = {} as Record<ControlAction, string>;
-  for (const action of Object.keys(KEYBOARD_HINTS) as ControlAction[])
+  for (const action of Object.keys(KEYBOARD) as ControlAction[])
     out[action] = hintFor(source, action);
   return out;
 }
 
 /** An action's hint (binding names + glyph family) for a hint source. */
 export function hintFrom(source: HintSource, action: ControlAction): Hint {
-  if (source === 'keyboard') return { labels: [KEYBOARD_HINTS[action]], family: 'keyboard' };
+  if (source === 'keyboard') return { labels: [KEYBOARD[action]], family: 'keyboard' };
   return { labels: glyphsFor(source.preset, action), family: source.family };
 }
 

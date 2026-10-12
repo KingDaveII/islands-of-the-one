@@ -94,6 +94,7 @@ export class GameScene extends Phaser.Scene {
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.session.dispose();
+      this.controls.dispose();
       this.input.setDefaultCursor('default');
     });
   }

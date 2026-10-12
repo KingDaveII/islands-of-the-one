@@ -4,6 +4,7 @@ import { TICK_HZ, type Run } from '@iot/sim';
 import type { Controls } from '../game/controls.js';
 import { Palette } from '../palette.js';
 import { chargeStage } from './charge.js';
+import { GLYPH_SIZE } from './glyphCells.js';
 import { HintRow } from './hint.js';
 import { label, place } from './text.js';
 import { abilitySlot, healthBar, icon, panel, tierPips, type IconKind } from './ui.js';
@@ -17,7 +18,7 @@ const SLOT = 20;
 const SMALL = 14;
 const SLOT_GAP = 4;
 /** Height of the key-hint row under the slots: a 1× controller glyph. */
-const HINT_H = 12;
+const HINT_H = GLYPH_SIZE;
 const READY_FLASH_MS = 200;
 
 const ABILITY_ICONS: Record<string, IconKind> = { haul: 'haul', 'the-catch': 'catch', 'turning-blade': 'sweep' };
@@ -49,6 +50,8 @@ export class Hud {
   private readyUntil: number[] = [0, 0, 0, 0];
   private prevCooldown: number[] = [0, 0, 0, 0];
   private now = 0;
+  /** The hint source the rows were last built for (device, preset, family, locked slots). */
+  private hintKey = '';
   readonly partyPortraits = false;
 
   constructor(
@@ -84,8 +87,14 @@ export class Hud {
     this.syncHints(run);
   }
 
-  /** Key hints follow the device in use (gamepad preset glyphs or keyboard keys). */
+  /** Key hints follow the device in use (gamepad preset glyphs or keyboard keys); rebuilt only when that changes. */
   private syncHints(run: Run): void {
+    const source = this.controls.hintSource();
+    const key =
+      (source === 'keyboard' ? 'keyboard' : `${source.family}:${source.preset.id}`) +
+      run.params.weapon.abilities.map((a) => (a.locked ? '-' : '+')).join('');
+    if (key === this.hintKey) return;
+    this.hintKey = key;
     const set = (row: HintRow | undefined, action: ControlAction): void => {
       row?.setHint(this.controls.hint(action));
     };

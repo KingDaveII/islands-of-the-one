@@ -51,7 +51,7 @@ function startGame(): void {
   const debug = new DebugOverlay();
   const tuningKey = eventKeyFor(keyboardBinding('tuning'));
   window.addEventListener('keydown', (e) => {
-    if (e.key === tuningKey) {
+    if (e.key.toLowerCase() === tuningKey.toLowerCase()) {
       e.preventDefault();
       panel.toggle();
     } else if (e.key === 'F3') {

@@ -41,7 +41,7 @@ export function keyboardBinding(action: ControlAction): string {
   return KEYBOARD[action];
 }
 
-/** The DOM `KeyboardEvent.key` value a binding name corresponds to (for window-level listeners). */
+/** The DOM `KeyboardEvent.key` value a binding name corresponds to (for window-level listeners; compare case-insensitively, Shift and CapsLock change the case of letters). */
 export function eventKeyFor(binding: string): string {
   switch (binding) {
     case 'Esc':

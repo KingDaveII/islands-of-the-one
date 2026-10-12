@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { ControlAction } from '@iot/shared';
 import { controlsStore } from '../game/controlsStore.js';
-import { hintFrom, padFamily, type PadFamily } from '../game/gamepad.js';
+import { connectedPad, hintFrom, padFamily, type PadFamily } from '../game/gamepad.js';
 import { keyboardBinding, keyCodeFor } from '../game/keyboard.js';
 import { Palette } from '../palette.js';
 import { HintRow } from '../render/hint.js';
@@ -122,7 +122,7 @@ export class ControlsScene extends Phaser.Scene {
   }
 
   private padFamilyNow(): PadFamily {
-    const pad = navigator.getGamepads().find((g): g is Gamepad => g !== null && g.connected);
+    const pad = connectedPad();
     return pad ? padFamily(pad.id) : 'ps';
   }
 
@@ -149,7 +149,7 @@ export class ControlsScene extends Phaser.Scene {
 
   override update(): void {
     // D-pad left/right (standard mapping 14/15) and Circle (1) go back.
-    const pad = navigator.getGamepads().find((g): g is Gamepad => g !== null && g.connected);
+    const pad = connectedPad();
     const family = pad ? padFamily(pad.id) : 'ps';
     if (family !== this.family) {
       this.family = family;

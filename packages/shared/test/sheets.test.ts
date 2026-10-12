@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import {
   controllerGlyphsSheet,
   hookbladeFxSheet,
@@ -32,7 +32,10 @@ describe.each(SHEETS)('the %s sheet', (_name, sheet) => {
     expect(existsSync(file), sheet.image).toBe(true);
   });
 
-  const png = decodePng(readFileSync(file));
+  let png: ReturnType<typeof decodePng> = { width: 0, height: 0, rgba: new Uint8Array(0) };
+  beforeAll(() => {
+    png = decodePng(readFileSync(file));
+  });
   const alpha = (x: number, y: number): number => png.rgba[(y * png.width + x) * 4 + 3] ?? 0;
 
   it('lists at least one cell, every one with a positive size inside the PNG', () => {

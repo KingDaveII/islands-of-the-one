@@ -110,8 +110,9 @@ export class HookbladeFx {
   }
 
   /**
-   * The charge spark at the hook tip: `stage` 0-3 from the charge meter
-   * (spark_0 while the charge builds, spark_2 held at full charge, in husk-core).
+   * The charge spark at the hook tip, by the charge meter's `stage` (0-3):
+   * spark_0 from the start through the first stage, spark_1 in the second,
+   * spark_2 held at full charge (stage 3, in husk-core).
    */
   spark(x: number, y: number, stage: number): void {
     const index = Math.max(0, Math.min(SPARK_FRAMES.length - 1, stage - 1));

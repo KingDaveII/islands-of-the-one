@@ -4,6 +4,7 @@ import { Button, encodeInput, type TickInput } from '@iot/sim';
 import { controlsStore } from './controlsStore.js';
 import {
   buttonsFor,
+  connectedPad,
   hintFrom,
   padFamily,
   softLock,
@@ -32,6 +33,9 @@ const PRESS_BUTTON: Partial<Record<ControlAction, number>> = {
   item2: Button.Item2,
 };
 
+/** Keys whose browser default (scrolling, moving focus) must not fire while a run is on. */
+const CAPTURED_KEYS: ReadonlySet<string> = new Set(['Space', 'Tab']);
+
 /** What the sampler needs to know about the world this tick. */
 export interface SampleContext {
   /** Enemy offsets from the player, world px (for the soft lock). */
@@ -59,6 +63,7 @@ export class Controls {
   private mouseActions: Partial<Record<MouseSide, ControlAction>> = {};
   private mouseDown: Record<MouseSide, boolean> = { left: false, right: false };
   private pointer: { x: number; y: number } | null = null;
+  private captured: number[] = [];
   private padId = '';
   lastInput: TickInput = { aim: 0, moveDir: 0, moveMag: 0, buttons: 0 };
   gamepadConnected = false;
@@ -79,8 +84,9 @@ export class Controls {
       }
       const code = keyCodeFor(binding);
       if (code === undefined) continue;
-      // Captured keys (Tab, F2, Space) never reach the browser's defaults.
-      const key = kb.addKey(code, true);
+      const capture = CAPTURED_KEYS.has(binding);
+      if (capture) this.captured.push(code);
+      const key = kb.addKey(code, capture);
       this.actionKeys[action] = key;
       const bit = PRESS_BUTTON[action];
       if (bit !== undefined) key.on('down', press(bit));
@@ -104,6 +110,12 @@ export class Controls {
       this.pointer = { x: p.worldX, y: p.worldY };
       this.aimSource = 'mouse';
     });
+  }
+
+  /** Release the key captures (Phaser keeps them past the scene). Call from the scene's shutdown. */
+  dispose(): void {
+    this.scene.input.keyboard?.removeCapture(this.captured);
+    this.captured = [];
   }
 
   /** The active gamepad preset. */
@@ -150,7 +162,7 @@ export class Controls {
     );
     let held = this.held('heavy');
 
-    const pad = navigator.getGamepads().find((g): g is Gamepad => g !== null && g.connected);
+    const pad = connectedPad();
     this.gamepadConnected = Boolean(pad);
     if (pad) {
       this.padId = pad.id;
@@ -202,7 +214,7 @@ export class Controls {
 
   /** Any "confirm" press this frame (menus): Enter, Space or gamepad Cross/Start. */
   static confirmPressed(prev: { pad: boolean }): boolean {
-    const pad = navigator.getGamepads().find((g): g is Gamepad => g !== null && g.connected);
+    const pad = connectedPad();
     const now = Boolean(pad && ((pad.buttons[0]?.pressed ?? false) || (pad.buttons[9]?.pressed ?? false)));
     const edge = now && !prev.pad;
     prev.pad = now;

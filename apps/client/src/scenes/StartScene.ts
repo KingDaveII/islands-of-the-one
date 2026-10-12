@@ -3,7 +3,7 @@ import type { ControlAction } from '@iot/shared';
 import { isWeaponAvailable, type Tuning } from '@iot/sim';
 import { Controls } from '../game/controls.js';
 import { controlsStore } from '../game/controlsStore.js';
-import { glyphsFor, padFamily } from '../game/gamepad.js';
+import { connectedPad, glyphsFor, padFamily, type PadFamily } from '../game/gamepad.js';
 import { keyboardBinding } from '../game/keyboard.js';
 import { parseSeed, randomSeed } from '../game/seed.js';
 import { tuningStore } from '../game/tuningStore.js';
@@ -34,6 +34,9 @@ export class StartScene extends Phaser.Scene {
   private caret!: Phaser.GameObjects.Rectangle;
   private cards!: Phaser.GameObjects.Graphics;
   private pad = { pad: true };
+  /** The gamepad hint line and the pad family it is drawn in (re-drawn when a pad is swapped). */
+  private padHints: HintRow | null = null;
+  private padFamily: PadFamily = 'ps';
   /** Divider y per card (between stats and lore). */
   private dividers: number[] = [];
 
@@ -115,10 +118,8 @@ export class StartScene extends Phaser.Scene {
 
     // Key hints as controller glyphs: the keyboard line, then the active pad preset in the connected pad's family.
     const key = (action: ControlAction): HintItem[] => glyphs([keyboardBinding(action)], 'keyboard');
-    const connected = navigator.getGamepads().find((g): g is Gamepad => g !== null && g.connected);
-    const family = connected ? padFamily(connected.id) : 'ps';
-    const pad = controlsStore.get();
-    const padKey = (action: ControlAction): HintItem[] => glyphs(glyphsFor(pad, action), family);
+    const connected = connectedPad();
+    this.padFamily = connected ? padFamily(connected.id) : 'ps';
     const lines: HintItem[][] = [
       [
         ...glyphs(['W', 'A', 'S', 'D'], 'keyboard'),
@@ -137,24 +138,13 @@ export class StartScene extends Phaser.Scene {
         ...key('item2'),
         word('items'),
       ],
-      [
-        word(`Gamepad (${pad.name}):`),
-        ...padKey('light'),
-        word('light  ·  hold'),
-        ...padKey('heavy'),
-        word('Hook-thrust  ·'),
-        ...padKey('dodge'),
-        word('dodge  ·'),
-        ...padKey('ability1'),
-        word('Haul  ·  C controls  ·'),
-        ...key('tuning'),
-        word('tuning  ·  F3 debug'),
-      ],
+      this.padHintItems(),
     ];
     lines.forEach((items, i) => {
-      new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInkMuted })
+      const row = new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInkMuted })
         .setItems(items)
         .place(cx + 20, VIEW_H - 30 + i * 14, 0.5);
+      if (i === 1) this.padHints = row;
     });
 
     // Text entry reads DOM key events directly (Phaser's key queue is for game controls).
@@ -175,6 +165,25 @@ export class StartScene extends Phaser.Scene {
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('paste', onPaste);
     });
+  }
+
+  /** The gamepad hint line: the active preset's buttons in the connected pad's glyph family. */
+  private padHintItems(): HintItem[] {
+    const pad = controlsStore.get();
+    const padKey = (action: ControlAction): HintItem[] => glyphs(glyphsFor(pad, action), this.padFamily);
+    return [
+      word(`Gamepad (${pad.name}):`),
+      ...padKey('light'),
+      word('light  ·  hold'),
+      ...padKey('heavy'),
+      word('Hook-thrust  ·'),
+      ...padKey('dodge'),
+      word('dodge  ·'),
+      ...padKey('ability1'),
+      word('Haul  ·  C controls  ·'),
+      ...glyphs([keyboardBinding('tuning')], 'keyboard'),
+      word('tuning  ·  F3 debug'),
+    ];
   }
 
   private drawCards(): void {
@@ -234,6 +243,12 @@ export class StartScene extends Phaser.Scene {
 
   override update(): void {
     this.drawCards();
+    const connected = connectedPad();
+    const family: PadFamily = connected ? padFamily(connected.id) : 'ps';
+    if (family !== this.padFamily && this.padHints) {
+      this.padFamily = family;
+      this.padHints.setItems(this.padHintItems()).place(VIEW_W / 2 + 20, VIEW_H - 30 + 14, 0.5);
+    }
     this.field.setText(this.seedText);
     this.caret.setX(Math.round(this.field.x + this.field.width + 1));
     if (Controls.confirmPressed(this.pad)) this.startRun();

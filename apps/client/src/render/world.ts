@@ -2,7 +2,6 @@ import type Phaser from 'phaser';
 import {
   heavyTiming,
   huskParams,
-  isFullyCharged,
   lightStrike,
   playerAttackPhase,
   slamCenter,
@@ -644,7 +643,7 @@ export class WorldRenderer {
     }
     if (charging) {
       // The charge spark (hookblade-fx) at the hook tip: spark_0 as the charge starts, spark_2 held at full charge.
-      const stage = isFullyCharged(P, p.charge) ? 3 : chargeStage(p.charge, P.weapon.heavy);
+      const stage = chargeStage(p.charge, P.weapon.heavy);
       const dir = facingStep(facing);
       const tx = x + (dir.x === 0 ? (facing >= 5 ? -5 : 5) : dir.x * 12);
       const ty = y + 1 + Math.max(0, dir.y) + dir.y * 6 - (dir.x !== 0 && dir.y === 0 ? 2 : 0);
