@@ -1,25 +1,49 @@
 import { accelerate, brake, moveBody } from './body.js';
-import { strikeArc, strikeCircle, type Ctx, type Hit } from './combat.js';
-import { idiv } from './fixed.js';
+import {
+  hitHusk,
+  hookSnags,
+  huskParams,
+  pickHaulTarget,
+  slide,
+  staggerHusk,
+  strikeArc,
+  strikeCircle,
+  strikeRect,
+  sweepHook,
+  type Ctx,
+  type Hit,
+} from './combat.js';
+import { idiv, length } from './fixed.js';
 import { Button, MOVE_MAG_MAX, moveDirToAngle, type TickInput } from './input.js';
-import { abilityAt, lightStrike, playerAttackPhase, strikePhase, type StrikePhase } from './moves.js';
-import type { Params, Strike } from './tuning.js';
-import type { BufferedAction, PlayerState } from './state.js';
-import { dirX, dirY } from './trig.js';
+import { abilityAt, heavyTiming, isCharged, lightStrike, playerAttackPhase, strikePhase, type StrikePhase } from './moves.js';
+import type { Ability, Haul, Params, Strike } from './tuning.js';
+import type { BufferedAction, HuskState, PlayerState } from './state.js';
+import { atan2, dirX, dirY } from './trig.js';
 
-/** Linear interpolation by charge fraction (charge / fullCharge), integer result. */
-function byCharge(range: [number, number], charge: number, full: number): number {
-  return range[0] + idiv((range[1] - range[0]) * Math.min(charge, full), full);
+/** Linear interpolation across the charge window (chargeMin..chargeMax), integer result. */
+function byCharge(range: [number, number], charge: number, min: number, max: number): number {
+  const span = Math.max(1, max - min);
+  const f = Math.max(0, Math.min(charge - min, span));
+  return range[0] + idiv((range[1] - range[0]) * f, span);
 }
 
+/**
+ * The Hook-thrust's hit for a given charge: the tap below `chargeMin`, else
+ * the charged thrust scaling from `chargeMin` to `chargeMax`. Every thrust
+ * pins its target (hold, then shove) and has no knockback.
+ */
 export function heavyHit(P: Params, charge: number): Hit {
   const h = P.weapon.heavy;
+  const base = { knockback: h.knockback, hitstop: h.hitstop, hold: h.hold, shove: h.shove };
+  if (!isCharged(P, charge)) {
+    return { ...base, damage: h.tap.damage, shellDamage: h.tap.shellDamage, shake: h.tap.shake };
+  }
+  const c = h.charged;
   return {
-    damage: byCharge(h.damage, charge, h.fullCharge),
-    shellDamage: byCharge(h.shellDamage, charge, h.fullCharge),
-    knockback: byCharge(h.knockback, charge, h.fullCharge),
-    hitstop: byCharge(h.hitstop, charge, h.fullCharge),
-    shake: byCharge(h.shake, charge, h.fullCharge),
+    ...base,
+    damage: byCharge(c.damage, charge, h.chargeMin, h.chargeMax),
+    shellDamage: byCharge(c.shellDamage, charge, h.chargeMin, h.chargeMax),
+    shake: byCharge(c.shake, charge, h.chargeMin, h.chargeMax),
   };
 }
 
@@ -59,7 +83,10 @@ function startLight(ctx: Ctx): void {
   const { s, P } = ctx;
   const p = s.player;
   const continuing = p.action === 'light' || p.comboTimer > 0;
-  const step = continuing ? p.nextCombo : 0;
+  let step = continuing ? p.nextCombo : 0;
+  // A light shortly after a Haul hit starts at the last combo hit.
+  if (p.haulCombo > 0) step = P.weapon.light.length - 1;
+  p.haulCombo = 0;
   p.action = 'light';
   p.t = 0;
   p.comboStep = step;
@@ -96,6 +123,7 @@ function startDodge(ctx: Ctx): void {
   p.t = 0;
   p.dir = p.moveMag > 0 ? p.moveAngle : p.aim;
   p.charge = 0;
+  p.hook = null;
   resetCombo(p);
   if (P.dodge.startup === 0) beginIframes(p, P);
   ctx.events.push({ type: 'dodge', x: p.x, y: p.y, dir: p.dir });
@@ -117,6 +145,7 @@ function startAbility(ctx: Ctx, slot: number, cooldown: number): void {
   p.hitIds = [];
   p.swingHitstop = 0;
   p.charge = 0;
+  p.hook = null;
   p.cooldowns[slot] = cooldown;
   resetCombo(p);
   ctx.events.push({ type: 'swing', attack: 'ability', step: slot, x: p.x, y: p.y, dir: p.dir });
@@ -166,6 +195,41 @@ function pressedAction(input: TickInput, heavyPressed: boolean): BufferedAction 
   return 'none';
 }
 
+/**
+ * Use the consumable in a slot. Items are instant (no move): a Ration starts a
+ * heal over time; using another while one runs adds to the pool and restarts
+ * the duration. Presses are not buffered.
+ */
+function useItem(ctx: Ctx, slotIndex: number): void {
+  const { s, P } = ctx;
+  const p = s.player;
+  const slot = p.items[slotIndex];
+  if (!slot || slot.count <= 0) return;
+  const kind = P.consumables.kinds.find((k) => k.id === slot.id);
+  if (!kind) return;
+  slot.count--;
+  const id = slot.id;
+  if (slot.count === 0) slot.id = '';
+  p.healPool += idiv(P.player.maxHp * kind.heal, 1000) * 1000;
+  p.healLeft = kind.duration;
+  ctx.events.push({ type: 'itemUsed', slot: slotIndex, id });
+}
+
+/** One tick of healing over time, spread evenly (in milli-HP) over the remaining ticks. */
+function healTick(p: PlayerState, maxHp: number): void {
+  if (p.healLeft <= 0) return;
+  const rate = p.healLeft === 1 ? p.healPool : idiv(p.healPool, p.healLeft);
+  p.healPool -= rate;
+  p.healLeft--;
+  p.healAcc += rate;
+  const whole = idiv(p.healAcc, 1000);
+  if (whole > 0) {
+    p.hp = Math.min(maxHp, p.hp + whole);
+    p.healAcc -= whole * 1000;
+  }
+  if (p.healLeft === 0) p.healPool = 0;
+}
+
 function locomotion(ctx: Ctx, factorPermille: number): void {
   const { s, P } = ctx;
   const p = s.player;
@@ -192,6 +256,166 @@ function advanceStrike(ctx: Ctx, st: Strike): StrikePhase {
   return ph;
 }
 
+/** The Hook-thrust: a straight rectangle hitbox along the aim. */
+function advanceHeavy(ctx: Ctx): StrikePhase {
+  const { s, P } = ctx;
+  const p = s.player;
+  const h = P.weapon.heavy;
+  const tm = heavyTiming(P, p.charge);
+  const hit = heavyHit(P, p.charge);
+  p.t++;
+  const ph = strikePhase(p.t, tm.startup, tm.active, tm.recovery);
+  if (ph === 'startup' || ph === 'active') {
+    p.vx = dirX(p.dir, tm.step);
+    p.vy = dirY(p.dir, tm.step);
+  } else {
+    brake(p, P.player.friction);
+  }
+  if (ph === 'active') strikeRect(ctx, p.x, p.y, p.dir, h.length, h.halfWidth, hit, p.hitIds);
+  return ph;
+}
+
+// --- Haul -------------------------------------------------------------------
+
+function launchHook(ctx: Ctx, haul: Haul): void {
+  const { s } = ctx;
+  const p = s.player;
+  const targetId = pickHaulTarget(ctx, p.x, p.y, p.aim, haul.halfCone, haul.range);
+  const target = s.husks.find((h) => h.id === targetId);
+  const dir = target ? atan2(target.y - p.y, target.x - p.x) : p.aim;
+  p.dir = dir;
+  p.hook = { x: p.x, y: p.y, dir, travel: 0, targetId, hitId: -1, pull: 'none', pullLeft: 0 };
+}
+
+/** The hook landed: damage, stagger, and the pull by weight class. */
+function hookHit(ctx: Ctx, a: Ability, haul: Haul, h: HuskState): void {
+  const { s, P } = ctx;
+  const p = s.player;
+  const hk = p.hook;
+  if (!hk) return;
+  const hit: Hit = {
+    damage: a.damage,
+    shellDamage: a.shellDamage,
+    knockback: 0,
+    hitstop: a.hitstop,
+    shake: a.shake,
+    hold: 0,
+    shove: 0,
+  };
+  hitHusk(ctx, h, hit, p.x, p.y);
+  hk.hitId = h.id;
+  hk.x = h.x;
+  hk.y = h.y;
+  const weightClass = huskParams(P, h.kind).weightClass;
+  if (h.core <= 0) {
+    // The hook killed it: nothing to pull.
+    ctx.events.push({ type: 'haulHit', id: h.id, kind: h.kind, weightClass, pull: 'husk', x: h.x, y: h.y });
+    p.hook = null;
+    return;
+  }
+  const d = length(h.x - p.x, h.y - p.y);
+  if (weightClass === 'heavy') {
+    // Too heavy to move: the chain pulls the player to it instead.
+    staggerHusk(h, haul.staggerHeavy);
+    hk.pull = 'player';
+    hk.pullLeft = idiv(Math.max(0, d - haul.playerPull) + a.speed - 1, Math.max(1, a.speed)) + 1;
+  } else {
+    staggerHusk(h, haul.stagger);
+    const full = Math.max(0, d - haul.pullLight);
+    const dist = weightClass === 'medium' ? idiv(full * haul.pullMedium, 1000) : full;
+    slide(ctx, h, atan2(p.y - h.y, p.x - h.x), dist);
+    hk.pull = 'husk';
+    hk.pullLeft = P.husks.knockbackTicks;
+  }
+  p.haulCombo = haul.comboWindow;
+  ctx.events.push({ type: 'haulHit', id: h.id, kind: h.kind, weightClass, pull: hk.pull, x: h.x, y: h.y });
+}
+
+function hookMiss(ctx: Ctx, a: Ability, haul: Haul): void {
+  const p = ctx.s.player;
+  const hk = p.hook;
+  if (!hk) return;
+  const refund = idiv(a.cooldown * haul.missRefund, 1000);
+  p.cooldowns[p.abilitySlot] = Math.max(0, (p.cooldowns[p.abilitySlot] ?? 0) - refund);
+  ctx.events.push({ type: 'haulMiss', x: hk.x, y: hk.y, refund });
+  p.hook = null;
+}
+
+/** One tick of the hook: flight (first hit only, range, walls), then the pull. Returns true while the hook is still out. */
+function stepHook(ctx: Ctx, a: Ability, haul: Haul): boolean {
+  const { s } = ctx;
+  const p = s.player;
+  const hk = p.hook;
+  if (!hk) return false;
+  if (hk.hitId < 0) {
+    const step = Math.min(haul.speed, haul.range - hk.travel);
+    const nx = hk.x + dirX(hk.dir, step);
+    const ny = hk.y + dirY(hk.dir, step);
+    const found = sweepHook(ctx, hk.x, hk.y, nx, ny, a.radius);
+    if (found) {
+      hk.x = found.x;
+      hk.y = found.y;
+      hookHit(ctx, a, haul, found.husk);
+      return p.hook !== null;
+    }
+    hk.x = nx;
+    hk.y = ny;
+    hk.travel += step;
+    if (hookSnags(s, nx, ny) || hk.travel >= haul.range) hookMiss(ctx, a, haul);
+    return p.hook !== null;
+  }
+  const h = s.husks.find((x) => x.id === hk.hitId);
+  if (hk.pull === 'player' && h && h.core > 0) {
+    hk.x = h.x;
+    hk.y = h.y;
+    const d = length(h.x - p.x, h.y - p.y);
+    if (d <= haul.playerPull || hk.pullLeft <= 0) {
+      // Arrived: the chain stops the player dead, with a short armor window to act out of.
+      p.vx = 0;
+      p.vy = 0;
+      p.armor = Math.max(p.armor, haul.arrivalArmor);
+      p.hook = null;
+      return false;
+    }
+    const dir = atan2(h.y - p.y, h.x - p.x);
+    const move = Math.min(a.speed, d - haul.playerPull);
+    p.vx = dirX(dir, move);
+    p.vy = dirY(dir, move);
+    hk.pullLeft--;
+    return true;
+  }
+  if (h && h.core > 0) {
+    hk.x = h.x;
+    hk.y = h.y;
+  }
+  hk.pullLeft--;
+  if (hk.pullLeft <= 0 || !h || h.core <= 0) p.hook = null;
+  return p.hook !== null;
+}
+
+/**
+ * Haul: startup, then the hook flies during the active frames. A hit extends
+ * the active phase for the pull (the husk's slide, or the player's travel);
+ * recovery starts the tick after the hook is done, or after the flight on a miss.
+ */
+function advanceHaul(ctx: Ctx, a: Ability, haul: Haul): StrikePhase {
+  const { s, P } = ctx;
+  const p = s.player;
+  const activeEnd = a.startup + a.active;
+  // The nominal active frames may run out while the chain is still pulling: hold there.
+  if (!(p.hook && p.t >= activeEnd)) p.t++;
+  if (p.t === a.startup + 1) launchHook(ctx, haul);
+  const ph = strikePhase(p.t, a.startup, a.active, a.recovery);
+  const pullingPlayer = p.hook?.pull === 'player';
+  let out = p.hook !== null;
+  if (out && ph === 'active') {
+    out = stepHook(ctx, a, haul);
+    if (!out) p.t = activeEnd;
+  }
+  if (!(pullingPlayer && out)) brake(p, P.player.friction);
+  return strikePhase(p.t, a.startup, a.active, a.recovery);
+}
+
 function advanceAction(ctx: Ctx): void {
   const { s, P } = ctx;
   const p = s.player;
@@ -209,45 +433,37 @@ function advanceAction(ctx: Ctx): void {
       break;
     case 'charge':
       p.t++;
-      p.charge = Math.min(P.weapon.heavy.fullCharge, p.charge + 1);
+      p.charge = Math.min(P.weapon.heavy.chargeMax, p.charge + 1);
       locomotion(ctx, P.weapon.heavy.chargeMove);
       if (!p.heavyHeld) startHeavy(ctx);
       break;
-    case 'heavy': {
-      const h = P.weapon.heavy;
-      const hit = heavyHit(P, p.charge);
-      const st: Strike = {
-        ...hit,
-        startup: h.startup,
-        active: h.active,
-        recovery: h.recovery,
-        armorStart: h.armorStart,
-        armorEnd: h.armorEnd,
-        reach: h.reach,
-        halfArc: h.halfArc,
-        step: h.step,
-      };
-      if (advanceStrike(ctx, st) === 'done') {
+    case 'heavy':
+      if (advanceHeavy(ctx) === 'done') {
         p.action = 'idle';
         p.t = 0;
         p.charge = 0;
       }
       break;
-    }
     case 'ability': {
       const a = abilityAt(P, p.abilitySlot);
-      p.t++;
-      const ph = a ? strikePhase(p.t, a.startup, a.active, a.recovery) : 'done';
-      if (a && ph === 'active') {
-        p.vx = dirX(p.dir, a.speed);
-        p.vy = dirY(p.dir, a.speed);
-        strikeCircle(ctx, p.x, p.y, a.radius, a, p.hitIds);
-      } else {
-        brake(p, P.player.friction);
+      let ph: StrikePhase = 'done';
+      if (a?.kind === 'haul' && a.haul) {
+        ph = advanceHaul(ctx, a, a.haul);
+      } else if (a) {
+        p.t++;
+        ph = strikePhase(p.t, a.startup, a.active, a.recovery);
+        if (ph === 'active') {
+          p.vx = dirX(p.dir, a.speed);
+          p.vy = dirY(p.dir, a.speed);
+          strikeCircle(ctx, p.x, p.y, a.radius, a, p.hitIds);
+        } else {
+          brake(p, P.player.friction);
+        }
       }
       if (ph === 'done') {
         p.action = 'idle';
         p.t = 0;
+        p.hook = null;
       }
       break;
     }
@@ -306,6 +522,8 @@ export function updatePlayer(ctx: Ctx, input: TickInput): void {
     p.buffer = pressed;
     p.bufferAge = 0;
   }
+  if (input.buttons & Button.Item1) useItem(ctx, 0);
+  if (input.buttons & Button.Item2) useItem(ctx, 1);
 
   // Hitstop freezes the player completely; buffered presses wait without aging.
   if (p.hitstop > 0) {
@@ -320,7 +538,11 @@ export function updatePlayer(ctx: Ctx, input: TickInput): void {
   }
   if (p.iframes > 0) p.iframes--;
   if (p.hurtInvuln > 0) p.hurtInvuln--;
+  if (p.armor > 0) p.armor--;
+  // The combo window opens once the chain lets go (the pull is part of the hit).
+  if (p.haulCombo > 0 && p.hook === null) p.haulCombo--;
   if (p.dodgeAge < 600) p.dodgeAge++;
+  healTick(p, P.player.maxHp);
 
   advanceAction(ctx);
 

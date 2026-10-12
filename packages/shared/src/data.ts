@@ -1,3 +1,4 @@
+import controls from '../data/controls.json' with { type: 'json' };
 import rooms from '../data/rooms.json' with { type: 'json' };
 import tuning from '../data/tuning.json' with { type: 'json' };
 
@@ -13,3 +14,9 @@ export type JuiceTuning = TuningData['juice'];
 
 export const roomTemplates = rooms.templates;
 export const TILE_SIZE_PX = rooms.tileSize;
+
+export const controlsData = controls;
+export type ControlsData = typeof controls;
+/** One gamepad preset: which glyph (standard-mapping button) fires each action, and how aim works. */
+export type ControlPreset = ControlsData['presets'][number];
+export type ControlAction = keyof ControlsData['keyboard'];

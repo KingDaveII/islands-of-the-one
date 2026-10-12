@@ -9,15 +9,18 @@ import {
   runResults,
   stepRun,
   type Run,
+  type SimEvent,
   type Tuning,
 } from '../src/index.js';
 import golden from './fixtures/golden-tuning.json' with { type: 'json' };
 import { cloneTuning, retune, step, steps, stepUntil, tuning, WEAPON } from './helpers.js';
 
-function drive(run: Run, maxTicks: number, reckless = false): void {
+function drive(run: Run, maxTicks: number, reckless = false): SimEvent[] {
+  const events: SimEvent[] = [];
   for (let i = 0; i < maxTicks && run.state.status === 'playing'; i++) {
-    stepRun(run, autopilot(run.state, run.params, { reckless }));
+    events.push(...stepRun(run, autopilot(run.state, run.params, { reckless })));
   }
+  return events;
 }
 
 describe('run flow', () => {
@@ -104,6 +107,32 @@ describe('run flow', () => {
   });
 });
 
+describe('headless playtest (autopilot)', () => {
+  const haulsBy = (events: SimEvent[], weightClass: string) =>
+    events.filter((e) => e.type === 'haulHit' && e.weightClass === weightClass);
+
+  it('lands a Haul on a light and on a heavy Husk, and a fully charged thrust', () => {
+    const run = createRun({ seed: 1234, tuning, rooms: roomTemplates, weapon: WEAPON });
+    const events = drive(run, 60 * 60 * 5);
+    expect(run.state.status).toBe('cleared');
+    expect(haulsBy(events, 'light').length).toBeGreaterThan(0);
+    expect(haulsBy(events, 'heavy')).toEqual(expect.arrayContaining([expect.objectContaining({ pull: 'player' })]));
+    const max = run.params.weapon.heavy.chargeMax;
+    const full = events.filter((e) => e.type === 'swing' && e.attack === 'heavy' && e.step >= max);
+    expect(full.length).toBeGreaterThan(0);
+    expect(events.some((e) => e.type === 'held')).toBe(true);
+    expect(events.some((e) => e.type === 'chestOpened')).toBe(true);
+  });
+
+  it('lands a Haul on a medium Husk (Peelings retuned to medium)', () => {
+    const t = cloneTuning();
+    t.husks.peeling.weightClass = 'medium';
+    const run = createRun({ seed: 11, tuning: t, rooms: roomTemplates, weapon: WEAPON });
+    const events = drive(run, 60 * 60 * 5);
+    expect(haulsBy(events, 'medium')).toEqual(expect.arrayContaining([expect.objectContaining({ pull: 'husk' })]));
+  });
+});
+
 describe('replay determinism', () => {
   it('same seed + inputs => identical final state hash', () => {
     const run = createRun({ seed: 1234, tuning, rooms: roomTemplates, weapon: WEAPON });
@@ -154,7 +183,7 @@ describe('replay determinism', () => {
     const t: Tuning = golden;
     const run = createRun({ seed: 2024, tuning: t, rooms: roomTemplates, weapon: WEAPON });
     drive(run, 60 * 30);
-    expect(hashRunState(run.state)).toMatchInlineSnapshot(`4196271051`);
+    expect(hashRunState(run.state)).toMatchInlineSnapshot(`2027018953`);
   });
 
   it('cloneTuning does not alias the data file', () => {

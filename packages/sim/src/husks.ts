@@ -1,5 +1,5 @@
 import { accelerate, brake, moveBody } from './body.js';
-import { huskAttackPlayer, huskParams, stepPush, type Ctx } from './combat.js';
+import { displace, huskAttackPlayer, huskParams, staggerHusk, stepPush, type Ctx } from './combat.js';
 import { idiv, length, QUARTER_TURN } from './fixed.js';
 import { randInt } from './rng.js';
 import type { HuskKind, HuskState } from './state.js';
@@ -36,9 +36,29 @@ export function createHusk(ctx: Ctx, kind: HuskKind, x: number, y: number): Husk
     pushX: 0,
     pushY: 0,
     pushT: 0,
+    stagger: 0,
+    held: null,
+    sinceHit: 0,
   };
   ctx.events.push({ type: 'spawn', id: h.id, kind, x, y });
   return h;
+}
+
+const SINCE_HIT_CAP = 60 * 600;
+
+/**
+ * The innermost shell layer regrows to full `innerRegrow` ticks after the
+ * husk was last hit, unless that layer broke (0): a broken layer stays broken.
+ */
+function regrowShell(ctx: Ctx, h: HuskState): void {
+  const hp = huskParams(ctx.P, h.kind);
+  if (hp.innerRegrow <= 0 || h.sinceHit < hp.innerRegrow) return;
+  const last = h.shell.length - 1;
+  const cur = h.shell[last] ?? 0;
+  const max = hp.shell[last] ?? 0;
+  if (last < 0 || cur <= 0 || cur >= max) return;
+  h.shell[last] = max;
+  ctx.events.push({ type: 'shellRegrow', id: h.id, kind: h.kind });
 }
 
 /** Center of a Nutshell slam. */
@@ -69,6 +89,8 @@ export function updateHusk(ctx: Ctx, h: HuskState): void {
   }
   stepPush(h);
   if (h.cooldown > 0) h.cooldown--;
+  if (h.sinceHit < SINCE_HIT_CAP) h.sinceHit++;
+  regrowShell(ctx, h);
   h.t++;
   const dx = p.x - h.x;
   const dy = p.y - h.y;
@@ -154,8 +176,26 @@ export function updateHusk(ctx: Ctx, h: HuskState): void {
       break;
     case 'stagger':
       brake(h, hp.friction);
-      if (h.t >= hp.stagger) toChase(h, rolledCooldown(ctx, h));
+      if (h.t >= Math.max(1, h.stagger)) toChase(h, rolledCooldown(ctx, h));
       break;
+    // Pinned on the Hook-thrust: frozen, then shoved off it.
+    case 'held': {
+      brake(h, hp.friction);
+      h.vx = 0;
+      h.vy = 0;
+      const held = h.held;
+      if (!held) {
+        toChase(h, idiv(hp.cooldown, 3));
+        break;
+      }
+      if (h.t >= held.left) {
+        displace(ctx, h, held.dir, held.shove);
+        h.held = null;
+        if (held.broke) staggerHusk(h, hp.stagger);
+        else toChase(h, idiv(hp.cooldown, 3));
+      }
+      break;
+    }
     case 'flinch':
       brake(h, hp.friction);
       if (h.t >= hp.flinch) toChase(h, idiv(hp.cooldown, 3));

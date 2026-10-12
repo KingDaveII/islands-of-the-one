@@ -3,6 +3,7 @@ import { replayRun, hashRunState, type AutopilotOptions, type RunRecord } from '
 import { Palette } from './palette.js';
 import { loadFonts } from './render/text.js';
 import { GameScene, VIEW_H, VIEW_W, type GameData } from './scenes/GameScene.js';
+import { ControlsScene } from './scenes/ControlsScene.js';
 import { ResultsScene } from './scenes/ResultsScene.js';
 import { StartScene } from './scenes/StartScene.js';
 import { TestScene } from './scenes/TestScene.js';
@@ -39,7 +40,7 @@ function startGame(): void {
     roundPixels: true,
     input: { gamepad: false },
     scale: { mode: Phaser.Scale.NONE, width: VIEW_W, height: VIEW_H, zoom: fitZoom() },
-    scene: [StartScene, GameScene, ResultsScene],
+    scene: [StartScene, GameScene, ResultsScene, ControlsScene],
   });
   window.addEventListener('resize', () => {
     game.scale.setZoom(fitZoom());

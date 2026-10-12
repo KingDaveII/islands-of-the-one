@@ -23,10 +23,15 @@
     "marginPx": 10,
     "slowmoMs": 300,
     "slowmoScale": 0.3,
-    "sparkglassBonus": 1
+    "sparkglassBonus": 1,
+    "cooldownRefundMs": 2000
   },
   "input": {
     "bufferMs": 120
+  },
+  "softlock": {
+    "angleDeg": 15,
+    "leftStickAngleDeg": 20
   },
   "weaponRoster": [
     {
@@ -49,7 +54,7 @@
     "hookblade": {
       "name": "Hookblade",
       "tier": 1,
-      "blurb": "A hooked blade for close work. Three quick cuts, a held heavy, and a lunge.",
+      "blurb": "A hooked blade for close work. Three quick cuts, a held Hook-thrust, and a Haul.",
       "lore": "It remembers a hand that was not yours.",
       "comboResetMs": 260,
       "light": [
@@ -100,69 +105,81 @@
         }
       ],
       "heavy": {
-        "fullChargeMs": 700,
-        "chargeMoveFactor": 0.45,
-        "startupMs": 90,
-        "activeMs": 80,
-        "recoveryMs": 380,
-        "armorStartMs": 0,
-        "armorEndMs": 0,
-        "reachPx": 36,
-        "arcDeg": 220,
-        "damageMin": 18,
-        "damageMax": 40,
-        "shellDamageMin": 25,
-        "shellDamageMax": 60,
-        "knockbackMinPx": 24,
-        "knockbackMaxPx": 72,
-        "hitstopMinMs": 70,
-        "hitstopMaxMs": 110,
-        "shakeMin": 2,
-        "shakeMax": 6,
-        "stepSpeed": 120
-      },
-      "abilities": [
-        {
-          "id": "lunge",
-          "name": "Lunge",
-          "locked": false,
-          "kind": "dash-strike",
-          "cooldownMs": 2500,
-          "startupMs": 0,
-          "activeMs": 180,
-          "recoveryMs": 200,
-          "armorStartMs": 0,
-          "armorEndMs": 0,
-          "speed": 380,
-          "hitRadiusPx": 12,
-          "damage": 16,
-          "shellDamage": 18,
-          "knockbackPx": 36,
-          "hitstopMs": 60,
-          "shake": 2
+        "thrust": {
+          "lengthPx": 40,
+          "widthPx": 12
         },
-        {
-          "id": "sweep",
-          "name": "Spinning sweep",
-          "locked": true,
-          "kind": "spin",
-          "cooldownMs": 4000,
-          "startupMs": 120,
-          "activeMs": 300,
+        "charge": {
+          "minMs": 200,
+          "maxMs": 600
+        },
+        "holdMs": 150,
+        "hitstopMs": 120,
+        "shovePx": 8,
+        "knockbackPx": 0,
+        "chargeMoveFactor": 0.45,
+        "tap": {
+          "startupMs": 160,
+          "activeMs": 100,
           "recoveryMs": 300,
           "armorStartMs": 0,
           "armorEndMs": 0,
-          "speed": 0,
-          "hitRadiusPx": 28,
-          "damage": 14,
-          "shellDamage": 14,
-          "knockbackPx": 24,
-          "hitstopMs": 50,
-          "shake": 2
+          "damageFactor": 1.2,
+          "shellDamage": 20,
+          "shake": 2,
+          "stepSpeed": 60
+        },
+        "charged": {
+          "startupMs": 80,
+          "activeMs": 120,
+          "recoveryMs": 380,
+          "armorStartMs": 0,
+          "armorEndMs": 200,
+          "damageFactorMin": 1.8,
+          "damageFactorMax": 2.6,
+          "shellDamageMin": 30,
+          "shellDamageMax": 45,
+          "shakeMin": 3,
+          "shakeMax": 6,
+          "stepSpeed": 120
+        }
+      },
+      "abilities": [
+        {
+          "id": "haul",
+          "name": "Haul",
+          "locked": false,
+          "kind": "haul",
+          "cooldownMs": 8000,
+          "startupMs": 60,
+          "activeMs": 200,
+          "recoveryMs": 220,
+          "armorStartMs": 0,
+          "armorEndMs": 0,
+          "speed": 380,
+          "hitRadiusPx": 4,
+          "damage": 8,
+          "shellDamage": 10,
+          "knockbackPx": 0,
+          "hitstopMs": 60,
+          "shake": 2,
+          "haul": {
+            "coneDeg": 20,
+            "rangePx": 112,
+            "speed": 600,
+            "pullLightPx": 20,
+            "pullMedium": 0.5,
+            "playerPullDistancePx": 24,
+            "arrivalArmorMs": 100,
+            "staggerMs": 600,
+            "staggerHeavyMs": 400,
+            "comboWindowMs": 400,
+            "missRefund": 0.5
+          }
         },
         {
-          "id": "tbd",
-          "name": "TBD",
+          "id": "the-catch",
+          "name": "The Catch",
           "locked": true,
           "kind": "none",
           "cooldownMs": 0,
@@ -178,6 +195,25 @@
           "knockbackPx": 0,
           "hitstopMs": 0,
           "shake": 0
+        },
+        {
+          "id": "turning-blade",
+          "name": "Turning Blade",
+          "locked": true,
+          "kind": "spin",
+          "cooldownMs": 4000,
+          "startupMs": 120,
+          "activeMs": 300,
+          "recoveryMs": 300,
+          "armorStartMs": 0,
+          "armorEndMs": 0,
+          "speed": 0,
+          "hitRadiusPx": 28,
+          "damage": 14,
+          "shellDamage": 14,
+          "knockbackPx": 24,
+          "hitstopMs": 50,
+          "shake": 2
         }
       ]
     }
@@ -223,7 +259,7 @@
     },
     "nutshell": {
       "radiusPx": 10,
-      "shell": [40, 40],
+      "shell": [30, 20],
       "core": 50,
       "speed": 34,
       "acceleration": 300,
@@ -248,7 +284,17 @@
       "sparkglassDrop": 3,
       "spawnMs": 800,
       "slamRadiusPx": 40,
-      "slamOffsetPx": 12
+      "slamOffsetPx": 12,
+      "innerRegrowMs": 8000
+    }
+  },
+  "consumables": {
+    "slots": 2,
+    "ration": {
+      "name": "Ration",
+      "healFraction": 0.3,
+      "durationMs": 5000,
+      "stackMax": 5
     }
   },
   "run": {
@@ -296,7 +342,22 @@
     "sparkglassKeptOnDeath": 0.5,
     "pickupMagnetRadiusPx": 44,
     "pickupSpeed": 240,
-    "pickupScatter": 90
+    "pickupScatter": 90,
+    "chests": [
+      {
+        "item": "ration",
+        "count": 2
+      },
+      {
+        "item": "ration",
+        "count": 1
+      },
+      {
+        "item": "ration",
+        "count": 1
+      }
+    ],
+    "chestRadiusPx": 8
   },
   "juice": {
     "shakeDurationMs": 120,

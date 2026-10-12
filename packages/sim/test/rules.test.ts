@@ -43,7 +43,9 @@ describe('move timing model', () => {
       expect(P.weapon.light[i]?.active).toBe(msToTicks(l.activeMs));
       expect(P.weapon.light[i]?.recovery).toBe(msToTicks(l.recoveryMs));
     });
-    expect(P.weapon.heavy.recovery).toBe(msToTicks(w.heavy.recoveryMs));
+    expect(P.weapon.heavy.tap.recovery).toBe(msToTicks(w.heavy.tap.recoveryMs));
+    expect(P.weapon.heavy.charged.startup).toBe(msToTicks(w.heavy.charged.startupMs));
+    expect(P.weapon.heavy.hold).toBe(msToTicks(w.heavy.holdMs));
     w.abilities.forEach((a, i) => {
       expect(P.weapon.abilities[i]?.startup).toBe(msToTicks(a.startupMs));
       expect(P.weapon.abilities[i]?.recovery).toBe(msToTicks(a.recoveryMs));
@@ -69,11 +71,12 @@ describe('move timing model', () => {
     expect(n).toBe((st?.startup ?? 0) + (st?.active ?? 0) + (st?.recovery ?? 0) + 1);
   });
 
-  it('the Hookblade has three ability slots, slots 2-3 locked, and no armor frames yet', () => {
+  it('the Hookblade has three ability slots, slots 2-3 locked; only the charged thrust has armor frames', () => {
     const P = arena().params;
     expect(P.weapon.abilities.map((a) => a.locked)).toEqual([false, true, true]);
-    const moves = [...P.weapon.light, P.weapon.heavy, ...P.weapon.abilities];
+    const moves = [...P.weapon.light, P.weapon.heavy.tap, ...P.weapon.abilities];
     expect(moves.every((m) => m.armorEnd === 0)).toBe(true);
+    expect(P.weapon.heavy.charged.armorEnd).toBe(P.weapon.heavy.charged.startup + P.weapon.heavy.charged.active);
   });
 });
 
@@ -113,11 +116,12 @@ describe('cancel windows', () => {
     const run = arena();
     const p = run.state.player;
     const P = run.params;
-    const lunge = P.weapon.abilities[0];
-    expect(lunge?.recovery).toBeGreaterThan(P.bufferTicks);
+    const haul = P.weapon.abilities[0];
+    expect(haul?.recovery).toBeGreaterThan(P.bufferTicks);
 
     // Active frames: not even a dodge.
     step(run, Button.Ability1);
+    stepUntil(run, () => playerAttackPhase(p, P) === 'active');
     step(run, Button.Dodge);
     expect(playerAttackPhase(p, P)).toBe('active');
     expect(p.action).toBe('ability');
@@ -126,12 +130,12 @@ describe('cancel windows', () => {
     const run2 = arena();
     const p2 = run2.state.player;
     retune(run2, (t) => {
-      const sweep = t.weapons[WEAPON]?.abilities[1];
+      const sweep = t.weapons[WEAPON]?.abilities[2];
       if (sweep) sweep.locked = false;
     });
     step(run2, Button.Ability1);
     toRecovery(run2);
-    for (const b of [Button.Light, Button.Heavy, Button.Ability2]) {
+    for (const b of [Button.Light, Button.Heavy, Button.Ability3]) {
       step(run2, b);
       expect(p2.action).toBe('ability');
       expect(p2.abilitySlot).toBe(0);
@@ -224,16 +228,16 @@ describe('ability slots', () => {
     const run = arena();
     const p = run.state.player;
     retune(run, (t) => {
-      const sweep = t.weapons[WEAPON]?.abilities[1];
+      const sweep = t.weapons[WEAPON]?.abilities[2];
       if (sweep) sweep.locked = false;
     });
-    const [lunge, sweep] = run.params.weapon.abilities;
+    const [haul, , sweep] = run.params.weapon.abilities;
     step(run, Button.Ability1);
-    expect(p.cooldowns[0]).toBe(lunge?.cooldown);
+    expect(p.cooldowns[0]).toBe(haul?.cooldown);
     stepUntil(run, () => p.action === 'idle');
-    step(run, Button.Ability2);
-    expect([p.action, p.abilitySlot]).toEqual(['ability', 1]);
-    expect(p.cooldowns[1]).toBe(sweep?.cooldown);
+    step(run, Button.Ability3);
+    expect([p.action, p.abilitySlot]).toEqual(['ability', 2]);
+    expect(p.cooldowns[2]).toBe(sweep?.cooldown);
     expect(p.cooldowns[0]).toBeGreaterThan(0);
   });
 
@@ -249,12 +253,13 @@ describe('ability slots', () => {
 });
 
 describe('multi-hit hitstop', () => {
-  /** Ticks a Lunge takes from press to idle (hitstop freezes add to it). */
-  function lungeTicks(run: Run): { ticks: number; events: SimEvent[] } {
+  /** Ticks a tap thrust takes from release to idle (hitstop freezes add to it). */
+  function thrustTicks(run: Run): { ticks: number; events: SimEvent[] } {
     const p = run.state.player;
-    const events = step(run, Button.Ability1, 0);
+    const events = steps(run, 2, Button.Heavy, 0);
+    events.push(...step(run, 0, 0));
     let ticks = 0;
-    while (p.action === 'ability') {
+    while (p.action === 'heavy') {
       events.push(...step(run));
       ticks++;
     }
@@ -262,15 +267,15 @@ describe('multi-hit hitstop', () => {
   }
 
   it('hits on different ticks of one swing freeze once, never summed', () => {
-    const base = lungeTicks(arena()).ticks;
+    const base = thrustTicks(arena()).ticks;
     const run = arena();
     still(run);
+    // The thrust steps forward during startup/active, so the far husk is reached a few ticks after the near one.
     addHusk(run, 'peeling', 20, { shell: [0], core: 1000 });
-    addHusk(run, 'peeling', 50, { shell: [0], core: 1000 });
-    const { ticks, events } = lungeTicks(run);
-    const lunge = run.params.weapon.abilities[0];
+    addHusk(run, 'peeling', 48, { shell: [0], core: 1000 });
+    const { ticks, events } = thrustTicks(run);
     expect(hits(events)).toHaveLength(2);
-    expect(ticks - base).toBe(lunge?.hitstop);
+    expect(ticks - base).toBe(run.params.weapon.heavy.hitstop);
   });
 
   it('several husks hit in the same tick freeze once', () => {
@@ -290,7 +295,7 @@ describe('multi-hit hitstop', () => {
     const ctx: Ctx = { s, P: run.params, events: [] };
     const [a, b, c] = [20, 30, 40].map((d) => addHusk(run, 'peeling', d, { shell: [0], core: 1000 }));
     if (!a || !b || !c) throw new Error('husks');
-    const hit = (hitstop: number) => ({ damage: 1, shellDamage: 1, knockback: 0, hitstop, shake: 0 });
+    const hit = (hitstop: number) => ({ damage: 1, shellDamage: 1, knockback: 0, hitstop, shake: 0, hold: 0, shove: 0 });
     s.player.swingHitstop = 0;
     hitHusk(ctx, a, hit(3), s.player.x, s.player.y);
     expect(s.player.hitstop).toBe(3);
@@ -336,22 +341,23 @@ describe('weight classes', () => {
     expect([heavy.pushed, heavy.moved]).toEqual([0, 0]);
   });
 
-  it('Peeling is light and Nutshell is heavy: a full heavy swing does not move a Nutshell', () => {
+  it('Peeling is light and Nutshell is heavy: the third light hit does not move a Nutshell', () => {
     expect([tuning.husks.peeling.weightClass, tuning.husks.nutshell.weightClass]).toEqual(['light', 'heavy']);
     const run = arena();
     retune(run, (t) => {
-      const w = t.weapons[WEAPON];
-      if (w) w.heavy.stepSpeed = 0;
+      for (const l of t.weapons[WEAPON]?.light ?? []) l.stepSpeed = 0;
       t.husks.nutshell.speed = 0;
     });
     const p = run.state.player;
+    p.nextCombo = 2;
+    p.comboTimer = 10;
     const h = addHusk(run, 'nutshell', 22, { shell: [0, 0], core: 1000 });
     const [x0, y0] = [h.x, h.y];
-    stepUntil(run, () => p.charge >= run.params.weapon.heavy.fullCharge, 200, Button.Heavy);
-    step(run);
+    step(run, Button.Light, 0);
     const events = stepUntil(run, () => p.action === 'idle');
     expect(hits(events)).toHaveLength(1);
-    expect(run.params.weapon.heavy.knockback[1]).toBeGreaterThan(0);
+    expect(run.params.weapon.light[2]?.knockback).toBeGreaterThan(0);
+    steps(run, 30);
     expect([h.x, h.y]).toEqual([x0, y0]);
   });
 

@@ -1,7 +1,7 @@
 import { huskParams } from './combat.js';
 import { idiv, length, TILE, TURN } from './fixed.js';
 import { Button, encodeInput, MOVE_DIRS, MOVE_MAG_MAX } from './input.js';
-import { playerAttackPhase } from './moves.js';
+import { isFullyCharged, playerAttackPhase } from './moves.js';
 import { isSolid, tileAt, tileOf } from './rooms.js';
 import type { HuskState, RunState } from './state.js';
 import { atan2 } from './trig.js';
@@ -92,12 +92,22 @@ function threat(s: RunState, P: Params, h: HuskState): boolean {
   return h.action === 'windup' && nu.startup - h.t <= 2 && d <= nu.slamRadius + nu.slamOffset + P.player.radius;
 }
 
+/** Use a Ration (any slot holding one) when hurt and not already healing. */
+function itemButton(s: RunState, P: Params): number {
+  const p = s.player;
+  if (p.healLeft > 0 || p.hp > idiv(P.player.maxHp, 2)) return 0;
+  const slot = p.items.findIndex((i) => i.id === 'ration' && i.count > 0);
+  if (slot === 0) return Button.Item1;
+  if (slot === 1) return Button.Item2;
+  return 0;
+}
+
 export function autopilot(s: RunState, P: Params, opts: AutopilotOptions = {}): number {
   const p = s.player;
   if (s.status !== 'playing' || p.action === 'dead') return 0;
   let aim = p.aim;
   let move = { moveDir: 0, moveMag: 0 };
-  let buttons = 0;
+  let buttons = itemButton(s, P);
 
   // Room cleared: walk to the open door.
   if (s.room.phase === 'cleared' && s.room.doorOpen) {
@@ -113,7 +123,9 @@ export function autopilot(s: RunState, P: Params, opts: AutopilotOptions = {}): 
 
   const targets = s.husks.filter((h) => h.core > 0 && h.action !== 'spawn');
   if (targets.length === 0) {
-    // Hover around the room middle while waves spawn.
+    // Between waves: grab an unopened chest, else hover around the room middle.
+    const chest = s.chests.find((c) => !c.opened);
+    if (chest) return encodeInput({ aim, ...goTo(s, chest.x, chest.y), buttons });
     move = goTo(s, idiv(s.room.cols * TILE, 2), idiv(s.room.rows * TILE, 2));
     if (length(p.x - idiv(s.room.cols * TILE, 2), p.y - idiv(s.room.rows * TILE, 2)) < TILE * 2) move.moveMag = 0;
     return encodeInput({ aim, ...move, buttons });
@@ -147,27 +159,30 @@ export function autopilot(s: RunState, P: Params, opts: AutopilotOptions = {}): 
   }
 
   if (p.action === 'charge') {
-    // Keep charging until full, then release.
-    const held = p.charge < P.weapon.heavy.fullCharge;
-    return encodeInput({ aim, ...goTo(s, target.x, target.y), buttons: held ? Button.Heavy : 0 });
+    // Hold the thrust until it is fully charged and the target is on the line, then release.
+    const inRange = best <= P.weapon.heavy.length + tr;
+    const release = isFullyCharged(P, p.charge) && inRange;
+    return encodeInput({ aim, ...goTo(s, target.x, target.y), buttons: release ? 0 : Button.Heavy });
   }
 
+  const shelled = target.kind === 'nutshell' && target.shell.some((v) => v > 0);
+  const busy = target.action === 'stagger' || target.action === 'flinch' || target.action === 'held';
   if (best > reach + tr) {
     move = goTo(s, target.x, target.y);
-    // Lunge after a target out of reach; from a light/heavy recovery this is a cancel.
-    const lunge = P.weapon.abilities[0];
-    const lungeReady = (p.cooldowns[0] ?? 1) === 0 && lunge !== undefined && !lunge.locked;
-    if (lungeReady && best < 90 * 256 && best > 36 * 256 && lineClear(s, p.x, p.y, target.x, target.y)) {
+    const haul = P.weapon.abilities[0];
+    const haulReady = (p.cooldowns[0] ?? 1) === 0 && haul !== undefined && !haul.locked && haul.haul !== null;
+    const range = haul?.haul?.range ?? 0;
+    if (haulReady && best < range && best > 36 * 256 && lineClear(s, p.x, p.y, target.x, target.y)) {
+      // Haul a target out of reach; from a light/heavy recovery this is a cancel.
       buttons |= Button.Ability1;
-    }
-  } else {
-    const shelled = target.kind === 'nutshell' && target.shell.some((v) => v > 0);
-    const busy = target.action === 'stagger' || target.action === 'flinch';
-    if (shelled && !busy && (p.action === 'idle' || phase === 'recovery') && (s.tick & 3) === 0) {
+    } else if (shelled && !busy && p.action === 'idle' && best < 70 * 256) {
+      // Open on a shelled Nutshell with a charged Hook-thrust (the shell breaker).
       buttons |= Button.Heavy;
-    } else if ((s.tick & 1) === 0) {
-      buttons |= Button.Light;
     }
+  } else if (shelled && !busy && (p.action === 'idle' || phase === 'recovery')) {
+    buttons |= Button.Heavy;
+  } else if ((s.tick & 1) === 0) {
+    buttons |= Button.Light;
   }
   return encodeInput({ aim, ...move, buttons });
 }

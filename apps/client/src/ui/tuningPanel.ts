@@ -1,5 +1,6 @@
 import { defaultTuning, type TuningData } from '@iot/shared';
 import { ABILITY_KINDS, WEIGHT_CLASSES } from '@iot/sim';
+import { controlsStore } from '../game/controlsStore.js';
 import { tuningStore } from '../game/tuningStore.js';
 
 type Path = (string | number)[];
@@ -107,7 +108,7 @@ export class TuningPanel {
       tuningStore.reset();
       status.textContent = 'reset to data file values';
     });
-    this.root.append(head, out);
+    this.root.append(head, out, this.presetRow());
 
     const groups = new Map<string, HTMLElement>();
     for (const { path, value } of leaves(t)) {
@@ -170,6 +171,28 @@ export class TuningPanel {
     }
   }
 
+  /** Gamepad preset select (controls.json), the same choice as the controls screen. */
+  private presetRow(): HTMLElement {
+    const row = document.createElement('label');
+    row.className = 'row';
+    const name = document.createElement('span');
+    name.textContent = 'gamepad preset';
+    const select = document.createElement('select');
+    select.dataset.preset = 'true';
+    for (const p of controlsStore.presets()) select.add(new Option(p.name, p.id, false, p.id === controlsStore.get().id));
+    const out = document.createElement('output');
+    out.textContent = controlsStore.get().id;
+    select.addEventListener('change', () => {
+      controlsStore.set(select.value);
+    });
+    controlsStore.subscribe((p) => {
+      select.value = p.id;
+      out.textContent = p.id;
+    });
+    row.append(name, select, out);
+    return row;
+  }
+
   /** Coalesce slider drags into one tuning change per animation frame. */
   private apply(path: Path, value: Leaf): void {
     const next = this.pending ?? structuredClone(tuningStore.get());
@@ -188,6 +211,7 @@ export class TuningPanel {
     const t = tuningStore.get();
     const byPath = new Map(leaves(t).map((l) => [JSON.stringify(l.path), l.value]));
     for (const input of this.root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input[type=range], select')) {
+      if (input.dataset.preset) continue;
       const v = byPath.get(input.dataset.path ?? '');
       if (v === undefined) continue;
       input.value = String(v);

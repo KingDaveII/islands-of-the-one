@@ -7,7 +7,7 @@ import { decodeInput } from './input.js';
 import { updatePlayer } from './player.js';
 import { randInt, shuffle } from './rng.js';
 import { collideWalls, findTiles, roomFromTemplate, tileAt, tileOf, type RoomTemplate } from './rooms.js';
-import type { PlayerState, RunState, SimEvent } from './state.js';
+import type { ItemSlot, PlayerState, RunState, SimEvent } from './state.js';
 import { atan2, dirX, dirY } from './trig.js';
 import { compileTuning, isWeaponAvailable, type Params, type Tuning } from './tuning.js';
 
@@ -78,7 +78,32 @@ function newPlayer(P: Params, x: number, y: number): PlayerState {
     heavyHeld: false,
     buffer: 'none',
     bufferAge: 0,
+    hook: null,
+    armor: 0,
+    haulCombo: 0,
+    items: Array.from({ length: P.consumables.slots }, (): ItemSlot => ({ id: '', count: 0 })),
+    healLeft: 0,
+    healPool: 0,
+    healAcc: 0,
   };
+}
+
+/**
+ * Put `count` of a consumable into the player's slots: onto a stack of the
+ * same item first (capped at its stackMax), else into an empty slot. Returns
+ * how many were taken.
+ */
+export function giveItem(p: PlayerState, P: Params, id: string, count: number): number {
+  const kind = P.consumables.kinds.find((k) => k.id === id);
+  if (!kind || count <= 0) return 0;
+  const slot = p.items.find((i) => i.id === id && i.count > 0) ?? p.items.find((i) => i.count === 0);
+  if (!slot) return 0;
+  const room = kind.stackMax - (slot.id === id ? slot.count : 0);
+  const taken = Math.max(0, Math.min(count, room));
+  if (taken === 0) return 0;
+  slot.id = id;
+  slot.count += taken;
+  return taken;
 }
 
 function enterRoom(ctx: Ctx, templates: RoomTemplate[], index: number): void {
@@ -96,6 +121,7 @@ function enterRoom(ctx: Ctx, templates: RoomTemplate[], index: number): void {
   p.vy = 0;
   s.husks = [];
   s.pickups = [];
+  s.chests = findTiles(s.room, 'C').map((c) => ({ id: s.nextId++, x: c.x, y: c.y, opened: false }));
   ctx.events.push({ type: 'roomEnter', index });
 }
 
@@ -116,6 +142,8 @@ export function createRun(config: RunConfig): Run {
     player: newPlayer(P, 0, 0),
     husks: [],
     pickups: [],
+    chests: [],
+    chestsOpened: 0,
     nextId: 1,
     sparkglass: 0,
     stats: { kills: 0, perfectDodges: 0, hitsLanded: 0, damageTaken: 0 },
@@ -284,6 +312,23 @@ function updatePickups(ctx: Ctx): void {
   });
 }
 
+/** Chests open on contact; their contents are scripted by the order they are opened in the run. */
+function updateChests(ctx: Ctx): void {
+  const { s, P } = ctx;
+  const p = s.player;
+  if (p.action === 'dead') return;
+  for (const c of s.chests) {
+    if (c.opened) continue;
+    if (length(p.x - c.x, p.y - c.y) > P.player.radius + P.run.chestRadius) continue;
+    c.opened = true;
+    const script = P.run.chests;
+    const contents = script[Math.min(s.chestsOpened, script.length - 1)];
+    s.chestsOpened++;
+    const count = contents ? giveItem(p, P, contents.item, contents.count) : 0;
+    ctx.events.push({ type: 'chestOpened', id: c.id, x: c.x, y: c.y, item: contents?.item ?? '', count });
+  }
+}
+
 /** Advance the run by one tick. Returns this tick's presentation events. */
 export function stepRun(run: Run, packedInput: number): SimEvent[] {
   const s = run.state;
@@ -301,6 +346,7 @@ export function stepRun(run: Run, packedInput: number): SimEvent[] {
   collideWalls(s.room, s.player, run.params.player.radius);
   for (const h of s.husks) collideWalls(s.room, h, huskParams(run.params, h.kind).radius);
   updatePickups(ctx);
+  updateChests(ctx);
   updateRoom(ctx, run.templates);
   if (s.slowmo > 0) s.slowmo--;
   return run.events;

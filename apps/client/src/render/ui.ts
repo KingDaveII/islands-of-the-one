@@ -49,7 +49,7 @@ export function tierPips(g: G, x: number, y: number, tier: number, max = 5): voi
   }
 }
 
-export type IconKind = 'lunge' | 'sweep' | 'dodge' | 'lock' | 'hookblade' | 'spark' | 'slash';
+export type IconKind = 'haul' | 'catch' | 'sweep' | 'dodge' | 'lock' | 'hookblade' | 'spark' | 'slash' | 'thrust' | 'ration';
 
 /** Small pixel icons, drawn into a box of `size` px at (x, y). */
 export function icon(g: G, kind: IconKind, x: number, y: number, size: number, color: number): void {
@@ -59,15 +59,38 @@ export function icon(g: G, kind: IconKind, x: number, y: number, size: number, c
   g.fillStyle(color, 1);
   const m = Math.floor(size / 2);
   switch (kind) {
-    case 'lunge':
-      // An arrow with speed lines.
-      c(m - 4, m - 1, 7, 2);
-      c(m + 1, m - 4, 1, 8);
-      c(m + 2, m - 3, 1, 6);
-      c(m + 3, m - 2, 1, 4);
-      c(m + 4, m - 1, 1, 2);
-      c(m - 7, m - 4, 3, 1);
-      c(m - 7, m + 3, 3, 1);
+    case 'haul':
+      // A chain of links ending in a hook.
+      c(m - 7, m, 2, 1);
+      c(m - 4, m, 2, 1);
+      c(m - 1, m, 2, 1);
+      c(m + 2, m - 2, 1, 5);
+      c(m + 3, m - 3, 3, 1);
+      c(m + 3, m + 2, 3, 1);
+      c(m + 5, m - 2, 1, 2);
+      break;
+    case 'catch':
+      // An open hand: a cup shape.
+      c(m - 4, m - 3, 1, 5);
+      c(m + 3, m - 3, 1, 5);
+      c(m - 3, m + 2, 6, 1);
+      c(m - 1, m - 5, 2, 1);
+      break;
+    case 'thrust':
+      // A straight thrust: a line with a hooked tip.
+      c(m - 6, m, 10, 2);
+      c(m + 4, m - 2, 1, 2);
+      c(m + 2, m - 2, 2, 1);
+      c(m - 7, m - 1, 1, 4);
+      break;
+    case 'ration':
+      // A wrapped bundle.
+      c(m - 4, m - 2, 8, 6);
+      g.fillStyle(Palette.uiPanel, 1);
+      c(m - 1, m - 2, 1, 6);
+      c(m - 4, m + 1, 8, 1);
+      g.fillStyle(color, 1);
+      c(m - 2, m - 4, 4, 2);
       break;
     case 'slash':
       // A quick diagonal cut.
@@ -125,9 +148,11 @@ export interface SlotState {
   locked: boolean;
   /** The frame lights up for this frame (just came back / in use). */
   ready: boolean;
-  /** Small 14×14 (dodge) or 20×20. */
+  /** Small 14×14 (dodge, consumables) or 20×20. */
   small?: boolean;
   active?: boolean;
+  /** An empty consumable slot: sunken, icon dimmed. */
+  empty?: boolean;
 }
 
 /**
@@ -149,7 +174,7 @@ export function abilitySlot(g: G, x: number, y: number, s: SlotState): void {
     icon(g, 'lock', ix, iy, inner, Palette.uiInkMuted);
     return;
   }
-  icon(g, s.icon, ix, iy, inner, s.cooldown > 0 ? Palette.uiBevel : s.active ? Palette.uiFocus : Palette.uiInk);
+  icon(g, s.icon, ix, iy, inner, s.empty ? Palette.uiBevel : s.cooldown > 0 ? Palette.uiBevel : s.active ? Palette.uiFocus : Palette.uiInk);
   if (s.cooldown > 0) {
     const half = inner / 2;
     const pts = squareSweep(ix + half, iy + half, half, 1 - s.cooldown, 1);

@@ -1,0 +1,72 @@
+{
+  "defaultPreset": "triggers",
+  "presets": [
+    {
+      "id": "triggers",
+      "name": "Triggers",
+      "aim": "right-stick",
+      "bindings": {
+        "light": "R2",
+        "heavy": "L2",
+        "dodge": "L1",
+        "ability1": "R1",
+        "ability2": "Square",
+        "ability3": "Triangle",
+        "interact": "Cross",
+        "chartPeek": "Circle",
+        "journal": "Down",
+        "item1": "Left",
+        "item2": "Right"
+      }
+    },
+    {
+      "id": "faces",
+      "name": "Faces",
+      "aim": "right-stick",
+      "bindings": {
+        "light": "Square",
+        "heavy": ["Triangle", "R2"],
+        "dodge": ["Cross", "L1"],
+        "ability1": ["Circle", "R1"],
+        "ability2": "L2",
+        "ability3": "Up",
+        "interact": "Cross",
+        "chartPeek": "R3",
+        "journal": "Down",
+        "item1": "Left",
+        "item2": "Right"
+      }
+    },
+    {
+      "id": "left-stick",
+      "name": "Left-stick aim",
+      "aim": "left-stick",
+      "bindings": {
+        "light": "R2",
+        "heavy": "L2",
+        "dodge": "L1",
+        "ability1": "R1",
+        "ability2": "Square",
+        "ability3": "Triangle",
+        "interact": "Cross",
+        "chartPeek": "Circle",
+        "journal": "Down",
+        "item1": "Left",
+        "item2": "Right"
+      }
+    }
+  ],
+  "keyboard": {
+    "light": "LMB",
+    "heavy": "RMB",
+    "dodge": "SPC",
+    "ability1": "E",
+    "ability2": "R",
+    "ability3": "T",
+    "interact": "C",
+    "chartPeek": "TAB",
+    "journal": "M",
+    "item1": "Q",
+    "item2": "F"
+  }
+}

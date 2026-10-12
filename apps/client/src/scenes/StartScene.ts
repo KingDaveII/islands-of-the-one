@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { isWeaponAvailable, type Tuning } from '@iot/sim';
-import { Controls, KEY_HINTS } from '../game/controls.js';
+import { Controls } from '../game/controls.js';
+import { controlsStore } from '../game/controlsStore.js';
+import { hintFor, KEYBOARD_HINTS } from '../game/gamepad.js';
 import { parseSeed, randomSeed } from '../game/seed.js';
 import { tuningStore } from '../game/tuningStore.js';
 import { Palette } from '../palette.js';
@@ -93,15 +95,20 @@ export class StartScene extends Phaser.Scene {
       this.startRun();
     });
     this.tweens.add({ targets: start, alpha: 0.75, duration: 700, yoyo: true, repeat: -1 });
+    this.button(cx + 50, seedY + 26, 'CONTROLS', false, () => {
+      this.scene.start('controls');
+    });
 
     // Mood: the Kindled facing a Husk at the shore.
     const mood = this.add.graphics();
     groundShadow(mood, 60, VIEW_H - 22, 5, 2);
     drawKindled(mood, 60, VIEW_H - 27, 2);
 
+    const k = KEYBOARD_HINTS;
+    const pad = controlsStore.get();
     const hints = [
-      `WASD move  ·  mouse aim  ·  ${KEY_HINTS.light} light  ·  hold ${KEY_HINTS.heavy} heavy  ·  ${KEY_HINTS.dodge} dodge  ·  ${KEY_HINTS.abilities[0]} lunge`,
-      'Gamepad: sticks move/aim · X light · Y/RT heavy · A dodge · B lunge · F2 tuning · F3 debug',
+      `WASD move  ·  mouse aim  ·  ${k.light} light  ·  hold ${k.heavy} Hook-thrust  ·  ${k.dodge} dodge  ·  ${k.ability1} Haul  ·  ${k.item1}/${k.item2} items`,
+      `Gamepad (${pad.name}): ${hintFor(pad, 'light')} light · hold ${hintFor(pad, 'heavy')} Hook-thrust · ${hintFor(pad, 'dodge')} dodge · ${hintFor(pad, 'ability1')} Haul · C controls · F2 tuning · F3 debug`,
     ];
     hints.forEach((line, i) => place(body(this, 0, 0, line, Palette.uiBevel), cx + 20, VIEW_H - 28 + i * 11, 0.5));
 
@@ -109,6 +116,7 @@ export class StartScene extends Phaser.Scene {
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === 'Enter') this.startRun();
+      else if (e.key === 'c' || e.key === 'C') this.scene.start('controls');
       else if (e.key === 'Backspace') this.seedText = this.seedText.slice(0, -1);
       else if (/^[a-z0-9]$/i.test(e.key) && this.seedText.length < MAX_SEED_LEN) this.seedText += e.key.toUpperCase();
     };

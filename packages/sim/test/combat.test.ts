@@ -280,8 +280,12 @@ describe('perfect dodge near-miss margin', () => {
 });
 
 describe('heavy and abilities', () => {
-  it('charges while held and scales the hit by charge', () => {
+  it('a short hold releases the tap thrust; a full hold the strongest charged thrust', () => {
     const run = arena();
+    // A straight thrust needs the target on the line: keep the Nutshell from circling.
+    retune(run, (t) => {
+      t.husks.nutshell.speed = 0;
+    });
     const p = run.state.player;
     const P = run.params;
     const quick = addHusk(run, 'nutshell', 22, { shell: [0, 0], core: 1000 });
@@ -290,38 +294,38 @@ describe('heavy and abilities', () => {
     step(run);
     expect(p.action).toBe('heavy');
     stepUntil(run, () => p.hitIds.length > 0);
-    const weak = 1000 - quick.core;
+    expect(1000 - quick.core).toBe(P.weapon.heavy.tap.damage);
 
     stepUntil(run, () => p.action === 'idle');
+    steps(run, 30);
     quick.core = 1000;
-    stepUntil(run, () => p.charge >= P.weapon.heavy.fullCharge, 200, Button.Heavy);
+    quick.action = 'chase';
+    stepUntil(run, () => p.charge >= P.weapon.heavy.chargeMax, 200, Button.Heavy);
     steps(run, 5, Button.Heavy);
-    expect(p.charge).toBe(P.weapon.heavy.fullCharge);
+    expect(p.charge).toBe(P.weapon.heavy.chargeMax);
     step(run);
     stepUntil(run, () => p.hitIds.length > 0);
-    expect(1000 - quick.core).toBe(P.weapon.heavy.damage[1]);
-    expect(1000 - quick.core).toBeGreaterThan(weak);
+    expect(1000 - quick.core).toBe(P.weapon.heavy.charged.damage[1]);
+    expect(1000 - quick.core).toBeGreaterThan(P.weapon.heavy.tap.damage);
   });
 
-  it('Lunge dashes along aim, hits, and goes on cooldown; locked slots do nothing', () => {
+  it('Haul is slot 1, hits and goes on cooldown; The Catch and Turning Blade are locked', () => {
     const run = arena();
     const p = run.state.player;
-    const x0 = p.x;
-    const h = addHusk(run, 'peeling', 40, { shell: [0], core: 100 });
+    const h = addHusk(run, 'peeling', 60, { shell: [0], core: 100 });
     const events = step(run, Button.Ability1, 0);
     expect([p.action, p.abilitySlot]).toEqual(['ability', 0]);
     expect(p.cooldowns[0]).toBe(run.params.weapon.abilities[0]?.cooldown);
     events.push(...stepUntil(run, () => p.action === 'idle'));
-    expect(p.x).toBeGreaterThan(x0);
     expect(h.core).toBeLessThan(100);
     expect(events.filter((e) => e.type === 'hit')).toHaveLength(1);
     step(run, Button.Ability1);
     expect(p.action).not.toBe('ability');
 
-    expect(run.params.weapon.abilities.map((a) => [a.id, a.locked])).toEqual([
-      ['lunge', false],
-      ['sweep', true],
-      ['tbd', true],
+    expect(run.params.weapon.abilities.map((a) => [a.id, a.name, a.locked])).toEqual([
+      ['haul', 'Haul', false],
+      ['the-catch', 'The Catch', true],
+      ['turning-blade', 'Turning Blade', true],
     ]);
     step(run, Button.Ability2);
     step(run, Button.Ability3);
