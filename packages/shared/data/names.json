@@ -1,0 +1,5 @@
+{
+  "$comment": "Writ Names: how many Old Letters a Name has.",
+  "minLetters": 2,
+  "maxLetters": 5
+}
