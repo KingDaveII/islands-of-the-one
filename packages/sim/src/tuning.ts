@@ -255,6 +255,8 @@ export interface Tuning {
   };
   input: {
     bufferMs: number;
+    /** The room turns Calm this long after the last awake hostile dies (docs/design/controls.md). */
+    calmDelayMs: number;
   };
   /** Gamepad soft lock (client only; the sim never reads it). */
   softlock: {
@@ -428,6 +430,8 @@ export interface Params {
   dodge: { startup: number; active: number; recovery: number; speed: number; cooldown: number; exitSpeed: number };
   perfect: { window: number; margin: number; slowmo: number; slowmoScale: number; bonus: number; cooldownRefund: number };
   bufferTicks: number;
+  /** Ticks after the last awake hostile dies before the input context turns Calm. */
+  calmDelayTicks: number;
   weapon: {
     id: string;
     comboReset: number;
@@ -656,6 +660,7 @@ export function compileTuning(t: Tuning, weaponId: string): Params {
       cooldownRefund: msToTicks(t.perfectDodge.cooldownRefundMs),
     },
     bufferTicks: msToTicks(t.input.bufferMs),
+    calmDelayTicks: Math.max(0, msToTicks(t.input.calmDelayMs)),
     weapon: {
       id: weaponId,
       comboReset: msToTicks(weapon.comboResetMs),

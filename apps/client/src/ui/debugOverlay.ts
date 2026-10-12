@@ -20,6 +20,7 @@ export function describeInput(i: TickInput): string {
     b & Button.Ability3 ? 'A3' : '',
     b & Button.Item1 ? 'I1' : '',
     b & Button.Item2 ? 'I2' : '',
+    b & Button.Interact ? 'INT' : '',
   ]
     .filter(Boolean)
     .join('+');
@@ -84,6 +85,7 @@ export class DebugOverlay {
       `player  ${s.player.action} t${s.player.t} hp${s.player.hp} buf ${s.player.buffer} charge ${s.player.charge} armor ${s.player.armor}`,
       `hook    ${s.player.hook ? `${s.player.hook.hitId < 0 ? 'flying' : s.player.hook.pull} target ${s.player.hook.targetId}` : '-'}  items ${s.player.items.map((i) => (i.count ? `${i.id}x${i.count}` : '-')).join(' ')}`,
       `room    ${s.roomIndex + 1} ${s.room.phase} wave ${s.room.wave + 1}`,
+      `context ${s.context}${s.calmTimer > 0 ? ` (calm in ${s.calmTimer})` : ''}`,
       `slowmo  ${s.slowmo}  hash ${this.hash.toString(16)}`,
       `tuning changes ${run.record.tuningChanges.length}`,
     ].join('\n');

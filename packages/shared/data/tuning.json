@@ -27,7 +27,8 @@
     "cooldownRefundMs": 2000
   },
   "input": {
-    "bufferMs": 120
+    "bufferMs": 120,
+    "calmDelayMs": 500
   },
   "softlock": {
     "angleDeg": 15,

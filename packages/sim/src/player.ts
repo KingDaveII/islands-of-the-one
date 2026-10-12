@@ -524,6 +524,8 @@ export function updatePlayer(ctx: Ctx, input: TickInput): void {
   }
   if (input.buttons & Button.Item1) useItem(ctx, 0);
   if (input.buttons & Button.Item2) useItem(ctx, 1);
+  // Interact is a Calm action: a press that reaches the sim in Combat (a stale replay, a forged input) is ignored.
+  if (input.buttons & Button.Interact && s.context === 'calm') ctx.events.push({ type: 'interact', x: p.x, y: p.y });
 
   // Hitstop freezes the player completely; buffered presses wait without aging.
   if (p.hitstop > 0) {

@@ -166,6 +166,13 @@ export interface RoomState {
 
 export type RunStatus = 'playing' | 'dead' | 'cleared';
 
+/**
+ * The input context (docs/design/controls.md): Combat while at least one
+ * hostile in the room is awake, Calm everything else. A room turns Combat the
+ * tick a hostile wakes and Calm `calmDelayTicks` after the last one dies.
+ */
+export type InputContext = 'combat' | 'calm';
+
 export interface RunStats {
   kills: number;
   perfectDodges: number;
@@ -195,6 +202,10 @@ export interface RunState {
   slowmo: number;
   /** Ticks until the run counts as cleared after the last room is cleared. */
   clearTimer: number;
+  /** The input context the client resolves buttons with. */
+  context: InputContext;
+  /** Ticks of Combat left after the last awake hostile died. */
+  calmTimer: number;
 }
 
 /** Things that happened this tick, for presentation (sound, particles, shake). Not hashed. */
@@ -232,6 +243,10 @@ export type SimEvent =
   | { type: 'huskDeath'; id: number; kind: HuskKind; x: number; y: number }
   | { type: 'spawn'; id: number; kind: HuskKind; x: number; y: number }
   | { type: 'pickup'; x: number; y: number; value: number }
+  /** An interact press the sim accepted (Calm only); nothing to interact with yet in M1. */
+  | { type: 'interact'; x: number; y: number }
+  /** The input context changed. */
+  | { type: 'context'; context: InputContext }
   | { type: 'roomEnter'; index: number }
   | { type: 'roomCleared'; index: number }
   | { type: 'runEnd'; status: RunStatus };
