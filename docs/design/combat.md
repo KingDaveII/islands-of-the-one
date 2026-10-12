@@ -30,7 +30,7 @@ renders state; it never decides an outcome.
 - **Quantized input.** Each tick's input is one packed uint32:
   - aim angle: 1/4096 turn;
   - movement: direction in 1/256 turn plus magnitude 0–7;
-  - buttons: Light, Dodge and Ability 1–3 are "pressed this tick", Heavy is "held".
+  - buttons: Light, Dodge, Ability 1–3 and Item 1–2 are "pressed this tick", Heavy is "held".
 
   The client does the float→integer quantization (`apps/client/src/game/quantize.ts`).
 
@@ -51,7 +51,11 @@ renders state; it never decides an outcome.
   a deadzone and 7 magnitude steps.
 - Aim is independent of movement:
   - mouse, or gamepad right stick, 360°;
-  - with no right-stick input, the gamepad aims where you walk.
+  - with the right stick centered, the gamepad aims where you walk, **soft-locked** to the nearest
+    enemy within `softlock.angleDeg` of that direction (the client does this; the sim only sees the
+    final aim). Presets and the soft lock: [`controls.md`](controls.md).
+- A dodge always rolls in the movement direction, never the soft-locked aim (aim is only the
+  fallback when standing still).
 - Collision is circles vs. tile walls and circles vs. circles, all in the sim (no Phaser physics).
   Overlapping bodies are pushed apart in proportion to their `mass` (not knockback; see §6). A
   dodging player, or one using an ability, passes through Husks.
@@ -63,21 +67,25 @@ renders state; it never decides an outcome.
 **Every move** has **startup → active → recovery**, stored in milliseconds in the data and turned
 into ticks at load:
 
-| Move          | Data                                          | Active means                                     |
-| ------------- | --------------------------------------------- | ------------------------------------------------ |
-| Light 1–3     | `weapons.<id>.light[i].startupMs` …           | the arc hits                                     |
-| Heavy         | `weapons.<id>.heavy.startupMs` …              | the arc hits                                     |
-| Abilities 1–3 | `weapons.<id>.abilities[i].startupMs` …       | the ability moves and hits                       |
-| Dodge         | `dodge.startupMs` / `activeMs` / `recoveryMs` | i-frames (recovery still slides)                 |
-| Husk attacks  | `husks.<kind>.attack.startupMs` …             | startup = wind-up/telegraph, active = lunge/slam |
+| Move            | Data                                          | Active means                                                  |
+| --------------- | --------------------------------------------- | ------------------------------------------------------------- |
+| Light 1–3       | `weapons.<id>.light[i].startupMs` …           | the arc hits                                                  |
+| Heavy (tap)     | `weapons.<id>.heavy.tap.startupMs` …          | the thrust line hits                                          |
+| Heavy (charged) | `weapons.<id>.heavy.charged.startupMs` …      | the thrust line hits                                          |
+| Abilities 1–3   | `weapons.<id>.abilities[i].startupMs` …       | the ability moves and hits (Haul: the hook flies, then pulls) |
+| Dodge           | `dodge.startupMs` / `activeMs` / `recoveryMs` | i-frames (recovery still slides)                              |
+| Husk attacks    | `husks.<kind>.attack.startupMs` …             | startup = wind-up/telegraph, active = lunge/slam              |
 
 Startup and active frames are committed; recovery is where cancels happen (§4).
 
 **Armor frames.** Any player move can mark a window of its frames as armored with `armorStartMs`
 and `armorEndMs` (counted from the start of the move; `0`/`0` means none). While armored, an enemy
 hit still deals its damage (and its hitstop and the post-hit invulnerability), but it does **not**
-interrupt the move: no hurt stun, no knockback, the buffer and combo are kept. The Hookblade uses no
-armor yet; the mechanic is there for heavier weapons.
+interrupt the move: no hurt stun, no knockback, the buffer and combo are kept. Three things armor
+the Hookblade: a **fully charged** heavy hold (from the moment the charge is full until the
+release), the charged thrust's own window (`heavy.charged.armorStartMs`/`armorEndMs`, applied only
+when it was released from a full charge), and the arrival of a Haul on a heavy target
+(`haul.arrivalArmorMs`, a timer independent of the move).
 
 ## 4. Cancels and the input buffer
 
@@ -93,7 +101,7 @@ What may start, given what the player is doing:
 | dodge (any phase)             | nothing                                      |
 | hurt                          | nothing                                      |
 
-- So an attack can always be finished with an ability ("cancel into Lunge"), but an ability is a
+- So an attack can always be finished with an ability ("cancel into Haul"), but an ability is a
   commitment that only a dodge can get you out of, and only once it has done its job.
 - **Input buffer.** Light, heavy, dodge and ability presses are buffered for `input.bufferMs`
   (about 120 ms). A press made shortly before an action becomes possible fires on the first tick it
@@ -114,34 +122,70 @@ picker, and:
 
 - **Light combo:** `light[]`, chained by pressing again in recovery. The chain survives
   `comboResetMs` of idling; after the last step it wraps to the first.
-- **Charged heavy:**
-  - hold to charge up to `heavy.fullChargeMs`, moving at `chargeMoveFactor`;
-  - release to strike;
-  - damage, shell damage, knockback, hitstop and shake all scale linearly with charge between their
-    `*Min` and `*Max` values;
-  - charge shows as three stage pips under the player and in the HUD.
+- **Heavy, the Hook-thrust:** a straight thrust. Its hitbox is a **rectangle**
+  `heavy.thrust.lengthPx` long (from the player's center along the aim) and `heavy.thrust.widthPx`
+  wide, against each Husk's circle, not a cone: what stands beside the line is missed.
+  - **Tap:** released before `heavy.charge.minMs` of hold. Timing `heavy.tap.*`; damage is
+    `heavy.tap.damageFactor` × the first light hit's damage; poise (shell) damage
+    `heavy.tap.shellDamage`.
+  - **Charge:** hold from `heavy.charge.minMs` to `heavy.charge.maxMs`, moving at
+    `chargeMoveFactor`; the charge caps at the window and holding longer keeps it there. Release
+    timing `heavy.charged.*`; damage scales linearly across the window from
+    `damageFactorMin` to `damageFactorMax` × the first light hit, poise from `shellDamageMin` to
+    `shellDamageMax`, shake likewise. **Armor frames once fully charged** (§3).
+  - **On hit:** knockback is `heavy.knockbackPx` (0): the target is **held** on the hook for
+    `heavy.holdMs`, frozen in place, then shoved `heavy.shovePx` along the thrust (a knockback, so
+    weight-scaled: a Nutshell is held but never moves). Hitstop `heavy.hitstopMs` for both sides,
+    then the hold counts. The hold interrupts whatever the Husk was doing, shell or not; a hold
+    that broke a shell layer ends in that layer's stagger, otherwise the Husk goes back to chasing
+    after a short cooldown. Lights on a held Husk don't end the hold (a break does).
+  - Charge shows as three stage pips under the player and in the HUD: none while the hold is still
+    a tap, then the window in thirds, all lit (and armored) at full.
 - **Three ability slots** (`abilities[]`). Each slot is a full move: `startupMs`/`activeMs`/
   `recoveryMs`, its **own** `cooldownMs`, armor frames, and its hit (`hitRadiusPx`, `damage`,
   `shellDamage`, `knockbackPx`, `hitstopMs`, `shake`). There is **no mana or energy**: cooldowns are
   the only limit.
-  - `kind` says how the sim runs it: `dash-strike` (move along the aim at `speed` during active,
-    hitting everything within `hitRadiusPx`), `spin` (the same without moving) or `none`.
+  - `kind` says how the sim runs it: `haul` (the hook, below, with its `haul` block), `spin`
+    (hitting everything within `hitRadiusPx` without moving) or `none`. The old `dash-strike`
+    (Lunge) is gone; its displacement code now pulls the player along the Haul's chain.
   - A `locked` slot exists in data and in the HUD but never executes; its press is swallowed.
 
 **Hookblade** (the only weapon so far):
 
 - **Light:** a 3-hit melee arc chain. The third hit is stronger, with more damage and knockback, a
   wider arc and longer hitstop.
-- **Heavy:** a wide, strong arc; the shell breaker.
-- **Slot 1, "Lunge":** a `dash-strike` along the aim that hits each Husk once. Cancelling light
-  recovery into it is the Hookblade's gap closer after the third hit knocks a Husk away.
-- **Slots 2 and 3:** in data, locked (spinning sweep, TBD).
+- **Heavy:** the Hook-thrust above; the shell breaker.
+- **Slot 1, "Haul":** fires the hook (`kind: haul`).
+  - **Targeting:** on launch, the nearest hittable Husk inside a cone of `haul.coneDeg` around the
+    aim and within `haul.rangePx` is locked and the hook flies at it; with nothing in the cone it
+    flies along the aim. It travels at `haul.speed` for at most `activeMs`, never beyond the range,
+    and stops at the **first** Husk its head (`hitRadiusPx`) touches, or at a wall (a miss).
+    Only Husks are ever candidates: the Kindled, allies and pickups are never hooked.
+  - **On hit:** the ability's damage/poise/hitstop land, then the pull by weight class:
+    - **light:** the Husk slides along the chain to `haul.pullLightPx` from the player;
+    - **medium:** `haul.pullMedium` of that distance;
+    - **heavy:** the chain pulls the **player** instead, at the ability's `speed`, to
+      `haul.playerPullDistancePx` from the Husk, with `haul.arrivalArmorMs` of armor on arrival.
+      The Husk never moves.
+
+    The target is staggered for `haul.staggerMs` (light/medium) or `haul.staggerHeavyMs` (heavy).
+    These are the Haul's own per-class keys; `husks.weightClasses` scales knockback and shoves,
+    not this pull. The pull extends the ability's active phase; recovery starts once the chain lets
+    go.
+
+  - **Combo step:** a light pressed within `haul.comboWindowMs` after the chain lets go starts at
+    combo hit 3. Only a dodge cancels the Haul's recovery (§4), so in practice the press is
+    buffered in the last part of the recovery, or made just after it.
+  - **Cooldown** `cooldownMs` (8 s). A miss (range, wall, nothing hit) refunds `haul.missRefund` of
+    it at once.
+- **Slots 2 and 3, "The Catch" and "Turning Blade":** in data, locked placeholders. On a gamepad
+  their face buttons only fire during an encounter.
 
 ## 6. Hits, hitstop, knockback, weight, poise
 
 - **Hitstop** freezes attacker and target for the hit's `hitstopMs`:
-  - light about 50 ms, the third hit and Lunge a bit more;
-  - heavy about 70–110 ms by charge.
+  - light about 50 ms, the third hit and the Haul a bit more;
+  - the Hook-thrust `heavy.hitstopMs` (120 ms), tap or charged, before the hold.
 
   It is per entity, in the sim: other Husks keep moving.
   **One swing freezes once.** When a swing (light, heavy or ability) hits several Husks, in the
@@ -152,16 +196,22 @@ picker, and:
 - **Knockback is a distance.** A hit's `knockbackPx` is how far it pushes a **light**-class enemy,
   away from the attacker; a pull is the same push aimed at the attacker. The push is a short slide
   over `husks.knockbackMs` that starts when the target's hitstop ends, and walls stop it.
-- **Weight classes.** Each enemy has a `weightClass`, and `husks.weightClasses` scales every pull
-  and knockback by class: **light** moves the full distance (1), **medium** half (0.5), **heavy**
-  not at all (0). Starting values, both tunable: the Peeling is light, the Nutshell heavy.
+- **Weight classes.** Each enemy has a `weightClass`, and `husks.weightClasses` scales every
+  knockback and shove by class: **light** moves the full distance (1), **medium** half (0.5),
+  **heavy** not at all (0). The Haul's pull goes by class too, from its own keys (§5), and a heavy
+  class turns the pull around onto the player. Starting values, both tunable: the Peeling is
+  light, the Nutshell heavy.
 - **Husk shells are armor-poise.** A Husk is a hollow shell (1–2 layers) around a bright core.
   - **Layer holds:** hits only chip the outermost layer. The Husk keeps attacking (super armor) and
     knockback is reduced (`armoredKnockbackFactor`).
   - **Layer breaks:** the Husk is **staggered** (`staggerMs`), which interrupts any wind-up or
     attack. Only `husks.shellBreakCoreFactor` of that hit's core damage lands.
   - **Shell gone:** core hits deal full damage and **flinch** (`flinchMs`), which also interrupts.
-  - The **heavy** has high `shellDamage`: it is the shell breaker. **Lights** are for the core.
+  - The **heavy** has high `shellDamage` (poise damage): it is the shell breaker. **Lights** are
+    for the core.
+  - **Regrow:** the Nutshell's inner layer regrows to full `husks.nutshell.innerRegrowMs` after the
+    Husk was last hit, unless it was broken (0 stays 0). The outer layer never regrows. Both
+    layers show as their own poise bar.
 - **Fair telegraphs.** Every Husk attack has a wind-up (its `attack.startupMs`) shown in the
   telegraph color, with a ground decal: the Peeling's dotted lunge line, the Nutshell's slam
   circle filling in. Attacks only track the player for the first `trackMs` of the wind-up, then
@@ -183,7 +233,8 @@ picker, and:
   `perfectDodge.marginPx`, so near misses count too. Rewards:
   - the attack is voided;
   - brief **slow-mo**: `slowmoMs` of real time played at `slowmoScale`;
-  - **+`sparkglassBonus` Sparkglass** (the "Sparkglass flare").
+  - **+`sparkglassBonus` Sparkglass** (the "Sparkglass flare");
+  - **`cooldownRefundMs` off every ability cooldown** (never below zero).
 - Dodging earlier than the window still avoids damage while the i-frames last, but it isn't
   perfect.
 
@@ -198,8 +249,9 @@ pursuit speed and attack cadence scale by `aggroPerSparkglass` per Sparkglass ca
   - Short lunge attack: `attack.startupMs` of wind-up, then a dash at `lungeSpeed` for
     `attack.activeMs`.
   - Circles at the edge of its range while its attack cools down.
-- **Nutshell** (heavy class): slow, with two shell layers (outer, inner) that crack separately.
-  Knockback never moves it.
+- **Nutshell** (heavy class): slow, with two shell layers (outer `shell[0]`, inner `shell[1]`,
+  30 and 20) that crack separately; the inner one regrows (§6). Knockback never moves it; a Haul
+  pulls the player to it instead.
   - Heavy slam: a long telegraph (`attack.startupMs`), then a circle of `slamRadiusPx` just ahead
     of it for `attack.activeMs`.
 
@@ -215,14 +267,29 @@ pursuit speed and attack cadence scale by `aggroPerSparkglass` per Sparkglass ca
   | `P`      | player start |
   | `S`      | spawn point  |
   | `D`      | exit door    |
+  | `C`      | chest        |
 
 - **Waves:** each room has its waves in `run.rooms[i].waves`. The door opens when the last wave is
   dead, and walking into it loads the next room. Room 3 is the tough one, with Nutshells.
+- **Chests:** every room has one (`C`). A chest opens on contact (within `run.chestRadiusPx` of the
+  player) at any time, and its contents are **scripted by the order chests are opened in the run**:
+  `run.chests[n]` for the n-th chest, clamped to the last entry (the first chest gives 2 Rations).
 - **End of a run:** death, or clearing room 3.
   - Sparkglass kept: 100% on a clear, `run.sparkglassKeptOnDeath` (50%) on death.
   - The results screen shows time, rooms, kills, perfect dodges and Sparkglass found/kept.
 
-## 10. Feel toolkit (presentation)
+## 10. Consumables
+
+Two item slots (`consumables.slots`), keyboard Q and F, gamepad D-pad left/right. Using an item is
+instant (no move, not buffered, any time but dead); a press on an empty slot does nothing. Items
+only come from chests for now, and they go onto a stack of the same item first (capped at its
+`stackMax`), else into an empty slot.
+
+- **Ration** (`consumables.ration`): heals `healFraction` of max HP spread evenly over `durationMs`
+  (the heal pauses with hitstop, like everything else), never past max HP. Using another while one
+  runs adds its heal to the pool and restarts the clock. Stacks to `stackMax` (5).
+
+## 11. Feel toolkit (presentation)
 
 The client adds juice from `tuning.json` → `juice`. None of it affects the sim. Colors and shapes
 follow [`readability.md`](readability.md).
@@ -232,7 +299,9 @@ follow [`readability.md`](readability.md).
 - Chipped-pixel shell particles, plus a ring and "CRACK"/"BREAK" when a layer breaks.
 - Core flare on death.
 - Perfect-dodge afterimage trail, flare and a tint during slow-mo.
-- Slash crescents; the charge meter under the player.
+- Slash crescents for lights; the thrust line and the drawn-back charge stance with the growing
+  hook-tip pixel for the heavy; the Haul chain (links, hook glyph, taut on a hit).
+- The charge meter under the player.
 - Camera lead toward the aim.
 - Render interpolation between ticks.
 
@@ -242,11 +311,12 @@ follow [`readability.md`](readability.md).
 - **Slow-mo** is the client stepping the sim more slowly in real time. The sim only counts down
   `slowmo` ticks, so replays are unaffected.
 
-## 11. Tuning workflow
+## 12. Tuning workflow
 
 - **F2** opens the tuning panel: a slider for every numeric value in `tuning.json` (all move
-  timings, cooldowns, armor windows, weight-class multipliers, …), a select for enums (an enemy's
-  `weightClass`, an ability's `kind`), and read-only flags (`locked`).
+  timings, cooldowns, armor windows, weight-class multipliers, the thrust, the Haul, the
+  consumables, the Nutshell's layers and regrow, the soft-lock angles, …), a select for enums (an
+  enemy's `weightClass`, an ability's `kind`), read-only flags (`locked`), and the gamepad preset.
   - Changes apply live and are recorded into the current run's record, so the run still replays.
   - New runs take the current values as their config.
   - **Export JSON** copies the values in the file's exact shape to paste over `tuning.json`.

@@ -13,11 +13,13 @@ pnpm build
 
 Open http://localhost:5173 and start a run (M1 solo combat prototype).
 
-Controls: WASD move, mouse aim, LMB/J light combo, hold RMB/K heavy, Space/Shift dodge, Q Lunge.
-Gamepad: left stick move, right stick aim, X light, Y/RT heavy, A dodge, B Lunge.
+Controls: WASD move, mouse aim, LMB/J light combo, hold RMB/K Hook-thrust, Space/Shift dodge, E Haul,
+Q/F items. Gamepad presets ("Triggers" by default: R2 light, L2 Hook-thrust, L1 dodge, R1 Haul) are
+data in `packages/shared/data/controls.json`, chosen on the controls screen (C) or in F2.
 F2 tuning panel (live sliders + Export JSON), F3 debug overlay. `?net` opens the M0 network test.
 
-Combat rules: [docs/design/combat.md](docs/design/combat.md).
+Combat rules: [docs/design/combat.md](docs/design/combat.md). Controls and the soft lock:
+[docs/design/controls.md](docs/design/controls.md).
 
 ## Docker
 
