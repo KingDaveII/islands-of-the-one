@@ -370,6 +370,7 @@
     "particleLifeMs": 420,
     "cameraLerp": 0.16,
     "aimLeadPx": 18,
-    "telegraphBlinkHz": 12
+    "telegraphBlinkHz": 12,
+    "promptRangePx": 40
   }
 }

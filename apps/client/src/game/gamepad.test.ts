@@ -48,7 +48,7 @@ describe('gamepad presets (data-driven)', () => {
     expect(hints('keyboard')).toMatchObject({
       light: 'LMB',
       heavy: 'RMB',
-      dodge: 'SPC',
+      dodge: 'Space',
       item1: 'Q',
       item2: 'F',
     });

@@ -2,7 +2,6 @@ import type Phaser from 'phaser';
 import {
   heavyTiming,
   huskParams,
-  isFullyCharged,
   lightStrike,
   playerAttackPhase,
   slamCenter,
@@ -21,6 +20,7 @@ import type { Session } from '../game/session.js';
 import { chargeStage } from './charge.js';
 import { facingIndex, facingStep } from './facing.js';
 import type { Fx } from './fx.js';
+import { HookbladeFx } from './hookblade.js';
 import { disc, ditherDisc, groundShadow, outlinedRect, pixelLine, ring } from './pixels.js';
 
 const RAD = (Math.PI * 2) / TURN;
@@ -87,7 +87,11 @@ const TRAIL_MS = 260;
  */
 export class WorldRenderer {
   private readonly room: G;
+  /** Floor layer: decals, shadows, pickups, the dodge trail (under the chain and the bodies). */
+  private readonly floor: G;
+  /** Bodies and overlays. */
   private readonly gfx: G;
+  private readonly hookblade: HookbladeFx;
   private roomKey = '';
   private ghosts: Ghost[] = [];
   /** Recent player positions (world ms ago), so the trail can start behind the dodge. */
@@ -101,8 +105,12 @@ export class WorldRenderer {
     private readonly juice: () => JuiceTuning,
   ) {
     this.room = scene.add.graphics();
+    this.floor = scene.add.graphics();
     this.gfx = scene.add.graphics();
-    layer.add([this.room, this.gfx]);
+    layer.add([this.room, this.floor]);
+    // Chain links go under the bodies, the hook head and charge spark over them.
+    this.hookblade = new HookbladeFx(scene);
+    this.hookblade.mount(layer, this.gfx);
   }
 
   /** Room size in pixels. */
@@ -257,9 +265,12 @@ export class WorldRenderer {
     const run = session.run;
     const s = run.state;
     this.drawRoom(s);
+    const f = this.floor;
     const g = this.gfx;
+    f.clear();
     g.clear();
-    this.drawDoors(g, s, timeMs);
+    this.hookblade.begin();
+    this.drawDoors(f, s, timeMs);
 
     const huskPos = new Map<number, { x: number; y: number }>();
     for (const h of s.husks) {
@@ -269,19 +280,19 @@ export class WorldRenderer {
     const pl = session.lerp('p', s.player.x, s.player.y);
     const player = { x: Math.round(pl.x), y: Math.round(pl.y) };
 
-    // Floor layer: telegraph decals, grounding shadows, pickups.
-    for (const h of s.husks) this.drawTelegraphDecal(g, run, h, huskPos.get(h.id) ?? h);
+    // Floor layer: telegraph decals, grounding shadows, pickups, the dodge trail.
+    for (const h of s.husks) this.drawTelegraphDecal(f, run, h, huskPos.get(h.id) ?? h);
     for (const h of s.husks) {
       if (h.action === 'spawn') continue;
       const pos = huskPos.get(h.id) ?? h;
       const r = huskParams(run.params, h.kind).radius / SUB;
-      groundShadow(g, pos.x, pos.y + r, r + 1, 2);
+      groundShadow(f, pos.x, pos.y + r, r + 1, 2);
     }
-    groundShadow(g, player.x, player.y + 6, 5, 2);
-    for (const c of s.chests) this.drawChest(g, c, timeMs);
-    for (const k of s.pickups) this.drawPickup(g, session.lerp(`k${k.id}`, k.x, k.y), timeMs);
-    this.drawTrail(g, session, player, dtWorldMs);
-    this.drawChain(g, session, player, huskPos);
+    groundShadow(f, player.x, player.y + 6, 5, 2);
+    for (const c of s.chests) this.drawChest(f, c, timeMs);
+    for (const k of s.pickups) this.drawPickup(f, session.lerp(`k${k.id}`, k.x, k.y), timeMs);
+    this.drawTrail(f, session, player, dtWorldMs);
+    this.drawChain(f, session, player, huskPos);
 
     // Bodies, back to front.
     const bodies: { y: number; draw: () => void }[] = s.husks.map((h) => {
@@ -318,9 +329,10 @@ export class WorldRenderer {
   }
 
   /**
-   * The Haul chain: 3 px links every 16 px of travel from the hand to the hook
-   * head, a 4 px hook glyph at the end. Once the hook lands the chain goes taut
-   * (a straight line under the links) while the husk, or the player, slides along it.
+   * The Haul chain from hookblade-fx: a link every 16 px from the hand to the
+   * hook head, the hook rotated to the throw angle around its shank end. Once
+   * the hook lands every link goes taut over a straight spark-amber line while
+   * the husk, or the player, slides along it.
    */
   private drawChain(g: G, session: Session, player: { x: number; y: number }, huskPos: Map<number, { x: number; y: number }>): void {
     const p = session.state.player;
@@ -331,33 +343,13 @@ export class WorldRenderer {
     const ey = hit ? hit.y : hk.y / SUB;
     const hx = player.x;
     const hy = player.y - 2;
-    const len = Math.hypot(ex - hx, ey - hy);
-    if (len < 1) return;
-    const ux = (ex - hx) / len;
-    const uy = (ey - hy) / len;
-    if (hit) {
-      pixelLine(g, hx, hy, ex, ey, Palette.playerOutline, 1, 3);
-      pixelLine(g, hx, hy, ex, ey, Palette.uiFocus);
+    const set = hk.hitId >= 0;
+    if (set) {
+      pixelLine(g, hx, hy, ex, ey, Palette.chainOutline, 1, 3);
+      pixelLine(g, hx, hy, ex, ey, Palette.chainTaut);
     }
-    for (let d = 8; d < len - 2; d += 16) {
-      const lx = Math.round(hx + ux * d);
-      const ly = Math.round(hy + uy * d);
-      // A link: 3 px along the chain with a 1 px outline.
-      pixelLine(g, lx - ux, ly - uy, lx + ux, ly + uy, Palette.playerOutline, 1, 3);
-      pixelLine(g, lx - ux, ly - uy, lx + ux, ly + uy, Palette.blade, 1, 1);
-    }
-    // The hook head: a 4 px glyph, bent back against the direction of travel.
-    const tx = Math.round(ex);
-    const ty = Math.round(ey);
-    const sx = Math.abs(ux) >= Math.abs(uy) ? Math.sign(ux) || 1 : 0;
-    const sy = sx === 0 ? Math.sign(uy) || 1 : 0;
-    g.fillStyle(Palette.playerOutline, 1).fillRect(tx - 3, ty - 3, 7, 7);
-    g.fillStyle(Palette.blade, 1);
-    if (sx !== 0) {
-      g.fillRect(tx - 2, ty - 1, 4, 1).fillRect(tx + sx * 2 - (sx < 0 ? 0 : 0), ty - 2, 1, 4).fillRect(tx - sx, ty + 1, 1, 1);
-    } else {
-      g.fillRect(tx - 1, ty - 2, 1, 4).fillRect(tx - 2, ty + sy * 2, 4, 1).fillRect(tx + 1, ty - sy, 1, 1);
-    }
+    this.hookblade.chain(hx, hy, ex, ey, set);
+    this.hookblade.hook(ex, ey, rad(hk.dir), set);
   }
 
   /**
@@ -650,16 +642,12 @@ export class WorldRenderer {
       drawKindled(g, x, y, facing, ink, step, !attacking);
     }
     if (charging) {
-      // A bright pixel grows at the hook tip as the charge fills (hollow-light, never white).
+      // The charge spark (hookblade-fx) at the hook tip: spark_0 as the charge starts, spark_2 held at full charge.
       const stage = chargeStage(p.charge, P.weapon.heavy);
       const dir = facingStep(facing);
       const tx = x + (dir.x === 0 ? (facing >= 5 ? -5 : 5) : dir.x * 12);
       const ty = y + 1 + Math.max(0, dir.y) + dir.y * 6 - (dir.x !== 0 && dir.y === 0 ? 2 : 0);
-      const size = 1 + Math.min(2, stage);
-      const half = size >> 1;
-      g.fillStyle(Palette.playerOutline, 1).fillRect(tx - half - 1, ty - half - 1, size + 2, size + 2);
-      g.fillStyle(isFullyCharged(P, p.charge) ? Palette.healthFill : Palette.blade, 1).fillRect(tx - half, ty - half, size, size);
-      if ((s.tick & 2) === 0 && stage >= 2) g.fillStyle(Palette.blade, 1).fillRect(tx - half - 1 + (s.tick & 1), ty - half - 2, 1, 1);
+      this.hookblade.spark(tx, ty, stage);
     }
   }
 
