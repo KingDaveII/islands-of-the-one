@@ -12,3 +12,4 @@ export { canStart, heavyHit, type Intent } from './player.js';
 export * from './hash.js';
 export * from './run.js';
 export { autopilot, type AutopilotOptions } from './autopilot.js';
+export * from './names.js';
