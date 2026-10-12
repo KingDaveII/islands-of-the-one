@@ -70,8 +70,10 @@ particles, text, dev panels):
   Sprites turn to the nearest of 8 facings, in sheet order **S, SE, E, NE, N, NW, W, SW**
   (`apps/client/src/render/facing.ts`).
 - **Haul guide** (gamepad only). While the Haul is ready, a faint dotted line runs from the player
-  along the aim to the Haul's range: 1 px `hollow-dusk` dots every 4 px, never a signal color.
-  Hidden during the cooldown (so also while the hook is out) and when the slot is locked.
+  along the aim to the Haul's range: 1 px `hollow-dusk` dots every 4 px, never a signal color. It
+  stops at the first wall along the aim (the hook projectile's own wall test), so it never runs
+  into the Hollow. Hidden during the cooldown (so also while the hook is out) and when the slot
+  is locked.
 - **Room.** Pale `hollow-lavender` floors with `hollow-light` flecks and a dithered edge where they
   meet walls; walls show a `hollow-below` face with `hollow-deep` lines; outside the room is
   `hollow-deep`.
@@ -125,6 +127,13 @@ of the screen where the fight happens:
   line never drifts onto half pixels.
 
 - **Lore and flavor text** is muted `hollow-dusk` (`#A99FC4`), always below a divider, never italic.
+- **Ink needs a panel under it.** `hollow-light` and `hollow-dusk` are meant for `ui-panel`
+  (12.8:1 and 5.9:1); on the pale floor they are 1.3:1 and 1.7:1. So every word and glyph sits on
+  a panel, or, for text drawn straight over the world (the floaters, the room banner), carries a
+  **1 px `dream-night` rim** all around the glyphs (`withOutline`, like the sprites' outlines),
+  and reads against it: 13.5:1 for `hollow-light`, 6.2:1 for `hollow-dusk`, 8.6:1 for
+  `spark-amber`, 5.6:1 for `choir-flame`, which the damage numbers use (`spark-ember` would be
+  4.4:1). Words and glyphs are never below 4.5:1 against what is directly under them.
 - **Rarity** also shows as tier pips, never by color alone.
 
 ## 5. Start screen
@@ -132,3 +141,5 @@ of the screen where the fight happens:
 One weapon per run: the start screen shows the weapon roster as cards. The Hookblade card has its
 tier pips, a Tiny5 stat line and its lore below a divider; the other weapons show as locked
 ("???", a lock, no stats). Only an unlocked weapon can be picked, and it can't be swapped mid-run.
+The key hints at the bottom sit on a plain panel sized to them over the shore strip, with the
+Kindled standing beside it on the floor (the ink would be under 2:1 on the floor itself).

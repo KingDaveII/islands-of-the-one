@@ -9,7 +9,8 @@
  *
  *   pnpm --filter @iot/client build && node tools/screenshots-task6.mjs [outDir] [sections]
  *
- * `sections` is any of C, D, E, F (default: all).
+ * `sections` is any of C, D, E, F, W (default: all); W is the text drawn over the world and the
+ * Haul guide at a wall.
  */
 import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
@@ -21,7 +22,7 @@ import { chromium } from 'playwright-core';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'apps/client/dist');
 const OUT = resolve(process.argv[2] ?? join(ROOT, 'docs/screenshots/m1-task6'));
-const SECTIONS = (process.argv[3] ?? 'CDEF').toUpperCase();
+const SECTIONS = (process.argv[3] ?? 'CDEFW').toUpperCase();
 const VIEW = { w: 480, h: 270 };
 const ZOOM = 2;
 
@@ -391,6 +392,79 @@ async function main() {
     await page.waitForTimeout(400);
     await shot(page, 'hud-panel-fades-behind-husk');
     console.log('F seed', seed);
+    await page.close();
+  }
+
+  // --- W. Text over the world (outlined) and the Haul guide stopping at a wall ---
+  if (SECTIONS.includes('W')) {
+    const page = await open();
+    await start(page, 23);
+    // A Husk in reach; one light press: the hit's floater, then the shell break.
+    await page.evaluate(placeHusk, { kind: 'peeling', dx: 18, dy: 0, patch: { shell: [4] } });
+    await page.evaluate(() => {
+      window.__iot.setSpeed(1);
+      let presses = 0;
+      window.__iot.setInputSource((s) => {
+        const p = s.player;
+        if (p.action === 'idle' && presses < 1) {
+          presses++;
+          return 1 << 23; // Light
+        }
+        return 0;
+      });
+    });
+    await page.waitForFunction(
+      () => window.__iot.scene().session.run.state.stats.hitsLanded > 0,
+      undefined,
+      { timeout: 5000 },
+    );
+    await page.evaluate(() => window.__iot.setSpeed(0.02));
+    await page.waitForTimeout(150);
+    await shot(page, 'world-text-outlined', await clipAroundPlayer(page, 200, 120));
+    // The room banner over the floor: clear the room's last wave so CLEARED shows.
+    await start(page, 24);
+    await page.evaluate(() => {
+      const scene = window.__iot.scene();
+      const s = scene.session.run.state;
+      s.room.phase = 'fighting';
+      s.room.wave = scene.session.run.params.run.rooms[0].waves.length - 1;
+      s.husks.length = 0;
+      window.__iot.setSpeed(1);
+    });
+    await page.waitForFunction(
+      () => window.__iot.scene().session.run.state.room.phase === 'cleared',
+    );
+    await page.evaluate(() => window.__iot.setSpeed(0.02));
+    await page.waitForTimeout(120);
+    await shot(page, 'room-banner-outlined', {
+      x: 100 * ZOOM,
+      y: 60 * ZOOM,
+      width: 280 * ZOOM,
+      height: 70 * ZOOM,
+    });
+    // The Haul guide toward the nearest wall: it stops where the hook would snag.
+    await start(page, 25);
+    await page.evaluate(() => window.__iot.setSpeed(0.1));
+    const aim = await page.evaluate(() => {
+      // Aim at the nearest wall tile from the player.
+      const s = window.__iot.scene().session.run.state;
+      const room = s.room;
+      const px = s.player.x / 256;
+      const py = s.player.y / 256;
+      let best = null;
+      for (let r = 0; r < room.rows; r++)
+        for (let c = 0; c < room.cols; c++) {
+          if (!'#o'.includes(room.tiles[r][c])) continue;
+          const d = Math.hypot(c * 16 + 8 - px, r * 16 + 8 - py);
+          if (!best || d < best.d) best = { d, x: c * 16 + 8, y: r * 16 + 8 };
+        }
+      const a = Math.atan2(best.y - py, best.x - px);
+      return [Math.cos(a) * 0.9, Math.sin(a) * 0.9];
+    });
+    await page.evaluate(setPad, { axes: [0, 0, aim[0], aim[1]] });
+    await usePad(page);
+    await page.waitForTimeout(600);
+    await shot(page, 'haul-guide-stops-at-wall', await clipAroundPlayer(page, 240, 140));
     await page.close();
   }
 

@@ -2,7 +2,7 @@ import type Phaser from 'phaser';
 import type { JuiceTuning } from '@iot/shared';
 import { Palette } from '../palette.js';
 import { DEPTH } from './depth.js';
-import { label, place, withShadow } from './text.js';
+import { label, place, withOutline } from './text.js';
 
 interface Particle {
   x: number;
@@ -97,7 +97,7 @@ export class Fx {
   }
 
   float(x: number, y: number, text: string, color: number, ms = 700): void {
-    const t = withShadow(label(this.scene, 0, 0, text, color));
+    const t = withOutline(label(this.scene, 0, 0, text, color));
     place(t, x, y, 0.5, 1);
     t.setDepth(DEPTH.floaters);
     this.layer.add(t);

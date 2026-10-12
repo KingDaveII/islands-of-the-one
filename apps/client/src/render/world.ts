@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import {
   heavyTiming,
+  hookSnags,
   huskParams,
   lightStrike,
   playerAttackPhase,
@@ -75,6 +76,10 @@ const HIT: HuskInk = {
   coreRing: Palette.hit,
 };
 
+/** The Haul guide starts this far from the player (clear of the sprite) and tests the wall every GUIDE_STEP px. */
+const GUIDE_START = 10;
+const GUIDE_STEP = 2;
+
 /** Alpha of the debug hitbox shapes drawn over the sprites (F3). */
 const DEBUG_ALPHA = 0.6;
 
@@ -130,13 +135,17 @@ export class WorldRenderer {
     const g = this.room;
     g.clear();
     const { room } = s;
-    const at = (c: number, r: number): string => (c < 0 || r < 0 || c >= room.cols || r >= room.rows ? '#' : tileAt(room, c, r));
+    const at = (c: number, r: number): string =>
+      c < 0 || r < 0 || c >= room.cols || r >= room.rows ? '#' : tileAt(room, c, r);
     // Wall tiles connected to the room's border are the outside (the Hollow); the rest are free-standing blocks with a solid cap.
     const outside = new Uint8Array(room.cols * room.rows);
     const queue: number[] = [];
     for (let r = 0; r < room.rows; r++) {
       for (let c = 0; c < room.cols; c++) {
-        if ((r === 0 || c === 0 || r === room.rows - 1 || c === room.cols - 1) && (isWall(at(c, r)) || at(c, r) === 'D')) {
+        if (
+          (r === 0 || c === 0 || r === room.rows - 1 || c === room.cols - 1) &&
+          (isWall(at(c, r)) || at(c, r) === 'D')
+        ) {
           outside[r * room.cols + c] = 1;
           queue.push(r * room.cols + c);
         }
@@ -146,7 +155,12 @@ export class WorldRenderer {
       const i = queue.pop() ?? 0;
       const c = i % room.cols;
       const r = Math.floor(i / room.cols);
-      for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+      for (const [dc, dr] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ] as const) {
         const nc = c + dc;
         const nr = r + dr;
         if (nc < 0 || nr < 0 || nc >= room.cols || nr >= room.rows) continue;
@@ -157,7 +171,13 @@ export class WorldRenderer {
         }
       }
     }
-    const block = (c: number, r: number): boolean => isWall(at(c, r)) && outside[r * room.cols + c] === 0 && c >= 0 && r >= 0 && c < room.cols && r < room.rows;
+    const block = (c: number, r: number): boolean =>
+      isWall(at(c, r)) &&
+      outside[r * room.cols + c] === 0 &&
+      c >= 0 &&
+      r >= 0 &&
+      c < room.cols &&
+      r < room.rows;
     for (let r = 0; r < room.rows; r++) {
       for (let c = 0; c < room.cols; c++) {
         const t = at(c, r);
@@ -205,8 +225,8 @@ export class WorldRenderer {
         const sc = noise(c, r, 99);
         if (sc % 7 === 0) {
           g.fillStyle(Palette.floorEdge, 1);
-          const sx = x + (sc >>> 4) % 10;
-          const sy = y + (sc >>> 12) % 14;
+          const sx = x + ((sc >>> 4) % 10);
+          const sy = y + ((sc >>> 12) % 14);
           g.fillRect(sx, sy, 3, 1).fillRect(sx + 3, sy + 1, 2, 1);
         }
         // Dithered edge where the floor meets a wall.
@@ -224,7 +244,8 @@ export class WorldRenderer {
               const px = dx === 0 ? x + i : dx < 0 ? x + d : x + TILE_PX - 1 - d;
               const py = dy === 0 ? y + i : dy < 0 ? y + d : y + TILE_PX - 1 - d;
               const solid = d === 0;
-              if (solid || (d === 1 && ((px + py) & 1) === 0) || (d === 2 && (px + py) % 4 === 0)) g.fillRect(px, py, 1, 1);
+              if (solid || (d === 1 && ((px + py) & 1) === 0) || (d === 2 && (px + py) % 4 === 0))
+                g.fillRect(px, py, 1, 1);
             }
           }
         }
@@ -310,13 +331,20 @@ export class WorldRenderer {
     }
 
     if (debugFlags.shapes) {
-      for (const h of s.husks) this.drawHuskShape(this.debug, run, h, huskPos.get(h.id) ?? h, fx, timeMs);
+      for (const h of s.husks)
+        this.drawHuskShape(this.debug, run, h, huskPos.get(h.id) ?? h, fx, timeMs);
       this.drawKindledShape(this.debug, session, player, fx);
     }
   }
 
   /** Husk effects that are not in the sheet: the spawn-in ring and the stagger marks. */
-  private drawHuskEffects(g: G, run: Run, h: HuskState, pos: { x: number; y: number }, timeMs: number): void {
+  private drawHuskEffects(
+    g: G,
+    run: Run,
+    h: HuskState,
+    pos: { x: number; y: number },
+    timeMs: number,
+  ): void {
     const hp = huskParams(run.params, h.kind);
     const r = Math.round(hp.radius / SUB);
     const { x, y } = pos;
@@ -329,13 +357,23 @@ export class WorldRenderer {
     if (h.action === 'stagger') {
       for (let i = 0; i < 2; i++) {
         const a = timeMs / 120 + i * Math.PI;
-        g.fillStyle(Palette.spark, 1).fillRect(Math.round(x + Math.cos(a) * (r + 2)), Math.round(y - r - 3 + Math.sin(a) * 1.5), 1, 1);
+        g.fillStyle(Palette.spark, 1).fillRect(
+          Math.round(x + Math.cos(a) * (r + 2)),
+          Math.round(y - r - 3 + Math.sin(a) * 1.5),
+          1,
+          1,
+        );
       }
     }
   }
 
   /** Player effects that are not in the sheet: the hitbox flashes (slash arc, thrust line) and the charge spark. */
-  private drawPlayerEffects(g: G, run: Run, pos: { x: number; y: number }, huskPos: Map<number, { x: number; y: number }>): void {
+  private drawPlayerEffects(
+    g: G,
+    run: Run,
+    pos: { x: number; y: number },
+    huskPos: Map<number, { x: number; y: number }>,
+  ): void {
     const p = run.state.player;
     const { x, y } = pos;
     if (p.action === 'dead') return;
@@ -365,7 +403,9 @@ export class WorldRenderer {
       return;
     }
     outlinedRect(g, x - 6, y - 5, 12, 10, Palette.wall, Palette.uiOutline);
-    g.fillStyle(Palette.floorEdge, 1).fillRect(x - 6, y - 5, 12, 1).fillRect(x - 6, y - 1, 12, 1);
+    g.fillStyle(Palette.floorEdge, 1)
+      .fillRect(x - 6, y - 5, 12, 1)
+      .fillRect(x - 6, y - 1, 12, 1);
     g.fillStyle(Palette.wallLine, 1).fillRect(x - 6, y - 2, 12, 1);
     const on = Math.floor(timeMs / 400) % 2 === 0;
     g.fillStyle(on ? Palette.spark : Palette.sparkDeep, 1).fillRect(x - 1, y - 2, 2, 3);
@@ -377,7 +417,12 @@ export class WorldRenderer {
    * the hook lands every link goes taut over a straight spark-amber line while
    * the husk, or the player, slides along it.
    */
-  private drawChain(g: G, session: Session, player: { x: number; y: number }, huskPos: Map<number, { x: number; y: number }>): void {
+  private drawChain(
+    g: G,
+    session: Session,
+    player: { x: number; y: number },
+    huskPos: Map<number, { x: number; y: number }>,
+  ): void {
     const p = session.state.player;
     const hk = p.hook;
     if (!hk) return;
@@ -400,7 +445,13 @@ export class WorldRenderer {
    * light attack is an arc), drawn back during startup. A held husk shows
    * pinned on the line.
    */
-  private drawThrust(g: G, run: Run, x: number, y: number, huskPos: Map<number, { x: number; y: number }>): void {
+  private drawThrust(
+    g: G,
+    run: Run,
+    x: number,
+    y: number,
+    huskPos: Map<number, { x: number; y: number }>,
+  ): void {
     const P = run.params;
     const p = run.state.player;
     const h = P.weapon.heavy;
@@ -413,15 +464,34 @@ export class WorldRenderer {
     const activeEnd = tm.startup + tm.active;
     if (phase === 'startup') {
       const back = 6 + Math.round((p.t / Math.max(1, tm.startup)) * 4);
-      pixelLine(g, x - Math.cos(a) * back, cy - Math.sin(a) * back, x + Math.cos(a) * 4, cy + Math.sin(a) * 4, Palette.playerOutline, 1, 3);
-      pixelLine(g, x - Math.cos(a) * back, cy - Math.sin(a) * back, x + Math.cos(a) * 4, cy + Math.sin(a) * 4, Palette.blade);
+      pixelLine(
+        g,
+        x - Math.cos(a) * back,
+        cy - Math.sin(a) * back,
+        x + Math.cos(a) * 4,
+        cy + Math.sin(a) * 4,
+        Palette.playerOutline,
+        1,
+        3,
+      );
+      pixelLine(
+        g,
+        x - Math.cos(a) * back,
+        cy - Math.sin(a) * back,
+        x + Math.cos(a) * 4,
+        cy + Math.sin(a) * 4,
+        Palette.blade,
+      );
       return;
     }
     const flashing = phase === 'active' || (phase === 'recovery' && p.t <= activeEnd + 3);
     const held = run.state.husks.filter((k) => k.action === 'held');
     if (!flashing && held.length === 0) return;
     if (flashing) {
-      const reach = phase === 'active' ? length * Math.min(1, (p.t - tm.startup + 1) / Math.max(1, tm.active) + 0.5) : length;
+      const reach =
+        phase === 'active'
+          ? length * Math.min(1, (p.t - tm.startup + 1) / Math.max(1, tm.active) + 0.5)
+          : length;
       const fading = phase === 'recovery';
       // The hitbox: a dithered band as wide as the thrust, with a solid line down the middle.
       thrustBand(g, x, cy, a, reach, width / 2, fading ? Palette.floorEdge : Palette.playerOutline);
@@ -446,9 +516,17 @@ export class WorldRenderer {
     const y = Math.round(p.y);
     const tw = Math.sin(timeMs / 120 + p.x) > 0.6;
     // Outlined Sparkglass piece.
-    g.fillStyle(Palette.uiPanel, 1).fillRect(x - 1, y - 4, 3, 9).fillRect(x - 2, y - 3, 5, 7).fillRect(x - 3, y - 1, 7, 3);
-    g.fillStyle(Palette.spark, 1).fillRect(x, y - 3, 1, 7).fillRect(x - 1, y - 2, 3, 5).fillRect(x - 2, y, 5, 1);
-    g.fillStyle(Palette.sparkDeep, 1).fillRect(x, y + 1, 1, 2).fillRect(x + 1, y, 1, 1);
+    g.fillStyle(Palette.uiPanel, 1)
+      .fillRect(x - 1, y - 4, 3, 9)
+      .fillRect(x - 2, y - 3, 5, 7)
+      .fillRect(x - 3, y - 1, 7, 3);
+    g.fillStyle(Palette.spark, 1)
+      .fillRect(x, y - 3, 1, 7)
+      .fillRect(x - 1, y - 2, 3, 5)
+      .fillRect(x - 2, y, 5, 1);
+    g.fillStyle(Palette.sparkDeep, 1)
+      .fillRect(x, y + 1, 1, 2)
+      .fillRect(x + 1, y, 1, 1);
     if (tw) g.fillStyle(Palette.floorFleck, 1).fillRect(x, y - 2, 1, 1);
   }
 
@@ -462,7 +540,15 @@ export class WorldRenderer {
       const len = (P.husks.peeling.lungeSpeed * P.husks.peeling.active) / SUB;
       const a = rad(h.attackDir);
       const shown = len * (0.35 + 0.65 * f);
-      pixelLine(g, pos.x, pos.y, pos.x + Math.cos(a) * shown, pos.y + Math.sin(a) * shown, Palette.telegraph, 2);
+      pixelLine(
+        g,
+        pos.x,
+        pos.y,
+        pos.x + Math.cos(a) * shown,
+        pos.y + Math.sin(a) * shown,
+        Palette.telegraph,
+        2,
+      );
       const ex = Math.round(pos.x + Math.cos(a) * len);
       const ey = Math.round(pos.y + Math.sin(a) * len);
       g.fillStyle(Palette.telegraphDark, 1).fillRect(ex - 1, ey - 1, 3, 3);
@@ -480,7 +566,14 @@ export class WorldRenderer {
   }
 
   /** The old placeholder Husk shape, its hitbox: drawn over the sprite with the F3 debug flag. */
-  private drawHuskShape(g: G, run: Run, h: HuskState, pos: { x: number; y: number }, fx: Fx, timeMs: number): void {
+  private drawHuskShape(
+    g: G,
+    run: Run,
+    h: HuskState,
+    pos: { x: number; y: number },
+    fx: Fx,
+    timeMs: number,
+  ): void {
     const P = run.params;
     const hp = huskParams(P, h.kind);
     const r = Math.round(hp.radius / SUB);
@@ -515,7 +608,9 @@ export class WorldRenderer {
         // Spiral.
         ring(g, x, y, r - 2, ink.shade);
         g.fillStyle(ink.fill, 1).fillRect(x + r - 3, y - 1, 2, 2);
-        g.fillStyle(ink.outline, 1).fillRect(x, y, 1, 1).fillRect(x + 1, y - 1, 1, 1);
+        g.fillStyle(ink.outline, 1)
+          .fillRect(x, y, 1, 1)
+          .fillRect(x + 1, y - 1, 1, 1);
         this.drawCracks(g, h, x, y, r, layer, frac, ink);
       } else {
         // Shell gone: the core is exposed (ringed so it never merges with the floor).
@@ -537,13 +632,28 @@ export class WorldRenderer {
         this.drawShellFragments(g, x, y, r - 2, ink);
       }
       disc(g, x, y, 3, ink.coreRing);
-      disc(g, x, y, 2, ink === HIT ? Palette.hit : ink === TELEGRAPH ? Palette.telegraph : Palette.core);
+      disc(
+        g,
+        x,
+        y,
+        2,
+        ink === HIT ? Palette.hit : ink === TELEGRAPH ? Palette.telegraph : Palette.core,
+      );
       if (ink !== HIT) g.fillStyle(Palette.core, 1).fillRect(x, y, 1, 1);
     }
   }
 
   /** Cracks on the current shell layer: one below 100%, three below 30% (same thresholds as the poise bar). */
-  private drawCracks(g: G, h: HuskState, x: number, y: number, r: number, layer: number, frac: number, ink: HuskInk): void {
+  private drawCracks(
+    g: G,
+    h: HuskState,
+    x: number,
+    y: number,
+    r: number,
+    layer: number,
+    frac: number,
+    ink: HuskInk,
+  ): void {
     if (frac >= 1 || ink === HIT) return;
     const count = frac < 0.3 ? 3 : 1;
     for (let i = 0; i < count; i++) {
@@ -555,7 +665,14 @@ export class WorldRenderer {
       const xm = x0 - Math.cos(a) * len * 0.5;
       const ym = y0 - Math.sin(a) * len * 0.5;
       pixelLine(g, x0, y0, xm, ym, ink.outline);
-      pixelLine(g, xm, ym, xm - Math.cos(bend) * len * 0.5, ym - Math.sin(bend) * len * 0.5, ink.outline);
+      pixelLine(
+        g,
+        xm,
+        ym,
+        xm - Math.cos(bend) * len * 0.5,
+        ym - Math.sin(bend) * len * 0.5,
+        ink.outline,
+      );
     }
   }
 
@@ -573,7 +690,13 @@ export class WorldRenderer {
    * damage. Crack notch under 30%; broken (staggered or no shell left) gets a
    * lit outline: it marks the player's opening.
    */
-  private drawPoise(g: G, run: Run, h: HuskState, pos: { x: number; y: number }, timeMs: number): void {
+  private drawPoise(
+    g: G,
+    run: Run,
+    h: HuskState,
+    pos: { x: number; y: number },
+    timeMs: number,
+  ): void {
     if (h.action === 'spawn') return;
     const hp = huskParams(run.params, h.kind);
     const damaged = h.shell.some((v, i) => v < (hp.shell[i] ?? 0)) || h.core < hp.core;
@@ -599,7 +722,8 @@ export class WorldRenderer {
       if (v <= 0) return;
       const w = Math.max(1, Math.round(16 * frac));
       g.fillStyle(Palette.poiseFill, 1).fillRect(x + 1, y + 1, w, 2);
-      if (frac < 0.3 && w > 2) g.fillStyle(Palette.poiseTrack, 1).fillRect(x + 1 + w - 2, y + 1, 1, 1);
+      if (frac < 0.3 && w > 2)
+        g.fillStyle(Palette.poiseTrack, 1).fillRect(x + 1 + w - 2, y + 1, 1, 1);
     });
   }
 
@@ -613,7 +737,10 @@ export class WorldRenderer {
     g.fillStyle(Palette.uiOutline, 1).fillRect(x, y, 13, 4);
     for (let i = 0; i < 3; i++) {
       const on = i < stage;
-      g.fillStyle(on ? (stage === 3 ? Palette.healthFill : Palette.spark) : Palette.uiBevel, 1).fillRect(x + 1 + i * 4, y + 1, 3, 2);
+      g.fillStyle(
+        on ? (stage === 3 ? Palette.healthFill : Palette.spark) : Palette.uiBevel,
+        1,
+      ).fillRect(x + 1 + i * 4, y + 1, 3, 2);
     }
   }
 
@@ -658,7 +785,16 @@ export class WorldRenderer {
     const cy = y - 3;
     if (phase === 'startup') {
       const back = dir + (p.comboStep % 2 === 0 ? -1 : 1) * half;
-      pixelLine(g, x, cy, x + Math.cos(back) * 9, cy + Math.sin(back) * 9, Palette.playerOutline, 1, 3);
+      pixelLine(
+        g,
+        x,
+        cy,
+        x + Math.cos(back) * 9,
+        cy + Math.sin(back) * 9,
+        Palette.playerOutline,
+        1,
+        3,
+      );
       pixelLine(g, x, cy, x + Math.cos(back) * 9, cy + Math.sin(back) * 9, Palette.blade);
       return;
     }
@@ -693,8 +829,10 @@ export class WorldRenderer {
   ): { x: number; y: number } {
     if (reticle.kind === 'mouse') return reticle;
     const target = reticle.targetId === null ? undefined : huskPos.get(reticle.targetId);
-    const husk = reticle.targetId === null ? undefined : s.husks.find((h) => h.id === reticle.targetId);
-    if (target && husk && husk.core > 0 && husk.action !== 'spawn') return { x: target.x, y: target.y - 3 };
+    const husk =
+      reticle.targetId === null ? undefined : s.husks.find((h) => h.id === reticle.targetId);
+    if (target && husk && husk.core > 0 && husk.action !== 'spawn')
+      return { x: target.x, y: target.y - 3 };
     const a = rad(reticle.aim);
     const d = this.juice().padReticleDistPx;
     return { x: player.x + Math.cos(a) * d, y: player.y - 3 + Math.sin(a) * d };
@@ -707,14 +845,33 @@ export class WorldRenderer {
    * out) and when the slot is locked. Muted ink, never a signal color.
    */
   private drawHaulGuide(g: G, run: Run, player: { x: number; y: number }, aim: number): void {
-    const p = run.state.player;
+    const s = run.state;
+    const p = s.player;
     const haul = run.params.weapon.abilities[0];
-    if (!haul || haul.locked || !haul.haul || (p.cooldowns[0] ?? 0) > 0 || p.action === 'dead') return;
+    if (!haul || haul.locked || !haul.haul || (p.cooldowns[0] ?? 0) > 0 || p.action === 'dead')
+      return;
     const a = rad(aim);
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
     const range = haul.haul.range / SUB;
+    // The guide ends where the hook would snag: the first wall along the aim (the projectile's own test).
+    let end = GUIDE_START;
+    for (let d = GUIDE_START; d <= range; d += GUIDE_STEP) {
+      if (hookSnags(s, p.x + Math.round(cos * d * SUB), p.y + Math.round(sin * d * SUB))) break;
+      end = d;
+    }
+    if (end <= GUIDE_START) return;
     const x = player.x;
     const y = player.y - 3;
-    pixelLine(g, x + Math.cos(a) * 10, y + Math.sin(a) * 10, x + Math.cos(a) * range, y + Math.sin(a) * range, Palette.uiInkMuted, 4);
+    pixelLine(
+      g,
+      x + cos * GUIDE_START,
+      y + sin * GUIDE_START,
+      x + cos * end,
+      y + sin * end,
+      Palette.uiInkMuted,
+      4,
+    );
   }
 
   /** Aim reticle: four broken rims on the diagonals around a spark. Never a cross or plus. */
@@ -738,7 +895,15 @@ export class WorldRenderer {
 }
 
 /** Checkerboard pixels inside a rotated band: from (x, y) along angle `a` for `len`, `half` wide each side. */
-function thrustBand(g: G, x: number, y: number, a: number, len: number, half: number, color: number): void {
+function thrustBand(
+  g: G,
+  x: number,
+  y: number,
+  a: number,
+  len: number,
+  half: number,
+  color: number,
+): void {
   const c = Math.cos(a);
   const s = Math.sin(a);
   const r = Math.ceil(len + half) + 1;
@@ -768,7 +933,15 @@ type Part = [x: number, y: number, w: number, h: number, color: number];
  * darkest outline in the room), turned to one of 8 facings (S, SE, E, NE, N,
  * NW, W, SW). Anchored on the body center; feet land at y + 5.
  */
-export function drawKindled(g: G, x: number, y: number, facing: number, ink?: KindledInk, step = -1, blade = true): void {
+export function drawKindled(
+  g: G,
+  x: number,
+  y: number,
+  facing: number,
+  ink?: KindledInk,
+  step = -1,
+  blade = true,
+): void {
   const c = (color: number): number => ink?.solid ?? color;
   const outline = ink?.outline ?? Palette.playerOutline;
   const f = ((facing % 8) + 8) % 8;
@@ -792,30 +965,63 @@ export function drawKindled(g: G, x: number, y: number, facing: number, ink?: Ki
   const hair = c(Palette.playerHair);
   const hairParts: Part[][] = [
     [[-3, -12, 6, 2, hair]],
-    [[-3, -12, 6, 2, hair], [-3, -10, 1, 3, hair]],
-    [[-3, -12, 6, 2, hair], [-3, -10, 3, 4, hair]],
-    [[-3, -12, 6, 2, hair], [-3, -10, 5, 5, hair]],
+    [
+      [-3, -12, 6, 2, hair],
+      [-3, -10, 1, 3, hair],
+    ],
+    [
+      [-3, -12, 6, 2, hair],
+      [-3, -10, 3, 4, hair],
+    ],
+    [
+      [-3, -12, 6, 2, hair],
+      [-3, -10, 5, 5, hair],
+    ],
     [[-3, -12, 6, 7, hair]],
   ];
   parts.push(...(hairParts[side] ?? []));
-  const eyes: [number, number][][] = [[[-2, -9], [1, -9]], [[-1, -9], [2, -9]], [[2, -9]], [], []];
+  const eyes: [number, number][][] = [
+    [
+      [-2, -9],
+      [1, -9],
+    ],
+    [
+      [-1, -9],
+      [2, -9],
+    ],
+    [[2, -9]],
+    [],
+    [],
+  ];
 
   // Blade along the facing, from the leading hand; behind the body when facing away.
   const dir = facingStep(f);
-  const hand = { x: x + (dir.x === 0 ? (west ? -5 : 5) : dir.x * 5), y: y + 1 + Math.max(0, dir.y) };
-  const tip = { x: hand.x + dir.x * 7, y: hand.y + dir.y * 6 - (dir.x !== 0 && dir.y === 0 ? 2 : 0) };
+  const hand = {
+    x: x + (dir.x === 0 ? (west ? -5 : 5) : dir.x * 5),
+    y: y + 1 + Math.max(0, dir.y),
+  };
+  const tip = {
+    x: hand.x + dir.x * 7,
+    y: hand.y + dir.y * 6 - (dir.x !== 0 && dir.y === 0 ? 2 : 0),
+  };
   const drawBlade = (): void => {
     if (!blade) return;
     pixelLine(g, hand.x, hand.y, tip.x, tip.y, outline, 1, 3);
     g.fillStyle(outline, 1).fillRect(tip.x - 1 + (dir.x < 0 ? 1 : -1), tip.y - 2, 3, 3);
     pixelLine(g, hand.x, hand.y, tip.x, tip.y, ink?.solid ?? Palette.blade);
-    g.fillStyle(ink?.solid ?? Palette.blade, 1).fillRect(tip.x + (dir.x < 0 ? 1 : -1), tip.y - 1, 1, 1);
+    g.fillStyle(ink?.solid ?? Palette.blade, 1).fillRect(
+      tip.x + (dir.x < 0 ? 1 : -1),
+      tip.y - 1,
+      1,
+      1,
+    );
   };
   const behind = dir.y < 0;
   if (behind) drawBlade();
   g.fillStyle(outline, 1);
   for (const [px, py, w, h] of parts) g.fillRect(x + mx(px, w) - 1, y + py - 1, w + 2, h + 2);
-  for (const [px, py, w, h, color] of parts) g.fillStyle(color, 1).fillRect(x + mx(px, w), y + py, w, h);
+  for (const [px, py, w, h, color] of parts)
+    g.fillStyle(color, 1).fillRect(x + mx(px, w), y + py, w, h);
   if (!ink) {
     g.fillStyle(outline, 1);
     for (const [ex, ey] of eyes[side] ?? []) g.fillRect(x + mx(ex, 1), y + ey, 1, 1);

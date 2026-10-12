@@ -23,6 +23,10 @@ const CARD_W = 136;
 const CARD_H = 104;
 const CARD_GAP = 8;
 const CARD_Y = 62;
+/** The hint panel over the shore strip: centered right of the Kindled, two 12 px rows on a 14 px pitch. */
+const HINT_PANEL_CX = 282;
+const HINT_PANEL_Y = VIEW_H - 40;
+const HINT_PANEL_PAD = 6;
 
 /**
  * Start screen: pick the run's weapon (one per run; only the Hookblade is
@@ -37,6 +41,8 @@ export class StartScene extends Phaser.Scene {
   private pad = { prev: [] as boolean[] };
   /** The two hint lines (the active device's bindings, then the menu keys) and the pad family they are drawn in. */
   private hintRows: HintRow[] = [];
+  /** The plain panel behind the hint lines (the ink needs ui-panel under it, not the pale floor). */
+  private hintPanel!: Phaser.GameObjects.Graphics;
   private padFamily: PadFamily = 'ps';
   /** Divider y per card (between stats and lore). */
   private dividers: number[] = [];
@@ -81,12 +87,22 @@ export class StartScene extends Phaser.Scene {
         // Stats first; lore last, muted, below a divider (never italic).
         const stats = body(this, x + 10, CARD_Y + 32, weapon.blurb, Palette.uiInk, CARD_W - 20);
         this.dividers[i] = Math.round(stats.y + stats.height + 3);
-        body(this, x + 10, (this.dividers[i] ?? 0) + 4, weapon.lore, Palette.uiInkMuted, CARD_W - 20);
+        body(
+          this,
+          x + 10,
+          (this.dividers[i] ?? 0) + 4,
+          weapon.lore,
+          Palette.uiInkMuted,
+          CARD_W - 20,
+        );
       } else {
         place(label(this, 0, 0, entry.name, Palette.uiInkMuted), x + 32, CARD_Y + 9);
         body(this, x + 10, CARD_Y + 33, 'Not found yet.', Palette.uiInkMuted, CARD_W - 20);
       }
-      const zone = this.add.zone(x, CARD_Y, CARD_W, CARD_H).setOrigin(0, 0).setInteractive({ useHandCursor: available });
+      const zone = this.add
+        .zone(x, CARD_Y, CARD_W, CARD_H)
+        .setOrigin(0, 0)
+        .setInteractive({ useHandCursor: available });
       zone.on('pointerdown', () => {
         if (available) this.weapon = entry.id;
       });
@@ -120,7 +136,10 @@ export class StartScene extends Phaser.Scene {
     // Key hints as controller glyphs, for the active device (keyboard+mouse or the pad preset in
     // the connected pad's family); they switch live with the device.
     this.padFamily = padFamilyNow();
-    this.hintRows = [0, 1].map(() => new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInkMuted }));
+    this.hintPanel = this.add.graphics();
+    this.hintRows = [0, 1].map(
+      () => new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInkMuted }),
+    );
     this.syncHints();
     const offDevice = deviceStore.subscribe(() => {
       this.syncHints();
@@ -139,11 +158,14 @@ export class StartScene extends Phaser.Scene {
       if (e.key === 'Enter') this.startRun();
       else if (e.key === 'c' || e.key === 'C') this.scene.start('controls');
       else if (e.key === 'Backspace') this.seedText = this.seedText.slice(0, -1);
-      else if (/^[a-z0-9]$/i.test(e.key) && this.seedText.length < MAX_SEED_LEN) this.seedText += e.key.toUpperCase();
+      else if (/^[a-z0-9]$/i.test(e.key) && this.seedText.length < MAX_SEED_LEN)
+        this.seedText += e.key.toUpperCase();
     };
     window.addEventListener('keydown', onKey);
     const onPaste = (e: ClipboardEvent) => {
-      const text = (e.clipboardData?.getData('text') ?? '').replace(/[^a-z0-9]/gi, '').toUpperCase();
+      const text = (e.clipboardData?.getData('text') ?? '')
+        .replace(/[^a-z0-9]/gi, '')
+        .toUpperCase();
       if (text) this.seedText = text.slice(0, MAX_SEED_LEN);
     };
     window.addEventListener('paste', onPaste);
@@ -157,7 +179,8 @@ export class StartScene extends Phaser.Scene {
   private hintLines(): HintItem[][] {
     if (deviceStore.get() === 'gamepad') {
       const pad = controlsStore.get();
-      const padKey = (action: ControlAction): HintItem[] => glyphs(glyphsFor(pad, action), this.padFamily);
+      const padKey = (action: ControlAction): HintItem[] =>
+        glyphs(glyphsFor(pad, action), this.padFamily);
       const menu = (index: number): HintItem[] => glyphs([menuGlyph(index)], this.padFamily);
       return [
         [
@@ -186,7 +209,8 @@ export class StartScene extends Phaser.Scene {
         ],
       ];
     }
-    const key = (action: ControlAction): HintItem[] => glyphs([keyboardBinding(action)], 'keyboard');
+    const key = (action: ControlAction): HintItem[] =>
+      glyphs([keyboardBinding(action)], 'keyboard');
     return [
       [
         ...glyphs(['W', 'A', 'S', 'D'], 'keyboard'),
@@ -214,10 +238,20 @@ export class StartScene extends Phaser.Scene {
     ];
   }
 
-  /** Rebuild the hint lines for the device in use and set the cursor to match. */
+  /**
+   * Rebuild the hint lines for the device in use, on a plain panel sized to
+   * them over the shore strip (the Kindled stands beside it), and set the
+   * cursor to match.
+   */
   private syncHints(): void {
+    const cx = HINT_PANEL_CX;
     this.hintLines().forEach((items, i) => {
-      this.hintRows[i]?.setItems(items).place(VIEW_W / 2 + 20, VIEW_H - 30 + i * 14, 0.5);
+      this.hintRows[i]?.setItems(items).place(cx, HINT_PANEL_Y + HINT_PANEL_PAD + i * 14, 0.5);
+    });
+    const w = Math.max(...this.hintRows.map((r) => r.width)) + 2 * HINT_PANEL_PAD;
+    this.hintPanel.clear();
+    panel(this.hintPanel, Math.round(cx - w / 2), HINT_PANEL_Y, w, 2 * HINT_PANEL_PAD + 26, {
+      plain: true,
     });
     menuCursor(this);
   }
@@ -236,14 +270,28 @@ export class StartScene extends Phaser.Scene {
     const roster = t.weaponRoster;
     const g = this.cards;
     g.clear();
-    const x0 = Math.round(VIEW_W / 2 - (roster.length * CARD_W + (roster.length - 1) * CARD_GAP) / 2);
+    const x0 = Math.round(
+      VIEW_W / 2 - (roster.length * CARD_W + (roster.length - 1) * CARD_GAP) / 2,
+    );
     roster.forEach((entry, i) => {
       const x = x0 + i * (CARD_W + CARD_GAP);
       const weapon = t.weapons[entry.id];
       const available = isWeaponAvailable(t, entry.id) && weapon !== undefined;
       const selected = available && entry.id === this.weapon;
-      panel(g, x, CARD_Y, CARD_W, CARD_H, selected ? {} : { rim: Palette.uiBevel, plain: !available });
-      abilitySlot(g, x + 8, CARD_Y + 7, { icon: 'hookblade', cooldown: 0, locked: !available, ready: selected });
+      panel(
+        g,
+        x,
+        CARD_Y,
+        CARD_W,
+        CARD_H,
+        selected ? {} : { rim: Palette.uiBevel, plain: !available },
+      );
+      abilitySlot(g, x + 8, CARD_Y + 7, {
+        icon: 'hookblade',
+        cooldown: 0,
+        locked: !available,
+        ready: selected,
+      });
       if (available) {
         tierPips(g, x + 32, CARD_Y + 21, weapon.tier);
         divider(g, x + 10, this.dividers[i] ?? CARD_Y + 63, CARD_W - 20);
@@ -252,18 +300,34 @@ export class StartScene extends Phaser.Scene {
   }
 
   /** Primary (spark-amber face) or secondary (bevel face) button. */
-  private button(x: number, y: number, text: string, primary: boolean, onClick: () => void): Phaser.GameObjects.Container {
+  private button(
+    x: number,
+    y: number,
+    text: string,
+    primary: boolean,
+    onClick: () => void,
+  ): Phaser.GameObjects.Container {
     const t = label(this, 0, 0, text, primary ? Palette.uiInkOnGlow : Palette.uiInk);
     const w = Math.round(t.width) + 14;
     const h = 15;
     const g = this.add.graphics();
     const draw = (hover: boolean): void => {
       g.clear();
-      g.fillStyle(Palette.uiOutline, 1).fillRect(1, 0, w - 2, h + 1).fillRect(0, 1, w, h - 1);
-      const face = primary ? (hover ? Palette.healthFill : Palette.spark) : hover ? Palette.floorEdge : Palette.uiBevel;
+      g.fillStyle(Palette.uiOutline, 1)
+        .fillRect(1, 0, w - 2, h + 1)
+        .fillRect(0, 1, w, h - 1);
+      const face = primary
+        ? hover
+          ? Palette.healthFill
+          : Palette.spark
+        : hover
+          ? Palette.floorEdge
+          : Palette.uiBevel;
       const bevel = primary ? Palette.healthFill : Palette.floorEdge;
       g.fillStyle(face, 1).fillRect(1, 1, w - 2, h - 2);
-      g.fillStyle(bevel, 1).fillRect(1, 1, w - 2, 1).fillRect(1, 1, 1, h - 2);
+      g.fillStyle(bevel, 1)
+        .fillRect(1, 1, w - 2, 1)
+        .fillRect(1, 1, 1, h - 2);
     };
     draw(false);
     place(t, w / 2, 4, 0.5);

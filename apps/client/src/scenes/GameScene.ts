@@ -12,7 +12,7 @@ import { clampScroll } from '../render/camera.js';
 import { DEPTH } from '../render/depth.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { preloadSpriteSheets, registerSpriteSheets } from '../render/spriteSheets.js';
-import { label, place, withShadow } from '../render/text.js';
+import { label, place, withOutline } from '../render/text.js';
 import { rad, WorldRenderer } from '../render/world.js';
 
 export const VIEW_W = 480;
@@ -90,8 +90,8 @@ export class GameScene extends Phaser.Scene {
     const weaponName = tuning.weapons[this.weapon]?.name ?? this.weapon;
     this.hud = new Hud(this, this.hudLayer, this.session.run, weaponName, this.controls);
 
-    this.banner = withShadow(label(this, 0, 0, '', Palette.uiInk, 16)).setAlpha(0);
-    this.bannerSub = withShadow(label(this, 0, 0, '', Palette.uiInkMuted)).setAlpha(0);
+    this.banner = withOutline(label(this, 0, 0, '', Palette.uiInk, 16)).setAlpha(0);
+    this.bannerSub = withOutline(label(this, 0, 0, '', Palette.uiInkMuted)).setAlpha(0);
     this.hudLayer.add([this.banner, this.bannerSub]);
 
     const hudCam = this.cameras.add(0, 0, VIEW_W, VIEW_H);
@@ -138,7 +138,7 @@ export class GameScene extends Phaser.Scene {
           this.fx.flash('p', j.hitFlashFrames);
           this.world.characters.hit('p');
           this.fx.burst(e.x / SUB, e.y / SUB, 10, Palette.hurt, j.particleSpeed, { dir: rad(e.dir), spread: 2 });
-          this.fx.float(e.x / SUB, e.y / SUB - 14, `-${e.damage}`, Palette.healthLoss, 650);
+          this.fx.float(e.x / SUB, e.y / SUB - 14, `-${e.damage}`, Palette.hurtInk, 650);
           if (e.armored) this.fx.ring(e.x / SUB, e.y / SUB - 4, 6, 12, 200, Palette.uiBevel, 1);
           break;
         case 'held': {
