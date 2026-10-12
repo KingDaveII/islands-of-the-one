@@ -34,6 +34,17 @@ dev/test/typecheck never need a prior build. Production builds compile each pack
 - Names in code, data and player-facing text use the terms in `docs/design/glossary.md`, including
   its banned names (checked by `packages/shared/test/names.test.ts`).
 
+## Lore and naming
+
+- Use the glossary terms in docs/design/glossary.md (Hollow, Shard, Pillar, Writ, Sparkglass, Veil, Kindled...).
+- In-world, the deity is only ever "the One".
+- Hard ban: the Hebrew name of God, meaning the Tetragrammaton (the four-letter name in any spelling or
+  transliteration and in any script, including Hebrew letters) and the title read in its place, "my
+  Lord" (see docs/design/glossary.md, which describes both without spelling them). Never in text,
+  data, item IDs, identifiers, assets or comments.
+- Old Letters (the Hebrew alphabet) are used for Writ Names, route waymarks and Veils. Every generator or text that produces letter sequences must pass the safe-letters filter (packages/shared/safe-letters) and have a test for it. Generated Names never contain yod-he. The filter stores banned runs as alphabet positions, never spelled out.
+- Everything else is allowed: religious and mythological names, symbols and real scripts are welcome as symbolism.
+
 ## Rules
 
 ### Authority
