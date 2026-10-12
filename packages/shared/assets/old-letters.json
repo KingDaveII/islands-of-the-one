@@ -1,10 +1,16 @@
 {
-  "$comment": "Old Letters sheet: one row of cells in `chars` order, each `cell` px wide and `height` px tall. Glyphs are white on transparent, start at column 0 of their cell, and `widths` gives each one's ink width. Rows 0-1 ascender, 2-6 body, 7 descender.",
+  "$comment": "Old Letters sheet: one row of cells in `chars` order, each `cell` px wide and `height` px tall. Glyphs are white on transparent, start at column 0 of their cell, and `widths` gives each one's ink width. Rows 0-1 ascender, 2-6 body, 7 descender. Glyphs from the design system's Old Letters sheet (ART DIRECTION, 2026-10-12).",
   "image": "old-letters-8px.png",
   "cell": 7,
   "height": 8,
-  "ascenderRows": [0, 1],
-  "bodyRows": [2, 6],
+  "ascenderRows": [
+    0,
+    1
+  ],
+  "bodyRows": [
+    2,
+    6
+  ],
   "descenderRow": 7,
   "gap": 1,
   "space": 3,
@@ -37,7 +43,35 @@
     "ף",
     "ץ"
   ],
-  "widths": [5, 4, 3, 4, 4, 2, 3, 4, 4, 2, 4, 4, 5, 3, 4, 4, 4, 4, 4, 4, 5, 4, 4, 4, 2, 4, 4],
+  "widths": [
+    5,
+    5,
+    3,
+    5,
+    5,
+    2,
+    3,
+    6,
+    5,
+    2,
+    4,
+    4,
+    6,
+    3,
+    6,
+    5,
+    5,
+    5,
+    4,
+    4,
+    5,
+    6,
+    3,
+    6,
+    3,
+    4,
+    5
+  ],
   "finals": {
     "כ": "ך",
     "מ": "ם",
