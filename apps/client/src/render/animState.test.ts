@@ -120,12 +120,19 @@ describe('the Kindled state machine', () => {
       anim: 'hit_W',
     });
     expect(kindledPose(s, run.params, KINDLED, { hitMs: 120 }).name).toBe('walk');
-    // Stunned: the hit frame holds for the whole hurt stun, whatever the hit clock says.
+    // Stunned: the flinch for the first 100 ms of the stun, then the stagger held to its end, whatever the hit clock says.
     s.player.action = 'hurt';
     s.player.t = 1;
     expect(kindledPose(s, run.params, KINDLED, { hitMs: 120 })).toMatchObject({ name: 'hit', anim: 'hit_W', frame: 0 });
+    s.player.t = 6; // 100 ms
+    expect(kindledPose(s, run.params, KINDLED, { hitMs: 120 })).toMatchObject({ name: 'hit', frame: 0 });
+    s.player.t = 7;
+    expect(kindledPose(s, run.params, KINDLED, { hitMs: 120 })).toMatchObject({ name: 'hit', frame: 1 });
     s.player.t = run.params.player.hurtStun;
-    expect(kindledPose(s, run.params, KINDLED, { hitMs: 500 })).toMatchObject({ name: 'hit', frame: 0 });
+    expect(kindledPose(s, run.params, KINDLED, { hitMs: 500 })).toMatchObject({ name: 'hit', frame: 1 });
+    // An armored hit that does not stun: the flinch alone for 100 ms.
+    s.player.action = 'idle';
+    expect(kindledPose(s, run.params, KINDLED, { hitMs: 50 })).toMatchObject({ name: 'hit', frame: 0 });
     s.player.action = 'dead';
     s.player.dir = deg(45);
     expect(kindledPose(s, run.params, KINDLED, { hitMs: -1, deathMs: 0 })).toMatchObject({
@@ -183,9 +190,13 @@ describe('the Kindled state machine', () => {
     expect(kindledPose(s, P, KINDLED, NO_CLOCKS).name).toBe('haul_pull');
     p.hook.pull = 'player';
     expect(kindledPose(s, P, KINDLED, NO_CLOCKS).name).toBe('haul_slide');
+    // The hook is gone (a miss) with active ticks still to run: haul_recover's first frame, then it plays over the recovery.
     p.hook = null;
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({ name: 'haul_recover', frame: 0 });
     p.t = haul.startup + haul.active + 1;
-    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({ name: 'haul_throw', frame: 1 });
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({ name: 'haul_recover', frame: 0 });
+    p.t = haul.startup + haul.active + haul.recovery;
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({ name: 'haul_recover', frame: 1 });
   });
 
   it('picks light_1..3 by combo step and the dodge frames by phase', () => {
@@ -281,16 +292,51 @@ describe('the Husk state machine', () => {
     expect(huskPose(s, P, h, PEELING, { hitMs: 100 }, true)).toEqual({ anim: 'chipped', frame: 0 });
   });
 
-  it('Nutshell: roll through the slam, chipped_outer / chipped_inner by broken layers, the regrow one-shot', () => {
+  it('spawn stretches over the spawn-in for both kinds', () => {
+    const run = newRun(6);
+    const s = run.state;
+    const P = run.params;
+    for (const [kind, sheet] of [
+      ['peeling', PEELING],
+      ['nutshell', NUTSHELL],
+    ] as const) {
+      const h = fakeHusk(9, kind);
+      h.action = 'spawn';
+      const spawn = P.husks[kind].spawn;
+      h.t = 0;
+      expect(huskPose(s, P, h, sheet, NO_CLOCKS, true), kind).toEqual({ anim: 'spawn', frame: 0 });
+      h.t = Math.floor(spawn / 2);
+      expect(huskPose(s, P, h, sheet, NO_CLOCKS, true), kind).toEqual({ anim: 'spawn', frame: 2 });
+      h.t = spawn - 1;
+      expect(huskPose(s, P, h, sheet, NO_CLOCKS, true), kind).toEqual({ anim: 'spawn', frame: 3 });
+      // A hit clock never interrupts the spawn (a spawning Husk cannot be hit anyway).
+      expect(huskPose(s, P, h, sheet, { hitMs: 10 }, true).anim, kind).toBe('spawn');
+    }
+  });
+
+  it('Nutshell: walk from velocity in the chase, the slam over the active ticks and held through the recovery, chipped layers, the regrow one-shot', () => {
     const run = newRun(5);
     const s = run.state;
     const P = run.params;
     const h = fakeHusk(2, 'nutshell');
+    const hp = P.husks.nutshell;
+    expect(huskPose(s, P, h, NUTSHELL, NO_CLOCKS, true)).toEqual({ anim: 'idle', frame: 0 });
+    h.vx = 200;
+    s.tick = 0;
+    expect(huskPose(s, P, h, NUTSHELL, NO_CLOCKS, true)).toEqual({ anim: 'walk', frame: 0 });
+    s.tick = 10;
+    expect(huskPose(s, P, h, NUTSHELL, NO_CLOCKS, true)).toEqual({ anim: 'walk', frame: 1 });
+    h.vx = 0;
     h.action = 'attack';
     h.t = 1;
-    expect(huskPose(s, P, h, NUTSHELL, NO_CLOCKS, true)).toEqual({ anim: 'roll', frame: 0 });
-    h.t = 6;
-    expect(huskPose(s, P, h, NUTSHELL, NO_CLOCKS, true)).toEqual({ anim: 'roll', frame: 1 });
+    expect(huskPose(s, P, h, NUTSHELL, NO_CLOCKS, true)).toEqual({ anim: 'slam', frame: 0 });
+    h.t = Math.ceil(hp.active / 2);
+    expect(huskPose(s, P, h, NUTSHELL, NO_CLOCKS, true)).toEqual({ anim: 'slam', frame: 0 });
+    h.t = hp.active;
+    expect(huskPose(s, P, h, NUTSHELL, NO_CLOCKS, true)).toEqual({ anim: 'slam', frame: 1 });
+    h.action = 'recover';
+    h.t = 1;
+    expect(huskPose(s, P, h, NUTSHELL, NO_CLOCKS, true)).toEqual({ anim: 'slam', frame: 1 });
     h.action = 'chase';
     h.shell = [0, 20];
     expect(huskPose(s, P, h, NUTSHELL, NO_CLOCKS, true)).toEqual({

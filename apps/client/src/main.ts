@@ -78,11 +78,12 @@ function startGame(): void {
   const panel = new TuningPanel();
   const debug = new DebugOverlay();
   const tuningKey = eventKeyFor(keyboardBinding('tuning'));
+  const debugKey = eventKeyFor(keyboardBinding('debug'));
   window.addEventListener('keydown', (e) => {
     if (e.key.toLowerCase() === tuningKey.toLowerCase()) {
       e.preventDefault();
       panel.toggle();
-    } else if (e.key === 'F3') {
+    } else if (e.key.toLowerCase() === debugKey.toLowerCase()) {
       // F3: the stats overlay, and the old hitbox shapes drawn over the sprites.
       e.preventDefault();
       debug.toggle();
@@ -134,6 +135,10 @@ function startGame(): void {
     /** The Kindled's animation this frame (name, facing, frame), for playtests. */
     pose() {
       return activeGame()?.world.characters.pose ?? null;
+    },
+    /** The Husks' animations this frame, in sim order, for playtests. */
+    huskPoses() {
+      return activeGame()?.world.characters.huskPoses ?? [];
     },
     /** Swap the Kindled to another clay tone (a palette swap built at load). */
     setClayTone(tone: ClayTone): void {
