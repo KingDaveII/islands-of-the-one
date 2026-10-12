@@ -4,6 +4,7 @@ import {
   PROTOCOL_VERSION,
   RoomName,
   ServerMessage,
+  lettersFromPositions,
   type PongPayload,
   type WelcomePayload,
 } from '@iot/shared';
@@ -74,6 +75,21 @@ describe('TestRoom over a real WebSocket', () => {
       )
       .toMatchObject({ x: 10, y: 20 });
 
+    await room.leave();
+  });
+
+  it('replaces a display name the safe-letters filter rejects', async () => {
+    const room: Room = await client.joinOrCreate(RoomName.Test, {
+      name: lettersFromPositions([9, 4, 5, 4]),
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    await expect
+      .poll(
+        () =>
+          (room.state as { players: Map<string, { name: string }> }).players.get(room.sessionId)
+            ?.name,
+      )
+      .toBe(`player-${room.sessionId.slice(0, 4)}`);
     await room.leave();
   });
 

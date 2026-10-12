@@ -3,6 +3,7 @@ import { schema, t, type SchemaType } from '@colyseus/schema';
 import {
   ClientMessage,
   isMovePayload,
+  isSafe,
   isPingPayload,
   PROTOCOL_VERSION,
   ServerMessage,
@@ -63,7 +64,9 @@ export class TestRoom extends Room<{ state: TestRoomState }> {
 
   override onJoin(client: Client, options?: Partial<JoinOptions>): void {
     const player = new PlayerState();
-    player.name = options?.name?.slice(0, 32) || `player-${client.sessionId.slice(0, 4)}`;
+    // Display names are untrusted text: anything the safe-letters filter rejects gets the default.
+    const wanted = typeof options?.name === 'string' ? options.name.slice(0, 32) : '';
+    player.name = wanted && isSafe(wanted).ok ? wanted : `player-${client.sessionId.slice(0, 4)}`;
     player.x = WORLD_SIZE.width / 2;
     player.y = WORLD_SIZE.height / 2;
     this.state.players.set(client.sessionId, player);
