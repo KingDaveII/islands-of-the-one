@@ -14,14 +14,14 @@ import {
 const deg = (d: number) => (d * Math.PI) / 180;
 
 describe('gamepad presets (data-driven)', () => {
-  it('Triggers is the default: R2 light, L2 heavy, L1 dodge, R1 ability 1, faces for the rest', () => {
+  it('Triggers is the default: R1 light, R2 heavy (hold), L1 dodge, L2 Haul, faces for the rest', () => {
     expect(DEFAULT_PRESET_ID).toBe('triggers');
     const t = presetById('triggers');
-    expect(buttonsFor(t, 'light', 'combat')).toEqual([GLYPH_BUTTON.R2]);
-    expect(buttonsFor(t, 'heavy', 'calm')).toEqual([GLYPH_BUTTON.L2]);
+    expect(buttonsFor(t, 'light', 'combat')).toEqual([GLYPH_BUTTON.R1]);
+    expect(buttonsFor(t, 'heavy', 'calm')).toEqual([GLYPH_BUTTON.R2]);
     expect(buttonsFor(t, 'dodge', 'combat')).toEqual([GLYPH_BUTTON.L1]);
     expect(buttonsFor(t, 'dodge', 'calm')).toEqual([GLYPH_BUTTON.L1]);
-    expect(buttonsFor(t, 'ability1', 'combat')).toEqual([GLYPH_BUTTON.R1]);
+    expect(buttonsFor(t, 'ability1', 'combat')).toEqual([GLYPH_BUTTON.L2]);
     expect([hintFor(t, 'ability2'), hintFor(t, 'ability3')]).toEqual(['Square', 'Triangle']);
     expect([hintFor(t, 'interact'), hintFor(t, 'chartPeek'), hintFor(t, 'journal')]).toEqual([
       'Cross',
@@ -53,6 +53,7 @@ describe('gamepad presets (data-driven)', () => {
     const l = presetById('left-stick');
     expect(l.aim).toBe('left-stick');
     expect(buttonsFor(l, 'light', 'combat')).toEqual(buttonsFor(presetById('triggers'), 'light', 'combat'));
+    expect(buttonsFor(l, 'ability1', 'combat')).toEqual([GLYPH_BUTTON.L2]);
     expect(PRESETS.map((p) => p.id)).toEqual(['triggers', 'faces', 'left-stick']);
   });
 
@@ -67,7 +68,8 @@ describe('gamepad presets (data-driven)', () => {
       interact: 'E',
     });
     expect(hints('keyboard', 'combat').interact).toBe('');
-    expect(hints(presetById('triggers'))).toMatchObject({ light: 'R2', heavy: 'L2' });
+    expect(hints(presetById('triggers'))).toMatchObject({ light: 'R1', heavy: 'R2', ability1: 'L2' });
+    expect(hints('keyboard').ability1).toBe('MMB/1');
     expect(hints(presetById('triggers'), 'calm')).toMatchObject({ interact: 'Cross', ability2: '' });
   });
 });

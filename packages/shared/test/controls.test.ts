@@ -84,12 +84,12 @@ describe('controls.json', () => {
     }
   });
 
-  it('has the keyboard layout from the design: E interacts in Calm only, Space dodges in both contexts', () => {
+  it('has the keyboard layout from the design: E interacts in Calm only, Space dodges in both contexts, Haul on the middle mouse button', () => {
     expect(controlsData.keyboard).toEqual({
       light: 'LMB',
       heavy: 'RMB',
       dodge: 'Space',
-      ability1: '1',
+      ability1: ['MMB', '1'],
       ability2: '2',
       ability3: '3',
       item1: 'Q',
@@ -103,6 +103,16 @@ describe('controls.json', () => {
     expect(bindingKeys(KEYBOARD.interact, 'combat')).toEqual([]);
     expect(bindingKeys(KEYBOARD.dodge, 'combat')).toEqual(['Space']);
     expect(bindingKeys(KEYBOARD.dodge, 'calm')).toEqual(['Space']);
+    // The middle mouse button first (the glyph the hints show), 1 as the alternate.
+    expect(bindingKeys(KEYBOARD.ability1, 'combat')).toEqual(['MMB', '1']);
+  });
+
+  it('Triggers and Left-stick (Playtest 2): R1 light, R2 heavy, L2 Haul, L1 dodge', () => {
+    for (const id of ['triggers', 'left-stick']) {
+      const preset = controlsData.presets.find((p) => p.id === id);
+      const b: Record<string, ControlBinding> = preset?.bindings ?? {};
+      expect([b.light, b.heavy, b.ability1, b.dodge], id).toEqual(['R1', 'R2', 'L2', 'L1']);
+    }
   });
 
   it('Faces: Cross dodges in Combat and interacts in Calm; L3 is unbound', () => {

@@ -36,7 +36,7 @@ The `keyboard` block, one key per action. Move and aim are not actions and stay 
 | Light                  | LMB                                     |
 | Hook-thrust (heavy)    | hold RMB                                |
 | Dodge                  | Space (both contexts)                   |
-| Haul (ability 1)       | 1                                       |
+| Haul (ability 1)       | MMB (the middle button), or 1           |
 | Abilities 2 / 3        | 2 / 3 (locked for now)                  |
 | Item 1 / Item 2        | Q / F                                   |
 | Interact               | E, Calm only (chests open on contact)   |
@@ -46,7 +46,9 @@ The `keyboard` block, one key per action. Move and aim are not actions and stay 
 | Tuning / debug         | F2 / F3 (F3 is a dev key, not in data)  |
 | Controls screen        | C on the start screen (a menu shortcut) |
 
-There are no alternates: the old J/K attacks and Shift dodge are gone.
+The Haul's 1 is the only alternate (the middle button first: hints show its glyph); the old J/K
+attacks and Shift dodge are gone. The middle button is captured on the game canvas, so it never
+starts the browser's autoscroll.
 
 ## 2. Gamepad presets
 
@@ -60,10 +62,10 @@ alternates) per action. No button is bound twice within a preset.
 
 | Action           | **Triggers** (default) | **Faces** (the previous layout) | **Left-stick aim**   |
 | ---------------- | ---------------------- | ------------------------------- | -------------------- |
-| light            | R2                     | Square                          | R2                   |
-| heavy (hold)     | L2                     | Triangle, R2                    | L2                   |
+| light            | R1                     | Square                          | R1                   |
+| heavy (hold)     | R2                     | Triangle, R2                    | R2                   |
 | dodge            | L1                     | Cross (Combat), L1              | L1                   |
-| ability 1 (Haul) | R1                     | Circle, R1                      | R1                   |
+| ability 1 (Haul) | L2                     | Circle, R1                      | L2                   |
 | ability 2 / 3    | Square / Triangle \*   | L2 / Up \*                      | Square / Triangle \* |
 | interact         | Cross (Calm)           | Cross (Calm)                    | Cross (Calm)         |
 | chart peek       | Circle                 | R3                              | Circle               |
@@ -73,14 +75,18 @@ alternates) per action. No button is bound twice within a preset.
 
 \* Abilities 2 and 3 on buttons fire **only in Combat**; in Calm those buttons are free for menus
 and interaction. In Faces, Cross is the dodge in Combat and interact in Calm; L3 is unbound.
+Playtest 2 moved Triggers and Left-stick to light R1, heavy R2 (hold), Haul L2, dodge L1: the
+attacks on the right hand, the hook and the roll on the left. Faces is unchanged.
 
 - The active preset is chosen on the **controls screen** (start screen → CONTROLS, or C; left/right
   or the D-pad to switch) or in the **F2 panel** (gamepad preset select), and remembered in
-  `localStorage`.
+  `localStorage` **by id only**: the bindings always come from `controls.json`, so a remembered
+  preset never replays an old layout (`apps/client/src/game/controlsStore.test.ts`).
 - The HUD, the controls screen, the start screen and the chest prompt show bindings as
   **controller glyphs** from `packages/shared/assets/controller-glyphs-12px.png` (1× beside body
   text, 2× on the controls screen), tinted with the UI ink: the active preset's buttons while a
-  gamepad is connected, the keyboard keys and mouse buttons otherwise. Presets use the DualSense
+  gamepad is connected, the keyboard keys and mouse buttons (`mouse_left`, `mouse_middle`,
+  `mouse_right`) otherwise. Presets use the DualSense
   cells (`ps_*`); a pad whose id contains "Xbox" or "xinput" switches to the Xbox family (`xb_*`;
   the D-pad and stick cells serve both). A binding the sheet has no cell for (Select, F3) falls back
   to its text label. The mapping is `apps/client/src/render/glyphCells.ts`.

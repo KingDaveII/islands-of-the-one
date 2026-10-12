@@ -13,14 +13,13 @@ import {
   type Hint,
   type HintSource,
 } from './gamepad.js';
-import { KEYBOARD_ACTIONS, keyboardKeys, keyCodeFor, MOUSE_BUTTONS } from './keyboard.js';
+import { KEYBOARD_ACTIONS, keyboardKeys, keyCodeFor, MOUSE_BUTTONS, mouseBindingFor, type MouseSide } from './keyboard.js';
 import { keyboardMove, quantizeAngle, quantizeMove } from './quantize.js';
 
 const STICK_DEADZONE = 0.2;
 const AIM_DEADZONE = 0.35;
 
 export type AimSource = 'mouse' | 'gamepad';
-type MouseSide = 'left' | 'right';
 
 /** Sim button a press of an action sets; heavy is a held state and the rest (chart peek, journal) have no sim button yet. */
 const PRESS_BUTTON: Partial<Record<ControlAction, number>> = {
@@ -67,7 +66,9 @@ export class Controls {
   private moveKeys: Record<string, Phaser.Input.Keyboard.Key>;
   /** Phaser keys by binding name, for every key any action names in any context. */
   private keys = new Map<string, Phaser.Input.Keyboard.Key>();
-  private mouseDown: Record<MouseSide, boolean> = { left: false, right: false };
+  private mouseDown: Record<MouseSide, boolean> = { left: false, middle: false, right: false };
+  /** DOM listeners on the canvas that stop the browser's middle-click autoscroll; removed on dispose. */
+  private readonly domListeners: [string, (e: Event) => void][] = [];
   /** The context the latest sample resolved presses with (hints follow it). */
   context: InputContext = 'calm';
   private pointer: { x: number; y: number } | null = null;
@@ -98,17 +99,27 @@ export class Controls {
     }
 
     scene.input.mouse?.disableContextMenu();
-    const side = (p: Phaser.Input.Pointer): MouseSide | null => (p.button === 0 ? 'left' : p.button === 2 ? 'right' : null);
     scene.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      const s = side(p);
-      if (!s) return;
-      this.mouseDown[s] = true;
-      this.latchedKeys.add(s === 'left' ? 'LMB' : 'RMB');
+      const binding = mouseBindingFor(p.button);
+      const side = binding ? MOUSE_BUTTONS[binding] : undefined;
+      if (!binding || !side) return;
+      this.mouseDown[side] = true;
+      this.latchedKeys.add(binding);
     });
     scene.input.on('pointerup', (p: Phaser.Input.Pointer) => {
-      const s = side(p);
-      if (s) this.mouseDown[s] = false;
+      const binding = mouseBindingFor(p.button);
+      const side = binding ? MOUSE_BUTTONS[binding] : undefined;
+      if (side) this.mouseDown[side] = false;
     });
+    // The middle button is a game button (the Haul): never the browser's autoscroll or a paste.
+    const canvas = scene.game.canvas;
+    const swallowMiddle = (e: Event): void => {
+      if (e instanceof MouseEvent && e.button === 1) e.preventDefault();
+    };
+    for (const type of ['mousedown', 'auxclick'] as const) {
+      canvas.addEventListener(type, swallowMiddle);
+      this.domListeners.push([type, swallowMiddle]);
+    }
     scene.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       this.pointer = { x: p.worldX, y: p.worldY };
       this.aimSource = 'mouse';
@@ -119,6 +130,8 @@ export class Controls {
   dispose(): void {
     this.scene.input.keyboard?.removeCapture(this.captured);
     this.captured = [];
+    for (const [type, fn] of this.domListeners) this.scene.game.canvas.removeEventListener(type, fn);
+    this.domListeners.length = 0;
   }
 
   /** The active gamepad preset. */
