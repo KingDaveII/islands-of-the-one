@@ -70,7 +70,7 @@ export class GameScene extends Phaser.Scene {
     this.hudLayer.add(this.tint);
     const tuning: Tuning = tuningStore.get();
     const weaponName = tuning.weapons[this.weapon]?.name ?? this.weapon;
-    this.hud = new Hud(this, this.hudLayer, this.session.run, weaponName);
+    this.hud = new Hud(this, this.hudLayer, this.session.run, weaponName, this.controls);
 
     this.banner = withShadow(label(this, 0, 0, '', Palette.uiInk, 16)).setAlpha(0);
     this.bannerSub = withShadow(label(this, 0, 0, '', Palette.uiInkMuted)).setAlpha(0);
@@ -120,6 +120,34 @@ export class GameScene extends Phaser.Scene {
           this.fx.float(e.x / SUB, e.y / SUB - 14, `-${e.damage}`, Palette.healthLoss, 650);
           if (e.armored) this.fx.ring(e.x / SUB, e.y / SUB - 4, 6, 12, 200, Palette.uiBevel, 1);
           break;
+        case 'held': {
+          // Pinned on the hook: a tight ring that snaps shut around the husk.
+          const h = this.session.state.husks.find((x) => x.id === e.id);
+          if (h) this.fx.ring(h.x / SUB, h.y / SUB, 10, 3, e.ms, Palette.blade, 1);
+          break;
+        }
+        case 'haulHit':
+          this.fx.shake(e.pull === 'player' ? 2 : 1);
+          this.fx.burst(e.x / SUB, e.y / SUB, 4, Palette.blade, 60, { life: 200 });
+          break;
+        case 'haulMiss':
+          this.fx.burst(e.x / SUB, e.y / SUB, 3, Palette.floorEdge, 30, { life: 180 });
+          break;
+        case 'itemUsed': {
+          const p = this.session.state.player;
+          this.fx.float(p.x / SUB, p.y / SUB - 16, e.id.toUpperCase(), Palette.healthFill, 700);
+          this.fx.ring(p.x / SUB, p.y / SUB, 2, 12, 300, Palette.healthFill, 1);
+          break;
+        }
+        case 'chestOpened':
+          this.fx.burst(e.x / SUB, e.y / SUB - 4, 8, Palette.spark, 60, { dir: -Math.PI / 2, spread: 1.2, life: 400 });
+          if (e.count > 0) this.fx.float(e.x / SUB, e.y / SUB - 14, `+${e.count} ${e.item.toUpperCase()}`, Palette.spark, 900);
+          break;
+        case 'shellRegrow': {
+          const h = this.session.state.husks.find((x) => x.id === e.id);
+          if (h) this.fx.ring(h.x / SUB, h.y / SUB, 2, 10, 260, Palette.shell, 1);
+          break;
+        }
         case 'dodge':
           this.fx.burst(e.x / SUB, e.y / SUB + 5, 5, Palette.floorEdge, 40, { dir: rad(e.dir) + Math.PI, spread: 1.6, life: 260 });
           break;

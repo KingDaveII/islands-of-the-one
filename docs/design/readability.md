@@ -43,9 +43,23 @@ particles, text, dev panels):
 - **Invulnerability.** The player flickers on alternate frames while invulnerable (dodge
   i-frames and the post-hit grace).
 - **Poise.** A poise bar (16 × 2 inside a 1 px outline) appears over an enemy **only once it has
-  taken damage**. It shows the current shell layer: a crack notch below 30%; broken (staggered, or
-  no shell left) lights its outline to mark the player's opening. The shell on the sprite shows
-  the same state: one crack below 100%, three below 30%, fragments once broken.
+  taken damage**, **one bar per shell layer**, outermost on top (the Nutshell shows both of its
+  layers; a broken layer is an empty track, and the inner one refills when it regrows). A crack
+  notch below 30%; broken (staggered, held, or no shell left) lights the outline to mark the
+  player's opening. The shell on the sprite shows the same state: one crack below 100%, three
+  below 30%, fragments once broken.
+- **Hook-thrust (heavy).** The charge is a drawn-back stance (the sprite steps 2 px away from the
+  aim) with a bright pixel growing at the hook tip, 1 → 3 px, in `hollow-light` (at full charge
+  the same color as a full health bar, never spark-glow). The thrust is a **straight line** hitbox
+  flash along the aim, as wide as the hitbox, in `hollow-light` with the player outline, where the
+  light attack is an arc. A held Husk shows **pinned on the line**: the line runs out to it for the
+  hold, and a `hollow-light` ring snaps shut on it.
+- **Haul.** A chain of 3 px `hollow-light` links (player outline) drawn out one per 16 px of travel
+  from the hand to the hook head, a 4 px hook glyph at the end. On a hit the chain goes **taut**: a
+  straight `spark-amber` line under the links while the target, or the player, slides along it.
+  No new signal color: the chain is the player's weapon, so it uses the weapon's tokens.
+- **Chests.** A banded `hollow-below` box with a `dream-night` outline and a blinking
+  `spark-amber` clasp; opened, the lid stands up and the inside is the Hollow.
 - **Aim.** The reticle marks the exact 360° aim: four broken rims on the diagonals around a spark,
   `hollow-light` with a `ui-outline` outline (never a cross or plus). Sprites turn to the nearest of
   8 facings, in sheet order **S, SE, E, NE, N, NW, W, SW** (`apps/client/src/render/facing.ts`).
@@ -60,19 +74,21 @@ particles, text, dev panels):
 HUD elements sit in the **four screen corners**, 8 px in from the edge, and never over the center
 of the screen where the fight happens:
 
-| Corner       | Contents                                                                                        |
-| ------------ | ----------------------------------------------------------------------------------------------- |
-| Top left     | HP bar (64 px, ticks every 10 HP, recent loss in ember, all ember below 25%) and the dodge slot |
-| Bottom left  | The weapon: name and tier pips, light combo pips, heavy charge meter, 3 ability slots           |
-| Top right    | Room counter, "ROOM 2/3"                                                                        |
-| Bottom right | Sparkglass counter                                                                              |
+| Corner       | Contents                                                                                                                                                                             |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Top left     | HP bar (64 px, ticks every 10 HP, recent loss in ember, all ember below 25%), the dodge slot and the two consumable slots (icon, count; sunken when empty, lit while a Ration heals) |
+| Bottom left  | The weapon: name and tier pips, light combo pips, heavy charge meter (3 stages of the charge window), 3 ability slots                                                                |
+| Top right    | Room counter, "ROOM 2/3"                                                                                                                                                             |
+| Bottom right | Sparkglass counter                                                                                                                                                                   |
 
 - **Ability slots** (20 × 20; the dodge slot is 14 × 14): the cooldown sweep darkens the remaining
   time clockwise from 12 o'clock, with whole seconds on top. Locked slots show a lock in
   `hollow-dusk` in a sunken frame, with no key hint. A slot's frame lights briefly when it comes
   back.
 - **Party portraits** are hidden in solo.
-- **Key hints** (LMB, RMB, Q, SPC) are placeholders until the controls are final.
+- **Key hints** are text labels until a glyph sheet exists: the active gamepad preset's glyphs
+  (R2, L2, L1, …) while a pad is connected, else the keyboard keys (LMB, RMB, SPC, E, Q, F). See
+  [`controls.md`](controls.md).
 
 ## 4. Panels and type
 

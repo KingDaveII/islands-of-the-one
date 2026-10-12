@@ -34,6 +34,14 @@ export function input(buttons = 0, aim = 0, moveMag = 0, moveDir = 0): number {
   return encodeInput({ aim, moveDir, moveMag, buttons });
 }
 
+/** Hold heavy until the charge is full, then release; returns the events of the hold. */
+export function chargeFull(run: Run, aim = 0): SimEvent[] {
+  const p = run.state.player;
+  const events = stepUntil(run, () => p.action === 'charge' && p.charge >= run.params.weapon.heavy.chargeMax, 200, Button.Heavy, aim);
+  events.push(...step(run, 0, aim));
+  return events;
+}
+
 /** Step once; returns that tick's events. */
 export function step(run: Run, buttons = 0, aim = 0): SimEvent[] {
   return stepRun(run, input(buttons, aim));
@@ -77,6 +85,9 @@ export function addHusk(run: Run, kind: HuskKind, distPx: number, patch: Partial
     pushX: 0,
     pushY: 0,
     pushT: 0,
+    stagger: 0,
+    held: null,
+    sinceHit: 0,
     ...patch,
   };
   s.husks.push(h);

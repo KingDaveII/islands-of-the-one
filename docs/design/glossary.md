@@ -60,6 +60,17 @@ All other religious and mythological names, symbols and scripts are allowed.
 (`PlayerState`, the `players` table); `kindled` is for in-world things, like a Kindled's
 Remembrance. Player-facing text says the Kindled.
 
+## Combat (the Hookblade)
+
+| Term          | Meaning                                                                     | In code                   |
+| ------------- | --------------------------------------------------------------------------- | ------------------------- |
+| Hook-thrust   | The Hookblade's heavy: a straight thrust that holds its target on the hook. | `heavy`, `thrust`, `held` |
+| Haul          | Ability slot 1: the hook on its chain, which pulls by weight class.         | `haul`                    |
+| The Catch     | Ability slot 2 (locked placeholder).                                        | `the-catch`               |
+| Turning Blade | Ability slot 3 (locked placeholder).                                        | `turning-blade`           |
+| Ration        | The consumable: heals over time. Found in chests.                           | `ration`, `consumables`   |
+| chest         | Opens on contact; scripted contents.                                        | `chest`, tile `C`         |
+
 ## Beings
 
 | Term               | Meaning                                                | In code                                          |

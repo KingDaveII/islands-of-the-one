@@ -7,9 +7,9 @@ import { TURN } from './fixed.js';
  *   bits  0-11  aim angle (1/4096 turn)
  *   bits 12-19  move direction (1/256 turn)
  *   bits 20-22  move magnitude (0..7)
- *   bits 23-28  buttons
+ *   bits 23-30  buttons
  *
- * Light, Dodge and Ability* are "pressed this tick" edges; Heavy is "held".
+ * Light, Dodge, Ability* and Item* are "pressed this tick" edges; Heavy is "held".
  */
 export const Button = {
   Light: 1,
@@ -18,7 +18,11 @@ export const Button = {
   Ability1: 8,
   Ability2: 16,
   Ability3: 32,
+  Item1: 64,
+  Item2: 128,
 } as const;
+
+export const BUTTON_MASK = 0xff;
 
 export const MOVE_DIRS = 256;
 export const MOVE_MAG_MAX = 7;
@@ -39,7 +43,7 @@ export function encodeInput(input: TickInput): number {
     ((input.aim & 0xfff) |
       ((input.moveDir & 0xff) << 12) |
       ((input.moveMag & 0x7) << 20) |
-      ((input.buttons & 0x3f) << 23)) >>>
+      ((input.buttons & BUTTON_MASK) << 23)) >>>
     0
   );
 }
@@ -49,7 +53,7 @@ export function decodeInput(packed: number): TickInput {
     aim: packed & 0xfff,
     moveDir: (packed >>> 12) & 0xff,
     moveMag: (packed >>> 20) & 0x7,
-    buttons: (packed >>> 23) & 0x3f,
+    buttons: (packed >>> 23) & BUTTON_MASK,
   };
 }
 

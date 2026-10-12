@@ -1,6 +1,8 @@
 import type Phaser from 'phaser';
 import {
+  heavyTiming,
   huskParams,
+  isFullyCharged,
   lightStrike,
   playerAttackPhase,
   slamCenter,
@@ -8,6 +10,7 @@ import {
   tileAt,
   TILE_PX,
   TURN,
+  type ChestState,
   type HuskState,
   type Run,
   type RunState,
@@ -15,6 +18,7 @@ import {
 import type { JuiceTuning } from '@iot/shared';
 import { Palette } from '../palette.js';
 import type { Session } from '../game/session.js';
+import { chargeStage } from './charge.js';
 import { facingIndex, facingStep } from './facing.js';
 import type { Fx } from './fx.js';
 import { disc, ditherDisc, groundShadow, outlinedRect, pixelLine, ring } from './pixels.js';
@@ -274,15 +278,17 @@ export class WorldRenderer {
       groundShadow(g, pos.x, pos.y + r, r + 1, 2);
     }
     groundShadow(g, player.x, player.y + 6, 5, 2);
+    for (const c of s.chests) this.drawChest(g, c, timeMs);
     for (const k of s.pickups) this.drawPickup(g, session.lerp(`k${k.id}`, k.x, k.y), timeMs);
     this.drawTrail(g, session, player, dtWorldMs);
+    this.drawChain(g, session, player, huskPos);
 
     // Bodies, back to front.
     const bodies: { y: number; draw: () => void }[] = s.husks.map((h) => {
       const pos = huskPos.get(h.id) ?? h;
       return { y: pos.y, draw: () => { this.drawHusk(g, run, h, pos, fx, timeMs); } };
     });
-    bodies.push({ y: player.y, draw: () => { this.drawPlayer(g, session, player, fx); } });
+    bodies.push({ y: player.y, draw: () => { this.drawPlayer(g, session, player, fx, huskPos); } });
     bodies.sort((a, b) => a.y - b.y);
     for (const b of bodies) b.draw();
 
@@ -290,6 +296,114 @@ export class WorldRenderer {
     for (const h of s.husks) this.drawPoise(g, run, h, huskPos.get(h.id) ?? h, timeMs);
     this.drawChargeMeter(g, run, player);
     if (crosshair) this.drawReticle(g, crosshair.x, crosshair.y);
+  }
+
+  /** A chest: a banded box with a clasp; opened, the lid stands up and the inside is dark. */
+  private drawChest(g: G, c: ChestState, timeMs: number): void {
+    const x = Math.round(c.x / SUB);
+    const y = Math.round(c.y / SUB);
+    groundShadow(g, x, y + 5, 7, 2);
+    if (c.opened) {
+      outlinedRect(g, x - 6, y - 2, 12, 7, Palette.wall, Palette.uiOutline);
+      g.fillStyle(Palette.hollow, 1).fillRect(x - 5, y - 1, 10, 3);
+      outlinedRect(g, x - 6, y - 8, 12, 3, Palette.wall, Palette.uiOutline);
+      g.fillStyle(Palette.floorEdge, 1).fillRect(x - 5, y - 7, 10, 1);
+      return;
+    }
+    outlinedRect(g, x - 6, y - 5, 12, 10, Palette.wall, Palette.uiOutline);
+    g.fillStyle(Palette.floorEdge, 1).fillRect(x - 6, y - 5, 12, 1).fillRect(x - 6, y - 1, 12, 1);
+    g.fillStyle(Palette.wallLine, 1).fillRect(x - 6, y - 2, 12, 1);
+    const on = Math.floor(timeMs / 400) % 2 === 0;
+    g.fillStyle(on ? Palette.spark : Palette.sparkDeep, 1).fillRect(x - 1, y - 2, 2, 3);
+  }
+
+  /**
+   * The Haul chain: 3 px links every 16 px of travel from the hand to the hook
+   * head, a 4 px hook glyph at the end. Once the hook lands the chain goes taut
+   * (a straight line under the links) while the husk, or the player, slides along it.
+   */
+  private drawChain(g: G, session: Session, player: { x: number; y: number }, huskPos: Map<number, { x: number; y: number }>): void {
+    const p = session.state.player;
+    const hk = p.hook;
+    if (!hk) return;
+    const hit = hk.hitId >= 0 ? huskPos.get(hk.hitId) : undefined;
+    const ex = hit ? hit.x : hk.x / SUB;
+    const ey = hit ? hit.y : hk.y / SUB;
+    const hx = player.x;
+    const hy = player.y - 2;
+    const len = Math.hypot(ex - hx, ey - hy);
+    if (len < 1) return;
+    const ux = (ex - hx) / len;
+    const uy = (ey - hy) / len;
+    if (hit) {
+      pixelLine(g, hx, hy, ex, ey, Palette.playerOutline, 1, 3);
+      pixelLine(g, hx, hy, ex, ey, Palette.uiFocus);
+    }
+    for (let d = 8; d < len - 2; d += 16) {
+      const lx = Math.round(hx + ux * d);
+      const ly = Math.round(hy + uy * d);
+      // A link: 3 px along the chain with a 1 px outline.
+      pixelLine(g, lx - ux, ly - uy, lx + ux, ly + uy, Palette.playerOutline, 1, 3);
+      pixelLine(g, lx - ux, ly - uy, lx + ux, ly + uy, Palette.blade, 1, 1);
+    }
+    // The hook head: a 4 px glyph, bent back against the direction of travel.
+    const tx = Math.round(ex);
+    const ty = Math.round(ey);
+    const sx = Math.abs(ux) >= Math.abs(uy) ? Math.sign(ux) || 1 : 0;
+    const sy = sx === 0 ? Math.sign(uy) || 1 : 0;
+    g.fillStyle(Palette.playerOutline, 1).fillRect(tx - 3, ty - 3, 7, 7);
+    g.fillStyle(Palette.blade, 1);
+    if (sx !== 0) {
+      g.fillRect(tx - 2, ty - 1, 4, 1).fillRect(tx + sx * 2 - (sx < 0 ? 0 : 0), ty - 2, 1, 4).fillRect(tx - sx, ty + 1, 1, 1);
+    } else {
+      g.fillRect(tx - 1, ty - 2, 1, 4).fillRect(tx - 2, ty + sy * 2, 4, 1).fillRect(tx + 1, ty - sy, 1, 1);
+    }
+  }
+
+  /**
+   * The Hook-thrust: a straight line hitbox flash along the aim (where the
+   * light attack is an arc), drawn back during startup. A held husk shows
+   * pinned on the line.
+   */
+  private drawThrust(g: G, run: Run, x: number, y: number, huskPos: Map<number, { x: number; y: number }>): void {
+    const P = run.params;
+    const p = run.state.player;
+    const h = P.weapon.heavy;
+    const tm = heavyTiming(P, p.charge);
+    const phase = playerAttackPhase(p, P);
+    const length = h.length / SUB;
+    const width = (h.halfWidth * 2) / SUB;
+    const a = rad(p.dir);
+    const cy = y - 3;
+    const activeEnd = tm.startup + tm.active;
+    if (phase === 'startup') {
+      const back = 6 + Math.round((p.t / Math.max(1, tm.startup)) * 4);
+      pixelLine(g, x - Math.cos(a) * back, cy - Math.sin(a) * back, x + Math.cos(a) * 4, cy + Math.sin(a) * 4, Palette.playerOutline, 1, 3);
+      pixelLine(g, x - Math.cos(a) * back, cy - Math.sin(a) * back, x + Math.cos(a) * 4, cy + Math.sin(a) * 4, Palette.blade);
+      return;
+    }
+    const flashing = phase === 'active' || (phase === 'recovery' && p.t <= activeEnd + 3);
+    const held = run.state.husks.filter((k) => k.action === 'held');
+    if (!flashing && held.length === 0) return;
+    if (flashing) {
+      const reach = phase === 'active' ? length * Math.min(1, (p.t - tm.startup + 1) / Math.max(1, tm.active) + 0.5) : length;
+      const fading = phase === 'recovery';
+      // The hitbox: a dithered band as wide as the thrust, with a solid line down the middle.
+      thrustBand(g, x, cy, a, reach, width / 2, fading ? Palette.floorEdge : Palette.playerOutline);
+      const ex = x + Math.cos(a) * reach;
+      const ey = cy + Math.sin(a) * reach;
+      pixelLine(g, x, cy, ex, ey, Palette.playerOutline, 1, fading ? 3 : 4);
+      pixelLine(g, x, cy, ex, ey, fading ? Palette.floorFleck : Palette.blade, 1, 2);
+      // The hook tip.
+      g.fillStyle(Palette.playerOutline, 1).fillRect(Math.round(ex) - 2, Math.round(ey) - 2, 5, 5);
+      g.fillStyle(Palette.blade, 1).fillRect(Math.round(ex) - 1, Math.round(ey) - 1, 3, 3);
+    }
+    // Pinned: the line runs out to each held husk for the hold.
+    for (const k of held) {
+      const pos = huskPos.get(k.id) ?? { x: k.x / SUB, y: k.y / SUB };
+      pixelLine(g, x, cy, pos.x, pos.y, Palette.playerOutline, 1, 4);
+      pixelLine(g, x, cy, pos.x, pos.y, Palette.blade, 1, 2);
+    }
   }
 
   private drawPickup(g: G, p: { x: number; y: number }, timeMs: number): void {
@@ -441,30 +555,35 @@ export class WorldRenderer {
     const damaged = h.shell.some((v, i) => v < (hp.shell[i] ?? 0)) || h.core < hp.core;
     if (!damaged) return;
     const layer = h.shell.findIndex((v) => v > 0);
-    const broken = layer < 0 || h.action === 'stagger';
-    const frac = layer >= 0 ? (h.shell[layer] ?? 0) / Math.max(1, hp.shell[layer] ?? 1) : 0;
+    const broken = layer < 0 || h.action === 'stagger' || h.action === 'held';
     const x = pos.x - 9;
-    const y = pos.y - Math.round(hp.radius / SUB) - 8;
+    const top = pos.y - Math.round(hp.radius / SUB) - 8 - (h.shell.length - 1) * 5;
     if (broken) {
       const on = Math.floor(timeMs / 150) % 2 === 0;
+      const y = top + (h.shell.length - 1) * 5;
       g.fillStyle(Palette.uiPanel, 1).fillRect(x - 1, y - 1, 20, 6);
       g.fillStyle(on ? Palette.uiFocus : Palette.sparkDeep, 1).fillRect(x, y, 18, 4);
       g.fillStyle(Palette.uiPanel, 1).fillRect(x + 1, y + 1, 16, 2);
       return;
     }
-    g.fillStyle(Palette.uiOutline, 1).fillRect(x, y, 18, 4);
-    g.fillStyle(Palette.poiseTrack, 1).fillRect(x + 1, y + 1, 16, 2);
-    const w = Math.max(1, Math.round(16 * frac));
-    g.fillStyle(Palette.poiseFill, 1).fillRect(x + 1, y + 1, w, 2);
-    if (frac < 0.3 && w > 2) g.fillStyle(Palette.poiseTrack, 1).fillRect(x + 1 + w - 2, y + 1, 1, 1);
+    // One bar per shell layer, outermost on top; a broken layer is an empty track.
+    h.shell.forEach((v, i) => {
+      const y = top + i * 5;
+      const frac = v / Math.max(1, hp.shell[i] ?? 1);
+      g.fillStyle(Palette.uiOutline, 1).fillRect(x, y, 18, 4);
+      g.fillStyle(Palette.poiseTrack, 1).fillRect(x + 1, y + 1, 16, 2);
+      if (v <= 0) return;
+      const w = Math.max(1, Math.round(16 * frac));
+      g.fillStyle(Palette.poiseFill, 1).fillRect(x + 1, y + 1, w, 2);
+      if (frac < 0.3 && w > 2) g.fillStyle(Palette.poiseTrack, 1).fillRect(x + 1 + w - 2, y + 1, 1, 1);
+    });
   }
 
   /** Heavy charge: three stage pips on an outline chip, just below the player while held. */
   private drawChargeMeter(g: G, run: Run, pos: { x: number; y: number }): void {
     const p = run.state.player;
     if (p.action !== 'charge') return;
-    const full = run.params.weapon.heavy.fullCharge;
-    const stage = Math.min(3, Math.floor((p.charge * 3) / full));
+    const stage = chargeStage(p.charge, run.params.weapon.heavy);
     const x = pos.x - 6;
     const y = pos.y + 10;
     g.fillStyle(Palette.uiOutline, 1).fillRect(x, y, 13, 4);
@@ -495,12 +614,19 @@ export class WorldRenderer {
     }
   }
 
-  private drawPlayer(g: G, session: Session, pos: { x: number; y: number }, fx: Fx): void {
+  private drawPlayer(g: G, session: Session, pos: { x: number; y: number }, fx: Fx, huskPos: Map<number, { x: number; y: number }>): void {
     const run = session.run;
     const P = run.params;
     const s = run.state;
     const p = s.player;
-    const { x, y } = pos;
+    let { x, y } = pos;
+    // Charging: a drawn-back stance, 2 px away from the aim.
+    const charging = p.action === 'charge';
+    if (charging) {
+      const a = rad(p.aim);
+      x -= Math.round(Math.cos(a) * 2);
+      y -= Math.round(Math.sin(a) * 2);
+    }
 
     if (p.action === 'dead') {
       outlinedRect(g, x - 8, y + 1, 16, 4, Palette.playerShirt, Palette.playerOutline);
@@ -515,31 +641,35 @@ export class WorldRenderer {
     const invulnerable = p.iframes > 0 || p.hurtInvuln > 0;
     const hidden = invulnerable && !flash && (s.tick & 1) === 1;
 
-    this.drawSlash(g, run, x, y);
+    if (p.action === 'heavy') this.drawThrust(g, run, x, y, huskPos);
+    else this.drawSlash(g, run, x, y);
     if (!hidden) {
       const moving = Math.abs(p.vx) + Math.abs(p.vy) > SUB / 4;
       const step = moving && p.action !== 'dodge' ? Math.floor(s.tick / 7) % 2 : -1;
       const ink = flash ? { outline: Palette.hit, solid: Palette.hit } : undefined;
       drawKindled(g, x, y, facing, ink, step, !attacking);
     }
-    if (p.action === 'ability' && playerAttackPhase(p, P) === 'active') {
-      const a = rad(p.dir);
-      for (let i = 1; i <= 3; i++) {
-        const bx = x - Math.cos(a) * (4 + i * 4);
-        const by = y - 4 - Math.sin(a) * (4 + i * 4);
-        pixelLine(g, bx, by, bx - Math.cos(a) * 3, by - Math.sin(a) * 3, Palette.blade);
-      }
+    if (charging) {
+      // A bright pixel grows at the hook tip as the charge fills (hollow-light, never white).
+      const stage = chargeStage(p.charge, P.weapon.heavy);
+      const dir = facingStep(facing);
+      const tx = x + (dir.x === 0 ? (facing >= 5 ? -5 : 5) : dir.x * 12);
+      const ty = y + 1 + Math.max(0, dir.y) + dir.y * 6 - (dir.x !== 0 && dir.y === 0 ? 2 : 0);
+      const size = 1 + Math.min(2, stage);
+      const half = size >> 1;
+      g.fillStyle(Palette.playerOutline, 1).fillRect(tx - half - 1, ty - half - 1, size + 2, size + 2);
+      g.fillStyle(isFullyCharged(P, p.charge) ? Palette.healthFill : Palette.blade, 1).fillRect(tx - half, ty - half, size, size);
+      if ((s.tick & 2) === 0 && stage >= 2) g.fillStyle(Palette.blade, 1).fillRect(tx - half - 1 + (s.tick & 1), ty - half - 2, 1, 1);
     }
   }
 
-  /** Slash arcs for light/heavy strikes (exact aim direction, not the 8-way facing). */
+  /** Slash arcs for light strikes (exact aim direction, not the 8-way facing); the heavy is a line, see drawThrust. */
   private drawSlash(g: G, run: Run, x: number, y: number): void {
     const P = run.params;
     const p = run.state.player;
-    if (p.action !== 'light' && p.action !== 'heavy') return;
+    if (p.action !== 'light') return;
     const phase = playerAttackPhase(p, P);
-    const heavy = p.action === 'heavy';
-    const st = heavy ? P.weapon.heavy : lightStrike(P, p.comboStep);
+    const st = lightStrike(P, p.comboStep);
     const reach = st.reach / SUB;
     const half = rad(st.halfArc);
     const dir = rad(p.dir);
@@ -552,9 +682,9 @@ export class WorldRenderer {
       return;
     }
     if (!(phase === 'active' || (phase === 'recovery' && p.t <= activeEnd + 3))) return;
-    const thick = heavy ? 5 : p.comboStep === P.weapon.light.length - 1 ? 4 : 3;
+    const thick = p.comboStep === P.weapon.light.length - 1 ? 4 : 3;
     const sweep = phase === 'active' ? Math.min(1, (p.t - st.startup) / Math.max(1, st.active)) : 1;
-    const ccw = p.comboStep % 2 === 0 && !heavy;
+    const ccw = p.comboStep % 2 === 0;
     const from = ccw ? dir - half : dir + half;
     const to = from + (ccw ? 1 : -1) * 2 * half * sweep;
     const a0 = Math.min(from, to);
@@ -587,6 +717,24 @@ export class WorldRenderer {
     for (const [dx, dy] of pts) g.fillRect(cx + dx - 1, cy + dy - 1, 3, 3);
     g.fillStyle(Palette.uiInk, 1);
     for (const [dx, dy] of pts) g.fillRect(cx + dx, cy + dy, 1, 1);
+  }
+}
+
+/** Checkerboard pixels inside a rotated band: from (x, y) along angle `a` for `len`, `half` wide each side. */
+function thrustBand(g: G, x: number, y: number, a: number, len: number, half: number, color: number): void {
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  const r = Math.ceil(len + half) + 1;
+  g.fillStyle(color, 1);
+  for (let dy = -r; dy <= r; dy++) {
+    for (let dx = -r; dx <= r; dx++) {
+      const along = dx * c + dy * s;
+      const across = -dx * s + dy * c;
+      if (along < 0 || along > len || Math.abs(across) > half) continue;
+      const px = Math.round(x) + dx;
+      const py = Math.round(y) + dy;
+      if (((px + py) & 1) === 0) g.fillRect(px, py, 1, 1);
+    }
   }
 }
 

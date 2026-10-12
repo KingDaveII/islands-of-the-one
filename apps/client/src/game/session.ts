@@ -13,7 +13,7 @@ import {
   type RunResults,
   type SimEvent,
 } from '@iot/sim';
-import type { Controls } from './controls.js';
+import type { Controls, SampleContext } from './controls.js';
 import { tuningStore } from './tuningStore.js';
 
 const TICK_MS = 1000 / TICK_HZ;
@@ -63,6 +63,18 @@ export class Session {
     return this.run.state.slowmo > 0 ? this.run.params.perfect.slowmoScale / 1000 : 1;
   }
 
+  /** What the input sampler needs from the world: enemy offsets (soft lock) and whether a fight is on. */
+  private sampleContext(): SampleContext {
+    const s = this.run.state;
+    const p = s.player;
+    const soft = this.run.tuning.softlock;
+    return {
+      enemies: s.husks.filter((h) => h.core > 0 && h.action !== 'spawn').map((h) => ({ dx: (h.x - p.x) / SUB, dy: (h.y - p.y) / SUB })),
+      encounter: s.room.phase === 'fighting' || s.husks.length > 0,
+      softLockDeg: this.controls.preset.aim === 'left-stick' ? soft.leftStickAngleDeg : soft.angleDeg,
+    };
+  }
+
   private snapshot(): void {
     const s = this.run.state;
     this.prev.set('p', { x: s.player.x, y: s.player.y });
@@ -85,7 +97,7 @@ export class Session {
       const p = this.run.state.player;
       const input = this.autopilot
         ? autopilot(this.run.state, this.run.params, this.autopilot)
-        : this.controls.sample(p.x / SUB, p.y / SUB);
+        : this.controls.sample(p.x / SUB, p.y / SUB, this.sampleContext());
       events.push(...stepRun(this.run, input));
       this.acc -= TICK_MS;
       this.stepsThisFrame++;

@@ -1,7 +1,8 @@
-import { angleDiff, idiv } from './fixed.js';
+import { angleDiff, clamp, idiv, length, TRIG_ONE } from './fixed.js';
 import { isArmored } from './moves.js';
 import { randInt } from './rng.js';
-import { atan2, dirX, dirY } from './trig.js';
+import { isSolid, tileOf } from './rooms.js';
+import { atan2, cos, dirX, dirY, sin } from './trig.js';
 import type { HuskParams, Params } from './tuning.js';
 import type { HuskKind, HuskState, RunState, SimEvent } from './state.js';
 
@@ -19,6 +20,10 @@ export interface Hit {
   knockback: number;
   hitstop: number;
   shake: number;
+  /** Ticks the target is pinned ("held") after the hit; 0 for none. */
+  hold: number;
+  /** Shove distance (units, weight-scaled) when the hold ends. */
+  shove: number;
 }
 
 export function huskParams(P: Params, kind: HuskKind): HuskParams {
@@ -36,11 +41,23 @@ export function isHittable(h: HuskState): boolean {
  * it, medium half, heavy not at all. The move is spread over a short slide.
  */
 export function displace(ctx: Ctx, h: HuskState, dir: number, dist: number): void {
-  const moved = idiv(dist * huskParams(ctx.P, h.kind).kbScale, 1000);
-  if (moved === 0) return;
-  h.pushX += dirX(dir, moved);
-  h.pushY += dirY(dir, moved);
+  slide(ctx, h, dir, idiv(dist * huskParams(ctx.P, h.kind).kbScale, 1000));
+}
+
+/** Slide a husk `dist` units along `dir` over the knockback time, unscaled (the Haul pulls by its own class rules). */
+export function slide(ctx: Ctx, h: HuskState, dir: number, dist: number): void {
+  if (dist <= 0) return;
+  h.pushX += dirX(dir, dist);
+  h.pushY += dirY(dir, dist);
   h.pushT = ctx.P.husks.knockbackTicks;
+}
+
+/** Put a husk in a stagger of `ticks` (interrupts anything it was doing). */
+export function staggerHusk(h: HuskState, ticks: number): void {
+  h.action = 'stagger';
+  h.t = 0;
+  h.stagger = Math.max(1, ticks);
+  h.held = null;
 }
 
 /** Apply one tick of a pending knockback/pull slide. */
@@ -103,16 +120,22 @@ export function hitHusk(ctx: Ctx, h: HuskState, hit: Hit, fromX: number, fromY: 
     coreDamage = hit.damage;
   }
   h.core -= coreDamage;
+  h.sinceHit = 0;
   const killed = h.core <= 0;
 
   const kb = absorbed ? idiv(hit.knockback * hp.armoredKb, 1000) : hit.knockback;
   displace(ctx, h, dir, kb);
 
   if (!killed) {
-    if (broke >= 0) {
-      h.action = 'stagger';
+    if (hit.hold > 0) {
+      // Pinned on the hook: frozen, then shoved. A broken layer staggers once the hold ends.
+      h.action = 'held';
       h.t = 0;
-    } else if (!absorbed && h.action !== 'stagger') {
+      h.held = { left: hit.hold, dir, shove: hit.shove, broke: broke >= 0 };
+      ctx.events.push({ type: 'held', id: h.id, kind: h.kind, ms: hit.hold });
+    } else if (broke >= 0) {
+      staggerHusk(h, hp.stagger);
+    } else if (!absorbed && h.action !== 'stagger' && h.action !== 'held') {
       h.action = 'flinch';
       h.t = 0;
     }
@@ -203,6 +226,104 @@ export function strikeCircle(
 }
 
 /**
+ * Thrust hit test: a rectangle `length` long (from (x, y) along dir) and
+ * 2 × `halfWidth` wide, against each husk's circle. Hits each husk once per attack.
+ */
+export function strikeRect(
+  ctx: Ctx,
+  x: number,
+  y: number,
+  dir: number,
+  length: number,
+  halfWidth: number,
+  hit: Hit,
+  hitIds: number[],
+): void {
+  const { s, P } = ctx;
+  const struck: HuskState[] = [];
+  const c = cos(dir);
+  const sn = sin(dir);
+  for (const h of s.husks) {
+    if (!isHittable(h) || hitIds.includes(h.id)) continue;
+    const r = huskParams(P, h.kind).radius;
+    const dx = h.x - x;
+    const dy = h.y - y;
+    // Husk center in the thrust's frame: along the thrust, and across it.
+    const along = idiv(dx * c + dy * sn, TRIG_ONE);
+    const across = idiv(dy * c - dx * sn, TRIG_ONE);
+    const nx = along - clamp(along, 0, length);
+    const ny = across - clamp(across, -halfWidth, halfWidth);
+    if (nx * nx + ny * ny > r * r) continue;
+    hitIds.push(h.id);
+    struck.push(h);
+    hitHusk(ctx, h, hit, x, y);
+  }
+  syncHitstop(ctx, struck);
+}
+
+/**
+ * Haul targeting: the nearest hittable husk inside the cone (half-angle
+ * `halfCone` around `aim`) and within `range` of (x, y), or -1. Only Husks are
+ * ever candidates: the player and any ally are never hooked.
+ */
+export function pickHaulTarget(ctx: Ctx, x: number, y: number, aim: number, halfCone: number, range: number): number {
+  const { s, P } = ctx;
+  let best = -1;
+  let bestDist = Number.MAX_SAFE_INTEGER;
+  for (const h of s.husks) {
+    if (!isHittable(h)) continue;
+    const dx = h.x - x;
+    const dy = h.y - y;
+    const d = length(dx, dy);
+    if (d - huskParams(P, h.kind).radius > range) continue;
+    if (Math.abs(angleDiff(atan2(dy, dx), aim)) > halfCone) continue;
+    if (d < bestDist) {
+      bestDist = d;
+      best = h.id;
+    }
+  }
+  return best;
+}
+
+/**
+ * Sweep the hook head from (x0, y0) to (x1, y1): the first hittable husk the
+ * segment touches (nearest along the segment), or null. `radius` is the hook
+ * head's radius; a solid tile under the head end snags the hook (null).
+ */
+export function sweepHook(
+  ctx: Ctx,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  radius: number,
+): { husk: HuskState; x: number; y: number } | null {
+  const { s, P } = ctx;
+  const abx = x1 - x0;
+  const aby = y1 - y0;
+  const den = abx * abx + aby * aby;
+  let best: { husk: HuskState; x: number; y: number; at: number } | null = null;
+  for (const h of s.husks) {
+    if (!isHittable(h)) continue;
+    const num = den === 0 ? 0 : clamp((h.x - x0) * abx + (h.y - y0) * aby, 0, den);
+    const cx = den === 0 ? x0 : x0 + idiv(abx * num, den);
+    const cy = den === 0 ? y0 : y0 + idiv(aby * num, den);
+    const reach = radius + huskParams(P, h.kind).radius;
+    const dx = h.x - cx;
+    const dy = h.y - cy;
+    if (dx * dx + dy * dy > reach * reach) continue;
+    if (!best || num < best.at) best = { husk: h, x: cx, y: cy, at: num };
+  }
+  if (best) return { husk: best.husk, x: best.x, y: best.y };
+  return null;
+}
+
+/** True when the hook head would be inside a wall. */
+export function hookSnags(s: RunState, x: number, y: number): boolean {
+  return isSolid(s.room, tileOf(x), tileOf(y));
+}
+
+/**
  * A husk attack reaches toward the player. `dist` is the distance from the
  * attack's center to the player center, `reach` the distance at which it
  * connects. Returns true when the attack is spent (it hit, or was perfectly
@@ -219,6 +340,8 @@ export function huskAttackPlayer(ctx: Ctx, h: HuskState, dist: number, reach: nu
       s.slowmo = P.perfect.slowmo;
       s.sparkglass += P.perfect.bonus;
       s.stats.perfectDodges++;
+      // The flare also takes time off every ability cooldown.
+      for (let i = 0; i < p.cooldowns.length; i++) p.cooldowns[i] = Math.max(0, (p.cooldowns[i] ?? 0) - P.perfect.cooldownRefund);
       ctx.events.push({ type: 'perfectDodge', x: p.x, y: p.y, bonus: P.perfect.bonus });
       return true;
     }
@@ -255,6 +378,7 @@ export function huskAttackPlayer(ctx: Ctx, h: HuskState, dist: number, reach: nu
     p.charge = 0;
     p.nextCombo = 0;
     p.comboTimer = 0;
+    p.hook = null;
   }
   return true;
 }
