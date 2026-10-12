@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import type { JuiceTuning } from '@iot/shared';
 import { Palette } from '../palette.js';
+import { DEPTH } from './depth.js';
 import { label, place, withShadow } from './text.js';
 
 interface Particle {
@@ -51,7 +52,7 @@ export class Fx {
     private readonly layer: Phaser.GameObjects.Layer,
     private readonly juice: () => JuiceTuning,
   ) {
-    this.gfx = scene.add.graphics();
+    this.gfx = scene.add.graphics().setDepth(DEPTH.fx);
     layer.add(this.gfx);
   }
 
@@ -98,6 +99,7 @@ export class Fx {
   float(x: number, y: number, text: string, color: number, ms = 700): void {
     const t = withShadow(label(this.scene, 0, 0, text, color));
     place(t, x, y, 0.5, 1);
+    t.setDepth(DEPTH.floaters);
     this.layer.add(t);
     this.floaters.push({ text: t, y: t.y, life: ms, max: ms, vy: -18 });
   }

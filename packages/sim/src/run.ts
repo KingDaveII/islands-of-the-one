@@ -7,7 +7,7 @@ import { decodeInput } from './input.js';
 import { updatePlayer } from './player.js';
 import { randInt, shuffle } from './rng.js';
 import { collideWalls, findTiles, roomFromTemplate, tileAt, tileOf, type RoomTemplate } from './rooms.js';
-import type { ItemSlot, PlayerState, RunState, SimEvent } from './state.js';
+import type { HuskState, ItemSlot, PlayerState, RunState, SimEvent } from './state.js';
 import { atan2, dirX, dirY } from './trig.js';
 import { compileTuning, isWeaponAvailable, type Params, type Tuning } from './tuning.js';
 
@@ -149,6 +149,8 @@ export function createRun(config: RunConfig): Run {
     stats: { kills: 0, perfectDodges: 0, hitsLanded: 0, damageTaken: 0 },
     slowmo: 0,
     clearTimer: 0,
+    context: 'calm',
+    calmTimer: 0,
   };
   const order = shuffle(
     s,
@@ -248,6 +250,29 @@ function updateRoom(ctx: Ctx, templates: RoomTemplate[]): void {
   }
 }
 
+/** True for a hostile that is awake: spawned in and alive. (An unstruck Glowing Shell will not count.) */
+export function isAwakeHostile(h: HuskState): boolean {
+  return h.core > 0 && h.action !== 'spawn';
+}
+
+/**
+ * The input context: Combat the tick a hostile is awake, Calm once none has
+ * been for `calmDelayTicks`. Runs after the husks so a Husk that woke this
+ * tick counts at once.
+ */
+function updateContext(ctx: Ctx): void {
+  const { s, P } = ctx;
+  const was = s.context;
+  if (s.husks.some(isAwakeHostile)) {
+    s.context = 'combat';
+    s.calmTimer = P.calmDelayTicks;
+  } else if (s.context === 'combat') {
+    if (s.calmTimer > 0) s.calmTimer--;
+    if (s.calmTimer <= 0) s.context = 'calm';
+  }
+  if (s.context !== was) ctx.events.push({ type: 'context', context: s.context });
+}
+
 /** Push overlapping bodies apart, split by mass. Dodging players and abilities pass through. */
 function separate(ctx: Ctx): void {
   const { s, P } = ctx;
@@ -342,6 +367,7 @@ export function stepRun(run: Run, packedInput: number): SimEvent[] {
   s.husks = s.husks.filter((h) => h.core > 0);
   for (const h of s.husks) updateHusk(ctx, h);
   s.husks = s.husks.filter((h) => h.core > 0);
+  updateContext(ctx);
   separate(ctx);
   collideWalls(s.room, s.player, run.params.player.radius);
   for (const h of s.husks) collideWalls(s.room, h, huskParams(run.params, h.kind).radius);

@@ -15,9 +15,13 @@ import {
   type RunState,
 } from '@iot/sim';
 import type { JuiceTuning } from '@iot/shared';
+import { SPRITE_FACINGS } from '@iot/shared';
 import { Palette } from '../palette.js';
 import type { Session } from '../game/session.js';
+import { debugFlags } from '../ui/debugFlags.js';
 import { chargeStage } from './charge.js';
+import { CharacterSprites } from './characters.js';
+import { DEPTH } from './depth.js';
 import { facingIndex, facingStep } from './facing.js';
 import type { Fx } from './fx.js';
 import { HookbladeFx } from './hookblade.js';
@@ -70,47 +74,42 @@ const HIT: HuskInk = {
   coreRing: Palette.hit,
 };
 
-/** One afterimage of the perfect-dodge trail. */
-interface Ghost {
-  x: number;
-  y: number;
-  facing: number;
-  life: number;
-}
-
-const GHOST_LIFE_MS = 220;
-const TRAIL_MS = 260;
+/** Alpha of the debug hitbox shapes drawn over the sprites (F3). */
+const DEBUG_ALPHA = 0.6;
 
 /**
- * Draws the sim state with placeholder shapes in the design-system palette
- * (docs/design/readability.md). Purely a view: it reads state, never changes it.
+ * Draws the sim state in the design-system palette (docs/design/readability.md):
+ * the room, floor decals and shadows, the character sprites (characters.ts,
+ * posed by the animation state machine), the attack hitbox flashes, poise
+ * bars and the reticle. Purely a view: it reads state, never changes it.
+ * With the F3 debug flag the old placeholder shapes draw over the sprites.
  */
 export class WorldRenderer {
   private readonly room: G;
-  /** Floor layer: decals, shadows, pickups, the dodge trail (under the chain and the bodies). */
+  /** Floor layer: decals, shadows, pickups (under the chain and the bodies). */
   private readonly floor: G;
-  /** Bodies and overlays. */
+  /** Overlays: hitbox flashes, poise bars, the charge meter, the reticle. */
   private readonly gfx: G;
+  /** The old hitbox shapes over the sprites, when debugFlags.shapes is on. */
+  private readonly debug: G;
   private readonly hookblade: HookbladeFx;
+  readonly characters: CharacterSprites;
   private roomKey = '';
-  private ghosts: Ghost[] = [];
-  /** Recent player positions (world ms ago), so the trail can start behind the dodge. */
-  private recent: { x: number; y: number; facing: number; age: number }[] = [];
-  private trailLeft = 0;
-  private ghostClock = 0;
 
   constructor(
     scene: Phaser.Scene,
     layer: Phaser.GameObjects.Layer,
     private readonly juice: () => JuiceTuning,
   ) {
-    this.room = scene.add.graphics();
-    this.floor = scene.add.graphics();
-    this.gfx = scene.add.graphics();
-    layer.add([this.room, this.floor]);
+    this.room = scene.add.graphics().setDepth(DEPTH.room);
+    this.floor = scene.add.graphics().setDepth(DEPTH.floor);
+    this.gfx = scene.add.graphics().setDepth(DEPTH.overlay);
+    this.debug = scene.add.graphics().setDepth(DEPTH.debug).setAlpha(DEBUG_ALPHA);
+    layer.add([this.room, this.floor, this.gfx, this.debug]);
     // Chain links go under the bodies, the hook head and charge spark over them.
     this.hookblade = new HookbladeFx(scene);
-    this.hookblade.mount(layer, this.gfx);
+    this.hookblade.mount(layer);
+    this.characters = new CharacterSprites(scene, layer);
   }
 
   /** Room size in pixels. */
@@ -120,14 +119,7 @@ export class WorldRenderer {
 
   /** Start the afterimage trail (call on a perfect dodge): afterimages along the path just taken, then more as it continues. */
   perfectDodge(): void {
-    this.trailLeft = TRAIL_MS;
-    this.ghostClock = 34;
-    let last: { x: number; y: number } | null = null;
-    for (const r of this.recent) {
-      if (last && Math.abs(r.x - last.x) + Math.abs(r.y - last.y) < 6) continue;
-      this.ghosts.push({ x: r.x, y: r.y, facing: r.facing, life: GHOST_LIFE_MS - r.age });
-      last = r;
-    }
+    this.characters.perfectDodge();
   }
 
   private drawRoom(s: RunState): void {
@@ -261,7 +253,14 @@ export class WorldRenderer {
     }
   }
 
-  draw(session: Session, fx: Fx, timeMs: number, dtWorldMs: number, crosshair: { x: number; y: number } | null): void {
+  draw(
+    session: Session,
+    fx: Fx,
+    timeMs: number,
+    dtWorldMs: number,
+    dtRealMs: number,
+    crosshair: { x: number; y: number } | null,
+  ): void {
     const run = session.run;
     const s = run.state;
     this.drawRoom(s);
@@ -269,6 +268,7 @@ export class WorldRenderer {
     const g = this.gfx;
     f.clear();
     g.clear();
+    this.debug.clear();
     this.hookblade.begin();
     this.drawDoors(f, s, timeMs);
 
@@ -291,22 +291,60 @@ export class WorldRenderer {
     groundShadow(f, player.x, player.y + 6, 5, 2);
     for (const c of s.chests) this.drawChest(f, c, timeMs);
     for (const k of s.pickups) this.drawPickup(f, session.lerp(`k${k.id}`, k.x, k.y), timeMs);
-    this.drawTrail(f, session, player, dtWorldMs);
     this.drawChain(f, session, player, huskPos);
 
-    // Bodies, back to front.
-    const bodies: { y: number; draw: () => void }[] = s.husks.map((h) => {
-      const pos = huskPos.get(h.id) ?? h;
-      return { y: pos.y, draw: () => { this.drawHusk(g, run, h, pos, fx, timeMs); } };
-    });
-    bodies.push({ y: player.y, draw: () => { this.drawPlayer(g, session, player, fx, huskPos); } });
-    bodies.sort((a, b) => a.y - b.y);
-    for (const b of bodies) b.draw();
+    // Bodies: the sprites, posed from the sim state; Husk spawn-in and stagger marks are engine effects.
+    const blink = Math.floor((timeMs / 1000) * this.juice().telegraphBlinkHz) % 2 === 0;
+    for (const h of s.husks) this.drawHuskEffects(g, run, h, huskPos.get(h.id) ?? h, timeMs);
+    this.characters.draw(session, fx, player, huskPos, blink, dtWorldMs, dtRealMs);
+    this.drawPlayerEffects(g, run, player, huskPos);
 
     // Overlays: poise bars and the charge meter.
     for (const h of s.husks) this.drawPoise(g, run, h, huskPos.get(h.id) ?? h, timeMs);
     this.drawChargeMeter(g, run, player);
     if (crosshair) this.drawReticle(g, crosshair.x, crosshair.y);
+
+    if (debugFlags.shapes) {
+      for (const h of s.husks) this.drawHuskShape(this.debug, run, h, huskPos.get(h.id) ?? h, fx, timeMs);
+      this.drawKindledShape(this.debug, session, player, fx);
+    }
+  }
+
+  /** Husk effects that are not in the sheet: the spawn-in ring and the stagger marks. */
+  private drawHuskEffects(g: G, run: Run, h: HuskState, pos: { x: number; y: number }, timeMs: number): void {
+    const hp = huskParams(run.params, h.kind);
+    const r = Math.round(hp.radius / SUB);
+    const { x, y } = pos;
+    if (h.action === 'spawn') {
+      const f = h.t / Math.max(1, hp.spawn);
+      ring(g, x, y, Math.max(1, Math.round(r + (1 - f) * 8)), Palette.floorEdge);
+      if (f > 0.5) disc(g, x, y, 1, Palette.core);
+      return;
+    }
+    if (h.action === 'stagger') {
+      for (let i = 0; i < 2; i++) {
+        const a = timeMs / 120 + i * Math.PI;
+        g.fillStyle(Palette.spark, 1).fillRect(Math.round(x + Math.cos(a) * (r + 2)), Math.round(y - r - 3 + Math.sin(a) * 1.5), 1, 1);
+      }
+    }
+  }
+
+  /** Player effects that are not in the sheet: the hitbox flashes (slash arc, thrust line) and the charge spark. */
+  private drawPlayerEffects(g: G, run: Run, pos: { x: number; y: number }, huskPos: Map<number, { x: number; y: number }>): void {
+    const p = run.state.player;
+    const { x, y } = pos;
+    if (p.action === 'dead') return;
+    if (p.action === 'heavy') this.drawThrust(g, run, x, y, huskPos);
+    else this.drawSlash(g, run, x, y);
+    if (p.action === 'charge') {
+      // The charge spark (hookblade-fx) at the hook tip: spark_0 as the charge starts, spark_2 held at full charge.
+      const stage = chargeStage(p.charge, run.params.weapon.heavy);
+      const facing = Math.max(0, SPRITE_FACINGS.indexOf(this.characters.pose?.facing ?? 'S'));
+      const dir = facingStep(facing);
+      const tx = x + (dir.x === 0 ? (facing >= 5 ? -5 : 5) : dir.x * 12);
+      const ty = y + 1 + Math.max(0, dir.y) + dir.y * 6 - (dir.x !== 0 && dir.y === 0 ? 2 : 0);
+      this.hookblade.spark(tx, ty, stage);
+    }
   }
 
   /** A chest: a banded box with a clasp; opened, the lid stands up and the inside is dark. */
@@ -436,17 +474,13 @@ export class WorldRenderer {
     }
   }
 
-  private drawHusk(g: G, run: Run, h: HuskState, pos: { x: number; y: number }, fx: Fx, timeMs: number): void {
+  /** The old placeholder Husk shape, its hitbox: drawn over the sprite with the F3 debug flag. */
+  private drawHuskShape(g: G, run: Run, h: HuskState, pos: { x: number; y: number }, fx: Fx, timeMs: number): void {
     const P = run.params;
     const hp = huskParams(P, h.kind);
     const r = Math.round(hp.radius / SUB);
     let { x, y } = pos;
-    if (h.action === 'spawn') {
-      const f = h.t / Math.max(1, hp.spawn);
-      ring(g, x, y, Math.max(1, Math.round(r + (1 - f) * 8)), Palette.floorEdge);
-      if (f > 0.5) disc(g, x, y, 1, Palette.core);
-      return;
-    }
+    if (h.action === 'spawn') return;
     if (h.action === 'flinch' || h.hitstop > 0) {
       x += Math.round((Math.random() - 0.5) * 2);
       y += Math.round((Math.random() - 0.5) * 2);
@@ -500,13 +534,6 @@ export class WorldRenderer {
       disc(g, x, y, 3, ink.coreRing);
       disc(g, x, y, 2, ink === HIT ? Palette.hit : ink === TELEGRAPH ? Palette.telegraph : Palette.core);
       if (ink !== HIT) g.fillStyle(Palette.core, 1).fillRect(x, y, 1, 1);
-    }
-
-    if (h.action === 'stagger') {
-      for (let i = 0; i < 2; i++) {
-        const a = timeMs / 120 + i * Math.PI;
-        g.fillStyle(Palette.spark, 1).fillRect(Math.round(x + Math.cos(a) * (r + 2)), Math.round(y - r - 3 + Math.sin(a) * 1.5), 1, 1);
-      }
     }
   }
 
@@ -585,70 +612,31 @@ export class WorldRenderer {
     }
   }
 
-  /** The perfect-dodge afterimage trail: spark-glow silhouettes with a 1 px hollow-deep outline. */
-  private drawTrail(g: G, session: Session, pos: { x: number; y: number }, dtWorldMs: number): void {
-    const p = session.state.player;
-    for (const r of this.recent) r.age += dtWorldMs;
-    this.recent = this.recent.filter((r) => r.age < 120);
-    this.recent.unshift({ x: pos.x, y: pos.y, facing: facingIndex(p.dir), age: 0 });
-    for (const gh of this.ghosts) gh.life -= dtWorldMs;
-    this.ghosts = this.ghosts.filter((gh) => gh.life > 0);
-    if (this.trailLeft > 0) {
-      this.trailLeft -= dtWorldMs;
-      this.ghostClock -= dtWorldMs;
-      if (this.ghostClock <= 0) {
-        this.ghostClock = 34;
-        this.ghosts.push({ x: pos.x, y: pos.y, facing: facingIndex(p.dir), life: GHOST_LIFE_MS });
-      }
-    }
-    for (const gh of this.ghosts) {
-      drawKindled(g, gh.x, gh.y, gh.facing, { outline: Palette.trailOutline, solid: Palette.trail }, -1, false);
-    }
-  }
-
-  private drawPlayer(g: G, session: Session, pos: { x: number; y: number }, fx: Fx, huskPos: Map<number, { x: number; y: number }>): void {
-    const run = session.run;
-    const P = run.params;
-    const s = run.state;
+  /** The old placeholder Kindled figure, its hitbox: drawn over the sprite with the F3 debug flag. */
+  private drawKindledShape(g: G, session: Session, pos: { x: number; y: number }, fx: Fx): void {
+    const s = session.run.state;
     const p = s.player;
     let { x, y } = pos;
     // Charging: a drawn-back stance, 2 px away from the aim.
-    const charging = p.action === 'charge';
-    if (charging) {
+    if (p.action === 'charge') {
       const a = rad(p.aim);
       x -= Math.round(Math.cos(a) * 2);
       y -= Math.round(Math.sin(a) * 2);
     }
-
+    // The shape is anchored on the body center, 5 px above the feet (the sprite origin).
+    y -= 5;
     if (p.action === 'dead') {
       outlinedRect(g, x - 8, y + 1, 16, 4, Palette.playerShirt, Palette.playerOutline);
       outlinedRect(g, x + 4, y, 5, 5, Palette.playerSkin, Palette.playerOutline);
       return;
     }
-
     const attacking = p.action === 'light' || p.action === 'heavy' || p.action === 'ability';
     const facing = facingIndex(p.action === 'idle' || p.action === 'charge' ? p.aim : p.dir);
     const flash = fx.isFlashing('p');
-    // Flicker on alternate frames while invulnerable (dodge i-frames, post-hit grace).
-    const invulnerable = p.iframes > 0 || p.hurtInvuln > 0;
-    const hidden = invulnerable && !flash && (s.tick & 1) === 1;
-
-    if (p.action === 'heavy') this.drawThrust(g, run, x, y, huskPos);
-    else this.drawSlash(g, run, x, y);
-    if (!hidden) {
-      const moving = Math.abs(p.vx) + Math.abs(p.vy) > SUB / 4;
-      const step = moving && p.action !== 'dodge' ? Math.floor(s.tick / 7) % 2 : -1;
-      const ink = flash ? { outline: Palette.hit, solid: Palette.hit } : undefined;
-      drawKindled(g, x, y, facing, ink, step, !attacking);
-    }
-    if (charging) {
-      // The charge spark (hookblade-fx) at the hook tip: spark_0 as the charge starts, spark_2 held at full charge.
-      const stage = chargeStage(p.charge, P.weapon.heavy);
-      const dir = facingStep(facing);
-      const tx = x + (dir.x === 0 ? (facing >= 5 ? -5 : 5) : dir.x * 12);
-      const ty = y + 1 + Math.max(0, dir.y) + dir.y * 6 - (dir.x !== 0 && dir.y === 0 ? 2 : 0);
-      this.hookblade.spark(tx, ty, stage);
-    }
+    const moving = Math.abs(p.vx) + Math.abs(p.vy) > SUB / 4;
+    const step = moving && p.action !== 'dodge' ? Math.floor(s.tick / 7) % 2 : -1;
+    const ink = flash ? { outline: Palette.hit, solid: Palette.hit } : undefined;
+    drawKindled(g, x, y, facing, ink, step, !attacking);
   }
 
   /** Slash arcs for light strikes (exact aim direction, not the 8-way facing); the heavy is a line, see drawThrust. */

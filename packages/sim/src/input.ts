@@ -7,9 +7,12 @@ import { TURN } from './fixed.js';
  *   bits  0-11  aim angle (1/4096 turn)
  *   bits 12-19  move direction (1/256 turn)
  *   bits 20-22  move magnitude (0..7)
- *   bits 23-30  buttons
+ *   bits 23-31  buttons
  *
- * Light, Dodge, Ability* and Item* are "pressed this tick" edges; Heavy is "held".
+ * Light, Dodge, Ability*, Item* and Interact are "pressed this tick" edges;
+ * Heavy is "held". The client resolves a button to an action with the input
+ * context (Combat or Calm, part of the run state) before packing, so the
+ * input log holds the resolved action and replays stay deterministic.
  */
 export const Button = {
   Light: 1,
@@ -20,9 +23,11 @@ export const Button = {
   Ability3: 32,
   Item1: 64,
   Item2: 128,
+  /** Interact (Calm only): the sim ignores it in Combat. */
+  Interact: 256,
 } as const;
 
-export const BUTTON_MASK = 0xff;
+export const BUTTON_MASK = 0x1ff;
 
 export const MOVE_DIRS = 256;
 export const MOVE_MAG_MAX = 7;

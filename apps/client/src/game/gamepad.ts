@@ -1,12 +1,22 @@
-import { controlsData, type ControlAction, type ControlPreset } from '@iot/shared';
+import {
+  bindingKeys,
+  bindingKeysAll,
+  controlsData,
+  type BindingContext,
+  type ControlAction,
+  type ControlBinding,
+  type ControlPreset,
+} from '@iot/shared';
 import { TURN } from '@iot/sim';
-import { KEYBOARD } from './keyboard.js';
+import { KEYBOARD, keyboardKeys } from './keyboard.js';
 
 /**
  * Gamepad presets are data (packages/shared/data/controls.json): which glyph
  * fires which action, and whether aim comes from the right stick or follows
  * the left. This module maps glyph names to standard-mapping button indexes,
  * and holds the soft lock. Keyboard/mouse bindings are data too, see keyboard.ts.
+ * A binding can name keys per input context (Combat, Calm): pass the
+ * context to resolve a press; leave it out to list every key for display.
  */
 
 /** Standard-mapping button index per glyph (PlayStation names; Xbox pads map the same positions). */
@@ -70,39 +80,41 @@ export function presetById(id: string): ControlPreset {
   );
 }
 
-/** The glyph names bound to an action in a preset (a binding may list alternates; none for keyboard-only actions). */
-export function glyphsFor(preset: ControlPreset, action: ControlAction): string[] {
-  const table: Readonly<Record<string, string | string[]>> = preset.bindings;
+/**
+ * The glyph names bound to an action in a preset: those that fire in
+ * `context`, or every one in any context when no context is given (a binding
+ * may list alternates; none for keyboard-only actions).
+ */
+export function glyphsFor(preset: ControlPreset, action: ControlAction, context?: BindingContext): string[] {
+  const table: Readonly<Record<string, ControlBinding>> = preset.bindings;
   const b = table[action];
-  if (b === undefined) return [];
-  return Array.isArray(b) ? b : [b];
+  return context === undefined ? bindingKeysAll(b) : bindingKeys(b, context);
 }
 
-/** Standard-mapping button indexes bound to an action. Unknown glyphs are ignored. */
-export function buttonsFor(preset: ControlPreset, action: ControlAction): number[] {
-  return glyphsFor(preset, action)
+/** Standard-mapping button indexes that fire an action in a context. Unknown glyphs are ignored. */
+export function buttonsFor(preset: ControlPreset, action: ControlAction, context: BindingContext): number[] {
+  return glyphsFor(preset, action, context)
     .map((g) => GLYPH_BUTTON[g])
     .filter((i): i is number => i !== undefined);
 }
 
-/** Text label for an action's binding ("R2", "L1/Cross"), shown until a glyph sheet exists. */
-export function hintFor(preset: ControlPreset, action: ControlAction): string {
-  return glyphsFor(preset, action).join('/');
+/** Text label for an action's binding ("R2", "L1/Cross"), in a context or across both. */
+export function hintFor(preset: ControlPreset, action: ControlAction, context?: BindingContext): string {
+  return glyphsFor(preset, action, context).join('/');
 }
 
 /** Text hints for every action, from the gamepad preset or the keyboard. */
-export function hints(source: 'keyboard' | ControlPreset): Record<ControlAction, string> {
-  if (source === 'keyboard') return { ...KEYBOARD };
+export function hints(source: 'keyboard' | ControlPreset, context?: BindingContext): Record<ControlAction, string> {
   const out = {} as Record<ControlAction, string>;
   for (const action of Object.keys(KEYBOARD) as ControlAction[])
-    out[action] = hintFor(source, action);
+    out[action] = source === 'keyboard' ? keyboardKeys(action, context).join('/') : hintFor(source, action, context);
   return out;
 }
 
-/** An action's hint (binding names + glyph family) for a hint source. */
-export function hintFrom(source: HintSource, action: ControlAction): Hint {
-  if (source === 'keyboard') return { labels: [KEYBOARD[action]], family: 'keyboard' };
-  return { labels: glyphsFor(source.preset, action), family: source.family };
+/** An action's hint (binding names + glyph family) for a hint source, in a context or across both. */
+export function hintFrom(source: HintSource, action: ControlAction, context?: BindingContext): Hint {
+  if (source === 'keyboard') return { labels: keyboardKeys(action, context), family: 'keyboard' };
+  return { labels: glyphsFor(source.preset, action, context), family: source.family };
 }
 
 /** Signed smallest difference between two angles in radians. */

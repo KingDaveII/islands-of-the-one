@@ -16,11 +16,11 @@ const ROWS: [ControlAction, string, string][] = [
   ['heavy', 'HOOK-THRUST', 'hold to charge'],
   ['dodge', 'DODGE', 'rolls where you move'],
   ['ability1', 'HAUL', 'the hook'],
-  ['ability2', 'THE CATCH', 'locked · encounters'],
-  ['ability3', 'TURNING BLADE', 'locked · encounters'],
+  ['ability2', 'THE CATCH', 'locked · combat only'],
+  ['ability3', 'TURNING BLADE', 'locked · combat only'],
   ['item1', 'ITEM 1', 'Ration'],
   ['item2', 'ITEM 2', 'Ration'],
-  ['interact', 'INTERACT', 'soon'],
+  ['interact', 'INTERACT', 'calm only · soon'],
   ['chartPeek', 'CHART PEEK', 'hold · soon'],
   ['journal', 'JOURNAL', 'soon'],
   ['menu', 'MENU', ''],
@@ -38,8 +38,10 @@ const PAD_X = 124;
 /**
  * Controls screen: the gamepad presets from controls.json (left/right or click
  * to switch; the choice is remembered), every binding shown as a 2× controller
- * glyph next to the keyboard/mouse key from the same data. The pad glyphs
- * follow the connected pad's family (DualSense, or Xbox). Esc or Enter goes back.
+ * glyph next to the keyboard/mouse key from the same data; a binding marked
+ * per input context shows every key it has, its note says the context. The
+ * pad glyphs follow the connected pad's family (DualSense, or Xbox). Esc or
+ * Enter goes back.
  */
 export class ControlsScene extends Phaser.Scene {
   private g!: Phaser.GameObjects.Graphics;

@@ -1,15 +1,17 @@
 import { controllerGlyphsSheet as sheet } from '@iot/shared';
 import { describe, expect, it } from 'vitest';
 import { glyphsFor, padFamily, PRESETS } from '../game/gamepad.js';
-import { KEYBOARD } from '../game/keyboard.js';
+import { KEYBOARD, keyboardKeys } from '../game/keyboard.js';
 import { glyphCell, GLYPH_SIZE } from './glyphCells.js';
 
 describe('controller glyph cells', () => {
   it('every keyboard binding has a key or mouse cell', () => {
-    for (const [action, binding] of Object.entries(KEYBOARD)) {
-      const cell = glyphCell(binding, 'keyboard');
-      expect(cell, `${action}: ${binding}`).not.toBeNull();
-      expect(sheet.cells.some((c) => c.name === cell)).toBe(true);
+    for (const action of Object.keys(KEYBOARD) as (keyof typeof KEYBOARD)[]) {
+      for (const binding of keyboardKeys(action)) {
+        const cell = glyphCell(binding, 'keyboard');
+        expect(cell, `${action}: ${binding}`).not.toBeNull();
+        expect(sheet.cells.some((c) => c.name === cell)).toBe(true);
+      }
     }
     expect(glyphCell('LMB', 'keyboard')).toBe('mouse_left');
     expect(glyphCell('RMB', 'keyboard')).toBe('mouse_right');

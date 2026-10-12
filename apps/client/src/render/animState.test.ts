@@ -1,0 +1,353 @@
+import { defaultTuning, KINDLED_ANIMS, roomTemplates, spriteSheets } from '@iot/shared';
+import { autopilot, createRun, stepRun, TURN, type HuskState, type Run } from '@iot/sim';
+import { describe, expect, it } from 'vitest';
+import {
+  facing4,
+  huskFlip,
+  huskPose,
+  kindledPose,
+  loopFrame,
+  onceFrame,
+  sheetFacing,
+  spreadFrame,
+  type Clocks,
+} from './animState.js';
+
+const KINDLED = spriteSheets['kindled-ash'];
+const PEELING = spriteSheets['husk-peeling'];
+const NUTSHELL = spriteSheets['husk-nutshell'];
+const NO_CLOCKS: Clocks = { hitMs: -1 };
+const deg = (d: number): number => Math.round((d * TURN) / 360) & (TURN - 1);
+
+/** Animations a run can show in M1 (carry and sit have no sim state yet). */
+const M1_PLAYABLE = KINDLED_ANIMS.map((a) => a.name).filter(
+  (n) => !n.startsWith('carry_') && n !== 'sit',
+);
+
+function newRun(seed: number): Run {
+  return createRun({ seed, tuning: defaultTuning, rooms: roomTemplates, weapon: 'hookblade' });
+}
+
+/** Drive a run with the autopilot through the state machine, collecting the animations it showed. */
+function playthrough(run: Run, maxTicks: number, hits: Set<string> = new Set()): Set<string> {
+  let hitAt = -1000;
+  for (let i = 0; i < maxTicks && run.state.status === 'playing'; i++) {
+    // Patient: the autopilot lets moves play out (it would otherwise cancel every recovery and pin into the next move).
+    const events = stepRun(run, autopilot(run.state, run.params, { patient: true }));
+    if (events.some((e) => e.type === 'playerHurt')) hitAt = run.state.tick;
+    const sinceHit = ((run.state.tick - hitAt) * 1000) / 60;
+    const pose = kindledPose(run.state, run.params, KINDLED, {
+      hitMs: hitAt < 0 ? -1 : sinceHit,
+      deathMs: 0,
+    });
+    expect(KINDLED.anims[pose.anim], pose.anim).toBeDefined();
+    expect(pose.frame).toBeLessThan(KINDLED.anims[pose.anim]?.frames.length ?? 0);
+    hits.add(pose.name);
+  }
+  return hits;
+}
+
+describe('frame timing helpers', () => {
+  it('loops and holds at the sheet rate from a tick count', () => {
+    const walk = KINDLED.anims.walk_S;
+    const charge = KINDLED.anims.heavy_charge_S;
+    expect(walk && charge).toBeTruthy();
+    if (!walk || !charge) return;
+    expect([0, 5, 6, 12, 36].map((t) => loopFrame(walk, t))).toEqual([0, 0, 1, 2, 0]);
+    expect([0, 4, 5, 10, 60].map((t) => onceFrame(charge, t))).toEqual([0, 0, 1, 2, 2]);
+  });
+
+  it('stretches or cuts frames over the move window by phase shares', () => {
+    const w = [
+      { len: 4, share: 1 },
+      { len: 3, share: 1 },
+      { len: 12, share: 1 },
+    ];
+    // 3 frames: one per phase, held for the phase's ticks.
+    expect([1, 2, 3, 4, 5, 6, 7, 8, 13, 19].map((t) => spreadFrame(3, w, t))).toEqual([
+      0, 0, 0, 0, 1, 1, 1, 2, 2, 2,
+    ]);
+    // 6 frames: two per phase, spread evenly.
+    expect([1, 2, 3, 4, 5, 7, 8, 13, 14, 19].map((t) => spreadFrame(6, w, t))).toEqual([
+      0, 0, 1, 1, 2, 3, 4, 4, 5, 5,
+    ]);
+    // The dodge: crouch / roll / recover with the roll getting two of four frames.
+    const dodge = [
+      { len: 0, share: 1 },
+      { len: 13, share: 2 },
+      { len: 3, share: 1 },
+    ];
+    expect([1, 7, 8, 13, 14, 16].map((t) => spreadFrame(4, dodge, t))).toEqual([1, 1, 2, 2, 3, 3]);
+    // A single frame is just itself; past the end holds the last.
+    expect(spreadFrame(1, w, 5)).toBe(0);
+    expect(spreadFrame(3, w, 99)).toBe(2);
+  });
+
+  it('maps a diagonal to the nearest of 4 facings and finds the facings a sheet has', () => {
+    expect(facing4(deg(0))).toBe('E');
+    expect(facing4(deg(90))).toBe('S');
+    expect(facing4(deg(180))).toBe('W');
+    expect(facing4(deg(270))).toBe('N');
+    expect(facing4(deg(30))).toBe('E');
+    expect(facing4(deg(60))).toBe('S');
+    expect(sheetFacing(KINDLED, 'walk', deg(45))).toBe('SE');
+    expect(sheetFacing(KINDLED, 'hit', deg(45))).toBe('S');
+    expect(sheetFacing(KINDLED, 'death', deg(300))).toBe('N');
+    expect(sheetFacing(KINDLED, 'sit', deg(180))).toBe('E');
+    expect(sheetFacing(KINDLED, 'sit', deg(270))).toBe('S');
+  });
+});
+
+describe('the Kindled state machine', () => {
+  it('idles facing the aim, walks when moving, and reads the hit and death clocks', () => {
+    const run = newRun(1);
+    const s = run.state;
+    s.player.aim = deg(180);
+    expect(kindledPose(s, run.params, KINDLED, NO_CLOCKS)).toMatchObject({
+      name: 'idle',
+      facing: 'W',
+      frame: 0,
+    });
+    s.player.vx = 300;
+    s.tick = 6;
+    expect(kindledPose(s, run.params, KINDLED, NO_CLOCKS)).toMatchObject({
+      name: 'walk',
+      facing: 'W',
+      frame: 1,
+    });
+    expect(kindledPose(s, run.params, KINDLED, { hitMs: 50 })).toMatchObject({
+      name: 'hit',
+      anim: 'hit_W',
+    });
+    expect(kindledPose(s, run.params, KINDLED, { hitMs: 120 }).name).toBe('walk');
+    // Stunned: the hit frame holds for the whole hurt stun, whatever the hit clock says.
+    s.player.action = 'hurt';
+    s.player.t = 1;
+    expect(kindledPose(s, run.params, KINDLED, { hitMs: 120 })).toMatchObject({ name: 'hit', anim: 'hit_W', frame: 0 });
+    s.player.t = run.params.player.hurtStun;
+    expect(kindledPose(s, run.params, KINDLED, { hitMs: 500 })).toMatchObject({ name: 'hit', frame: 0 });
+    s.player.action = 'dead';
+    s.player.dir = deg(45);
+    expect(kindledPose(s, run.params, KINDLED, { hitMs: -1, deathMs: 0 })).toMatchObject({
+      name: 'death',
+      facing: 'S',
+      frame: 0,
+    });
+    expect(kindledPose(s, run.params, KINDLED, { hitMs: -1, deathMs: 5000 }).frame).toBe(5);
+  });
+
+  it('plays heavy_charge → heavy_thrust → heavy_hold → heavy_recover, and the Haul branches', () => {
+    const run = newRun(2);
+    const s = run.state;
+    const P = run.params;
+    const p = s.player;
+    p.action = 'charge';
+    p.t = 1;
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({ name: 'heavy_charge', frame: 0 });
+    p.t = 60;
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({ name: 'heavy_charge', frame: 2 });
+    p.action = 'heavy';
+    p.charge = P.weapon.heavy.chargeMax;
+    const tm = P.weapon.heavy.charged;
+    p.t = 1;
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({ name: 'heavy_thrust', frame: 0 });
+    p.t = tm.startup + 1;
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({ name: 'heavy_thrust', frame: 1 });
+    // The pin: heavy_hold from the hit (still in the active phase, through the hitstop) until the Husk is let go.
+    s.husks.push({ ...fakeHusk(1, 'peeling'), action: 'held' });
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({ name: 'heavy_hold', frame: 0 });
+    p.t = tm.startup + tm.active + 1;
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({ name: 'heavy_hold', frame: 0 });
+    s.husks = [];
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({
+      name: 'heavy_recover',
+      frame: 0,
+    });
+    p.t = tm.startup + tm.active + tm.recovery;
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({
+      name: 'heavy_recover',
+      frame: 1,
+    });
+
+    const haul = P.weapon.abilities[0];
+    if (!haul) throw new Error('no Haul');
+    p.action = 'ability';
+    p.abilitySlot = 0;
+    p.t = 1;
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({ name: 'haul_throw', frame: 0 });
+    p.t = haul.startup + 1;
+    p.hook = { x: 0, y: 0, dir: 0, travel: 0, targetId: -1, hitId: -1, pull: 'none', pullLeft: 0 };
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({ name: 'haul_throw', frame: 1 });
+    p.hook.hitId = 1;
+    p.hook.pull = 'husk';
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS).name).toBe('haul_pull');
+    p.hook.pull = 'player';
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS).name).toBe('haul_slide');
+    p.hook = null;
+    p.t = haul.startup + haul.active + 1;
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({ name: 'haul_throw', frame: 1 });
+  });
+
+  it('picks light_1..3 by combo step and the dodge frames by phase', () => {
+    const run = newRun(3);
+    const s = run.state;
+    const P = run.params;
+    const p = s.player;
+    p.action = 'light';
+    for (const step of [0, 1, 2]) {
+      p.comboStep = step;
+      const st = P.weapon.light[step];
+      if (!st) throw new Error('no strike');
+      p.t = 1;
+      expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({
+        name: `light_${step + 1}`,
+        frame: 0,
+      });
+      p.t = st.startup + 1;
+      expect(kindledPose(s, P, KINDLED, NO_CLOCKS).frame).toBe(1);
+      p.t = st.startup + st.active + 1;
+      expect(kindledPose(s, P, KINDLED, NO_CLOCKS).frame).toBe(2);
+    }
+    p.action = 'dodge';
+    p.dir = deg(90);
+    p.t = 1;
+    const d = P.dodge;
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS)).toMatchObject({
+      name: 'dodge',
+      facing: 'S',
+      frame: d.startup === 0 ? 1 : 0,
+    });
+    p.t = d.startup + d.active;
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS).frame).toBe(2);
+    p.t = d.startup + d.active + d.recovery;
+    expect(kindledPose(s, P, KINDLED, NO_CLOCKS).frame).toBe(3);
+  });
+});
+
+function fakeHusk(id: number, kind: 'peeling' | 'nutshell'): HuskState {
+  const hp = defaultTuning.husks[kind];
+  return {
+    id,
+    kind,
+    x: 0,
+    y: 0,
+    vx: 0,
+    vy: 0,
+    shell: [...hp.shell],
+    core: hp.core,
+    action: 'chase',
+    t: 0,
+    attackDir: 0,
+    attackHit: false,
+    cooldown: 0,
+    hitstop: 0,
+    strafe: 1,
+    pushX: 0,
+    pushY: 0,
+    pushT: 0,
+    stagger: 0,
+    held: null,
+    sinceHit: 0,
+  };
+}
+
+describe('the Husk state machine', () => {
+  it('Peeling: idle, telegraph (blinking while tracking), lunge over the attack, settle, chipped, hit', () => {
+    const run = newRun(4);
+    const s = run.state;
+    const P = run.params;
+    const h = fakeHusk(1, 'peeling');
+    const hp = P.husks.peeling;
+    expect(huskPose(s, P, h, PEELING, NO_CLOCKS, true)).toEqual({ anim: 'idle', frame: 0 });
+    s.tick = 20;
+    expect(huskPose(s, P, h, PEELING, NO_CLOCKS, true)).toEqual({ anim: 'idle', frame: 1 });
+    h.action = 'windup';
+    h.t = 1;
+    expect(huskPose(s, P, h, PEELING, NO_CLOCKS, true)).toEqual({ anim: 'telegraph', frame: 0 });
+    expect(huskPose(s, P, h, PEELING, NO_CLOCKS, false)).toEqual({ anim: 'idle', frame: 1 });
+    h.t = hp.track + 1;
+    expect(huskPose(s, P, h, PEELING, NO_CLOCKS, false)).toEqual({ anim: 'telegraph', frame: 1 });
+    h.action = 'attack';
+    h.t = 1;
+    expect(huskPose(s, P, h, PEELING, NO_CLOCKS, true)).toEqual({ anim: 'lunge', frame: 0 });
+    h.t = hp.active;
+    expect(huskPose(s, P, h, PEELING, NO_CLOCKS, true)).toEqual({ anim: 'lunge', frame: 1 });
+    h.action = 'recover';
+    expect(huskPose(s, P, h, PEELING, NO_CLOCKS, true)).toEqual({ anim: 'lunge', frame: 2 });
+    h.action = 'chase';
+    h.shell = [0];
+    expect(huskPose(s, P, h, PEELING, NO_CLOCKS, true)).toEqual({ anim: 'chipped', frame: 0 });
+    expect(huskPose(s, P, h, PEELING, { hitMs: 10 }, true)).toEqual({ anim: 'hit', frame: 0 });
+    expect(huskPose(s, P, h, PEELING, { hitMs: 100 }, true)).toEqual({ anim: 'chipped', frame: 0 });
+  });
+
+  it('Nutshell: roll through the slam, chipped_outer / chipped_inner by broken layers, the regrow one-shot', () => {
+    const run = newRun(5);
+    const s = run.state;
+    const P = run.params;
+    const h = fakeHusk(2, 'nutshell');
+    h.action = 'attack';
+    h.t = 1;
+    expect(huskPose(s, P, h, NUTSHELL, NO_CLOCKS, true)).toEqual({ anim: 'roll', frame: 0 });
+    h.t = 6;
+    expect(huskPose(s, P, h, NUTSHELL, NO_CLOCKS, true)).toEqual({ anim: 'roll', frame: 1 });
+    h.action = 'chase';
+    h.shell = [0, 20];
+    expect(huskPose(s, P, h, NUTSHELL, NO_CLOCKS, true)).toEqual({
+      anim: 'chipped_outer',
+      frame: 0,
+    });
+    h.shell = [0, 0];
+    expect(huskPose(s, P, h, NUTSHELL, NO_CLOCKS, true)).toEqual({
+      anim: 'chipped_inner',
+      frame: 0,
+    });
+    h.shell = [0, 20];
+    expect(huskPose(s, P, h, NUTSHELL, { hitMs: -1, regrowMs: 0 }, true)).toEqual({
+      anim: 'regrow',
+      frame: 0,
+    });
+    expect(huskPose(s, P, h, NUTSHELL, { hitMs: -1, regrowMs: 340 }, true)).toEqual({
+      anim: 'regrow',
+      frame: 2,
+    });
+    expect(huskPose(s, P, h, NUTSHELL, { hitMs: -1, regrowMs: 600 }, true)).toEqual({
+      anim: 'chipped_outer',
+      frame: 0,
+    });
+  });
+
+  it('flips west by the attack direction while attacking, by movement otherwise, keeping the last flip when still', () => {
+    const h = fakeHusk(3, 'peeling');
+    expect(huskFlip(h, false)).toBe(false);
+    expect(huskFlip(h, true)).toBe(true);
+    h.vx = -300;
+    expect(huskFlip(h, false)).toBe(true);
+    h.vx = 300;
+    expect(huskFlip(h, true)).toBe(false);
+    h.action = 'windup';
+    h.attackDir = deg(180);
+    expect(huskFlip(h, false)).toBe(true);
+    h.attackDir = deg(45);
+    expect(huskFlip(h, true)).toBe(false);
+  });
+});
+
+describe('headless playtest (autopilot through the state machine)', () => {
+  it('shows every M1 Kindled animation at least once across a clear and a death', () => {
+    const shown = playthrough(newRun(1234), 60 * 60 * 5);
+    playthrough(newRun(11), 60 * 60 * 5, shown);
+    const deathRun = newRun(5);
+    playthrough(deathRun, 60 * 20, shown);
+    // Stop fighting back until the run ends, then a few frames of the death animation.
+    for (let i = 0; i < 60 * 120 && deathRun.state.status === 'playing'; i++) stepRun(deathRun, 0);
+    expect(deathRun.state.status).toBe('dead');
+    shown.add(
+      kindledPose(deathRun.state, deathRun.params, KINDLED, { hitMs: -1, deathMs: 300 }).name,
+    );
+    const missing = M1_PLAYABLE.filter((n) => !shown.has(n));
+    // Logged for the PR's playtest record (vitest shows stdout with --silent=false).
+    console.log(`Kindled animations played: ${[...shown].sort().join(', ')}`);
+    expect(missing).toEqual([]);
+  });
+});

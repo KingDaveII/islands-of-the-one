@@ -1,13 +1,16 @@
 import Phaser from 'phaser';
 import { SUB, TILE_PX, type RunResults, type SimEvent, type Tuning } from '@iot/sim';
 import { Controls } from '../game/controls.js';
+import { promptTarget } from '../game/interact.js';
 import { Session } from '../game/session.js';
 import { tuningStore } from '../game/tuningStore.js';
 import { Palette } from '../palette.js';
 import { Fx } from '../render/fx.js';
 import { hintItems, HintRow } from '../render/hint.js';
 import { Hud } from '../render/hud.js';
+import { DEPTH } from '../render/depth.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
+import { preloadSpriteSheets, registerSpriteSheets } from '../render/spriteSheets.js';
 import { label, place, withShadow } from '../render/text.js';
 import { rad, WorldRenderer } from '../render/world.js';
 
@@ -30,7 +33,7 @@ export interface GameData {
 export class GameScene extends Phaser.Scene {
   session!: Session;
   controls!: Controls;
-  private world!: WorldRenderer;
+  world!: WorldRenderer;
   private fx!: Fx;
   private hud!: Hud;
   private worldLayer!: Phaser.GameObjects.Layer;
@@ -39,7 +42,7 @@ export class GameScene extends Phaser.Scene {
   private bannerSub!: Phaser.GameObjects.Text;
   private bannerLife = 0;
   private tint!: Phaser.GameObjects.Rectangle;
-  /** The interact prompt over the nearest closed chest in reach. */
+  /** The interact prompt (Calm only) over the nearest interactable in reach; nothing in M1 needs one. */
   private prompt!: HintRow;
   private seed = 0;
   private weapon = 'hookblade';
@@ -62,10 +65,12 @@ export class GameScene extends Phaser.Scene {
 
   preload(): void {
     preloadSheets(this);
+    preloadSpriteSheets(this);
   }
 
   create(): void {
     registerSheetFrames(this);
+    registerSpriteSheets(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
     this.worldLayer = this.add.layer();
     this.hudLayer = this.add.layer();
@@ -75,6 +80,7 @@ export class GameScene extends Phaser.Scene {
     this.world = new WorldRenderer(this, this.worldLayer, juice);
     this.fx = new Fx(this, this.worldLayer, juice);
     this.prompt = new HintRow(this, { backdrop: true }).setVisible(false);
+    this.prompt.container.setDepth(DEPTH.prompt);
     this.worldLayer.add(this.prompt.container);
     // Slow-mo tint over the world, under the HUD.
     this.tint = this.add.rectangle(0, 0, VIEW_W, VIEW_H, Palette.hollow, 0).setOrigin(0, 0);
@@ -114,8 +120,9 @@ export class GameScene extends Phaser.Scene {
           const x = e.x / SUB;
           const y = e.y / SUB;
           this.fx.shake(e.shake);
-          // Hit flash: the struck target turns signal-hit white for 1-2 frames.
+          // Hit flash: the struck target turns signal-hit white for 1-2 frames, then its hit frame for 100 ms.
           this.fx.flash(`h${e.id}`, j.hitFlashFrames);
+          this.world.characters.hit(`h${e.id}`);
           this.fx.chips(x, y, rad(e.dir), e.shell ? Math.ceil(j.chipParticles / 2) : j.chipParticles);
           if (e.shell) this.fx.burst(x, y, 3, Palette.shell, j.particleSpeed * 1.5, { dir: rad(e.dir) + Math.PI, spread: 1.4, life: 160 });
           if (e.broke >= 0) {
@@ -128,6 +135,7 @@ export class GameScene extends Phaser.Scene {
         case 'playerHurt':
           this.fx.shake(e.shake);
           this.fx.flash('p', j.hitFlashFrames);
+          this.world.characters.hit('p');
           this.fx.burst(e.x / SUB, e.y / SUB, 10, Palette.hurt, j.particleSpeed, { dir: rad(e.dir), spread: 2 });
           this.fx.float(e.x / SUB, e.y / SUB - 14, `-${e.damage}`, Palette.healthLoss, 650);
           if (e.armored) this.fx.ring(e.x / SUB, e.y / SUB - 4, 6, 12, 200, Palette.uiBevel, 1);
@@ -158,6 +166,7 @@ export class GameScene extends Phaser.Scene {
         case 'shellRegrow': {
           const h = this.session.state.husks.find((x) => x.id === e.id);
           if (h) this.fx.ring(h.x / SUB, h.y / SUB, 2, 10, 260, Palette.shell, 1);
+          this.world.characters.regrow(e.id);
           break;
         }
         case 'dodge':
@@ -183,6 +192,7 @@ export class GameScene extends Phaser.Scene {
           }
           break;
         case 'huskDeath':
+          this.world.characters.huskDied(e.id, e.kind, e.x, e.y);
           this.fx.coreFlare(e.x / SUB, e.y / SUB);
           this.fx.shake(e.kind === 'nutshell' ? 5 : 2);
           break;
@@ -208,23 +218,22 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  /** The interact prompt: the interact glyph and "OPEN" over the nearest closed chest within reach. */
+  /**
+   * The interact prompt: the interact glyph and the target's word over the
+   * nearest interactable within reach, in Calm only (docs/design/controls.md).
+   * Chests open on contact and never prompt; M1 has no interactable, so this
+   * shows nothing yet.
+   */
   private updatePrompt(): void {
     const s = this.session.state;
-    const range = tuningStore.get().juice.promptRangePx * SUB;
-    let best: { x: number; y: number; d: number } | null = null;
-    for (const c of s.chests) {
-      if (c.opened) continue;
-      const d = Math.hypot(c.x - s.player.x, c.y - s.player.y);
-      if (d <= range && (!best || d < best.d)) best = { x: c.x, y: c.y, d };
-    }
-    if (!best || s.player.action === 'dead') {
+    const target = promptTarget(s, tuningStore.get().juice.promptRangePx * SUB);
+    if (!target) {
       this.prompt.setVisible(false);
       return;
     }
     this.prompt
-      .setItems([...hintItems(this.controls.hint('interact')), { text: 'OPEN' }])
-      .place(best.x / SUB, best.y / SUB - 12, 0.5, 1)
+      .setItems([...hintItems(this.controls.hint('interact')), { text: target.label }])
+      .place(target.x / SUB, target.y / SUB - 12, 0.5, 1)
       .setVisible(true);
   }
 
@@ -256,7 +265,7 @@ export class GameScene extends Phaser.Scene {
     this.lastRoom = s.roomIndex;
     const scale = this.session.timeScale();
     this.tint.setFillStyle(Palette.hollow, scale < 1 ? 0.28 : 0);
-    this.world.draw(this.session, this.fx, this.time.now, delta * scale, this.controls.crosshair());
+    this.world.draw(this.session, this.fx, this.time.now, delta * scale, delta, this.controls.crosshair());
     this.fx.update(delta * scale, delta);
     this.updatePrompt();
     this.hud.draw(this.session.run, delta);

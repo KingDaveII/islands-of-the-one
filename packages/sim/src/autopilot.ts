@@ -15,6 +15,8 @@ import type { Params } from './tuning.js';
 export interface AutopilotOptions {
   /** Never dodge or retreat (used to playtest a death). */
   reckless?: boolean;
+  /** Let every move play out: never cancel a recovery, and wait while a Husk is pinned (animation playtests). */
+  patient?: boolean;
 }
 
 function moveToward(angle: number): { moveDir: number; moveMag: number } {
@@ -156,6 +158,11 @@ export function autopilot(s: RunState, P: Params, opts: AutopilotOptions = {}): 
   const slammer = targets.find((h) => h.kind === 'nutshell' && h.action === 'windup' && h.shell.some((v) => v > 0));
   if (!opts.reckless && slammer && length(slammer.x - p.x, slammer.y - p.y) < P.husks.nutshell.slamRadius + 20 * 256) {
     return encodeInput({ aim, ...moveToward(atan2(p.y - slammer.y, p.x - slammer.x)), buttons });
+  }
+
+  // Patient: watch the pin and the recovery instead of cancelling into the next move.
+  if (opts.patient && (phase === 'recovery' || s.husks.some((h) => h.action === 'held'))) {
+    return encodeInput({ aim, ...move, buttons });
   }
 
   if (p.action === 'charge') {

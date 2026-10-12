@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import type { ControlAction, ControlPreset } from '@iot/shared';
-import { Button, encodeInput, type TickInput } from '@iot/sim';
+import { Button, encodeInput, type InputContext, type TickInput } from '@iot/sim';
 import { controlsStore } from './controlsStore.js';
 import {
   buttonsFor,
@@ -13,7 +13,7 @@ import {
   type Hint,
   type HintSource,
 } from './gamepad.js';
-import { KEYBOARD_ACTIONS, keyboardBinding, keyCodeFor, MOUSE_BUTTONS } from './keyboard.js';
+import { KEYBOARD_ACTIONS, keyboardKeys, keyCodeFor, MOUSE_BUTTONS } from './keyboard.js';
 import { keyboardMove, quantizeAngle, quantizeMove } from './quantize.js';
 
 const STICK_DEADZONE = 0.2;
@@ -22,7 +22,7 @@ const AIM_DEADZONE = 0.35;
 export type AimSource = 'mouse' | 'gamepad';
 type MouseSide = 'left' | 'right';
 
-/** Sim button a press of an action latches; heavy is a held state and the rest have no sim button yet. */
+/** Sim button a press of an action sets; heavy is a held state and the rest (chart peek, journal) have no sim button yet. */
 const PRESS_BUTTON: Partial<Record<ControlAction, number>> = {
   light: Button.Light,
   dodge: Button.Dodge,
@@ -31,7 +31,9 @@ const PRESS_BUTTON: Partial<Record<ControlAction, number>> = {
   ability3: Button.Ability3,
   item1: Button.Item1,
   item2: Button.Item2,
+  interact: Button.Interact,
 };
+const PRESS_ACTIONS = Object.keys(PRESS_BUTTON) as ControlAction[];
 
 /** Keys whose browser default (scrolling, moving focus) must not fire while a run is on. */
 const CAPTURED_KEYS: ReadonlySet<string> = new Set(['Space', 'Tab']);
@@ -40,8 +42,8 @@ const CAPTURED_KEYS: ReadonlySet<string> = new Set(['Space', 'Tab']);
 export interface SampleContext {
   /** Enemy offsets from the player, world px (for the soft lock). */
   enemies: readonly { dx: number; dy: number }[];
-  /** Abilities 2 and 3 on the face buttons only fire during an encounter. */
-  encounter: boolean;
+  /** The sim's input context: a binding marked per context fires only in its own. */
+  context: InputContext;
   /** Soft-lock angle for the active preset, degrees. */
   softLockDeg: number;
 }
@@ -49,19 +51,25 @@ export interface SampleContext {
 /**
  * Collects keyboard, mouse and gamepad (browser Gamepad API) input and turns
  * it into one packed sim input per tick. Presses are latched between ticks so
- * none are lost when a frame runs zero or several sim steps. Every binding is
- * data (controls.json): the gamepad's from the active preset, the keyboard's
- * and mouse's from the `keyboard` block.
+ * none are lost when a frame runs zero or several sim steps, and resolved to
+ * an action at the tick with the input context the sim reports (Combat or
+ * Calm, docs/design/controls.md), so the sim's input log holds the resolved
+ * action and replays never need the context. Every binding is data
+ * (controls.json): the gamepad's from the active preset, the keyboard's and
+ * mouse's from the `keyboard` block.
  */
 export class Controls {
-  private latched = 0;
+  /** Key and mouse-button names pressed since the last sample (resolved there). */
+  private latchedKeys = new Set<string>();
   private aim = 0;
   private aimSource: AimSource = 'mouse';
   private prevPadButtons: boolean[] = [];
   private moveKeys: Record<string, Phaser.Input.Keyboard.Key>;
-  private actionKeys: Partial<Record<ControlAction, Phaser.Input.Keyboard.Key>> = {};
-  private mouseActions: Partial<Record<MouseSide, ControlAction>> = {};
+  /** Phaser keys by binding name, for every key any action names in any context. */
+  private keys = new Map<string, Phaser.Input.Keyboard.Key>();
   private mouseDown: Record<MouseSide, boolean> = { left: false, right: false };
+  /** The context the latest sample resolved presses with (hints follow it). */
+  context: InputContext = 'calm';
   private pointer: { x: number; y: number } | null = null;
   private captured: number[] = [];
   private padId = '';
@@ -72,24 +80,21 @@ export class Controls {
     const kb = scene.input.keyboard;
     if (!kb) throw new Error('keyboard input unavailable');
     this.moveKeys = kb.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT', true) as Record<string, Phaser.Input.Keyboard.Key>;
-    const press = (bit: number) => () => {
-      this.latched |= bit;
-    };
     for (const action of KEYBOARD_ACTIONS) {
-      const binding = keyboardBinding(action);
-      const side = MOUSE_BUTTONS[binding];
-      if (side) {
-        this.mouseActions[side] = action;
-        continue;
+      for (const binding of keyboardKeys(action)) {
+        if (MOUSE_BUTTONS[binding] || this.keys.has(binding)) continue;
+        const code = keyCodeFor(binding);
+        if (code === undefined) continue;
+        const capture = CAPTURED_KEYS.has(binding);
+        if (capture) this.captured.push(code);
+        const key = kb.addKey(code, capture);
+        this.keys.set(binding, key);
+        if (PRESS_BUTTON[action] !== undefined) {
+          key.on('down', () => {
+            this.latchedKeys.add(binding);
+          });
+        }
       }
-      const code = keyCodeFor(binding);
-      if (code === undefined) continue;
-      const capture = CAPTURED_KEYS.has(binding);
-      if (capture) this.captured.push(code);
-      const key = kb.addKey(code, capture);
-      this.actionKeys[action] = key;
-      const bit = PRESS_BUTTON[action];
-      if (bit !== undefined) key.on('down', press(bit));
     }
 
     scene.input.mouse?.disableContextMenu();
@@ -98,9 +103,7 @@ export class Controls {
       const s = side(p);
       if (!s) return;
       this.mouseDown[s] = true;
-      const action = this.mouseActions[s];
-      const bit = action ? PRESS_BUTTON[action] : undefined;
-      if (bit !== undefined) this.latched |= bit;
+      this.latchedKeys.add(s === 'left' ? 'LMB' : 'RMB');
     });
     scene.input.on('pointerup', (p: Phaser.Input.Pointer) => {
       const s = side(p);
@@ -128,16 +131,26 @@ export class Controls {
     return this.gamepadConnected ? { preset: this.preset, family: padFamily(this.padId) } : 'keyboard';
   }
 
-  /** The hint for an action from the device in use. */
+  /** The hint for an action from the device in use, in the current input context. */
   hint(action: ControlAction): Hint {
-    return hintFrom(this.hintSource(), action);
+    return hintFrom(this.hintSource(), action, this.context);
   }
 
-  /** Whether an action's keyboard key or mouse button is down right now (held actions: heavy, chart peek). */
+  /** Whether a key or mouse button is down right now, by binding name. */
+  private keyDown(binding: string): boolean {
+    const side = MOUSE_BUTTONS[binding];
+    if (side) return this.mouseDown[side];
+    return this.keys.get(binding)?.isDown ?? false;
+  }
+
+  /** Whether an action's keyboard key or mouse button is down right now in the current context (held actions: heavy, chart peek). */
   held(action: ControlAction): boolean {
-    if (this.actionKeys[action]?.isDown) return true;
-    for (const s of ['left', 'right'] as const) if (this.mouseActions[s] === action && this.mouseDown[s]) return true;
-    return false;
+    return keyboardKeys(action, this.context).some((k) => this.keyDown(k));
+  }
+
+  /** Whether a key bound to the action in the current context was pressed since the last sample. */
+  private pressed(action: ControlAction): boolean {
+    return keyboardKeys(action, this.context).some((k) => this.latchedKeys.has(k));
   }
 
   /** World-space crosshair position (mouse), or null when aiming with a stick. */
@@ -153,6 +166,7 @@ export class Controls {
 
   /** Build this tick's input. `px, py` is the player position in world pixels. */
   sample(px: number, py: number, ctx: SampleContext): number {
+    this.context = ctx.context;
     const k = this.moveKeys;
     let move = keyboardMove(
       Boolean(k.A?.isDown || k.LEFT?.isDown),
@@ -161,6 +175,10 @@ export class Controls {
       Boolean(k.S?.isDown || k.DOWN?.isDown),
     );
     let held = this.held('heavy');
+    // Keyboard and mouse presses, resolved to actions with this tick's context.
+    let buttons = 0;
+    for (const action of PRESS_ACTIONS) if (this.pressed(action)) buttons |= PRESS_BUTTON[action] ?? 0;
+    this.latchedKeys.clear();
 
     const pad = connectedPad();
     this.gamepadConnected = Boolean(pad);
@@ -182,19 +200,15 @@ export class Controls {
         this.aimSource = 'gamepad';
         this.aim = quantizeAngle(softLock(Math.atan2(ly, lx), ctx.enemies, ctx.softLockDeg));
       }
-      const buttons = this.padButtons(pad);
-      const down = (action: ControlAction) => buttonsFor(preset, action).some((i) => buttons[i] ?? false);
+      const padButtons = this.padButtons(pad);
+      const context = ctx.context;
+      const down = (action: ControlAction) => buttonsFor(preset, action, context).some((i) => padButtons[i] ?? false);
       const edge = (action: ControlAction) =>
-        buttonsFor(preset, action).some((i) => (buttons[i] ?? false) && !(this.prevPadButtons[i] ?? false));
-      if (edge('light')) this.latched |= Button.Light;
-      if (edge('dodge')) this.latched |= Button.Dodge;
-      if (edge('ability1')) this.latched |= Button.Ability1;
-      if (ctx.encounter && edge('ability2')) this.latched |= Button.Ability2;
-      if (ctx.encounter && edge('ability3')) this.latched |= Button.Ability3;
-      if (edge('item1')) this.latched |= Button.Item1;
-      if (edge('item2')) this.latched |= Button.Item2;
+        buttonsFor(preset, action, context).some((i) => (padButtons[i] ?? false) && !(this.prevPadButtons[i] ?? false));
+      // A button bound per context (Cross: dodge in Combat, interact in Calm) resolves to this tick's context only.
+      for (const action of PRESS_ACTIONS) if (edge(action)) buttons |= PRESS_BUTTON[action] ?? 0;
       if (down('heavy')) held = true;
-      this.prevPadButtons = buttons;
+      this.prevPadButtons = padButtons;
     }
 
     if (this.aimSource === 'mouse' && this.pointer) {
@@ -205,9 +219,8 @@ export class Controls {
     const input: TickInput = {
       aim: this.aim,
       ...move,
-      buttons: this.latched | (held ? Button.Heavy : 0),
+      buttons: buttons | (held ? Button.Heavy : 0),
     };
-    this.latched = 0;
     this.lastInput = input;
     return encodeInput(input);
   }

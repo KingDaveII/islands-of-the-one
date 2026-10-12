@@ -1,13 +1,21 @@
-import { controlsData, type ControlAction } from '@iot/shared';
+import {
+  bindingKeys,
+  bindingKeysAll,
+  controlsData,
+  type BindingContext,
+  type ControlAction,
+  type ControlBinding,
+} from '@iot/shared';
 
 /**
  * Keyboard and mouse bindings are data: the `keyboard` block of
  * packages/shared/data/controls.json names one key (or mouse button) per
- * action, and this module turns those names into the key codes the Controls
+ * action, per input context where it matters (E interacts in Calm only),
+ * and this module turns those names into the key codes the Controls
  * sampler listens to. It has no Phaser dependency so the table is testable
  * in node; Phaser's KeyCodes are the DOM `keyCode` values used here.
  */
-export const KEYBOARD: Readonly<Record<ControlAction, string>> = controlsData.keyboard;
+export const KEYBOARD: Readonly<Record<ControlAction, ControlBinding>> = controlsData.keyboard;
 export const KEYBOARD_ACTIONS: readonly ControlAction[] = Object.keys(KEYBOARD) as ControlAction[];
 
 /** Mouse buttons, by their binding name. */
@@ -36,9 +44,15 @@ export function keyCodeFor(binding: string): number | undefined {
   return NAMED_KEYS[binding];
 }
 
-/** The key or mouse button bound to an action ("LMB", "Space", "1"). */
+/** The keys or mouse buttons that fire an action in a context ("LMB", "Space", "1"), or in any context when none is given. */
+export function keyboardKeys(action: ControlAction, context?: BindingContext): string[] {
+  const b = KEYBOARD[action];
+  return context === undefined ? bindingKeysAll(b) : bindingKeys(b, context);
+}
+
+/** The first key bound to an action in any context (for labels of context-free actions: menu, tuning). */
 export function keyboardBinding(action: ControlAction): string {
-  return KEYBOARD[action];
+  return keyboardKeys(action)[0] ?? '';
 }
 
 /** The DOM `KeyboardEvent.key` value a binding name corresponds to (for window-level listeners; compare case-insensitively, Shift and CapsLock change the case of letters). */

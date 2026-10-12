@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import { hookbladeFxSheet as sheet } from '@iot/shared';
 import { Palette } from '../palette.js';
+import { DEPTH } from './depth.js';
 import { HOOKBLADE_TEXTURE } from './sheets.js';
 
 /**
@@ -40,11 +41,10 @@ export class HookbladeFx {
     this.sparkImage = this.image(SPARK_FRAMES[0] ?? sheet.hook.flight, 0.5, 0.5);
   }
 
-  /** Adds the pool to a layer: links below `between` (the body graphics), hook and spark above it. */
-  mount(layer: Phaser.GameObjects.Layer, between: Phaser.GameObjects.GameObject): void {
-    for (const l of this.links) layer.add([...l.rim, l.ink]);
-    layer.add(between);
-    layer.add([...this.hookSlot.rim, this.hookSlot.ink, this.sparkImage]);
+  /** Adds the pool to a layer: links under the bodies, the hook and spark over them (depth.ts). */
+  mount(layer: Phaser.GameObjects.Layer): void {
+    for (const l of this.links) layer.add([...l.rim, l.ink].map((img) => img.setDepth(DEPTH.chain)));
+    layer.add([...this.hookSlot.rim, this.hookSlot.ink, this.sparkImage].map((img) => img.setDepth(DEPTH.overlay)));
   }
 
   private image(frame: string, ox: number, oy: number): Image {

@@ -1,0 +1,71 @@
+{
+  "source": "tokens: the design system's 32 raw colours, copied from its tokens.json (color block; role tokens like ui-ink are aliases and stay out). They change only through an art/ PR. clay: the four clay tones of the Kindled (sprites.md section 5); remembranceOutfit: placeholder outfit colours.",
+  "tokens": {
+    "hollow-light": "#f4efe6",
+    "hollow-lavender": "#d9d2e9",
+    "hollow-dusk": "#a99fc4",
+    "hollow-below": "#5b5478",
+    "hollow-deep": "#2a2540",
+    "spark-glow": "#ffe7a3",
+    "spark-amber": "#f2b65a",
+    "spark-ember": "#c9733a",
+    "watcher-iron": "#4a4e57",
+    "watcher-stone": "#7d8794",
+    "watcher-rain": "#3e5c7a",
+    "watcher-bronze": "#a8743a",
+    "wheel-brass": "#c79a3e",
+    "wheel-brass-dark": "#8a6420",
+    "wheel-eye": "#e9e4d4",
+    "wheel-patina": "#2f7f7a",
+    "sleeper-flesh": "#c98f78",
+    "sleeper-ochre": "#9c5b4a",
+    "sleeper-soil": "#e3c29e",
+    "sleeper-night": "#24305a",
+    "husk-shell": "#e8e2d6",
+    "husk-core": "#fff4c7",
+    "unwritten-sail": "#8c7f6e",
+    "unwritten-tar": "#5e5448",
+    "choir-paper": "#fbf8f0",
+    "choir-gold": "#d8b24a",
+    "choir-flame": "#f07a3a",
+    "choir-flame-deep": "#b5402e",
+    "dream-night": "#1c2147",
+    "signal-hit": "#ffffff",
+    "signal-telegraph": "#e0457b",
+    "signal-telegraph-dark": "#8e2550"
+  },
+  "signals": {
+    "hit": "#ffffff",
+    "telegraph": [
+      "#e0457b",
+      "#8e2550"
+    ]
+  },
+  "clay": {
+    "drawn": "clay-grey-ochre",
+    "tones": {
+      "clay-grey-ochre": {
+        "skin": "#8c7f6e",
+        "shade": "#5e5448"
+      },
+      "clay-pale": {
+        "skin": "#e8e2d6",
+        "shade": "#8c7f6e"
+      },
+      "clay-red": {
+        "skin": "#c98f78",
+        "shade": "#9c5b4a"
+      },
+      "clay-river-dark": {
+        "skin": "#5e5448",
+        "shade": "#2a2540"
+      }
+    }
+  },
+  "remembranceOutfit": {
+    "clay": "#9c5b4a",
+    "ash": "#5b5478",
+    "tide": "#a99fc4",
+    "wing": "#e3c29e"
+  }
+}
