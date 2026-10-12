@@ -124,9 +124,10 @@ export const KINDLED_ANIMS: readonly KindledAnimSpec[] = [
   spec('heavy_hold', 1, 0, false, true),
   spec('heavy_recover', 2, 12, false, false),
   spec('haul_throw', 2, 15, false, true),
+  spec('haul_recover', 2, 12, false, false),
   spec('haul_pull', 2, 12, true, false),
   spec('haul_slide', 2, 12, true, false),
-  spec('hit', 1, 0, false, true, SPRITE_FACINGS_4),
+  spec('hit', 2, 0, false, true, SPRITE_FACINGS_4),
   spec('death', 6, 8, false, true, SPRITE_FACINGS_4),
   spec('carry_idle', 2, 2, true, false, SPRITE_FACINGS_4),
   spec('carry_walk', 6, 10, true, false, SPRITE_FACINGS_4),
@@ -135,8 +136,8 @@ export const KINDLED_ANIMS: readonly KindledAnimSpec[] = [
 
 /** The Husk animations (no facings) per kind, as the sheets must carry them. */
 export const HUSK_ANIMS: Readonly<Record<'peeling' | 'nutshell', readonly string[]>> = {
-  peeling: ['idle', 'telegraph', 'lunge', 'hit', 'chipped', 'death', 'drop'],
-  nutshell: ['idle', 'telegraph', 'roll', 'hit', 'chipped_outer', 'chipped_inner', 'regrow', 'death', 'drop'],
+  peeling: ['spawn', 'idle', 'telegraph', 'lunge', 'hit', 'chipped', 'death', 'drop'],
+  nutshell: ['spawn', 'idle', 'walk', 'telegraph', 'slam', 'hit', 'chipped_outer', 'chipped_inner', 'regrow', 'death', 'drop'],
 };
 
 /** True for a Kindled sheet (`kindled-<remembrance>`), which has facings and a palette block. */

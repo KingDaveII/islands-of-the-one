@@ -69,6 +69,8 @@
     "chartPeek": "Tab",
     "journal": "J",
     "menu": "Esc",
-    "tuning": "F2"
+    "controls": "C",
+    "tuning": "F2",
+    "debug": "F3"
   }
 }

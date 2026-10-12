@@ -4,7 +4,7 @@ import { isWeaponAvailable, type Tuning } from '@iot/sim';
 import { deviceStore } from '../game/activeDevice.js';
 import { controlsStore } from '../game/controlsStore.js';
 import { glyphsFor, MENU_BUTTONS, padEdges, type PadFamily } from '../game/gamepad.js';
-import { keyboardBinding } from '../game/keyboard.js';
+import { eventKeyFor, keyboardBinding } from '../game/keyboard.js';
 import { parseSeed, randomSeed } from '../game/seed.js';
 import { tuningStore } from '../game/tuningStore.js';
 import { Palette } from '../palette.js';
@@ -153,10 +153,11 @@ export class StartScene extends Phaser.Scene {
     });
 
     // Text entry reads DOM key events directly (Phaser's key queue is for game controls).
+    const controlsKey = eventKeyFor(keyboardBinding('controls')).toLowerCase();
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === 'Enter') this.startRun();
-      else if (e.key === 'c' || e.key === 'C') this.scene.start('controls');
+      else if (e.key.toLowerCase() === controlsKey) this.scene.start('controls');
       else if (e.key === 'Backspace') this.seedText = this.seedText.slice(0, -1);
       else if (/^[a-z0-9]$/i.test(e.key) && this.seedText.length < MAX_SEED_LEN)
         this.seedText += e.key.toUpperCase();
@@ -231,9 +232,13 @@ export class StartScene extends Phaser.Scene {
       ],
       [
         ...glyphs(['Enter'], 'keyboard'),
-        word('start  ·  C controls  ·'),
-        ...glyphs([keyboardBinding('tuning')], 'keyboard'),
-        word('tuning  ·  F3 debug'),
+        word('start  ·'),
+        ...key('controls'),
+        word('controls  ·'),
+        ...key('tuning'),
+        word('tuning  ·'),
+        ...key('debug'),
+        word('debug'),
       ],
     ];
   }

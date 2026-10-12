@@ -43,11 +43,12 @@ The `keyboard` block, one key per action. Move and aim are not actions and stay 
 | Chart peek             | hold Tab (no function yet)              |
 | Journal                | J (no function yet)                     |
 | Menu                   | Esc (back, on the controls screen)      |
-| Tuning / debug         | F2 / F3 (F3 is a dev key, not in data)  |
-| Controls screen        | C on the start screen (a menu shortcut) |
+| Tuning / debug         | F2 / F3 (`tuning`, `debug`)             |
+| Controls screen        | C on the start screen (`controls`)      |
 
 The Haul's 1 is the only alternate (the middle button first: hints show its glyph); the old J/K
-attacks and Shift dodge are gone. The middle button is captured on the game canvas, so it never
+attacks and Shift dodge are gone. The menu keys (`menu`, `controls`, `tuning`, `debug`) are in the
+same block so the start screen's hints draw them as glyphs through `keyboardBinding`. The middle button is captured on the game canvas, so it never
 starts the browser's autoscroll.
 
 ## 2. Gamepad presets

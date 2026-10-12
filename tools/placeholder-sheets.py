@@ -66,9 +66,10 @@ KINDLED_ANIMS = [
     ("heavy_hold", 1, 0, 0, True, FACINGS8),
     ("heavy_recover", 2, 12, 0, False, FACINGS8),
     ("haul_throw", 2, 15, 0, True, FACINGS8),
+    ("haul_recover", 2, 12, 0, False, FACINGS8),
     ("haul_pull", 2, 12, -1, False, FACINGS8),
     ("haul_slide", 2, 12, -1, False, FACINGS8),
-    ("hit", 1, 0, 0, True, FACINGS4),
+    ("hit", 2, 0, 0, True, FACINGS4),
     ("death", 6, 8, 0, True, FACINGS4),
     ("carry_idle", 2, 2, -1, False, FACINGS4),
     ("carry_walk", 6, 10, -1, False, FACINGS4),
@@ -77,6 +78,7 @@ KINDLED_ANIMS = [
 
 # sprites.md §4, Peeling and Nutshell: name, frames, fps, loop, hold.
 PEELING_ANIMS = [
+    ("spawn", 4, 0, 0, False),
     ("idle", 2, 3, -1, False),
     ("telegraph", 2, 8, 0, True),
     ("lunge", 3, 15, 0, False),
@@ -86,9 +88,11 @@ PEELING_ANIMS = [
     ("drop", 1, 0, 0, True),
 ]
 NUTSHELL_ANIMS = [
+    ("spawn", 4, 0, 0, False),
     ("idle", 2, 2, -1, False),
+    ("walk", 4, 6, -1, False),
     ("telegraph", 2, 8, 0, True),
-    ("roll", 4, 12, -1, False),
+    ("slam", 2, 0, 0, True),
     ("hit", 1, 0, 0, True),
     ("chipped_outer", 1, 0, 0, True),
     ("chipped_inner", 1, 0, 0, True),
@@ -304,6 +308,10 @@ def draw_kindled(c: Canvas, anim: str, facing: str, n: int, origin: tuple[int, i
         kindled_body(c, facing, ox, oy)
         # The arm out; the chain and hook come from hookblade-fx.
         c.line(ox + sx * 7, oy - 12 + sy * 2, ox + sx * (9 + 4 * n), oy - 12 + sy * (4 + 2 * n), SKIN)
+    elif anim == "haul_recover":
+        # The arm coming back to the body as the chain reels in.
+        kindled_body(c, facing, ox, oy)
+        c.line(ox + sx * 7, oy - 12 + sy * 2, ox + sx * (11 - 3 * n), oy - 12 + sy * (4 - n), SKIN)
     elif anim == "haul_pull":
         kindled_body(c, facing, ox - sx * n, oy - sy * n)
         c.rect(ox - 3 + sx * 6, oy - 12, 2, 2, SKIN)
@@ -312,7 +320,9 @@ def draw_kindled(c: Canvas, anim: str, facing: str, n: int, origin: tuple[int, i
         kindled_body(c, facing, ox + sx * (2 + n), oy)
         c.line(ox - sx * 6, oy - 10, ox - sx * (10 + 2 * n), oy - 8 + n, OUTFIT)
     elif anim == "hit":
-        kindled_body(c, facing, ox - sx, oy - sy)
+        # 0 = the flinch (knocked a pixel back), 1 = the stagger (lower, further back, held to the end of the stun).
+        back = (1, 3)[n]
+        kindled_body(c, facing, ox - sx * back, oy - sy * back, h=BODY_H - 2 * n)
     elif anim == "death":
         # The fall: the body tips over, then the freckles go out one by one.
         w = (16, 18, 22, 26, 28, 28)[n]
@@ -357,7 +367,24 @@ def core_dot(c: Canvas, cx: int, cy: int, ring_color=HUSK_OUTLINE) -> None:
 def draw_peeling(c: Canvas, anim: str, n: int, origin: tuple[int, int]) -> None:
     ox, oy = origin
     cx, cy = ox, oy - 4  # a 12x9 body standing on the origin
-    if anim == "idle":
+    if anim == "spawn":
+        # The curl gathering round its core: the core alone, flakes circling, the shell half closed, closed (= idle 0).
+        if n == 0:
+            c.rect(cx - 1, cy - 1, 2, 2, CORE)
+        elif n == 1:
+            core_dot(c, cx, cy)
+            for dx, dy in ((-4, -2), (4, -1), (-3, 3), (3, 2), (0, -4), (1, 4)):
+                c.px(cx + dx, cy + dy, SHELL)
+        elif n == 2:
+            peeling_shell(c, cx, cy, 5, 3, SHELL, SHELL_SHADE, HUSK_OUTLINE)
+            for dy in range(-4, 5):
+                for dx in range(0, 7):
+                    if (dx + dy) % 2 == 0 or dx > 3:
+                        c.px(cx + dx, cy + dy, TRANSPARENT)
+            core_dot(c, cx, cy)
+        else:
+            peeling_shell(c, cx, cy, 5, 3, SHELL, SHELL_SHADE, HUSK_OUTLINE)
+    elif anim == "idle":
         peeling_shell(c, cx, cy - (1 if n == 1 else 0), 5, 3 + (1 if n == 1 else 0), SHELL, SHELL_SHADE, HUSK_OUTLINE)
     elif anim == "telegraph":
         # Pre-tinted: pulled back a pixel, in the telegraph colours.
@@ -412,19 +439,43 @@ def draw_nutshell(c: Canvas, anim: str, n: int, origin: tuple[int, int]) -> None
     ox, oy = origin
     cx, cy = ox, oy - 12  # a 24x24 shell standing on the origin
     R, INNER = 11, 6
-    if anim == "idle":
+    if anim == "spawn":
+        # The shell closing round its core: the core alone, flakes circling, half closed, closed (= idle 0).
+        if n == 0:
+            c.rect(cx - 1, cy - 1, 2, 2, CORE)
+        elif n == 1:
+            core_dot(c, cx, cy)
+            for dx, dy in ((-8, -3), (7, -5), (-6, 6), (8, 4), (0, -9), (2, 8), (-9, 1)):
+                c.rect(cx + dx, cy + dy, 2, 1, SHELL)
+        elif n == 2:
+            nutshell_shell(c, cx, cy, R, SHELL, SHELL_SHADE, HUSK_OUTLINE, INNER, gaps={6, 7, 0, 1})
+            core_dot(c, cx, cy)
+        else:
+            nutshell_shell(c, cx, cy, R, SHELL, SHELL_SHADE, HUSK_OUTLINE, INNER)
+            core_dot(c, cx, cy)
+    elif anim == "idle":
         nutshell_shell(c, cx, cy - (1 if n == 1 else 0), R, SHELL, SHELL_SHADE, HUSK_OUTLINE, INNER)
         core_dot(c, cx, cy - (1 if n == 1 else 0))
+    elif anim == "walk":
+        # The chase: the shell rocks forward on its hidden feet, 4 px per cycle.
+        lean = (0, 1, 0, -1)[n]
+        lift = (0, 1, 0, 1)[n]
+        nutshell_shell(c, cx + lean, cy - lift, R, SHELL, SHELL_SHADE, HUSK_OUTLINE, INNER)
+        core_dot(c, cx + lean, cy - lift)
+        c.rect(cx - 6 + (n % 2) * 8, oy - 1, 4, 1, HUSK_OUTLINE)
     elif anim == "telegraph":
         nutshell_shell(c, cx, cy + n, R, TELEGRAPH, TELEGRAPH_DARK, TELEGRAPH_DARK, INNER)
         core_dot(c, cx, cy + n, TELEGRAPH_DARK)
-    elif anim == "roll":
-        squash = 1 if n % 2 == 1 else 0
-        nutshell_shell(c, cx, cy + squash, R - squash, SHELL, SHELL_SHADE, HUSK_OUTLINE, INNER)
-        core_dot(c, cx, cy + squash)
-        # A mark that turns with the roll.
-        mx, my = ((0, -8), (8, 0), (0, 8), (-8, 0))[n]
-        c.rect(cx + mx - 1, cy + squash + my - 1, 3, 3, CRACK)
+    elif anim == "slam":
+        # 0 = the shell dropping (lifted, about to fall), 1 = the impact (squashed on the floor, held through the recovery).
+        if n == 0:
+            nutshell_shell(c, cx, cy - 3, R, SHELL, SHELL_SHADE, HUSK_OUTLINE, INNER)
+            core_dot(c, cx, cy - 3)
+        else:
+            nutshell_shell(c, cx, cy + 2, R - 2, SHELL, SHELL_SHADE, HUSK_OUTLINE, INNER - 1)
+            core_dot(c, cx, cy + 2)
+            c.rect(cx - R - 3, oy - 1, 4, 1, CRACK)
+            c.rect(cx + R, oy - 1, 4, 1, CRACK)
     elif anim == "hit":
         nutshell_shell(c, cx, cy, R, SHELL, SHELL_SHADE, HUSK_OUTLINE, INNER)
         core_dot(c, cx, cy)

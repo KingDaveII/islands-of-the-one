@@ -172,11 +172,12 @@ function pinning(s: RunState): boolean {
  * - heavy_charge at the sheet's rate holding the last frame → heavy_thrust over
  *   startup + active → heavy_hold from the tick the thrust pins a Husk until the
  *   pin ends (through the hitstop) → heavy_recover over the rest of the recovery;
- * - Haul: haul_throw (arm out, then the last frame while the hook flies),
- *   haul_pull while the chain pulls a Husk, haul_slide while it pulls the player;
- * - hit held through the hurt stun (a longer hit animation plays at its rate and
- *   holds its last frame), or for 100 ms after an armored hit; death at the
- *   sheet's rate after the sim stops.
+ * - Haul: haul_throw (arm out, then the last frame only while the hook flies),
+ *   haul_pull while the chain pulls a Husk, haul_slide while it pulls the player,
+ *   haul_recover over the recovery;
+ * - hit through the hurt stun: frame 0 (the flinch) for the first 100 ms, frame 1
+ *   (the stagger) to the end of the stun; frame 0 alone for 100 ms after an
+ *   armored hit; death at the sheet's rate after the sim stops.
  */
 export function kindledPose(
   s: RunState,
@@ -192,8 +193,8 @@ export function kindledPose(
   // Standing, charging or stunned the Kindled faces the aim; a move faces the direction it locked at its start.
   const faceAngle =
     p.action === 'idle' || p.action === 'charge' || p.action === 'hurt' ? p.aim : p.dir;
-  // Stunned: `hit` plays at the sheet's rate and holds its last frame for the whole hurt stun.
-  if (p.action === 'hurt') return kindledPoseOf(sheet, 'hit', faceAngle, (a) => onceFrame(a, p.t));
+  // Stunned: the flinch (frame 0) for the first 100 ms of the stun, then the stagger (frame 1) held to its end.
+  if (p.action === 'hurt') return kindledPoseOf(sheet, 'hit', faceAngle, () => (p.t <= ticks(HIT_MS) ? 0 : 1));
   // An armored hit (no stun) still shows the hit frame for 100 ms.
   if (clocks.hitMs >= 0 && clocks.hitMs < HIT_MS)
     return kindledPoseOf(sheet, 'hit', faceAngle, () => 0);
@@ -261,11 +262,16 @@ function abilityPose(p: PlayerState, P: Params, sheet: SpriteSheet): KindledPose
     if (hk.pull === 'husk')
       return kindledPoseOf(sheet, 'haul_pull', p.dir, (anim) => loopFrame(anim, p.t));
   }
-  // The throw: the arm goes out over the startup, then the last frame holds while the hook flies and through the recovery.
-  return kindledPoseOf(sheet, 'haul_throw', p.dir, (anim) =>
-    phase === 'startup'
-      ? spreadFrame(anim.frames.length, [{ len: a.startup, share: 1 }], p.t)
-      : anim.frames.length - 1,
+  // The throw: the arm goes out over the startup, then the last frame holds only while the hook flies.
+  if (phase === 'startup' || (phase === 'active' && hk !== null)) {
+    return kindledPoseOf(sheet, 'haul_throw', p.dir, (anim) =>
+      phase === 'startup' ? spreadFrame(anim.frames.length, [{ len: a.startup, share: 1 }], p.t) : anim.frames.length - 1,
+    );
+  }
+  // The chain reels in: haul_recover over the recovery (its first frame while the active ticks run out after a miss).
+  const activeEnd = a.startup + a.active;
+  return kindledPoseOf(sheet, 'haul_recover', p.dir, (anim) =>
+    phase === 'recovery' ? spreadFrame(anim.frames.length, [{ len: a.recovery, share: 1 }], p.t - activeEnd) : 0,
   );
 }
 
@@ -288,13 +294,17 @@ function huskBase(h: HuskState, sheet: SpriteSheet, tick: number): Pose {
 }
 
 /**
- * A Husk's pose from its sim state: telegraph during the wind-up (blinking
- * with the resting pose while the attack still tracks, solid once it has
- * locked), the Peeling's lunge (stretch, hit) over the attack and its settle
- * through the recovery, the Nutshell's roll looping through the slam, the
- * hit frame for 100 ms after a hit, the regrow one-shot after the inner
- * shell regrows, chipped frames once a layer is gone, idle otherwise.
- * Death plays on a transient the renderer keeps after the Husk is gone.
+ * A Husk's pose from its sim state: spawn stretched over the spawn-in (the
+ * engine's ring stays under it; the Husk is not awake until it ends),
+ * telegraph during the wind-up (blinking with the resting pose while the
+ * attack still tracks, solid once it has locked), the Peeling's lunge
+ * (stretch, hit) over the attack and its settle through the recovery, the
+ * Nutshell's walk from its velocity in the chase and its slam (frame 0 over
+ * the first half of the active ticks, frame 1 over the second, held through
+ * the recovery), the hit frame for 100 ms after a hit, the regrow one-shot
+ * after the inner shell regrows, chipped frames once a layer is gone, idle
+ * otherwise. Death plays on a transient the renderer keeps after the Husk is
+ * gone.
  */
 export function huskPose(
   s: RunState,
@@ -305,6 +315,12 @@ export function huskPose(
   blink: boolean,
 ): Pose {
   const hp = huskParams(P, h.kind);
+  if (h.action === 'spawn') {
+    const spawn = sheet.anims.spawn;
+    if (!spawn) return { anim: 'idle', frame: 0 };
+    const n = spawn.frames.length;
+    return { anim: 'spawn', frame: Math.min(n - 1, Math.floor((Math.max(0, h.t) * n) / Math.max(1, hp.spawn))) };
+  }
   if (clocks.hitMs >= 0 && clocks.hitMs < HIT_MS && 'hit' in sheet.anims)
     return { anim: 'hit', frame: 0 };
   const regrow = sheet.anims.regrow;
@@ -333,12 +349,24 @@ export function huskPose(
           frame: Math.min(n - 1, Math.floor((Math.max(0, h.t - 1) * n) / Math.max(1, hp.active))),
         };
       }
-      const roll = sheet.anims.roll;
-      return roll ? { anim: 'roll', frame: loopFrame(roll, h.t) } : base;
+      // The slam: the shell dropping over the first half of the active ticks, the impact over the second.
+      const slam = sheet.anims.slam;
+      if (!slam) return base;
+      const n = slam.frames.length;
+      return { anim: 'slam', frame: Math.min(n - 1, Math.floor((Math.max(0, h.t - 1) * n) / Math.max(1, hp.active))) };
     }
     case 'recover': {
       const lunge = sheet.anims.lunge;
       if (h.kind === 'peeling' && lunge) return { anim: 'lunge', frame: lunge.frames.length - 1 };
+      const slam = sheet.anims.slam;
+      if (h.kind === 'nutshell' && slam) return { anim: 'slam', frame: slam.frames.length - 1 };
+      return base;
+    }
+    case 'chase': {
+      // The Nutshell walks: its shell rocks forward while it moves, as long as it is whole.
+      const walk = sheet.anims.walk;
+      const moving = Math.abs(h.vx) + Math.abs(h.vy) > WALK_THRESHOLD;
+      if (walk && moving && base.anim === 'idle') return { anim: 'walk', frame: loopFrame(walk, s.tick) };
       return base;
     }
     default:

@@ -81,6 +81,8 @@ export class CharacterSprites {
   private ghostClock = 0;
   /** The pose shown this frame (the debug overlay and playtests read it). */
   pose: KindledPose | null = null;
+  /** The Husks' poses this frame, in sim order (playtests). */
+  huskPoses: Pose[] = [];
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -238,6 +240,7 @@ export class CharacterSprites {
 
     // The Husks.
     const seen = new Set<number>();
+    this.huskPoses = [];
     for (const h of s.husks) {
       seen.add(h.id);
       let entry = this.husks.get(h.id);
@@ -246,14 +249,10 @@ export class CharacterSprites {
         this.husks.set(h.id, entry);
       }
       const sprite = entry.sprite;
-      if (h.action === 'spawn') {
-        // The spawn-in is an engine effect (world.ts); the body appears once it wakes.
-        sprite.setVisible(false);
-        continue;
-      }
       const pos = huskPos.get(h.id) ?? { x: Math.round(h.x / SUB), y: Math.round(h.y / SUB) };
       const sheet = spriteSheets[HUSK_SHEET[h.kind]];
       const hp = huskPose(s, P, h, sheet, this.clocks(`h${h.id}`, h.id), blink);
+      this.huskPoses.push(hp);
       this.show(sprite, HUSK_SHEET[h.kind], sheet, hp);
       entry.flip = huskFlip(h, entry.flip);
       let { x, y } = pos;
