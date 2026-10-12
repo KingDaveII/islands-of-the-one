@@ -1,12 +1,16 @@
 import Phaser from 'phaser';
+import type { ControlAction } from '@iot/shared';
 import { isWeaponAvailable, type Tuning } from '@iot/sim';
 import { Controls } from '../game/controls.js';
 import { controlsStore } from '../game/controlsStore.js';
-import { hintFor, KEYBOARD_HINTS } from '../game/gamepad.js';
+import { glyphsFor, padFamily } from '../game/gamepad.js';
+import { keyboardBinding } from '../game/keyboard.js';
 import { parseSeed, randomSeed } from '../game/seed.js';
 import { tuningStore } from '../game/tuningStore.js';
 import { Palette } from '../palette.js';
+import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
 import { groundShadow } from '../render/pixels.js';
+import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { body, label, place } from '../render/text.js';
 import { abilitySlot, divider, panel, tierPips } from '../render/ui.js';
 import { drawKindled } from '../render/world.js';
@@ -37,7 +41,12 @@ export class StartScene extends Phaser.Scene {
     super('start');
   }
 
+  preload(): void {
+    preloadSheets(this);
+  }
+
   create(): void {
+    registerSheetFrames(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
     this.seedText = String(randomSeed());
     this.pad = { pad: true };
@@ -104,13 +113,49 @@ export class StartScene extends Phaser.Scene {
     groundShadow(mood, 60, VIEW_H - 22, 5, 2);
     drawKindled(mood, 60, VIEW_H - 27, 2);
 
-    const k = KEYBOARD_HINTS;
+    // Key hints as controller glyphs: the keyboard line, then the active pad preset in the connected pad's family.
+    const key = (action: ControlAction): HintItem[] => glyphs([keyboardBinding(action)], 'keyboard');
+    const connected = navigator.getGamepads().find((g): g is Gamepad => g !== null && g.connected);
+    const family = connected ? padFamily(connected.id) : 'ps';
     const pad = controlsStore.get();
-    const hints = [
-      `WASD move  ·  mouse aim  ·  ${k.light} light  ·  hold ${k.heavy} Hook-thrust  ·  ${k.dodge} dodge  ·  ${k.ability1} Haul  ·  ${k.item1}/${k.item2} items`,
-      `Gamepad (${pad.name}): ${hintFor(pad, 'light')} light · hold ${hintFor(pad, 'heavy')} Hook-thrust · ${hintFor(pad, 'dodge')} dodge · ${hintFor(pad, 'ability1')} Haul · C controls · F2 tuning · F3 debug`,
+    const padKey = (action: ControlAction): HintItem[] => glyphs(glyphsFor(pad, action), family);
+    const lines: HintItem[][] = [
+      [
+        ...glyphs(['W', 'A', 'S', 'D'], 'keyboard'),
+        word('move  ·'),
+        ...glyphs(['Mouse'], 'keyboard'),
+        word('aim  ·'),
+        ...key('light'),
+        word('light  ·  hold'),
+        ...key('heavy'),
+        word('Hook-thrust  ·'),
+        ...key('dodge'),
+        word('dodge  ·'),
+        ...key('ability1'),
+        word('Haul  ·'),
+        ...key('item1'),
+        ...key('item2'),
+        word('items'),
+      ],
+      [
+        word(`Gamepad (${pad.name}):`),
+        ...padKey('light'),
+        word('light  ·  hold'),
+        ...padKey('heavy'),
+        word('Hook-thrust  ·'),
+        ...padKey('dodge'),
+        word('dodge  ·'),
+        ...padKey('ability1'),
+        word('Haul  ·  C controls  ·'),
+        ...key('tuning'),
+        word('tuning  ·  F3 debug'),
+      ],
     ];
-    hints.forEach((line, i) => place(body(this, 0, 0, line, Palette.uiBevel), cx + 20, VIEW_H - 28 + i * 11, 0.5));
+    lines.forEach((items, i) => {
+      new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInkMuted })
+        .setItems(items)
+        .place(cx + 20, VIEW_H - 30 + i * 14, 0.5);
+    });
 
     // Text entry reads DOM key events directly (Phaser's key queue is for game controls).
     const onKey = (e: KeyboardEvent) => {

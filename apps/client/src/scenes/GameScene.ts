@@ -5,7 +5,9 @@ import { Session } from '../game/session.js';
 import { tuningStore } from '../game/tuningStore.js';
 import { Palette } from '../palette.js';
 import { Fx } from '../render/fx.js';
+import { hintItems, HintRow } from '../render/hint.js';
 import { Hud } from '../render/hud.js';
+import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { label, place, withShadow } from '../render/text.js';
 import { rad, WorldRenderer } from '../render/world.js';
 
@@ -37,6 +39,8 @@ export class GameScene extends Phaser.Scene {
   private bannerSub!: Phaser.GameObjects.Text;
   private bannerLife = 0;
   private tint!: Phaser.GameObjects.Rectangle;
+  /** The interact prompt over the nearest closed chest in reach. */
+  private prompt!: HintRow;
   private seed = 0;
   private weapon = 'hookblade';
   private endAt = -1;
@@ -56,7 +60,12 @@ export class GameScene extends Phaser.Scene {
     this.lastRoom = -1;
   }
 
+  preload(): void {
+    preloadSheets(this);
+  }
+
   create(): void {
+    registerSheetFrames(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
     this.worldLayer = this.add.layer();
     this.hudLayer = this.add.layer();
@@ -65,6 +74,8 @@ export class GameScene extends Phaser.Scene {
     this.session = new Session(this.seed, this.weapon, this.controls);
     this.world = new WorldRenderer(this, this.worldLayer, juice);
     this.fx = new Fx(this, this.worldLayer, juice);
+    this.prompt = new HintRow(this, { backdrop: true }).setVisible(false);
+    this.worldLayer.add(this.prompt.container);
     // Slow-mo tint over the world, under the HUD.
     this.tint = this.add.rectangle(0, 0, VIEW_W, VIEW_H, Palette.hollow, 0).setOrigin(0, 0);
     this.hudLayer.add(this.tint);
@@ -196,6 +207,26 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /** The interact prompt: the interact glyph and "OPEN" over the nearest closed chest within reach. */
+  private updatePrompt(): void {
+    const s = this.session.state;
+    const range = tuningStore.get().juice.promptRangePx * SUB;
+    let best: { x: number; y: number; d: number } | null = null;
+    for (const c of s.chests) {
+      if (c.opened) continue;
+      const d = Math.hypot(c.x - s.player.x, c.y - s.player.y);
+      if (d <= range && (!best || d < best.d)) best = { x: c.x, y: c.y, d };
+    }
+    if (!best || s.player.action === 'dead') {
+      this.prompt.setVisible(false);
+      return;
+    }
+    this.prompt
+      .setItems([...hintItems(this.controls.hint('interact')), { text: 'OPEN' }])
+      .place(best.x / SUB, best.y / SUB - 12, 0.5, 1)
+      .setVisible(true);
+  }
+
   private followCamera(snap: boolean): void {
     const s = this.session.state;
     const j = tuningStore.get().juice;
@@ -226,6 +257,7 @@ export class GameScene extends Phaser.Scene {
     this.tint.setFillStyle(Palette.hollow, scale < 1 ? 0.28 : 0);
     this.world.draw(this.session, this.fx, this.time.now, delta * scale, this.controls.crosshair());
     this.fx.update(delta * scale, delta);
+    this.updatePrompt();
     this.hud.draw(this.session.run, delta);
 
     if (this.bannerLife > 0) {

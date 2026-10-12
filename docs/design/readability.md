@@ -49,14 +49,17 @@ particles, text, dev panels):
   player's opening. The shell on the sprite shows the same state: one crack below 100%, three
   below 30%, fragments once broken.
 - **Hook-thrust (heavy).** The charge is a drawn-back stance (the sprite steps 2 px away from the
-  aim) with a bright pixel growing at the hook tip, 1 → 3 px, in `hollow-light` (at full charge
-  the same color as a full health bar, never spark-glow). The thrust is a **straight line** hitbox
+  aim) with the **charge spark** from `hookblade-fx` at the hook tip: `spark_0` as the charge
+  starts, `spark_1` through the window, `spark_2` held at full charge; `spark-amber`, the full
+  charge in `husk-core` (never spark-glow). The thrust is a **straight line** hitbox
   flash along the aim, as wide as the hitbox, in `hollow-light` with the player outline, where the
   light attack is an arc. A held Husk shows **pinned on the line**: the line runs out to it for the
   hold, and a `hollow-light` ring snaps shut on it.
-- **Haul.** A chain of 3 px `hollow-light` links (player outline) drawn out one per 16 px of travel
-  from the hand to the hook head, a 4 px hook glyph at the end. On a hit the chain goes **taut**: a
-  straight `spark-amber` line under the links while the target, or the player, slides along it.
+- **Haul.** The chain and hook are the `hookblade-fx` sheet (`packages/shared/assets`), white on
+  transparent and tinted at draw time: one `chain_link` per 16 px from the hand to the hook, the
+  `hook` cell rotated to the throw angle around its shank end, all in `hollow-light` with a 1 px
+  player outline. On a hit every link swaps to `chain_link_taut` in `spark-amber`, the hook to
+  `hook_set`, over a straight `spark-amber` line while the target, or the player, slides along it.
   No new signal color: the chain is the player's weapon, so it uses the weapon's tokens.
 - **Chests.** A banded `hollow-below` box with a `dream-night` outline and a blinking
   `spark-amber` clasp; opened, the lid stands up and the inside is the Hollow.

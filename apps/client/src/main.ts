@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { replayRun, hashRunState, type AutopilotOptions, type RunRecord } from '@iot/sim';
+import { eventKeyFor, keyboardBinding } from './game/keyboard.js';
 import { Palette } from './palette.js';
 import { loadFonts } from './render/text.js';
 import { GameScene, VIEW_H, VIEW_W, type GameData } from './scenes/GameScene.js';
@@ -48,8 +49,9 @@ function startGame(): void {
 
   const panel = new TuningPanel();
   const debug = new DebugOverlay();
+  const tuningKey = eventKeyFor(keyboardBinding('tuning'));
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'F2') {
+    if (e.key === tuningKey) {
       e.preventDefault();
       panel.toggle();
     } else if (e.key === 'F3') {

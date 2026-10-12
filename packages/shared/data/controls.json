@@ -25,12 +25,21 @@
       "aim": "right-stick",
       "bindings": {
         "light": "Square",
-        "heavy": ["Triangle", "R2"],
-        "dodge": ["Cross", "L1"],
-        "ability1": ["Circle", "R1"],
+        "heavy": [
+          "Triangle",
+          "R2"
+        ],
+        "dodge": [
+          "Cross",
+          "L1"
+        ],
+        "ability1": [
+          "Circle",
+          "R1"
+        ],
         "ability2": "L2",
         "ability3": "Up",
-        "interact": "Cross",
+        "interact": "L3",
         "chartPeek": "R3",
         "journal": "Down",
         "item1": "Left",
@@ -59,14 +68,16 @@
   "keyboard": {
     "light": "LMB",
     "heavy": "RMB",
-    "dodge": "SPC",
-    "ability1": "E",
-    "ability2": "R",
-    "ability3": "T",
-    "interact": "C",
-    "chartPeek": "TAB",
-    "journal": "M",
+    "dodge": "Space",
+    "ability1": "1",
+    "ability2": "2",
+    "ability3": "3",
     "item1": "Q",
-    "item2": "F"
+    "item2": "F",
+    "interact": "E",
+    "chartPeek": "Tab",
+    "journal": "J",
+    "menu": "Esc",
+    "tuning": "F2"
   }
 }

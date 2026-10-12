@@ -52,6 +52,12 @@ export const Palette = {
   playerHair: T.unwrittenTar,
   playerTrousers: T.hollowBelow,
   blade: T.hollowLight,
+  // Hookblade FX (hookblade-fx sheet, tinted at draw time)
+  chain: T.hollowLight,
+  chainOutline: T.dreamNight,
+  chainTaut: T.sparkAmber,
+  chargeSpark: T.sparkAmber,
+  chargeSparkFull: T.huskCore,
   // Husks
   huskOutline: T.hollowDeep,
   shell: T.huskShell,

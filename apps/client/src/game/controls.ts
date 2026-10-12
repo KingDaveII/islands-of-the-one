@@ -2,13 +2,35 @@ import type Phaser from 'phaser';
 import type { ControlAction, ControlPreset } from '@iot/shared';
 import { Button, encodeInput, type TickInput } from '@iot/sim';
 import { controlsStore } from './controlsStore.js';
-import { buttonsFor, hints, softLock, TRIGGER_BUTTONS, TRIGGER_THRESHOLD } from './gamepad.js';
+import {
+  buttonsFor,
+  hintFrom,
+  padFamily,
+  softLock,
+  TRIGGER_BUTTONS,
+  TRIGGER_THRESHOLD,
+  type Hint,
+  type HintSource,
+} from './gamepad.js';
+import { KEYBOARD_ACTIONS, keyboardBinding, keyCodeFor, MOUSE_BUTTONS } from './keyboard.js';
 import { keyboardMove, quantizeAngle, quantizeMove } from './quantize.js';
 
 const STICK_DEADZONE = 0.2;
 const AIM_DEADZONE = 0.35;
 
 export type AimSource = 'mouse' | 'gamepad';
+type MouseSide = 'left' | 'right';
+
+/** Sim button a press of an action latches; heavy is a held state and the rest have no sim button yet. */
+const PRESS_BUTTON: Partial<Record<ControlAction, number>> = {
+  light: Button.Light,
+  dodge: Button.Dodge,
+  ability1: Button.Ability1,
+  ability2: Button.Ability2,
+  ability3: Button.Ability3,
+  item1: Button.Item1,
+  item2: Button.Item2,
+};
 
 /** What the sampler needs to know about the world this tick. */
 export interface SampleContext {
@@ -23,46 +45,60 @@ export interface SampleContext {
 /**
  * Collects keyboard, mouse and gamepad (browser Gamepad API) input and turns
  * it into one packed sim input per tick. Presses are latched between ticks so
- * none are lost when a frame runs zero or several sim steps. Gamepad bindings
- * come from the active preset (controls.json); keyboard/mouse are fixed.
+ * none are lost when a frame runs zero or several sim steps. Every binding is
+ * data (controls.json): the gamepad's from the active preset, the keyboard's
+ * and mouse's from the `keyboard` block.
  */
 export class Controls {
   private latched = 0;
   private aim = 0;
   private aimSource: AimSource = 'mouse';
   private prevPadButtons: boolean[] = [];
-  private keys: Record<string, Phaser.Input.Keyboard.Key>;
-  private mouseHeavy = false;
+  private moveKeys: Record<string, Phaser.Input.Keyboard.Key>;
+  private actionKeys: Partial<Record<ControlAction, Phaser.Input.Keyboard.Key>> = {};
+  private mouseActions: Partial<Record<MouseSide, ControlAction>> = {};
+  private mouseDown: Record<MouseSide, boolean> = { left: false, right: false };
   private pointer: { x: number; y: number } | null = null;
+  private padId = '';
   lastInput: TickInput = { aim: 0, moveDir: 0, moveMag: 0, buttons: 0 };
   gamepadConnected = false;
 
   constructor(private readonly scene: Phaser.Scene) {
     const kb = scene.input.keyboard;
     if (!kb) throw new Error('keyboard input unavailable');
-    this.keys = kb.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,J,K,Q,E,R,T,F,SPACE,SHIFT', true) as Record<
-      string,
-      Phaser.Input.Keyboard.Key
-    >;
+    this.moveKeys = kb.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT', true) as Record<string, Phaser.Input.Keyboard.Key>;
     const press = (bit: number) => () => {
       this.latched |= bit;
     };
-    this.keys.J?.on('down', press(Button.Light));
-    this.keys.SPACE?.on('down', press(Button.Dodge));
-    this.keys.SHIFT?.on('down', press(Button.Dodge));
-    this.keys.E?.on('down', press(Button.Ability1));
-    this.keys.R?.on('down', press(Button.Ability2));
-    this.keys.T?.on('down', press(Button.Ability3));
-    this.keys.Q?.on('down', press(Button.Item1));
-    this.keys.F?.on('down', press(Button.Item2));
+    for (const action of KEYBOARD_ACTIONS) {
+      const binding = keyboardBinding(action);
+      const side = MOUSE_BUTTONS[binding];
+      if (side) {
+        this.mouseActions[side] = action;
+        continue;
+      }
+      const code = keyCodeFor(binding);
+      if (code === undefined) continue;
+      // Captured keys (Tab, F2, Space) never reach the browser's defaults.
+      const key = kb.addKey(code, true);
+      this.actionKeys[action] = key;
+      const bit = PRESS_BUTTON[action];
+      if (bit !== undefined) key.on('down', press(bit));
+    }
 
     scene.input.mouse?.disableContextMenu();
+    const side = (p: Phaser.Input.Pointer): MouseSide | null => (p.button === 0 ? 'left' : p.button === 2 ? 'right' : null);
     scene.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      if (p.rightButtonDown()) this.mouseHeavy = true;
-      else if (p.leftButtonDown()) this.latched |= Button.Light;
+      const s = side(p);
+      if (!s) return;
+      this.mouseDown[s] = true;
+      const action = this.mouseActions[s];
+      const bit = action ? PRESS_BUTTON[action] : undefined;
+      if (bit !== undefined) this.latched |= bit;
     });
     scene.input.on('pointerup', (p: Phaser.Input.Pointer) => {
-      if (!p.rightButtonDown()) this.mouseHeavy = false;
+      const s = side(p);
+      if (s) this.mouseDown[s] = false;
     });
     scene.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       this.pointer = { x: p.worldX, y: p.worldY };
@@ -75,9 +111,21 @@ export class Controls {
     return controlsStore.get();
   }
 
-  /** Key/glyph hints for the device in use: the preset's glyphs on a gamepad, else the keyboard. */
-  hints(): Record<ControlAction, string> {
-    return hints(this.gamepadConnected ? this.preset : 'keyboard');
+  /** Where hints come from: the pad preset (in the pad's glyph family) while a pad is connected, else the keyboard. */
+  hintSource(): HintSource {
+    return this.gamepadConnected ? { preset: this.preset, family: padFamily(this.padId) } : 'keyboard';
+  }
+
+  /** The hint for an action from the device in use. */
+  hint(action: ControlAction): Hint {
+    return hintFrom(this.hintSource(), action);
+  }
+
+  /** Whether an action's keyboard key or mouse button is down right now (held actions: heavy, chart peek). */
+  held(action: ControlAction): boolean {
+    if (this.actionKeys[action]?.isDown) return true;
+    for (const s of ['left', 'right'] as const) if (this.mouseActions[s] === action && this.mouseDown[s]) return true;
+    return false;
   }
 
   /** World-space crosshair position (mouse), or null when aiming with a stick. */
@@ -93,18 +141,19 @@ export class Controls {
 
   /** Build this tick's input. `px, py` is the player position in world pixels. */
   sample(px: number, py: number, ctx: SampleContext): number {
-    const k = this.keys;
+    const k = this.moveKeys;
     let move = keyboardMove(
       Boolean(k.A?.isDown || k.LEFT?.isDown),
       Boolean(k.D?.isDown || k.RIGHT?.isDown),
       Boolean(k.W?.isDown || k.UP?.isDown),
       Boolean(k.S?.isDown || k.DOWN?.isDown),
     );
-    let held = this.mouseHeavy || Boolean(k.K?.isDown);
+    let held = this.held('heavy');
 
     const pad = navigator.getGamepads().find((g): g is Gamepad => g !== null && g.connected);
     this.gamepadConnected = Boolean(pad);
     if (pad) {
+      this.padId = pad.id;
       const preset = this.preset;
       const lx = pad.axes[0] ?? 0;
       const ly = pad.axes[1] ?? 0;

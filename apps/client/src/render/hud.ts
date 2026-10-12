@@ -1,8 +1,10 @@
 import type Phaser from 'phaser';
+import type { ControlAction } from '@iot/shared';
 import { TICK_HZ, type Run } from '@iot/sim';
 import type { Controls } from '../game/controls.js';
 import { Palette } from '../palette.js';
 import { chargeStage } from './charge.js';
+import { HintRow } from './hint.js';
 import { label, place } from './text.js';
 import { abilitySlot, healthBar, icon, panel, tierPips, type IconKind } from './ui.js';
 
@@ -14,6 +16,8 @@ const PAD = 4;
 const SLOT = 20;
 const SMALL = 14;
 const SLOT_GAP = 4;
+/** Height of the key-hint row under the slots: a 1× controller glyph. */
+const HINT_H = 12;
 const READY_FLASH_MS = 200;
 
 const ABILITY_ICONS: Record<string, IconKind> = { haul: 'haul', 'the-catch': 'catch', 'turning-blade': 'sweep' };
@@ -26,19 +30,20 @@ const ITEM_ICONS: Record<string, IconKind> = { ration: 'ration' };
  * - bottom left: the weapon (light combo, heavy charge, 3 ability slots),
  * - top right: room counter,
  * - bottom right: Sparkglass.
- * Key hints are text labels from the active control preset (gamepad) or the
- * keyboard, until a glyph sheet exists. Party portraits only show in a party.
+ * Key hints are controller glyphs (the sheet in packages/shared/assets) from
+ * the active control preset while a pad is connected, else the keyboard keys;
+ * a binding with no glyph shows its label. Party portraits only show in a party.
  */
 export class Hud {
   private readonly g: Phaser.GameObjects.Graphics;
   private readonly hpText: Phaser.GameObjects.Text;
-  private readonly dodgeKey: Phaser.GameObjects.Text;
-  private readonly itemKeys: Phaser.GameObjects.Text[];
+  private readonly dodgeKey: HintRow;
+  private readonly itemKeys: HintRow[];
   private readonly itemCounts: Phaser.GameObjects.Text[];
   private readonly room: Phaser.GameObjects.Text;
   private readonly spark: Phaser.GameObjects.Text;
   private readonly weaponName: Phaser.GameObjects.Text;
-  private readonly keys: Phaser.GameObjects.Text[];
+  private readonly keys: HintRow[];
   private readonly secs: Phaser.GameObjects.Text[];
   private lagHp = -1;
   private readyUntil: number[] = [0, 0, 0, 0];
@@ -55,29 +60,25 @@ export class Hud {
   ) {
     this.g = scene.add.graphics();
     this.hpText = label(scene, 0, 0, '100');
-    this.dodgeKey = label(scene, 0, 0, '', Palette.uiInkMuted);
+    this.dodgeKey = new HintRow(scene);
     this.room = label(scene, 0, 0, 'ROOM 1/3');
     this.spark = label(scene, 0, 0, '0');
     this.weaponName = label(scene, 0, 0, weaponName.toUpperCase());
     const abilities = run.params.weapon.abilities;
-    this.keys = [
-      label(scene, 0, 0, '', Palette.uiInkMuted),
-      label(scene, 0, 0, '', Palette.uiInkMuted),
-      ...abilities.map(() => label(scene, 0, 0, '', Palette.uiInkMuted)),
-    ];
+    this.keys = [new HintRow(scene), new HintRow(scene), ...abilities.map(() => new HintRow(scene))];
     this.secs = abilities.map(() => label(scene, 0, 0, ''));
-    this.itemKeys = run.state.player.items.map(() => label(scene, 0, 0, '', Palette.uiInkMuted));
+    this.itemKeys = run.state.player.items.map(() => new HintRow(scene));
     this.itemCounts = run.state.player.items.map(() => label(scene, 0, 0, ''));
     layer.add([
       this.g,
       this.hpText,
-      this.dodgeKey,
+      this.dodgeKey.container,
       this.room,
       this.spark,
       this.weaponName,
-      ...this.keys,
+      ...this.keys.map((k) => k.container),
       ...this.secs,
-      ...this.itemKeys,
+      ...this.itemKeys.map((k) => k.container),
       ...this.itemCounts,
     ]);
     this.syncHints(run);
@@ -85,19 +86,22 @@ export class Hud {
 
   /** Key hints follow the device in use (gamepad preset glyphs or keyboard keys). */
   private syncHints(run: Run): void {
-    const h = this.controls.hints();
-    const set = (t: Phaser.GameObjects.Text | undefined, v: string): void => {
-      if (t && t.text !== v) t.setText(v);
+    const set = (row: HintRow | undefined, action: ControlAction): void => {
+      row?.setHint(this.controls.hint(action));
     };
-    set(this.dodgeKey, h.dodge);
-    set(this.keys[0], h.light);
-    set(this.keys[1], h.heavy);
-    const abilityHints = [h.ability1, h.ability2, h.ability3];
+    set(this.dodgeKey, 'dodge');
+    set(this.keys[0], 'light');
+    set(this.keys[1], 'heavy');
+    const abilityActions: ControlAction[] = ['ability1', 'ability2', 'ability3'];
     run.params.weapon.abilities.forEach((a, i) => {
-      set(this.keys[2 + i], a.locked ? '' : (abilityHints[i] ?? ''));
+      const row = this.keys[2 + i];
+      const action = abilityActions[i];
+      if (!row) return;
+      if (a.locked || !action) row.setItems([]);
+      else set(row, action);
     });
-    set(this.itemKeys[0], h.item1);
-    set(this.itemKeys[1], h.item2);
+    set(this.itemKeys[0], 'item1');
+    set(this.itemKeys[1], 'item2');
   }
 
   /** Lights a slot's frame briefly when its cooldown comes back. */
@@ -123,7 +127,7 @@ export class Hud {
     this.lagHp = Math.max(this.lagHp, p.hp);
     if (this.hpText.text !== String(p.hp)) this.hpText.setText(String(p.hp));
     const tlW = PAD + 66 + 3 + Math.max(this.hpText.width, 18) + PAD;
-    const tlH = PAD + 8 + 3 + SMALL + 10 + PAD;
+    const tlH = PAD + 8 + 3 + SMALL + 1 + HINT_H + PAD;
     panel(g, INSET, INSET, tlW, tlH, { plain: true });
     healthBar(g, INSET + PAD, INSET + PAD, p.hp, P.player.maxHp, this.lagHp);
     place(this.hpText, INSET + PAD + 66 + 3, INSET + PAD);
@@ -133,7 +137,7 @@ export class Hud {
     const dodgeReady = this.ready(3, dodging ? 1 : p.dodgeCooldown);
     let x = INSET + PAD;
     abilitySlot(g, x, rowY, { icon: 'dodge', cooldown: dodgeCd, locked: false, ready: dodgeReady, small: true, active: dodging });
-    place(this.dodgeKey, x + SMALL / 2, rowY + SMALL + 1, 0.5);
+    this.dodgeKey.place(x + SMALL / 2, rowY + SMALL + 1, 0.5);
     x += SMALL + 3 + Math.round(this.dodgeKey.width / 2) + 6;
     // Consumable slots: icon, count and key hint; empty slots are sunken.
     p.items.forEach((item, i) => {
@@ -157,8 +161,7 @@ export class Hud {
           count.setText(t);
         }
       }
-      const key = this.itemKeys[i];
-      if (key) place(key, x + SMALL / 2, rowY + SMALL + 1, 0.5);
+      this.itemKeys[i]?.place(x + SMALL / 2, rowY + SMALL + 1, 0.5);
       x += SMALL + SLOT_GAP + 2;
     });
 
@@ -183,7 +186,7 @@ export class Hud {
     // --- Bottom left: weapon --------------------------------------------
     const abilities = P.weapon.abilities;
     const blW = PAD + SLOT * 3 + SLOT_GAP * 2 + 6 + abilities.length * SLOT + (abilities.length - 1) * SLOT_GAP + PAD;
-    const blH = PAD + 10 + SLOT + 10 + PAD;
+    const blH = PAD + 10 + SLOT + 1 + HINT_H + PAD;
     const blX = INSET;
     const blY = H - INSET - blH;
     panel(g, blX, blY, blW, blH, { plain: true });
@@ -203,7 +206,7 @@ export class Hud {
     icon(g, 'slash', x + 2, wy + 1, 12, p.action === 'light' ? Palette.uiFocus : Palette.uiInk);
     g.fillStyle(Palette.uiOutline, 1).fillRect(x + 3, wy + 13, 14, 4);
     for (let i = 0; i < n; i++) g.fillStyle(i < done ? Palette.spark : Palette.uiBevel, 1).fillRect(x + 4 + i * 4, wy + 14, 3, 2);
-    place(this.keys[0] ?? this.weaponName, x + SLOT / 2, wy + SLOT + 1, 0.5);
+    this.keys[0]?.place(x + SLOT / 2, wy + SLOT + 1, 0.5);
     x += SLOT + SLOT_GAP;
 
     // Heavy (the Hook-thrust): charge meter, 3 stages across the charge window; all bright at full charge.
@@ -216,7 +219,7 @@ export class Hud {
       const on = i < stage;
       g.fillStyle(on ? (stage === 3 ? Palette.healthFill : Palette.spark) : Palette.uiBevel, 1).fillRect(x + 4 + i * 4, wy + 14, 3, 2);
     }
-    place(this.keys[1] ?? this.weaponName, x + SLOT / 2, wy + SLOT + 1, 0.5);
+    this.keys[1]?.place(x + SLOT / 2, wy + SLOT + 1, 0.5);
     x += SLOT + 6;
 
     // Ability slots: own cooldown each, sweep + whole seconds; locked slots show a lock.
@@ -240,8 +243,7 @@ export class Hud {
           g.fillStyle(Palette.uiOutline, 1).fillRect(secs.x - 1, secs.y - 1, secs.width + 2, 9);
         }
       }
-      const key = this.keys[2 + i];
-      if (key) place(key, x + SLOT / 2, wy + SLOT + 1, 0.5);
+      this.keys[2 + i]?.place(x + SLOT / 2, wy + SLOT + 1, 0.5);
       x += SLOT + SLOT_GAP;
     });
   }
