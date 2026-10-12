@@ -42,6 +42,19 @@ export function heavyTiming(P: Params, charge: number): Timing & { step: number 
   return { ...h.charged, armorStart: 0, armorEnd: 0 };
 }
 
+/**
+ * True while a light is in its recovery but the chain point has not come yet:
+ * the next light must wait `lightChainTicks` of the recovery (the delay that
+ * evens out the light cadence between input devices), everything else may
+ * cancel from the first recovery tick.
+ */
+export function beforeChainPoint(p: PlayerState, P: Params): boolean {
+  if (p.action !== 'light') return false;
+  const st = lightStrike(P, p.comboStep);
+  const recoveryStart = st.startup + st.active + 1;
+  return p.t >= recoveryStart && p.t < recoveryStart + P.lightChainTicks;
+}
+
 /** Timing of the attack or ability the player is performing, or null (dodge has its own rules). */
 export function playerMove(p: PlayerState, P: Params): Timing | null {
   switch (p.action) {

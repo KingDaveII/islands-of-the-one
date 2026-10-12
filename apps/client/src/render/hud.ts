@@ -21,8 +21,37 @@ const SLOT_GAP = 4;
 const HINT_H = GLYPH_SIZE;
 const READY_FLASH_MS = 200;
 
-const ABILITY_ICONS: Record<string, IconKind> = { haul: 'haul', 'the-catch': 'catch', 'turning-blade': 'sweep' };
+const ABILITY_ICONS: Record<string, IconKind> = {
+  haul: 'haul',
+  'the-catch': 'catch',
+  'turning-blade': 'sweep',
+};
 const ITEM_ICONS: Record<string, IconKind> = { ration: 'ration' };
+
+export type Corner = 'tl' | 'tr' | 'bl' | 'br';
+const CORNERS: Corner[] = ['tl', 'tr', 'bl', 'br'];
+/** A panel's screen rectangle (game px), outline and drop shadow included. */
+export interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+/** The screen rectangle of a body (the player, a hostile) the panels must not hide. */
+export type BodyRect = Rect;
+/** A panel stays dithered this long after a body was last behind it, so it never flickers at the edge. */
+const BEHIND_HOLD_MS = 120;
+
+/** How far the HUD's corner panels reach in from each screen edge: the camera keeps the room's corners outside them (GameScene). */
+export interface SafeMargins {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
+const overlaps = (a: Rect, b: Rect): boolean =>
+  a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
 /**
  * Screen-space HUD at the four corners (the center of the screen stays clear
@@ -36,7 +65,17 @@ const ITEM_ICONS: Record<string, IconKind> = { ration: 'ration' };
  * a binding with no glyph shows its label. Party portraits only show in a party.
  */
 export class Hud {
-  private readonly g: Phaser.GameObjects.Graphics;
+  /** One Graphics per corner. */
+  private readonly g: Record<Corner, Phaser.GameObjects.Graphics>;
+  /** Until when each corner's panel is drawn dithered (a body was behind it). */
+  private readonly behindUntil: Record<Corner, number> = { tl: 0, tr: 0, bl: 0, br: 0 };
+  /** The panel rectangle each corner drew last frame. */
+  private readonly rects: Record<Corner, Rect> = {
+    tl: { x: 0, y: 0, w: 0, h: 0 },
+    tr: { x: 0, y: 0, w: 0, h: 0 },
+    bl: { x: 0, y: 0, w: 0, h: 0 },
+    br: { x: 0, y: 0, w: 0, h: 0 },
+  };
   private readonly hpText: Phaser.GameObjects.Text;
   private readonly dodgeKey: HintRow;
   private readonly itemKeys: HintRow[];
@@ -61,19 +100,28 @@ export class Hud {
     weaponName: string,
     private readonly controls: Controls,
   ) {
-    this.g = scene.add.graphics();
+    this.g = {
+      tl: scene.add.graphics(),
+      tr: scene.add.graphics(),
+      bl: scene.add.graphics(),
+      br: scene.add.graphics(),
+    };
     this.hpText = label(scene, 0, 0, '100');
     this.dodgeKey = new HintRow(scene);
     this.room = label(scene, 0, 0, 'ROOM 1/3');
     this.spark = label(scene, 0, 0, '0');
     this.weaponName = label(scene, 0, 0, weaponName.toUpperCase());
     const abilities = run.params.weapon.abilities;
-    this.keys = [new HintRow(scene), new HintRow(scene), ...abilities.map(() => new HintRow(scene))];
+    this.keys = [
+      new HintRow(scene),
+      new HintRow(scene),
+      ...abilities.map(() => new HintRow(scene)),
+    ];
     this.secs = abilities.map(() => label(scene, 0, 0, ''));
     this.itemKeys = run.state.player.items.map(() => new HintRow(scene));
     this.itemCounts = run.state.player.items.map(() => label(scene, 0, 0, ''));
     layer.add([
-      this.g,
+      ...CORNERS.map((c) => this.g[c]),
       this.hpText,
       this.dodgeKey.container,
       this.room,
@@ -85,6 +133,47 @@ export class Hud {
       ...this.itemCounts,
     ]);
     this.syncHints(run);
+  }
+
+  /**
+   * How far the corner panels reach in from each screen edge (their extents,
+   * drop shadow included), from the latest draw. The camera may scroll past
+   * the room's edges by this much, so a player in a room corner is always in
+   * the clear area (docs/design/readability.md §3).
+   */
+  safeMargins(): SafeMargins {
+    const r = this.rects;
+    return {
+      left: Math.max(r.tl.x + r.tl.w, r.bl.x + r.bl.w),
+      right: W - Math.min(r.tr.x, r.br.x),
+      top: Math.max(r.tl.y + r.tl.h, r.tr.y + r.tr.h),
+      bottom: H - Math.min(r.bl.y, r.br.y),
+    };
+  }
+
+  /** The panel rectangles drawn last frame, by corner. */
+  panelRects(): Readonly<Record<Corner, Rect>> {
+    return this.rects;
+  }
+
+  /**
+   * A corner's panel: solid, or a 50 % checkerboard dither of its fill and
+   * frame while the player or a hostile is behind it, so the room shows
+   * through. The ink, bars, icons and glyphs on it stay solid
+   * (docs/design/readability.md §3).
+   */
+  private panelAt(corner: Corner, x: number, y: number, w: number, h: number): void {
+    // The panel's drop shadow adds a pixel below.
+    this.rects[corner] = { x, y, w, h: h + 1 };
+    panel(this.g[corner], x, y, w, h, { plain: true, dither: this.behindUntil[corner] > this.now });
+  }
+
+  /** Note which panels a body is behind this frame (against last frame's rectangles). */
+  private markBehind(bodies: readonly BodyRect[]): void {
+    for (const c of CORNERS) {
+      if (bodies.some((b) => overlaps(b, this.rects[c])))
+        this.behindUntil[c] = this.now + BEHIND_HOLD_MS;
+    }
   }
 
   /** Key hints follow the device in use (gamepad preset glyphs or keyboard keys) and the input context; rebuilt only when those change. */
@@ -116,19 +205,22 @@ export class Hud {
 
   /** Lights a slot's frame briefly when its cooldown comes back. */
   private ready(i: number, cooldown: number): boolean {
-    if (cooldown === 0 && (this.prevCooldown[i] ?? 0) > 0) this.readyUntil[i] = this.now + READY_FLASH_MS;
+    if (cooldown === 0 && (this.prevCooldown[i] ?? 0) > 0)
+      this.readyUntil[i] = this.now + READY_FLASH_MS;
     this.prevCooldown[i] = cooldown;
     return (this.readyUntil[i] ?? 0) > this.now;
   }
 
-  draw(run: Run, dtMs: number): void {
+  /** Draw the HUD. `bodies` are the screen rectangles of the player and the hostiles: a panel one is behind is dithered. */
+  draw(run: Run, dtMs: number, bodies: readonly BodyRect[] = []): void {
     this.now += dtMs;
     this.syncHints(run);
+    this.markBehind(bodies);
     const s = run.state;
     const P = run.params;
     const p = s.player;
-    const g = this.g;
-    g.clear();
+    for (const c of CORNERS) this.g[c].clear();
+    let g = this.g.tl;
 
     // --- Top left: HP + dodge + consumables ----------------------------
     if (this.lagHp < 0) this.lagHp = p.hp;
@@ -138,7 +230,7 @@ export class Hud {
     if (this.hpText.text !== String(p.hp)) this.hpText.setText(String(p.hp));
     const tlW = PAD + 66 + 3 + Math.max(this.hpText.width, 18) + PAD;
     const tlH = PAD + 8 + 3 + SMALL + 1 + HINT_H + PAD;
-    panel(g, INSET, INSET, tlW, tlH, { plain: true });
+    this.panelAt('tl', INSET, INSET, tlW, tlH);
     healthBar(g, INSET + PAD, INSET + PAD, p.hp, P.player.maxHp, this.lagHp);
     place(this.hpText, INSET + PAD + 66 + 3, INSET + PAD);
     const rowY = INSET + PAD + 11;
@@ -146,7 +238,14 @@ export class Hud {
     const dodgeCd = dodging ? 1 : P.dodge.cooldown > 0 ? p.dodgeCooldown / P.dodge.cooldown : 0;
     const dodgeReady = this.ready(3, dodging ? 1 : p.dodgeCooldown);
     let x = INSET + PAD;
-    abilitySlot(g, x, rowY, { icon: 'dodge', cooldown: dodgeCd, locked: false, ready: dodgeReady, small: true, active: dodging });
+    abilitySlot(g, x, rowY, {
+      icon: 'dodge',
+      cooldown: dodgeCd,
+      locked: false,
+      ready: dodgeReady,
+      small: true,
+      active: dodging,
+    });
     this.dodgeKey.place(x + SMALL / 2, rowY + SMALL + 1, 0.5);
     x += SMALL + 3 + Math.round(this.dodgeKey.width / 2) + 6;
     // Consumable slots: icon, count and key hint; empty slots are sunken.
@@ -178,8 +277,9 @@ export class Hud {
     // --- Top right: room counter ----------------------------------------
     const roomText = `ROOM ${s.roomIndex + 1}/${P.run.rooms.length}`;
     if (this.room.text !== roomText) this.room.setText(roomText);
+    g = this.g.tr;
     const trW = PAD + this.room.width + PAD;
-    panel(g, W - INSET - trW, INSET, trW, PAD + 8 + PAD, { plain: true });
+    this.panelAt('tr', W - INSET - trW, INSET, trW, PAD + 8 + PAD);
     place(this.room, W - INSET - trW + PAD, INSET + PAD);
 
     // --- Bottom right: Sparkglass ---------------------------------------
@@ -189,17 +289,26 @@ export class Hud {
     const brH = PAD + 10 + PAD;
     const brX = W - INSET - brW;
     const brY = H - INSET - brH;
-    panel(g, brX, brY, brW, brH, { plain: true });
+    g = this.g.br;
+    this.panelAt('br', brX, brY, brW, brH);
     icon(g, 'spark', brX + PAD, brY + PAD, 10, Palette.spark);
     place(this.spark, brX + PAD + 13, brY + PAD + 1);
 
     // --- Bottom left: weapon --------------------------------------------
     const abilities = P.weapon.abilities;
-    const blW = PAD + SLOT * 3 + SLOT_GAP * 2 + 6 + abilities.length * SLOT + (abilities.length - 1) * SLOT_GAP + PAD;
+    const blW =
+      PAD +
+      SLOT * 3 +
+      SLOT_GAP * 2 +
+      6 +
+      abilities.length * SLOT +
+      (abilities.length - 1) * SLOT_GAP +
+      PAD;
     const blH = PAD + 10 + SLOT + 1 + HINT_H + PAD;
     const blX = INSET;
     const blY = H - INSET - blH;
-    panel(g, blX, blY, blW, blH, { plain: true });
+    g = this.g.bl;
+    this.panelAt('bl', blX, blY, blW, blH);
     place(this.weaponName, blX + PAD, blY + PAD);
     tierPips(g, blX + blW - PAD - 18, blY + PAD + 2, 1);
     const wy = blY + PAD + 10;
@@ -212,10 +321,23 @@ export class Hud {
     // Light: combo pips (filled = hits done in this chain).
     this.slotFrame(g, x, wy, p.action === 'light');
     const n = P.weapon.light.length;
-    const done = p.action === 'light' ? p.comboStep + 1 : p.comboTimer > 0 ? p.nextCombo : p.haulCombo > 0 ? n - 1 : 0;
+    const done =
+      p.action === 'light'
+        ? p.comboStep + 1
+        : p.comboTimer > 0
+          ? p.nextCombo
+          : p.haulCombo > 0
+            ? n - 1
+            : 0;
     icon(g, 'slash', x + 2, wy + 1, 12, p.action === 'light' ? Palette.uiFocus : Palette.uiInk);
     g.fillStyle(Palette.uiOutline, 1).fillRect(x + 3, wy + 13, 14, 4);
-    for (let i = 0; i < n; i++) g.fillStyle(i < done ? Palette.spark : Palette.uiBevel, 1).fillRect(x + 4 + i * 4, wy + 14, 3, 2);
+    for (let i = 0; i < n; i++)
+      g.fillStyle(i < done ? Palette.spark : Palette.uiBevel, 1).fillRect(
+        x + 4 + i * 4,
+        wy + 14,
+        3,
+        2,
+      );
     this.keys[0]?.place(x + SLOT / 2, wy + SLOT + 1, 0.5);
     x += SLOT + SLOT_GAP;
 
@@ -227,7 +349,10 @@ export class Hud {
     g.fillStyle(Palette.uiOutline, 1).fillRect(x + 3, wy + 13, 14, 4);
     for (let i = 0; i < 3; i++) {
       const on = i < stage;
-      g.fillStyle(on ? (stage === 3 ? Palette.healthFill : Palette.spark) : Palette.uiBevel, 1).fillRect(x + 4 + i * 4, wy + 14, 3, 2);
+      g.fillStyle(
+        on ? (stage === 3 ? Palette.healthFill : Palette.spark) : Palette.uiBevel,
+        1,
+      ).fillRect(x + 4 + i * 4, wy + 14, 3, 2);
     }
     this.keys[1]?.place(x + SLOT / 2, wy + SLOT + 1, 0.5);
     x += SLOT + 6;
@@ -261,7 +386,12 @@ export class Hud {
   /** The frame of a non-ability weapon slot (light, heavy). */
   private slotFrame(g: Phaser.GameObjects.Graphics, x: number, y: number, lit: boolean): void {
     g.fillStyle(Palette.uiOutline, 1).fillRect(x, y, SLOT, SLOT);
-    g.fillStyle(lit ? Palette.uiFocus : Palette.uiBevel, 1).fillRect(x + 1, y + 1, SLOT - 2, SLOT - 2);
+    g.fillStyle(lit ? Palette.uiFocus : Palette.uiBevel, 1).fillRect(
+      x + 1,
+      y + 1,
+      SLOT - 2,
+      SLOT - 2,
+    );
     g.fillStyle(Palette.uiPanel, 1).fillRect(x + 2, y + 2, SLOT - 4, SLOT - 4);
   }
 }

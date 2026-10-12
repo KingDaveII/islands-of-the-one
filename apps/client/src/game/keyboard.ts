@@ -19,7 +19,13 @@ export const KEYBOARD: Readonly<Record<ControlAction, ControlBinding>> = control
 export const KEYBOARD_ACTIONS: readonly ControlAction[] = Object.keys(KEYBOARD) as ControlAction[];
 
 /** Mouse buttons, by their binding name. */
-export const MOUSE_BUTTONS: Readonly<Record<string, 'left' | 'right'>> = { LMB: 'left', RMB: 'right' };
+export type MouseSide = 'left' | 'middle' | 'right';
+export const MOUSE_BUTTONS: Readonly<Record<string, MouseSide>> = { LMB: 'left', MMB: 'middle', RMB: 'right' };
+
+/** The binding name of a DOM `MouseEvent.button` (0 left, 1 middle, 2 right), or null for any other button. */
+export function mouseBindingFor(button: number): string | null {
+  return button === 0 ? 'LMB' : button === 1 ? 'MMB' : button === 2 ? 'RMB' : null;
+}
 
 const NAMED_KEYS: Record<string, number> = {
   Tab: 9,

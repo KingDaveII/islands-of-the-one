@@ -98,6 +98,8 @@ export const Palette = {
   poiseFill: T.hollowLavender,
   poiseTrack: T.hollowBelow,
   hurt: T.sparkEmber,
+  /** Damage numbers over the world: choir-flame reads 5.6:1 against the text outline, where spark-ember is 4.4:1. */
+  hurtInk: T.choirFlame,
   // Writ letters (Old Letters), one color per letter state.
   writLit: T.hollowLight,
   writDim: T.hollowDusk,

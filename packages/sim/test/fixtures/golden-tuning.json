@@ -28,6 +28,7 @@
   },
   "input": {
     "bufferMs": 120,
+    "lightChainMs": 30,
     "calmDelayMs": 500
   },
   "softlock": {

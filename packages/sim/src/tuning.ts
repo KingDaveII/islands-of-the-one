@@ -255,6 +255,12 @@ export interface Tuning {
   };
   input: {
     bufferMs: number;
+    /**
+     * A light's recovery can be cancelled into the next light only once this
+     * much of it has passed (dodge, heavy and abilities still cancel on its
+     * first tick), so a bumper and a mouse reach the same top light cadence.
+     */
+    lightChainMs: number;
     /** The room turns Calm this long after the last awake hostile dies (docs/design/controls.md). */
     calmDelayMs: number;
   };
@@ -430,6 +436,8 @@ export interface Params {
   dodge: { startup: number; active: number; recovery: number; speed: number; cooldown: number; exitSpeed: number };
   perfect: { window: number; margin: number; slowmo: number; slowmoScale: number; bonus: number; cooldownRefund: number };
   bufferTicks: number;
+  /** Ticks of a light's recovery that must pass before the next light may start. */
+  lightChainTicks: number;
   /** Ticks after the last awake hostile dies before the input context turns Calm. */
   calmDelayTicks: number;
   weapon: {
@@ -660,6 +668,7 @@ export function compileTuning(t: Tuning, weaponId: string): Params {
       cooldownRefund: msToTicks(t.perfectDodge.cooldownRefundMs),
     },
     bufferTicks: msToTicks(t.input.bufferMs),
+    lightChainTicks: msToTicks(t.input.lightChainMs),
     calmDelayTicks: Math.max(0, msToTicks(t.input.calmDelayMs)),
     weapon: {
       id: weaponId,

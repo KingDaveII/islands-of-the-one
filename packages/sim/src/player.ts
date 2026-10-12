@@ -15,7 +15,16 @@ import {
 } from './combat.js';
 import { idiv, length } from './fixed.js';
 import { Button, MOVE_MAG_MAX, moveDirToAngle, type TickInput } from './input.js';
-import { abilityAt, heavyTiming, isCharged, lightStrike, playerAttackPhase, strikePhase, type StrikePhase } from './moves.js';
+import {
+  abilityAt,
+  beforeChainPoint,
+  heavyTiming,
+  isCharged,
+  lightStrike,
+  playerAttackPhase,
+  strikePhase,
+  type StrikePhase,
+} from './moves.js';
 import type { Ability, Haul, Params, Strike } from './tuning.js';
 import type { BufferedAction, HuskState, PlayerState } from './state.js';
 import { atan2, dirX, dirY } from './trig.js';
@@ -47,13 +56,15 @@ export function heavyHit(P: Params, charge: number): Hit {
   };
 }
 
-export type Intent = 'attack' | 'ability' | 'dodge';
+export type Intent = 'light' | 'heavy' | 'ability' | 'dodge';
 
 /**
  * Cancel rules: what may start now, given the current move.
  *
  * - idle: anything.
- * - light / heavy recovery: the next light, a heavy, an ability or a dodge.
+ * - light recovery: a heavy, an ability or a dodge from its first tick; the
+ *   next light only once `lightChainTicks` of the recovery have passed.
+ * - heavy recovery: the next light, a heavy, an ability or a dodge.
  * - ability recovery: only a dodge.
  * - charging a heavy: only a dodge.
  * - startup / active of any move, dodge, hurt: nothing (presses stay buffered).
@@ -65,6 +76,7 @@ export function canStart(p: PlayerState, P: Params, intent: Intent): boolean {
     case 'charge':
       return intent === 'dodge';
     case 'light':
+      return playerAttackPhase(p, P) === 'recovery' && !(intent === 'light' && beforeChainPoint(p, P));
     case 'heavy':
       return playerAttackPhase(p, P) === 'recovery';
     case 'ability':
@@ -165,11 +177,11 @@ function tryAction(ctx: Ctx, action: BufferedAction): boolean {
       startDodge(ctx);
       return true;
     case 'light':
-      if (!canStart(p, P, 'attack')) return false;
+      if (!canStart(p, P, 'light')) return false;
       startLight(ctx);
       return true;
     case 'heavy':
-      if (!canStart(p, P, 'attack')) return false;
+      if (!canStart(p, P, 'heavy')) return false;
       startCharge(p);
       return true;
     default: {
@@ -552,6 +564,8 @@ export function updatePlayer(ctx: Ctx, input: TickInput): void {
     if (tryAction(ctx, p.buffer)) {
       p.buffer = 'none';
       p.bufferAge = 0;
+    } else if (p.buffer === 'light' && beforeChainPoint(p, P)) {
+      // A buffered light waits for the chain point without aging: the wait may be longer than the buffer.
     } else if (++p.bufferAge > P.bufferTicks) {
       p.buffer = 'none';
       p.bufferAge = 0;

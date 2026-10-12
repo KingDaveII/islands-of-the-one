@@ -75,7 +75,9 @@ export class Session {
     const p = s.player;
     const soft = this.run.tuning.softlock;
     return {
-      enemies: s.husks.filter((h) => h.core > 0 && h.action !== 'spawn').map((h) => ({ dx: (h.x - p.x) / SUB, dy: (h.y - p.y) / SUB })),
+      enemies: s.husks
+        .filter((h) => h.core > 0 && h.action !== 'spawn')
+        .map((h) => ({ id: h.id, dx: (h.x - p.x) / SUB, dy: (h.y - p.y) / SUB })),
       context: s.context,
       softLockDeg: this.controls.preset.aim === 'left-stick' ? soft.leftStickAngleDeg : soft.angleDeg,
     };

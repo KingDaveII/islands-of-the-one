@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
 import type { ControlAction } from '@iot/shared';
+import { deviceStore } from '../game/activeDevice.js';
 import { controlsStore } from '../game/controlsStore.js';
-import { connectedPad, hintFrom, padFamily, type PadFamily } from '../game/gamepad.js';
+import { hintFrom, MENU_BUTTONS, padEdges, type PadFamily } from '../game/gamepad.js';
 import { keyboardBinding, keyCodeFor } from '../game/keyboard.js';
-import { Palette } from '../palette.js';
-import { HintRow } from '../render/hint.js';
+import { css, Palette } from '../palette.js';
+import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
+import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { body, label, place } from '../render/text.js';
 import { divider, panel } from '../render/ui.js';
@@ -40,16 +42,19 @@ const PAD_X = 124;
  * to switch; the choice is remembered), every binding shown as a 2× controller
  * glyph next to the keyboard/mouse key from the same data; a binding marked
  * per input context shows every key it has, its note says the context. The
- * pad glyphs follow the connected pad's family (DualSense, or Xbox). Esc or
- * Enter goes back.
+ * pad glyphs follow the connected pad's family (DualSense, or Xbox). The
+ * active device's column header is lit and the footer names its own keys;
+ * both switch live. Esc or Enter goes back, Circle on the pad.
  */
 export class ControlsScene extends Phaser.Scene {
   private g!: Phaser.GameObjects.Graphics;
   private presetName!: Phaser.GameObjects.Text;
   private aimNote!: Phaser.GameObjects.Text;
   private padRows: HintRow[] = [];
-  private prevPad: boolean[] = [];
+  private pad = { prev: [] as boolean[] };
   private family: PadFamily = 'ps';
+  private headers: { keys: Phaser.GameObjects.Text; pad: Phaser.GameObjects.Text }[] = [];
+  private footer!: HintRow;
 
   constructor() {
     super('controls');
@@ -65,8 +70,9 @@ export class ControlsScene extends Phaser.Scene {
     const cx = VIEW_W / 2;
     this.g = this.add.graphics();
     this.padRows = [];
-    this.prevPad = [];
-    this.family = this.padFamilyNow();
+    this.pad = { prev: [] };
+    this.headers = [];
+    this.family = padFamilyNow();
     place(label(this, 0, 0, 'CONTROLS', Palette.uiInk, 16), cx, 8, 0.5);
     place(label(this, 0, 0, 'GAMEPAD PRESET', Palette.uiInkMuted), cx - 180, 30);
     this.presetName = label(this, 0, 0, '', Palette.spark);
@@ -84,8 +90,10 @@ export class ControlsScene extends Phaser.Scene {
 
     for (const gx of GROUP_X) {
       place(label(this, 0, 0, 'ACTION', Palette.uiInkMuted), gx, 52);
-      place(label(this, 0, 0, 'KEYS', Palette.uiInkMuted), gx + KEYS_X, 52);
-      place(label(this, 0, 0, 'PAD', Palette.uiInkMuted), gx + PAD_X, 52);
+      this.headers.push({
+        keys: place(label(this, 0, 0, 'KEYS', Palette.uiInkMuted), gx + KEYS_X, 52),
+        pad: place(label(this, 0, 0, 'PAD', Palette.uiInkMuted), gx + PAD_X, 52),
+      });
     }
     ROWS.forEach(([action, name, note], i) => {
       const gx = GROUP_X[Math.floor(i / ROWS_PER_GROUP)] ?? 0;
@@ -96,13 +104,8 @@ export class ControlsScene extends Phaser.Scene {
       const pad = new HintRow(this, { scale: 2 }).place(gx + PAD_X, y);
       this.padRows.push(pad);
     });
-    const hint = place(
-      label(this, 0, 0, 'LEFT/RIGHT SWITCH  ·  ESC BACK', Palette.uiInk),
-      cx,
-      VIEW_H - 14,
-      0.5,
-    );
-    this.tweens.add({ targets: hint, alpha: 0.3, duration: 600, yoyo: true, repeat: -1 });
+    this.footer = new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInk });
+    this.tweens.add({ targets: this.footer.container, alpha: 0.3, duration: 600, yoyo: true, repeat: -1 });
 
     const back = () => {
       this.scene.start('start');
@@ -117,15 +120,25 @@ export class ControlsScene extends Phaser.Scene {
       controlsStore.cycle(1);
     });
     this.sync();
-    const off = controlsStore.subscribe(() => {
+    const offPreset = controlsStore.subscribe(() => {
       this.sync();
     });
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, off);
+    const offDevice = deviceStore.subscribe(() => {
+      this.sync();
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      offPreset();
+      offDevice();
+    });
   }
 
-  private padFamilyNow(): PadFamily {
-    const pad = connectedPad();
-    return pad ? padFamily(pad.id) : 'ps';
+  /** The footer for the device in use: how to switch presets and go back with it. */
+  private footerItems(): HintItem[] {
+    if (deviceStore.get() === 'gamepad') {
+      const menu = (index: number): HintItem[] => glyphs([menuGlyph(index)], this.family);
+      return [...menu(MENU_BUTTONS.left), ...menu(MENU_BUTTONS.right), word('switch  ·'), ...menu(MENU_BUTTONS.back), word('back')];
+    }
+    return [...glyphs(['Left', 'Right'], 'keyboard'), word('switch  ·'), ...glyphs([keyboardBinding('menu')], 'keyboard'), word('back')];
   }
 
   private sync(): void {
@@ -147,21 +160,25 @@ export class ControlsScene extends Phaser.Scene {
     ROWS.forEach(([action], i) => {
       this.padRows[i]?.setHint(hintFrom({ preset, family: this.family }, action));
     });
+    // The active device's column is lit; the footer names its keys; the cursor follows it.
+    const padMode = deviceStore.get() === 'gamepad';
+    for (const h of this.headers) {
+      h.keys.setColor(css(padMode ? Palette.uiInkMuted : Palette.uiFocus));
+      h.pad.setColor(css(padMode ? Palette.uiFocus : Palette.uiInkMuted));
+    }
+    this.footer.setItems(this.footerItems()).place(cx, VIEW_H - 16, 0.5);
+    menuCursor(this);
   }
 
   override update(): void {
-    // D-pad left/right (standard mapping 14/15) and Circle (1) go back.
-    const pad = connectedPad();
-    const family = pad ? padFamily(pad.id) : 'ps';
+    const family = padFamilyNow();
     if (family !== this.family) {
       this.family = family;
       this.sync();
     }
-    const now = pad ? pad.buttons.map((b) => b.pressed) : [];
-    const edge = (i: number) => (now[i] ?? false) && !(this.prevPad[i] ?? false);
-    if (edge(14)) controlsStore.cycle(-1);
-    if (edge(15)) controlsStore.cycle(1);
-    if (edge(1)) this.scene.start('start');
-    this.prevPad = now;
+    const edges = padEdges(this.pad);
+    if (edges.includes(MENU_BUTTONS.left)) controlsStore.cycle(-1);
+    if (edges.includes(MENU_BUTTONS.right)) controlsStore.cycle(1);
+    if (edges.includes(MENU_BUTTONS.back)) this.scene.start('start');
   }
 }

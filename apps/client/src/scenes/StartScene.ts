@@ -1,14 +1,15 @@
 import Phaser from 'phaser';
 import type { ControlAction } from '@iot/shared';
 import { isWeaponAvailable, type Tuning } from '@iot/sim';
-import { Controls } from '../game/controls.js';
+import { deviceStore } from '../game/activeDevice.js';
 import { controlsStore } from '../game/controlsStore.js';
-import { connectedPad, glyphsFor, padFamily, type PadFamily } from '../game/gamepad.js';
+import { glyphsFor, MENU_BUTTONS, padEdges, type PadFamily } from '../game/gamepad.js';
 import { keyboardBinding } from '../game/keyboard.js';
 import { parseSeed, randomSeed } from '../game/seed.js';
 import { tuningStore } from '../game/tuningStore.js';
 import { Palette } from '../palette.js';
 import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
+import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
 import { groundShadow } from '../render/pixels.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { body, label, place } from '../render/text.js';
@@ -22,6 +23,10 @@ const CARD_W = 136;
 const CARD_H = 104;
 const CARD_GAP = 8;
 const CARD_Y = 62;
+/** The hint panel over the shore strip: centered right of the Kindled, two 12 px rows on a 14 px pitch. */
+const HINT_PANEL_CX = 282;
+const HINT_PANEL_Y = VIEW_H - 40;
+const HINT_PANEL_PAD = 6;
 
 /**
  * Start screen: pick the run's weapon (one per run; only the Hookblade is
@@ -33,9 +38,11 @@ export class StartScene extends Phaser.Scene {
   private field!: Phaser.GameObjects.Text;
   private caret!: Phaser.GameObjects.Rectangle;
   private cards!: Phaser.GameObjects.Graphics;
-  private pad = { pad: true };
-  /** The gamepad hint line and the pad family it is drawn in (re-drawn when a pad is swapped). */
-  private padHints: HintRow | null = null;
+  private pad = { prev: [] as boolean[] };
+  /** The two hint lines (the active device's bindings, then the menu keys) and the pad family they are drawn in. */
+  private hintRows: HintRow[] = [];
+  /** The plain panel behind the hint lines (the ink needs ui-panel under it, not the pale floor). */
+  private hintPanel!: Phaser.GameObjects.Graphics;
   private padFamily: PadFamily = 'ps';
   /** Divider y per card (between stats and lore). */
   private dividers: number[] = [];
@@ -52,7 +59,7 @@ export class StartScene extends Phaser.Scene {
     registerSheetFrames(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
     this.seedText = String(randomSeed());
-    this.pad = { pad: true };
+    this.pad = { prev: [] };
     const t: Tuning = tuningStore.get();
     const roster = t.weaponRoster;
     this.weapon = roster.find((w) => isWeaponAvailable(t, w.id))?.id ?? 'hookblade';
@@ -80,12 +87,22 @@ export class StartScene extends Phaser.Scene {
         // Stats first; lore last, muted, below a divider (never italic).
         const stats = body(this, x + 10, CARD_Y + 32, weapon.blurb, Palette.uiInk, CARD_W - 20);
         this.dividers[i] = Math.round(stats.y + stats.height + 3);
-        body(this, x + 10, (this.dividers[i] ?? 0) + 4, weapon.lore, Palette.uiInkMuted, CARD_W - 20);
+        body(
+          this,
+          x + 10,
+          (this.dividers[i] ?? 0) + 4,
+          weapon.lore,
+          Palette.uiInkMuted,
+          CARD_W - 20,
+        );
       } else {
         place(label(this, 0, 0, entry.name, Palette.uiInkMuted), x + 32, CARD_Y + 9);
         body(this, x + 10, CARD_Y + 33, 'Not found yet.', Palette.uiInkMuted, CARD_W - 20);
       }
-      const zone = this.add.zone(x, CARD_Y, CARD_W, CARD_H).setOrigin(0, 0).setInteractive({ useHandCursor: available });
+      const zone = this.add
+        .zone(x, CARD_Y, CARD_W, CARD_H)
+        .setOrigin(0, 0)
+        .setInteractive({ useHandCursor: available });
       zone.on('pointerdown', () => {
         if (available) this.weapon = entry.id;
       });
@@ -116,11 +133,85 @@ export class StartScene extends Phaser.Scene {
     groundShadow(mood, 60, VIEW_H - 22, 5, 2);
     drawKindled(mood, 60, VIEW_H - 27, 2);
 
-    // Key hints as controller glyphs: the keyboard line, then the active pad preset in the connected pad's family.
-    const key = (action: ControlAction): HintItem[] => glyphs([keyboardBinding(action)], 'keyboard');
-    const connected = connectedPad();
-    this.padFamily = connected ? padFamily(connected.id) : 'ps';
-    const lines: HintItem[][] = [
+    // Key hints as controller glyphs, for the active device (keyboard+mouse or the pad preset in
+    // the connected pad's family); they switch live with the device.
+    this.padFamily = padFamilyNow();
+    this.hintPanel = this.add.graphics();
+    this.hintRows = [0, 1].map(
+      () => new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInkMuted }),
+    );
+    this.syncHints();
+    const offDevice = deviceStore.subscribe(() => {
+      this.syncHints();
+    });
+    const offPreset = controlsStore.subscribe(() => {
+      this.syncHints();
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      offDevice();
+      offPreset();
+    });
+
+    // Text entry reads DOM key events directly (Phaser's key queue is for game controls).
+    const onKey = (e: KeyboardEvent) => {
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === 'Enter') this.startRun();
+      else if (e.key === 'c' || e.key === 'C') this.scene.start('controls');
+      else if (e.key === 'Backspace') this.seedText = this.seedText.slice(0, -1);
+      else if (/^[a-z0-9]$/i.test(e.key) && this.seedText.length < MAX_SEED_LEN)
+        this.seedText += e.key.toUpperCase();
+    };
+    window.addEventListener('keydown', onKey);
+    const onPaste = (e: ClipboardEvent) => {
+      const text = (e.clipboardData?.getData('text') ?? '')
+        .replace(/[^a-z0-9]/gi, '')
+        .toUpperCase();
+      if (text) this.seedText = text.slice(0, MAX_SEED_LEN);
+    };
+    window.addEventListener('paste', onPaste);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('paste', onPaste);
+    });
+  }
+
+  /** The hint lines for the active device: its bindings, then the menu keys. */
+  private hintLines(): HintItem[][] {
+    if (deviceStore.get() === 'gamepad') {
+      const pad = controlsStore.get();
+      const padKey = (action: ControlAction): HintItem[] =>
+        glyphs(glyphsFor(pad, action), this.padFamily);
+      const menu = (index: number): HintItem[] => glyphs([menuGlyph(index)], this.padFamily);
+      return [
+        [
+          word(`${pad.name}:`),
+          ...padKey('light'),
+          word('light  ·  hold'),
+          ...padKey('heavy'),
+          word('Hook-thrust  ·'),
+          ...padKey('dodge'),
+          word('dodge  ·'),
+          ...padKey('ability1'),
+          word('Haul  ·'),
+          ...padKey('item1'),
+          ...padKey('item2'),
+          word('items  ·'),
+          word(pad.aim === 'left-stick' ? 'aim follows movement' : 'right stick aims'),
+        ],
+        [
+          ...menu(MENU_BUTTONS.confirm[0]),
+          word('start  ·'),
+          ...menu(MENU_BUTTONS.controls),
+          word('controls  ·'),
+          ...menu(MENU_BUTTONS.left),
+          ...menu(MENU_BUTTONS.right),
+          word('weapon'),
+        ],
+      ];
+    }
+    const key = (action: ControlAction): HintItem[] =>
+      glyphs([keyboardBinding(action)], 'keyboard');
+    return [
       [
         ...glyphs(['W', 'A', 'S', 'D'], 'keyboard'),
         word('move  ·'),
@@ -138,52 +229,40 @@ export class StartScene extends Phaser.Scene {
         ...key('item2'),
         word('items'),
       ],
-      this.padHintItems(),
+      [
+        ...glyphs(['Enter'], 'keyboard'),
+        word('start  ·  C controls  ·'),
+        ...glyphs([keyboardBinding('tuning')], 'keyboard'),
+        word('tuning  ·  F3 debug'),
+      ],
     ];
-    lines.forEach((items, i) => {
-      const row = new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInkMuted })
-        .setItems(items)
-        .place(cx + 20, VIEW_H - 30 + i * 14, 0.5);
-      if (i === 1) this.padHints = row;
-    });
-
-    // Text entry reads DOM key events directly (Phaser's key queue is for game controls).
-    const onKey = (e: KeyboardEvent) => {
-      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
-      if (e.key === 'Enter') this.startRun();
-      else if (e.key === 'c' || e.key === 'C') this.scene.start('controls');
-      else if (e.key === 'Backspace') this.seedText = this.seedText.slice(0, -1);
-      else if (/^[a-z0-9]$/i.test(e.key) && this.seedText.length < MAX_SEED_LEN) this.seedText += e.key.toUpperCase();
-    };
-    window.addEventListener('keydown', onKey);
-    const onPaste = (e: ClipboardEvent) => {
-      const text = (e.clipboardData?.getData('text') ?? '').replace(/[^a-z0-9]/gi, '').toUpperCase();
-      if (text) this.seedText = text.slice(0, MAX_SEED_LEN);
-    };
-    window.addEventListener('paste', onPaste);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      window.removeEventListener('keydown', onKey);
-      window.removeEventListener('paste', onPaste);
-    });
   }
 
-  /** The gamepad hint line: the active preset's buttons in the connected pad's glyph family. */
-  private padHintItems(): HintItem[] {
-    const pad = controlsStore.get();
-    const padKey = (action: ControlAction): HintItem[] => glyphs(glyphsFor(pad, action), this.padFamily);
-    return [
-      word(`Gamepad (${pad.name}):`),
-      ...padKey('light'),
-      word('light  ·  hold'),
-      ...padKey('heavy'),
-      word('Hook-thrust  ·'),
-      ...padKey('dodge'),
-      word('dodge  ·'),
-      ...padKey('ability1'),
-      word('Haul  ·  C controls  ·'),
-      ...glyphs([keyboardBinding('tuning')], 'keyboard'),
-      word('tuning  ·  F3 debug'),
-    ];
+  /**
+   * Rebuild the hint lines for the device in use, on a plain panel sized to
+   * them over the shore strip (the Kindled stands beside it), and set the
+   * cursor to match.
+   */
+  private syncHints(): void {
+    const cx = HINT_PANEL_CX;
+    this.hintLines().forEach((items, i) => {
+      this.hintRows[i]?.setItems(items).place(cx, HINT_PANEL_Y + HINT_PANEL_PAD + i * 14, 0.5);
+    });
+    const w = Math.max(...this.hintRows.map((r) => r.width)) + 2 * HINT_PANEL_PAD;
+    this.hintPanel.clear();
+    panel(this.hintPanel, Math.round(cx - w / 2), HINT_PANEL_Y, w, 2 * HINT_PANEL_PAD + 26, {
+      plain: true,
+    });
+    menuCursor(this);
+  }
+
+  /** Step the weapon choice through the roster's unlocked entries (D-pad). */
+  private cycleWeapon(delta: number): void {
+    const t: Tuning = tuningStore.get();
+    const open = t.weaponRoster.filter((w) => isWeaponAvailable(t, w.id)).map((w) => w.id);
+    if (open.length === 0) return;
+    const i = Math.max(0, open.indexOf(this.weapon));
+    this.weapon = open[(((i + delta) % open.length) + open.length) % open.length] ?? this.weapon;
   }
 
   private drawCards(): void {
@@ -191,14 +270,28 @@ export class StartScene extends Phaser.Scene {
     const roster = t.weaponRoster;
     const g = this.cards;
     g.clear();
-    const x0 = Math.round(VIEW_W / 2 - (roster.length * CARD_W + (roster.length - 1) * CARD_GAP) / 2);
+    const x0 = Math.round(
+      VIEW_W / 2 - (roster.length * CARD_W + (roster.length - 1) * CARD_GAP) / 2,
+    );
     roster.forEach((entry, i) => {
       const x = x0 + i * (CARD_W + CARD_GAP);
       const weapon = t.weapons[entry.id];
       const available = isWeaponAvailable(t, entry.id) && weapon !== undefined;
       const selected = available && entry.id === this.weapon;
-      panel(g, x, CARD_Y, CARD_W, CARD_H, selected ? {} : { rim: Palette.uiBevel, plain: !available });
-      abilitySlot(g, x + 8, CARD_Y + 7, { icon: 'hookblade', cooldown: 0, locked: !available, ready: selected });
+      panel(
+        g,
+        x,
+        CARD_Y,
+        CARD_W,
+        CARD_H,
+        selected ? {} : { rim: Palette.uiBevel, plain: !available },
+      );
+      abilitySlot(g, x + 8, CARD_Y + 7, {
+        icon: 'hookblade',
+        cooldown: 0,
+        locked: !available,
+        ready: selected,
+      });
       if (available) {
         tierPips(g, x + 32, CARD_Y + 21, weapon.tier);
         divider(g, x + 10, this.dividers[i] ?? CARD_Y + 63, CARD_W - 20);
@@ -207,18 +300,34 @@ export class StartScene extends Phaser.Scene {
   }
 
   /** Primary (spark-amber face) or secondary (bevel face) button. */
-  private button(x: number, y: number, text: string, primary: boolean, onClick: () => void): Phaser.GameObjects.Container {
+  private button(
+    x: number,
+    y: number,
+    text: string,
+    primary: boolean,
+    onClick: () => void,
+  ): Phaser.GameObjects.Container {
     const t = label(this, 0, 0, text, primary ? Palette.uiInkOnGlow : Palette.uiInk);
     const w = Math.round(t.width) + 14;
     const h = 15;
     const g = this.add.graphics();
     const draw = (hover: boolean): void => {
       g.clear();
-      g.fillStyle(Palette.uiOutline, 1).fillRect(1, 0, w - 2, h + 1).fillRect(0, 1, w, h - 1);
-      const face = primary ? (hover ? Palette.healthFill : Palette.spark) : hover ? Palette.floorEdge : Palette.uiBevel;
+      g.fillStyle(Palette.uiOutline, 1)
+        .fillRect(1, 0, w - 2, h + 1)
+        .fillRect(0, 1, w, h - 1);
+      const face = primary
+        ? hover
+          ? Palette.healthFill
+          : Palette.spark
+        : hover
+          ? Palette.floorEdge
+          : Palette.uiBevel;
       const bevel = primary ? Palette.healthFill : Palette.floorEdge;
       g.fillStyle(face, 1).fillRect(1, 1, w - 2, h - 2);
-      g.fillStyle(bevel, 1).fillRect(1, 1, w - 2, 1).fillRect(1, 1, 1, h - 2);
+      g.fillStyle(bevel, 1)
+        .fillRect(1, 1, w - 2, 1)
+        .fillRect(1, 1, 1, h - 2);
     };
     draw(false);
     place(t, w / 2, 4, 0.5);
@@ -243,14 +352,17 @@ export class StartScene extends Phaser.Scene {
 
   override update(): void {
     this.drawCards();
-    const connected = connectedPad();
-    const family: PadFamily = connected ? padFamily(connected.id) : 'ps';
-    if (family !== this.padFamily && this.padHints) {
+    const family = padFamilyNow();
+    if (family !== this.padFamily) {
       this.padFamily = family;
-      this.padHints.setItems(this.padHintItems()).place(VIEW_W / 2 + 20, VIEW_H - 30 + 14, 0.5);
+      this.syncHints();
     }
     this.field.setText(this.seedText);
     this.caret.setX(Math.round(this.field.x + this.field.width + 1));
-    if (Controls.confirmPressed(this.pad)) this.startRun();
+    const edges = padEdges(this.pad);
+    if (MENU_BUTTONS.confirm.some((b) => edges.includes(b))) this.startRun();
+    else if (edges.includes(MENU_BUTTONS.controls)) this.scene.start('controls');
+    else if (edges.includes(MENU_BUTTONS.left)) this.cycleWeapon(-1);
+    else if (edges.includes(MENU_BUTTONS.right)) this.cycleWeapon(1);
   }
 }

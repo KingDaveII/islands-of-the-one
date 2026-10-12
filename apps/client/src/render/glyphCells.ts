@@ -45,7 +45,7 @@ const PAD_CELLS: Record<'ps' | 'xb', Record<string, string>> = {
     Start: 'xb_menu',
   },
 };
-const MOUSE_CELLS: Record<string, string> = { LMB: 'mouse_left', RMB: 'mouse_right', Mouse: 'mouse' };
+const MOUSE_CELLS: Record<string, string> = { LMB: 'mouse_left', MMB: 'mouse_middle', RMB: 'mouse_right', Mouse: 'mouse' };
 
 /** The sheet cell for a binding name in a family, or null when the sheet has none (show the text label). */
 export function glyphCell(binding: string, family: GlyphFamily): string | null {

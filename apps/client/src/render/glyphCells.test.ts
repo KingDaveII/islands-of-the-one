@@ -14,6 +14,7 @@ describe('controller glyph cells', () => {
       }
     }
     expect(glyphCell('LMB', 'keyboard')).toBe('mouse_left');
+    expect(glyphCell('MMB', 'keyboard')).toBe('mouse_middle');
     expect(glyphCell('RMB', 'keyboard')).toBe('mouse_right');
     expect(glyphCell('Space', 'keyboard')).toBe('key_space');
     expect(glyphCell('F2', 'keyboard')).toBe('key_f2');

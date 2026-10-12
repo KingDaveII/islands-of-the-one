@@ -8,6 +8,7 @@ import {
   type ControlPreset,
 } from '@iot/shared';
 import { TURN } from '@iot/sim';
+import { PAD_STICK_DEADZONE, type PadSnapshot } from './activeDevice.js';
 import { KEYBOARD, keyboardKeys } from './keyboard.js';
 
 /**
@@ -52,6 +53,44 @@ export const DEFAULT_PRESET_ID: string = controlsData.defaultPreset;
 /** The first connected pad (browser Gamepad API), or null. */
 export function connectedPad(): Gamepad | null {
   return navigator.getGamepads().find((g): g is Gamepad => g !== null && g.connected) ?? null;
+}
+
+/** Buttons down on a pad (triggers by value), by standard-mapping index. */
+export function padButtonsDown(pad: Gamepad): boolean[] {
+  return pad.buttons.map((b, i) => (TRIGGER_BUTTONS.has(i) ? b.value > TRIGGER_THRESHOLD : b.pressed));
+}
+
+/** What the active-device tracker reads from the pad this frame (activeDevice.ts), or null without a pad. */
+export function padSnapshot(pad: Gamepad | null): PadSnapshot | null {
+  if (!pad) return null;
+  const out = (x: number, y: number): boolean => Math.hypot(x, y) > PAD_STICK_DEADZONE;
+  return {
+    buttons: padButtonsDown(pad),
+    stick: out(pad.axes[0] ?? 0, pad.axes[1] ?? 0) || out(pad.axes[2] ?? 0, pad.axes[3] ?? 0),
+  };
+}
+
+/**
+ * Menu navigation on a pad, by standard-mapping index: Cross or Start
+ * confirms, Circle goes back, Triangle opens the controls screen, the D-pad
+ * steps through choices. Not bindings (controls.json is for the game's
+ * actions): the menus read these directly.
+ */
+export const MENU_BUTTONS = {
+  confirm: [GLYPH_BUTTON.Cross ?? 0, GLYPH_BUTTON.Start ?? 9],
+  back: GLYPH_BUTTON.Circle ?? 1,
+  controls: GLYPH_BUTTON.Triangle ?? 3,
+  left: GLYPH_BUTTON.Left ?? 14,
+  right: GLYPH_BUTTON.Right ?? 15,
+} as const;
+
+/** Pad buttons that went down since the last call (menus); `state.prev` is kept between frames. */
+export function padEdges(state: { prev: boolean[] }): number[] {
+  const pad = connectedPad();
+  const now = pad ? pad.buttons.map((b) => b.pressed) : [];
+  const edges = now.flatMap((down, i) => (down && !(state.prev[i] ?? false) ? [i] : []));
+  state.prev = now;
+  return edges;
 }
 
 /** Which glyph family a hint is drawn in: keyboard caps and mouse buttons, DualSense (ps) or Xbox (xb). */
@@ -125,26 +164,39 @@ function angleDelta(a: number, b: number): number {
   return d;
 }
 
+/** An enemy the soft lock may snap to: its offset from the player (world px) and its sim id. */
+export interface LockCandidate {
+  dx: number;
+  dy: number;
+  id?: number;
+}
+
 /**
  * Soft lock: with no direct aim, aim where you walk, snapped to the nearest
  * enemy within `maxDeg` of that direction. `enemies` are offsets from the
- * player (world px). Returns the aim angle in radians.
+ * player (world px). Returns the aim angle in radians and the enemy snapped
+ * to (null when the aim is just the move direction).
  */
-export function softLock(
+export function softLockPick<E extends LockCandidate>(
   moveAngle: number,
-  enemies: readonly { dx: number; dy: number }[],
+  enemies: readonly E[],
   maxDeg: number,
-): number {
+): { angle: number; target: E | null } {
   const max = (maxDeg * Math.PI) / 180;
-  let best: { angle: number; dist: number } | null = null;
+  let best: { angle: number; dist: number; target: E } | null = null;
   for (const e of enemies) {
     const dist = Math.hypot(e.dx, e.dy);
     if (dist === 0) continue;
     const angle = Math.atan2(e.dy, e.dx);
     if (Math.abs(angleDelta(angle, moveAngle)) > max) continue;
-    if (!best || dist < best.dist) best = { angle, dist };
+    if (!best || dist < best.dist) best = { angle, dist, target: e };
   }
-  return best ? best.angle : moveAngle;
+  return best ? { angle: best.angle, target: best.target } : { angle: moveAngle, target: null };
+}
+
+/** The soft-locked aim angle alone (see softLockPick). */
+export function softLock(moveAngle: number, enemies: readonly LockCandidate[], maxDeg: number): number {
+  return softLockPick(moveAngle, enemies, maxDeg).angle;
 }
 
 /** Radians from a sim angle (1/4096 turn). */

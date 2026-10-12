@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eventKeyFor, KEYBOARD, KEYBOARD_ACTIONS, keyboardBinding, keyboardKeys, keyCodeFor, MOUSE_BUTTONS } from './keyboard.js';
+import { eventKeyFor, KEYBOARD, KEYBOARD_ACTIONS, keyboardBinding, keyboardKeys, keyCodeFor, MOUSE_BUTTONS, mouseBindingFor } from './keyboard.js';
 
 describe('keyboard bindings (data-driven)', () => {
   it('every keyboard binding is a mouse button or a key with a code', () => {
@@ -23,12 +23,12 @@ describe('keyboard bindings (data-driven)', () => {
     expect(keyboardBinding('tuning')).toBe('F2');
   });
 
-  it('matches the design: LMB light, RMB heavy, Space dodge, 1-3 abilities, Q/F items, E interact', () => {
+  it('matches the design: LMB light, RMB heavy, Space dodge, MMB (or 1) Haul, 2-3 abilities, Q/F items, E interact', () => {
     expect(KEYBOARD).toMatchObject({
       light: 'LMB',
       heavy: 'RMB',
       dodge: 'Space',
-      ability1: '1',
+      ability1: ['MMB', '1'],
       ability2: '2',
       ability3: '3',
       item1: 'Q',
@@ -43,6 +43,13 @@ describe('keyboard bindings (data-driven)', () => {
     expect(Object.values(KEYBOARD)).not.toContain('J/K');
     expect(Object.values(KEYBOARD).filter((k) => k === 'J')).toHaveLength(1);
     expect(Object.values(KEYBOARD)).not.toContain('Shift');
+  });
+
+  it('names the three mouse buttons, the middle one first for the Haul', () => {
+    expect(MOUSE_BUTTONS).toEqual({ LMB: 'left', MMB: 'middle', RMB: 'right' });
+    expect([0, 1, 2, 3, 4].map(mouseBindingFor)).toEqual(['LMB', 'MMB', 'RMB', null, null]);
+    expect(keyboardBinding('ability1')).toBe('MMB');
+    expect(keyboardKeys('ability1')).toEqual(['MMB', '1']);
   });
 
   it('maps binding names to DOM key codes', () => {
