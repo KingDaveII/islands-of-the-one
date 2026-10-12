@@ -15,9 +15,18 @@ export type FontSize = 8 | 16 | 24;
 const LINE: Record<FontSize, number> = { 8: 10, 16: 18, 24: 24 };
 const BODY_PITCH = 11;
 
-/** Resolve once both faces (declared with @font-face in index.html) are ready to draw. */
+/**
+ * Resolve once both faces (declared with @font-face in index.html) are ready
+ * to draw, so the first scene never renders in the fallback font. Resolves
+ * either way after the loads settle; a face that failed is reported, since
+ * the text would then be the browser's sans-serif at 8 px.
+ */
 export async function loadFonts(): Promise<void> {
-  await Promise.all([document.fonts.load(`8px ${FONT_LABEL}`), document.fonts.load(`8px ${FONT_TEXT}`)]);
+  const faces = [FONT_LABEL, FONT_TEXT];
+  await Promise.allSettled(faces.map((f) => document.fonts.load(`8px ${f}`)));
+  await document.fonts.ready;
+  const missing = faces.filter((f) => !document.fonts.check(`8px ${f}`));
+  if (missing.length > 0) console.warn(`fonts not loaded, text will use a fallback face: ${missing.join(', ')}`);
 }
 
 /**

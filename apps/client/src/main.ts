@@ -13,6 +13,7 @@ import { connectedPad, padSnapshot } from './game/gamepad.js';
 import { eventKeyFor, keyboardBinding } from './game/keyboard.js';
 import { Palette } from './palette.js';
 import { loadFonts } from './render/text.js';
+import { fitZoom } from './game/zoom.js';
 import { GameScene, VIEW_H, VIEW_W, type GameData } from './scenes/GameScene.js';
 import { ControlsScene } from './scenes/ControlsScene.js';
 import { ResultsScene } from './scenes/ResultsScene.js';
@@ -22,9 +23,9 @@ import { debugFlags } from './ui/debugFlags.js';
 import { DebugOverlay } from './ui/debugOverlay.js';
 import { TuningPanel } from './ui/tuningPanel.js';
 
-/** Largest integer zoom that fits (x4 on a 1080p screen), never below 1. */
-function fitZoom(): number {
-  return Math.max(1, Math.floor(Math.min(window.innerWidth / VIEW_W, window.innerHeight / VIEW_H)));
+/** The zoom that fits the window with whole device pixels per game pixel (zoom.ts). */
+function zoomNow(): number {
+  return fitZoom(window.innerWidth, window.innerHeight, window.devicePixelRatio);
 }
 
 const params = new URLSearchParams(window.location.search);
@@ -51,11 +52,12 @@ function startGame(): void {
     pixelArt: true,
     roundPixels: true,
     input: { gamepad: false },
-    scale: { mode: Phaser.Scale.NONE, width: VIEW_W, height: VIEW_H, zoom: fitZoom() },
+    scale: { mode: Phaser.Scale.NONE, width: VIEW_W, height: VIEW_H, zoom: zoomNow() },
     scene: [StartScene, GameScene, ResultsScene, ControlsScene],
   });
+  // Also fires when the browser zoom (and so the device pixel ratio) changes.
   window.addEventListener('resize', () => {
-    game.scale.setZoom(fitZoom());
+    game.scale.setZoom(zoomNow());
   });
 
   // The active device (keyboard+mouse or gamepad): any key or mouse button, mouse motion past a

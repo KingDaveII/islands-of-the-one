@@ -76,7 +76,11 @@ particles, text, dev panels):
   meet walls; walls show a `hollow-below` face with `hollow-deep` lines; outside the room is
   `hollow-deep`.
 - Pixel rules: whole game pixels only, flat shading in 2–3 steps, dithering instead of gradients,
-  integer zoom (×4 at 1080p).
+  and a zoom of **whole device pixels** per game pixel (×4 at 1080p). The zoom is chosen in
+  device pixels, not CSS pixels (`apps/client/src/game/zoom.ts`): on a display scaled to 125 % a
+  CSS zoom of 3 would be 3.75 device pixels and 1 px strokes would come out 3 or 4 wide at random,
+  which is what made the start screen's text look wrong in Playtest 2; 4 device pixels there is a
+  CSS zoom of 3.2.
 
 ## 3. HUD
 
@@ -94,6 +98,11 @@ of the screen where the fight happens:
   time clockwise from 12 o'clock, with whole seconds on top. Locked slots show a lock in
   `hollow-dusk` in a sunken frame, with no key hint. A slot's frame lights briefly when it comes
   back.
+- **The HUD never hides the room** (Playtest 2). The camera may scroll past the room's edges by
+  the panels' extents (their safe margins, read from the panels the HUD drew), so a player
+  standing in a room corner is always drawn in the clear area between them; a room that fits the
+  area the HUD leaves free is centered in it (`apps/client/src/render/camera.ts`). And a panel
+  drops to about 40 % opacity while the player or a hostile is behind it, back to full once clear.
 - **Party portraits** are hidden in solo.
 - **Key hints** are text labels until a glyph sheet exists: the active gamepad preset's glyphs
   (R2, L2, L1, …) while a pad is connected, else the keyboard keys (LMB, RMB, SPC, E, Q, F). See
@@ -111,6 +120,9 @@ of the screen where the fight happens:
 
   Both are pixel-exact only at multiples of 8 px: labels and numbers 8 px, titles 16 px, the title
   screen 24 px (drawn as the 8 px face scaled by a whole number, with partial pixels snapped off).
+  Both faces are loaded (`document.fonts`) before the first scene starts; every text sits on whole
+  pixels (`place`, `label`, `body` round) and both faces have whole-pixel advances at 8 px, so a
+  line never drifts onto half pixels.
 
 - **Lore and flavor text** is muted `hollow-dusk` (`#A99FC4`), always below a divider, never italic.
 - **Rarity** also shows as tier pips, never by color alone.
