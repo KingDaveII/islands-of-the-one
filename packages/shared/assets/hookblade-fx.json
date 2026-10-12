@@ -1,0 +1,81 @@
+{
+ "image": "hookblade-fx.png",
+ "cells": [
+  {
+   "name": "chain_link",
+   "x": 0,
+   "y": 0,
+   "w": 3,
+   "h": 3
+  },
+  {
+   "name": "chain_link_taut",
+   "x": 4,
+   "y": 0,
+   "w": 3,
+   "h": 3
+  },
+  {
+   "name": "hook",
+   "x": 8,
+   "y": 0,
+   "w": 4,
+   "h": 4
+  },
+  {
+   "name": "hook_set",
+   "x": 13,
+   "y": 0,
+   "w": 4,
+   "h": 4
+  },
+  {
+   "name": "spark_0",
+   "x": 18,
+   "y": 0,
+   "w": 5,
+   "h": 5
+  },
+  {
+   "name": "spark_1",
+   "x": 24,
+   "y": 0,
+   "w": 5,
+   "h": 5
+  },
+  {
+   "name": "spark_2",
+   "x": 30,
+   "y": 0,
+   "w": 5,
+   "h": 5
+  }
+ ],
+ "anims": {
+  "charge_spark": {
+   "frames": [
+    "spark_0",
+    "spark_1",
+    "spark_2"
+   ],
+   "fps": 12,
+   "loop": false,
+   "note": "spark_0 at the start of the charge, spark_2 held at full charge (armored); draw at the hook tip, tint spark-amber, spark_2 husk-core"
+  }
+ },
+ "chain": {
+  "link": "chain_link",
+  "spacing": 16,
+  "taut": "chain_link_taut",
+  "note": "one link per 16 px from the hand to the hook; on a hit every link swaps to taut for the pull"
+ },
+ "hook": {
+  "flight": "hook",
+  "set": "hook_set",
+  "origin": [
+   0,
+   1
+  ],
+  "note": "drawn pointing right, rotate to the throw angle; origin is the shank end where the chain attaches"
+ }
+}
