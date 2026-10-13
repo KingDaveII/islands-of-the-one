@@ -90,6 +90,8 @@ export const Palette = {
   uiInk: T.hollowLight,
   uiInkMuted: T.hollowDusk,
   uiInkOnGlow: T.hollowDeep,
+  /** The 1 px drop shadow under text drawn over the world (readability.md §4). */
+  textShadow: T.dreamNight,
   uiFocus: T.sparkAmber,
   healthFill: T.hollowLight,
   healthShade: T.hollowLavender,

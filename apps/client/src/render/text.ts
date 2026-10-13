@@ -1,11 +1,10 @@
 import Phaser from 'phaser';
 import {
   BODY_LINE_PITCH,
-  chipRect,
   LABEL_LINE_PITCH,
-  layoutText,
   silkscreenFont,
   tiny5Font,
+  TEXT_SHADOW_OFFSET,
   type BitmapFont,
 } from '@iot/shared';
 import silkscreenUrl from '@iot/shared/assets/fonts/silkscreen-8px.png';
@@ -149,21 +148,28 @@ export function body(
 
 /**
  * Text drawn straight over the world (floaters, damage numbers, the room
- * banner) sits on a ui-outline chip: the ink's extent plus 1 px of padding,
- * as the design system asks for numbers over art (readability.md §4). The
- * chip follows the text through setText; `place` lands the chip on whole
- * pixels. Alpha set on the chip fades both.
+ * banner) is drawn twice: a dream-night copy 1 game px below (whatever the
+ * text's scale), then the ink on top. The shadow is what makes it legible on
+ * the pale floor (readability.md §4); it is no rim (a rim fills the 1 px
+ * counters of a letter and E reads as B) and no box. The shadow follows the
+ * text through setText; `place` lands the pair on whole pixels. Never fade
+ * it with alpha: see `blinkOut`.
  */
-export class Chip extends Phaser.GameObjects.Container {
+export class Shadowed extends Phaser.GameObjects.Container {
   readonly label: Text;
-  private readonly back: Phaser.GameObjects.Rectangle;
+  private readonly shadow: Text;
 
-  constructor(scene: Phaser.Scene, text: Text, color: number = Palette.uiOutline) {
+  constructor(scene: Phaser.Scene, text: Text, color: number = Palette.textShadow) {
     super(scene, text.x, text.y);
     this.label = text;
-    this.back = scene.add.rectangle(0, 0, 1, 1, color).setOrigin(0, 0);
+    this.shadow = scene.add
+      .bitmapText(TEXT_SHADOW_OFFSET.x, TEXT_SHADOW_OFFSET.y, text.font, text.text)
+      .setLineSpacing(text.lineSpacing)
+      .setMaxWidth(text.maxWidth)
+      .setScale(text.scaleX, text.scaleY)
+      .setTint(color);
     text.setPosition(0, 0);
-    this.add([this.back, text]);
+    this.add([this.shadow, text]);
     scene.add.existing(this);
     this.fit();
   }
@@ -175,34 +181,44 @@ export class Chip extends Phaser.GameObjects.Container {
   setText(value: string): this {
     if (value !== this.label.text) {
       this.label.setText(value);
+      this.shadow.setText(value);
       this.fit();
     }
     return this;
   }
 
-  /** Size the chip to the ink (the shared layout is the client's, so the chip never misses a glyph). */
+  /** The container's box is the text's (the shadow's extra row is not counted), so `place` lands the ink. */
   private fit(): void {
-    const entry = FONTS[this.label.font];
-    if (!entry) throw new Error(`unknown font ${this.label.font}`);
-    const scale = this.label.scaleX;
-    const layout = layoutText(entry.font, this.label.text, {
-      maxWidth: this.label.maxWidth / scale,
-      lineSpacing: this.label.lineSpacing,
-    });
-    const r = chipRect(layout, scale);
-    this.back.setSize(r.w, r.h).setVisible(r.w > 0 && r.h > 0);
-    // The chip is what `place` positions: the container's box is the chip's, the text offset inside it.
-    this.setSize(r.w, r.h);
-    this.label.setPosition(-r.x, -r.y);
+    this.setSize(this.label.width, this.label.height);
   }
 }
 
-/** Put `text` on a ui-outline chip (text drawn over the world). */
-export function chip(text: Text, color: number = Palette.uiOutline): Chip {
-  return new Chip(text.scene, text, color);
+/** Draw `text` with its drop shadow (text drawn over the world). */
+export function shadowed(text: Text, color: number = Palette.textShadow): Shadowed {
+  return new Shadowed(text.scene, text, color);
 }
 
-/** Anything `place` can land on whole pixels: a text, a chip (its size is the chip's), a hint row. */
+/**
+ * Text leaves in whole steps, never by an alpha fade (which blends the ink
+ * off-palette): over the last `windowMs` of its life it blinks `blinks`
+ * times (off, on, ..., off) and ends hidden. Call every frame with the
+ * remaining life; the text is solid until the window starts.
+ */
+export function blinkOut(
+  t: { setVisible(visible: boolean): unknown },
+  remainingMs: number,
+  windowMs: number,
+  blinks = 2,
+): void {
+  if (remainingMs >= windowMs) {
+    t.setVisible(true);
+    return;
+  }
+  const slot = Math.floor((Math.max(0, remainingMs) * 2 * blinks) / windowMs);
+  t.setVisible(slot % 2 === 1);
+}
+
+/** Anything `place` can land on whole pixels: a text, a shadowed text, a hint row. */
 export interface Placeable {
   readonly width: number;
   readonly height: number;

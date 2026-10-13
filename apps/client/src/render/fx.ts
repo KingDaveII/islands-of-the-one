@@ -2,7 +2,7 @@ import type Phaser from 'phaser';
 import type { JuiceTuning } from '@iot/shared';
 import { Palette } from '../palette.js';
 import { DEPTH } from './depth.js';
-import { chip, label, place, type Chip } from './text.js';
+import { blinkOut, label, place, shadowed, type Shadowed } from './text.js';
 
 interface Particle {
   x: number;
@@ -27,8 +27,11 @@ interface Ring {
   width: number;
 }
 
+/** Floaters blink out over their last 200 ms. */
+const FLOATER_BLINK_MS = 200;
+
 interface Floater {
-  text: Chip;
+  text: Shadowed;
   life: number;
   max: number;
   y: number;
@@ -97,7 +100,7 @@ export class Fx {
   }
 
   float(x: number, y: number, text: string, color: number, ms = 700): void {
-    const t = chip(label(this.scene, 0, 0, text, color));
+    const t = shadowed(label(this.scene, 0, 0, text, color));
     place(t, x, y, 0.5, 1);
     t.setDepth(DEPTH.floaters);
     this.layer.add(t);
@@ -138,7 +141,8 @@ export class Fx {
       }
       f.y += f.vy * (dtRealMs / 1000);
       f.text.y = Math.round(f.y);
-      f.text.setAlpha(Math.min(1, (f.life / f.max) * 2));
+      // Solid, then a 2-blink pop over the last 200 ms (no alpha fade: readability.md §4).
+      blinkOut(f.text, f.life, FLOATER_BLINK_MS);
       return true;
     });
   }

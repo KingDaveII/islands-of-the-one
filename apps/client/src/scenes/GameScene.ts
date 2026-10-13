@@ -12,12 +12,14 @@ import { clampScroll } from '../render/camera.js';
 import { DEPTH } from '../render/depth.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { preloadSpriteSheets, registerSpriteSheets } from '../render/spriteSheets.js';
-import { chip, label, place, preloadFonts, registerFonts, type Chip } from '../render/text.js';
+import { blinkOut, label, place, preloadFonts, registerFonts, shadowed, type Shadowed } from '../render/text.js';
 import { rad, WorldRenderer } from '../render/world.js';
 
 export const VIEW_W = 480;
 export const VIEW_H = 270;
 const END_DELAY_MS = 1900;
+/** The banner blinks out over its last 300 ms (no alpha fade: readability.md §4). */
+const BANNER_BLINK_MS = 300;
 
 export interface ResultsData {
   seed: number;
@@ -39,8 +41,8 @@ export class GameScene extends Phaser.Scene {
   private hud!: Hud;
   private worldLayer!: Phaser.GameObjects.Layer;
   private hudLayer!: Phaser.GameObjects.Layer;
-  private banner!: Chip;
-  private bannerSub!: Chip;
+  private banner!: Shadowed;
+  private bannerSub!: Shadowed;
   private bannerLife = 0;
   private tint!: Phaser.GameObjects.Rectangle;
   /** The interact prompt (Calm only) over the nearest interactable in reach; nothing in M1 needs one. */
@@ -92,8 +94,8 @@ export class GameScene extends Phaser.Scene {
     const weaponName = tuning.weapons[this.weapon]?.name ?? this.weapon;
     this.hud = new Hud(this, this.hudLayer, this.session.run, weaponName, this.controls);
 
-    this.banner = chip(label(this, 0, 0, '', Palette.uiInk, 16)).setAlpha(0);
-    this.bannerSub = chip(label(this, 0, 0, '', Palette.uiInkMuted)).setAlpha(0);
+    this.banner = shadowed(label(this, 0, 0, '', Palette.uiInk, 16)).setVisible(false);
+    this.bannerSub = shadowed(label(this, 0, 0, '', Palette.uiInkMuted)).setVisible(false);
     this.hudLayer.add([this.banner, this.bannerSub]);
 
     const hudCam = this.cameras.add(0, 0, VIEW_W, VIEW_H);
@@ -109,8 +111,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showBanner(text: string, sub = '', ms = 1400): void {
-    place(this.banner.setText(text).setAlpha(1), VIEW_W / 2, 84, 0.5);
-    place(this.bannerSub.setText(sub).setAlpha(sub ? 1 : 0), VIEW_W / 2, 106, 0.5);
+    place(this.banner.setText(text).setVisible(true), VIEW_W / 2, 84, 0.5);
+    place(this.bannerSub.setText(sub).setVisible(sub !== ''), VIEW_W / 2, 106, 0.5);
     this.bannerLife = ms;
   }
 
@@ -301,9 +303,8 @@ export class GameScene extends Phaser.Scene {
 
     if (this.bannerLife > 0) {
       this.bannerLife -= delta;
-      const a = Math.min(1, this.bannerLife / 300);
-      this.banner.setAlpha(a);
-      if (this.bannerSub.text) this.bannerSub.setAlpha(a);
+      blinkOut(this.banner, this.bannerLife, BANNER_BLINK_MS);
+      if (this.bannerSub.text) blinkOut(this.bannerSub, this.bannerLife, BANNER_BLINK_MS);
     }
     if (this.endAt >= 0 && this.time.now >= this.endAt) {
       this.endAt = -1;
