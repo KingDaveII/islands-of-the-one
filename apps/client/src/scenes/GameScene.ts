@@ -12,7 +12,7 @@ import { clampScroll } from '../render/camera.js';
 import { DEPTH } from '../render/depth.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { preloadSpriteSheets, registerSpriteSheets } from '../render/spriteSheets.js';
-import { blinkOut, label, place, preloadFonts, registerFonts, shadowed, type Shadowed } from '../render/text.js';
+import { blinkOut, place, preloadFonts, registerFonts, worldWord, type Text } from '../render/text.js';
 import { rad, WorldRenderer } from '../render/world.js';
 
 export const VIEW_W = 480;
@@ -41,8 +41,8 @@ export class GameScene extends Phaser.Scene {
   private hud!: Hud;
   private worldLayer!: Phaser.GameObjects.Layer;
   private hudLayer!: Phaser.GameObjects.Layer;
-  private banner!: Shadowed;
-  private bannerSub!: Shadowed;
+  private banner!: Text;
+  private bannerSub!: Text;
   private bannerLife = 0;
   private tint!: Phaser.GameObjects.Rectangle;
   /** The interact prompt (Calm only) over the nearest interactable in reach; nothing in M1 needs one. */
@@ -94,8 +94,9 @@ export class GameScene extends Phaser.Scene {
     const weaponName = tuning.weapons[this.weapon]?.name ?? this.weapon;
     this.hud = new Hud(this, this.hudLayer, this.session.run, weaponName, this.controls);
 
-    this.banner = shadowed(label(this, 0, 0, '', Palette.uiInk, 16)).setVisible(false);
-    this.bannerSub = shadowed(label(this, 0, 0, '', Palette.uiInkMuted)).setVisible(false);
+    // Words over the world: dark ink, no panel, no shadow (readability.md §4).
+    this.banner = worldWord(this, 0, 0, '', 16).setVisible(false);
+    this.bannerSub = worldWord(this, 0, 0, '').setVisible(false);
     this.hudLayer.add([this.banner, this.bannerSub]);
 
     const hudCam = this.cameras.add(0, 0, VIEW_W, VIEW_H);
@@ -133,7 +134,7 @@ export class GameScene extends Phaser.Scene {
           if (e.broke >= 0) {
             this.fx.chips(x, y, rad(e.dir), j.shellBreakParticles);
             this.fx.ring(x, y, 4, 16, 260, Palette.shellCrack, 1);
-            this.fx.float(x, y - 10, e.broke === 0 && P.husks[e.kind].shell.length > 1 ? 'CRACK' : 'BREAK', Palette.uiInk, 600);
+            this.fx.float(x, y - 10, e.broke === 0 && P.husks[e.kind].shell.length > 1 ? 'CRACK' : 'BREAK', 600);
           }
           break;
         }
@@ -142,7 +143,7 @@ export class GameScene extends Phaser.Scene {
           this.fx.flash('p', j.hitFlashFrames);
           this.world.characters.hit('p');
           this.fx.burst(e.x / SUB, e.y / SUB, 10, Palette.hurt, j.particleSpeed, { dir: rad(e.dir), spread: 2 });
-          this.fx.float(e.x / SUB, e.y / SUB - 14, `-${e.damage}`, Palette.hurtInk, 650);
+          this.fx.float(e.x / SUB, e.y / SUB - 14, `-${e.damage}`, 650, Palette.hurtInk);
           if (e.armored) this.fx.ring(e.x / SUB, e.y / SUB - 4, 6, 12, 200, Palette.uiBevel, 1);
           break;
         case 'held': {
@@ -160,13 +161,13 @@ export class GameScene extends Phaser.Scene {
           break;
         case 'itemUsed': {
           const p = this.session.state.player;
-          this.fx.float(p.x / SUB, p.y / SUB - 16, e.id.toUpperCase(), Palette.healthFill, 700);
+          this.fx.float(p.x / SUB, p.y / SUB - 16, e.id.toUpperCase(), 700);
           this.fx.ring(p.x / SUB, p.y / SUB, 2, 12, 300, Palette.healthFill, 1);
           break;
         }
         case 'chestOpened':
           this.fx.burst(e.x / SUB, e.y / SUB - 4, 8, Palette.spark, 60, { dir: -Math.PI / 2, spread: 1.2, life: 400 });
-          if (e.count > 0) this.fx.float(e.x / SUB, e.y / SUB - 14, `+${e.count} ${e.item.toUpperCase()}`, Palette.spark, 900);
+          if (e.count > 0) this.fx.float(e.x / SUB, e.y / SUB - 14, `+${e.count} ${e.item.toUpperCase()}`, 900, Palette.spark);
           break;
         case 'shellRegrow': {
           const h = this.session.state.husks.find((x) => x.id === e.id);
@@ -181,7 +182,7 @@ export class GameScene extends Phaser.Scene {
           this.world.perfectDodge();
           this.fx.ring(e.x / SUB, e.y / SUB, 4, 34, 420, Palette.spark, 2);
           this.fx.burst(e.x / SUB, e.y / SUB, 18, Palette.spark, j.particleSpeed * 1.2, { size: 2 });
-          this.fx.float(e.x / SUB, e.y / SUB - 16, `PERFECT +${e.bonus}`, Palette.spark, 900);
+          this.fx.float(e.x / SUB, e.y / SUB - 16, `PERFECT +${e.bonus}`, 900, Palette.spark);
           break;
         case 'huskAttack':
           if (e.kind === 'nutshell') {

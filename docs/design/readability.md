@@ -133,18 +133,21 @@ of the screen where the fight happens:
   their own sheet (`letters.md`).
 
 - **Lore and flavor text** is muted `hollow-dusk` (`#A99FC4`), always below a divider, never italic.
-- **Ink needs a panel under it, or a shadow.** `hollow-light` and `hollow-dusk` are meant for
-  `ui-panel` (12.8:1 and 5.9:1); on the pale floor they are 1.3:1 and 1.7:1. So every word and
-  glyph in the UI sits on a panel, where it is never below 4.5:1 against what is directly under
-  it. Text drawn straight over the world (the floaters, the damage numbers, the room banner, YOU
-  FELL, anything without a panel under it) gets a **1 px `dream-night` drop shadow** instead
-  (`shadowed` in `text.ts`): the text drawn twice, the shadow copy 1 game px below (also at 16 px,
-  where the glyph pixels are 2×2), then the ink on top. No box behind it and no rim on the other
-  sides: a rim fills the 1 px counters of a letter with its own color and E reads as B. Such text
-  is legible by its shadow (10.6:1 against the floor, and every stroke has a dark edge under it),
-  not by the ink-on-ground ratio, which stays below 4.5:1 on the floor. Ink over the floor:
-  `hollow-light` for words, `choir-flame` for the damage numbers (1.9:1 on `hollow-lavender`,
-  where `spark-amber` is 1.2:1), never a signal colour.
+- **Pale ink needs a panel under it.** `hollow-light` and `hollow-dusk` are meant for `ui-panel`
+  (12.8:1 and 5.9:1); on the pale floor they are 1.3:1 and 1.7:1. So every word and glyph in the
+  UI sits on a panel, where it is never below 4.5:1 against what is directly under it.
+- **Words over the world are dark ink.** Text drawn straight over the world without a panel (the
+  floaters BREAK and CRACK, the room banner and its sub line, YOU FELL, SHARD CLEARED) is
+  `hollow-deep` (`worldWord` in `text.ts`): 10:1 on `hollow-lavender` and 11:1 on `husk-shell`,
+  the pale floor and shells it lands on. Nothing under it: no panel, no shadow, no box, and no rim
+  (a rim fills the 1 px counters of a letter with its own color and E reads as B). `dream-night`
+  would read 10.6:1, but it stays the Kindled's outline, the darkest value in the room.
+- **Coloured numbers and pickups over the world carry a 1 px `dream-night` drop shadow.** The
+  damage numbers (`choir-flame`: 1.9:1 on the floor, where `spark-amber` is 1.2:1) and the
+  pickups (`+1 RATION`, Sparkglass, `PERFECT +N` in `spark-amber`) are `shadowed` in `text.ts`:
+  the text drawn twice, the shadow copy 1 game px below (also at 16 px), then the ink on top. They
+  are legible by the dark edge under every stroke, not by the ink-on-ground ratio. Never a signal
+  colour.
 - **No alpha fades on text.** An alpha fade blends the ink off-palette. Floaters and banners
   stay solid and leave in whole steps: a 2-blink pop over the last 200 ms of a floater's life
   and the last 300 ms of a banner's (`blinkOut` in `text.ts`), the same timing the fades had.

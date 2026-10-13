@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Text screenshots for docs/screenshots/m1-task8b (drop shadows instead of
- * chips under text drawn over the world): floaters (BREAK, CRACK, -12,
+ * Text screenshots for docs/screenshots/m1-task8b (text over the world: dark
+ * words, shadowed coloured numbers, no chips): floaters (BREAK, CRACK, -12,
  * +1 RATION) over the floor and over a Husk, the room banner and the YOU
  * FELL banner, at zoom 3 (device px per game px) on a 150 % display. Runs
  * the built client in headless Chromium through the `window.__iot` playtest
@@ -140,15 +140,15 @@ const floaters = ({ dx, dy, stacked = false }) => {
   const y = s.player.y / 256 + dy;
   if (stacked) {
     // On a body: the words across it, one under the other.
-    scene.fx.float(x, y - 18, '-12', 0xf07a3a, 1e9);
-    scene.fx.float(x, y - 4, 'BREAK', 0xf4efe6, 1e9);
-    scene.fx.float(x, y + 10, 'CRACK', 0xf4efe6, 1e9);
-    scene.fx.float(x, y + 26, '+1 RATION', 0xf2b65a, 1e9);
+    scene.fx.float(x, y - 18, '-12', 1e9, 0xf07a3a);
+    scene.fx.float(x, y - 4, 'BREAK', 1e9);
+    scene.fx.float(x, y + 10, 'CRACK', 1e9);
+    scene.fx.float(x, y + 26, '+1 RATION', 1e9, 0xf2b65a);
   } else {
-    scene.fx.float(x - 26, y - 10, 'BREAK', 0xf4efe6, 1e9);
-    scene.fx.float(x + 26, y - 10, 'CRACK', 0xf4efe6, 1e9);
-    scene.fx.float(x, y - 26, '-12', 0xf07a3a, 1e9);
-    scene.fx.float(x, y + 24, '+1 RATION', 0xf2b65a, 1e9);
+    scene.fx.float(x - 26, y - 10, 'BREAK', 1e9);
+    scene.fx.float(x + 26, y - 10, 'CRACK', 1e9);
+    scene.fx.float(x, y - 26, '-12', 1e9, 0xf07a3a);
+    scene.fx.float(x, y + 24, '+1 RATION', 1e9, 0xf2b65a);
   }
   for (const f of scene.fx.floaters) f.vy = 0;
   return { x: x - cam.scrollX, y: y - cam.scrollY };

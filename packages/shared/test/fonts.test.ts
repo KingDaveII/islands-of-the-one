@@ -20,8 +20,9 @@ import {
 } from '../src/index.js';
 import { decodePng, encodePng } from './png.js';
 
-/** Design-system tokens the client draws text in (apps/client/src/palette.ts): hollow-light ink, dream-night shadow, choir-flame damage numbers. */
+/** Design-system tokens the client draws text in (apps/client/src/palette.ts): hollow-light ink, hollow-deep words over the world, dream-night shadow, choir-flame damage numbers. */
 const INK = [0xf4, 0xef, 0xe6] as const;
+const WORLD_INK = [0x2a, 0x25, 0x40] as const;
 const SHADOW = [0x1c, 0x21, 0x47] as const;
 const HURT_INK = [0xf0, 0x7a, 0x3a] as const;
 
@@ -219,12 +220,15 @@ function expectGolden(
 const hookblade = defaultTuning.weapons.hookblade;
 
 describe('golden images (the client lays text out the same way)', () => {
-  it.each(['BREAK', 'CRACK', 'YOU FELL'])('floater "%s" with its drop shadow', (text) => {
-    expectGolden(
-      `${text.toLowerCase().replace(' ', '-')}-shadowed`,
-      paint(silkscreenFont, layoutText(silkscreenFont, text), INK, true),
-    );
-  });
+  it.each(['BREAK', 'CRACK', 'YOU FELL'])(
+    'the word "%s" over the world: dark ink, no shadow',
+    (text) => {
+      expectGolden(
+        text.toLowerCase().replace(' ', '-'),
+        paint(silkscreenFont, layoutText(silkscreenFont, text), WORLD_INK, false),
+      );
+    },
+  );
 
   it('a damage number with its drop shadow', () => {
     expectGolden(
@@ -256,10 +260,10 @@ describe('golden images (the client lays text out the same way)', () => {
     );
   });
 
-  it('the 16 px banner (the 8 px face at 2x)', () => {
+  it('the 16 px banner over the world (the 8 px face at 2x, dark ink)', () => {
     expectGolden(
       'shard-cleared-16',
-      paint(silkscreenFont, layoutText(silkscreenFont, 'SHARD CLEARED'), INK, true, 2),
+      paint(silkscreenFont, layoutText(silkscreenFont, 'SHARD CLEARED'), WORLD_INK, false, 2),
     );
   });
 

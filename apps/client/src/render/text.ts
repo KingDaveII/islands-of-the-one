@@ -147,14 +147,29 @@ export function body(
 }
 
 /**
- * Text drawn straight over the world (floaters, damage numbers, the room
- * banner) is drawn twice: a dream-night copy 1 game px below (whatever the
- * text's scale), then the ink on top. The shadow is what makes it legible on
- * the pale floor (readability.md §4); it is no rim (a rim fills the 1 px
- * counters of a letter and E reads as B) and no box. The shadow follows the
- * text through setText; `place` lands the pair on whole pixels. Never fade
- * it with alpha: see `blinkOut`.
+ * Text drawn straight over the world (readability.md §4) comes in two kinds,
+ * neither with a box or a rim (a rim fills the 1 px counters of a letter
+ * and E reads as B), and neither ever faded with alpha (see `blinkOut`):
+ * - words (BREAK, CRACK, the room banner, YOU FELL) are `worldWord`: plain
+ *   dark ink, ~10:1 on the pale floor and the pale Husk shells;
+ * - coloured numbers and pickups (-12, +1 RATION, PERFECT +5) are
+ *   `shadowed`: the text drawn twice, a dream-night copy 1 game px below
+ *   (whatever the text's scale), then the ink on top.
  */
+export type WorldText = Text | Shadowed;
+
+/** A word over the world: a Silkscreen label in the world ink (hollow-deep), nothing under it. */
+export function worldWord(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  text: string,
+  size: FontSize = 8,
+): Text {
+  return label(scene, x, y, text, Palette.worldInk, size);
+}
+
+/** A coloured number or pickup over the world: `text` with its 1 px drop shadow; follows the text through setText. */
 export class Shadowed extends Phaser.GameObjects.Container {
   readonly label: Text;
   private readonly shadow: Text;
@@ -193,7 +208,7 @@ export class Shadowed extends Phaser.GameObjects.Container {
   }
 }
 
-/** Draw `text` with its drop shadow (text drawn over the world). */
+/** Draw `text` with its drop shadow (coloured numbers and pickups over the world). */
 export function shadowed(text: Text, color: number = Palette.textShadow): Shadowed {
   return new Shadowed(text.scene, text, color);
 }
