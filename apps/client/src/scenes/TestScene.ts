@@ -1,14 +1,15 @@
 import Phaser from 'phaser';
 import { resolveServerUrl } from '../config.js';
 import { connect, type Connection } from '../net.js';
-import { css, Palette } from '../palette.js';
+import { Palette } from '../palette.js';
+import { body, label, preloadFonts, registerFonts, type Text } from '../render/text.js';
 
 const SELF_COLOR = Palette.spark;
 const OTHER_COLOR = Palette.floorEdge;
 
 /** M0 smoke-test scene: connect to the test room, show peers, click to move. */
 export class TestScene extends Phaser.Scene {
-  private status!: Phaser.GameObjects.Text;
+  private status!: Text;
   private connection: Connection | undefined;
   private readonly markers = new Map<string, Phaser.GameObjects.Arc>();
   private lastRtt: number | undefined;
@@ -17,11 +18,14 @@ export class TestScene extends Phaser.Scene {
     super('TestScene');
   }
 
+  preload(): void {
+    preloadFonts(this);
+  }
+
   create(): void {
-    this.add
-      .text(16, 16, 'Islands of the One — M0 test scene', { fontSize: '20px', color: css(Palette.uiInk) })
-      .setScrollFactor(0);
-    this.status = this.add.text(16, 44, 'connecting…', { fontSize: '14px', color: css(Palette.uiInkMuted) });
+    registerFonts(this);
+    label(this, 16, 16, 'ISLANDS OF THE ONE — M0 TEST SCENE', Palette.uiInk, 16).setScrollFactor(0);
+    this.status = body(this, 16, 44, 'connecting…', Palette.uiInkMuted);
 
     const url = resolveServerUrl(
       import.meta.env.VITE_SERVER_URL,

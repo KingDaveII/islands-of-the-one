@@ -120,24 +120,29 @@ of the screen where the fight happens:
   and left, a 1 px `dream-night` outline with chamfered corners and a hard 1 px drop shadow. Menu
   panels add a thin glowing `spark-amber` rim, cracked open at the corners; HUD clusters use the
   plain variant so the rim doesn't compete with the fight.
-- **Fonts** (both SIL OFL, self-hosted in `apps/client/public/fonts`):
-  - **Silkscreen** for labels and numbers;
-  - **Tiny5** for sentences (stats, descriptions, lore), 11 px line pitch.
-
-  Both are pixel-exact only at multiples of 8 px: labels and numbers 8 px, titles 16 px, the title
-  screen 24 px (drawn as the 8 px face scaled by a whole number, with partial pixels snapped off).
-  Both faces are loaded (`document.fonts`) before the first scene starts; every text sits on whole
-  pixels (`place`, `label`, `body` round) and both faces have whole-pixel advances at 8 px, so a
-  line never drifts onto half pixels.
+- **Fonts** (both SIL OFL): **Silkscreen** for labels and numbers, **Tiny5** for sentences (stats,
+  descriptions, lore), 11 px line pitch. The game never draws text with the browser's font
+  rasterizer: both faces are converted by `tools/bitmap-fonts.py` into 8 px pixel atlases
+  (`packages/shared/assets/fonts`, white on transparent, no partial pixels, the same on every OS
+  and browser), and every piece of text is a BitmapText from those atlases, tinted by color token
+  (`label`, `body` in `apps/client/src/render/text.ts`; nothing else creates text, which ESLint
+  enforces). Labels and numbers are 8 px, titles 16 px, the title screen 24 px: the 8 px glyphs
+  scaled by a whole number, so every font pixel stays a crisp 2×2 / 3×3 block. Line pitches are
+  10 / 18 / 24 (body 11). Every text sits on whole pixels (`place`, `label`, `body` round) and both
+  faces have whole-pixel advances, so a line never drifts onto half pixels. The Old Letters have
+  their own sheet (`letters.md`).
 
 - **Lore and flavor text** is muted `hollow-dusk` (`#A99FC4`), always below a divider, never italic.
 - **Ink needs a panel under it.** `hollow-light` and `hollow-dusk` are meant for `ui-panel`
   (12.8:1 and 5.9:1); on the pale floor they are 1.3:1 and 1.7:1. So every word and glyph sits on
-  a panel, or, for text drawn straight over the world (the floaters, the room banner), carries a
-  **1 px `dream-night` rim** all around the glyphs (`withOutline`, like the sprites' outlines),
-  and reads against it: 13.5:1 for `hollow-light`, 6.2:1 for `hollow-dusk`, 8.6:1 for
-  `spark-amber`, 5.6:1 for `choir-flame`, which the damage numbers use (`spark-ember` would be
-  4.4:1). Words and glyphs are never below 4.5:1 against what is directly under them.
+  a panel, or, for text drawn straight over the world (the floaters, the damage numbers, the room
+  banner, YOU FELL, anything without a panel under it), on a **`ui-outline` chip** (`dream-night`,
+  the ink's extent plus 1 px of padding all around; `chip` in `text.ts`), as the design system
+  says for numbers over art, and reads against the chip: 13.5:1 for `hollow-light`, 6.2:1 for
+  `hollow-dusk`, 8.6:1 for `spark-amber`, 5.6:1 for `choir-flame`, which the damage numbers use
+  (`spark-ember` would be 4.4:1). Never a rim traced around the glyphs: at 8 px it fills the
+  1 px counters of a letter with its own color and E reads as B. Words and glyphs are never below
+  4.5:1 against what is directly under them.
 - **Rarity** also shows as tier pips, never by color alone.
 
 ## 5. Start screen

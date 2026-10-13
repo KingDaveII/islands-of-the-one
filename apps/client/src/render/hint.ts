@@ -3,7 +3,7 @@ import type { GlyphFamily, Hint } from '../game/gamepad.js';
 import { Palette } from '../palette.js';
 import { glyphCell, GLYPH_SIZE } from './glyphCells.js';
 import { GLYPH_TEXTURE } from './sheets.js';
-import { body, label, type FontSize } from './text.js';
+import { body, label, type FontSize, type Text } from './text.js';
 import { panel } from './ui.js';
 
 /**
@@ -87,7 +87,7 @@ export class HintRow {
     for (const item of items) {
       if (!first) x += 2 * s;
       first = false;
-      let obj: Phaser.GameObjects.Image | Phaser.GameObjects.Text;
+      let obj: Phaser.GameObjects.Image | Text;
       if ('cell' in item) {
         obj = this.scene.add.image(x, pad, GLYPH_TEXTURE, item.cell).setOrigin(0, 0).setScale(s).setTint(this.tint);
         x += glyph;

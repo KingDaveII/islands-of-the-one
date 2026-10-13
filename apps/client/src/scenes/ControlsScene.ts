@@ -4,11 +4,11 @@ import { deviceStore } from '../game/activeDevice.js';
 import { controlsStore } from '../game/controlsStore.js';
 import { hintFrom, MENU_BUTTONS, padEdges, type PadFamily } from '../game/gamepad.js';
 import { keyboardBinding, keyCodeFor } from '../game/keyboard.js';
-import { css, Palette } from '../palette.js';
+import { Palette } from '../palette.js';
 import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
 import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
-import { body, label, place } from '../render/text.js';
+import { body, label, place, preloadFonts, registerFonts, type Text } from '../render/text.js';
 import { divider, panel } from '../render/ui.js';
 import { VIEW_H, VIEW_W } from './GameScene.js';
 
@@ -48,12 +48,12 @@ const PAD_X = 124;
  */
 export class ControlsScene extends Phaser.Scene {
   private g!: Phaser.GameObjects.Graphics;
-  private presetName!: Phaser.GameObjects.Text;
-  private aimNote!: Phaser.GameObjects.Text;
+  private presetName!: Text;
+  private aimNote!: Text;
   private padRows: HintRow[] = [];
   private pad = { prev: [] as boolean[] };
   private family: PadFamily = 'ps';
-  private headers: { keys: Phaser.GameObjects.Text; pad: Phaser.GameObjects.Text }[] = [];
+  private headers: { keys: Text; pad: Text }[] = [];
   private footer!: HintRow;
 
   constructor() {
@@ -62,10 +62,12 @@ export class ControlsScene extends Phaser.Scene {
 
   preload(): void {
     preloadSheets(this);
+    preloadFonts(this);
   }
 
   create(): void {
     registerSheetFrames(this);
+    registerFonts(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
     const cx = VIEW_W / 2;
     this.g = this.add.graphics();
@@ -163,8 +165,8 @@ export class ControlsScene extends Phaser.Scene {
     // The active device's column is lit; the footer names its keys; the cursor follows it.
     const padMode = deviceStore.get() === 'gamepad';
     for (const h of this.headers) {
-      h.keys.setColor(css(padMode ? Palette.uiInkMuted : Palette.uiFocus));
-      h.pad.setColor(css(padMode ? Palette.uiFocus : Palette.uiInkMuted));
+      h.keys.setTint(padMode ? Palette.uiInkMuted : Palette.uiFocus);
+      h.pad.setTint(padMode ? Palette.uiFocus : Palette.uiInkMuted);
     }
     this.footer.setItems(this.footerItems()).place(cx, VIEW_H - 16, 0.5);
     menuCursor(this);

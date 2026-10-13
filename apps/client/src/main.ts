@@ -12,7 +12,6 @@ import { deviceStore, type Device } from './game/activeDevice.js';
 import { connectedPad, padSnapshot } from './game/gamepad.js';
 import { eventKeyFor, keyboardBinding } from './game/keyboard.js';
 import { Palette } from './palette.js';
-import { loadFonts } from './render/text.js';
 import { fitZoom } from './game/zoom.js';
 import { GameScene, VIEW_H, VIEW_W, type GameData } from './scenes/GameScene.js';
 import { ControlsScene } from './scenes/ControlsScene.js';
@@ -40,8 +39,7 @@ if (params.has('net')) {
     scene: [TestScene],
   });
 } else {
-  // Text uses the self-hosted pixel fonts, so they must be ready before any scene draws.
-  void loadFonts().then(startGame, startGame);
+  startGame();
 }
 
 function startGame(): void {

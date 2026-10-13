@@ -56,6 +56,30 @@ export default tseslint.config(
     languageOptions: { globals: { ...globals.browser } },
   },
   {
+    // One text path: every piece of text is a BitmapText from the pixel atlases, made by
+    // label()/body() in render/text.ts. Phaser Text is rasterized by the browser's font engine,
+    // which differs per OS and browser (readability.md §4).
+    files: ['apps/client/src/**/*.ts'],
+    ignores: ['apps/client/src/render/text.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.property.name='text'][callee.object.property.name='add']",
+          message: 'No Phaser Text (browser-rasterized): use label()/body() from render/text.ts.',
+        },
+        {
+          selector: "CallExpression[callee.property.name='bitmapText'][callee.object.property.name='add']",
+          message: 'Create text through label()/body() in render/text.ts, the one text path.',
+        },
+        {
+          selector: "NewExpression[callee.property.name=/^(Text|BitmapText)$/][callee.object.property.name='GameObjects']",
+          message: 'Create text through label()/body() in render/text.ts, the one text path.',
+        },
+      ],
+    },
+  },
+  {
     files: ['**/*.js', '**/*.mjs'],
     extends: [tseslint.configs.disableTypeChecked],
   },

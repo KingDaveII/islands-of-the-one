@@ -12,7 +12,7 @@ import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
 import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
 import { groundShadow } from '../render/pixels.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
-import { body, label, place } from '../render/text.js';
+import { body, label, place, preloadFonts, registerFonts, type Text } from '../render/text.js';
 import { abilitySlot, divider, panel, tierPips } from '../render/ui.js';
 import { drawKindled } from '../render/world.js';
 import type { GameData } from './GameScene.js';
@@ -35,7 +35,7 @@ const HINT_PANEL_PAD = 6;
 export class StartScene extends Phaser.Scene {
   seedText = '';
   weapon = 'hookblade';
-  private field!: Phaser.GameObjects.Text;
+  private field!: Text;
   private caret!: Phaser.GameObjects.Rectangle;
   private cards!: Phaser.GameObjects.Graphics;
   private pad = { prev: [] as boolean[] };
@@ -53,10 +53,12 @@ export class StartScene extends Phaser.Scene {
 
   preload(): void {
     preloadSheets(this);
+    preloadFonts(this);
   }
 
   create(): void {
     registerSheetFrames(this);
+    registerFonts(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
     this.seedText = String(randomSeed());
     this.pad = { prev: [] };
