@@ -90,6 +90,10 @@ export const Palette = {
   uiInk: T.hollowLight,
   uiInkMuted: T.hollowDusk,
   uiInkOnGlow: T.hollowDeep,
+  /** Words drawn over the world (floaters, banners): dark ink on the pale floor and shells, ~10:1 (readability.md §4). */
+  worldInk: T.hollowDeep,
+  /** The 1 px drop shadow under coloured numbers and pickups drawn over the world (readability.md §4). */
+  textShadow: T.dreamNight,
   uiFocus: T.sparkAmber,
   healthFill: T.hollowLight,
   healthShade: T.hollowLavender,

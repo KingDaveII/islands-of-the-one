@@ -8,8 +8,8 @@ import tiny5 from '../assets/fonts/tiny5-8px.json' with { type: 'json' };
  * white on transparent) that Phaser BitmapText draws, tinted and scaled by
  * whole numbers. `layoutText` lays a string out the way Phaser's BitmapText
  * does (same advances, same word wrap, same line pitch), so node tests can
- * render exactly what the client shows (`rasterizeText`), and the client can
- * size the chips it puts under text drawn over the world (`chipRect`).
+ * render exactly what the client shows (`rasterizeText`, with the drop
+ * shadow of text drawn over the world at `TEXT_SHADOW_OFFSET`).
  */
 export interface BitmapGlyph {
   ch: string;
@@ -50,8 +50,8 @@ export const bitmapFonts: readonly BitmapFont[] = [silkscreenFont, tiny5Font];
 /** Line pitches of the client's text styles, in font px at scale 1 (readability.md §4). */
 export const LABEL_LINE_PITCH = 10;
 export const BODY_LINE_PITCH = 11;
-/** Padding of the ui-outline chip under text drawn over the world. */
-export const CHIP_PAD = 1;
+/** The drop shadow under text drawn over the world: a dream-night copy this many game px away, whatever the text's scale. */
+export const TEXT_SHADOW_OFFSET = { x: 0, y: 1 } as const;
 
 const glyphMaps = new WeakMap<BitmapFont, Map<string, BitmapGlyph>>();
 
@@ -174,32 +174,6 @@ export function layoutText(
   }
   if (inkRight === 0) inkLeft = inkTop = 0;
   return { text: wrapped, glyphs, width, height, inkLeft, inkTop, inkRight, inkBottom };
-}
-
-export interface Rect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-/**
- * The ui-outline chip under text drawn over the world: the ink's extent (at
- * `scale`, the text's whole-number scale) plus CHIP_PAD px all around,
- * relative to the text's top-left. Empty text has no chip (w and h 0).
- */
-export function chipRect(
-  layout: Pick<TextLayout, 'inkLeft' | 'inkTop' | 'inkRight' | 'inkBottom'>,
-  scale = 1,
-): Rect {
-  if (layout.inkRight <= layout.inkLeft || layout.inkBottom <= layout.inkTop)
-    return { x: 0, y: 0, w: 0, h: 0 };
-  return {
-    x: layout.inkLeft * scale - CHIP_PAD,
-    y: layout.inkTop * scale - CHIP_PAD,
-    w: (layout.inkRight - layout.inkLeft) * scale + 2 * CHIP_PAD,
-    h: (layout.inkBottom - layout.inkTop) * scale + 2 * CHIP_PAD,
-  };
 }
 
 /** An atlas's ink, one byte per pixel (1 = ink), row-major. */

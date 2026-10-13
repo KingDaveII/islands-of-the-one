@@ -4,7 +4,6 @@ import {
   BODY_LINE_PITCH,
   LABEL_LINE_PITCH,
   bitmapFonts,
-  chipRect,
   defaultTuning,
   glyphOf,
   inkMaskFromRgba,
@@ -12,6 +11,7 @@ import {
   measureText,
   rasterizeText,
   silkscreenFont,
+  TEXT_SHADOW_OFFSET,
   tiny5Font,
   wrapText,
   type BitmapFont,
@@ -20,9 +20,10 @@ import {
 } from '../src/index.js';
 import { decodePng, encodePng } from './png.js';
 
-/** Design-system tokens the client draws text in (apps/client/src/palette.ts): hollow-light ink, dream-night chip, choir-flame damage numbers. */
+/** Design-system tokens the client draws text in (apps/client/src/palette.ts): hollow-light ink, hollow-deep words over the world, dream-night shadow, choir-flame damage numbers. */
 const INK = [0xf4, 0xef, 0xe6] as const;
-const CHIP = [0x1c, 0x21, 0x47] as const;
+const WORLD_INK = [0x2a, 0x25, 0x40] as const;
+const SHADOW = [0x1c, 0x21, 0x47] as const;
 const HURT_INK = [0xf0, 0x7a, 0x3a] as const;
 
 const PRINTABLE_ASCII = Array.from({ length: 0x7f - 0x20 }, (_, i) =>
@@ -145,51 +146,49 @@ describe('text layout (Phaser BitmapText rules)', () => {
     expect(second[0]?.y).toBe(LABEL_LINE_PITCH + (glyphOf(silkscreenFont, 'F')?.yo ?? -1));
   });
 
-  it('pads the chip by 1 px around the ink (caps rows 3-7 of the Silkscreen box), none for empty text', () => {
+  it('reports the ink extent (Silkscreen caps on rows 3-7 of the box), none for empty text', () => {
     const plain = layoutText(silkscreenFont, 'BREAK');
     const b = glyphOf(silkscreenFont, 'B');
     if (!b) throw new Error('B');
     expect([plain.inkLeft, plain.inkTop, plain.inkBottom]).toEqual([b.xo, 3, 8]);
-    expect(chipRect(plain)).toEqual({ x: b.xo - 1, y: 2, w: plain.inkRight - b.xo + 2, h: 7 });
-    expect(chipRect(plain, 2)).toEqual({
-      x: 2 * b.xo - 1,
-      y: 5,
-      w: 2 * (plain.inkRight - b.xo) + 2,
-      h: 12,
-    });
-    const tail = layoutText(silkscreenFont, 'Q');
-    expect(tail.inkBottom).toBe(9);
-    expect(chipRect(tail).h).toBe(8);
-    expect(chipRect(layoutText(silkscreenFont, ''))).toEqual({ x: 0, y: 0, w: 0, h: 0 });
-    expect(chipRect(layoutText(silkscreenFont, ' '))).toEqual({ x: 0, y: 0, w: 0, h: 0 });
+    expect(layoutText(silkscreenFont, 'Q').inkBottom).toBe(9);
+    const empty = layoutText(silkscreenFont, ' ');
+    expect([empty.inkLeft, empty.inkTop, empty.inkRight, empty.inkBottom]).toEqual([0, 0, 0, 0]);
+  });
+
+  it('the drop shadow is 1 game px below, whatever the scale', () => {
+    expect(TEXT_SHADOW_OFFSET).toEqual({ x: 0, y: 1 });
   });
 });
 
-/** Ink (and a chip, for text over the world) as straight RGBA; every pixel fully on or off. */
+/**
+ * Ink as straight RGBA, every pixel fully on or off; with `shadow`, the way the
+ * client draws text over the world: a dream-night copy TEXT_SHADOW_OFFSET
+ * game px away first, the ink on top (the image grows by the offset).
+ */
 function paint(
   font: BitmapFont,
   layout: TextLayout,
   ink: readonly [number, number, number],
-  chip: boolean,
+  shadow: boolean,
   scale = 1,
 ): { width: number; height: number; rgba: Uint8Array } {
   const mask = rasterizeText(atlas(font), layout, scale);
-  // The image is the chip (ink extent + 1 px), or the text's own raster.
-  const rect = chip ? chipRect(layout, scale) : { x: 0, y: 0, w: mask.width, h: mask.height };
-  const { w: width, h: height } = rect;
+  const dx = shadow ? TEXT_SHADOW_OFFSET.x : 0;
+  const dy = shadow ? TEXT_SHADOW_OFFSET.y : 0;
+  const width = mask.width + dx;
+  const height = mask.height + dy;
   const rgba = new Uint8Array(width * height * 4);
-  if (chip) {
-    for (let i = 0; i < width * height; i++) rgba.set([...CHIP, 255], i * 4);
-  }
-  for (let y = 0; y < mask.height; y++) {
-    for (let x = 0; x < mask.width; x++) {
-      if (!mask.ink[y * mask.width + x]) continue;
-      const px = x - rect.x;
-      const py = y - rect.y;
-      expect(px >= 0 && px < width && py >= 0 && py < height, 'ink outside the chip').toBe(true);
-      rgba.set([...ink, 255], (py * width + px) * 4);
+  const stamp = (ox: number, oy: number, color: readonly [number, number, number]): void => {
+    for (let y = 0; y < mask.height; y++) {
+      for (let x = 0; x < mask.width; x++) {
+        if (mask.ink[y * mask.width + x])
+          rgba.set([...color, 255], ((y + oy) * width + x + ox) * 4);
+      }
     }
-  }
+  };
+  if (shadow) stamp(dx, dy, SHADOW);
+  stamp(0, 0, ink);
   for (let i = 3; i < rgba.length; i += 4)
     expect(rgba[i] === 0 || rgba[i] === 255, 'partial alpha').toBe(true);
   return { width, height, rgba };
@@ -221,18 +220,37 @@ function expectGolden(
 const hookblade = defaultTuning.weapons.hookblade;
 
 describe('golden images (the client lays text out the same way)', () => {
-  it.each(['BREAK', 'CRACK', 'YOU FELL'])('floater "%s" on its chip', (text) => {
+  it.each(['BREAK', 'CRACK', 'YOU FELL'])(
+    'the word "%s" over the world: dark ink, no shadow',
+    (text) => {
+      expectGolden(
+        text.toLowerCase().replace(' ', '-'),
+        paint(silkscreenFont, layoutText(silkscreenFont, text), WORLD_INK, false),
+      );
+    },
+  );
+
+  it('a damage number with its drop shadow', () => {
     expectGolden(
-      text.toLowerCase().replace(' ', '-'),
-      paint(silkscreenFont, layoutText(silkscreenFont, text), INK, true),
+      'damage-12-shadowed',
+      paint(silkscreenFont, layoutText(silkscreenFont, '-12'), HURT_INK, true),
     );
   });
 
-  it('a damage number on its chip', () => {
-    expectGolden(
-      'damage-12',
-      paint(silkscreenFont, layoutText(silkscreenFont, '-12'), HURT_INK, true),
-    );
+  it('the shadow sits exactly one row under the ink and never over it', () => {
+    const layout = layoutText(silkscreenFont, 'E');
+    const img = paint(silkscreenFont, layout, INK, true);
+    const mask = rasterizeText(atlas(silkscreenFont), layout);
+    const at = (x: number, y: number): number[] =>
+      Array.from(img.rgba.subarray((y * img.width + x) * 4, (y * img.width + x) * 4 + 3));
+    for (let y = 0; y < mask.height; y++)
+      for (let x = 0; x < mask.width; x++) {
+        if (mask.ink[y * mask.width + x]) {
+          expect(at(x, y)).toEqual([...INK]);
+          expect(mask.ink[(y + 1) * mask.width + x] ? [...INK] : [...SHADOW]).toEqual(at(x, y + 1));
+        }
+      }
+    expect(img.height).toBe(mask.height + 1);
   });
 
   it('the start screen prompt', () => {
@@ -242,10 +260,10 @@ describe('golden images (the client lays text out the same way)', () => {
     );
   });
 
-  it('the 16 px banner (the 8 px face at 2x)', () => {
+  it('the 16 px banner over the world (the 8 px face at 2x, dark ink)', () => {
     expectGolden(
       'shard-cleared-16',
-      paint(silkscreenFont, layoutText(silkscreenFont, 'SHARD CLEARED'), INK, true, 2),
+      paint(silkscreenFont, layoutText(silkscreenFont, 'SHARD CLEARED'), WORLD_INK, false, 2),
     );
   });
 

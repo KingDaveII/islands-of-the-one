@@ -2,7 +2,7 @@ import type Phaser from 'phaser';
 import type { JuiceTuning } from '@iot/shared';
 import { Palette } from '../palette.js';
 import { DEPTH } from './depth.js';
-import { chip, label, place, type Chip } from './text.js';
+import { blinkOut, label, place, shadowed, worldWord, type WorldText } from './text.js';
 
 interface Particle {
   x: number;
@@ -27,8 +27,11 @@ interface Ring {
   width: number;
 }
 
+/** Floaters blink out over their last 200 ms. */
+const FLOATER_BLINK_MS = 200;
+
 interface Floater {
-  text: Chip;
+  text: WorldText;
   life: number;
   max: number;
   y: number;
@@ -68,10 +71,21 @@ export class Fx {
   shake(strength: number): void {
     const j = this.juice();
     if (strength <= 0) return;
-    this.scene.cameras.main.shake(j.shakeDurationMs + strength * 12, Math.min(0.03, strength * j.shakePerStrength), true);
+    this.scene.cameras.main.shake(
+      j.shakeDurationMs + strength * 12,
+      Math.min(0.03, strength * j.shakePerStrength),
+      true,
+    );
   }
 
-  burst(x: number, y: number, count: number, color: number, speed: number, opts: { dir?: number; spread?: number; size?: number; life?: number } = {}): void {
+  burst(
+    x: number,
+    y: number,
+    count: number,
+    color: number,
+    speed: number,
+    opts: { dir?: number; spread?: number; size?: number; life?: number } = {},
+  ): void {
     const j = this.juice();
     const spread = opts.spread ?? Math.PI * 2;
     for (let i = 0; i < count; i++) {
@@ -96,8 +110,12 @@ export class Fx {
     this.rings.push({ x, y, r0, r1, life: ms, max: ms, color, width });
   }
 
-  float(x: number, y: number, text: string, color: number, ms = 700): void {
-    const t = chip(label(this.scene, 0, 0, text, color));
+  /** A floater: a word in the world ink, or, with `color`, a coloured number/pickup with its drop shadow (readability.md §4). */
+  float(x: number, y: number, text: string, ms = 700, color?: number): void {
+    const t =
+      color === undefined
+        ? worldWord(this.scene, 0, 0, text)
+        : shadowed(label(this.scene, 0, 0, text, color));
     place(t, x, y, 0.5, 1);
     t.setDepth(DEPTH.floaters);
     this.layer.add(t);
@@ -138,7 +156,8 @@ export class Fx {
       }
       f.y += f.vy * (dtRealMs / 1000);
       f.text.y = Math.round(f.y);
-      f.text.setAlpha(Math.min(1, (f.life / f.max) * 2));
+      // Solid, then a 2-blink pop over the last 200 ms (no alpha fade: readability.md §4).
+      blinkOut(f.text, f.life, FLOATER_BLINK_MS);
       return true;
     });
   }
@@ -147,7 +166,10 @@ export class Fx {
   chips(x: number, y: number, dir: number, count: number): void {
     const j = this.juice();
     this.burst(x, y, count, Palette.shell, j.particleSpeed, { dir, spread: Math.PI * 0.9 });
-    this.burst(x, y, Math.ceil(count / 2), Palette.huskOutline, j.particleSpeed * 0.8, { dir, spread: Math.PI * 0.9 });
+    this.burst(x, y, Math.ceil(count / 2), Palette.huskOutline, j.particleSpeed * 0.8, {
+      dir,
+      spread: Math.PI * 0.9,
+    });
   }
 
   /** Core flare when a Husk dies. */

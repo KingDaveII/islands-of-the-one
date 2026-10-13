@@ -43,6 +43,8 @@ export class Session {
   /** Real-time pacing for playtests and screenshots (1 = normal); presentation only, never part of the record. */
   speed = 1;
   private unsubscribe: () => void;
+  /** The events of creating the run (the first room's `roomEnter`), delivered with the first update: stepRun would drop them. */
+  private pending: SimEvent[];
 
   constructor(
     readonly seed: number,
@@ -51,6 +53,7 @@ export class Session {
   ) {
     // One weapon per run: it is part of the run config and never changes mid-run.
     this.run = createRun({ seed, tuning: tuningStore.get(), rooms: roomTemplates, weapon });
+    this.pending = this.run.events;
     this.unsubscribe = tuningStore.subscribe((t) => {
       if (this.run.state.status === 'playing') setRunTuning(this.run, t);
     });
@@ -96,7 +99,8 @@ export class Session {
 
   /** Advance by real time; returns events from all steps taken. */
   update(dtMs: number): SimEvent[] {
-    const events: SimEvent[] = [];
+    const events: SimEvent[] = this.pending;
+    this.pending = [];
     this.stepsThisFrame = 0;
     if (this.isEnded()) return events;
     this.acc += Math.min(dtMs, 250) * this.timeScale() * this.speed;
