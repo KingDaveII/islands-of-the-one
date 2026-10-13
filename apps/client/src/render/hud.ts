@@ -6,7 +6,7 @@ import { Palette } from '../palette.js';
 import { chargeStage } from './charge.js';
 import { GLYPH_SIZE } from './glyphCells.js';
 import { HintRow } from './hint.js';
-import { label, place } from './text.js';
+import { label, place, type Text } from './text.js';
 import { abilitySlot, healthBar, icon, panel, tierPips, type IconKind } from './ui.js';
 
 const W = 480;
@@ -76,15 +76,15 @@ export class Hud {
     bl: { x: 0, y: 0, w: 0, h: 0 },
     br: { x: 0, y: 0, w: 0, h: 0 },
   };
-  private readonly hpText: Phaser.GameObjects.Text;
+  private readonly hpText: Text;
   private readonly dodgeKey: HintRow;
   private readonly itemKeys: HintRow[];
-  private readonly itemCounts: Phaser.GameObjects.Text[];
-  private readonly room: Phaser.GameObjects.Text;
-  private readonly spark: Phaser.GameObjects.Text;
-  private readonly weaponName: Phaser.GameObjects.Text;
+  private readonly itemCounts: Text[];
+  private readonly room: Text;
+  private readonly spark: Text;
+  private readonly weaponName: Text;
   private readonly keys: HintRow[];
-  private readonly secs: Phaser.GameObjects.Text[];
+  private readonly secs: Text[];
   private lagHp = -1;
   private readyUntil: number[] = [0, 0, 0, 0];
   private prevCooldown: number[] = [0, 0, 0, 0];

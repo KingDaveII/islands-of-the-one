@@ -12,7 +12,7 @@ import { clampScroll } from '../render/camera.js';
 import { DEPTH } from '../render/depth.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { preloadSpriteSheets, registerSpriteSheets } from '../render/spriteSheets.js';
-import { label, place, withOutline } from '../render/text.js';
+import { chip, label, place, preloadFonts, registerFonts, type Chip } from '../render/text.js';
 import { rad, WorldRenderer } from '../render/world.js';
 
 export const VIEW_W = 480;
@@ -39,8 +39,8 @@ export class GameScene extends Phaser.Scene {
   private hud!: Hud;
   private worldLayer!: Phaser.GameObjects.Layer;
   private hudLayer!: Phaser.GameObjects.Layer;
-  private banner!: Phaser.GameObjects.Text;
-  private bannerSub!: Phaser.GameObjects.Text;
+  private banner!: Chip;
+  private bannerSub!: Chip;
   private bannerLife = 0;
   private tint!: Phaser.GameObjects.Rectangle;
   /** The interact prompt (Calm only) over the nearest interactable in reach; nothing in M1 needs one. */
@@ -67,11 +67,13 @@ export class GameScene extends Phaser.Scene {
   preload(): void {
     preloadSheets(this);
     preloadSpriteSheets(this);
+    preloadFonts(this);
   }
 
   create(): void {
     registerSheetFrames(this);
     registerSpriteSheets(this);
+    registerFonts(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
     this.worldLayer = this.add.layer();
     this.hudLayer = this.add.layer();
@@ -90,8 +92,8 @@ export class GameScene extends Phaser.Scene {
     const weaponName = tuning.weapons[this.weapon]?.name ?? this.weapon;
     this.hud = new Hud(this, this.hudLayer, this.session.run, weaponName, this.controls);
 
-    this.banner = withOutline(label(this, 0, 0, '', Palette.uiInk, 16)).setAlpha(0);
-    this.bannerSub = withOutline(label(this, 0, 0, '', Palette.uiInkMuted)).setAlpha(0);
+    this.banner = chip(label(this, 0, 0, '', Palette.uiInk, 16)).setAlpha(0);
+    this.bannerSub = chip(label(this, 0, 0, '', Palette.uiInkMuted)).setAlpha(0);
     this.hudLayer.add([this.banner, this.bannerSub]);
 
     const hudCam = this.cameras.add(0, 0, VIEW_W, VIEW_H);

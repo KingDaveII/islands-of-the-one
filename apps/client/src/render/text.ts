@@ -1,100 +1,118 @@
-import type Phaser from 'phaser';
-import { css, Palette } from '../palette.js';
+import Phaser from 'phaser';
+import {
+  BODY_LINE_PITCH,
+  chipRect,
+  LABEL_LINE_PITCH,
+  layoutText,
+  silkscreenFont,
+  tiny5Font,
+  type BitmapFont,
+} from '@iot/shared';
+import silkscreenUrl from '@iot/shared/assets/fonts/silkscreen-8px.png';
+import tiny5Url from '@iot/shared/assets/fonts/tiny5-8px.png';
+import { Palette } from '../palette.js';
 
 /**
- * Self-hosted pixel faces (SIL OFL, see public/fonts): Silkscreen for labels
- * and numbers, Tiny5 for sentences. Both are pixel-exact only at multiples of
- * 8 px, so those are the only sizes offered.
+ * The one text path. Every piece of text is a Phaser BitmapText drawn from
+ * the pixel atlases in packages/shared/assets/fonts (Silkscreen for labels
+ * and numbers, Tiny5 for sentences; both SIL OFL, converted at 8 px by
+ * tools/bitmap-fonts.py), tinted by color token, so the glyph pixels never
+ * depend on the browser's font rasterizer. Sizes 16 and 24 are the 8 px
+ * glyphs scaled by a whole number. Nothing else creates text (ESLint).
+ *
+ * Call `preloadFonts` from a scene's preload and `registerFonts` from its
+ * create (both safe to call again: textures and font data are game-wide).
  */
-export const FONT_LABEL = 'Silkscreen';
-export const FONT_TEXT = 'Tiny5';
+export const FONT_LABEL = 'silkscreen-8px';
+export const FONT_TEXT = 'tiny5-8px';
 
 export type FontSize = 8 | 16 | 24;
+export type Text = Phaser.GameObjects.BitmapText;
 
-/** Line pitch per style (game px). */
-const LINE: Record<FontSize, number> = { 8: 10, 16: 18, 24: 24 };
-const BODY_PITCH = 11;
+/** Line pitch per label size (game px); the body pitch is BODY_LINE_PITCH. */
+const LINE: Record<FontSize, number> = { 8: LABEL_LINE_PITCH, 16: 18, 24: 24 };
 
-/**
- * Resolve once both faces (declared with @font-face in index.html) are ready
- * to draw, so the first scene never renders in the fallback font. Resolves
- * either way after the loads settle; a face that failed is reported, since
- * the text would then be the browser's sans-serif at 8 px.
- */
-export async function loadFonts(): Promise<void> {
-  const faces = [FONT_LABEL, FONT_TEXT];
-  await Promise.allSettled(faces.map((f) => document.fonts.load(`8px ${f}`)));
-  await document.fonts.ready;
-  const missing = faces.filter((f) => !document.fonts.check(`8px ${f}`));
-  if (missing.length > 0)
-    console.warn(`fonts not loaded, text will use a fallback face: ${missing.join(', ')}`);
+const FONTS: Record<string, { url: string; font: BitmapFont }> = {
+  [FONT_LABEL]: { url: silkscreenUrl, font: silkscreenFont },
+  [FONT_TEXT]: { url: tiny5Url, font: tiny5Font },
+};
+
+export function preloadFonts(scene: Phaser.Scene): void {
+  for (const [key, { url }] of Object.entries(FONTS))
+    if (!scene.textures.exists(key)) scene.load.image(key, url);
 }
 
-/** Outline color per text that has one (withOutline); applied by the snap below. */
-const outlines = new WeakMap<Phaser.GameObjects.Text, number>();
-
-/**
- * Keep text pixel-exact: after Phaser draws a text canvas, snap every pixel
- * to fully on or off (the browser's rasterizer leaves faint partial pixels on
- * some Silkscreen glyphs), add the 1 px outline when the text has one, then
- * re-upload the texture.
- */
-function crisp(t: Phaser.GameObjects.Text): Phaser.GameObjects.Text {
-  const draw = t.updateText.bind(t);
-  const snap = (): Phaser.GameObjects.Text => {
-    draw();
-    const { canvas, context } = t;
-    if (canvas.width === 0 || canvas.height === 0) return t;
-    const img = context.getImageData(0, 0, canvas.width, canvas.height);
-    const px = img.data;
-    for (let i = 3; i < px.length; i += 4) px[i] = (px[i] ?? 0) >= 128 ? 255 : 0;
-    const outline = outlines.get(t);
-    if (outline !== undefined) dilate(px, canvas.width, canvas.height, outline);
-    context.putImageData(img, 0, 0);
-    t.frame.source.update();
-    return t;
-  };
-  t.updateText = snap;
-  return snap();
+/** Phaser's per-glyph font data (Phaser.Types.GameObjects.BitmapText.BitmapFontCharacterData, plus the advance it reads). */
+interface GlyphData {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  centerX: number;
+  centerY: number;
+  xOffset: number;
+  yOffset: number;
+  xAdvance: number;
+  u0: number;
+  v0: number;
+  u1: number;
+  v1: number;
+  data: object;
+  kerning: Record<string, number>;
 }
 
-/** Paint every off pixel next to an on pixel (4-neighbourhood) in `color`: a 1 px rim, like the sprites' outlines. */
-function dilate(px: Uint8ClampedArray, w: number, h: number, color: number): void {
-  const on = new Uint8Array(w * h);
-  for (let i = 0; i < w * h; i++) on[i] = (px[i * 4 + 3] ?? 0) === 255 ? 1 : 0;
-  const r = (color >> 16) & 0xff;
-  const g = (color >> 8) & 0xff;
-  const b = color & 0xff;
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const i = y * w + x;
-      if (on[i] === 1) continue;
-      const near =
-        (x > 0 && on[i - 1] === 1) ||
-        (x < w - 1 && on[i + 1] === 1) ||
-        (y > 0 && on[i - w] === 1) ||
-        (y < h - 1 && on[i + w] === 1);
-      if (!near) continue;
-      px[i * 4] = r;
-      px[i * 4 + 1] = g;
-      px[i * 4 + 2] = b;
-      px[i * 4 + 3] = 255;
-    }
+/** The atlas contract as Phaser's BitmapFontData (what ParseXMLBitmapFont builds from BMFont XML). */
+function fontData(
+  key: string,
+  font: BitmapFont,
+  texture: Phaser.Textures.Texture,
+): Phaser.Types.GameObjects.BitmapText.BitmapFontData {
+  const src = texture.getSourceImage();
+  const tw = src.width;
+  const th = src.height;
+  const chars: Record<number, GlyphData> = {};
+  for (const g of font.chars) {
+    const code = g.ch.codePointAt(0);
+    if (code === undefined) continue;
+    chars[code] = {
+      x: g.x,
+      y: g.y,
+      width: g.w,
+      height: g.h,
+      centerX: Math.floor(g.w / 2),
+      centerY: Math.floor(g.h / 2),
+      xOffset: g.xo,
+      yOffset: g.yo,
+      xAdvance: g.adv,
+      u0: g.x / tw,
+      v0: g.y / th,
+      u1: (g.x + g.w) / tw,
+      v1: (g.y + g.h) / th,
+      data: {},
+      kerning: {},
+    };
+  }
+  return { font: key, size: font.size, lineHeight: font.lineHeight, retroFont: false, chars };
+}
+
+export function registerFonts(scene: Phaser.Scene): void {
+  for (const [key, { font }] of Object.entries(FONTS)) {
+    if (scene.cache.bitmapFont.has(key) || !scene.textures.exists(key)) continue;
+    const texture = scene.textures.get(key);
+    scene.cache.bitmapFont.add(key, {
+      data: fontData(key, font, texture),
+      texture: key,
+      frame: null,
+      fromAtlas: false,
+    });
   }
 }
 
-function style(
-  family: string,
-  size: FontSize,
-  color: number,
-): Phaser.Types.GameObjects.Text.TextStyle {
-  return { fontFamily: family, fontSize: `${size}px`, color: css(color), resolution: 1 };
-}
-
 /**
- * A Silkscreen label/number at (x, y), top-left anchored on whole pixels.
- * Title (16) and display (24) sizes are the 8 px face scaled by a whole
- * number, so every font pixel stays a crisp 2×2 / 3×3 block.
+ * A Silkscreen label/number at (x, y), top-left anchored on whole pixels, in
+ * a color token. Title (16) and display (24) sizes are the 8 px face scaled
+ * by a whole number, so every font pixel stays a crisp 2×2 / 3×3 block; the
+ * line pitch is 10 / 18 / 24.
  */
 export function label(
   scene: Phaser.Scene,
@@ -103,13 +121,16 @@ export function label(
   text: string,
   color: number = Palette.uiInk,
   size: FontSize = 8,
-): Phaser.GameObjects.Text {
-  const t = scene.add.text(Math.round(x), Math.round(y), text, style(FONT_LABEL, 8, color));
-  t.setLineSpacing((LINE[size] - size) / (size / 8));
-  return crisp(t).setScale(size / 8);
+): Text {
+  const scale = size / 8;
+  return scene.add
+    .bitmapText(Math.round(x), Math.round(y), FONT_LABEL, text)
+    .setLineSpacing(LINE[size] / scale - 8)
+    .setScale(scale)
+    .setTint(color);
 }
 
-/** Tiny5 body copy (sentences, stats, lore) with the 11 px line pitch. */
+/** Tiny5 body copy (sentences, stats, lore) with the 11 px line pitch, word-wrapped at `wrapWidth` (game px). */
 export function body(
   scene: Phaser.Scene,
   x: number,
@@ -117,38 +138,79 @@ export function body(
   text: string,
   color: number = Palette.uiInk,
   wrapWidth?: number,
-): Phaser.GameObjects.Text {
-  const t = scene.add.text(Math.round(x), Math.round(y), text, {
-    ...style(FONT_TEXT, 8, color),
-    ...(wrapWidth ? { wordWrap: { width: wrapWidth } } : {}),
-  });
-  t.setLineSpacing(BODY_PITCH - 8);
-  return crisp(t);
+): Text {
+  const t = scene.add
+    .bitmapText(Math.round(x), Math.round(y), FONT_TEXT, text)
+    .setLineSpacing(BODY_LINE_PITCH - 8)
+    .setTint(color);
+  if (wrapWidth) t.setMaxWidth(wrapWidth);
+  return t;
 }
 
 /**
- * A 1 px ui-outline rim all around the glyphs, for text drawn straight over
- * the world (floaters, the room banner): on the pale floor the ink alone is
- * under 2:1, against the rim it is what readability.md §4 asks for. The
- * padding makes room for the rim; `place` still lands the box on whole pixels.
+ * Text drawn straight over the world (floaters, damage numbers, the room
+ * banner) sits on a ui-outline chip: the ink's extent plus 1 px of padding,
+ * as the design system asks for numbers over art (readability.md §4). The
+ * chip follows the text through setText; `place` lands the chip on whole
+ * pixels. Alpha set on the chip fades both.
  */
-export function withOutline(
-  t: Phaser.GameObjects.Text,
-  color: number = Palette.uiOutline,
-): Phaser.GameObjects.Text {
-  outlines.set(t, color);
-  return t.setPadding(1, 1, 1, 1).updateText();
+export class Chip extends Phaser.GameObjects.Container {
+  readonly label: Text;
+  private readonly back: Phaser.GameObjects.Rectangle;
+
+  constructor(scene: Phaser.Scene, text: Text, color: number = Palette.uiOutline) {
+    super(scene, text.x, text.y);
+    this.label = text;
+    this.back = scene.add.rectangle(0, 0, 1, 1, color).setOrigin(0, 0);
+    text.setPosition(0, 0);
+    this.add([this.back, text]);
+    scene.add.existing(this);
+    this.fit();
+  }
+
+  get text(): string {
+    return this.label.text;
+  }
+
+  setText(value: string): this {
+    if (value !== this.label.text) {
+      this.label.setText(value);
+      this.fit();
+    }
+    return this;
+  }
+
+  /** Size the chip to the ink (the shared layout is the client's, so the chip never misses a glyph). */
+  private fit(): void {
+    const entry = FONTS[this.label.font];
+    if (!entry) throw new Error(`unknown font ${this.label.font}`);
+    const scale = this.label.scaleX;
+    const layout = layoutText(entry.font, this.label.text, {
+      maxWidth: this.label.maxWidth / scale,
+      lineSpacing: this.label.lineSpacing,
+    });
+    const r = chipRect(layout, scale);
+    this.back.setSize(r.w, r.h).setVisible(r.w > 0 && r.h > 0);
+    // The chip is what `place` positions: the container's box is the chip's, the text offset inside it.
+    this.setSize(r.w, r.h);
+    this.label.setPosition(-r.x, -r.y);
+  }
+}
+
+/** Put `text` on a ui-outline chip (text drawn over the world). */
+export function chip(text: Text, color: number = Palette.uiOutline): Chip {
+  return new Chip(text.scene, text, color);
+}
+
+/** Anything `place` can land on whole pixels: a text, a chip (its size is the chip's), a hint row. */
+export interface Placeable {
+  readonly width: number;
+  readonly height: number;
+  setPosition(x: number, y: number): unknown;
 }
 
 /** Place text so its anchor point lands on whole pixels (ox/oy: 0 left/top, 0.5 center, 1 right/bottom). */
-export function place(
-  t: Phaser.GameObjects.Text,
-  x: number,
-  y: number,
-  ox = 0,
-  oy = 0,
-): Phaser.GameObjects.Text {
-  return t
-    .setOrigin(0, 0)
-    .setPosition(Math.round(x - t.displayWidth * ox), Math.round(y - t.displayHeight * oy));
+export function place<T extends Placeable>(t: T, x: number, y: number, ox = 0, oy = 0): T {
+  t.setPosition(Math.round(x - t.width * ox), Math.round(y - t.height * oy));
+  return t;
 }

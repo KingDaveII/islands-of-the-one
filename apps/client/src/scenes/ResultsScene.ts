@@ -6,7 +6,7 @@ import { Palette } from '../palette.js';
 import { continueHint, menuCursor, padFamilyNow } from '../render/menus.js';
 import { HintRow } from '../render/hint.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
-import { label, place } from '../render/text.js';
+import { label, place, preloadFonts, registerFonts } from '../render/text.js';
 import { panel } from '../render/ui.js';
 import type { ResultsData } from './GameScene.js';
 import { VIEW_H, VIEW_W } from './GameScene.js';
@@ -28,10 +28,12 @@ export class ResultsScene extends Phaser.Scene {
 
   preload(): void {
     preloadSheets(this);
+    preloadFonts(this);
   }
 
   create(): void {
     registerSheetFrames(this);
+    registerFonts(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
     const { results: r, seed, weapon } = this.data_;
     const cleared = r.status === 'cleared';
