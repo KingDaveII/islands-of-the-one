@@ -453,3 +453,60 @@ describe('accounts API in production', () => {
     expect((await tryRegister('third')).statusCode).toBe(429);
   });
 });
+
+describe('per-username login throttle', () => {
+  let ctx: Awaited<ReturnType<typeof setup>>;
+  const open = { max: 10_000, timeWindowMs: 60_000 };
+
+  beforeAll(async () => {
+    ctx = await setup({
+      trustProxy: 'loopback',
+      rateLimit: { login: open, register: open },
+      loginThrottle: { maxFailures: 3, windowMs: 15 * 60_000, lockMs: 15 * 60_000 },
+    });
+  });
+
+  afterAll(async () => {
+    await ctx.app.close();
+    await ctx.db.close();
+  });
+
+  /** A login from its own client address (the per-IP limit never sees two from one). */
+  let ip = 0;
+  const attempt = (username: string, password: string) =>
+    call(ctx.app, ApiRoute.Login, {
+      body: { username, password },
+      headers: { 'x-forwarded-for': `198.51.100.${++ip}` },
+    });
+
+  it('refuses a username after 3 failures from different addresses, even with the right password', async () => {
+    await register(ctx.app, 'target');
+    await register(ctx.app, 'bystander');
+    for (let i = 0; i < 3; i++)
+      expect((await attempt('target', `guess number ${i}`)).statusCode).toBe(401);
+    const locked = await attempt('TARGET', 'correct horse');
+    expect(locked.statusCode).toBe(401);
+    expect(locked.json()).toEqual({ error: 'wrong-credentials', message: WRONG_CREDENTIALS });
+    expect(locked.headers['set-cookie']).toBeUndefined();
+    // Other accounts are unaffected.
+    expect((await attempt('bystander', 'correct horse')).statusCode).toBe(200);
+
+    // 15 minutes later the lock is over.
+    ctx.clock.t += 15 * 60_000;
+    expect((await attempt('target', 'correct horse')).statusCode).toBe(200);
+  });
+
+  it('a success clears the count; unknown usernames lock the same way', async () => {
+    await register(ctx.app, 'forgetful');
+    for (let i = 0; i < 2; i++) await attempt('forgetful', 'wrong password');
+    expect((await attempt('forgetful', 'correct horse')).statusCode).toBe(200);
+    for (let i = 0; i < 2; i++) await attempt('forgetful', 'wrong password');
+    expect((await attempt('forgetful', 'correct horse')).statusCode).toBe(200);
+
+    for (let i = 0; i < 4; i++) {
+      const res = await attempt('nobody-at-all', 'whatever goes');
+      expect(res.statusCode).toBe(401);
+      expect(res.json()).toEqual({ error: 'wrong-credentials', message: WRONG_CREDENTIALS });
+    }
+  });
+});

@@ -6,6 +6,7 @@ import { API_PREFIX, PROTOCOL_VERSION, RoomName } from '@iot/shared';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { apiRoutes, DEFAULT_RATE_LIMITS, type ApiOptions } from './api/routes.js';
 import type { Clock } from './auth/sessions.js';
+import { DEFAULT_LOGIN_THROTTLE } from './auth/throttle.js';
 import type { DbHandle } from './db/client.js';
 import { TestRoom } from './rooms/TestRoom.js';
 
@@ -22,6 +23,8 @@ export interface AppOptions {
   trustProxy?: boolean | string;
   /** Rate limits of the account routes (tests lower them). */
   rateLimit?: ApiOptions['rateLimit'];
+  /** The per-username login throttle (tests lower it). */
+  loginThrottle?: ApiOptions['loginThrottle'];
   /** Wall clock for sessions (tests move it). */
   now?: Clock;
 }
@@ -46,6 +49,7 @@ export async function createApp({
   secureCookies = false,
   trustProxy = false,
   rateLimit = DEFAULT_RATE_LIMITS,
+  loginThrottle = DEFAULT_LOGIN_THROTTLE,
   now = () => new Date(),
 }: AppOptions): Promise<App> {
   const matchmaking = createNodeMatchmakingMiddleware();
@@ -73,7 +77,14 @@ export async function createApp({
     }
   });
 
-  await http.register(apiRoutes, { prefix: API_PREFIX, db: db.db, secureCookies, now, rateLimit });
+  await http.register(apiRoutes, {
+    prefix: API_PREFIX,
+    db: db.db,
+    secureCookies,
+    now,
+    rateLimit,
+    loginThrottle,
+  });
 
   const transport = new WebSocketTransport();
   transport.attachToServer(http.server);

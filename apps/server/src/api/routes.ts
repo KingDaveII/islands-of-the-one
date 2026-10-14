@@ -32,6 +32,7 @@ import {
   tokenFromCookieHeader,
   type Clock,
 } from '../auth/sessions.js';
+import { LoginThrottle, type LoginThrottleOptions } from '../auth/throttle.js';
 import type { Database } from '../db/client.js';
 import { accounts, kindled, type Account, type KindledRow } from '../db/schema.js';
 
@@ -54,6 +55,8 @@ export interface ApiOptions {
   secureCookies: boolean;
   now: Clock;
   rateLimit: { register: RateWindow; login: RateWindow };
+  /** The per-username login throttle (beside the per-IP limits). */
+  loginThrottle: LoginThrottleOptions;
 }
 
 export const DEFAULT_RATE_LIMITS: ApiOptions['rateLimit'] = {
@@ -109,6 +112,7 @@ export function sameOrigin(origin: string | undefined, host: string | undefined)
 
 export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise<void> {
   const { db, now } = opts;
+  const throttle = new LoginThrottle(opts.loginThrottle);
 
   await app.register(rateLimit, {
     global: false,
@@ -222,16 +226,23 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
         return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
       const username = validateUsername(req.body.username);
       const password = validatePassword(req.body.password);
-      const account = username.ok ? await findAccount(username.value) : undefined;
+      const at = now();
+      const key = username.ok ? username.value : null;
+      // A username locked by the throttle is refused without looking at the password, so
+      // guesses can't be confirmed while it lasts; the same dummy verification keeps the timing.
+      const locked = key !== null && throttle.isLocked(key, at.getTime());
+      const account = username.ok && !locked ? await findAccount(username.value) : undefined;
       // Always one argon2 verification (a dummy one for an unknown username): same time, same answer.
       const verified = await verifyPassword(
         account?.passwordHash,
         password.ok ? password.value : '',
       );
-      if (!account || !password.ok || !verified)
+      if (!account || !password.ok || !verified) {
+        if (key !== null && !locked) throttle.fail(key, at.getTime());
         return fail(reply, 401, ApiErrorCode.WrongCredentials, WRONG_CREDENTIALS);
+      }
+      throttle.succeed(account.username);
 
-      const at = now();
       await deleteSession(db, tokenFromCookieHeader(req.headers.cookie));
       await purgeExpiredSessions(db, account.id, at);
       await db.update(accounts).set({ lastLoginAt: at }).where(eq(accounts.id, account.id));
