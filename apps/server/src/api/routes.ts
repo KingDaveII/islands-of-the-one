@@ -16,6 +16,7 @@ import {
   type AccountView,
   type ApiErrorBody,
   type KindledResponse,
+  type InventoryResponse,
   type KindledView,
   type MeResponse,
 } from '@iot/shared';
@@ -34,7 +35,9 @@ import {
 } from '../auth/sessions.js';
 import { LoginThrottle, type LoginThrottleOptions } from '../auth/throttle.js';
 import type { Database } from '../db/client.js';
+import { isUniqueViolation } from '../db/errors.js';
 import { accounts, kindled, type Account, type KindledRow } from '../db/schema.js';
+import { createInventory } from '../inventory/index.js';
 
 /**
  * The HTTP JSON API under /api (docs/design/accounts.md). Every route, body
@@ -90,16 +93,6 @@ function kindledView(k: KindledRow): KindledView {
   };
 }
 
-/** Postgres unique_violation, through Drizzle's error wrapping. */
-function isUniqueViolation(err: unknown): boolean {
-  let e: unknown = err;
-  for (let depth = 0; depth < 5 && typeof e === 'object' && e !== null; depth++) {
-    if ((e as { code?: unknown }).code === '23505') return true;
-    e = (e as { cause?: unknown }).cause;
-  }
-  return false;
-}
-
 /** The request's Origin names the host it was sent to (the page and the API share one origin). */
 export function sameOrigin(origin: string | undefined, host: string | undefined): boolean {
   if (!origin || !host) return false;
@@ -112,6 +105,7 @@ export function sameOrigin(origin: string | undefined, host: string | undefined)
 
 export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise<void> {
   const { db, now } = opts;
+  const inventory = createInventory(db);
   const throttle = new LoginThrottle(opts.loginThrottle);
 
   await app.register(rateLimit, {
@@ -292,5 +286,18 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
     if (!row) throw new Error('kindled insert returned nothing');
     const body: KindledResponse = { kindled: kindledView(row) };
     return reply.code(201).send(body);
+  });
+
+  // The Kindled comes from the session cookie only; a request names no one.
+  app.get(path(ApiRoute.Inventory), async (req, reply) => {
+    const account = await signedIn(req, reply);
+    if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
+    const k = await findKindled(account.id);
+    if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+    const held = await inventory.holdings(k.id);
+    const body: InventoryResponse = {
+      items: held.map((h) => ({ item: h.itemId, quantity: h.quantity })),
+    };
+    return reply.send(body);
   });
 }
