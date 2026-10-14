@@ -26,6 +26,18 @@ describe('the API client', () => {
     expect(calls[0]?.init).toMatchObject({ method: 'GET', credentials: 'include' });
   });
 
+  it('GETs the inventory and unwraps its items', async () => {
+    const items = [{ item: 'sealed-gin', quantity: 12 }];
+    const { calls, api } = fake(200, { items });
+    expect(await api.inventory()).toEqual({ ok: true, value: items });
+    expect(calls[0]?.input).toBe(ApiRoute.Inventory);
+    expect(calls[0]?.init).toMatchObject({ method: 'GET', credentials: 'include' });
+    expect(await fake(200, { items: [{ item: 'sealed-gin', quantity: -1 }] }).api.inventory()).toMatchObject({
+      ok: false,
+      error: 'unreachable',
+    });
+  });
+
   it('POSTs JSON', async () => {
     const { calls, api } = fake(201, ME);
     await api.register({ username: 'mira', password: 'correct horse' });

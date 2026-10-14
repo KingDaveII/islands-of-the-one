@@ -13,6 +13,7 @@ Browser multiplayer game (idle / co-op / action MMORPG). pnpm monorepo, TypeScri
 | `packages/sim`         | Deterministic combat sim: 60 Hz integer ticks, seeded RNG, replayable runs.    |
 | `docs/design`          | Design rules: `combat.md`, `readability.md` (how it's drawn), `glossary.md`,   |
 |                        | `accounts.md` (the `/api` routes, session cookie, account and name rules).     |
+|                        | `inventory.md` (items, `inventory.apply`, the ledger, the `inv:grant` CLI).    |
 
 Workspace packages are consumed from source via the custom `source` export condition
 (tsconfig `customConditions`, Vite `resolve.conditions`, `tsx --conditions=source`), so

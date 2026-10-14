@@ -80,6 +80,7 @@ export const MENU_BUTTONS = {
   confirm: [GLYPH_BUTTON.Cross ?? 0, GLYPH_BUTTON.Start ?? 9],
   back: GLYPH_BUTTON.Circle ?? 1,
   controls: GLYPH_BUTTON.Triangle ?? 3,
+  inventory: GLYPH_BUTTON.Square ?? 2,
   left: GLYPH_BUTTON.Left ?? 14,
   right: GLYPH_BUTTON.Right ?? 15,
   up: GLYPH_BUTTON.Up ?? 12,

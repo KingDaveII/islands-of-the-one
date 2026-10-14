@@ -136,6 +136,7 @@ frame, so the device never flickers; a pad going away hands it back to the keybo
   on the mouse in mouse mode and on the pad aim in pad mode (§3).
 - **Menus**: the OS cursor shows in mouse mode and hides in pad mode. They stay navigable on the
   pad with a fixed convention (`MENU_BUTTONS` in `gamepad.ts`, not bindings): Cross or Start
-  confirms, Circle goes back, Triangle opens the controls screen from the start screen, the D-pad
+  confirms, Circle goes back, Triangle opens the controls screen from the start screen, Square the inventory view (no keyboard key
+  yet: the glyph sheet has no I key, so keyboard players click INVENTORY), the D-pad
   (left/right) steps through choices (the weapon on the start screen, the preset on the controls
   screen).

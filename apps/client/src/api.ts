@@ -1,11 +1,13 @@
 import {
   ApiRoute,
   isApiErrorBody,
+  isInventoryResponse,
   isKindledResponse,
   isMeResponse,
   type ApiErrorCode,
   type CreateKindledRequest,
   type CredentialsRequest,
+  type InventoryEntry,
   type KindledView,
   type MeResponse,
 } from '@iot/shared';
@@ -62,6 +64,8 @@ export interface Api {
   login(body: CredentialsRequest): Promise<ApiResult<MeResponse>>;
   logout(): Promise<ApiResult<undefined>>;
   createKindled(body: CreateKindledRequest): Promise<ApiResult<KindledView>>;
+  /** The signed-in Kindled's items, in items.json order; `no-kindled` before creation. */
+  inventory(): Promise<ApiResult<InventoryEntry[]>>;
 }
 
 export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)): Api {
@@ -73,6 +77,10 @@ export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)):
     createKindled: async (body) => {
       const res = await request(fetchFn, ApiRoute.Kindled, 'POST', body, isKindledResponse);
       return res.ok ? { ok: true, value: res.value.kindled } : res;
+    },
+    inventory: async () => {
+      const res = await request(fetchFn, ApiRoute.Inventory, 'GET', undefined, isInventoryResponse);
+      return res.ok ? { ok: true, value: res.value.items } : res;
     },
   };
 }
