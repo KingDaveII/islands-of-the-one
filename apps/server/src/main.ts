@@ -9,7 +9,14 @@ const db = await createDb({ url: config.databaseUrl, pgliteDir: config.pgliteDir
 // the Docker image in sync with the schema. Set SKIP_MIGRATIONS=1 to opt out.
 if (!process.env.SKIP_MIGRATIONS) await db.migrate();
 
-const app = await createApp({ db, logger: true, devCors: config.devCors, version: config.version });
+const app = await createApp({
+  db,
+  logger: true,
+  devCors: config.devCors,
+  version: config.version,
+  secureCookies: config.secureCookies,
+  trustProxy: config.trustProxy,
+});
 const address = await app.listen(config.port, config.host);
 app.http.log.info(`server ${config.version} listening on ${address} (db: ${db.kind})`);
 

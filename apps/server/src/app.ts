@@ -2,8 +2,10 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { createNodeMatchmakingMiddleware, matchMaker, Server as GameServer } from '@colyseus/core';
 import { setTransport } from '@colyseus/core/Transport';
 import { WebSocketTransport } from '@colyseus/ws-transport';
-import { PROTOCOL_VERSION, RoomName } from '@iot/shared';
+import { API_PREFIX, PROTOCOL_VERSION, RoomName } from '@iot/shared';
 import Fastify, { type FastifyInstance } from 'fastify';
+import { apiRoutes, DEFAULT_RATE_LIMITS, type ApiOptions } from './api/routes.js';
+import type { Clock } from './auth/sessions.js';
 import type { DbHandle } from './db/client.js';
 import { TestRoom } from './rooms/TestRoom.js';
 
@@ -14,6 +16,14 @@ export interface AppOptions {
   devCors?: boolean;
   /** Build identifier reported by /health. */
   version?: string;
+  /** Mark the session cookie Secure (see Config.secureCookies). */
+  secureCookies?: boolean;
+  /** Fastify's trustProxy: which hops may set X-Forwarded-For (see Config.trustProxy). */
+  trustProxy?: boolean | string;
+  /** Rate limits of the account routes (tests lower them). */
+  rateLimit?: ApiOptions['rateLimit'];
+  /** Wall clock for sessions (tests move it). */
+  now?: Clock;
 }
 
 export interface App {
@@ -33,10 +43,15 @@ export async function createApp({
   logger = false,
   devCors = false,
   version = 'dev',
+  secureCookies = false,
+  trustProxy = false,
+  rateLimit = DEFAULT_RATE_LIMITS,
+  now = () => new Date(),
 }: AppOptions): Promise<App> {
   const matchmaking = createNodeMatchmakingMiddleware();
   const http = Fastify({
     logger,
+    trustProxy,
     serverFactory: (handler) =>
       createServer((req: IncomingMessage, res: ServerResponse) => {
         if (devCors && req.url?.startsWith(`/${matchMaker.controller.matchmakeRoute}/`)) {
@@ -57,6 +72,8 @@ export async function createApp({
       return reply.code(503).send({ status: 'error', db: db.kind });
     }
   });
+
+  await http.register(apiRoutes, { prefix: API_PREFIX, db: db.db, secureCookies, now, rateLimit });
 
   const transport = new WebSocketTransport();
   transport.attachToServer(http.server);

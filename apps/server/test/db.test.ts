@@ -1,6 +1,7 @@
+import { getTableName } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createDb, type DbHandle } from '../src/db/client.js';
-import { findPlayerByName, upsertPlayer } from '../src/db/players.js';
+import { accounts, kindled, sessions } from '../src/db/schema.js';
 
 describe('database (PGlite)', () => {
   let handle: DbHandle;
@@ -18,15 +19,17 @@ describe('database (PGlite)', () => {
     await expect(handle.migrate()).resolves.toBeUndefined();
   });
 
-  it('creates and re-reads a player', async () => {
-    const created = await upsertPlayer(handle.db, 'alice');
-    expect(created.level).toBe(1);
+  it('creates the account tables', async () => {
+    for (const table of [accounts, sessions, kindled]) {
+      await expect(handle.db.select().from(table).limit(1)).resolves.toEqual([]);
+    }
+    expect(getTableName(accounts)).toBe('accounts');
+  });
 
-    const again = await upsertPlayer(handle.db, 'alice');
-    expect(again.id).toBe(created.id);
-
-    const found = await findPlayerByName(handle.db, 'alice');
-    expect(found?.id).toBe(created.id);
-    expect(await findPlayerByName(handle.db, 'bob')).toBeUndefined();
+  it('keeps usernames unique in any case', async () => {
+    await handle.db.insert(accounts).values({ username: 'mira', passwordHash: 'x' });
+    await expect(
+      handle.db.insert(accounts).values({ username: 'MIRA', passwordHash: 'x' }),
+    ).rejects.toThrow();
   });
 });

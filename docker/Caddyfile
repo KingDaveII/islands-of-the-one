@@ -1,10 +1,11 @@
 # Staging reverse proxy. One origin for client and server, automatic HTTPS
 # (Let's Encrypt; sslip.io hostnames resolve to the VPS IP).
 {$STAGING_DOMAIN} {
-	# Game server: matchmaking HTTP, health, and WebSocket upgrades
-	# (Colyseus connects to /<processId>/<roomId>?sessionId=...).
+	# Game server: the JSON API, matchmaking HTTP, health, and WebSocket
+	# upgrades (Colyseus connects to /<processId>/<roomId>?sessionId=...).
+	# Caddy keeps the Host header, which the API's Origin check compares to.
 	@server {
-		path /matchmake/* /health
+		path /api/* /matchmake/* /health
 	}
 	@websocket {
 		header Connection *Upgrade*
