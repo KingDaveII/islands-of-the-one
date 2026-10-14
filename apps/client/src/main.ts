@@ -14,7 +14,10 @@ import { eventKeyFor, keyboardBinding } from './game/keyboard.js';
 import { Palette } from './palette.js';
 import { fitZoom } from './game/zoom.js';
 import { GameScene, VIEW_H, VIEW_W, type GameData } from './scenes/GameScene.js';
+import { AccountScene } from './scenes/AccountScene.js';
 import { ControlsScene } from './scenes/ControlsScene.js';
+import { CreationScene } from './scenes/CreationScene.js';
+import { GateScene } from './scenes/GateScene.js';
 import { ResultsScene } from './scenes/ResultsScene.js';
 import { StartScene } from './scenes/StartScene.js';
 import { TestScene } from './scenes/TestScene.js';
@@ -51,7 +54,17 @@ function startGame(): void {
     roundPixels: true,
     input: { gamepad: false },
     scale: { mode: Phaser.Scale.NONE, width: VIEW_W, height: VIEW_H, zoom: zoomNow() },
-    scene: [StartScene, GameScene, ResultsScene, ControlsScene],
+    // The gate asks the server who is signed in (GET /api/me) and opens the
+    // account, creation or start screen.
+    scene: [
+      GateScene,
+      AccountScene,
+      CreationScene,
+      StartScene,
+      GameScene,
+      ResultsScene,
+      ControlsScene,
+    ],
   });
   // Also fires when the browser zoom (and so the device pixel ratio) changes.
   window.addEventListener('resize', () => {

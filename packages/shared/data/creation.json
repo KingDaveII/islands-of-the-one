@@ -1,0 +1,21 @@
+{
+  "$comment": "Kindled creation (docs/design/accounts.md). remembrances: the four cosmetic origins (glossary), in display order, with the outfit each one wears; clayTones: the four clay tones in display order (ids are palette.json clay.tones keys), with display names; defaultClayTone is preselected; name: the Kindled name rules, counted in grapheme clusters after NFC and whitespace collapsing.",
+  "remembrances": {
+    "clay": { "name": "Clay", "outfit": "potter's wrap and clay-stiffened apron" },
+    "ash": { "name": "Ash", "outfit": "soot-black hooded cloak with singed hem" },
+    "tide": { "name": "Tide", "outfit": "salt-stiff sailcloth tunic with rope belt" },
+    "wing": { "name": "Wing", "outfit": "down-lined mantle over a torn harness" }
+  },
+  "clayTones": {
+    "clay-grey-ochre": { "name": "Grey-ochre" },
+    "clay-pale": { "name": "Pale" },
+    "clay-red": { "name": "Red" },
+    "clay-river-dark": { "name": "River-dark" }
+  },
+  "defaultClayTone": "clay-grey-ochre",
+  "name": {
+    "minGraphemes": 2,
+    "maxGraphemes": 24,
+    "maxMarksPerGrapheme": 4
+  }
+}

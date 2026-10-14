@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- maximum-scale: iOS zooms the page into a focused input under 16 px; the game sizes itself. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>Islands of the One</title>
     <link rel="icon" href="data:," />
     <link
@@ -50,6 +51,31 @@
       }
       #game canvas {
         image-rendering: pixelated;
+      }
+      /* Typed text: real inputs in a real form over the canvas (src/ui/formFields.ts places
+         them, sizes the face to 8 game px and sets the colours from palette.ts). */
+      .game-form {
+        margin: 0;
+      }
+      .game-input {
+        position: fixed;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        font-family: 'Tiny5', monospace;
+        -webkit-font-smoothing: none;
+        z-index: 5;
+      }
+      .game-form-submit {
+        position: fixed;
+        left: -10000px;
+        top: 0;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
       }
       /* Dev panels use the Panel look: dark fired clay, a raised bevel, a thin glowing rim. */
       .overlay-panel {

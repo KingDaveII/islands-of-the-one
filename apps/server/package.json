@@ -16,8 +16,10 @@
     "@colyseus/schema": "^5.0.36",
     "@colyseus/ws-transport": "^0.18.4",
     "@electric-sql/pglite": "^0.5.8",
+    "@fastify/rate-limit": "^11.2.1",
     "@iot/shared": "workspace:*",
     "@iot/sim": "workspace:*",
+    "@node-rs/argon2": "^2.2.2",
     "drizzle-orm": "^0.45.4",
     "fastify": "^5.12.5",
     "pg": "^8.23.1"

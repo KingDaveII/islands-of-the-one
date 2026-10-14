@@ -1,14 +1,17 @@
 import Phaser from 'phaser';
 import type { ControlAction } from '@iot/shared';
 import { isWeaponAvailable, type Tuning } from '@iot/sim';
+import { accountStore, api } from '../api.js';
 import { deviceStore } from '../game/activeDevice.js';
 import { controlsStore } from '../game/controlsStore.js';
-import { glyphsFor, MENU_BUTTONS, padEdges, type PadFamily } from '../game/gamepad.js';
+import { glyphsFor, MENU_BUTTONS, padEdges, padEdgeState, type PadFamily } from '../game/gamepad.js';
 import { eventKeyFor, keyboardBinding } from '../game/keyboard.js';
 import { parseSeed, randomSeed } from '../game/seed.js';
+import { displayable } from '../game/drawable.js';
 import { tuningStore } from '../game/tuningStore.js';
 import { Palette } from '../palette.js';
 import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
+import { button } from '../render/button.js';
 import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
 import { groundShadow } from '../render/pixels.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
@@ -30,7 +33,8 @@ const HINT_PANEL_PAD = 6;
 
 /**
  * Start screen: pick the run's weapon (one per run; only the Hookblade is
- * available yet, the rest show as locked), keep or type a seed, start.
+ * available yet, the rest show as locked), keep or type a seed, start. The
+ * signed-in Kindled shows top right, with the log-out button (Esc, Circle).
  */
 export class StartScene extends Phaser.Scene {
   seedText = '';
@@ -46,6 +50,7 @@ export class StartScene extends Phaser.Scene {
   private padFamily: PadFamily = 'ps';
   /** Divider y per card (between stats and lore). */
   private dividers: number[] = [];
+  private loggingOut = false;
 
   constructor() {
     super('start');
@@ -61,7 +66,8 @@ export class StartScene extends Phaser.Scene {
     registerFonts(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
     this.seedText = String(randomSeed());
-    this.pad = { prev: [] };
+    this.pad = padEdgeState();
+    this.loggingOut = false;
     const t: Tuning = tuningStore.get();
     const roster = t.weaponRoster;
     this.weapon = roster.find((w) => isWeaponAvailable(t, w.id))?.id ?? 'hookblade';
@@ -75,6 +81,17 @@ export class StartScene extends Phaser.Scene {
 
     place(label(this, 0, 0, 'ISLANDS OF THE ONE', Palette.uiInk, 24), cx, 10, 0.5);
     place(label(this, 0, 0, 'M1 COMBAT PROTOTYPE', Palette.uiInkMuted), cx, 36, 0.5);
+
+    // Who is signed in, and the way out.
+    const me = accountStore.current;
+    if (me) {
+      const who = me.kindled ? `${me.kindled.name} (${me.account.username})` : me.account.username;
+      place(body(this, 0, 0, displayable(who), Palette.uiInkMuted), VIEW_W - 6, 36, 1);
+    }
+    const logout = button(this, 0, 4, 'LOG OUT', false, () => {
+      this.logOut();
+    });
+    logout.container.setX(VIEW_W - 6 - logout.width);
     place(label(this, 0, 0, 'CHOOSE YOUR WEAPON', Palette.uiInk), cx, 50, 0.5);
 
     // Weapon cards.
@@ -118,15 +135,15 @@ export class StartScene extends Phaser.Scene {
     this.field = label(this, cx - 79, seedY + 4, '', Palette.spark);
     this.caret = this.add.rectangle(0, seedY + 4, 1, 8, Palette.spark).setOrigin(0, 0);
     this.tweens.add({ targets: this.caret, alpha: 0, duration: 400, yoyo: true, repeat: -1 });
-    this.button(cx + 50, seedY, 'NEW SEED', false, () => {
+    button(this, cx + 50, seedY, 'NEW SEED', false, () => {
       this.seedText = String(randomSeed());
     });
 
-    const start = this.button(cx - 40, seedY + 26, 'START RUN', true, () => {
+    const start = button(this, cx - 40, seedY + 26, 'START RUN', true, () => {
       this.startRun();
     });
-    this.tweens.add({ targets: start, alpha: 0.75, duration: 700, yoyo: true, repeat: -1 });
-    this.button(cx + 50, seedY + 26, 'CONTROLS', false, () => {
+    this.tweens.add({ targets: start.container, alpha: 0.75, duration: 700, yoyo: true, repeat: -1 });
+    button(this, cx + 50, seedY + 26, 'CONTROLS', false, () => {
       this.scene.start('controls');
     });
 
@@ -159,6 +176,7 @@ export class StartScene extends Phaser.Scene {
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === 'Enter') this.startRun();
+      else if (e.key === 'Escape') this.logOut();
       else if (e.key.toLowerCase() === controlsKey) this.scene.start('controls');
       else if (e.key === 'Backspace') this.seedText = this.seedText.slice(0, -1);
       else if (/^[a-z0-9]$/i.test(e.key) && this.seedText.length < MAX_SEED_LEN)
@@ -208,7 +226,9 @@ export class StartScene extends Phaser.Scene {
           word('controls  ·'),
           ...menu(MENU_BUTTONS.left),
           ...menu(MENU_BUTTONS.right),
-          word('weapon'),
+          word('weapon  ·'),
+          ...menu(MENU_BUTTONS.back),
+          word('log out'),
         ],
       ];
     }
@@ -240,7 +260,9 @@ export class StartScene extends Phaser.Scene {
         ...key('tuning'),
         word('tuning  ·'),
         ...key('debug'),
-        word('debug'),
+        word('debug  ·'),
+        ...glyphs(['Esc'], 'keyboard'),
+        word('log out'),
       ],
     ];
   }
@@ -306,49 +328,14 @@ export class StartScene extends Phaser.Scene {
     });
   }
 
-  /** Primary (spark-amber face) or secondary (bevel face) button. */
-  private button(
-    x: number,
-    y: number,
-    text: string,
-    primary: boolean,
-    onClick: () => void,
-  ): Phaser.GameObjects.Container {
-    const t = label(this, 0, 0, text, primary ? Palette.uiInkOnGlow : Palette.uiInk);
-    const w = Math.round(t.width) + 14;
-    const h = 15;
-    const g = this.add.graphics();
-    const draw = (hover: boolean): void => {
-      g.clear();
-      g.fillStyle(Palette.uiOutline, 1)
-        .fillRect(1, 0, w - 2, h + 1)
-        .fillRect(0, 1, w, h - 1);
-      const face = primary
-        ? hover
-          ? Palette.healthFill
-          : Palette.spark
-        : hover
-          ? Palette.floorEdge
-          : Palette.uiBevel;
-      const bevel = primary ? Palette.healthFill : Palette.floorEdge;
-      g.fillStyle(face, 1).fillRect(1, 1, w - 2, h - 2);
-      g.fillStyle(bevel, 1)
-        .fillRect(1, 1, w - 2, 1)
-        .fillRect(1, 1, 1, h - 2);
-    };
-    draw(false);
-    place(t, w / 2, 4, 0.5);
-    const c = this.add.container(Math.round(x), Math.round(y), [g, t]);
-    const zone = this.add.zone(0, 0, w, h).setOrigin(0, 0).setInteractive({ useHandCursor: true });
-    c.add(zone);
-    zone.on('pointerdown', onClick);
-    zone.on('pointerover', () => {
-      draw(true);
+  /** End the session on the server and go back to the account screen. */
+  logOut(): void {
+    if (this.loggingOut) return;
+    this.loggingOut = true;
+    void api.logout().then(() => {
+      accountStore.current = null;
+      this.scene.start('account');
     });
-    zone.on('pointerout', () => {
-      draw(false);
-    });
-    return c;
   }
 
   startRun(): void {
@@ -369,6 +356,7 @@ export class StartScene extends Phaser.Scene {
     const edges = padEdges(this.pad);
     if (MENU_BUTTONS.confirm.some((b) => edges.includes(b))) this.startRun();
     else if (edges.includes(MENU_BUTTONS.controls)) this.scene.start('controls');
+    else if (edges.includes(MENU_BUTTONS.back)) this.logOut();
     else if (edges.includes(MENU_BUTTONS.left)) this.cycleWeapon(-1);
     else if (edges.includes(MENU_BUTTONS.right)) this.cycleWeapon(1);
   }

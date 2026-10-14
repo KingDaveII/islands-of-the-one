@@ -73,7 +73,7 @@ export function padSnapshot(pad: Gamepad | null): PadSnapshot | null {
 /**
  * Menu navigation on a pad, by standard-mapping index: Cross or Start
  * confirms, Circle goes back, Triangle opens the controls screen, the D-pad
- * steps through choices. Not bindings (controls.json is for the game's
+ * steps through choices and rows. Not bindings (controls.json is for the game's
  * actions): the menus read these directly.
  */
 export const MENU_BUTTONS = {
@@ -82,7 +82,18 @@ export const MENU_BUTTONS = {
   controls: GLYPH_BUTTON.Triangle ?? 3,
   left: GLYPH_BUTTON.Left ?? 14,
   right: GLYPH_BUTTON.Right ?? 15,
+  up: GLYPH_BUTTON.Up ?? 12,
+  down: GLYPH_BUTTON.Down ?? 13,
 } as const;
+
+/**
+ * A fresh edge tracker for a menu scene: buttons already held when it opens
+ * (the press that opened it) don't count until they are released.
+ */
+export function padEdgeState(): { prev: boolean[] } {
+  const pad = connectedPad();
+  return { prev: pad ? pad.buttons.map((b) => b.pressed) : [] };
+}
 
 /** Pad buttons that went down since the last call (menus); `state.prev` is kept between frames. */
 export function padEdges(state: { prev: boolean[] }): number[] {

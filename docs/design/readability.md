@@ -126,7 +126,8 @@ of the screen where the fight happens:
   (`packages/shared/assets/fonts`, white on transparent, no partial pixels, the same on every OS
   and browser), and every piece of text is a BitmapText from those atlases, tinted by color token
   (`label`, `body` in `apps/client/src/render/text.ts`; nothing else creates text, which ESLint
-  enforces). Labels and numbers are 8 px, titles 16 px, the title screen 24 px: the 8 px glyphs
+  enforces). The one exception is typed text: usernames, passwords and Kindled names are real HTML
+  inputs over the canvas, in Tiny5 at 8 game px ([`accounts.md`](accounts.md)). Labels and numbers are 8 px, titles 16 px, the title screen 24 px: the 8 px glyphs
   scaled by a whole number, so every font pixel stays a crisp 2×2 / 3×3 block. Line pitches are
   10 / 18 / 24 (body 11). Every text sits on whole pixels (`place`, `label`, `body` round) and both
   faces have whole-pixel advances, so a line never drifts onto half pixels. The Old Letters have

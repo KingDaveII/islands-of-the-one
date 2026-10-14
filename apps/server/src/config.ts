@@ -15,6 +15,15 @@ export interface Config {
   devCors: boolean;
   /** Build identifier (git SHA) reported by /health. */
   version: string;
+  /** Session cookies carry Secure everywhere but local dev (deployed builds are HTTPS behind Caddy). */
+  secureCookies: boolean;
+  /**
+   * Which proxies may set X-Forwarded-For (the client IP the account rate
+   * limits key on). `TRUST_PROXY` overrides: "true", "false", or a list of
+   * addresses/CIDRs/proxy-addr names. Production default: private ranges,
+   * where Caddy sits on the compose network (the server publishes no port).
+   */
+  trustProxy: boolean | string;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -22,12 +31,23 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   if (!Number.isInteger(port) || port < 0 || port > 65535) {
     throw new Error(`Invalid PORT: ${env.PORT ?? ''}`);
   }
+  const production = env.NODE_ENV === 'production';
   return {
     port,
     host: env.HOST ?? '0.0.0.0',
     databaseUrl: env.DATABASE_URL || undefined,
     pgliteDir: env.PGLITE_DIR || undefined,
-    devCors: env.NODE_ENV !== 'production',
+    devCors: !production,
     version: env.APP_VERSION || 'dev',
+    secureCookies: production,
+    trustProxy: parseTrustProxy(env.TRUST_PROXY, production),
   };
+}
+
+function parseTrustProxy(value: string | undefined, production: boolean): boolean | string {
+  if (value === undefined || value === '')
+    return production ? 'loopback,linklocal,uniquelocal' : false;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return value;
 }

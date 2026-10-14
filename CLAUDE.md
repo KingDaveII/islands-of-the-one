@@ -11,7 +11,8 @@ Browser multiplayer game (idle / co-op / action MMORPG). pnpm monorepo, TypeScri
 | `packages/shared`      | Wire protocol (types/guards) and game data. No runtime deps.                   |
 | `packages/shared/data` | `tuning.json` (every balance/feel number), `rooms.json` (room templates).      |
 | `packages/sim`         | Deterministic combat sim: 60 Hz integer ticks, seeded RNG, replayable runs.    |
-| `docs/design`          | Design rules: `combat.md`, `readability.md` (how it's drawn), `glossary.md`.   |
+| `docs/design`          | Design rules: `combat.md`, `readability.md` (how it's drawn), `glossary.md`,   |
+|                        | `accounts.md` (the `/api` routes, session cookie, account and name rules).     |
 
 Workspace packages are consumed from source via the custom `source` export condition
 (tsconfig `customConditions`, Vite `resolve.conditions`, `tsx --conditions=source`), so
@@ -56,6 +57,11 @@ dev/test/typecheck never need a prior build. Production builds compile each pack
 - The protocol lives in `packages/shared`. Every client↔server message type, payload and room name is
   defined there and used by both sides; never hard-code message strings in apps. Bump
   `PROTOCOL_VERSION` on any breaking wire change.
+- The holding talks over the HTTP JSON API under `/api` (`docs/design/accounts.md`): routes, bodies,
+  guards and error codes in `packages/shared/src/api.ts`. Mutating routes need a JSON body and a
+  same-origin `Origin` (enforced for every route in `apps/server/src/api/routes.ts`). Who is asking
+  comes only from the session cookie (`resolveSession`, or `accountFromCookieHeader` in a room's
+  `onAuth`), never from the body. Store hashes, never session tokens or passwords.
 
 ### Items and currency
 
@@ -93,11 +99,18 @@ dev/test/typecheck never need a prior build. Production builds compile each pack
   `apps/client/src/render/text.ts`; never Phaser Text (ESLint bans it). Words over the world are
   dark ink (`worldWord()`), coloured numbers get a 1 px drop shadow (`shadowed()`); never a chip or
   a rim, and never an alpha fade (`blinkOut()`).
+- DOM inputs for typed text (`apps/client/src/ui/formFields.ts`: usernames, passwords, names) are the
+  one exception to "all text is BitmapText": real inputs in a real form over the canvas, so phones,
+  password managers, IME and paste work. Text the game draws itself only uses characters the atlases
+  contain (`DRAWABLE_CHARS`).
 
 ### Database
 
 - Schema changes only through Drizzle migrations: edit `apps/server/src/db/schema.ts`, run
   `db:generate`, commit the generated SQL + `meta/`. Never edit an applied migration.
+- Migrations are expand-only: staging rolls code back but not migrations. Retire a table or column by
+  removing its code first and keeping it in `schema.ts` (marked retired); drop it in a later
+  contract migration once no deployable release uses it.
 - Tests use in-memory PGlite (`createDb()` with no URL); production uses Postgres via `DATABASE_URL`.
 
 ### Code quality
@@ -121,6 +134,7 @@ dev/test/typecheck never need a prior build. Production builds compile each pack
 - Claude Code on the web: `.claude/settings.json` runs `scripts/cloud-setup.sh` on startup/resume. It
   starts local Postgres, ensures role/db `game`, and runs `pnpm install` only when the lockfile changed.
 - Without `DATABASE_URL` the server uses PGlite (`PGLITE_DIR` to persist, else in-memory).
+- In dev, Vite proxies `/api` to the server (same origin, like staging); open the client on :5173.
 - The server applies pending migrations on start unless `SKIP_MIGRATIONS` is set.
 - Deployment: `docs/DEPLOY.md`. Staging is a compose stack behind Caddy on one origin; pushes to
   `main` deploy automatically once CI passes. Never commit `.env`/`deploy.env` or put secrets in

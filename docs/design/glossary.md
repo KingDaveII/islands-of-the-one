@@ -48,17 +48,19 @@ All other religious and mythological names, symbols and scripts are allowed.
 
 ## The Kindled and their things
 
-| Term         | Meaning                                                                    | In code                                      |
-| ------------ | -------------------------------------------------------------------------- | -------------------------------------------- |
-| the Kindled  | The players; one is a Kindled.                                             | `kindled`                                    |
-| Remembrance  | A Kindled's cosmetic origin: **Clay**, **Ash**, **Tide** or **Wing**.      | `remembrance`; `clay`, `ash`, `tide`, `wing` |
-| Sparkglass   | The crystal that is both currency and fuel. A mass noun: "120 Sparkglass". | `sparkglass`                                 |
-| Veil         | A ship's ward.                                                             | `veil`                                       |
-| deep-casting | Fishing in the Hollow.                                                     | `deepCasting`                                |
+| Term         | Meaning                                                                              | In code                                                                   |
+| ------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| the Kindled  | The players; one is a Kindled.                                                       | `kindled`                                                                 |
+| Remembrance  | A Kindled's cosmetic origin: **Clay**, **Ash**, **Tide** or **Wing**.                | `remembrance`; `clay`, `ash`, `tide`, `wing`                              |
+| clay tone    | The colour of a Kindled's clay: **Grey-ochre**, **Pale**, **Red** or **River-dark**. | `clayTone`; `clay-grey-ochre`, `clay-pale`, `clay-red`, `clay-river-dark` |
+| Sparkglass   | The crystal that is both currency and fuel. A mass noun: "120 Sparkglass".           | `sparkglass`                                                              |
+| Veil         | A ship's ward.                                                                       | `veil`                                                                    |
+| deep-casting | Fishing in the Hollow.                                                               | `deepCasting`                                                             |
 
-`player` stays the technical name in code for accounts, sessions, input and the controlled entity
-(`PlayerState`, the `players` table); `kindled` is for in-world things, like a Kindled's
-Remembrance. Player-facing text says the Kindled.
+`player` stays the technical name in code for input and the controlled entity (`PlayerState`);
+accounts and sessions are `account` and `session` (the `accounts` and `sessions` tables);
+`kindled` is for in-world things, like a Kindled's Remembrance (the `kindled` table). Player-facing
+text says the Kindled.
 
 ## Combat (the Hookblade)
 
