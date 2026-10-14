@@ -14,6 +14,7 @@ export const ApiRoute = {
   Logout: '/api/logout',
   Me: '/api/me',
   Kindled: '/api/kindled',
+  Inventory: '/api/inventory',
 } as const;
 export type ApiRoute = (typeof ApiRoute)[keyof typeof ApiRoute];
 
@@ -33,6 +34,7 @@ export const ApiErrorCode = {
   NotSignedIn: 'not-signed-in',
   NameRefused: 'name-refused',
   KindledExists: 'kindled-exists',
+  NoKindled: 'no-kindled',
   RateLimited: 'rate-limited',
   Forbidden: 'forbidden',
   UnsupportedMediaType: 'unsupported-media-type',
@@ -93,6 +95,17 @@ export interface KindledResponse {
   kindled: KindledView;
 }
 
+/** One held item: an id from data/items.json and how many (always more than 0). */
+export interface InventoryEntry {
+  item: string;
+  quantity: number;
+}
+
+/** GET /api/inventory: the signed-in Kindled's items, in items.json order. */
+export interface InventoryResponse {
+  items: InventoryEntry[];
+}
+
 type Obj = Record<string, unknown>;
 
 const isObject = (value: unknown): value is Obj =>
@@ -150,6 +163,20 @@ export function isMeResponse(value: unknown): value is MeResponse {
 
 export function isKindledResponse(value: unknown): value is KindledResponse {
   return isObject(value) && isKindledView(value.kindled);
+}
+
+export function isInventoryEntry(value: unknown): value is InventoryEntry {
+  return (
+    isObject(value) &&
+    typeof value.item === 'string' &&
+    typeof value.quantity === 'number' &&
+    Number.isSafeInteger(value.quantity) &&
+    value.quantity > 0
+  );
+}
+
+export function isInventoryResponse(value: unknown): value is InventoryResponse {
+  return isObject(value) && Array.isArray(value.items) && value.items.every(isInventoryEntry);
 }
 
 const ERROR_CODES = new Set<string>(Object.values(ApiErrorCode));

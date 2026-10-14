@@ -1,0 +1,4 @@
+{
+  "$comment": "The current Telling (docs/design/inventory.md): every item_ledger row is stamped with it. Change it only when a new Telling begins.",
+  "current": "telling-1"
+}

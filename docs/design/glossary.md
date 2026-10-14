@@ -56,11 +56,30 @@ All other religious and mythological names, symbols and scripts are allowed.
 | Sparkglass   | The crystal that is both currency and fuel. A mass noun: "120 Sparkglass".           | `sparkglass`                                                              |
 | Veil         | A ship's ward.                                                                       | `veil`                                                                    |
 | deep-casting | Fishing in the Hollow.                                                               | `deepCasting`                                                             |
+| Telling      | A season of the world (about nine months); items reset between Tellings.             | `telling`; ids `telling-1`, …                                             |
 
 `player` stays the technical name in code for input and the controlled entity (`PlayerState`);
 accounts and sessions are `account` and `session` (the `accounts` and `sessions` tables);
 `kindled` is for in-world things, like a Kindled's Remembrance (the `kindled` table). Player-facing
 text says the Kindled.
+
+## Items
+
+The M2 items ([`inventory.md`](inventory.md), `packages/shared/data/items.json`). Item ids are
+kebab-case and never renamed once shipped (the ledger stores them).
+
+| Term           | Meaning                                                                                  | In code                           |
+| -------------- | ---------------------------------------------------------------------------------------- | --------------------------------- |
+| sealed gin     | The currency unit: wild Sparkglass weighed and sealed at the Weighing. "120 sealed gin". | `sealed-gin`                      |
+| wild sliver    | The smallest piece of wild Sparkglass.                                                   | `wild-sliver`                     |
+| glass chip     | Wild Sparkglass worth three slivers (the book's "shard"; a Shard is always an island).   | `glass-chip`                      |
+| deep glass     | The largest grade of wild Sparkglass, worth nine slivers.                                | `deep-glass`                      |
+| twisted log    | Wood (the first raft takes five).                                                        | `twisted-log`                     |
+| black stone    | Stone; Works are built from it.                                                          | `black-stone`                     |
+| streaked stone | Stone from a deeper quarry layer.                                                        | `streaked-stone`                  |
+| grey seeds     | Seeds for a field.                                                                       | `grey-seeds`                      |
+| pale grain     | What a field grows; Rations are cooked from it.                                          | `pale-grain`                      |
+| item ledger    | The record of every item change (`inventory.apply`).                                     | `itemLedger`, table `item_ledger` |
 
 ## Combat (the Hookblade)
 
@@ -87,16 +106,16 @@ text says the Kindled.
 
 ## Retired terms
 
-| Don't use                                            | Use                                        |
-| ---------------------------------------------------- | ------------------------------------------ |
-| void, the Deep (the sea, the backdrop around a room) | the Hollow, `hollow`                       |
-| island                                               | Shard, or holding for a player's own Shard |
-| tether as a noun, data ID or identifier              | Writ                                       |
-| crystal                                              | Sparkglass                                 |
-| fishing                                              | deep-casting                               |
-| tier of a Writ                                       | Writ line                                  |
-| shard for a fragment of something                    | chip, piece (a Shard is always an island)  |
-| any other name or title for the deity                | the One                                    |
+| Don't use                                            | Use                                                                             |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------- |
+| void, the Deep (the sea, the backdrop around a room) | the Hollow, `hollow`                                                            |
+| island                                               | Shard, or holding for a player's own Shard                                      |
+| tether as a noun, data ID or identifier              | Writ                                                                            |
+| crystal                                              | Sparkglass                                                                      |
+| fishing                                              | deep-casting                                                                    |
+| tier of a Writ                                       | Writ line                                                                       |
+| shard for a fragment of something                    | chip, piece (a Shard is always an island); the Sparkglass grade is a glass chip |
+| any other name or title for the deity                | the One                                                                         |
 
 These stay as they are: the TypeScript keyword `void`; "hollow" as an adjective (a Husk's hollow
 shell); the title "Islands of the One" and the repo, package and deploy names taken from it
