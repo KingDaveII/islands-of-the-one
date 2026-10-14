@@ -99,6 +99,10 @@ dev/test/typecheck never need a prior build. Production builds compile each pack
   `apps/client/src/render/text.ts`; never Phaser Text (ESLint bans it). Words over the world are
   dark ink (`worldWord()`), coloured numbers get a 1 px drop shadow (`shadowed()`); never a chip or
   a rim, and never an alpha fade (`blinkOut()`).
+- DOM inputs for typed text (`apps/client/src/ui/formFields.ts`: usernames, passwords, names) are the
+  one exception to "all text is BitmapText": real inputs in a real form over the canvas, so phones,
+  password managers, IME and paste work. Text the game draws itself only uses characters the atlases
+  contain (`DRAWABLE_CHARS`).
 
 ### Database
 

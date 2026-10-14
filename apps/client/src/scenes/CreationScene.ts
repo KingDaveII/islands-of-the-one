@@ -11,15 +11,15 @@ import {
 import { accountStore, api } from '../api.js';
 import { deviceStore } from '../game/activeDevice.js';
 import { MENU_BUTTONS, padEdges, padEdgeState, type PadFamily } from '../game/gamepad.js';
-import { backspace, typedText, typeInto } from '../game/textInput.js';
 import { clayToneColors, Palette, remembranceColor } from '../palette.js';
 import { button, type Button } from '../render/button.js';
-import { FIELD_H, TextField } from '../render/field.js';
+import { FIELD_H, FieldFrame } from '../render/field.js';
 import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
 import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
 import { animKey, toneTextureKey } from '../render/spriteSheets.js';
 import { body, label, place, type Text } from '../render/text.js';
 import { panel } from '../render/ui.js';
+import { createForm, type DomForm } from '../ui/formFields.js';
 import { VIEW_H, VIEW_W } from './GameScene.js';
 
 type Row = 'remembrance' | 'tone' | 'name' | 'confirm';
@@ -58,7 +58,8 @@ export class CreationScene extends Phaser.Scene {
   private swatches!: Phaser.GameObjects.Graphics;
   private toneName!: Text;
   private preview!: Phaser.GameObjects.Sprite;
-  private field!: TextField;
+  private field!: FieldFrame;
+  private form!: DomForm;
   private error!: Text;
   private confirm!: Button;
   private marker!: Text;
@@ -94,7 +95,7 @@ export class CreationScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => {
           this.remembrance = id;
-          this.row = 'remembrance';
+          this.focusRow('remembrance');
         });
     });
 
@@ -132,50 +133,64 @@ export class CreationScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => {
           this.setTone(tone);
-          this.row = 'tone';
+          this.focusRow('tone');
         });
     });
     this.toneName = body(this, 0, TONE_Y + 4, '', Palette.uiInk);
 
     // Name.
     label(this, COL_X, NAME_Y - 11, 'NAME', Palette.uiInkMuted);
-    this.field = new TextField(this, COL_X, NAME_Y, NAME_W);
-    this.field.zone.on('pointerdown', () => {
-      this.row = 'name';
-    });
+    this.field = new FieldFrame(this, COL_X, NAME_Y, NAME_W);
     const { minGraphemes, maxGraphemes } = creationData.name;
+    this.form = createForm(
+      [
+        {
+          name: 'kindled-name',
+          box: this.field.box,
+          type: 'text',
+          autocomplete: 'off',
+          // Room for decomposed accents; the validator counts characters.
+          maxLength: maxGraphemes * 4,
+          label: 'Kindled name',
+        },
+      ],
+      () => {
+        this.send();
+      },
+      () => {
+        this.row = 'name';
+      },
+    );
     body(
       this,
       COL_X,
       NAME_Y + FIELD_H + 4,
-      `${minGraphemes}-${maxGraphemes} characters, in any language.`,
+      `${minGraphemes}-${maxGraphemes} letters: A–Z and accented Latin.`,
       Palette.uiInkMuted,
     );
     this.error = body(this, COL_X, NAME_Y + FIELD_H + 16, '', Palette.uiError, VIEW_W - COL_X - 90);
 
     this.confirm = button(this, 0, CONFIRM_Y, 'CONFIRM', true, () => {
-      this.send();
+      this.form.submit();
     });
     this.confirm.container.setX(VIEW_W - MARGIN - this.confirm.width);
     this.marker = label(this, 0, 0, '>', Palette.uiFocus);
     this.hint = new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInkMuted });
     this.family = padFamilyNow();
 
+    this.form.layout(this.game.canvas, this.scale.zoom);
+
+    // A click on the canvas takes focus from the input; give it back while the name row is focused.
+    this.input.on('pointerup', () => {
+      if (this.row === 'name') this.focusRow('name');
+    });
     const onKey = (e: KeyboardEvent): void => {
       this.onKey(e);
     };
-    const onPaste = (e: ClipboardEvent): void => {
-      const text = e.clipboardData?.getData('text') ?? '';
-      if (!text) return;
-      e.preventDefault();
-      this.row = 'name';
-      this.field.value = typeInto('name', this.field.value, text);
-    };
     window.addEventListener('keydown', onKey);
-    window.addEventListener('paste', onPaste);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       window.removeEventListener('keydown', onKey);
-      window.removeEventListener('paste', onPaste);
+      this.form.destroy();
     });
   }
 
@@ -199,15 +214,25 @@ export class CreationScene extends Phaser.Scene {
     else if (this.row === 'tone') this.setTone(wrap(CREATION_CLAY_TONES, this.tone));
   }
 
+  /** Move to a row: the name row focuses the input, any other row takes focus off it. */
+  private focusRow(row: Row): void {
+    this.row = row;
+    const input = this.form.input('kindled-name');
+    if (row === 'name') input.focus({ preventScroll: true });
+    else if (document.activeElement === input) input.blur();
+  }
+
   private step(delta: number): void {
     const i = ROWS.indexOf(this.row);
-    this.row = ROWS[(i + delta + ROWS.length) % ROWS.length] ?? 'name';
+    this.focusRow(ROWS[(i + delta + ROWS.length) % ROWS.length] ?? 'name');
   }
 
   private onKey(e: KeyboardEvent): void {
+    // Leave keys that compose text (IME) to the input.
+    if (e.isComposing) return;
     if (e.key === 'Enter') {
       e.preventDefault();
-      this.send();
+      this.form.submit();
       return;
     }
     if (e.key === 'Tab' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -223,26 +248,17 @@ export class CreationScene extends Phaser.Scene {
       this.cycle(e.key === 'ArrowLeft' ? -1 : 1);
       return;
     }
-    if (e.key === 'Backspace') {
-      e.preventDefault();
-      this.row = 'name';
-      this.field.value = backspace(this.field.value);
-      return;
-    }
-    const text = typedText(e);
-    if (text === null) return;
-    // Typing goes to the name from any row (and away from browser shortcuts like quick find).
-    e.preventDefault();
-    this.row = 'name';
-    this.field.value = typeInto('name', this.field.value, text);
+    // Typing on another row goes to the name: focusing the input during keydown sends it the key.
+    if (this.row !== 'name' && Array.from(e.key).length === 1 && !e.ctrlKey && !e.metaKey)
+      this.focusRow('name');
   }
 
   private send(): void {
     if (this.busy) return;
-    const checked = validateKindledName(this.field.value);
+    const checked = validateKindledName(this.form.input('kindled-name').value);
     if (!checked.ok) {
       this.error.setText(checked.message);
-      this.row = 'name';
+      this.focusRow('name');
       return;
     }
     this.busy = true;
@@ -327,6 +343,7 @@ export class CreationScene extends Phaser.Scene {
     this.hint.setItems(this.hintItems()).place(VIEW_W / 2, VIEW_H - 18, 0.5);
     menuCursor(this);
 
+    this.form.layout(this.game.canvas, this.scale.zoom);
     this.field.focused = this.row === 'name';
     this.field.update();
     this.confirm.setFocused(this.row === 'confirm');
@@ -346,7 +363,7 @@ export class CreationScene extends Phaser.Scene {
     else if (edges.includes(MENU_BUTTONS.right)) this.cycle(1);
     else if (MENU_BUTTONS.confirm.some((b) => edges.includes(b))) {
       if (this.row === 'remembrance' || this.row === 'tone') this.step(1);
-      else this.send();
+      else this.form.submit();
     }
   }
 }

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { tiny5Font, type ControlAction } from '@iot/shared';
+import type { ControlAction } from '@iot/shared';
 import { isWeaponAvailable, type Tuning } from '@iot/sim';
 import { accountStore, api } from '../api.js';
 import { deviceStore } from '../game/activeDevice.js';
@@ -7,7 +7,7 @@ import { controlsStore } from '../game/controlsStore.js';
 import { glyphsFor, MENU_BUTTONS, padEdges, padEdgeState, type PadFamily } from '../game/gamepad.js';
 import { eventKeyFor, keyboardBinding } from '../game/keyboard.js';
 import { parseSeed, randomSeed } from '../game/seed.js';
-import { displayable } from '../game/textInput.js';
+import { displayable } from '../game/drawable.js';
 import { tuningStore } from '../game/tuningStore.js';
 import { Palette } from '../palette.js';
 import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
@@ -86,7 +86,7 @@ export class StartScene extends Phaser.Scene {
     const me = accountStore.current;
     if (me) {
       const who = me.kindled ? `${me.kindled.name} (${me.account.username})` : me.account.username;
-      place(body(this, 0, 0, displayable(who, tiny5Font), Palette.uiInkMuted), VIEW_W - 6, 36, 1);
+      place(body(this, 0, 0, displayable(who), Palette.uiInkMuted), VIEW_W - 6, 36, 1);
     }
     const logout = button(this, 0, 4, 'LOG OUT', false, () => {
       this.logOut();

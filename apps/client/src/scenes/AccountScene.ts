@@ -1,22 +1,31 @@
 import Phaser from 'phaser';
-import { PASSWORD_RULES, USERNAME_RULES, validatePassword, validateUsername } from '@iot/shared';
+import {
+  PASSWORD_MAX,
+  PASSWORD_RULES,
+  USERNAME_MAX,
+  USERNAME_RULES,
+  validatePassword,
+  validateUsername,
+} from '@iot/shared';
 import { accountStore, api } from '../api.js';
 import { deviceStore } from '../game/activeDevice.js';
 import { MENU_BUTTONS, padEdges, padEdgeState, type PadFamily } from '../game/gamepad.js';
-import { backspace, typedText, typeInto, type FieldKind } from '../game/textInput.js';
 import { Palette } from '../palette.js';
 import { button, type Button } from '../render/button.js';
-import { FIELD_H, TextField } from '../render/field.js';
+import { FIELD_H, FieldFrame } from '../render/field.js';
 import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
 import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
 import { body, label, place, type Text } from '../render/text.js';
 import { panel } from '../render/ui.js';
+import { createForm, type DomForm } from '../ui/formFields.js';
 import { VIEW_H, VIEW_W } from './GameScene.js';
 import { sceneFor } from './GateScene.js';
 
 type Mode = 'login' | 'register';
-type Row = 'mode' | 'username' | 'password' | 'submit';
+type Field = 'username' | 'password';
+type Row = 'mode' | Field | 'submit';
 const ROWS: Row[] = ['mode', 'username', 'password', 'submit'];
+const FIELDS: Field[] = ['username', 'password'];
 
 const PANEL = { x: 110, y: 46, w: 260, h: 184 };
 const INNER_X = PANEL.x + 14;
@@ -28,19 +37,24 @@ const RULES_Y = PASS_Y + FIELD_H + 6;
 const ERROR_Y = RULES_Y + 24;
 const SUBMIT_Y = PANEL.y + PANEL.h - 24;
 
+const isField = (row: Row): row is Field => row === 'username' || row === 'password';
+
 /**
  * Log in or create an account (docs/design/accounts.md): a username and a
- * password field (masked), Enter submits, the server's refusal shows in body
- * text. Keyboard: type into the focused field, Tab or the arrows move
- * between rows, left/right on the top row switch between logging in and
- * creating an account. Pad: the D-pad moves and switches, Cross confirms
- * (typing needs the keyboard). Placeholder layout until UI-05.
+ * password field, Enter submits, the server's refusal shows in body text.
+ * The fields are real inputs in a real form over the canvas (ui/formFields.ts):
+ * phones get their keyboard, password managers save and fill (current- or
+ * new-password by mode), IME and paste work. Keyboard: Tab or Up/Down move
+ * between rows, Left/Right on the top row switch between logging in and
+ * creating an account. Pad: the D-pad moves and switches, Cross confirms.
+ * Placeholder layout until UI-05.
  */
 export class AccountScene extends Phaser.Scene {
   private mode: Mode = 'login';
   private row: Row = 'username';
   private busy = false;
-  private fields!: Record<'username' | 'password', TextField>;
+  private frames!: Record<Field, FieldFrame>;
+  private form!: DomForm;
   private tabs!: Record<Mode, Text>;
   private tabLine!: Phaser.GameObjects.Graphics;
   private rules!: Text;
@@ -59,7 +73,6 @@ export class AccountScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor(Palette.hollow);
     this.mode = 'login';
-    this.row = 'username';
     this.busy = false;
     this.pad = padEdgeState();
     place(label(this, 0, 0, 'ISLANDS OF THE ONE', Palette.uiInk, 24), VIEW_W / 2, 10, 0.5);
@@ -85,15 +98,37 @@ export class AccountScene extends Phaser.Scene {
 
     label(this, INNER_X, USER_Y - 10, 'USERNAME', Palette.uiInkMuted);
     label(this, INNER_X, PASS_Y - 10, 'PASSWORD', Palette.uiInkMuted);
-    this.fields = {
-      username: new TextField(this, INNER_X, USER_Y, INNER_W),
-      password: new TextField(this, INNER_X, PASS_Y, INNER_W, { masked: true }),
+    this.frames = {
+      username: new FieldFrame(this, INNER_X, USER_Y, INNER_W),
+      password: new FieldFrame(this, INNER_X, PASS_Y, INNER_W),
     };
-    for (const row of ['username', 'password'] as const) {
-      this.fields[row].zone.on('pointerdown', () => {
-        this.row = row;
-      });
-    }
+    this.form = createForm(
+      [
+        {
+          name: 'username',
+          box: this.frames.username.box,
+          type: 'text',
+          autocomplete: 'username',
+          maxLength: USERNAME_MAX,
+          label: 'Username',
+        },
+        {
+          name: 'password',
+          box: this.frames.password.box,
+          type: 'password',
+          autocomplete: 'current-password',
+          // Code points, not UTF-16 units: let the validator count.
+          maxLength: PASSWORD_MAX * 2,
+          label: 'Password',
+        },
+      ],
+      () => {
+        this.send();
+      },
+      (name) => {
+        if (name === 'username' || name === 'password') this.row = name;
+      },
+    );
     this.rules = body(
       this,
       INNER_X,
@@ -107,7 +142,7 @@ export class AccountScene extends Phaser.Scene {
     // One button per mode, the other hidden (their widths differ).
     const make = (text: string): Button =>
       button(this, 0, SUBMIT_Y, text, true, () => {
-        this.send();
+        this.form.submit();
       });
     this.submits = { login: make('LOG IN'), register: make('CREATE ACCOUNT') };
     for (const b of Object.values(this.submits))
@@ -118,22 +153,20 @@ export class AccountScene extends Phaser.Scene {
     this.hint = new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInkMuted });
     this.family = padFamilyNow();
     this.setMode('login');
+    this.form.layout(this.game.canvas, this.scale.zoom);
+    this.focusRow('username');
 
+    // A click on the canvas takes focus from the input; give it back to the focused field.
+    this.input.on('pointerup', () => {
+      if (isField(this.row)) this.focusRow(this.row);
+    });
     const onKey = (e: KeyboardEvent): void => {
       this.onKey(e);
     };
-    const onPaste = (e: ClipboardEvent): void => {
-      const field = this.focusedField();
-      const text = e.clipboardData?.getData('text') ?? '';
-      if (!field || !text) return;
-      e.preventDefault();
-      field.value = typeInto(this.row as FieldKind, field.value, text);
-    };
     window.addEventListener('keydown', onKey);
-    window.addEventListener('paste', onPaste);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       window.removeEventListener('keydown', onKey);
-      window.removeEventListener('paste', onPaste);
+      this.form.destroy();
     });
   }
 
@@ -141,6 +174,9 @@ export class AccountScene extends Phaser.Scene {
     this.mode = mode;
     this.error.setText('');
     this.rules.setVisible(mode === 'register');
+    // Password managers fill a saved password when logging in and offer a new one when creating.
+    this.form.input('password').autocomplete =
+      mode === 'login' ? 'current-password' : 'new-password';
     for (const m of ['login', 'register'] as const) {
       this.tabs[m].setTint(m === mode ? Palette.uiInk : Palette.uiInkMuted);
       this.submits?.[m].container.setVisible(m === mode);
@@ -151,66 +187,62 @@ export class AccountScene extends Phaser.Scene {
     this.tabLine.fillStyle(Palette.uiFocus, 1).fillRect(t.x, t.y + 10, Math.round(t.width), 1);
   }
 
-  private focusedField(): TextField | null {
-    return this.row === 'username' || this.row === 'password' ? this.fields[this.row] : null;
+  private toggleMode(): void {
+    this.setMode(this.mode === 'login' ? 'register' : 'login');
+  }
+
+  /** Move to a row: a field row focuses its input, any other row takes focus off the inputs. */
+  private focusRow(row: Row): void {
+    this.row = row;
+    if (isField(row)) {
+      this.form.input(row).focus({ preventScroll: true });
+      return;
+    }
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && this.form.form.contains(active)) active.blur();
   }
 
   private step(delta: number): void {
     const i = ROWS.indexOf(this.row);
-    this.row = ROWS[(i + delta + ROWS.length) % ROWS.length] ?? 'username';
+    this.focusRow(ROWS[(i + delta + ROWS.length) % ROWS.length] ?? 'username');
   }
 
   private onKey(e: KeyboardEvent): void {
+    // Leave keys that compose text (IME) to the input.
+    if (e.isComposing) return;
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (this.row === 'mode') this.setMode(this.mode === 'login' ? 'register' : 'login');
-      else this.send();
-      return;
-    }
-    if (e.key === 'Tab') {
+      if (this.row === 'mode') this.toggleMode();
+      else this.form.submit();
+    } else if (e.key === 'Tab') {
       e.preventDefault();
       this.step(e.shiftKey ? -1 : 1);
-      return;
-    }
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       this.step(e.key === 'ArrowDown' ? 1 : -1);
-      return;
-    }
-    if (this.row === 'mode' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
-      this.setMode(this.mode === 'login' ? 'register' : 'login');
-      return;
-    }
-    const field = this.focusedField();
-    if (!field) return;
-    if (e.key === 'Backspace') {
+    } else if (this.row === 'mode' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
       e.preventDefault();
-      field.value = backspace(field.value);
-      return;
+      this.toggleMode();
     }
-    const text = typedText(e);
-    if (text === null) return;
-    // Keep typed characters away from browser shortcuts (Firefox quick find on ' and /).
-    e.preventDefault();
-    field.value = typeInto(this.row as FieldKind, field.value, text);
+    // Everything else is typing, and belongs to the focused input.
   }
 
   private send(): void {
     if (this.busy) return;
-    const username = this.fields.username.value;
-    const password = this.fields.password.value;
+    const username = this.form.input('username').value;
+    const password = this.form.input('password').value;
     if (this.mode === 'register') {
       // The same rules the server applies, checked first so the answer is instant.
       const u = validateUsername(username);
       if (!u.ok) {
         this.error.setText(u.message);
-        this.row = 'username';
+        this.focusRow('username');
         return;
       }
       const p = validatePassword(password);
       if (!p.ok) {
         this.error.setText(`Password: ${p.message}`);
-        this.row = 'password';
+        this.focusRow('password');
         return;
       }
     }
@@ -240,7 +272,7 @@ export class AccountScene extends Phaser.Scene {
         ...menu(MENU_BUTTONS.right),
         word('log in / create  ·'),
         ...menu(MENU_BUTTONS.confirm[0]),
-        word('confirm  ·  type with the keyboard'),
+        word('confirm'),
       ];
     }
     return [
@@ -254,15 +286,16 @@ export class AccountScene extends Phaser.Scene {
   }
 
   override update(): void {
+    this.form.layout(this.game.canvas, this.scale.zoom);
     const family = padFamilyNow();
     if (family !== this.family) this.family = family;
     this.hint.setItems(this.hintItems()).place(VIEW_W / 2, VIEW_H - 18, 0.5);
     menuCursor(this);
 
-    this.fields.username.focused = this.row === 'username';
-    this.fields.password.focused = this.row === 'password';
-    this.fields.username.update();
-    this.fields.password.update();
+    for (const f of FIELDS) {
+      this.frames[f].focused = this.row === f;
+      this.frames[f].update();
+    }
     this.submit.setFocused(this.row === 'submit');
     const markerY = {
       mode: TAB_Y,
@@ -279,10 +312,10 @@ export class AccountScene extends Phaser.Scene {
       this.row === 'mode' &&
       (edges.includes(MENU_BUTTONS.left) || edges.includes(MENU_BUTTONS.right))
     )
-      this.setMode(this.mode === 'login' ? 'register' : 'login');
+      this.toggleMode();
     else if (MENU_BUTTONS.confirm.some((b) => edges.includes(b))) {
-      if (this.row === 'mode') this.setMode(this.mode === 'login' ? 'register' : 'login');
-      else this.send();
+      if (this.row === 'mode') this.toggleMode();
+      else this.form.submit();
     }
   }
 }

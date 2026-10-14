@@ -31,6 +31,13 @@ application/json` (`415` otherwise) and an `Origin` whose host is the request's 
 - **Rate limits** (`@fastify/rate-limit`, per client IP, in memory): login 10 a minute, register 10
   an hour; `429` rate-limited. Behind Caddy the IP comes from `X-Forwarded-For` (see `trustProxy` in
   `apps/server/src/config.ts`).
+- **Per-username login throttle** (`apps/server/src/auth/throttle.ts`, in memory): after 10 failed
+  logins for one username within 15 minutes, its logins are refused for 15 minutes from any address,
+  with the usual "Wrong username or password." (the password isn't even checked while locked, and the
+  dummy argon2 verification keeps the timing). The per-IP limit can't stop one account being guessed
+  at from many addresses; this can. Unknown usernames count the same way, so the throttle says
+  nothing about which exist, and a flood of made-up names can't push a live lock out of memory. A
+  success clears the count.
 
 ## The session cookie
 
@@ -53,12 +60,20 @@ application/json` (`415` otherwise) and an `Origin` whose host is the request's 
 - **Logging in** says only "Wrong username or password." whichever part was wrong, and always runs
   one argon2 verification (a dummy hash for an unknown username), so the answer and its timing are
   the same. argon2's comparison is constant-time; sessions are looked up by the token's hash.
-- **Kindled names**: free text in any language and script. NFC, trimmed, every run of whitespace
-  (tabs and line breaks too) collapsed to one space; 2–24 grapheme clusters; at least one letter; at
-  most 4 combining marks per cluster (counted decomposed); no control, format (bidi overrides and
-  isolates, zero-width space), surrogate or private-use characters, except the zero-width joiner and
-  non-joiner some scripts need; through the safe-letters filter (not strict: a Kindled name may
-  contain yod-he). Refused names get `NAME_REFUSED`. Names are not unique.
+- **Kindled names**: NFC, trimmed, every run of whitespace (tabs and line breaks too) collapsed to
+  one space; no control, format (bidi overrides and isolates, zero-width space, soft hyphen),
+  surrogate or private-use characters; through the safe-letters filter (not strict: a Kindled name
+  may contain yod-he); **only characters the game can draw**; 2–24 grapheme clusters; at least one
+  letter. Refused names get `NAME_REFUSED`, except undrawable ones (below). Names are not unique.
+- **Names the game can draw.** The book asks for names in any language; until the pixel fonts have
+  more scripts, that is narrowed to the characters both atlases contain (`DRAWABLE_CHARS` in
+  `packages/shared/src/accounts.ts`, read from the atlas contracts, so server and client agree):
+  printable ASCII and the Latin-1 Supplement, i.e. A–Z and accented Latin letters (`tools/
+bitmap-fonts.py` builds both). Anything else (other scripts, Latin letters outside Latin-1, a mark
+  with no precomposed letter, emoji) is refused with "Use letters the game can draw for now: A–Z and
+  accented Latin letters." Usernames are ASCII already. The rules that only matter beyond Latin-1
+  (at most 4 combining marks per cluster, the zero-width joiner and non-joiner allowed for the scripts
+  that need them) stay in the validator for when the atlases grow.
 - **Remembrance** (`clay | ash | tide | wing`) and **clay tone** (palette.json's `clay.tones`,
   default grey-ochre) come from
   [`packages/shared/data/creation.json`](../../packages/shared/data/creation.json), with their
@@ -80,6 +95,15 @@ from `schema.ts` and drops it.
 
 On load the gate scene asks `GET /api/me`: no session → the account scene (log in / create account),
 a session without a Kindled → the creation scene, otherwise the start screen, which shows the Kindled
-and a log-out button (Esc, Circle). Text fields are keyboard-driven (`game/textInput.ts`); the choices
-are navigable by pad. The pixel fonts are ASCII only for now: characters they lack show as `?` on
-screen (the name is stored as typed). `apps/client/src/api.ts` is the typed API client.
+and a log-out button (Esc, Circle). `apps/client/src/api.ts` is the typed API client.
+
+The username, password and Kindled name fields are real HTML inputs in a real `<form>` laid over the
+canvas (`apps/client/src/ui/formFields.ts`): phones open their on-screen keyboard, password managers
+save and fill (`autocomplete` `username`, and `current-password` when logging in or `new-password`
+when creating an account; the form's submit event is what they watch), IME works for every
+language, and paste works. They are the one exception to "all text is BitmapText": the canvas still
+draws each field's panel and focus rim (`render/field.ts`), and the input inside it is transparent,
+in Tiny5 at 8 game px (8 × zoom CSS px, whole device pixels like the canvas), coloured from
+`palette.ts`. The scenes keep the row model: Tab and Up/Down (D-pad) move between rows and focus or
+blur the input, Left/Right (D-pad) change the choices, Enter (Cross) submits through the form.
+Characters the fonts can't draw show as `?` on the canvas (`game/drawable.ts`).
