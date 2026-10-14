@@ -5,7 +5,7 @@ CI is built, pushed to GHCR and deployed automatically. Production is not set up
 
 ```
             ┌──────────────────────── VPS: /opt/islands (compose project "islands") ────────────────────────┐
- browser ──▶│ caddy :80/:443(+udp) ──▶ /matchmake/*, /health, WebSocket upgrades ──▶ server :2567 ──▶ postgres │
+ browser ──▶│ caddy :80/:443(+udp) ──▶ /api/*, /matchmake/*, /health, WebSockets ──▶ server :2567 ──▶ postgres │
             │                     └──▶ everything else ──────────────────────────▶ client :80 (nginx)        │
             │ backup: nightly pg_dump 03:00 UTC, 7 days kept                                              │
             └──────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -14,6 +14,13 @@ CI is built, pushed to GHCR and deployed automatically. Production is not set up
 Client and server share one origin (`https://$STAGING_DOMAIN`), so the deployed client connects to
 `wss://<same host>` and no CORS is involved. (The server only adds CORS headers when
 `NODE_ENV` is not `production`, for local dev where Vite and the server are on different ports.)
+
+The account API (`/api/*`, [`design/accounts.md`](design/accounts.md)) relies on that one origin:
+its session cookie is same-origin, and mutating routes refuse an `Origin` that doesn't match the
+`Host` Caddy passes through unchanged. With `NODE_ENV=production` the server marks the cookie
+`Secure` and trusts `X-Forwarded-For` from private-range peers (Caddy on the compose network; the
+server publishes no port) for the per-IP login/register rate limits; `TRUST_PROXY` overrides that.
+Accounts need no secrets: sessions are random tokens stored hashed, passwords are argon2id hashes.
 
 ## Files
 
