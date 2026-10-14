@@ -146,6 +146,10 @@ export class StartScene extends Phaser.Scene {
     button(this, cx + 50, seedY + 26, 'CONTROLS', false, () => {
       this.scene.start('controls');
     });
+    const inventory = button(this, 0, seedY + 26, 'INVENTORY', false, () => {
+      this.scene.start('inventory');
+    });
+    inventory.container.setX(cx - 50 - inventory.width);
 
     // Mood: the Kindled facing a Husk at the shore.
     const mood = this.add.graphics();
@@ -224,6 +228,8 @@ export class StartScene extends Phaser.Scene {
           word('start  ·'),
           ...menu(MENU_BUTTONS.controls),
           word('controls  ·'),
+          ...menu(MENU_BUTTONS.inventory),
+          word('inventory  ·'),
           ...menu(MENU_BUTTONS.left),
           ...menu(MENU_BUTTONS.right),
           word('weapon  ·'),
@@ -356,6 +362,7 @@ export class StartScene extends Phaser.Scene {
     const edges = padEdges(this.pad);
     if (MENU_BUTTONS.confirm.some((b) => edges.includes(b))) this.startRun();
     else if (edges.includes(MENU_BUTTONS.controls)) this.scene.start('controls');
+    else if (edges.includes(MENU_BUTTONS.inventory)) this.scene.start('inventory');
     else if (edges.includes(MENU_BUTTONS.back)) this.logOut();
     else if (edges.includes(MENU_BUTTONS.left)) this.cycleWeapon(-1);
     else if (edges.includes(MENU_BUTTONS.right)) this.cycleWeapon(1);

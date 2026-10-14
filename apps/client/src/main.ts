@@ -18,6 +18,7 @@ import { AccountScene } from './scenes/AccountScene.js';
 import { ControlsScene } from './scenes/ControlsScene.js';
 import { CreationScene } from './scenes/CreationScene.js';
 import { GateScene } from './scenes/GateScene.js';
+import { InventoryScene } from './scenes/InventoryScene.js';
 import { ResultsScene } from './scenes/ResultsScene.js';
 import { StartScene } from './scenes/StartScene.js';
 import { TestScene } from './scenes/TestScene.js';
@@ -64,6 +65,7 @@ function startGame(): void {
       GameScene,
       ResultsScene,
       ControlsScene,
+      InventoryScene,
     ],
   });
   // Also fires when the browser zoom (and so the device pixel ratio) changes.

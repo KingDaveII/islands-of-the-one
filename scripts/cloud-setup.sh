@@ -33,6 +33,11 @@ if [ "$(as_postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAM
   as_postgres psql -qc "CREATE DATABASE ${DB_NAME} OWNER ${DB_USER}"
 fi
 
+# A throwaway database for the Postgres-only tests (TEST_DATABASE_URL; they wipe it).
+if [ "$(as_postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}_test'")" != "1" ]; then
+  as_postgres psql -qc "CREATE DATABASE ${DB_NAME}_test OWNER ${DB_USER}"
+fi
+
 # --- Node dependencies ----------------------------------------------------
 if ! command -v pnpm >/dev/null 2>&1; then
   npm install -g "pnpm@$(node -p "require('./package.json').packageManager.split('@')[1]")" >/dev/null
@@ -48,4 +53,7 @@ fi
 
 if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -q '^export DATABASE_URL=' "$CLAUDE_ENV_FILE" 2>/dev/null; then
   echo "export DATABASE_URL=${DATABASE_URL:-postgres://${DB_USER}:${DB_PASS}@localhost:5432/${DB_NAME}}" >>"$CLAUDE_ENV_FILE"
+fi
+if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -q '^export TEST_DATABASE_URL=' "$CLAUDE_ENV_FILE" 2>/dev/null; then
+  echo "export TEST_DATABASE_URL=${TEST_DATABASE_URL:-postgres://${DB_USER}:${DB_PASS}@localhost:5432/${DB_NAME}_test}" >>"$CLAUDE_ENV_FILE"
 fi

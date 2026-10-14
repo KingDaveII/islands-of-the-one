@@ -15,6 +15,13 @@
       "when": 1791982439824,
       "tag": "0001_accounts_sessions_kindled",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791988329812,
+      "tag": "0002_inventory_ledger",
+      "breakpoints": true
     }
   ]
 }

@@ -52,6 +52,26 @@ export default tseslint.config(
     },
   },
   {
+    // Items and currency: every change goes through inventory.apply(), which writes the ledger
+    // in the same transaction. Only the inventory module may reach the item tables
+    // (docs/design/inventory.md; test/inventory-boundary.test.ts also checks raw SQL).
+    files: ['apps/server/**/*.ts'],
+    ignores: ['apps/server/src/inventory/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/inventory/tables', '**/inventory/tables.js'],
+              message: 'Only the inventory module touches the item tables: use inventory.apply() and its readers.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['apps/client/**/*.ts'],
     languageOptions: { globals: { ...globals.browser } },
   },
