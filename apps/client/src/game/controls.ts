@@ -92,6 +92,8 @@ export class Controls {
     const kb = scene.input.keyboard;
     if (!kb) throw new Error('keyboard input unavailable');
     this.moveKeys = kb.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT', true) as Record<string, Phaser.Input.Keyboard.Key>;
+    // Captured too: released in dispose(), or they'd stay swallowed in the menus' text inputs.
+    this.captured.push(...Object.values(this.moveKeys).map((k) => k.keyCode));
     for (const action of KEYBOARD_ACTIONS) {
       for (const binding of keyboardKeys(action)) {
         if (MOUSE_BUTTONS[binding] || this.keys.has(binding)) continue;
