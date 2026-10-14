@@ -3,20 +3,24 @@
 Bitmap fonts for the client's text (M1 task 8).
 
 Rasterizes Silkscreen and Tiny5 (the woff2 files in apps/client/public/fonts,
-both SIL OFL) at 8 px, with FreeType's monochrome renderer (no antialiasing,
-no partial pixels), into one atlas PNG (white on transparent) plus one JSON
+both SIL OFL) at 8 px, with FreeType's monochrome renderer (freetype-py; no
+antialiasing, no partial pixels), into one atlas PNG (white on transparent) plus one JSON
 contract per face in packages/shared/assets/fonts. The client draws every
 piece of text from these atlases (Phaser BitmapText), so the glyph pixels no
 longer depend on the browser's font rasterizer; the sizes 16 and 24 are the
 8 px glyphs scaled by a whole number.
 
-Charset: printable ASCII plus every character the game data (rooms.json,
-tuning.json, controls.json) and the client's scene strings use. A character
-a face has no glyph for fails the run.
+Charset: printable ASCII, the Latin-1 Supplement (U+00A0-U+00FF but the soft
+hyphen: accented
+Latin letters, so Kindled names can use them; docs/design/accounts.md), plus
+every character the game data (rooms.json, tuning.json, controls.json) and
+the client's scene strings use. A character a face has no glyph for fails
+the run.
 
 The outlines are rendered unhinted (the faces ship ttfautohint instructions,
 which move Silkscreen's punctuation off its pixel grid at 8 px), so what the
-atlas holds is the font's own pixel grid.
+atlas holds is the font's own pixel grid. Composite glyphs whose parts are
+offset by half a pixel are snapped to the grid (snap_composites).
 
 Checks, per glyph: no partial alpha (by construction, and asserted), a
 whole-pixel advance, and the same pixels at 8 px as the 16 px rasterization
@@ -26,13 +30,14 @@ goes to docs/screenshots/m1-task8/font-sheets.png.
 
 Re-runnable, deterministic:
 
-    pip install pillow fonttools brotli
+    pip install pillow fonttools brotli freetype-py
     python3 tools/bitmap-fonts.py          # writes the assets and the sheet
     python3 tools/bitmap-fonts.py --check  # fails if the committed assets differ
 """
 from __future__ import annotations
 
 import json
+import math
 import re
 import sys
 import tempfile
@@ -40,6 +45,7 @@ from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
 
+import freetype
 from fontTools import subset
 from fontTools.ttLib import TTFont
 from PIL import Image, ImageDraw, ImageFont
@@ -101,7 +107,9 @@ def source_strings(path: Path) -> set[str]:
 
 
 def charset() -> list[str]:
-    chars = {chr(c) for c in range(0x20, 0x7F)}
+    # Printable ASCII and the Latin-1 Supplement (accented Latin letters for names), less the soft
+    # hyphen: an invisible format character that is never drawn (and Tiny5 has no glyph for it).
+    chars = {chr(c) for c in range(0x20, 0x7F)} | {chr(c) for c in range(0xA0, 0x100) if c != 0xAD}
     for f in DATA_FILES:
         chars |= data_strings(json.loads(f.read_text(encoding="utf-8")))
     for d in SOURCE_DIRS:
@@ -122,13 +130,23 @@ class Glyph:
     adv: int  # pen advance
 
 
-def render(font: ImageFont.FreeTypeFont, ch: str, size: int) -> Image.Image:
-    """The glyph, monochrome, with the pen at (size, size*2) so bearings of either sign fit."""
+def render(face: freetype.Face, ch: str, size: int) -> tuple[Image.Image, float]:
+    """
+    The glyph, monochrome, with the pen at (size, size*2) so bearings of either
+    sign fit, and its unrounded advance in px. FreeType directly, unhinted:
+    Pillow's text placement pads some glyph boxes (Tiny5's accented letters)
+    by a pixel, which moved them off the grid.
+    """
+    face.set_pixel_sizes(0, size)
+    face.load_char(ch, freetype.FT_LOAD_RENDER | freetype.FT_LOAD_TARGET_MONO | freetype.FT_LOAD_NO_HINTING)
+    g = face.glyph
+    bm = g.bitmap
     im = Image.new("1", (size * 6, size * 6), 0)
-    d = ImageDraw.Draw(im)
-    d.fontmode = "1"
-    d.text((size, size * 2), ch, font=font, fill=1, anchor="ls")
-    return im
+    for row in range(bm.rows):
+        for col in range(bm.width):
+            if bm.buffer[row * bm.pitch + col // 8] & (0x80 >> (col % 8)):
+                im.putpixel((size + g.bitmap_left + col, size * 2 - g.bitmap_top + row), 1)
+    return im, g.advance.x / 64
 
 
 def tight(im: Image.Image, pen_x: int, baseline: int) -> tuple[Image.Image, int, int] | None:
@@ -138,6 +156,36 @@ def tight(im: Image.Image, pen_x: int, baseline: int) -> tuple[Image.Image, int,
         return None
     x0, y0, x1, y1 = bbox
     return im.crop(bbox), x0 - pen_x, y0 - baseline
+
+
+def snap_composites(tt: TTFont, family: str) -> None:
+    """
+    Put composite glyphs' component offsets on the face's pixel grid (upem / 8
+    units). Silkscreen builds some accented capitals (O and U with circumflex
+    or dieresis, Y acute) from the letter plus a mark offset by half a pixel
+    (62 or 188 of 125 units), so their 8 px pixels are a rounding accident and
+    fail the 8 px vs 16 px/2 check. An offset is read as a whole number of
+    half pixels and a half rounds up: exactly where FreeType's 8 px rendering
+    already drew the mark, now on the grid at every size.
+    """
+    upem = tt["head"].unitsPerEm
+    if upem % SIZE or "glyf" not in tt:
+        return
+    grid = upem // SIZE
+    glyf = tt["glyf"]
+    snapped = []
+    for name in glyf.keys():
+        g = glyf[name]
+        if not g.isComposite():
+            continue
+        for c in g.components:
+            x = grid * math.ceil(round(2 * c.x / grid) / 2)
+            y = grid * math.ceil(round(2 * c.y / grid) / 2)
+            if (x, y) != (c.x, c.y):
+                snapped.append(f"{name} {c.glyphName} ({c.x},{c.y})->({x},{y})")
+                c.x, c.y = x, y
+    for line in snapped:
+        print(f"{family}: snapped {line}")
 
 
 def unhinted(tt: TTFont, out: Path) -> None:
@@ -163,16 +211,15 @@ def rasterize(family: str, path: Path, chars: list[str], tmp: Path) -> tuple[lis
     # The baseline row in the 8 px line box is the face's ascent (its own em box: 8 for Silkscreen, 7 for Tiny5).
     ascent = round(tt["hhea"].ascent * SIZE / upem)
     raw = tmp / f"{path.stem}-unhinted.ttf"
+    snap_composites(tt, family)
     unhinted(tt, raw)
-    f8 = ImageFont.truetype(str(raw), SIZE)
-    f16 = ImageFont.truetype(str(raw), SIZE * 2)
+    face = freetype.Face(str(raw))
     glyphs: list[Glyph] = []
     for ch in chars:
-        adv = f8.getlength(ch)
+        im8, adv = render(face, ch, SIZE)
         if adv != int(adv):
             sys.exit(f"{family} {ch!r}: advance {adv} is not a whole pixel at {SIZE} px")
-        im8 = render(f8, ch, SIZE)
-        im16 = render(f16, ch, SIZE * 2)
+        im16, _ = render(face, ch, SIZE * 2)
         # 16 px halved must equal 8 px: every 2x2 block uniform and equal to the 8 px pixel.
         for y in range(im8.height):
             for x in range(im8.width):

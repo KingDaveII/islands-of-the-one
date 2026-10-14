@@ -29,6 +29,10 @@ const HURT_INK = [0xf0, 0x7a, 0x3a] as const;
 const PRINTABLE_ASCII = Array.from({ length: 0x7f - 0x20 }, (_, i) =>
   String.fromCharCode(0x20 + i),
 );
+/** The Latin-1 Supplement less the soft hyphen (accented Latin letters for names). */
+const LATIN_1 = Array.from({ length: 0x100 - 0xa0 }, (_, i) =>
+  String.fromCharCode(0xa0 + i),
+).filter((ch) => ch !== '\u00ad');
 /** Characters the data and the scene strings use beyond ASCII (the generator scans for them). */
 const EXTRA_CHARS = ['·', '…', '—'];
 
@@ -62,10 +66,10 @@ describe.each(bitmapFonts.map((f) => [f.family, f] as const))('the %s atlas', (_
     }
   });
 
-  it('covers printable ASCII and the characters the data and scenes use, once each', () => {
+  it('covers printable ASCII, Latin-1 and the characters the data and scenes use, once each', () => {
     const chars = font.chars.map((g) => g.ch);
     expect(new Set(chars).size).toBe(chars.length);
-    for (const ch of [...PRINTABLE_ASCII, ...EXTRA_CHARS])
+    for (const ch of [...PRINTABLE_ASCII, ...LATIN_1, ...EXTRA_CHARS])
       expect(glyphOf(font, ch), `U+${ch.codePointAt(0)?.toString(16)}`).toBeDefined();
     expect(glyphOf(font, '\n')).toBeUndefined();
   });
@@ -274,6 +278,15 @@ describe('golden images (the client lays text out the same way)', () => {
     });
     expect(layout.text.split('\n').length).toBeGreaterThan(1);
     expectGolden('hookblade-blurb', paint(tiny5Font, layout, INK, false));
+  });
+
+  it('accented Latin names, in both faces', () => {
+    const names = 'Zoë Ångström · Jürgen Ñúñez · ÇÉÔÖÛÜÝ àéîõüÿ ß Æ Ø';
+    expectGolden(
+      'latin-1-silkscreen',
+      paint(silkscreenFont, layoutText(silkscreenFont, names), INK, false),
+    );
+    expectGolden('latin-1-tiny5', paint(tiny5Font, layoutText(tiny5Font, names), INK, false));
   });
 
   it('digits', () => {
