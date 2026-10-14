@@ -1,4 +1,4 @@
-import { paletteData, type PaletteToken } from '@iot/shared';
+import { paletteData, type ClayTone, type PaletteToken, type Remembrance } from '@iot/shared';
 
 /**
  * Design-system color tokens (art direction, not balance data), read from
@@ -95,6 +95,8 @@ export const Palette = {
   /** The 1 px drop shadow under coloured numbers and pickups drawn over the world (readability.md §4). */
   textShadow: T.dreamNight,
   uiFocus: T.sparkAmber,
+  /** Refusals and errors in body text on a panel (choir-flame on ui-panel). */
+  uiError: T.choirFlame,
   healthFill: T.hollowLight,
   healthShade: T.hollowLavender,
   healthLoss: T.sparkEmber,
@@ -111,5 +113,16 @@ export const Palette = {
   writEmber: T.sparkEmber,
   rarity: [T.hollowLavender, T.hollowLight, T.sparkAmber, T.sparkEmber, T.choirFlameDeep],
 } as const;
+
+/** A Kindled clay tone's skin and shade (palette.json clay.tones; both are palette tokens). */
+export function clayToneColors(tone: ClayTone): { skin: number; shade: number } {
+  const t = paletteData.clay.tones[tone];
+  return { skin: parseInt(t.skin.slice(1), 16), shade: parseInt(t.shade.slice(1), 16) };
+}
+
+/** A Remembrance's placeholder outfit colour (palette.json remembranceOutfit, a palette token). */
+export function remembranceColor(remembrance: Remembrance): number {
+  return parseInt(paletteData.remembranceOutfit[remembrance].slice(1), 16);
+}
 
 export const css = (c: number): string => `#${c.toString(16).padStart(6, '0')}`;

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { controlsStore } from './controlsStore.js';
 import {
   buttonsFor,
@@ -6,6 +6,9 @@ import {
   GLYPH_BUTTON,
   hintFor,
   hints,
+  MENU_BUTTONS,
+  padEdges,
+  padEdgeState,
   presetById,
   PRESETS,
   softLock,
@@ -117,5 +120,34 @@ describe('soft lock', () => {
     const left = [{ dx: -60, dy: 1 }];
     expect(softLock(-Math.PI + 0.1, left, 15)).toBeCloseTo(Math.atan2(1, -60), 5);
     expect(softLock(0, [{ dx: 0, dy: 0 }], 15)).toBe(0);
+  });
+});
+
+describe('menu pad edges', () => {
+  const buttons = Array.from({ length: 17 }, () => ({ pressed: false, value: 0 }));
+  const press = (i: number, down: boolean): void => {
+    const b = buttons[i];
+    if (b) b.pressed = down;
+  };
+
+  beforeEach(() => {
+    for (const b of buttons) b.pressed = false;
+    vi.stubGlobal('navigator', {
+      getGamepads: () => [{ id: 'pad', connected: true, buttons, axes: [] }],
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('ignores the press that opened the menu until it is released', () => {
+    press(MENU_BUTTONS.confirm[0], true);
+    const state = padEdgeState();
+    expect(padEdges(state)).toEqual([]);
+    press(MENU_BUTTONS.confirm[0], false);
+    expect(padEdges(state)).toEqual([]);
+    press(MENU_BUTTONS.confirm[0], true);
+    expect(padEdges(state)).toEqual([MENU_BUTTONS.confirm[0]]);
   });
 });
