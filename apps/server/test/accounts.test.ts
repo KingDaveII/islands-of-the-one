@@ -2,6 +2,7 @@ import {
   ApiRoute,
   isMeResponse,
   lettersFromPositions,
+  NAME_NOT_DRAWABLE,
   NAME_REFUSED,
   SESSION_COOKIE,
   WRONG_CREDENTIALS,
@@ -353,32 +354,42 @@ describe('accounts API', () => {
       }
     });
 
-    it('validates the name: length, combining characters, RTL text, control characters, the filter', async () => {
+    it('validates the name: length, combining characters, control characters, drawable letters, the filter', async () => {
       const refused = [
         'M',
         '   ',
         'x'.repeat(25),
         'Mi\u0000ra',
         'Mi\u0007ra',
-        'Mira‮evil',
-        `Z${'́'.repeat(6)}algo`,
+        'Mira\u202eevil',
         '!!',
         latin([24, 0, 7, 22, 4, 7]),
         `Sir ${latin([9, 4, 7, 14, 21, 0, 7]).toUpperCase()}`,
         lettersFromPositions([9, 4, 5, 4]),
-        Array.from(lettersFromPositions([0, 3, 13, 9])).join('ָ '),
+        Array.from(lettersFromPositions([0, 3, 13, 9])).join('\u05b8 '),
+      ];
+      const notDrawable = [
+        '\u05e9\u05b8\u05c1\u05dc\u05d5\u05b9\u05dd', // Hebrew, right to left
+        '\u0645\u0631\u064a\u0645', // Arabic
+        'Mira \u05de\u05d9\u05e8\u05d4',
+        `Z${'\u0301'.repeat(6)}algo`,
+        'Nguy\u1ec5n',
       ];
       const cookie = sessionFrom(await register(app, 'namer'));
-      for (const name of refused) {
-        const res = await create(cookie, { name, remembrance: 'clay' });
-        expect(res.statusCode, JSON.stringify(name)).toBe(400);
-        expect(res.json()).toEqual({ error: 'name-refused', message: NAME_REFUSED });
+      for (const [names, message] of [
+        [refused, NAME_REFUSED],
+        [notDrawable, NAME_NOT_DRAWABLE],
+      ] as const) {
+        for (const name of names) {
+          const res = await create(cookie, { name, remembrance: 'clay' });
+          expect(res.statusCode, JSON.stringify(name)).toBe(400);
+          expect(res.json(), JSON.stringify(name)).toEqual({ error: 'name-refused', message });
+        }
       }
       const accepted: [string, string][] = [
-        ['שָׁלוֹם', 'שָׁלוֹם'.normalize('NFC')],
-        ['مريم', 'مريم'],
-        ['Zoé', 'Zoé'],
-        ['é'.repeat(24), 'é'.repeat(24)],
+        ['Zoe\u0301', 'Zo\u00e9'],
+        ['e\u0301'.repeat(24), '\u00e9'.repeat(24)],
+        ['J\u00fcrgen \u00d1\u00fa\u00f1ez', 'J\u00fcrgen \u00d1\u00fa\u00f1ez'],
         ['Mira\tof\nAsh', 'Mira of Ash'],
       ];
       for (const [i, [name, stored]] of accepted.entries()) {

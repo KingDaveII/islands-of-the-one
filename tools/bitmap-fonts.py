@@ -70,6 +70,8 @@ DATA_FILES = [
 ]
 # Scene, HUD and input strings (not ui/: those are DOM dev panels in the browser's own fonts).
 SOURCE_DIRS = [ROOT / "apps/client/src/scenes", ROOT / "apps/client/src/render", ROOT / "apps/client/src/game"]
+# Shared player-facing strings the client shows (account rules and refusals).
+SOURCE_FILES = [ROOT / "packages/shared/src/accounts.ts", ROOT / "packages/shared/src/api.ts"]
 
 # Design-system colors for the contact sheet (hollow-deep panel, hollow-light ink, hollow-dusk labels).
 PANEL = (0x2A, 0x25, 0x40, 255)
@@ -117,6 +119,8 @@ def charset() -> list[str]:
             if f.name.endswith(".test.ts"):
                 continue
             chars |= source_strings(f)
+    for f in SOURCE_FILES:
+        chars |= source_strings(f)
     # Control characters never get a glyph (newlines break lines, tabs are not drawn).
     return sorted(c for c in chars if ord(c) >= 0x20 and not (0x7F <= ord(c) < 0xA0))
 

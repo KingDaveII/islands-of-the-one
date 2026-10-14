@@ -4,12 +4,14 @@ import {
   CREATION_CLAY_TONES,
   creationData,
   DEFAULT_CLAY_TONE,
+  DRAWABLE_CHARS,
   graphemes,
   isApiErrorBody,
   isCreateKindledRequest,
   isCredentialsRequest,
   isMeResponse,
   lettersFromPositions,
+  NAME_NOT_DRAWABLE,
   NAME_REFUSED,
   normalizeKindledName,
   paletteData,
@@ -64,7 +66,7 @@ describe('validateUsername', () => {
       'a'.repeat(21),
       'has space',
       'dot.ted',
-      'é-acute',
+      '\u00e9-acute',
       'ash!',
       '',
       42,
@@ -72,7 +74,7 @@ describe('validateUsername', () => {
     ])
       expect(validateUsername(bad).ok, String(bad)).toBe(false);
     // The Kelvin sign lowercases to "k": refused before lowercasing.
-    expect(validateUsername('Kindled').ok).toBe(false);
+    expect(validateUsername('\u212aindled').ok).toBe(false);
     expect(validateUsername('x'.repeat(10_000)).ok).toBe(false);
   });
 
@@ -89,15 +91,15 @@ describe('validatePassword', () => {
     expect(validatePassword('p'.repeat(128)).ok).toBe(true);
     expect(validatePassword('with spaces ok')).toEqual({ ok: true, value: 'with spaces ok' });
     // e + combining acute becomes é.
-    expect(validatePassword('café-latte')).toEqual({ ok: true, value: 'café-latte' });
+    expect(validatePassword('cafe\u0301-latte')).toEqual({ ok: true, value: 'caf\u00e9-latte' });
     // Astral characters count once each.
-    expect(validatePassword('🔥'.repeat(8)).ok).toBe(true);
+    expect(validatePassword('\ud83d\udd25'.repeat(8)).ok).toBe(true);
   });
 
   it('refuses short, long and non-string passwords', () => {
     for (const bad of ['1234567', 'p'.repeat(129), '', 12345678, undefined])
       expect(validatePassword(bad).ok, String(bad)).toBe(false);
-    expect(validatePassword('🔥'.repeat(7)).ok).toBe(false);
+    expect(validatePassword('\ud83d\udd25'.repeat(7)).ok).toBe(false);
   });
 });
 
@@ -109,14 +111,15 @@ describe('validateKindledName', () => {
     expect(validateKindledName(input), JSON.stringify(input)).toEqual({
       ok: false,
       reason,
-      message: NAME_REFUSED,
+      message: reason === 'not-drawable' ? NAME_NOT_DRAWABLE : NAME_REFUSED,
     });
   };
 
   it('normalizes: NFC, trimmed, inner whitespace collapsed', () => {
     ok('  Mira   of\tthe\nShore  ', 'Mira of the Shore');
-    ok('Zoé', 'Zoé');
-    expect(normalizeKindledName('a 　b')).toBe('a b');
+    // e + combining acute composes to é.
+    ok('Zoe\u0301', 'Zo\u00e9');
+    expect(normalizeKindledName('a\u00a0\u3000b')).toBe('a b');
   });
 
   it('counts grapheme clusters, 2 to 24', () => {
@@ -127,60 +130,67 @@ describe('validateKindledName', () => {
     refused('', 'length');
     refused('x'.repeat(25), 'length');
     refused('x'.repeat(10_000), 'length');
-    // Combining characters: one cluster each, so 24 accented letters fit.
-    const accented = 'é'.repeat(24);
+    // Decomposed accents compose: 24 accented letters fit.
+    const accented = 'e\u0301'.repeat(24);
     expect(graphemes(accented)).toHaveLength(24);
-    ok(accented, 'é'.repeat(24));
-    // A letter with several marks is still one cluster (Vietnamese).
-    ok('Nguyễn', 'Nguyễn');
-    ok('ậb', 'ậb');
+    ok(accented, '\u00e9'.repeat(24));
   });
 
-  it('refuses stacks of combining marks', () => {
-    refused('Z\u0301\u0300\u0302\u0303\u0304algo', 'characters');
+  it('accepts A-Z and accented Latin letters (the Latin-1 the fonts draw)', () => {
+    ok('Zo\u00eb \u00c5ngstr\u00f6m', 'Zo\u00eb \u00c5ngstr\u00f6m');
+    ok('J\u00fcrgen \u00d1\u00fa\u00f1ez', 'J\u00fcrgen \u00d1\u00fa\u00f1ez');
+    ok("Ma\u00ebl O'Bri\u00e9n-Fa\u00df", "Ma\u00ebl O'Bri\u00e9n-Fa\u00df");
+    ok('\u00c6sa \u00d8rn \u00de\u00f3ra', '\u00c6sa \u00d8rn \u00de\u00f3ra');
+    for (const ch of 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+      expect(DRAWABLE_CHARS.has(ch), ch).toBe(true);
   });
 
-  it('accepts any language, right-to-left scripts included', () => {
-    ok('שָׁלוֹם', 'שָׁלוֹם'.normalize('NFC'));
-    ok('مريم', 'مريم');
-    ok('Mira מירה', 'Mira מירה');
-    ok('Ἀχιλλεύς', 'Ἀχιλλεύς');
-    ok('ナオミ', 'ナオミ');
-    ok('Ольга', 'Ольга');
-    ok('अनु', 'अनु');
-    // Persian uses the zero-width non-joiner inside words.
-    ok('می‌خواهم', 'می‌خواهم');
+  it('refuses what the pixel fonts cannot draw yet, with its own line', () => {
+    expect(NAME_NOT_DRAWABLE).toBe(
+      'Use letters the game can draw for now: A\u2013Z and accented Latin letters.',
+    );
+    // Other scripts, right-to-left ones included (the book's "any language" waits for glyphs).
+    refused('\u05e9\u05b8\u05c1\u05dc\u05d5\u05b9\u05dd', 'not-drawable'); // Hebrew with niqqud
+    refused('\u0645\u0631\u064a\u0645', 'not-drawable'); // Arabic
+    refused('Mira \u05de\u05d9\u05e8\u05d4', 'not-drawable'); // mixed
+    refused('\u1f08\u03c7\u03b9\u03bb\u03bb\u03b5\u03cd\u03c2', 'not-drawable'); // Greek
+    refused('\u041e\u043b\u044c\u0433\u0430', 'not-drawable'); // Cyrillic
+    refused('\u30ca\u30aa\u30df', 'not-drawable'); // Katakana
+    // Latin outside Latin-1 (Vietnamese, Polish), and a mark with no precomposed letter.
+    refused('Nguy\u1ec5n', 'not-drawable');
+    refused('\u0141ucja', 'not-drawable');
+    refused('q\u0301r', 'not-drawable');
+    refused('Z\u0301\u0300\u0302\u0303\u0304algo', 'not-drawable');
+    refused('\ud83d\udd25\ud83d\udd25', 'not-drawable');
   });
 
   it('refuses control, bidi and other invisible format characters', () => {
     refused('Mi\u0000ra', 'characters');
     refused('Mi\u0007ra', 'characters');
     refused('Mi\u007fra', 'characters');
-    refused('Mira‮', 'characters'); // right-to-left override
-    refused('⁧Mira⁩', 'characters'); // isolates
-    refused('Mi​ra', 'characters'); // zero-width space
-    refused('Mi‏ra', 'characters'); // right-to-left mark
-    refused('Mira', 'characters'); // private use
+    refused('Mira\u202e', 'characters'); // right-to-left override
+    refused('\u2067Mira\u2069', 'characters'); // isolates
+    refused('Mi\u200bra', 'characters'); // zero-width space
+    refused('Mi\u200fra', 'characters'); // right-to-left mark
+    refused('Mi\u00adra', 'characters'); // soft hyphen
+    refused('Mi\ue000ra', 'characters'); // private use
     refused('Mi\ud800ra', 'characters'); // lone surrogate
   });
 
   it('needs at least one letter', () => {
     refused('12', 'no-letter');
     refused('!!', 'no-letter');
-    refused('🔥🔥', 'no-letter');
     ok('R2', 'R2');
   });
 
-  it('runs the safe-letters filter on the normalized name', () => {
+  it('runs the safe-letters filter on the normalized name, in any script', () => {
     refused(LATIN_BANNED, 'unsafe');
     refused(`Sir ${LATIN_BANNED.toUpperCase()}`, 'unsafe');
     refused(Array.from(LATIN_BANNED).join(' '), 'unsafe');
     refused(HEBREW_BANNED, 'unsafe');
     refused(`Mira ${TITLE_BANNED}`, 'unsafe');
     // Niqqud between the letters does not hide it.
-    refused(Array.from(HEBREW_BANNED).join('ָ'), 'unsafe');
-    // Not strict: a name may contain the yod-he pair.
-    ok(lettersFromPositions([9, 4, 5, 20, 15]), lettersFromPositions([9, 4, 5, 20, 15]));
+    refused(Array.from(HEBREW_BANNED).join('\u05b8'), 'unsafe');
   });
 
   it('refuses non-text', () => {

@@ -1,4 +1,5 @@
 import creation from '../data/creation.json' with { type: 'json' };
+import { silkscreenFont, tiny5Font } from './fonts.js';
 import { isSafe, NAME_REFUSED } from './safe-letters.js';
 import type { ClayTone } from './sprites.js';
 
@@ -77,7 +78,7 @@ export function graphemes(text: string): string[] {
 }
 
 /** Zero-width non-joiner and joiner: format characters some scripts need (Persian, Indic). */
-const JOINERS = new Set(['‌', '‍']);
+const JOINERS = new Set(['\u200c', '\u200d']);
 
 /**
  * Control, format (bidi overrides and isolates, invisible marks), surrogate
@@ -99,8 +100,27 @@ export function normalizeKindledName(input: string): string {
   return input.normalize('NFC').replace(/\s+/gu, ' ').trim();
 }
 
-/** Why a Kindled name was refused (the player sees NAME_REFUSED either way). */
-export type KindledNameRejection = 'not-text' | 'length' | 'characters' | 'no-letter' | 'unsafe';
+/**
+ * The characters the game can draw: those both pixel fonts have a glyph for
+ * (printable ASCII and the Latin-1 Supplement, tools/bitmap-fonts.py). A
+ * Kindled name may only use these until the atlases grow more scripts.
+ */
+export const DRAWABLE_CHARS: ReadonlySet<string> = new Set(
+  silkscreenFont.chars.map((g) => g.ch).filter((ch) => tiny5Font.chars.some((g) => g.ch === ch)),
+);
+
+export function isDrawable(text: string): boolean {
+  for (const ch of text) if (!DRAWABLE_CHARS.has(ch)) return false;
+  return true;
+}
+
+/** The refusal for a name the pixel fonts can't draw. */
+export const NAME_NOT_DRAWABLE =
+  'Use letters the game can draw for now: A–Z and accented Latin letters.';
+
+/** Why a Kindled name was refused (NAME_NOT_DRAWABLE for 'not-drawable', NAME_REFUSED otherwise). */
+export type KindledNameRejection =
+  'not-text' | 'length' | 'characters' | 'not-drawable' | 'no-letter' | 'unsafe';
 
 export type KindledNameValidation =
   { ok: true; name: string } | { ok: false; reason: KindledNameRejection; message: string };
@@ -112,10 +132,12 @@ const refuse = (reason: KindledNameRejection): KindledNameValidation => ({
 });
 
 /**
- * A Kindled name: free text in any language and script, normalized
- * (normalizeKindledName), 2-24 grapheme clusters, at least one letter, at most
- * a few combining marks per cluster, no control or format characters, and
- * nothing the safe-letters filter rejects.
+ * A Kindled name: text normalized (normalizeKindledName), no control or
+ * format characters, only characters the game can draw (DRAWABLE_CHARS:
+ * A-Z and accented Latin letters for now; the book's "any language" waits
+ * for more glyphs), 2-24 grapheme clusters, at least one letter, at most a
+ * few combining marks per cluster, and nothing the safe-letters filter
+ * rejects.
  */
 export function validateKindledName(input: unknown): KindledNameValidation {
   if (typeof input !== 'string') return refuse('not-text');
@@ -124,6 +146,8 @@ export function validateKindledName(input: unknown): KindledNameValidation {
   if (input.length > rules.maxGraphemes * 16) return refuse('length');
   const name = normalizeKindledName(input);
   if (hasForbiddenChar(name)) return refuse('characters');
+  if (!isSafe(name).ok) return refuse('unsafe');
+  if (!isDrawable(name)) return { ok: false, reason: 'not-drawable', message: NAME_NOT_DRAWABLE };
   const clusters = graphemes(name);
   if (clusters.length < rules.minGraphemes || clusters.length > rules.maxGraphemes)
     return refuse('length');
@@ -132,6 +156,5 @@ export function validateKindledName(input: unknown): KindledNameValidation {
     if (marks > rules.maxMarksPerGrapheme) return refuse('characters');
   }
   if (!/\p{L}/u.test(name)) return refuse('no-letter');
-  if (!isSafe(name).ok) return refuse('unsafe');
   return { ok: true, name };
 }
