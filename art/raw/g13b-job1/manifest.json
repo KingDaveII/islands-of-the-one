@@ -1,0 +1,2727 @@
+{
+  "job": "g13b-job1",
+  "purpose": "G1.3b pilot: the same 15 assets twice, (b) text only and (c) anchored, for a blind judgement against our own art.",
+  "date": "2026-10-15",
+  "style_sentence": "Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+  "palette": [
+    "#F4EFE6",
+    "#D9D2E9",
+    "#A99FC4",
+    "#5B5478",
+    "#2A2540",
+    "#F2B65A",
+    "#C9733A",
+    "#4A4E57",
+    "#7D8794",
+    "#3E5C7A",
+    "#A8743A",
+    "#C79A3E",
+    "#8A6420",
+    "#E9E4D4",
+    "#2F7F7A",
+    "#C98F78",
+    "#9C5B4A",
+    "#E3C29E",
+    "#24305A",
+    "#E8E2D6",
+    "#FFF4C7",
+    "#8C7F6E",
+    "#5E5448",
+    "#FBF8F0",
+    "#D8B24A",
+    "#F07A3A",
+    "#B5402E",
+    "#1C2147"
+  ],
+  "anchors_passed_as": "upload:<id> references (POST https://api.pixellab.ai/v2/uploads) instead of inline base64; see surprises",
+  "anchors": {
+    "kindled-ash-s-64.png": {
+      "upload": "upload:93e95093-37ee-4663-986c-b5908b9f9284",
+      "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+    },
+    "husk-peeling-64.png": {
+      "upload": "upload:5c61ccaa-1f62-4243-817e-ceac2caa2f67",
+      "sha256": "8d6497ac2d06ad326d25fa41e07613b7cf329af50cb4d75a1610919cdd1f2d82"
+    },
+    "prop-clay-jar-64.png": {
+      "upload": "upload:dd0e3eb0-cea2-4a3b-976a-de9a82c03e4b",
+      "sha256": "9f08705fb367fa0208ce1e9036a13cba6d7717310f982e7cb04d979a96fc4710"
+    },
+    "icon-ref-hookblade-32.png": {
+      "upload": "upload:5e6a18fe-7026-47d9-8638-477c6d992073",
+      "sha256": "c541b328f1755017f9b2a96c80808fd1b688458bc4a49e13074a978982af4eef"
+    },
+    "icon-ref-lock-32.png": {
+      "upload": "upload:f568436e-a1cc-40a8-9829-a4e846b563e3",
+      "sha256": "1b5dd6b76823a6c871142d90191ca38b2ca0e5f789a33dfa1ed96cdc1532e49b"
+    },
+    "palette-28.png": {
+      "upload": "upload:ceb9a4b5-6d78-481d-9fce-baa63dfb819e",
+      "sha256": "0365cd32dc06ae726d3159cbfa13b988958b6a5f3ef6c10ae69d1c95673dfa25"
+    }
+  },
+  "seed": "1234 on every call that takes a seed (create_image_pixen, create_image_pro); create_character and create_topdown_tileset take none. The one retake used 1235.",
+  "generations": {
+    "b": 22,
+    "c": 158.1,
+    "total": 180.1,
+    "measured": "get_balance 1999 -> 1818.90 = 180.10"
+  },
+  "rejected_calls_not_charged": [
+    "create_image_pro for npc-kesh (c) with the anchor as inline base64: 'Could not decode image ... a character was altered in transit'",
+    "6 create_image_pixen calls (prop-sailcloth, prop-bricks, 4 icons) refused with 'rate limit exceeded (8/8 jobs)' and sent again once slots were free"
+  ],
+  "assets": [
+    {
+      "id": "npc-kesh",
+      "kind": "npc",
+      "b": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "Old Kesh, a Kindled hermit and fisherman: a small figure made of river-dark brown-black clay, about 40 px tall, with a few widely spaced amber freckles like small lights, long white hair and a white beard, a patched grey-ochre sailcloth tunic with a wet grey patch, dark trousers and wrapped dark feet. He holds a long wooden casting rod upright at his side. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "mode": "v3",
+          "size": 64,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "detail": "medium detail",
+          "n_directions": 8,
+          "name": "npc-kesh (b)"
+        },
+        "seed": "create_character has no seed parameter",
+        "character_id": "4d1597c8-a438-46e6-aafb-115183c90610",
+        "generations": 2,
+        "generations_source": "quoted '2 generations' by the tool; matches the balance",
+        "retakes": 0,
+        "outputs": [
+          {
+            "file": "b/npc-kesh/south.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              8,
+              2,
+              53,
+              61
+            ],
+            "height": 59,
+            "width": 45,
+            "lowest_opaque_row": 60
+          },
+          {
+            "file": "b/npc-kesh/south-east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              18,
+              6,
+              49,
+              62
+            ],
+            "height": 56,
+            "width": 31,
+            "lowest_opaque_row": 61
+          },
+          {
+            "file": "b/npc-kesh/east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              16,
+              7,
+              43,
+              63
+            ],
+            "height": 56,
+            "width": 27,
+            "lowest_opaque_row": 62
+          },
+          {
+            "file": "b/npc-kesh/north-east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              15,
+              5,
+              53,
+              61
+            ],
+            "height": 56,
+            "width": 38,
+            "lowest_opaque_row": 60
+          },
+          {
+            "file": "b/npc-kesh/north.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              12,
+              2,
+              56,
+              60
+            ],
+            "height": 58,
+            "width": 44,
+            "lowest_opaque_row": 59
+          },
+          {
+            "file": "b/npc-kesh/north-west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              15,
+              1,
+              48,
+              61
+            ],
+            "height": 60,
+            "width": 33,
+            "lowest_opaque_row": 60
+          },
+          {
+            "file": "b/npc-kesh/west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              22,
+              2,
+              48,
+              62
+            ],
+            "height": 60,
+            "width": 26,
+            "lowest_opaque_row": 61
+          },
+          {
+            "file": "b/npc-kesh/south-west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              12,
+              2,
+              48,
+              62
+            ],
+            "height": 60,
+            "width": 36,
+            "lowest_opaque_row": 61
+          }
+        ],
+        "files": "b/<id>/<direction>.png from the character zip (api.pixellab.ai/mcp/characters/<id>/download); character-metadata.json from the zip"
+      },
+      "c": {
+        "steps": [
+          {
+            "tool": "create_image_pro",
+            "job_id": "fba23b00-14dd-4069-b6a0-44612b5dc23e",
+            "arguments": {
+              "description": "Old Kesh, a Kindled hermit and fisherman: a small figure made of river-dark brown-black clay, about 40 px tall, with a few widely spaced amber freckles like small lights, long white hair and a white beard, a patched grey-ochre sailcloth tunic with a wet grey patch, dark trousers and wrapped dark feet. He holds a long wooden casting rod upright at his side. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters. Facing the viewer, standing.",
+              "width": 64,
+              "height": 64,
+              "no_background": true,
+              "reference_images": [
+                {
+                  "url": "upload:93e95093-37ee-4663-986c-b5908b9f9284",
+                  "usage": "character base: copy the proportions, the size on the 64x64 canvas, the clay-figure build, the outline and the shading style; NOT the outfit, colours or weapon",
+                  "source": "art/anchors/kindled-ash-s-64.png",
+                  "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+                }
+              ],
+              "palette": [
+                "#F4EFE6",
+                "#D9D2E9",
+                "#A99FC4",
+                "#5B5478",
+                "#2A2540",
+                "#F2B65A",
+                "#C9733A",
+                "#4A4E57",
+                "#7D8794",
+                "#3E5C7A",
+                "#A8743A",
+                "#C79A3E",
+                "#8A6420",
+                "#E9E4D4",
+                "#2F7F7A",
+                "#C98F78",
+                "#9C5B4A",
+                "#E3C29E",
+                "#24305A",
+                "#E8E2D6",
+                "#FFF4C7",
+                "#8C7F6E",
+                "#5E5448",
+                "#FBF8F0",
+                "#D8B24A",
+                "#F07A3A",
+                "#B5402E",
+                "#1C2147"
+              ],
+              "palette_name": "Islands of the One",
+              "max_colors": 12,
+              "seed": 1234
+            },
+            "generations": 10,
+            "candidates": 16,
+            "pick_index": 0,
+            "pick_why": "faces the viewer, rod upright at his side, amber freckles visible, whole figure inside; every candidate stands on row 59 and is ~45-52 px tall incl. hair/rod",
+            "pick": {
+              "file": "c/npc-kesh/pick.png",
+              "size": [
+                64,
+                64
+              ],
+              "bbox": [
+                17,
+                8,
+                53,
+                60
+              ],
+              "height": 52,
+              "width": 36,
+              "lowest_opaque_row": 59
+            }
+          },
+          {
+            "tool": "create_character",
+            "character_id": "887f648c-2679-4db7-8908-e3a602240ef9",
+            "arguments": {
+              "description": "Old Kesh, a Kindled hermit and fisherman: a small figure made of river-dark brown-black clay, about 40 px tall, with a few widely spaced amber freckles like small lights, long white hair and a white beard, a patched grey-ochre sailcloth tunic with a wet grey patch, dark trousers and wrapped dark feet. He holds a long wooden casting rod upright at his side. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+              "mode": "v3",
+              "reference_image_url": "upload:3df9de7c-761e-4ec2-96eb-b0d8225c1911",
+              "n_directions": 8,
+              "name": "npc-kesh (c)"
+            },
+            "reference_note": "reference_image_url is an upload of c/<id>/pick.png, byte for byte, instead of reference_image_base64 (inline base64 was corrupted in transit, see surprises)",
+            "seed": "create_character has no seed parameter",
+            "generations": 1,
+            "generations_source": "quoted 'v3 reference (1 generations)'; matches the balance"
+          }
+        ],
+        "generations": 11,
+        "retakes": 0,
+        "pick_index": 0,
+        "outputs": [
+          {
+            "file": "c/npc-kesh/south.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              17,
+              8,
+              53,
+              60
+            ],
+            "height": 52,
+            "width": 36,
+            "lowest_opaque_row": 59
+          },
+          {
+            "file": "c/npc-kesh/south-east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              19,
+              5,
+              50,
+              60
+            ],
+            "height": 55,
+            "width": 31,
+            "lowest_opaque_row": 59
+          },
+          {
+            "file": "c/npc-kesh/east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              20,
+              5,
+              42,
+              60
+            ],
+            "height": 55,
+            "width": 22,
+            "lowest_opaque_row": 59
+          },
+          {
+            "file": "c/npc-kesh/north-east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              19,
+              5,
+              45,
+              60
+            ],
+            "height": 55,
+            "width": 26,
+            "lowest_opaque_row": 59
+          },
+          {
+            "file": "c/npc-kesh/north.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              11,
+              8,
+              48,
+              60
+            ],
+            "height": 52,
+            "width": 37,
+            "lowest_opaque_row": 59
+          },
+          {
+            "file": "c/npc-kesh/north-west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              15,
+              8,
+              45,
+              60
+            ],
+            "height": 52,
+            "width": 30,
+            "lowest_opaque_row": 59
+          },
+          {
+            "file": "c/npc-kesh/west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              22,
+              7,
+              44,
+              60
+            ],
+            "height": 53,
+            "width": 22,
+            "lowest_opaque_row": 59
+          },
+          {
+            "file": "c/npc-kesh/south-west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              18,
+              8,
+              46,
+              60
+            ],
+            "height": 52,
+            "width": 28,
+            "lowest_opaque_row": 59
+          }
+        ]
+      }
+    },
+    {
+      "id": "npc-tally",
+      "kind": "npc",
+      "b": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "Tally, a young Kindled woman: a small figure of red terracotta clay, about 40 px tall, three amber freckles, dark violet hair tied up in a knot, a pale salt-stiff sailcloth tunic with a rope belt and a bronze buckle, dark trousers and boots, empty hands. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "mode": "v3",
+          "size": 64,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "detail": "medium detail",
+          "n_directions": 8,
+          "name": "npc-tally (b)"
+        },
+        "seed": "create_character has no seed parameter",
+        "character_id": "411a8674-933a-4b7d-abaa-5c72d7123ad6",
+        "generations": 2,
+        "generations_source": "quoted '2 generations' by the tool; matches the balance",
+        "retakes": 0,
+        "outputs": [
+          {
+            "file": "b/npc-tally/south.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              12,
+              2,
+              49,
+              61
+            ],
+            "height": 59,
+            "width": 37,
+            "lowest_opaque_row": 60
+          },
+          {
+            "file": "b/npc-tally/south-east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              15,
+              1,
+              50,
+              62
+            ],
+            "height": 61,
+            "width": 35,
+            "lowest_opaque_row": 61
+          },
+          {
+            "file": "b/npc-tally/east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              14,
+              3,
+              46,
+              62
+            ],
+            "height": 59,
+            "width": 32,
+            "lowest_opaque_row": 61
+          },
+          {
+            "file": "b/npc-tally/north-east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              15,
+              3,
+              47,
+              61
+            ],
+            "height": 58,
+            "width": 32,
+            "lowest_opaque_row": 60
+          },
+          {
+            "file": "b/npc-tally/north.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              13,
+              3,
+              50,
+              60
+            ],
+            "height": 57,
+            "width": 37,
+            "lowest_opaque_row": 59
+          },
+          {
+            "file": "b/npc-tally/north-west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              15,
+              3,
+              47,
+              61
+            ],
+            "height": 58,
+            "width": 32,
+            "lowest_opaque_row": 60
+          },
+          {
+            "file": "b/npc-tally/west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              17,
+              3,
+              49,
+              62
+            ],
+            "height": 59,
+            "width": 32,
+            "lowest_opaque_row": 61
+          },
+          {
+            "file": "b/npc-tally/south-west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              15,
+              3,
+              49,
+              62
+            ],
+            "height": 59,
+            "width": 34,
+            "lowest_opaque_row": 61
+          }
+        ],
+        "files": "b/<id>/<direction>.png from the character zip (api.pixellab.ai/mcp/characters/<id>/download); character-metadata.json from the zip"
+      },
+      "c": {
+        "steps": [
+          {
+            "tool": "create_image_pro",
+            "job_id": "c15aebbe-172a-4f18-acce-5e390add03ab",
+            "arguments": {
+              "description": "Tally, a young Kindled woman: a small figure of red terracotta clay, about 40 px tall, three amber freckles, dark violet hair tied up in a knot, a pale salt-stiff sailcloth tunic with a rope belt and a bronze buckle, dark trousers and boots, empty hands. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters. Facing the viewer, standing.",
+              "width": 64,
+              "height": 64,
+              "no_background": true,
+              "reference_images": [
+                {
+                  "url": "upload:93e95093-37ee-4663-986c-b5908b9f9284",
+                  "usage": "character base: copy the proportions, the size on the 64x64 canvas, the clay-figure build, the outline and the shading style; NOT the outfit, colours or weapon",
+                  "source": "art/anchors/kindled-ash-s-64.png",
+                  "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+                }
+              ],
+              "palette": [
+                "#F4EFE6",
+                "#D9D2E9",
+                "#A99FC4",
+                "#5B5478",
+                "#2A2540",
+                "#F2B65A",
+                "#C9733A",
+                "#4A4E57",
+                "#7D8794",
+                "#3E5C7A",
+                "#A8743A",
+                "#C79A3E",
+                "#8A6420",
+                "#E9E4D4",
+                "#2F7F7A",
+                "#C98F78",
+                "#9C5B4A",
+                "#E3C29E",
+                "#24305A",
+                "#E8E2D6",
+                "#FFF4C7",
+                "#8C7F6E",
+                "#5E5448",
+                "#FBF8F0",
+                "#D8B24A",
+                "#F07A3A",
+                "#B5402E",
+                "#1C2147"
+              ],
+              "palette_name": "Islands of the One",
+              "max_colors": 12,
+              "seed": 1234
+            },
+            "generations": 10,
+            "candidates": 16,
+            "pick_index": 11,
+            "pick_why": "the only candidate with the three amber freckles; faces the viewer, hair knot, buckle, empty hands; lowest row 56 (candidates range 54-62); 51 px tall incl. the knot",
+            "pick": {
+              "file": "c/npc-tally/pick.png",
+              "size": [
+                64,
+                64
+              ],
+              "bbox": [
+                15,
+                6,
+                41,
+                57
+              ],
+              "height": 51,
+              "width": 26,
+              "lowest_opaque_row": 56
+            }
+          },
+          {
+            "tool": "create_character",
+            "character_id": "2a81a7cd-7de9-4c5f-a0c9-73c9d0a080d7",
+            "arguments": {
+              "description": "Tally, a young Kindled woman: a small figure of red terracotta clay, about 40 px tall, three amber freckles, dark violet hair tied up in a knot, a pale salt-stiff sailcloth tunic with a rope belt and a bronze buckle, dark trousers and boots, empty hands. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+              "mode": "v3",
+              "reference_image_url": "upload:14c50846-df57-42a6-a339-6577bbdca2c1",
+              "n_directions": 8,
+              "name": "npc-tally (c)"
+            },
+            "reference_note": "reference_image_url is an upload of c/<id>/pick.png, byte for byte, instead of reference_image_base64 (inline base64 was corrupted in transit, see surprises)",
+            "seed": "create_character has no seed parameter",
+            "generations": 1,
+            "generations_source": "quoted 'v3 reference (1 generations)'; matches the balance"
+          }
+        ],
+        "generations": 11,
+        "retakes": 0,
+        "pick_index": 11,
+        "outputs": [
+          {
+            "file": "c/npc-tally/south.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              15,
+              6,
+              41,
+              57
+            ],
+            "height": 51,
+            "width": 26,
+            "lowest_opaque_row": 56
+          },
+          {
+            "file": "c/npc-tally/south-east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              19,
+              7,
+              40,
+              57
+            ],
+            "height": 50,
+            "width": 21,
+            "lowest_opaque_row": 56
+          },
+          {
+            "file": "c/npc-tally/east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              20,
+              7,
+              40,
+              57
+            ],
+            "height": 50,
+            "width": 20,
+            "lowest_opaque_row": 56
+          },
+          {
+            "file": "c/npc-tally/north-east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              19,
+              7,
+              44,
+              57
+            ],
+            "height": 50,
+            "width": 25,
+            "lowest_opaque_row": 56
+          },
+          {
+            "file": "c/npc-tally/north.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              17,
+              7,
+              45,
+              57
+            ],
+            "height": 50,
+            "width": 28,
+            "lowest_opaque_row": 56
+          },
+          {
+            "file": "c/npc-tally/north-west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              23,
+              7,
+              42,
+              57
+            ],
+            "height": 50,
+            "width": 19,
+            "lowest_opaque_row": 56
+          },
+          {
+            "file": "c/npc-tally/west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              21,
+              6,
+              41,
+              57
+            ],
+            "height": 51,
+            "width": 20,
+            "lowest_opaque_row": 56
+          },
+          {
+            "file": "c/npc-tally/south-west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              17,
+              6,
+              45,
+              57
+            ],
+            "height": 51,
+            "width": 28,
+            "lowest_opaque_row": 56
+          }
+        ]
+      }
+    },
+    {
+      "id": "npc-clerk",
+      "kind": "npc",
+      "b": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "A Concord weigh-house clerk: a Scattered man about 43 px tall with warm tan skin and a shaved head, an iron-grey fringed wrap robe in an ancient Mesopotamian style with ochre trim. He holds a small bronze balance in one hand and a blank clay tablet in the other. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "mode": "v3",
+          "size": 64,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "detail": "medium detail",
+          "n_directions": 8,
+          "name": "npc-clerk (b)"
+        },
+        "seed": "create_character has no seed parameter",
+        "character_id": "92d7a5f9-0298-4053-a159-ec534035aac2",
+        "generations": 2,
+        "generations_source": "quoted '2 generations' by the tool; matches the balance",
+        "retakes": 0,
+        "outputs": [
+          {
+            "file": "b/npc-clerk/south.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              6,
+              3,
+              47,
+              61
+            ],
+            "height": 58,
+            "width": 41,
+            "lowest_opaque_row": 60
+          },
+          {
+            "file": "b/npc-clerk/south-east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              16,
+              3,
+              50,
+              62
+            ],
+            "height": 59,
+            "width": 34,
+            "lowest_opaque_row": 61
+          },
+          {
+            "file": "b/npc-clerk/east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              20,
+              3,
+              49,
+              61
+            ],
+            "height": 58,
+            "width": 29,
+            "lowest_opaque_row": 60
+          },
+          {
+            "file": "b/npc-clerk/north-east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              17,
+              3,
+              58,
+              61
+            ],
+            "height": 58,
+            "width": 41,
+            "lowest_opaque_row": 60
+          },
+          {
+            "file": "b/npc-clerk/north.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              13,
+              3,
+              59,
+              59
+            ],
+            "height": 56,
+            "width": 46,
+            "lowest_opaque_row": 58
+          },
+          {
+            "file": "b/npc-clerk/north-west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              9,
+              3,
+              47,
+              61
+            ],
+            "height": 58,
+            "width": 38,
+            "lowest_opaque_row": 60
+          },
+          {
+            "file": "b/npc-clerk/west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              12,
+              3,
+              41,
+              61
+            ],
+            "height": 58,
+            "width": 29,
+            "lowest_opaque_row": 60
+          },
+          {
+            "file": "b/npc-clerk/south-west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              5,
+              3,
+              44,
+              62
+            ],
+            "height": 59,
+            "width": 39,
+            "lowest_opaque_row": 61
+          }
+        ],
+        "files": "b/<id>/<direction>.png from the character zip (api.pixellab.ai/mcp/characters/<id>/download); character-metadata.json from the zip"
+      },
+      "c": {
+        "steps": [
+          {
+            "tool": "create_image_pro",
+            "job_id": "c0f61407-40a7-4b7b-9af2-0c46d3336a32",
+            "arguments": {
+              "description": "A Concord weigh-house clerk: a Scattered man about 43 px tall with warm tan skin and a shaved head, an iron-grey fringed wrap robe in an ancient Mesopotamian style with ochre trim. He holds a small bronze balance in one hand and a blank clay tablet in the other. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters. Facing the viewer, standing.",
+              "width": 64,
+              "height": 64,
+              "no_background": true,
+              "reference_images": [
+                {
+                  "url": "upload:93e95093-37ee-4663-986c-b5908b9f9284",
+                  "usage": "character base: copy the proportions, the size on the 64x64 canvas, the clay-figure build, the outline and the shading style; NOT the outfit, colours or weapon",
+                  "source": "art/anchors/kindled-ash-s-64.png",
+                  "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+                }
+              ],
+              "palette": [
+                "#F4EFE6",
+                "#D9D2E9",
+                "#A99FC4",
+                "#5B5478",
+                "#2A2540",
+                "#F2B65A",
+                "#C9733A",
+                "#4A4E57",
+                "#7D8794",
+                "#3E5C7A",
+                "#A8743A",
+                "#C79A3E",
+                "#8A6420",
+                "#E9E4D4",
+                "#2F7F7A",
+                "#C98F78",
+                "#9C5B4A",
+                "#E3C29E",
+                "#24305A",
+                "#E8E2D6",
+                "#FFF4C7",
+                "#8C7F6E",
+                "#5E5448",
+                "#FBF8F0",
+                "#D8B24A",
+                "#F07A3A",
+                "#B5402E",
+                "#1C2147"
+              ],
+              "palette_name": "Islands of the One",
+              "max_colors": 12,
+              "seed": 1234
+            },
+            "generations": 10,
+            "candidates": 16,
+            "pick_index": 0,
+            "pick_why": "faces the viewer, bronze balance in one hand and a blank tablet in the other, ochre trim; every candidate is ~60 px tall (target 43) on row 61, so height could not be matched",
+            "pick": {
+              "file": "c/npc-clerk/pick.png",
+              "size": [
+                64,
+                64
+              ],
+              "bbox": [
+                7,
+                2,
+                47,
+                62
+              ],
+              "height": 60,
+              "width": 40,
+              "lowest_opaque_row": 61
+            }
+          },
+          {
+            "tool": "create_character",
+            "character_id": "215b20c4-5d40-4282-be08-e385486b366b",
+            "arguments": {
+              "description": "A Concord weigh-house clerk: a Scattered man about 43 px tall with warm tan skin and a shaved head, an iron-grey fringed wrap robe in an ancient Mesopotamian style with ochre trim. He holds a small bronze balance in one hand and a blank clay tablet in the other. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+              "mode": "v3",
+              "reference_image_url": "upload:1916c262-79a9-4d71-9071-77272e75386d",
+              "n_directions": 8,
+              "name": "npc-clerk (c)"
+            },
+            "reference_note": "reference_image_url is an upload of c/<id>/pick.png, byte for byte, instead of reference_image_base64 (inline base64 was corrupted in transit, see surprises)",
+            "seed": "create_character has no seed parameter",
+            "generations": 1,
+            "generations_source": "quoted 'v3 reference (1 generations)'; matches the balance"
+          }
+        ],
+        "generations": 11,
+        "retakes": 0,
+        "pick_index": 0,
+        "outputs": [
+          {
+            "file": "c/npc-clerk/south.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              7,
+              2,
+              47,
+              62
+            ],
+            "height": 60,
+            "width": 40,
+            "lowest_opaque_row": 61
+          },
+          {
+            "file": "c/npc-clerk/south-east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              14,
+              2,
+              46,
+              62
+            ],
+            "height": 60,
+            "width": 32,
+            "lowest_opaque_row": 61
+          },
+          {
+            "file": "c/npc-clerk/east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              22,
+              2,
+              43,
+              62
+            ],
+            "height": 60,
+            "width": 21,
+            "lowest_opaque_row": 61
+          },
+          {
+            "file": "c/npc-clerk/north-east.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              19,
+              2,
+              55,
+              62
+            ],
+            "height": 60,
+            "width": 36,
+            "lowest_opaque_row": 61
+          },
+          {
+            "file": "c/npc-clerk/north.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              16,
+              2,
+              57,
+              62
+            ],
+            "height": 60,
+            "width": 41,
+            "lowest_opaque_row": 61
+          },
+          {
+            "file": "c/npc-clerk/north-west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              17,
+              2,
+              52,
+              62
+            ],
+            "height": 60,
+            "width": 35,
+            "lowest_opaque_row": 61
+          },
+          {
+            "file": "c/npc-clerk/west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              22,
+              2,
+              42,
+              62
+            ],
+            "height": 60,
+            "width": 20,
+            "lowest_opaque_row": 61
+          },
+          {
+            "file": "c/npc-clerk/south-west.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              8,
+              2,
+              45,
+              62
+            ],
+            "height": 60,
+            "width": 37,
+            "lowest_opaque_row": 61
+          }
+        ]
+      }
+    },
+    {
+      "id": "enemy-hungerling",
+      "kind": "enemy",
+      "b": {
+        "tool": "create_image_pixen",
+        "job_id": "ca108703-0d74-4d56-8400-af94274a5f5a",
+        "arguments": {
+          "description": "A Hungerling, a Dream-Spawn creature: a giant's hunger given legs. A squat, wrong-scaled thing about 26 px wide and 24 px tall: a huge round belly with a wide toothy mouth, short stubby giant's legs and oversized hands, warm flesh-pink skin with night-blue shadows, no eyes. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "direction": "south",
+          "outline": "single color outline",
+          "detail": "medium detail",
+          "seed": 1234
+        },
+        "generations": 1,
+        "retakes": 0,
+        "outputs": [
+          {
+            "file": "b/enemy-hungerling/enemy-hungerling.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              3,
+              6,
+              61,
+              56
+            ],
+            "height": 50,
+            "width": 58,
+            "lowest_opaque_row": 55
+          }
+        ]
+      },
+      "c": {
+        "tool": "create_image_pro",
+        "job_id": "c86c077c-6c68-433c-b3ac-8545786774ab",
+        "arguments": {
+          "description": "A Hungerling, a Dream-Spawn creature: a giant's hunger given legs. A squat, wrong-scaled thing about 26 px wide and 24 px tall: a huge round belly with a wide toothy mouth, short stubby giant's legs and oversized hands, warm flesh-pink skin with night-blue shadows, no eyes. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "reference_images": [
+            {
+              "url": "upload:5c61ccaa-1f62-4243-817e-ceac2caa2f67",
+              "usage": "enemy style: outline, shading, amount of detail",
+              "source": "art/anchors/husk-peeling-64.png",
+              "sha256": "8d6497ac2d06ad326d25fa41e07613b7cf329af50cb4d75a1610919cdd1f2d82"
+            },
+            {
+              "url": "upload:93e95093-37ee-4663-986c-b5908b9f9284",
+              "usage": "scale only: this is the player; the creature stands beside it",
+              "source": "art/anchors/kindled-ash-s-64.png",
+              "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+            }
+          ],
+          "palette": [
+            "#F4EFE6",
+            "#D9D2E9",
+            "#A99FC4",
+            "#5B5478",
+            "#2A2540",
+            "#F2B65A",
+            "#C9733A",
+            "#4A4E57",
+            "#7D8794",
+            "#3E5C7A",
+            "#A8743A",
+            "#C79A3E",
+            "#8A6420",
+            "#E9E4D4",
+            "#2F7F7A",
+            "#C98F78",
+            "#9C5B4A",
+            "#E3C29E",
+            "#24305A",
+            "#E8E2D6",
+            "#FFF4C7",
+            "#8C7F6E",
+            "#5E5448",
+            "#FBF8F0",
+            "#D8B24A",
+            "#F07A3A",
+            "#B5402E",
+            "#1C2147"
+          ],
+          "palette_name": "Islands of the One",
+          "max_colors": 10,
+          "seed": 1234
+        },
+        "generations": 10,
+        "candidates": 16,
+        "retakes": 0,
+        "pick_index": 0,
+        "pick_why": "wide toothy mouth on the belly, no eyes, oversized hands, faces south; all 16 are 46-60 px tall (target 24); #6 has eyes, several put the mouth on the head",
+        "outputs": [
+          {
+            "file": "c/enemy-hungerling/pick.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              12,
+              3,
+              52,
+              62
+            ],
+            "height": 59,
+            "width": 40,
+            "lowest_opaque_row": 61
+          }
+        ]
+      }
+    },
+    {
+      "id": "enemy-gardener",
+      "kind": "enemy",
+      "b": {
+        "tool": "create_image_pixen",
+        "job_id": "11f80a1e-5d12-4362-ad8b-a0ebc26ac841",
+        "arguments": {
+          "description": "A Felled Gardener, a Dream-Spawn creature: a tall stooped gardener about 40 px tall, made of dream-stuff, with a man's shape like a burnt sapling, a broken pruning hook in one hand, warm flesh tones fading into night blue, faint echo outlines trailing from its back. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "direction": "south",
+          "outline": "single color outline",
+          "detail": "medium detail",
+          "seed": 1234
+        },
+        "generations": 1,
+        "retakes": 0,
+        "outputs": [
+          {
+            "file": "b/enemy-gardener/enemy-gardener.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              14,
+              7,
+              52,
+              59
+            ],
+            "height": 52,
+            "width": 38,
+            "lowest_opaque_row": 58
+          }
+        ]
+      },
+      "c": {
+        "tool": "create_image_pro",
+        "job_id": "95936c74-9d2e-4c76-9186-0c7184aa1841",
+        "arguments": {
+          "description": "A Felled Gardener, a Dream-Spawn creature: a tall stooped gardener about 40 px tall, made of dream-stuff, with a man's shape like a burnt sapling, a broken pruning hook in one hand, warm flesh tones fading into night blue, faint echo outlines trailing from its back. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "reference_images": [
+            {
+              "url": "upload:5c61ccaa-1f62-4243-817e-ceac2caa2f67",
+              "usage": "enemy style: outline, shading, amount of detail",
+              "source": "art/anchors/husk-peeling-64.png",
+              "sha256": "8d6497ac2d06ad326d25fa41e07613b7cf329af50cb4d75a1610919cdd1f2d82"
+            },
+            {
+              "url": "upload:93e95093-37ee-4663-986c-b5908b9f9284",
+              "usage": "scale only: this is the player; the creature stands beside it",
+              "source": "art/anchors/kindled-ash-s-64.png",
+              "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+            }
+          ],
+          "palette": [
+            "#F4EFE6",
+            "#D9D2E9",
+            "#A99FC4",
+            "#5B5478",
+            "#2A2540",
+            "#F2B65A",
+            "#C9733A",
+            "#4A4E57",
+            "#7D8794",
+            "#3E5C7A",
+            "#A8743A",
+            "#C79A3E",
+            "#8A6420",
+            "#E9E4D4",
+            "#2F7F7A",
+            "#C98F78",
+            "#9C5B4A",
+            "#E3C29E",
+            "#24305A",
+            "#E8E2D6",
+            "#FFF4C7",
+            "#8C7F6E",
+            "#5E5448",
+            "#FBF8F0",
+            "#D8B24A",
+            "#F07A3A",
+            "#B5402E",
+            "#1C2147"
+          ],
+          "palette_name": "Islands of the One",
+          "max_colors": 10,
+          "seed": 1234
+        },
+        "generations": 10,
+        "candidates": 16,
+        "retakes": 0,
+        "pick_index": 1,
+        "pick_why": "clearest flesh-to-night-blue fade, broken hook in hand, whole figure inside; all 16 are 53-62 px tall (target 40) and stooped head-down; none shows clear echo outlines (#14 has a white cloud)",
+        "outputs": [
+          {
+            "file": "c/enemy-gardener/pick.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              5,
+              3,
+              50,
+              62
+            ],
+            "height": 59,
+            "width": 45,
+            "lowest_opaque_row": 61
+          }
+        ]
+      }
+    },
+    {
+      "id": "prop-basket",
+      "kind": "prop",
+      "b": {
+        "tool": "create_image_pixen",
+        "job_id": "7409fe4c-7508-40a3-8869-f0296ba89fdb",
+        "arguments": {
+          "description": "An upturned reed basket, used as a seat, about 20 px wide. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "detail": "medium detail",
+          "seed": 1234
+        },
+        "generations": 1,
+        "retakes": 0,
+        "outputs": [
+          {
+            "file": "b/prop-basket/prop-basket.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              6,
+              6,
+              58,
+              57
+            ],
+            "height": 51,
+            "width": 52,
+            "lowest_opaque_row": 56
+          }
+        ]
+      },
+      "c": {
+        "tool": "create_image_pro",
+        "job_id": "b73c96ee-3a9f-492e-9b30-ffaa925a8a70",
+        "arguments": {
+          "description": "An upturned reed basket, used as a seat, about 20 px wide. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "reference_images": [
+            {
+              "url": "upload:dd0e3eb0-cea2-4a3b-976a-de9a82c03e4b",
+              "usage": "prop style: outline, shading, amount of detail",
+              "source": "art/anchors/prop-clay-jar-64.png",
+              "sha256": "9f08705fb367fa0208ce1e9036a13cba6d7717310f982e7cb04d979a96fc4710"
+            },
+            {
+              "url": "upload:93e95093-37ee-4663-986c-b5908b9f9284",
+              "usage": "scale only: this is the player",
+              "source": "art/anchors/kindled-ash-s-64.png",
+              "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+            }
+          ],
+          "palette": [
+            "#F4EFE6",
+            "#D9D2E9",
+            "#A99FC4",
+            "#5B5478",
+            "#2A2540",
+            "#F2B65A",
+            "#C9733A",
+            "#4A4E57",
+            "#7D8794",
+            "#3E5C7A",
+            "#A8743A",
+            "#C79A3E",
+            "#8A6420",
+            "#E9E4D4",
+            "#2F7F7A",
+            "#C98F78",
+            "#9C5B4A",
+            "#E3C29E",
+            "#24305A",
+            "#E8E2D6",
+            "#FFF4C7",
+            "#8C7F6E",
+            "#5E5448",
+            "#FBF8F0",
+            "#D8B24A",
+            "#F07A3A",
+            "#B5402E",
+            "#1C2147"
+          ],
+          "palette_name": "Islands of the One",
+          "max_colors": 8,
+          "seed": 1234
+        },
+        "generations": 10,
+        "candidates": 16,
+        "retakes": 0,
+        "pick_index": 0,
+        "pick_why": "plain upturned reed basket with a closed flat top, lowest row 55; all candidates are 40-56 px wide (target 20)",
+        "outputs": [
+          {
+            "file": "c/prop-basket/pick.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              9,
+              13,
+              55,
+              56
+            ],
+            "height": 43,
+            "width": 46,
+            "lowest_opaque_row": 55
+          }
+        ]
+      }
+    },
+    {
+      "id": "prop-balance",
+      "kind": "prop",
+      "b": {
+        "tool": "create_image_pixen",
+        "job_id": "98e13ab3-787b-426f-b0c1-d2aff455de45",
+        "arguments": {
+          "description": "A small bronze weighing balance on a short wooden stand, two pans, about 24 px tall. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "detail": "medium detail",
+          "seed": 1234
+        },
+        "generations": 1,
+        "retakes": 0,
+        "outputs": [
+          {
+            "file": "b/prop-balance/prop-balance.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              9,
+              4,
+              54,
+              60
+            ],
+            "height": 56,
+            "width": 45,
+            "lowest_opaque_row": 59
+          }
+        ]
+      },
+      "c": {
+        "tool": "create_image_pro",
+        "job_id": "cd33e549-0cbb-44a3-ad83-f99823b0f94b",
+        "arguments": {
+          "description": "A small bronze weighing balance on a short wooden stand, two pans, about 24 px tall. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "reference_images": [
+            {
+              "url": "upload:dd0e3eb0-cea2-4a3b-976a-de9a82c03e4b",
+              "usage": "prop style: outline, shading, amount of detail",
+              "source": "art/anchors/prop-clay-jar-64.png",
+              "sha256": "9f08705fb367fa0208ce1e9036a13cba6d7717310f982e7cb04d979a96fc4710"
+            },
+            {
+              "url": "upload:93e95093-37ee-4663-986c-b5908b9f9284",
+              "usage": "scale only: this is the player",
+              "source": "art/anchors/kindled-ash-s-64.png",
+              "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+            }
+          ],
+          "palette": [
+            "#F4EFE6",
+            "#D9D2E9",
+            "#A99FC4",
+            "#5B5478",
+            "#2A2540",
+            "#F2B65A",
+            "#C9733A",
+            "#4A4E57",
+            "#7D8794",
+            "#3E5C7A",
+            "#A8743A",
+            "#C79A3E",
+            "#8A6420",
+            "#E9E4D4",
+            "#2F7F7A",
+            "#C98F78",
+            "#9C5B4A",
+            "#E3C29E",
+            "#24305A",
+            "#E8E2D6",
+            "#FFF4C7",
+            "#8C7F6E",
+            "#5E5448",
+            "#FBF8F0",
+            "#D8B24A",
+            "#F07A3A",
+            "#B5402E",
+            "#1C2147"
+          ],
+          "palette_name": "Islands of the One",
+          "max_colors": 8,
+          "seed": 1234
+        },
+        "generations": 10,
+        "candidates": 16,
+        "retakes": 0,
+        "pick_index": 0,
+        "pick_why": "symmetric bronze balance, two pans, wooden stand, lowest row 55; candidates are 38-49 px tall (target 24)",
+        "outputs": [
+          {
+            "file": "c/prop-balance/pick.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              10,
+              11,
+              54,
+              56
+            ],
+            "height": 45,
+            "width": 44,
+            "lowest_opaque_row": 55
+          }
+        ]
+      }
+    },
+    {
+      "id": "prop-lamp",
+      "kind": "prop",
+      "b": {
+        "tool": "create_image_pixen",
+        "job_id": "5517b88e-2db8-43a7-be30-e77ca708dd23",
+        "arguments": {
+          "description": "A clay oil lamp on a low clay stand, lit with a small orange flame, about 18 px tall. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "detail": "medium detail",
+          "seed": 1234
+        },
+        "generations": 1,
+        "retakes": 0,
+        "outputs": [
+          {
+            "file": "b/prop-lamp/prop-lamp.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              10,
+              6,
+              51,
+              58
+            ],
+            "height": 52,
+            "width": 41,
+            "lowest_opaque_row": 57
+          }
+        ]
+      },
+      "c": {
+        "tool": "create_image_pro",
+        "job_id": "5462fab9-6e8c-4c84-93fe-87ab7d5cfd00",
+        "arguments": {
+          "description": "A clay oil lamp on a low clay stand, lit with a small orange flame, about 18 px tall. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "reference_images": [
+            {
+              "url": "upload:dd0e3eb0-cea2-4a3b-976a-de9a82c03e4b",
+              "usage": "prop style: outline, shading, amount of detail",
+              "source": "art/anchors/prop-clay-jar-64.png",
+              "sha256": "9f08705fb367fa0208ce1e9036a13cba6d7717310f982e7cb04d979a96fc4710"
+            },
+            {
+              "url": "upload:93e95093-37ee-4663-986c-b5908b9f9284",
+              "usage": "scale only: this is the player",
+              "source": "art/anchors/kindled-ash-s-64.png",
+              "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+            }
+          ],
+          "palette": [
+            "#F4EFE6",
+            "#D9D2E9",
+            "#A99FC4",
+            "#5B5478",
+            "#2A2540",
+            "#F2B65A",
+            "#C9733A",
+            "#4A4E57",
+            "#7D8794",
+            "#3E5C7A",
+            "#A8743A",
+            "#C79A3E",
+            "#8A6420",
+            "#E9E4D4",
+            "#2F7F7A",
+            "#C98F78",
+            "#9C5B4A",
+            "#E3C29E",
+            "#24305A",
+            "#E8E2D6",
+            "#FFF4C7",
+            "#8C7F6E",
+            "#5E5448",
+            "#FBF8F0",
+            "#D8B24A",
+            "#F07A3A",
+            "#B5402E",
+            "#1C2147"
+          ],
+          "palette_name": "Islands of the One",
+          "max_colors": 8,
+          "seed": 1234
+        },
+        "generations": 10,
+        "candidates": 16,
+        "retakes": 0,
+        "pick_index": 7,
+        "pick_why": "lit clay lamp on a clay block stand, lowest row 52; #1 sits on row 53 but on a grey stone stand; #2 and #11 are jugs",
+        "outputs": [
+          {
+            "file": "c/prop-lamp/pick.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              13,
+              17,
+              51,
+              53
+            ],
+            "height": 36,
+            "width": 38,
+            "lowest_opaque_row": 52
+          }
+        ]
+      }
+    },
+    {
+      "id": "prop-sailcloth",
+      "kind": "prop",
+      "b": {
+        "tool": "create_image_pixen",
+        "job_id": "178ae438-0581-4a92-adbe-1c7d69fc021b",
+        "arguments": {
+          "description": "A bundle of folded pale sailcloth tied with rope, about 22 px wide. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "detail": "medium detail",
+          "seed": 1234
+        },
+        "generations": 1,
+        "retakes": 0,
+        "outputs": [
+          {
+            "file": "b/prop-sailcloth/prop-sailcloth.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              4,
+              6,
+              60,
+              58
+            ],
+            "height": 52,
+            "width": 56,
+            "lowest_opaque_row": 57
+          }
+        ]
+      },
+      "c": {
+        "tool": "create_image_pro",
+        "job_id": "174e1740-c6d1-41da-a51a-76b5291835dd",
+        "arguments": {
+          "description": "A bundle of folded pale sailcloth tied with rope, about 22 px wide. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "reference_images": [
+            {
+              "url": "upload:dd0e3eb0-cea2-4a3b-976a-de9a82c03e4b",
+              "usage": "prop style: outline, shading, amount of detail",
+              "source": "art/anchors/prop-clay-jar-64.png",
+              "sha256": "9f08705fb367fa0208ce1e9036a13cba6d7717310f982e7cb04d979a96fc4710"
+            },
+            {
+              "url": "upload:93e95093-37ee-4663-986c-b5908b9f9284",
+              "usage": "scale only: this is the player",
+              "source": "art/anchors/kindled-ash-s-64.png",
+              "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+            }
+          ],
+          "palette": [
+            "#F4EFE6",
+            "#D9D2E9",
+            "#A99FC4",
+            "#5B5478",
+            "#2A2540",
+            "#F2B65A",
+            "#C9733A",
+            "#4A4E57",
+            "#7D8794",
+            "#3E5C7A",
+            "#A8743A",
+            "#C79A3E",
+            "#8A6420",
+            "#E9E4D4",
+            "#2F7F7A",
+            "#C98F78",
+            "#9C5B4A",
+            "#E3C29E",
+            "#24305A",
+            "#E8E2D6",
+            "#FFF4C7",
+            "#8C7F6E",
+            "#5E5448",
+            "#FBF8F0",
+            "#D8B24A",
+            "#F07A3A",
+            "#B5402E",
+            "#1C2147"
+          ],
+          "palette_name": "Islands of the One",
+          "max_colors": 8,
+          "seed": 1234
+        },
+        "generations": 10,
+        "candidates": 16,
+        "retakes": 0,
+        "pick_index": 6,
+        "pick_why": "folded (not rolled) pale cloth tied with rope, lowest row 52; candidates are 46-60 px wide (target 22)",
+        "outputs": [
+          {
+            "file": "c/prop-sailcloth/pick.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              3,
+              11,
+              61,
+              53
+            ],
+            "height": 42,
+            "width": 58,
+            "lowest_opaque_row": 52
+          }
+        ]
+      }
+    },
+    {
+      "id": "prop-bricks",
+      "kind": "prop",
+      "b": {
+        "tool": "create_image_pixen",
+        "job_id": "b7e27841-b03d-4ece-852f-de1120958fe7",
+        "arguments": {
+          "description": "A small stack of sun-dried mud bricks, about 28 px wide. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "detail": "medium detail",
+          "seed": 1234
+        },
+        "generations": 1,
+        "retakes": 0,
+        "outputs": [
+          {
+            "file": "b/prop-bricks/prop-bricks.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              6,
+              6,
+              58,
+              58
+            ],
+            "height": 52,
+            "width": 52,
+            "lowest_opaque_row": 57
+          }
+        ]
+      },
+      "c": {
+        "tool": "create_image_pro",
+        "job_id": "89c4ea9a-6280-4215-8b6e-d65d318537b7",
+        "arguments": {
+          "description": "A small stack of sun-dried mud bricks, about 28 px wide. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "reference_images": [
+            {
+              "url": "upload:dd0e3eb0-cea2-4a3b-976a-de9a82c03e4b",
+              "usage": "prop style: outline, shading, amount of detail",
+              "source": "art/anchors/prop-clay-jar-64.png",
+              "sha256": "9f08705fb367fa0208ce1e9036a13cba6d7717310f982e7cb04d979a96fc4710"
+            },
+            {
+              "url": "upload:93e95093-37ee-4663-986c-b5908b9f9284",
+              "usage": "scale only: this is the player",
+              "source": "art/anchors/kindled-ash-s-64.png",
+              "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+            }
+          ],
+          "palette": [
+            "#F4EFE6",
+            "#D9D2E9",
+            "#A99FC4",
+            "#5B5478",
+            "#2A2540",
+            "#F2B65A",
+            "#C9733A",
+            "#4A4E57",
+            "#7D8794",
+            "#3E5C7A",
+            "#A8743A",
+            "#C79A3E",
+            "#8A6420",
+            "#E9E4D4",
+            "#2F7F7A",
+            "#C98F78",
+            "#9C5B4A",
+            "#E3C29E",
+            "#24305A",
+            "#E8E2D6",
+            "#FFF4C7",
+            "#8C7F6E",
+            "#5E5448",
+            "#FBF8F0",
+            "#D8B24A",
+            "#F07A3A",
+            "#B5402E",
+            "#1C2147"
+          ],
+          "palette_name": "Islands of the One",
+          "max_colors": 8,
+          "seed": 1234
+        },
+        "generations": 10,
+        "candidates": 16,
+        "retakes": 0,
+        "pick_index": 6,
+        "pick_why": "small stacked pile of mud-coloured bricks, lowest row 53, 45 px wide (target 28); #0 is closest in width (35) but sits on row 49",
+        "outputs": [
+          {
+            "file": "c/prop-bricks/pick.png",
+            "size": [
+              64,
+              64
+            ],
+            "bbox": [
+              10,
+              13,
+              55,
+              54
+            ],
+            "height": 41,
+            "width": 45,
+            "lowest_opaque_row": 53
+          }
+        ]
+      }
+    },
+    {
+      "id": "icon-ration",
+      "kind": "icon",
+      "b": {
+        "tool": "create_image_pixen",
+        "job_id": "99b8fbe4-4e09-45e0-9020-0391b3a80dce",
+        "arguments": {
+          "description": "A ration: a small round loaf of hard brown bread wrapped in pale sailcloth and tied with a cord. A game item icon. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "outline": "single color outline",
+          "seed": 1234
+        },
+        "generations": 1,
+        "retakes": 0,
+        "outputs": [
+          {
+            "file": "b/icon-ration/icon-ration.png",
+            "size": [
+              32,
+              32
+            ],
+            "bbox": [
+              0,
+              0,
+              32,
+              32
+            ],
+            "height": 32,
+            "width": 32,
+            "lowest_opaque_row": 31
+          },
+          {
+            "file": "b/icon-ration/icon-ration-16.png",
+            "size": [
+              16,
+              16
+            ],
+            "bbox": [
+              0,
+              0,
+              16,
+              16
+            ],
+            "height": 16,
+            "width": 16,
+            "lowest_opaque_row": 15
+          }
+        ],
+        "reduced_16": "reduce_icons.py (2x2 mode, ties to the darker, snap to the 28 in OKLab)"
+      },
+      "c": {
+        "tool": "create_image_pro",
+        "job_id": "03edac69-e88b-462a-ae8d-715cd5115bb4",
+        "arguments": {
+          "description": "A ration: a small round loaf of hard brown bread wrapped in pale sailcloth and tied with a cord. A game item icon. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "reference_images": [
+            {
+              "url": "upload:5e6a18fe-7026-47d9-8638-477c6d992073",
+              "usage": "icon style: a 16 px icon shown at 2x; copy the 2x2 pixel blocks, the dark navy outline and the flat shading",
+              "source": "art/anchors/icon-ref-hookblade-32.png",
+              "sha256": "c541b328f1755017f9b2a96c80808fd1b688458bc4a49e13074a978982af4eef"
+            },
+            {
+              "url": "upload:f568436e-a1cc-40a8-9829-a4e846b563e3",
+              "usage": "icon style, same as the first",
+              "source": "art/anchors/icon-ref-lock-32.png",
+              "sha256": "1b5dd6b76823a6c871142d90191ca38b2ca0e5f789a33dfa1ed96cdc1532e49b"
+            }
+          ],
+          "palette": [
+            "#F4EFE6",
+            "#D9D2E9",
+            "#A99FC4",
+            "#5B5478",
+            "#2A2540",
+            "#F2B65A",
+            "#C9733A",
+            "#4A4E57",
+            "#7D8794",
+            "#3E5C7A",
+            "#A8743A",
+            "#C79A3E",
+            "#8A6420",
+            "#E9E4D4",
+            "#2F7F7A",
+            "#C98F78",
+            "#9C5B4A",
+            "#E3C29E",
+            "#24305A",
+            "#E8E2D6",
+            "#FFF4C7",
+            "#8C7F6E",
+            "#5E5448",
+            "#FBF8F0",
+            "#D8B24A",
+            "#F07A3A",
+            "#B5402E",
+            "#1C2147"
+          ],
+          "palette_name": "Islands of the One",
+          "max_colors": 6,
+          "seed": 1234
+        },
+        "generations": 10,
+        "candidates": 64,
+        "retakes": 0,
+        "pick_index": 44,
+        "pick_why": "round brown loaf partly wrapped in pale cloth, tied with a cord bow, clear of the edges",
+        "outputs": [
+          {
+            "file": "c/icon-ration/pick.png",
+            "size": [
+              32,
+              32
+            ],
+            "bbox": [
+              2,
+              3,
+              30,
+              29
+            ],
+            "height": 26,
+            "width": 28,
+            "lowest_opaque_row": 28
+          },
+          {
+            "file": "c/icon-ration/icon-ration-16.png",
+            "size": [
+              16,
+              16
+            ],
+            "bbox": [
+              1,
+              1,
+              15,
+              15
+            ],
+            "height": 14,
+            "width": 14,
+            "lowest_opaque_row": 14
+          }
+        ],
+        "reduced_16": "reduce_icons.py (2x2 mode, ties to the darker, snap to the 28 in OKLab)"
+      }
+    },
+    {
+      "id": "icon-sparkglass",
+      "kind": "icon",
+      "b": {
+        "tool": "create_image_pixen",
+        "job_id": "218c8aa9-5ce7-498e-97f5-02248c6f0cbf",
+        "arguments": {
+          "description": "A chip of Sparkglass: a small faceted amber crystal shard with a warm light inside. A game item icon. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "outline": "single color outline",
+          "seed": 1234
+        },
+        "generations": 1,
+        "retakes": 0,
+        "outputs": [
+          {
+            "file": "b/icon-sparkglass/icon-sparkglass.png",
+            "size": [
+              32,
+              32
+            ],
+            "bbox": [
+              0,
+              1,
+              32,
+              31
+            ],
+            "height": 30,
+            "width": 32,
+            "lowest_opaque_row": 30
+          },
+          {
+            "file": "b/icon-sparkglass/icon-sparkglass-16.png",
+            "size": [
+              16,
+              16
+            ],
+            "bbox": [
+              0,
+              0,
+              16,
+              16
+            ],
+            "height": 16,
+            "width": 16,
+            "lowest_opaque_row": 15
+          }
+        ],
+        "reduced_16": "reduce_icons.py (2x2 mode, ties to the darker, snap to the 28 in OKLab)"
+      },
+      "c": {
+        "tool": "create_image_pro",
+        "job_id": "ce457554-fa42-494f-887b-d01abc7dd0b5",
+        "arguments": {
+          "description": "A chip of Sparkglass: a small faceted amber crystal shard with a warm light inside. A game item icon. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "reference_images": [
+            {
+              "url": "upload:5e6a18fe-7026-47d9-8638-477c6d992073",
+              "usage": "icon style: a 16 px icon shown at 2x; copy the 2x2 pixel blocks, the dark navy outline and the flat shading",
+              "source": "art/anchors/icon-ref-hookblade-32.png",
+              "sha256": "c541b328f1755017f9b2a96c80808fd1b688458bc4a49e13074a978982af4eef"
+            },
+            {
+              "url": "upload:f568436e-a1cc-40a8-9829-a4e846b563e3",
+              "usage": "icon style, same as the first",
+              "source": "art/anchors/icon-ref-lock-32.png",
+              "sha256": "1b5dd6b76823a6c871142d90191ca38b2ca0e5f789a33dfa1ed96cdc1532e49b"
+            }
+          ],
+          "palette": [
+            "#F4EFE6",
+            "#D9D2E9",
+            "#A99FC4",
+            "#5B5478",
+            "#2A2540",
+            "#F2B65A",
+            "#C9733A",
+            "#4A4E57",
+            "#7D8794",
+            "#3E5C7A",
+            "#A8743A",
+            "#C79A3E",
+            "#8A6420",
+            "#E9E4D4",
+            "#2F7F7A",
+            "#C98F78",
+            "#9C5B4A",
+            "#E3C29E",
+            "#24305A",
+            "#E8E2D6",
+            "#FFF4C7",
+            "#8C7F6E",
+            "#5E5448",
+            "#FBF8F0",
+            "#D8B24A",
+            "#F07A3A",
+            "#B5402E",
+            "#1C2147"
+          ],
+          "palette_name": "Islands of the One",
+          "max_colors": 6,
+          "seed": 1234
+        },
+        "generations": 10,
+        "candidates": 64,
+        "retakes": 0,
+        "pick_index": 24,
+        "pick_why": "an angled faceted amber shard with a light core; several others are symmetric gems, grey stones or clusters",
+        "outputs": [
+          {
+            "file": "c/icon-sparkglass/pick.png",
+            "size": [
+              32,
+              32
+            ],
+            "bbox": [
+              6,
+              3,
+              26,
+              29
+            ],
+            "height": 26,
+            "width": 20,
+            "lowest_opaque_row": 28
+          },
+          {
+            "file": "c/icon-sparkglass/icon-sparkglass-16.png",
+            "size": [
+              16,
+              16
+            ],
+            "bbox": [
+              3,
+              1,
+              13,
+              15
+            ],
+            "height": 14,
+            "width": 10,
+            "lowest_opaque_row": 14
+          }
+        ],
+        "reduced_16": "reduce_icons.py (2x2 mode, ties to the darker, snap to the 28 in OKLab)"
+      }
+    },
+    {
+      "id": "icon-tonic",
+      "kind": "icon",
+      "b": {
+        "tool": "create_image_pixen",
+        "job_id": "cbe4e363-2fe0-4a7d-a586-a89041ff50da",
+        "arguments": {
+          "description": "A tonic: a small clay flask with a cork stopper, half full of amber liquid. A game item icon. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "outline": "single color outline",
+          "seed": 1234
+        },
+        "generations": 1,
+        "retakes": 0,
+        "outputs": [
+          {
+            "file": "b/icon-tonic/icon-tonic.png",
+            "size": [
+              32,
+              32
+            ],
+            "bbox": [
+              0,
+              0,
+              32,
+              32
+            ],
+            "height": 32,
+            "width": 32,
+            "lowest_opaque_row": 31
+          },
+          {
+            "file": "b/icon-tonic/icon-tonic-16.png",
+            "size": [
+              16,
+              16
+            ],
+            "bbox": [
+              0,
+              0,
+              16,
+              16
+            ],
+            "height": 16,
+            "width": 16,
+            "lowest_opaque_row": 15
+          }
+        ],
+        "reduced_16": "reduce_icons.py (2x2 mode, ties to the darker, snap to the 28 in OKLab)"
+      },
+      "c": {
+        "tool": "create_image_pro",
+        "job_id": "54f780d1-2377-43e6-b0e6-822b00096ef4",
+        "arguments": {
+          "description": "A tonic: a small clay flask with a cork stopper, half full of amber liquid. A game item icon. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "reference_images": [
+            {
+              "url": "upload:5e6a18fe-7026-47d9-8638-477c6d992073",
+              "usage": "icon style: a 16 px icon shown at 2x; copy the 2x2 pixel blocks, the dark navy outline and the flat shading",
+              "source": "art/anchors/icon-ref-hookblade-32.png",
+              "sha256": "c541b328f1755017f9b2a96c80808fd1b688458bc4a49e13074a978982af4eef"
+            },
+            {
+              "url": "upload:f568436e-a1cc-40a8-9829-a4e846b563e3",
+              "usage": "icon style, same as the first",
+              "source": "art/anchors/icon-ref-lock-32.png",
+              "sha256": "1b5dd6b76823a6c871142d90191ca38b2ca0e5f789a33dfa1ed96cdc1532e49b"
+            }
+          ],
+          "palette": [
+            "#F4EFE6",
+            "#D9D2E9",
+            "#A99FC4",
+            "#5B5478",
+            "#2A2540",
+            "#F2B65A",
+            "#C9733A",
+            "#4A4E57",
+            "#7D8794",
+            "#3E5C7A",
+            "#A8743A",
+            "#C79A3E",
+            "#8A6420",
+            "#E9E4D4",
+            "#2F7F7A",
+            "#C98F78",
+            "#9C5B4A",
+            "#E3C29E",
+            "#24305A",
+            "#E8E2D6",
+            "#FFF4C7",
+            "#8C7F6E",
+            "#5E5448",
+            "#FBF8F0",
+            "#D8B24A",
+            "#F07A3A",
+            "#B5402E",
+            "#1C2147"
+          ],
+          "palette_name": "Islands of the One",
+          "max_colors": 6,
+          "seed": 1234
+        },
+        "generations": 10,
+        "candidates": 64,
+        "retakes": 0,
+        "pick_index": 10,
+        "pick_why": "clay flask with a cork, the amber liquid shown in the lower half through a cut-away window; most candidates are glass bottles or fully clay",
+        "outputs": [
+          {
+            "file": "c/icon-tonic/pick.png",
+            "size": [
+              32,
+              32
+            ],
+            "bbox": [
+              6,
+              2,
+              28,
+              31
+            ],
+            "height": 29,
+            "width": 22,
+            "lowest_opaque_row": 30
+          },
+          {
+            "file": "c/icon-tonic/icon-tonic-16.png",
+            "size": [
+              16,
+              16
+            ],
+            "bbox": [
+              3,
+              1,
+              14,
+              16
+            ],
+            "height": 15,
+            "width": 11,
+            "lowest_opaque_row": 15
+          }
+        ],
+        "reduced_16": "reduce_icons.py (2x2 mode, ties to the darker, snap to the 28 in OKLab)"
+      }
+    },
+    {
+      "id": "icon-bomb",
+      "kind": "icon",
+      "b": {
+        "tool": "create_image_pixen",
+        "job_id": "69cd95e1-1272-479f-a799-9b3b82652894",
+        "arguments": {
+          "description": "A bomb: a round dark clay pot with a short burning fuse. A game item icon. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "outline": "single color outline",
+          "seed": 1234
+        },
+        "generations": 2,
+        "retakes": 1,
+        "outputs": [
+          {
+            "file": "b/icon-bomb/icon-bomb.png",
+            "size": [
+              32,
+              32
+            ],
+            "bbox": [
+              3,
+              0,
+              29,
+              30
+            ],
+            "height": 30,
+            "width": 26,
+            "lowest_opaque_row": 29
+          },
+          {
+            "file": "b/icon-bomb/icon-bomb-16.png",
+            "size": [
+              16,
+              16
+            ],
+            "bbox": [
+              1,
+              0,
+              15,
+              15
+            ],
+            "height": 15,
+            "width": 14,
+            "lowest_opaque_row": 14
+          }
+        ],
+        "reduced_16": "reduce_icons.py (2x2 mode, ties to the darker, snap to the 28 in OKLab)",
+        "takes": [
+          {
+            "job_id": "4142cda9-e0cd-443f-b6d7-be966ced2ff2",
+            "seed": 1234,
+            "generations": 1,
+            "file": "b/icon-bomb/take1-rejected/icon-bomb.png",
+            "rejected": "hard failure: cut off by the canvas edge (the fuse flame runs into row 0: 4 opaque pixels on the top row, 2 of them flame colours)"
+          },
+          {
+            "job_id": "69cd95e1-1272-479f-a799-9b3b82652894",
+            "seed": 1235,
+            "generations": 1,
+            "file": "b/icon-bomb/icon-bomb.png",
+            "why_seed_1235": "the same arguments with seed 1234 would return the same image, so the one retake used the next seed",
+            "kept": "the flame's 1 px tip touches row 0 but the flame shape is complete; no retake left in any case. It also drew a face on the pot, which was not asked for"
+          }
+        ]
+      },
+      "c": {
+        "tool": "create_image_pro",
+        "job_id": "ea04a8da-5360-4c9a-bac4-fa0f415e3b43",
+        "arguments": {
+          "description": "A bomb: a round dark clay pot with a short burning fuse. A game item icon. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "reference_images": [
+            {
+              "url": "upload:5e6a18fe-7026-47d9-8638-477c6d992073",
+              "usage": "icon style: a 16 px icon shown at 2x; copy the 2x2 pixel blocks, the dark navy outline and the flat shading",
+              "source": "art/anchors/icon-ref-hookblade-32.png",
+              "sha256": "c541b328f1755017f9b2a96c80808fd1b688458bc4a49e13074a978982af4eef"
+            },
+            {
+              "url": "upload:f568436e-a1cc-40a8-9829-a4e846b563e3",
+              "usage": "icon style, same as the first",
+              "source": "art/anchors/icon-ref-lock-32.png",
+              "sha256": "1b5dd6b76823a6c871142d90191ca38b2ca0e5f789a33dfa1ed96cdc1532e49b"
+            }
+          ],
+          "palette": [
+            "#F4EFE6",
+            "#D9D2E9",
+            "#A99FC4",
+            "#5B5478",
+            "#2A2540",
+            "#F2B65A",
+            "#C9733A",
+            "#4A4E57",
+            "#7D8794",
+            "#3E5C7A",
+            "#A8743A",
+            "#C79A3E",
+            "#8A6420",
+            "#E9E4D4",
+            "#2F7F7A",
+            "#C98F78",
+            "#9C5B4A",
+            "#E3C29E",
+            "#24305A",
+            "#E8E2D6",
+            "#FFF4C7",
+            "#8C7F6E",
+            "#5E5448",
+            "#FBF8F0",
+            "#D8B24A",
+            "#F07A3A",
+            "#B5402E",
+            "#1C2147"
+          ],
+          "palette_name": "Islands of the One",
+          "max_colors": 6,
+          "seed": 1234
+        },
+        "generations": 10,
+        "candidates": 64,
+        "retakes": 0,
+        "pick_index": 6,
+        "pick_why": "dark brown clay pot with a band and a lit fuse, the flame clear of the top edge; like all 64 its bottom outline sits on row 31",
+        "outputs": [
+          {
+            "file": "c/icon-bomb/pick.png",
+            "size": [
+              32,
+              32
+            ],
+            "bbox": [
+              3,
+              1,
+              30,
+              32
+            ],
+            "height": 31,
+            "width": 27,
+            "lowest_opaque_row": 31
+          },
+          {
+            "file": "c/icon-bomb/icon-bomb-16.png",
+            "size": [
+              16,
+              16
+            ],
+            "bbox": [
+              1,
+              1,
+              15,
+              16
+            ],
+            "height": 15,
+            "width": 14,
+            "lowest_opaque_row": 15
+          }
+        ],
+        "reduced_16": "reduce_icons.py (2x2 mode, ties to the darker, snap to the 28 in OKLab)"
+      }
+    },
+    {
+      "id": "tileset",
+      "kind": "tileset",
+      "b": {
+        "tool": "create_topdown_tileset",
+        "tileset_id": "80bac0a6-8d14-4050-a75e-c1d4cc53a1a0",
+        "arguments": {
+          "lower_description": "still deep water of the Hollow, dark violet-navy with faint ripples",
+          "upper_description": "pale shell-grit ground, lavender-white with small shell flecks",
+          "transition_description": "a thin wet shore lip",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "transition_size": 0.25,
+          "view": "high top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "mode": "standard"
+        },
+        "seed": "create_topdown_tileset has no seed parameter",
+        "base_tile_ids": {
+          "lower": "d4579837-79f7-4356-bf2c-c850d57b2fd4",
+          "upper": "2fbee713-2b21-4f51-9889-176f9c44c6b1"
+        },
+        "generations": 4,
+        "generations_source": "not quoted by the tool; the balance closes with standard 4 + pro 15 (the documented pro price for 32 px tiles)",
+        "retakes": 0,
+        "tiles": 16,
+        "files": "sheet.png (/mcp/tilesets/<id>/image?inline=true), metadata.json (/metadata: corners, pattern_4x4, bounding_box), tiles/wang_<n>.png sliced by bounding_box, example-map.png (the example map image get_topdown_tileset returned inline)"
+      },
+      "c": {
+        "steps": [
+          {
+            "tool": "create_topdown_tileset",
+            "tileset_id": "be7f1338-8d8b-462e-916b-3b85189f3d17",
+            "arguments": {
+              "lower_description": "still deep water of the Hollow, dark violet-navy with faint ripples",
+              "upper_description": "pale shell-grit ground, lavender-white with small shell flecks",
+              "transition_description": "a thin wet shore lip",
+              "tile_size": {
+                "width": 32,
+                "height": 32
+              },
+              "transition_size": 0.25,
+              "view": "high top-down",
+              "outline": "single color outline",
+              "shading": "basic shading",
+              "detail": "medium detail",
+              "mode": "pro"
+            },
+            "seed": "create_topdown_tileset has no seed parameter",
+            "base_tile_ids": {
+              "lower": "5ada213f-325d-4924-ba65-7b2f9409f6b4",
+              "upper": "de2be8cc-3df1-4ac5-bf2a-ac206a5ddb28"
+            },
+            "generations": 15,
+            "tiles": 16
+          },
+          {
+            "tool": "reduce_colors",
+            "job_id": "ec9fec0f-db7d-4243-80d9-56e3f195c7f7",
+            "arguments": {
+              "image_urls": "the 16 raw tiles wang_0..wang_15 in that order, uploaded as upload:<id> (all 16 in one call)",
+              "palette_image_url": "upload:ceb9a4b5-6d78-481d-9fce-baa63dfb819e",
+              "palette_source": "art/anchors/palette-28.png",
+              "dithering": "none"
+            },
+            "generations": 0.1,
+            "result": "tiles-reduced/wang_<n>.png; 14 of the 28 colours used, every pixel on the palette"
+          }
+        ],
+        "generations": 15.1,
+        "retakes": 0,
+        "files": "sheet.png, metadata.json, tiles/ (raw), tiles-reduced/ (after reduce_colors), example-map.png (raw, not reduced)"
+      }
+    }
+  ]
+}

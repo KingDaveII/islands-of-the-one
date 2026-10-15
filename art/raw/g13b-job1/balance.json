@@ -1,0 +1,60 @@
+{
+  "job": "g13b-job1",
+  "budget": 600,
+  "before": 1999,
+  "after": 1818.9,
+  "spent": 180.1,
+  "credits_usd": {
+    "before": 0.0,
+    "after": 0.0
+  },
+  "note": "Jobs ran in parallel (the account allows 8 at once), so a snapshot was taken whenever an asset batch finished rather than strictly after each single asset. Each call's own cost is in manifest.json; the snapshots close exactly against those costs.",
+  "snapshots": [
+    {
+      "when": "before the first call (~10:39Z)",
+      "generations_remaining": 1999,
+      "generations_used": 1
+    },
+    {
+      "when": "after npc-kesh (b) and npc-kesh (c) step 1 were charged",
+      "generations_remaining": 1987,
+      "generations_used": 13,
+      "charged_since_previous": 12,
+      "calls": {
+        "npc-kesh b create_character": 2,
+        "npc-kesh c create_image_pro": 10
+      },
+      "note": "npc-kesh (c) step 2 had been queued but not yet charged (charges land when a job completes)"
+    },
+    {
+      "when": "after the NPC (b) set, all NPC (c) step 1 calls, npc-kesh (c) step 2 and the first 11 Pixen (b) calls",
+      "generations_remaining": 1951,
+      "generations_used": 49,
+      "charged_since_previous": 36,
+      "calls": {
+        "npc-kesh c create_character": 1,
+        "npc-tally b create_character": 2,
+        "npc-tally c create_image_pro": 10,
+        "npc-clerk b create_character": 2,
+        "npc-clerk c create_image_pro": 10,
+        "create_image_pixen x11 (2 enemies, 5 props, 4 icons)": 11
+      }
+    },
+    {
+      "when": "after everything else (~11:10Z), and again at the end",
+      "generations_remaining": 1818.9,
+      "generations_used": 181.1,
+      "charged_since_previous": 132.1,
+      "calls": {
+        "npc-tally c create_character": 1,
+        "npc-clerk c create_character": 1,
+        "enemy (c) create_image_pro x2": 20,
+        "icon-bomb (b) retake create_image_pixen": 1,
+        "prop (c) create_image_pro x5": 50,
+        "icon (c) create_image_pro x4": 40,
+        "tileset (b) standard + tileset (c) pro": 19,
+        "reduce_colors (c tiles)": 0.1
+      }
+    }
+  ]
+}
