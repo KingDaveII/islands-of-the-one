@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 /**
+ * Historical (M1/M2): this script assumes M1's 480 × 270 canvas at a CSS
+ * zoom. Since G1.5 (the canvas at device resolution, a world and a UI camera)
+ * it no longer runs as-is; its shots stay the record of their task.
+ * tools/screenshots-g15.mjs is the current script.
+ *
  * Screenshots for docs/screenshots/m1-task6 (Playtest 2 polish): the pad
  * reticle and Haul guide (C), the start screen's text at zoom 3 and 4 and at
  * a fractional device pixel ratio (E), the HUD's safe margins with the

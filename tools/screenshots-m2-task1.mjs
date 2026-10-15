@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 /**
+ * Historical (M1/M2): this script assumes M1's 480 × 270 canvas at a CSS
+ * zoom. Since G1.5 (the canvas at device resolution, a world and a UI camera)
+ * it no longer runs as-is; its shots stay the record of their task.
+ * tools/screenshots-g15.mjs is the current script.
+ *
  * Accounts and Kindled creation (docs/screenshots/m2-task1), and the M2
  * Task 1 end-to-end check in a fresh browser: create an account (after one
  * refused try), create a Kindled (each Remembrance, a tone swap, a refused

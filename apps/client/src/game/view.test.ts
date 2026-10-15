@@ -39,14 +39,16 @@ describe('fitWorldView', () => {
     expect(fit.y + fit.h * fit.zW).toBeLessThanOrEqual(d.h);
   });
 
-  it('keeps the view within its height limits whenever the window allows a zoom above 1', () => {
+  it('keeps the view within its limits whenever the window allows a zoom above 1', () => {
     for (let h = 300; h <= 2400; h += 7) {
       for (let w = 600; w <= 4000; w += 113) {
         const f = fitWorldView(w, h, VIEW);
         expect(f.h).toBeLessThanOrEqual(VIEW.maxHeightPx);
         expect(f.w).toBeLessThanOrEqual(VIEW.widthPx);
-        // The width step drops the zoom once only: a tall, narrow window can keep z > 1 with a narrow view.
-        if (f.zW > 1) expect(f.h, `${w}×${h}`).toBeGreaterThanOrEqual(VIEW.minHeightPx);
+        if (f.zW > 1) {
+          expect(f.h, `${w}×${h}`).toBeGreaterThanOrEqual(VIEW.minHeightPx);
+          expect(f.w, `${w}×${h}`).toBeGreaterThanOrEqual(VIEW.minWidthPx);
+        }
       }
     }
   });
@@ -110,8 +112,10 @@ describe('viewInUi', () => {
     expect(viewInUi(fitWorldView(2532, 1170, VIEW), 4)).toEqual({ x: 77, y: 12, w: 479, h: 269 });
     // 1366 × 650 at z 1: 960 × 540 device px at (203, 55), an odd offset, inside a 683 × 325 UI area.
     expect(viewInUi(fitWorldView(1366, 650, VIEW), 2)).toEqual({ x: 102, y: 28, w: 479, h: 269 });
-    // A tall, narrow window keeps z 2 with a 300 px view (the width step drops one zoom only).
-    expect(fitWorldView(600, 1301, VIEW)).toMatchObject({ zW: 2, w: 300, h: 540 });
+    // The width step drops the zoom until the width fits: a tall, narrow window goes to z 1.
+    expect(fitWorldView(600, 1301, VIEW)).toEqual({ zW: 1, w: 600, h: 540, x: 0, y: 380 });
+    // 1617 × 1728: z 4 by height, 404 then 539 too narrow, z 2 is 808 wide.
+    expect(fitWorldView(1617, 1728, VIEW)).toMatchObject({ zW: 2, w: 808, h: 540 });
   });
 });
 

@@ -29,6 +29,8 @@ function census(rgba: Uint8Array): { masked: Map<string, number>; bare: Map<stri
 }
 
 describe('the clay-tone swap', () => {
+  // The fixture's belt and boots are deliberately the skin-shade colour, unlike ART's sheets (which keep
+  // skin colours for skin only), to prove the masked swap leaves non-skin pixels alone.
   it('swaps only under the skin mask: the belt and boots keep unwritten-tar', () => {
     const before = census(png.rgba);
     const out = png.rgba.slice();

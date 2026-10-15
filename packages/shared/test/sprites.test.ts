@@ -372,6 +372,8 @@ describe('the v2 contract (sprites.md §2, §5)', () => {
       expect(v2Problems('kindled-fixture', sheet, png, bare)).toEqual([`swap keys with no masked pixel: ${shade}`]);
     });
 
+    // The fixture's belt and boots are deliberately the skin-shade colour, unlike ART's sheets (which keep
+    // skin colours for skin only), to prove the masked swap leaves non-skin pixels alone.
     it('leaves the belt and boots out of the mask though they share the skin shade', () => {
       const shade = paletteData.clay.tones['clay-grey-ochre'].shade;
       let masked = 0;

@@ -55,7 +55,7 @@ const whole = (v: number): number => (Number.isFinite(v) && v > 0 ? Math.floor(v
  * The world zoom and view for a window of `Wd × Hd` device px:
  * 1. `z` is the smallest whole number ≥ 1 with `Hd / z ≤ maxHeightPx`;
  * 2. if `floor(Hd / z) < minHeightPx` and `z > 1`, `z − 1`;
- * 3. if `floor(Wd / z) < minWidthPx` and `z > 1`, `z − 1`;
+ * 3. while `floor(Wd / z) < minWidthPx` and `z > 1`, `z − 1` (until the width fits);
  * 4. the view is `min(floor(Wd / z), widthPx) × min(floor(Hd / z), maxHeightPx)`, centred.
  * Below the minimums at `z = 1` the view is what fits.
  */
@@ -64,7 +64,7 @@ export function fitWorldView(deviceW: number, deviceH: number, view: ViewTuning)
   const Hd = whole(deviceH);
   let z = Math.max(1, Math.ceil(Hd / Math.max(1, view.maxHeightPx)));
   if (Math.floor(Hd / z) < view.minHeightPx && z > 1) z--;
-  if (Math.floor(Wd / z) < view.minWidthPx && z > 1) z--;
+  while (Math.floor(Wd / z) < view.minWidthPx && z > 1) z--;
   const w = Math.min(Math.floor(Wd / z), view.widthPx);
   const h = Math.min(Math.floor(Hd / z), view.maxHeightPx);
   return { zW: z, w, h, x: Math.floor((Wd - w * z) / 2), y: Math.floor((Hd - h * z) / 2) };

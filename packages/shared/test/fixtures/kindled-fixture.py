@@ -55,6 +55,9 @@ def figure(breath):
     rect(39, 22, 3, 10, CLOTH_DARK)
     rect(22, 32, 3, 2, SKIN, True)  # hands
     rect(39, 32, 3, 2, SHADE, True)
+    # The belt and boots are deliberately drawn in the skin-shade colour (unwritten-tar), unlike
+    # ART's sheets, which keep the skin colours for skin only: they prove the masked swap leaves
+    # non-skin pixels in a swap colour alone.
     rect(25, 33, 14, 2, TAR)  # the belt: unwritten-tar, not skin
     rect(26, 35, 12, 7, CLOTH)  # skirt of the coat
     rect(27, 42, 4, 8, CLOTH_DARK, lift=False)  # legs

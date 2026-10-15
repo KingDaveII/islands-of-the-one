@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 /**
+ * Historical (M1/M2): this script assumes M1's 480 × 270 canvas at a CSS
+ * zoom. Since G1.5 (the canvas at device resolution, a world and a UI camera)
+ * it no longer runs as-is; its shots stay the record of their task.
+ * tools/screenshots-g15.mjs is the current script.
+ *
  * The inventory view (docs/screenshots/m2-task2), and the M2 Task 2
  * end-to-end check: a new account and Kindled see an empty inventory; the
  * playtest CLI grants items (pnpm --filter @iot/server inv:grant, the same
