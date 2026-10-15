@@ -7,10 +7,13 @@ import { css, Palette } from '../palette.js';
  * managers a form to save and fill, IME composition for every language, and
  * paste. The canvas still draws each field's panel and focus rim (render/
  * field.ts); the input sits inside it, transparent, in the pixel face (Tiny5)
- * at 8 game px, i.e. 8 × zoom CSS px: whole device pixels, like the canvas.
+ * at 8 UI px, i.e. 8 × zU device px: whole device pixels, like the canvas.
+ * The menus centre their 480 × 270 layout in the UI area, so a field's box
+ * (layout px) maps to CSS px through the layout's offset and zU / dpr CSS px
+ * per UI px (render/cameras.ts `uiToCss`).
  */
 
-/** A field's box in game px: the panel's outer box. */
+/** A field's box in layout px (the menu's 480 × 270 UI layout): the panel's outer box. */
 export interface FieldBox {
   x: number;
   y: number;
@@ -18,9 +21,9 @@ export interface FieldBox {
   h: number;
 }
 
-/** The text's inset inside the panel, in game px (left/right, and the 8 px line box's top). */
+/** The text's inset inside the panel, in UI px (left/right, and the 8 px line box's top). */
 export const FIELD_TEXT_INSET = { x: 6, y: 4 };
-/** The text line box, in game px. */
+/** The text line box, in UI px. */
 const LINE_H = 8;
 
 export interface CssBox {
@@ -31,14 +34,22 @@ export interface CssBox {
   fontSize: number;
 }
 
+/** How layout px map to the page: CSS px per UI px, and the layout's top left in UI px from the canvas's. */
+export interface UiToCss {
+  zoom: number;
+  x: number;
+  y: number;
+}
+
 /**
  * Where an input goes on the page: its text line inside the field's panel,
- * from the canvas's page box and the zoom (CSS px per game px).
+ * from the canvas's page box and the UI → CSS mapping.
  */
-export function inputBox(canvas: { left: number; top: number }, zoom: number, f: FieldBox): CssBox {
+export function inputBox(canvas: { left: number; top: number }, map: UiToCss, f: FieldBox): CssBox {
+  const zoom = map.zoom;
   return {
-    left: canvas.left + (f.x + FIELD_TEXT_INSET.x) * zoom,
-    top: canvas.top + (f.y + FIELD_TEXT_INSET.y) * zoom,
+    left: canvas.left + (map.x + f.x + FIELD_TEXT_INSET.x) * zoom,
+    top: canvas.top + (map.y + f.y + FIELD_TEXT_INSET.y) * zoom,
     width: (f.w - 2 * FIELD_TEXT_INSET.x) * zoom,
     height: LINE_H * zoom,
     fontSize: LINE_H * zoom,
@@ -58,7 +69,7 @@ export interface DomForm {
   readonly form: HTMLFormElement;
   input(name: string): HTMLInputElement;
   /** Re-place the inputs over the canvas (call every frame: it only touches the DOM when something moved). */
-  layout(canvas: HTMLCanvasElement, zoom: number): void;
+  layout(canvas: HTMLCanvasElement, map: UiToCss): void;
   /** Submit as a browser would (password managers watch the submit event). */
   submit(): void;
   destroy(): void;
@@ -121,13 +132,13 @@ export function createForm(
       if (!input) throw new Error(`no input ${name}`);
       return input;
     },
-    layout(canvas, zoom) {
+    layout(canvas, map) {
       const rect = canvas.getBoundingClientRect();
-      const key = `${rect.left},${rect.top},${zoom}`;
+      const key = `${rect.left},${rect.top},${map.zoom},${map.x},${map.y}`;
       if (key === placed) return;
       placed = key;
       for (const spec of specs) {
-        const box = inputBox(rect, zoom, spec.box);
+        const box = inputBox(rect, map, spec.box);
         const s = (inputs.get(spec.name) as HTMLInputElement).style;
         s.left = `${box.left}px`;
         s.top = `${box.top}px`;

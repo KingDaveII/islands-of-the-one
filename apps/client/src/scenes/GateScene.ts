@@ -9,7 +9,8 @@ import { continueHint, padFamilyNow } from '../render/menus.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { preloadSpriteSheets, registerSpriteSheets } from '../render/spriteSheets.js';
 import { body, label, place, preloadFonts, registerFonts, type Text } from '../render/text.js';
-import { VIEW_H, VIEW_W } from './GameScene.js';
+import { UI_H, UI_W } from '../game/view.js';
+import { menuCamera } from '../render/cameras.js';
 
 /** Where a signed-in account goes: Kindled creation until it has one, then the start screen. */
 export function sceneFor(me: MeResponse): 'creation' | 'start' {
@@ -44,9 +45,10 @@ export class GateScene extends Phaser.Scene {
     registerSpriteSheets(this);
     registerFonts(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
+    menuCamera(this);
     this.pad = padEdgeState();
-    place(label(this, 0, 0, 'ISLANDS OF THE ONE', Palette.uiInk, 24), VIEW_W / 2, 10, 0.5);
-    this.status = body(this, 0, 0, '...', Palette.uiInkMuted, VIEW_W - 80);
+    place(label(this, 0, 0, 'ISLANDS OF THE ONE', Palette.uiInk, 24), UI_W / 2, 10, 0.5);
+    this.status = body(this, 0, 0, '...', Palette.uiInkMuted, UI_W - 80);
     this.hint = new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInkMuted });
     this.hint.setVisible(false);
     const onKey = (e: KeyboardEvent): void => {
@@ -84,14 +86,14 @@ export class GateScene extends Phaser.Scene {
 
   private show(text: string): void {
     this.status.setText(text);
-    place(this.status, VIEW_W / 2, VIEW_H / 2 - 8, 0.5);
+    place(this.status, UI_W / 2, UI_H / 2 - 8, 0.5);
   }
 
   override update(): void {
     this.hint.setVisible(this.failed);
     if (this.failed) {
       this.hint.setItems(continueHint(deviceStore.get(), padFamilyNow()));
-      this.hint.place(VIEW_W / 2, VIEW_H / 2 + 8, 0.5);
+      this.hint.place(UI_W / 2, UI_H / 2 + 8, 0.5);
     }
     const edges = padEdges(this.pad);
     if (this.failed && MENU_BUTTONS.confirm.some((b) => edges.includes(b))) this.ask();

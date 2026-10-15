@@ -11,7 +11,8 @@ import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { body, label, place, preloadFonts, registerFonts, type Text } from '../render/text.js';
 import { panel } from '../render/ui.js';
-import { VIEW_H, VIEW_W } from './GameScene.js';
+import { UI_H, UI_W } from '../game/view.js';
+import { menuCamera } from '../render/cameras.js';
 
 const PANEL_W = 240;
 const PANEL_Y = 50;
@@ -48,10 +49,11 @@ export class InventoryScene extends Phaser.Scene {
     registerSheetFrames(this);
     registerFonts(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
+    menuCamera(this);
     this.pad = padEdgeState();
     this.rows = [];
     this.family = padFamilyNow();
-    const cx = VIEW_W / 2;
+    const cx = UI_W / 2;
     place(label(this, 0, 0, 'INVENTORY', Palette.uiInk, 16), cx, 8, 0.5);
     const who = accountStore.current?.kindled?.name;
     if (who) place(body(this, 0, 0, displayable(who), Palette.uiInkMuted), cx, 30, 0.5);
@@ -87,7 +89,7 @@ export class InventoryScene extends Phaser.Scene {
 
   /** Draw the list; an empty inventory says so. */
   private show(list: ReturnType<typeof inventoryRows>): void {
-    const cx = VIEW_W / 2;
+    const cx = UI_W / 2;
     if (list.length === 0) {
       this.status.setText('Nothing yet.');
       place(this.status, cx, ROW_Y, 0.5);
@@ -115,7 +117,7 @@ export class InventoryScene extends Phaser.Scene {
   private layout(count: number): void {
     const h = 16 + count * ROW_PITCH;
     this.g.clear();
-    panel(this.g, VIEW_W / 2 - PANEL_W / 2, PANEL_Y, PANEL_W, h);
+    panel(this.g, UI_W / 2 - PANEL_W / 2, PANEL_Y, PANEL_W, h);
   }
 
   /** The footer for the device in use: how to go back with it. */
@@ -124,7 +126,7 @@ export class InventoryScene extends Phaser.Scene {
       deviceStore.get() === 'gamepad'
         ? [...glyphs([menuGlyph(MENU_BUTTONS.back)], this.family), word('back')]
         : [...glyphs([keyboardBinding('menu')], 'keyboard'), word('back')];
-    this.footer.setItems(items).place(VIEW_W / 2, VIEW_H - 16, 0.5);
+    this.footer.setItems(items).place(UI_W / 2, UI_H - 16, 0.5);
     menuCursor(this);
   }
 

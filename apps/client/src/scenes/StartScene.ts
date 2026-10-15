@@ -19,7 +19,8 @@ import { body, label, place, preloadFonts, registerFonts, type Text } from '../r
 import { abilitySlot, divider, panel, tierPips } from '../render/ui.js';
 import { drawKindled } from '../render/world.js';
 import type { GameData } from './GameScene.js';
-import { VIEW_H, VIEW_W } from './GameScene.js';
+import { UI_H, UI_W } from '../game/view.js';
+import { menuCamera } from '../render/cameras.js';
 
 const MAX_SEED_LEN = 16;
 const CARD_W = 136;
@@ -28,7 +29,7 @@ const CARD_GAP = 8;
 const CARD_Y = 62;
 /** The hint panel over the shore strip: centered right of the Kindled, two 12 px rows on a 14 px pitch. */
 const HINT_PANEL_CX = 282;
-const HINT_PANEL_Y = VIEW_H - 40;
+const HINT_PANEL_Y = UI_H - 40;
 const HINT_PANEL_PAD = 6;
 
 /**
@@ -65,19 +66,20 @@ export class StartScene extends Phaser.Scene {
     registerSheetFrames(this);
     registerFonts(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
+    menuCamera(this);
     this.seedText = String(randomSeed());
     this.pad = padEdgeState();
     this.loggingOut = false;
     const t: Tuning = tuningStore.get();
     const roster = t.weaponRoster;
     this.weapon = roster.find((w) => isWeaponAvailable(t, w.id))?.id ?? 'hookblade';
-    const cx = VIEW_W / 2;
+    const cx = UI_W / 2;
 
     const bg = this.add.graphics();
-    bg.fillStyle(Palette.floor, 1).fillRect(0, VIEW_H - 34, VIEW_W, 34);
+    bg.fillStyle(Palette.floor, 1).fillRect(0, UI_H - 34, UI_W, 34);
     bg.fillStyle(Palette.floorEdge, 1);
-    for (let x = 0; x < VIEW_W; x++) if (x % 2 === 0) bg.fillRect(x, VIEW_H - 34, 1, 1);
-    bg.fillRect(0, VIEW_H - 35, VIEW_W, 1);
+    for (let x = 0; x < UI_W; x++) if (x % 2 === 0) bg.fillRect(x, UI_H - 34, 1, 1);
+    bg.fillRect(0, UI_H - 35, UI_W, 1);
 
     place(label(this, 0, 0, 'ISLANDS OF THE ONE', Palette.uiInk, 24), cx, 10, 0.5);
     place(label(this, 0, 0, 'M1 COMBAT PROTOTYPE', Palette.uiInkMuted), cx, 36, 0.5);
@@ -86,12 +88,12 @@ export class StartScene extends Phaser.Scene {
     const me = accountStore.current;
     if (me) {
       const who = me.kindled ? `${me.kindled.name} (${me.account.username})` : me.account.username;
-      place(body(this, 0, 0, displayable(who), Palette.uiInkMuted), VIEW_W - 6, 36, 1);
+      place(body(this, 0, 0, displayable(who), Palette.uiInkMuted), UI_W - 6, 36, 1);
     }
     const logout = button(this, 0, 4, 'LOG OUT', false, () => {
       this.logOut();
     });
-    logout.container.setX(VIEW_W - 6 - logout.width);
+    logout.container.setX(UI_W - 6 - logout.width);
     place(label(this, 0, 0, 'CHOOSE YOUR WEAPON', Palette.uiInk), cx, 50, 0.5);
 
     // Weapon cards.
@@ -153,8 +155,8 @@ export class StartScene extends Phaser.Scene {
 
     // Mood: the Kindled facing a Husk at the shore.
     const mood = this.add.graphics();
-    groundShadow(mood, 60, VIEW_H - 22, 5, 2);
-    drawKindled(mood, 60, VIEW_H - 27, 2);
+    groundShadow(mood, 60, UI_H - 22, 5, 2);
+    drawKindled(mood, 60, UI_H - 27, 2);
 
     // Key hints as controller glyphs, for the active device (keyboard+mouse or the pad preset in
     // the connected pad's family); they switch live with the device.
@@ -306,7 +308,7 @@ export class StartScene extends Phaser.Scene {
     const g = this.cards;
     g.clear();
     const x0 = Math.round(
-      VIEW_W / 2 - (roster.length * CARD_W + (roster.length - 1) * CARD_GAP) / 2,
+      UI_W / 2 - (roster.length * CARD_W + (roster.length - 1) * CARD_GAP) / 2,
     );
     roster.forEach((entry, i) => {
       const x = x0 + i * (CARD_W + CARD_GAP);
