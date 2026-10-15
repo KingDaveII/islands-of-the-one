@@ -1,0 +1,126 @@
+{
+  "job": "g13b-job0",
+  "purpose": "Prove the PixelLab MCP works end to end from Claude Code on the web, and measure cost (G1.3b pilot).",
+  "date": "2026-10-15",
+  "mcp_server": {
+    "config": ".mcp.json -> pixellab (type http, https://api.pixellab.ai/mcp, Authorization: Bearer ${PIXELLAB_API_TOKEN})",
+    "server_info": {
+      "name": "PixelLab MCP Server",
+      "version": "0.2.0",
+      "protocolVersion": "2025-06-18"
+    },
+    "connected": true,
+    "token_set": true,
+    "tool_count": 102,
+    "tool_inventory": "tools.json (verbatim tools/list), tools.md (summary)"
+  },
+  "calls": [
+    { "tool": "get_balance", "when": "before", "cost": "free" },
+    {
+      "tool": "create_character",
+      "arguments_sent": {
+        "description": "Small clay figure with grey-ochre clay skin and three amber freckles, in a soot-grey hooded cloak with an ember-singed hem over a grey tunic, tan collar, dark belt, dark trousers and boots. Holds a short hooked blade in its right hand. Pixel art with a 1 px dark navy outline.",
+        "mode": "v3",
+        "reference_image_base64": "<kindled-ash-s-64.png, sha256 8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a>"
+      },
+      "why_mode_v3": "The tool only accepts a south reference image (reference_image_base64/_url) in mode=\"v3\"; the default mode \"standard\" ignores it. Everything else left at its default.",
+      "effective_settings": {
+        "description": "(as above)",
+        "name": null,
+        "body_type": "humanoid",
+        "template": null,
+        "mode": "v3",
+        "n_directions": 8,
+        "reference_image_base64": "kindled-ash-s-64.png",
+        "reference_image_url": null,
+        "style_character_id": null,
+        "concept_image_url": null,
+        "concept_image_base64": null,
+        "direction_images": null,
+        "proportions": "{\"type\": \"preset\", \"name\": \"default\"} (ignored in v3)",
+        "size": "null -> 64x64 from the reference",
+        "outline": "single color black outline (ignored with a reference image)",
+        "shading": "basic shading (ignored in v3)",
+        "detail": "medium detail (ignored with a reference image)",
+        "text_guidance_scale": "8.0 (ignored in v3)",
+        "view": "low top-down"
+      },
+      "response": "id 8d666a0b-3521-4d4e-a81a-902347b65d1d; name 'Small clay figure'; mode: v3 reference (1 generations, 8 directions); body humanoid; size 64x64px; view low top-down; style: from reference image (outline/detail hints ignored); status processing (~3-5 min)",
+      "seed": "not exposed: create_character has no seed parameter and neither the response nor metadata.json reports one",
+      "character_id": "8d666a0b-3521-4d4e-a81a-902347b65d1d",
+      "group_id": "b595a416-5431-41d1-a14e-5b454fb8fe17",
+      "server_template_id": "mannequin",
+      "state_name": "Idle",
+      "created_at": "2026-10-15T10:11:04.461224+00:00",
+      "time_to_complete": "about 6 minutes (queued ~10:11 UTC, downloaded 10:17 UTC)",
+      "retakes": 0
+    },
+    {
+      "tool": "get_character",
+      "count": 4,
+      "cost": "free",
+      "note": "status polls; the last returned status completed with 8 rotation URLs, a zip download URL and a spritesheet URL"
+    },
+    { "tool": "get_balance", "when": "after", "cost": "free" }
+  ],
+  "balance_before": {
+    "credits": "$0.00",
+    "generations_remaining": 2000,
+    "generations_used": 0,
+    "generations_total": 2000,
+    "subscription": "active (Tier 1: Pixel Apprentice)",
+    "generations_reset": "2026-11-15",
+    "generations_today": 5
+  },
+  "balance_after": {
+    "credits": "$0.00",
+    "generations_remaining": 1999,
+    "generations_used": 1,
+    "generations_total": 2000,
+    "subscription": "active (Tier 1: Pixel Apprentice)",
+    "generations_reset": "2026-11-15",
+    "generations_today": 4
+  },
+  "cost": {
+    "generations_spent": 1,
+    "credits_spent_usd": 0,
+    "stated_in_response": "1 generations",
+    "measured": "generations_remaining 2000 -> 1999, generations_used 0 -> 1, credits $0.00 -> $0.00",
+    "note": "The create_character tool description quotes v3 at 2-9 generations; a 64x64 v3 rotation from a reference was quoted and charged 1."
+  },
+  "billing_source": {
+    "answer": "MCP calls draw on the subscription's generations, not on separate API credits.",
+    "evidence": "get_balance before/after: generations_remaining fell 2000 -> 1999 while credits stayed $0.00. The server instructions say 'Requires PixelLab subscription (with credit fallback support)', so USD credits are only a fallback once generations run out (the daily bonus generations_today is spent only after generations_remaining hits 0)."
+  },
+  "reference": {
+    "file": "kindled-ash-s-64.png",
+    "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a",
+    "size": "64x64 RGBA, content bbox x16-44 y14-59",
+    "note": "The base64 in the job prompt has a one-character error: character 1052 reads 'p' ('...Od0hpX2rer...') where the file with the stated sha256 has 'h' ('...Od0hhX2rer...'). As given it decodes to a PNG whose IDAT CRC fails (sha256 50abe518...). The single substitution reproduces the stated sha256 exactly, so the committed file is the intended one. It was checked to face the viewer straight on before the call."
+  },
+  "downloads": {
+    "rotation_urls_host": "backblaze.pixellab.ai",
+    "rotation_urls_result": "BLOCKED: the environment's proxy answered 403 to CONNECT backblaze.pixellab.ai:443 (network policy).",
+    "used_instead": "https://api.pixellab.ai/mcp/characters/8d666a0b-3521-4d4e-a81a-902347b65d1d/download (Bearer token), 200 application/zip, 9690 bytes, no redirect. Contents: Idle/rotations/<direction>.png x8 + metadata.json. The 8 PNGs were extracted byte for byte.",
+    "spritesheet_url_host": "api.pixellab.ai (not fetched)",
+    "hosts": { "api.pixellab.ai": "reachable", "backblaze.pixellab.ai": "blocked" }
+  },
+  "outputs": {
+    "south.png": { "size": "64x64", "mode": "RGBA", "bytes": 918, "bbox": [16, 14, 45, 60] },
+    "south-east.png": { "size": "64x64", "mode": "RGBA", "bytes": 1107, "bbox": [22, 14, 44, 61] },
+    "east.png": { "size": "64x64", "mode": "RGBA", "bytes": 913, "bbox": [24, 12, 50, 56] },
+    "north-east.png": { "size": "64x64", "mode": "RGBA", "bytes": 811, "bbox": [20, 13, 53, 54] },
+    "north.png": { "size": "64x64", "mode": "RGBA", "bytes": 700, "bbox": [19, 14, 49, 55] },
+    "north-west.png": { "size": "64x64", "mode": "RGBA", "bytes": 636, "bbox": [20, 13, 43, 54] },
+    "west.png": { "size": "64x64", "mode": "RGBA", "bytes": 946, "bbox": [14, 12, 40, 54] },
+    "south-west.png": { "size": "64x64", "mode": "RGBA", "bytes": 1195, "bbox": [10, 13, 44, 56] },
+    "rescaled": false,
+    "contact_sheet": "contact.png: reference S, then S SE E NE N NW W SW at 4x nearest-neighbour; row 1 on #D9D2E9, row 2 on #2A2540"
+  },
+  "observations": [
+    "south.png is the reference except 3 opaque blade pixels at x=24, y=45-47 that came back transparent; fully transparent pixels carry RGB (42,37,64) instead of (0,0,0).",
+    "north-west shows no blade (hidden behind the cloak).",
+    "west holds the blade on the near (south) side, which for a west-facing figure is the left hand.",
+    "north-west and west have a 1 px navy floor line under the feet that the other directions don't."
+  ]
+}
