@@ -1,7 +1,8 @@
 import type Phaser from 'phaser';
-import { hookbladeFxSheet as sheet } from '@iot/shared';
+import { hookbladeFxSheet as sheet, LEGACY_PIXEL_SCALE } from '@iot/shared';
 import { Palette } from '../palette.js';
 import { DEPTH } from './depth.js';
+import { worldPx } from './scale.js';
 import { HOOKBLADE_TEXTURE } from './sheets.js';
 
 /**
@@ -12,6 +13,9 @@ import { HOOKBLADE_TEXTURE } from './sheets.js';
  * world renderer re-poses every frame; links sit under the bodies, the hook
  * and spark over them. Tints are palette tokens; links and hook get a 1 px
  * player-outline rim from four offset copies.
+ *
+ * hookblade-fx is M1 art: callers pass sim px, the images stand at world px
+ * and draw at the legacy 2× (its rim one sheet pixel, 2 world px).
  */
 type Image = Phaser.GameObjects.Image;
 
@@ -48,7 +52,11 @@ export class HookbladeFx {
   }
 
   private image(frame: string, ox: number, oy: number): Image {
-    return this.scene.add.image(0, 0, HOOKBLADE_TEXTURE, frame).setOrigin(ox, oy).setVisible(false);
+    return this.scene.add
+      .image(0, 0, HOOKBLADE_TEXTURE, frame)
+      .setOrigin(ox, oy)
+      .setScale(LEGACY_PIXEL_SCALE)
+      .setVisible(false);
   }
 
   private slot(frame: string, ox: number, oy: number): Slot {
@@ -58,16 +66,17 @@ export class HookbladeFx {
     };
   }
 
+  /** Pose a slot at a whole sim pixel (x, y). */
   private pose(s: Slot, frame: string, x: number, y: number, angle: number, tint: number): void {
     const all = [s.ink, ...s.rim];
     for (const img of all) {
       if (img.frame.name !== frame) img.setFrame(frame, true, false);
       img.setRotation(angle).setVisible(true);
     }
-    s.ink.setPosition(x, y).setTint(tint);
+    s.ink.setPosition(worldPx(x), worldPx(y)).setTint(tint);
     s.rim.forEach((img, i) => {
       const [dx, dy] = RIM[i] ?? [0, 0];
-      img.setPosition(x + dx, y + dy);
+      img.setPosition(worldPx(x) + dx * LEGACY_PIXEL_SCALE, worldPx(y) + dy * LEGACY_PIXEL_SCALE);
     });
   }
 
@@ -120,6 +129,9 @@ export class HookbladeFx {
     const full = index === SPARK_FRAMES.length - 1;
     const img = this.sparkImage;
     if (img.frame.name !== frame) img.setFrame(frame, true, false);
-    img.setPosition(Math.round(x), Math.round(y)).setTint(full ? Palette.chargeSparkFull : Palette.chargeSpark).setVisible(true);
+    img
+      .setPosition(worldPx(Math.round(x)), worldPx(Math.round(y)))
+      .setTint(full ? Palette.chargeSparkFull : Palette.chargeSpark)
+      .setVisible(true);
   }
 }

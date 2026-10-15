@@ -375,5 +375,11 @@
     "padReticleDistPx": 32,
     "telegraphBlinkHz": 12,
     "promptRangePx": 40
+  },
+  "view": {
+    "widthPx": 960,
+    "minWidthPx": 768,
+    "minHeightPx": 432,
+    "maxHeightPx": 540
   }
 }

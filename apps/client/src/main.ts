@@ -12,8 +12,8 @@ import { deviceStore, type Device } from './game/activeDevice.js';
 import { connectedPad, padSnapshot } from './game/gamepad.js';
 import { eventKeyFor, keyboardBinding } from './game/keyboard.js';
 import { Palette } from './palette.js';
-import { fitZoom } from './game/zoom.js';
-import { GameScene, VIEW_H, VIEW_W, type GameData } from './scenes/GameScene.js';
+import { deviceNow, fitCanvasToWindow } from './render/cameras.js';
+import { GameScene, type GameData } from './scenes/GameScene.js';
 import { AccountScene } from './scenes/AccountScene.js';
 import { ControlsScene } from './scenes/ControlsScene.js';
 import { CreationScene } from './scenes/CreationScene.js';
@@ -25,11 +25,6 @@ import { TestScene } from './scenes/TestScene.js';
 import { debugFlags } from './ui/debugFlags.js';
 import { DebugOverlay } from './ui/debugOverlay.js';
 import { TuningPanel } from './ui/tuningPanel.js';
-
-/** The zoom that fits the window with whole device pixels per game pixel (zoom.ts). */
-function zoomNow(): number {
-  return fitZoom(window.innerWidth, window.innerHeight, window.devicePixelRatio);
-}
 
 const params = new URLSearchParams(window.location.search);
 
@@ -47,6 +42,9 @@ if (params.has('net')) {
 }
 
 function startGame(): void {
+  // The canvas is the window: backing store in device px, CSS size the window (render/cameras.ts).
+  // Each scene puts its cameras on whole device pixels per world or UI pixel (game/view.ts).
+  const device = deviceNow();
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'game',
@@ -54,7 +52,7 @@ function startGame(): void {
     pixelArt: true,
     roundPixels: true,
     input: { gamepad: false },
-    scale: { mode: Phaser.Scale.NONE, width: VIEW_W, height: VIEW_H, zoom: zoomNow() },
+    scale: { mode: Phaser.Scale.NONE, width: device.w, height: device.h, zoom: 1 / device.dpr },
     // The gate asks the server who is signed in (GET /api/me) and opens the
     // account, creation or start screen.
     scene: [
@@ -70,8 +68,20 @@ function startGame(): void {
   });
   // Also fires when the browser zoom (and so the device pixel ratio) changes.
   window.addEventListener('resize', () => {
-    game.scale.setZoom(zoomNow());
+    fitCanvasToWindow(game);
   });
+  // Moving the window to a display with another pixel ratio may not resize it: watch the ratio too.
+  const watchRatio = (): void => {
+    window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener(
+      'change',
+      () => {
+        fitCanvasToWindow(game);
+        watchRatio();
+      },
+      { once: true },
+    );
+  };
+  watchRatio();
 
   // The active device (keyboard+mouse or gamepad): any key or mouse button, mouse motion past a
   // few px, any pad button or stick. Everything that shows bindings follows it live.

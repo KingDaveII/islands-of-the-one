@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 /**
+ * Historical (M1/M2): this script assumes M1's 480 × 270 canvas at a CSS
+ * zoom. Since G1.5 (the canvas at device resolution, a world and a UI camera)
+ * it no longer runs as-is; its shots stay the record of their task.
+ * tools/screenshots-g15.mjs is the current script.
+ *
  * Sprite screenshots for docs/screenshots/m1-task7 (sprites.md §9 brought to
  * the engine): a Peeling and a Nutshell spawning, the Haul throw → recover,
  * the Nutshell's walk and slam, the Kindled's hit flinch → stagger, and the

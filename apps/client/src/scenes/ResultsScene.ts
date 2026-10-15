@@ -9,7 +9,8 @@ import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { label, place, preloadFonts, registerFonts } from '../render/text.js';
 import { panel } from '../render/ui.js';
 import type { ResultsData } from './GameScene.js';
-import { VIEW_H, VIEW_W } from './GameScene.js';
+import { UI_H, UI_W } from '../game/view.js';
+import { menuCamera } from '../render/cameras.js';
 
 export class ResultsScene extends Phaser.Scene {
   private data_!: ResultsData;
@@ -35,9 +36,10 @@ export class ResultsScene extends Phaser.Scene {
     registerSheetFrames(this);
     registerFonts(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
+    menuCamera(this);
     const { results: r, seed, weapon } = this.data_;
     const cleared = r.status === 'cleared';
-    const cx = VIEW_W / 2;
+    const cx = UI_W / 2;
     place(label(this, 0, 0, cleared ? 'SHARD CLEARED' : 'YOU FELL', cleared ? Palette.spark : Palette.healthLoss, 16), cx, 30, 0.5);
     place(label(this, 0, 0, `SEED ${seed} · ${weapon.toUpperCase()}`, Palette.uiInkMuted), cx, 52, 0.5);
 
@@ -60,7 +62,7 @@ export class ResultsScene extends Phaser.Scene {
     this.hint = new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInk });
     this.tweens.add({ targets: this.hint.container, alpha: 0.3, duration: 600, yoyo: true, repeat: -1 });
     const sync = (): void => {
-      this.hint.setItems(continueHint(deviceStore.get(), padFamilyNow())).place(cx, VIEW_H - 36, 0.5);
+      this.hint.setItems(continueHint(deviceStore.get(), padFamilyNow())).place(cx, UI_H - 36, 0.5);
       menuCursor(this);
     };
     sync();

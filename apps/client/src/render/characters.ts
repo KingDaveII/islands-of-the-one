@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { spriteSheets, type ClayTone, type SpriteSheet, type SpriteSheetName } from '@iot/shared';
-import { huskParams, SUB, type HuskKind, type Run } from '@iot/sim';
+import { SUB, type HuskKind, type Params, type Run } from '@iot/sim';
 import type { Session } from '../game/session.js';
 import { Palette } from '../palette.js';
 import {
@@ -12,9 +12,10 @@ import {
   type Pose,
 } from './animState.js';
 import { DEPTH } from './depth.js';
-import { feetOffset, PLAYER_FEET } from './feet.js';
+import { huskFeet, PLAYER_FEET } from './feet.js';
 import type { Fx } from './fx.js';
-import { toneTextureKey } from './spriteSheets.js';
+import { snapToArt } from './scale.js';
+import { spriteScale, toneTextureKey } from './spriteSheets.js';
 
 type Sprite = Phaser.GameObjects.Sprite;
 
@@ -57,6 +58,9 @@ interface Ghost {
 /**
  * The player and the Husks as sprites from the character sheets, posed every
  * frame by the animation state machine (animState.ts) from the sim state.
+ * Positions come in sim px and become world px here: each sprite stands on
+ * its own art-pixel grid at its sheet's scale (2 for M1's v1 sheets, 1 for
+ * v2), its feet 5 sim px (the Kindled) or a radius (a Husk) below the centre.
  * Effects stay in the engine: the grounding shadow (world.ts), the white hit
  * flash (a fill tint), chips as particles (fx.ts), the Hookblade FX at the
  * hook tip (hookblade.ts). Facing comes from the sim's aim or move direction;
@@ -75,7 +79,9 @@ export class CharacterSprites {
   private now = 0;
   private tone: ClayTone;
   private readonly kindledSheet: SpriteSheet = spriteSheets['kindled-ash'];
-  /** Recent player positions, for the trail to start behind the dodge. */
+  /** The run's params at the last draw (a corpse's feet come from its kind's radius). */
+  private params: Params | null = null;
+  /** Recent player positions (sim px), for the trail to start behind the dodge. */
   private recent: { x: number; y: number; pose: KindledPose; age: number }[] = [];
   private trailLeft = 0;
   private ghostClock = 0;
@@ -90,16 +96,22 @@ export class CharacterSprites {
     tone: ClayTone = spriteSheets['kindled-ash'].palette?.drawn as ClayTone,
   ) {
     this.tone = tone;
-    this.player = this.sprite(this.playerTexture());
+    this.player = this.sprite(this.playerTexture(), this.kindledScale);
     this.player.setDepth(DEPTH.bodies);
   }
 
-  private playerTexture(): string {
-    return toneTextureKey('kindled-ash', this.tone);
+  /** World px per sheet px of the Kindled's sheet. */
+  private get kindledScale(): number {
+    return spriteScale('kindled-ash');
   }
 
-  private sprite(texture: string, frame?: string): Sprite {
-    const s = this.scene.add.sprite(0, 0, texture, frame).setVisible(false);
+  /** The Kindled's texture in the current tone (built on first use). */
+  private playerTexture(): string {
+    return toneTextureKey(this.scene, 'kindled-ash', this.tone);
+  }
+
+  private sprite(texture: string, scale: number, frame?: string): Sprite {
+    const s = this.scene.add.sprite(0, 0, texture, frame).setScale(scale).setVisible(false);
     this.layer.add(s);
     return s;
   }
@@ -130,13 +142,14 @@ export class CharacterSprites {
     const sheet = spriteSheets[HUSK_SHEET[kind]];
     const death = sheet.anims.death;
     if (!death) return;
-    const sprite = prev ? prev.sprite : this.sprite(HUSK_SHEET[kind]);
+    const scale = spriteScale(HUSK_SHEET[kind]);
+    const sprite = prev ? prev.sprite : this.sprite(HUSK_SHEET[kind], scale);
     this.husks.delete(id);
-    const feet = feetOffset(sheet);
+    const feet = this.params ? huskFeet(this.params, kind) : 0;
     sprite
       .setPosition(
-        prev?.sprite.x ?? Math.round(x / SUB),
-        prev?.sprite.y ?? Math.round(y / SUB) + feet,
+        prev?.sprite.x ?? snapToArt(x / SUB, scale),
+        prev?.sprite.y ?? snapToArt(y / SUB + feet, scale),
       )
       .setVisible(true)
       .clearTint()
@@ -156,25 +169,29 @@ export class CharacterSprites {
     }
   }
 
+  /** An afterimage at a body centre (sim px): the sprite's frame at its own scale, over a 1 world px rim (the engine's density). */
   private ghost(x: number, y: number, pose: KindledPose, life: number): void {
     if (life <= 0 || this.ghosts.length >= MAX_GHOSTS) return;
+    const scale = this.kindledScale;
     const g = this.ghostPool.pop() ?? {
-      ink: this.sprite(this.playerTexture()),
-      rim: RIM.map(() => this.sprite(this.playerTexture())),
+      ink: this.sprite(this.playerTexture(), scale),
+      rim: RIM.map(() => this.sprite(this.playerTexture(), scale)),
       life: 0,
     };
     g.life = life;
     const frame = this.frameName(this.kindledSheet, pose);
+    const wx = snapToArt(x, scale);
+    const wy = snapToArt(y + PLAYER_FEET, scale);
     g.ink
       .setTexture(this.playerTexture(), frame)
-      .setPosition(x, y + PLAYER_FEET)
+      .setPosition(wx, wy)
       .setTintFill(Palette.trail)
       .setDepth(DEPTH.trail + 1)
       .setVisible(true);
     g.rim.forEach((r, i) => {
       const [dx, dy] = RIM[i] ?? [0, 0];
       r.setTexture(this.playerTexture(), frame)
-        .setPosition(x + dx, y + PLAYER_FEET + dy)
+        .setPosition(wx + dx, wy + dy)
         .setTintFill(Palette.trailOutline)
         .setDepth(DEPTH.trail)
         .setVisible(true);
@@ -204,8 +221,9 @@ export class CharacterSprites {
 
   /**
    * Pose every sprite for this frame. `player` and `huskPos` are the
-   * interpolated world-pixel body centers; `dtWorldMs` slows with slow-mo
-   * (the trail and corpses), `dtRealMs` does not (the hit and regrow clocks).
+   * interpolated body centers in sim px (unrounded: each sprite snaps to its
+   * own art grid in world px); `dtWorldMs` slows with slow-mo (the trail and
+   * corpses), `dtRealMs` does not (the hit and regrow clocks).
    */
   draw(
     session: Session,
@@ -221,6 +239,7 @@ export class CharacterSprites {
     const s = run.state;
     const P = run.params;
     const p = s.player;
+    this.params = P;
 
     // The player.
     if (p.action === 'dead' && this.deathAt < 0) this.deathAt = this.now;
@@ -232,8 +251,9 @@ export class CharacterSprites {
     const flash = fx.isFlashing('p');
     const hidden = invulnerable && !flash && (s.tick & 1) === 1;
     // Sprites stand on their origin, the point between the feet; the sim position is the body center.
+    const ks = this.kindledScale;
     this.player
-      .setPosition(player.x, player.y + PLAYER_FEET)
+      .setPosition(snapToArt(player.x, ks), snapToArt(player.y + PLAYER_FEET, ks))
       .setVisible(!hidden)
       .setDepth(DEPTH.bodies + player.y * DEPTH.perPixel);
     this.tint(this.player, flash);
@@ -244,12 +264,13 @@ export class CharacterSprites {
     for (const h of s.husks) {
       seen.add(h.id);
       let entry = this.husks.get(h.id);
+      const scale = spriteScale(HUSK_SHEET[h.kind]);
       if (!entry) {
-        entry = { sprite: this.sprite(HUSK_SHEET[h.kind]), flip: false };
+        entry = { sprite: this.sprite(HUSK_SHEET[h.kind], scale), flip: false };
         this.husks.set(h.id, entry);
       }
       const sprite = entry.sprite;
-      const pos = huskPos.get(h.id) ?? { x: Math.round(h.x / SUB), y: Math.round(h.y / SUB) };
+      const pos = huskPos.get(h.id) ?? { x: h.x / SUB, y: h.y / SUB };
       const sheet = spriteSheets[HUSK_SHEET[h.kind]];
       const hp = huskPose(s, P, h, sheet, this.clocks(`h${h.id}`, h.id), blink);
       this.huskPoses.push(hp);
@@ -260,9 +281,9 @@ export class CharacterSprites {
         x += Math.round((Math.random() - 0.5) * 2);
         y += Math.round((Math.random() - 0.5) * 2);
       }
-      const feet = Math.round(huskParams(P, h.kind).radius / SUB);
+      const feet = huskFeet(P, h.kind);
       sprite
-        .setPosition(x, y + feet)
+        .setPosition(snapToArt(x, scale), snapToArt(y + feet, scale))
         .setFlipX(entry.flip)
         .setVisible(true)
         .setDepth(DEPTH.bodies + y * DEPTH.perPixel);

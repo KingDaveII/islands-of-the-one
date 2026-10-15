@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 /**
+ * Historical (M1/M2): this script assumes M1's 480 × 270 canvas at a CSS
+ * zoom. Since G1.5 (the canvas at device resolution, a world and a UI camera)
+ * it no longer runs as-is; its shots stay the record of their task.
+ * tools/screenshots-g15.mjs is the current script.
+ *
  * Sprite screenshots for docs/screenshots (M1 Task 5): the 8 facings of walk,
  * a heavy charge → thrust → hold sequence, a Haul throw and pull, a Nutshell
  * regrow. Runs the client in headless Chromium through the `window.__iot`

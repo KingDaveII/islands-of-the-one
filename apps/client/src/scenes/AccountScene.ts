@@ -18,7 +18,8 @@ import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
 import { body, label, place, type Text } from '../render/text.js';
 import { panel } from '../render/ui.js';
 import { createForm, type DomForm } from '../ui/formFields.js';
-import { VIEW_H, VIEW_W } from './GameScene.js';
+import { UI_H, UI_W } from '../game/view.js';
+import { menuCamera, uiToCss, type MenuLayout } from '../render/cameras.js';
 import { sceneFor } from './GateScene.js';
 
 type Mode = 'login' | 'register';
@@ -55,6 +56,8 @@ export class AccountScene extends Phaser.Scene {
   private busy = false;
   private frames!: Record<Field, FieldFrame>;
   private form!: DomForm;
+  /** Where the 480 × 270 layout sits on the canvas (the DOM inputs line up with it). */
+  private layout!: () => MenuLayout;
   private tabs!: Record<Mode, Text>;
   private tabLine!: Phaser.GameObjects.Graphics;
   private rules!: Text;
@@ -72,10 +75,11 @@ export class AccountScene extends Phaser.Scene {
 
   create(): void {
     this.cameras.main.setBackgroundColor(Palette.hollow);
+    this.layout = menuCamera(this);
     this.mode = 'login';
     this.busy = false;
     this.pad = padEdgeState();
-    place(label(this, 0, 0, 'ISLANDS OF THE ONE', Palette.uiInk, 24), VIEW_W / 2, 10, 0.5);
+    place(label(this, 0, 0, 'ISLANDS OF THE ONE', Palette.uiInk, 24), UI_W / 2, 10, 0.5);
 
     const g = this.add.graphics();
     panel(g, PANEL.x, PANEL.y, PANEL.w, PANEL.h);
@@ -153,7 +157,7 @@ export class AccountScene extends Phaser.Scene {
     this.hint = new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInkMuted });
     this.family = padFamilyNow();
     this.setMode('login');
-    this.form.layout(this.game.canvas, this.scale.zoom);
+    this.form.layout(this.game.canvas, uiToCss(this.game.canvas, this.layout()));
     this.focusRow('username');
 
     // A click on the canvas takes focus from the input; give it back to the focused field.
@@ -286,10 +290,10 @@ export class AccountScene extends Phaser.Scene {
   }
 
   override update(): void {
-    this.form.layout(this.game.canvas, this.scale.zoom);
+    this.form.layout(this.game.canvas, uiToCss(this.game.canvas, this.layout()));
     const family = padFamilyNow();
     if (family !== this.family) this.family = family;
-    this.hint.setItems(this.hintItems()).place(VIEW_W / 2, VIEW_H - 18, 0.5);
+    this.hint.setItems(this.hintItems()).place(UI_W / 2, UI_H - 18, 0.5);
     menuCursor(this);
 
     for (const f of FIELDS) {

@@ -16,11 +16,12 @@ import { button, type Button } from '../render/button.js';
 import { FIELD_H, FieldFrame } from '../render/field.js';
 import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
 import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
-import { animKey, toneTextureKey } from '../render/spriteSheets.js';
+import { animKey, spriteScale, toneTextureKey } from '../render/spriteSheets.js';
 import { body, label, place, type Text } from '../render/text.js';
 import { panel } from '../render/ui.js';
 import { createForm, type DomForm } from '../ui/formFields.js';
-import { VIEW_H, VIEW_W } from './GameScene.js';
+import { UI_H, UI_W } from '../game/view.js';
+import { menuCamera, uiToCss, type MenuLayout } from '../render/cameras.js';
 
 type Row = 'remembrance' | 'tone' | 'name' | 'confirm';
 const ROWS: Row[] = ['remembrance', 'tone', 'name', 'confirm'];
@@ -29,7 +30,7 @@ const MARGIN = 15;
 const CARD_Y = 40;
 const CARD_H = 62;
 const CARD_GAP = 6;
-const CARD_W = Math.floor((VIEW_W - 2 * MARGIN - 3 * CARD_GAP) / 4);
+const CARD_W = Math.floor((UI_W - 2 * MARGIN - 3 * CARD_GAP) / 4);
 const PREVIEW = { x: MARGIN, y: 112, w: 120, h: 100 };
 const COL_X = PREVIEW.x + PREVIEW.w + 16;
 const TONE_Y = 124;
@@ -60,6 +61,8 @@ export class CreationScene extends Phaser.Scene {
   private preview!: Phaser.GameObjects.Sprite;
   private field!: FieldFrame;
   private form!: DomForm;
+  /** Where the 480 × 270 layout sits on the canvas (the DOM inputs line up with it). */
+  private layout!: () => MenuLayout;
   private error!: Text;
   private confirm!: Button;
   private marker!: Text;
@@ -73,12 +76,13 @@ export class CreationScene extends Phaser.Scene {
 
   create(): void {
     this.cameras.main.setBackgroundColor(Palette.hollow);
+    this.layout = menuCamera(this);
     this.remembrance = REMEMBRANCES[0] ?? 'clay';
     this.tone = DEFAULT_CLAY_TONE;
     this.row = 'remembrance';
     this.busy = false;
     this.pad = padEdgeState();
-    const cx = VIEW_W / 2;
+    const cx = UI_W / 2;
     place(label(this, 0, 0, 'CREATE YOUR KINDLED', Palette.uiInk, 16), cx, 6, 0.5);
 
     // Remembrance cards.
@@ -118,9 +122,10 @@ export class CreationScene extends Phaser.Scene {
       .sprite(
         PREVIEW.x + PREVIEW.w / 2,
         PREVIEW.y + PREVIEW.h - 10,
-        toneTextureKey(SHEET, this.tone),
+        toneTextureKey(this, SHEET, this.tone),
       )
-      .setScale(2);
+      // UI px: a v1 sheet at 2 per sheet px as in M1, a v2 sheet at 1 (its pixels are already B's density).
+      .setScale(spriteScale(SHEET));
     this.showTone();
 
     // Clay tone swatches.
@@ -168,17 +173,17 @@ export class CreationScene extends Phaser.Scene {
       `${minGraphemes}-${maxGraphemes} letters: A–Z and accented Latin.`,
       Palette.uiInkMuted,
     );
-    this.error = body(this, COL_X, NAME_Y + FIELD_H + 16, '', Palette.uiError, VIEW_W - COL_X - 90);
+    this.error = body(this, COL_X, NAME_Y + FIELD_H + 16, '', Palette.uiError, UI_W - COL_X - 90);
 
     this.confirm = button(this, 0, CONFIRM_Y, 'CONFIRM', true, () => {
       this.form.submit();
     });
-    this.confirm.container.setX(VIEW_W - MARGIN - this.confirm.width);
+    this.confirm.container.setX(UI_W - MARGIN - this.confirm.width);
     this.marker = label(this, 0, 0, '>', Palette.uiFocus);
     this.hint = new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInkMuted });
     this.family = padFamilyNow();
 
-    this.form.layout(this.game.canvas, this.scale.zoom);
+    this.form.layout(this.game.canvas, uiToCss(this.game.canvas, this.layout()));
 
     // A click on the canvas takes focus from the input; give it back while the name row is focused.
     this.input.on('pointerup', () => {
@@ -200,7 +205,7 @@ export class CreationScene extends Phaser.Scene {
   }
 
   private showTone(): void {
-    const key = toneTextureKey(SHEET, this.tone);
+    const key = toneTextureKey(this, SHEET, this.tone);
     this.preview.play(animKey(key, 'idle_S'));
   }
 
@@ -340,10 +345,10 @@ export class CreationScene extends Phaser.Scene {
     this.draw();
     const family = padFamilyNow();
     if (family !== this.family) this.family = family;
-    this.hint.setItems(this.hintItems()).place(VIEW_W / 2, VIEW_H - 18, 0.5);
+    this.hint.setItems(this.hintItems()).place(UI_W / 2, UI_H - 18, 0.5);
     menuCursor(this);
 
-    this.form.layout(this.game.canvas, this.scale.zoom);
+    this.form.layout(this.game.canvas, uiToCss(this.game.canvas, this.layout()));
     this.field.focused = this.row === 'name';
     this.field.update();
     this.confirm.setFocused(this.row === 'confirm');

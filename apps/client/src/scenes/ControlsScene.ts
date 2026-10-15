@@ -10,7 +10,8 @@ import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { body, label, place, preloadFonts, registerFonts, type Text } from '../render/text.js';
 import { divider, panel } from '../render/ui.js';
-import { VIEW_H, VIEW_W } from './GameScene.js';
+import { UI_H, UI_W } from '../game/view.js';
+import { menuCamera } from '../render/cameras.js';
 
 /** Rows of the controls table: action, player-facing name, note. */
 const ROWS: [ControlAction, string, string][] = [
@@ -69,7 +70,8 @@ export class ControlsScene extends Phaser.Scene {
     registerSheetFrames(this);
     registerFonts(this);
     this.cameras.main.setBackgroundColor(Palette.hollow);
-    const cx = VIEW_W / 2;
+    menuCamera(this);
+    const cx = UI_W / 2;
     this.g = this.add.graphics();
     this.padRows = [];
     this.pad = { prev: [] };
@@ -145,7 +147,7 @@ export class ControlsScene extends Phaser.Scene {
 
   private sync(): void {
     const preset = controlsStore.get();
-    const cx = VIEW_W / 2;
+    const cx = UI_W / 2;
     this.g.clear();
     panel(this.g, cx - 66, 26, 108, 16, { plain: true });
     place(this.presetName.setText(preset.name.toUpperCase()), cx - 61, 30);
@@ -158,7 +160,7 @@ export class ControlsScene extends Phaser.Scene {
       cx + 58,
       31,
     );
-    divider(this.g, GROUP_X[0] ?? 0, ROW_Y + ROWS_PER_GROUP * ROW_PITCH, VIEW_W - 2 * (GROUP_X[0] ?? 0));
+    divider(this.g, GROUP_X[0] ?? 0, ROW_Y + ROWS_PER_GROUP * ROW_PITCH, UI_W - 2 * (GROUP_X[0] ?? 0));
     ROWS.forEach(([action], i) => {
       this.padRows[i]?.setHint(hintFrom({ preset, family: this.family }, action));
     });
@@ -168,7 +170,7 @@ export class ControlsScene extends Phaser.Scene {
       h.keys.setTint(padMode ? Palette.uiInkMuted : Palette.uiFocus);
       h.pad.setTint(padMode ? Palette.uiFocus : Palette.uiInkMuted);
     }
-    this.footer.setItems(this.footerItems()).place(cx, VIEW_H - 16, 0.5);
+    this.footer.setItems(this.footerItems()).place(cx, UI_H - 16, 0.5);
     menuCursor(this);
   }
 

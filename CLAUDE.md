@@ -93,6 +93,9 @@ dev/test/typecheck never need a prior build. Production builds compile each pack
 - Game balance numbers live in `packages/shared/data`, never hardcoded in apps or the sim. The sim
   takes the tuning as part of each run's config (live F2 edits are recorded in the run).
 - Combat rules: `docs/design/combat.md`. Keep it in sync when the rules change.
+- Render scale: the world draws at 2× (`WORLD_PX_PER_UNIT`, one sim px = 2 world px, a tile 32) on a
+  world camera, the UI (text, HUD, menus) on M1's 480×270 grid on a UI camera, each at whole device
+  px per pixel (`apps/client/src/game/view.ts`); convert sim numbers once, at the render boundary.
 - Visuals: every client color is a token from `apps/client/src/palette.ts`. The signal colors (hit
   white, telegraph pink, perfect-dodge glow) are reserved; see `docs/design/readability.md`.
 - Text: every piece of text is a BitmapText from the pixel atlases in `packages/shared/assets/fonts`

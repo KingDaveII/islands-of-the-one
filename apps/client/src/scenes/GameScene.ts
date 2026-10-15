@@ -4,20 +4,22 @@ import { Controls } from '../game/controls.js';
 import { promptTarget } from '../game/interact.js';
 import { Session } from '../game/session.js';
 import { tuningStore } from '../game/tuningStore.js';
+import { fitUi, fitWorldView, viewInUi, type Rect as ViewRect, type UiFit, type WorldFit } from '../game/view.js';
 import { Palette } from '../palette.js';
 import { Fx } from '../render/fx.js';
 import { hintItems, HintRow } from '../render/hint.js';
 import { Hud, type BodyRect, type Corner, type Rect } from '../render/hud.js';
 import { clampScroll } from '../render/camera.js';
 import { DEPTH } from '../render/depth.js';
+import { simPx, worldPx } from '../render/scale.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { preloadSpriteSheets, registerSpriteSheets } from '../render/spriteSheets.js';
 import { blinkOut, place, preloadFonts, registerFonts, worldWord, type Text } from '../render/text.js';
-import { rad, WorldRenderer } from '../render/world.js';
+import { drawReticle, rad, WorldRenderer } from '../render/world.js';
 
-export const VIEW_W = 480;
-export const VIEW_H = 270;
 const END_DELAY_MS = 1900;
+/** The room banner's line, UI px below the top of the world view (M1's 84 of 270). */
+const BANNER_Y = 84;
 /** The banner blinks out over its last 300 ms (no alpha fade: readability.md §4). */
 const BANNER_BLINK_MS = 300;
 
@@ -41,10 +43,22 @@ export class GameScene extends Phaser.Scene {
   private hud!: Hud;
   private worldLayer!: Phaser.GameObjects.Layer;
   private hudLayer!: Phaser.GameObjects.Layer;
+  /** The UI camera (the main camera is the world's). */
+  private uiCam!: Phaser.Cameras.Scene2D.Camera;
+  /** The world view and the UI grid for the current canvas, and the view in UI px. */
+  private worldFit: WorldFit = { zW: 1, w: 960, h: 540, x: 0, y: 0 };
+  private uiFit: UiFit = { zU: 1, w: 480, h: 270 };
+  private frame: ViewRect = { x: 0, y: 0, w: 480, h: 270 };
+  private fitKey = '';
+  /** The world camera's scroll this frame, whole world px (shake included). */
+  private scroll = { x: 0, y: 0 };
+
   private banner!: Text;
   private bannerSub!: Text;
   private bannerLife = 0;
   private tint!: Phaser.GameObjects.Rectangle;
+  /** The mouse reticle: the cursor in a run, on the UI grid at the pointer. */
+  private cursor!: Phaser.GameObjects.Graphics;
   /** The interact prompt (Calm only) over the nearest interactable in reach; nothing in M1 needs one. */
   private prompt!: HintRow;
   private seed = 0;
@@ -80,15 +94,20 @@ export class GameScene extends Phaser.Scene {
     this.worldLayer = this.add.layer();
     this.hudLayer = this.add.layer();
     const juice = () => tuningStore.get().juice;
-    this.controls = new Controls(this);
+    // The pointer is read through the world camera, in sim px (aim, the reticle).
+    this.controls = new Controls(this, (p) => {
+      const w = this.cameras.main.getWorldPoint(p.x, p.y);
+      return { x: simPx(w.x), y: simPx(w.y) };
+    });
     this.session = new Session(this.seed, this.weapon, this.controls);
     this.world = new WorldRenderer(this, this.worldLayer, juice);
-    this.fx = new Fx(this, this.worldLayer, juice);
+    this.fx = new Fx(this, this.worldLayer, this.hudLayer, juice, (x, y) => this.toUi(x, y));
+    // Words over the world are UI px, placed at their projected world position (readability.md §4).
     this.prompt = new HintRow(this, { backdrop: true }).setVisible(false);
     this.prompt.container.setDepth(DEPTH.prompt);
-    this.worldLayer.add(this.prompt.container);
-    // Slow-mo tint over the world, under the HUD.
-    this.tint = this.add.rectangle(0, 0, VIEW_W, VIEW_H, Palette.hollow, 0).setOrigin(0, 0);
+    this.hudLayer.add(this.prompt.container);
+    // Slow-mo tint over the world view, under the HUD.
+    this.tint = this.add.rectangle(0, 0, 1, 1, Palette.hollow, 0).setOrigin(0, 0);
     this.hudLayer.add(this.tint);
     const tuning: Tuning = tuningStore.get();
     const weaponName = tuning.weapons[this.weapon]?.name ?? this.weapon;
@@ -98,10 +117,17 @@ export class GameScene extends Phaser.Scene {
     this.banner = worldWord(this, 0, 0, '', 16).setVisible(false);
     this.bannerSub = worldWord(this, 0, 0, '').setVisible(false);
     this.hudLayer.add([this.banner, this.bannerSub]);
+    this.cursor = this.add.graphics().setDepth(DEPTH.cursor);
+    this.hudLayer.add(this.cursor);
 
-    const hudCam = this.cameras.add(0, 0, VIEW_W, VIEW_H);
-    hudCam.ignore(this.worldLayer);
+    // Two cameras on two grids (game/view.ts): the world's (main) at zW, the UI's over it at zU.
+    this.uiCam = this.cameras.add(0, 0, this.scale.width, this.scale.height);
+    this.uiCam.ignore(this.worldLayer);
     this.cameras.main.ignore(this.hudLayer);
+    this.cameras.main.setOrigin(0, 0);
+    this.uiCam.setOrigin(0, 0);
+    this.fitKey = '';
+    this.fitCameras();
     this.input.setDefaultCursor('none');
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -111,10 +137,63 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * Fit the cameras to the canvas (every frame; it only acts on a change,
+   * which a window resize or a browser zoom makes): the world camera on the
+   * centred world view at zW, the UI camera over the whole canvas at zU, the
+   * HUD on the view's edges in UI px.
+   */
+  private fitCameras(): boolean {
+    const Wd = this.scale.width;
+    const Hd = this.scale.height;
+    const view = tuningStore.get().view;
+    const key = `${Wd}x${Hd}:${view.widthPx},${view.minWidthPx},${view.minHeightPx},${view.maxHeightPx}`;
+    if (key === this.fitKey) return false;
+    this.fitKey = key;
+    const w = fitWorldView(Wd, Hd, view);
+    this.worldFit = w;
+    this.uiFit = fitUi(Wd, Hd);
+    this.frame = viewInUi(w, this.uiFit.zU);
+    this.cameras.main.setViewport(w.x, w.y, w.w * w.zW, w.h * w.zW).setZoom(w.zW);
+    this.uiCam.setViewport(0, 0, Wd, Hd).setZoom(this.uiFit.zU).setScroll(0, 0);
+    this.hud.setFrame(this.frame);
+    this.tint.setPosition(this.frame.x, this.frame.y).setSize(this.frame.w, this.frame.h);
+    if (this.banner.visible) this.placeBanner();
+    return true;
+  }
+
+  /** A point of the world (sim px) on the UI grid (UI px, unrounded): through the world camera, then into UI px. */
+  toUi(x: number, y: number): { x: number; y: number } {
+    const w = this.worldFit;
+    const z = this.uiFit.zU;
+    return {
+      x: (w.x + (worldPx(x) - this.scroll.x) * w.zW) / z,
+      y: (w.y + (worldPx(y) - this.scroll.y) * w.zW) / z,
+    };
+  }
+
+  /** The world view in UI px (playtests, the HUD). */
+  viewFrame(): Readonly<ViewRect> {
+    return this.frame;
+  }
+
+  /** The cameras' fits (playtests and screenshots read them). */
+  fits(): { world: Readonly<WorldFit>; ui: Readonly<UiFit> } {
+    return { world: this.worldFit, ui: this.uiFit };
+  }
+
   private showBanner(text: string, sub = '', ms = 1400): void {
-    place(this.banner.setText(text).setVisible(true), VIEW_W / 2, 84, 0.5);
-    place(this.bannerSub.setText(sub).setVisible(sub !== ''), VIEW_W / 2, 106, 0.5);
+    this.banner.setText(text).setVisible(true);
+    this.bannerSub.setText(sub).setVisible(sub !== '');
+    this.placeBanner();
     this.bannerLife = ms;
+  }
+
+  /** The banner over the top of the view, centred (UI px). */
+  private placeBanner(): void {
+    const cx = this.frame.x + this.frame.w / 2;
+    place(this.banner, cx, this.frame.y + BANNER_Y, 0.5);
+    place(this.bannerSub, cx, this.frame.y + BANNER_Y + 22, 0.5);
   }
 
   private onEvents(events: SimEvent[]): void {
@@ -232,14 +311,16 @@ export class GameScene extends Phaser.Scene {
    */
   private updatePrompt(): void {
     const s = this.session.state;
+    // The range is a sim distance (sim units); only the drawing is in world and UI px.
     const target = promptTarget(s, tuningStore.get().juice.promptRangePx * SUB);
     if (!target) {
       this.prompt.setVisible(false);
       return;
     }
+    const at = this.toUi(target.x / SUB, target.y / SUB - 12);
     this.prompt
       .setItems([...hintItems(this.controls.hint('interact')), { text: target.label }])
-      .place(target.x / SUB, target.y / SUB - 12, 0.5, 1)
+      .place(at.x, at.y, 0.5, 1)
       .setVisible(true);
   }
 
@@ -247,24 +328,49 @@ export class GameScene extends Phaser.Scene {
    * The camera follows the player (led toward the aim) and may scroll past
    * the room's edges by the HUD's safe margins (the corner panels' extents),
    * so a player standing in a room corner is always in the clear area. A
-   * room that fits the area the HUD leaves free is centered in it.
+   * room that fits the area the HUD leaves free is centered in it. All in
+   * world px, over the current view (sim px and `aimLeadPx` ×2; the margins
+   * from UI px through the two zooms).
    */
   private followCamera(snap: boolean): void {
     const s = this.session.state;
     const j = tuningStore.get().juice;
+    const view = this.worldFit;
     const p = this.session.lerp('p', s.player.x, s.player.y);
     const aim = rad(s.player.aim);
-    const tx = p.x + Math.cos(aim) * j.aimLeadPx - VIEW_W / 2;
-    const ty = p.y + Math.sin(aim) * j.aimLeadPx - VIEW_H / 2;
-    const roomW = s.room.cols * TILE_PX;
-    const roomH = s.room.rows * TILE_PX;
-    const m = this.hud.safeMargins();
-    const cx = clampScroll(tx, roomW, VIEW_W, m.left, m.right);
-    const cy = clampScroll(ty, roomH, VIEW_H, m.top, m.bottom);
+    const tx = worldPx(p.x + Math.cos(aim) * j.aimLeadPx) - view.w / 2;
+    const ty = worldPx(p.y + Math.sin(aim) * j.aimLeadPx) - view.h / 2;
+    const roomW = worldPx(s.room.cols * TILE_PX);
+    const roomH = worldPx(s.room.rows * TILE_PX);
+    const m = this.marginsInWorld();
+    const cx = clampScroll(tx, roomW, view.w, m.left, m.right);
+    const cy = clampScroll(ty, roomH, view.h, m.top, m.bottom);
     const k = snap ? 1 : j.cameraLerp;
     this.camX += (cx - this.camX) * k;
     this.camY += (cy - this.camY) * k;
-    this.cameras.main.setScroll(Math.round(this.camX), Math.round(this.camY));
+    this.scroll = {
+      x: Math.round(this.camX) + this.fx.shakeOffset.x,
+      y: Math.round(this.camY) + this.fx.shakeOffset.y,
+    };
+    this.cameras.main.setScroll(this.scroll.x, this.scroll.y);
+  }
+
+  /** The HUD's safe margins (UI px from the edges of the view's UI rectangle) as world px from the view's edges, rounded up. */
+  private marginsInWorld(): { left: number; right: number; top: number; bottom: number } {
+    const m = this.hud.safeMargins();
+    const w = this.worldFit;
+    const z = this.uiFit.zU;
+    const f = this.frame;
+    const right = w.x + w.w * w.zW;
+    const bottom = w.y + w.h * w.zW;
+    // Device px from the view's own edge to the panel's inner edge, then world px.
+    const toWorld = (device: number): number => Math.max(0, Math.ceil(device / w.zW));
+    return {
+      left: toWorld((f.x + m.left) * z - w.x),
+      right: toWorld(right - (f.x + f.w - m.right) * z),
+      top: toWorld((f.y + m.top) * z - w.y),
+      bottom: toWorld(bottom - (f.y + f.h - m.bottom) * z),
+    };
   }
 
   /** The HUD's panel rectangles (playtests check what the camera keeps clear). */
@@ -272,18 +378,35 @@ export class GameScene extends Phaser.Scene {
     return this.hud.panelRects();
   }
 
-  /** Screen rectangles of the player and the awake hostiles (a HUD panel one is behind fades). */
+  /** The mouse reticle where the pointer is (UI px: canvas px over zU); the pad's is drawn in the world. */
+  private drawCursor(): void {
+    this.cursor.clear();
+    const reticle = this.controls.reticle();
+    if (reticle?.kind !== 'mouse') return;
+    const p = this.input.activePointer;
+    drawReticle(this.cursor, p.x / this.uiFit.zU, p.y / this.uiFit.zU);
+  }
+
+  /** A box of the world (sim px) on the UI grid, its corners projected and rounded outwards. */
+  private boxToUi(x: number, y: number, w: number, h: number): BodyRect {
+    const a = this.toUi(x, y);
+    const b = this.toUi(x + w, y + h);
+    const x0 = Math.floor(a.x);
+    const y0 = Math.floor(a.y);
+    return { x: x0, y: y0, w: Math.ceil(b.x) - x0, h: Math.ceil(b.y) - y0 };
+  }
+
+  /** UI rectangles of the player and the awake hostiles (a HUD panel one is behind is dithered), through the projection. */
   private bodyRects(): BodyRect[] {
     const s = this.session.state;
-    const cam = this.cameras.main;
     const rects: BodyRect[] = [];
     const p = this.session.lerp('p', s.player.x, s.player.y);
-    rects.push({ x: Math.round(p.x) - cam.scrollX - 8, y: Math.round(p.y) - cam.scrollY - 14, w: 16, h: 24 });
+    rects.push(this.boxToUi(Math.round(p.x) - 8, Math.round(p.y) - 14, 16, 24));
     for (const h of s.husks) {
       if (h.action === 'spawn' || h.core <= 0) continue;
       const r = huskParams(this.session.run.params, h.kind).radius / SUB;
       const pos = this.session.lerp(`h${h.id}`, h.x, h.y);
-      rects.push({ x: Math.round(pos.x) - cam.scrollX - r - 2, y: Math.round(pos.y) - cam.scrollY - r - 4, w: 2 * r + 4, h: 2 * r + 6 });
+      rects.push(this.boxToUi(Math.round(pos.x) - r - 2, Math.round(pos.y) - r - 4, 2 * r + 4, 2 * r + 6));
     }
     return rects;
   }
@@ -293,13 +416,15 @@ export class GameScene extends Phaser.Scene {
     const events = this.session.update(delta);
     this.onEvents(events);
     const s = this.session.state;
-    this.followCamera(this.lastRoom !== s.roomIndex);
+    const refit = this.fitCameras();
+    this.followCamera(refit || this.lastRoom !== s.roomIndex);
     this.lastRoom = s.roomIndex;
     const scale = this.session.timeScale();
     this.tint.setFillStyle(Palette.hollow, scale < 1 ? 0.28 : 0);
     this.world.draw(this.session, this.fx, this.time.now, delta * scale, delta, this.controls.reticle());
     this.fx.update(delta * scale, delta);
     this.updatePrompt();
+    this.drawCursor();
     this.hud.draw(this.session.run, delta, this.bodyRects());
 
     if (this.bannerLife > 0) {

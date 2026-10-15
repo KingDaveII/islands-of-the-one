@@ -9,9 +9,7 @@ import { HintRow } from './hint.js';
 import { label, place, type Text } from './text.js';
 import { abilitySlot, healthBar, icon, panel, tierPips, type IconKind } from './ui.js';
 
-const W = 480;
-const H = 270;
-/** HUD inset from the screen edge and panel padding (game px). */
+/** HUD inset from the world view's edge and panel padding (UI px). */
 const INSET = 8;
 const PAD = 4;
 const SLOT = 20;
@@ -30,7 +28,7 @@ const ITEM_ICONS: Record<string, IconKind> = { ration: 'ration' };
 
 export type Corner = 'tl' | 'tr' | 'bl' | 'br';
 const CORNERS: Corner[] = ['tl', 'tr', 'bl', 'br'];
-/** A panel's screen rectangle (game px), outline and drop shadow included. */
+/** A panel's screen rectangle (UI px), outline and drop shadow included. */
 export interface Rect {
   x: number;
   y: number;
@@ -42,7 +40,7 @@ export type BodyRect = Rect;
 /** A panel stays dithered this long after a body was last behind it, so it never flickers at the edge. */
 const BEHIND_HOLD_MS = 120;
 
-/** How far the HUD's corner panels reach in from each screen edge: the camera keeps the room's corners outside them (GameScene). */
+/** How far the HUD's corner panels reach in from each edge of the world view (UI px): the camera keeps the room's corners outside them (GameScene). */
 export interface SafeMargins {
   left: number;
   right: number;
@@ -54,8 +52,10 @@ const overlaps = (a: Rect, b: Rect): boolean =>
   a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
 /**
- * Screen-space HUD at the four corners (the center of the screen stays clear
- * for the fight):
+ * Screen-space HUD at the four corners of the world view (the center stays
+ * clear for the fight), on the UI grid: the view's rectangle in UI px
+ * (`setFrame`, rounded inwards) is where the corners are, so the HUD hugs
+ * the world however wide the window is, with M1's 8 px safe margins:
  * - top left: HP, the dodge slot and the two consumable slots,
  * - bottom left: the weapon (light combo, heavy charge, 3 ability slots),
  * - top right: room counter,
@@ -91,6 +91,8 @@ export class Hud {
   private now = 0;
   /** The hint source the rows were last built for (device, preset, family, locked slots). */
   private hintKey = '';
+  /** The world view in UI px: the HUD's corners. */
+  private frame = { x: 0, y: 0, w: 480, h: 270 };
   readonly partyPortraits = false;
 
   constructor(
@@ -143,12 +145,18 @@ export class Hud {
    */
   safeMargins(): SafeMargins {
     const r = this.rects;
+    const f = this.frame;
     return {
-      left: Math.max(r.tl.x + r.tl.w, r.bl.x + r.bl.w),
-      right: W - Math.min(r.tr.x, r.br.x),
-      top: Math.max(r.tl.y + r.tl.h, r.tr.y + r.tr.h),
-      bottom: H - Math.min(r.bl.y, r.br.y),
+      left: Math.max(r.tl.x + r.tl.w, r.bl.x + r.bl.w) - f.x,
+      right: f.x + f.w - Math.min(r.tr.x, r.br.x),
+      top: Math.max(r.tl.y + r.tl.h, r.tr.y + r.tr.h) - f.y,
+      bottom: f.y + f.h - Math.min(r.bl.y, r.br.y),
     };
+  }
+
+  /** The world view's rectangle in UI px (game/view.ts `viewInUi`); the corners follow it from the next draw. */
+  setFrame(frame: { x: number; y: number; w: number; h: number }): void {
+    this.frame = { ...frame };
   }
 
   /** The panel rectangles drawn last frame, by corner. */
@@ -221,6 +229,9 @@ export class Hud {
     const p = s.player;
     for (const c of CORNERS) this.g[c].clear();
     let g = this.g.tl;
+    const { x: L, y: T } = this.frame;
+    const R = this.frame.x + this.frame.w;
+    const B = this.frame.y + this.frame.h;
 
     // --- Top left: HP + dodge + consumables ----------------------------
     if (this.lagHp < 0) this.lagHp = p.hp;
@@ -230,14 +241,14 @@ export class Hud {
     if (this.hpText.text !== String(p.hp)) this.hpText.setText(String(p.hp));
     const tlW = PAD + 66 + 3 + Math.max(this.hpText.width, 18) + PAD;
     const tlH = PAD + 8 + 3 + SMALL + 1 + HINT_H + PAD;
-    this.panelAt('tl', INSET, INSET, tlW, tlH);
-    healthBar(g, INSET + PAD, INSET + PAD, p.hp, P.player.maxHp, this.lagHp);
-    place(this.hpText, INSET + PAD + 66 + 3, INSET + PAD);
-    const rowY = INSET + PAD + 11;
+    this.panelAt('tl', L + INSET, T + INSET, tlW, tlH);
+    healthBar(g, L + INSET + PAD, T + INSET + PAD, p.hp, P.player.maxHp, this.lagHp);
+    place(this.hpText, L + INSET + PAD + 66 + 3, T + INSET + PAD);
+    const rowY = T + INSET + PAD + 11;
     const dodging = p.action === 'dodge';
     const dodgeCd = dodging ? 1 : P.dodge.cooldown > 0 ? p.dodgeCooldown / P.dodge.cooldown : 0;
     const dodgeReady = this.ready(3, dodging ? 1 : p.dodgeCooldown);
-    let x = INSET + PAD;
+    let x = L + INSET + PAD;
     abilitySlot(g, x, rowY, {
       icon: 'dodge',
       cooldown: dodgeCd,
@@ -279,16 +290,16 @@ export class Hud {
     if (this.room.text !== roomText) this.room.setText(roomText);
     g = this.g.tr;
     const trW = PAD + this.room.width + PAD;
-    this.panelAt('tr', W - INSET - trW, INSET, trW, PAD + 8 + PAD);
-    place(this.room, W - INSET - trW + PAD, INSET + PAD);
+    this.panelAt('tr', R - INSET - trW, T + INSET, trW, PAD + 8 + PAD);
+    place(this.room, R - INSET - trW + PAD, T + INSET + PAD);
 
     // --- Bottom right: Sparkglass ---------------------------------------
     const sparkText = String(s.sparkglass);
     if (this.spark.text !== sparkText) this.spark.setText(sparkText);
     const brW = PAD + 10 + 3 + Math.max(this.spark.width, 8) + PAD;
     const brH = PAD + 10 + PAD;
-    const brX = W - INSET - brW;
-    const brY = H - INSET - brH;
+    const brX = R - INSET - brW;
+    const brY = B - INSET - brH;
     g = this.g.br;
     this.panelAt('br', brX, brY, brW, brH);
     icon(g, 'spark', brX + PAD, brY + PAD, 10, Palette.spark);
@@ -305,8 +316,8 @@ export class Hud {
       (abilities.length - 1) * SLOT_GAP +
       PAD;
     const blH = PAD + 10 + SLOT + 1 + HINT_H + PAD;
-    const blX = INSET;
-    const blY = H - INSET - blH;
+    const blX = L + INSET;
+    const blY = B - INSET - blH;
     g = this.g.bl;
     this.panelAt('bl', blX, blY, blW, blH);
     place(this.weaponName, blX + PAD, blY + PAD);
