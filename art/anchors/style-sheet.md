@@ -2,10 +2,23 @@
 
 The visual rules every generated asset is judged against. Exemplars in this folder: `kindled-ash-s-64.png` (the player), `husk-peeling-64.png` (an enemy), `prop-clay-jar-64.png` (a prop); `icon-ref-hookblade-32.png` and `icon-ref-lock-32.png` (two 16 px design-system icons shown at 2×); `palette-28.png` is the colour whitelist as a 28×1 strip; `style-sheet.png` is this page as a picture.
 
-## Canvas and proportions
+## Canvas and proportions (option B, decided 2026-10-15)
 - Characters: a 32×48 body box on a **64×64** canvas, centred, **soles on row 53**. Enemies and props rest on row 53 too.
-- About 3 heads tall. Kindled: 40 px from sole to hood. Scattered folk: 42–44 px. Enemies: 24–40 px bodies. Props: 12–32 px.
-- Width at most 30 px without weapons. Front views are symmetric except the weapon hand.
+- About 3 heads tall. Height is counted from the lowest sole pixel to the top of the head, hair or hood; a held rod or weapon doesn't count.
+  - Kindled: **45 px** (44–46).
+  - Scattered folk: **48 px**.
+  - Enemies: 24–44 px bodies.
+  - Props: 12–32 px.
+- At the 2× world (32 px tiles) a Kindled stands about 1.4 tiles tall, the same proportion as M1.
+- Width at most 30 px without weapons or held tools. Front views are symmetric except the weapon hand.
+- The exemplar `kindled-ash-s-64.png` is still the 40 px version (the old option A). Job g13b-job4 replaces it with a 45 px one.
+
+## Generating at size (PixelLab)
+- Generate on a canvas of about the target height ÷ 0.8 for Kindled (they fill 75–85 % of it) and ÷ 0.75 for everyone else, for example 44×56 for a Kindled and 44×64 for a Scattered.
+- Measure every candidate's height and pick the one closest to the target, within 2 px. Candidates from one call differ by only 0–3 px, so if none is close, change the canvas, not the seed.
+- Pad the pick onto 64×64, centred, soles on row 53. Never scale pixel art.
+- Rotations and animations bring in off-palette colours and drift 0–4 rows. Snap every frame to the 28 colours (OKLab nearest) and re-ground it to row 53, then recolour the outline by role.
+- Props: no canvas under 24 px, because the candidates bleed into each other.
 
 ## Colour
 - Only the 28 whitelist colours below. Never #FFFFFF (hit flash), #E0457B / #8E2550 (telegraph frames only), #FFE7A3 (perfect dodge).
