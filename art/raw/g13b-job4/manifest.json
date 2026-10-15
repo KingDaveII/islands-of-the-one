@@ -1,0 +1,2352 @@
+{
+ "job": "g13b-job4",
+ "date": "2026-10-15",
+ "purpose": "G1.3b pilot: the player at B (Kindled 45 px, 44-46) from ART's design at the cast's level of detail, the two Job 2 winning engines (skeleton-v3 walk, v3 swing) re-run on it, and Tally re-run at size.",
+ "style_sentence": "Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+ "height_rule": "opaque rows from the top of the head, hair or hood to the lowest sole pixel. On every candidate here the lowest opaque row is a sole row (the player's blade ends on the sole row, never below it), so height = lowest opaque row - top row + 1. Rotations and animation frames are listed with top-to-lowest-opaque-row, which on side views can include the blade tip.",
+ "images_passed_as": "upload:<id> references from get_upload_url; no inline base64 anywhere",
+ "seed": "1234 on both create_image_pro calls; create_character and animate_character take no seed. No retake, so no seed or canvas change was used.",
+ "uploads": {
+  "art/anchors/kindled-ash-s-64.png": {
+   "upload": "upload:802d0906-6309-413e-9e86-1ff4fe329b47",
+   "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+  },
+  "art/raw/g13b-job3/npc-kesh/pick-64.png": {
+   "upload": "upload:9c96b717-5297-4b1e-a2f8-7723115e45b8",
+   "sha256": "1117ae84191731c1c62a84bf2cc5db8d811a7ec850f127d29ced1770175080e9"
+  },
+  "art/raw/g13b-job4/player/pick-64.png": {
+   "upload": "upload:cc077c26-980a-429f-9d7b-73c1b098b414",
+   "sha256": "018c85438123cfdf1d08a889f38f59c5647b4f541b3b836b61a959e63b992ce4"
+  },
+  "art/raw/g13b-job4/npc-tally/pick-64.png": {
+   "upload": "upload:053c27e3-b96d-46cd-abbe-62a8cfa210b2",
+   "sha256": "0708610829625bfd3df2836adf53a657966ca8bd5ccc676a082eea3aea88433f"
+  }
+ },
+ "generations": {
+  "create_image_pro player": 10,
+  "create_image_pro npc-tally": 10,
+  "create_character v3 player": 1,
+  "create_character v3 npc-tally": 1,
+  "walk-skel (skeleton-v3, 5 dir)": 15,
+  "attack-v3 (v3, 2 dir)": 2,
+  "total": 39,
+  "budget": "about 40, hard cap 50",
+  "measured": "get_balance 1606.90 -> 1567.90 = 39.00",
+  "max single quote": 15
+ },
+ "retakes": {
+  "used": 0,
+  "note": "No hard failure: both picks are within 3 px of 45 (player candidates 41-48 with two at 46 and one at 47; Tally 47-49), every candidate faces south except player #19 (back view), none is cut off, all are the right subject."
+ },
+ "rejected_calls_not_charged": [
+  "1 of 25 parallel player-candidate downloads was reset by the network and fetched again (no generation cost)",
+  "the first character-zip download for the player returned 423 (locked while its animations were queued); its rotations were taken from the rotation URLs, and after the animations finished the zip was fetched and every rotation and frame checked identical (0 mismatches)"
+ ],
+ "player": {
+  "target_height_px": "45 (44-46)",
+  "step1": {
+   "tool": "create_image_pro",
+   "job_id": "940977f9-2966-4dcd-8b40-2d71e6452eec",
+   "asset_id": "021efd1b-edf6-57c6-aa33-bc336767ebe4",
+   "arguments": {
+    "description": "Small clay figure about 45 px tall with grey-ochre clay skin and three amber freckles, in a soot-grey hooded cloak with an ember-singed hem over a grey tunic, tan collar, dark belt, dark trousers and boots. Holds a short hooked blade in its right hand, hanging down at its side. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters. Facing the viewer, standing.",
+    "width": 44,
+    "height": 56,
+    "no_background": true,
+    "seed": 1234,
+    "palette": [
+     "#F4EFE6",
+     "#D9D2E9",
+     "#A99FC4",
+     "#5B5478",
+     "#2A2540",
+     "#F2B65A",
+     "#C9733A",
+     "#4A4E57",
+     "#7D8794",
+     "#3E5C7A",
+     "#A8743A",
+     "#C79A3E",
+     "#8A6420",
+     "#E9E4D4",
+     "#2F7F7A",
+     "#C98F78",
+     "#9C5B4A",
+     "#E3C29E",
+     "#24305A",
+     "#E8E2D6",
+     "#FFF4C7",
+     "#8C7F6E",
+     "#5E5448",
+     "#FBF8F0",
+     "#D8B24A",
+     "#F07A3A",
+     "#B5402E",
+     "#1C2147"
+    ],
+    "palette_name": "Islands of the One",
+    "max_colors": 12,
+    "reference_images": [
+     {
+      "url": "upload:802d0906-6309-413e-9e86-1ff4fe329b47",
+      "source": "art/anchors/kindled-ash-s-64.png",
+      "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a",
+      "usage": "this is the character: copy its design exactly (the hooded soot-grey cloak with the ember-singed hem, grey tunic, tan collar, grey-ochre clay face with two small eyes and three amber freckles, the short hooked blade hanging from the right hand on the viewer's left) and its 1 px dark navy outline; NOT its size, it is drawn smaller than wanted"
+     },
+     {
+      "url": "upload:9c96b717-5297-4b1e-a2f8-7723115e45b8",
+      "source": "art/raw/g13b-job3/npc-kesh/pick-64.png",
+      "sha256": "1117ae84191731c1c62a84bf2cc5db8d811a7ec850f127d29ced1770175080e9",
+      "usage": "detail and shading only: match this amount of detail, the shading and the height on the canvas; NOT its design, colours or outline colour"
+     }
+    ]
+   },
+   "canvas_accepted": [
+    44,
+    56
+   ],
+   "candidates": 25,
+   "generations": 10,
+   "generations_source": "quoted 'cost: 10 generations'; get_image charged_generations 10",
+   "retakes": 0
+  },
+  "candidates": [
+   {
+    "index": 0,
+    "file": "player/candidates/candidate-00.png",
+    "sha256": "94823cc4aac8a0c3f540719a182164f496ec8de71fd99fc381fa3fe114e2790a",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     5,
+     4,
+     36,
+     52
+    ],
+    "colours": 11,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=0"
+   },
+   {
+    "index": 1,
+    "file": "player/candidates/candidate-01.png",
+    "sha256": "f3bb67962df032efd7be7d7345bdd2ff1483a57fcdd8a12797947274d40824cc",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     6,
+     4,
+     35,
+     52
+    ],
+    "colours": 11,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=1"
+   },
+   {
+    "index": 2,
+    "file": "player/candidates/candidate-02.png",
+    "sha256": "43a5ce73deff4bb4a56b44301fe0c237c05ef3dce5bb2ca1c284183e9b0229a8",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     6,
+     4,
+     35,
+     52
+    ],
+    "colours": 11,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=2"
+   },
+   {
+    "index": 3,
+    "file": "player/candidates/candidate-03.png",
+    "sha256": "093fda0db50b34fd9fe0acafb700b6fe90f2a09754a042b07d2d57af43762b26",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     6,
+     4,
+     34,
+     52
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=3"
+   },
+   {
+    "index": 4,
+    "file": "player/candidates/candidate-04.png",
+    "sha256": "7d929e74d094379acae1e5d71a5d231ca5cbfb4dd63395b04888e085d249be41",
+    "height": 47,
+    "head_top_row": 5,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     8,
+     5,
+     35,
+     52
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=4"
+   },
+   {
+    "index": 5,
+    "file": "player/candidates/candidate-05.png",
+    "sha256": "f7e3855ea668af6fff860b36abbfe9e475f2b2261792e1483a22748b3e78a1cf",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     6,
+     4,
+     35,
+     52
+    ],
+    "colours": 11,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=5"
+   },
+   {
+    "index": 6,
+    "file": "player/candidates/candidate-06.png",
+    "sha256": "7a0568b8b6298770fa8f8b8facc4068b468a1482af0b45bd39088b9b8084ce7e",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     6,
+     4,
+     35,
+     52
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=6"
+   },
+   {
+    "index": 7,
+    "file": "player/candidates/candidate-07.png",
+    "sha256": "a5c15df76ab7adc78b756ce75461309a757320c40fbb547d2242534aafb6d31f",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     7,
+     4,
+     34,
+     52
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=7"
+   },
+   {
+    "index": 8,
+    "file": "player/candidates/candidate-08.png",
+    "sha256": "e43e454662bc10475d261997629c65a61d303d86cab6be19b235e8ae96a72b16",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     6,
+     4,
+     34,
+     52
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=8"
+   },
+   {
+    "index": 9,
+    "file": "player/candidates/candidate-09.png",
+    "sha256": "1bc58e2e6836b1a5fa7d2e5b0dd0343bd5f1ff9249211e46e4824436a713045d",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     7,
+     4,
+     39,
+     52
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=9"
+   },
+   {
+    "index": 10,
+    "file": "player/candidates/candidate-10.png",
+    "sha256": "3df094fa7161c05f63c1dde89747b9ab4845335a98d5a61567e1bef7b7069c9d",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     8,
+     4,
+     41,
+     52
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=10"
+   },
+   {
+    "index": 11,
+    "file": "player/candidates/candidate-11.png",
+    "sha256": "7f4cbee398246067b50cb13b7bb50315be1648fe090b163119ea10db7266f481",
+    "height": 41,
+    "head_top_row": 11,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     7,
+     11,
+     35,
+     52
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=11"
+   },
+   {
+    "index": 12,
+    "file": "player/candidates/candidate-12.png",
+    "sha256": "1c4a7117fe873433fcc1022547f24c2e6362abae0334f2c91208143ea191f19c",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     9,
+     4,
+     35,
+     52
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=12"
+   },
+   {
+    "index": 13,
+    "file": "player/candidates/candidate-13.png",
+    "sha256": "7c4011c8e3d519f028c244eae24b614bb90a8dbef04f5fcf6c9d8d7e48355414",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     8,
+     4,
+     36,
+     52
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=13"
+   },
+   {
+    "index": 14,
+    "file": "player/candidates/candidate-14.png",
+    "sha256": "31f38c80a6ca44ab7e5a9ff923e8fb7b056824aaf1bff5d6a03e5ed13f3e0e01",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     6,
+     4,
+     40,
+     52
+    ],
+    "colours": 11,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=14"
+   },
+   {
+    "index": 15,
+    "file": "player/candidates/candidate-15.png",
+    "sha256": "f26637a19a87749fb6d0cf293d3e7f27dd5aaa048d6536137595cbfaf017a9a6",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     9,
+     4,
+     40,
+     52
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=15"
+   },
+   {
+    "index": 16,
+    "file": "player/candidates/candidate-16.png",
+    "sha256": "b930d28c658470a25fd4dda5c2b28b5958f0863bb7e50b05f500ab25978f651c",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     9,
+     4,
+     34,
+     52
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=16"
+   },
+   {
+    "index": 17,
+    "file": "player/candidates/candidate-17.png",
+    "sha256": "68fc0c01772b528f033145d54072d52b55aeeae16d93db10f8a9fbb3579e4e57",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     9,
+     4,
+     34,
+     52
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=17"
+   },
+   {
+    "index": 18,
+    "file": "player/candidates/candidate-18.png",
+    "sha256": "e66c54e3750f5ea752c50c2b97231ddd23a9692baecdec0ed125180587d13854",
+    "height": 46,
+    "head_top_row": 6,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     8,
+     6,
+     36,
+     52
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=18"
+   },
+   {
+    "index": 19,
+    "file": "player/candidates/candidate-19.png",
+    "sha256": "d19ed5752ea412e30665065146c7ed2f43961dd4389db911959ad6dab930dab3",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     8,
+     4,
+     35,
+     52
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=19"
+   },
+   {
+    "index": 20,
+    "file": "player/candidates/candidate-20.png",
+    "sha256": "cba49374950af1cec8e0e15d90384685278900266d42afeb4ba0acb6ab97b2fa",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     6,
+     4,
+     40,
+     52
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=20"
+   },
+   {
+    "index": 21,
+    "file": "player/candidates/candidate-21.png",
+    "sha256": "1ffd8309368661e8d9b8d9a90c1e9c4abd129770d7beadccdb4f4ff2d7d7f33a",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     4,
+     4,
+     39,
+     52
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=21"
+   },
+   {
+    "index": 22,
+    "file": "player/candidates/candidate-22.png",
+    "sha256": "c084945013c7615f7ed447807dd43d0bcf082638bd00f0b2ba18bc9dfe673232",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     8,
+     4,
+     35,
+     52
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=22"
+   },
+   {
+    "index": 23,
+    "file": "player/candidates/candidate-23.png",
+    "sha256": "11da104b63864b0a3f088bcbf7e52b9eac14b6b418cce0aaa80f941cabdbc1fe",
+    "height": 46,
+    "head_top_row": 6,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     6,
+     6,
+     39,
+     52
+    ],
+    "colours": 11,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=23"
+   },
+   {
+    "index": 24,
+    "file": "player/candidates/candidate-24.png",
+    "sha256": "70be6dd4290b3a9736aef97cdea8c0e561fcea21e893bad7244053f8044469da",
+    "height": 48,
+    "head_top_row": 4,
+    "lowest_opaque_row": 51,
+    "bbox": [
+     7,
+     4,
+     38,
+     52
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/940977f9-2966-4dcd-8b40-2d71e6452eec/download?index=24"
+   }
+  ],
+  "candidates_sheet": "player/candidates.png",
+  "candidate_heights": {
+   "min": 41,
+   "max": 48,
+   "all": [
+    48,
+    48,
+    48,
+    48,
+    47,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    41,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    46,
+    48,
+    48,
+    48,
+    48,
+    46,
+    48
+   ]
+  },
+  "design_check": {
+   "blade hanging on the viewer's left, hood, cloak, freckles visible, standing front-on": [
+    0,
+    1,
+    2,
+    3,
+    5,
+    6,
+    8
+   ],
+   "#4 (47 px)": "no blade (hands clasped at the belt)",
+   "#18 (46 px)": "no blade, freckles not visible",
+   "#23 (46 px)": "blade on the viewer's right, freckles not visible",
+   "#9, #10": "blade on the viewer's right",
+   "#11 (41 px)": "crouching",
+   "#12, #24": "blade held across the body",
+   "#19": "back view",
+   "#7, #13, #15, #16, #17, #22": "no blade in hand",
+   "#14, #20, #21": "blade on the viewer's left but the other arm raised (#21 also lifts the blade), not a front-on standing pose"
+  },
+  "pick": {
+   "index": 0,
+   "height": 48,
+   "file": "player/pick.png",
+   "sha256": "94823cc4aac8a0c3f540719a182164f496ec8de71fd99fc381fa3fe114e2790a",
+   "bbox": [
+    5,
+    4,
+    36,
+    52
+   ],
+   "head_top_row": 4,
+   "sole_row": 51,
+   "colours": 11,
+   "off_palette": 0,
+   "reserved": [],
+   "semi_transparent_px": 0,
+   "palette_used": [
+    "#1C2147",
+    "#2A2540",
+    "#4A4E57",
+    "#5B5478",
+    "#5E5448",
+    "#7D8794",
+    "#8C7F6E",
+    "#9C5B4A",
+    "#E8E2D6",
+    "#F07A3A",
+    "#F2B65A"
+   ],
+   "why": "No candidate that keeps the design is within 2 px of 45. The only candidates at 46-47 px (#4, #18, #23) lose the blade or move it to the viewer's right and show no freckles, so the pick is the closest candidate that keeps the design: 48 px (+3). Of the seven design-keeping 48 px candidates, #0 is front-on and symmetric except the blade hand, with the hooked blade hanging from the hand on the viewer's left, the hood, the soot cloak with an ember-singed hem on both sides, the tan collar, the dark belt and amber freckles clearly visible on both cheeks."
+  },
+  "pick_64": {
+   "file": "player/pick-64.png",
+   "sha256": "018c85438123cfdf1d08a889f38f59c5647b4f541b3b836b61a959e63b992ce4",
+   "paste_offset": [
+    10,
+    2
+   ],
+   "bbox": [
+    15,
+    6,
+    46,
+    54
+   ],
+   "sole_row": 53,
+   "rule": "pick canvas pasted unscaled, centred horizontally ((64-44)//2 = 10), lowest opaque (sole) row on row 53"
+  },
+  "rotation": {
+   "tool": "create_character",
+   "character_id": "815123a2-d502-4db6-b77b-b01aad7d892f",
+   "arguments": {
+    "description": "Small clay figure about 45 px tall with grey-ochre clay skin and three amber freckles, in a soot-grey hooded cloak with an ember-singed hem over a grey tunic, tan collar, dark belt, dark trousers and boots. Holds a short hooked blade in its right hand, hanging down at its side. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+    "mode": "v3",
+    "reference_image_url": "upload:cc077c26-980a-429f-9d7b-73c1b098b414",
+    "n_directions": 8,
+    "name": "player (g13b-job4)"
+   },
+   "reference_note": "upload of player/pick-64.png, byte for byte",
+   "seed": "create_character has no seed parameter",
+   "generations": 1,
+   "generations_source": "quoted 'v3 reference (1 generations, 8 directions)'",
+   "files": "<direction>.png from the rotation URLs, checked identical to the character zip; character-metadata.json from the zip",
+   "south_vs_pick64": "identical on every visible pixel",
+   "outputs": [
+    {
+     "direction": "south",
+     "file": "player/south.png",
+     "sha256": "e3d58bc853258fa51d225ee7f56ed55ef6663d645cf71edaa31dd40ad4b6edbb",
+     "bbox": [
+      15,
+      6,
+      46,
+      54
+     ],
+     "lowest_opaque_row": 53,
+     "height_top_to_lowest_row": 48,
+     "colours": 11,
+     "off_palette": 0,
+     "off_palette_px": 0,
+     "reserved": [],
+     "semi_transparent_px": 0
+    },
+    {
+     "direction": "south-east",
+     "file": "player/south-east.png",
+     "sha256": "77a272b79f5431adb4d40605c505d7eff063ae96ea77e135e30338a30b47fb5b",
+     "bbox": [
+      17,
+      7,
+      45,
+      57
+     ],
+     "lowest_opaque_row": 56,
+     "height_top_to_lowest_row": 50,
+     "colours": 31,
+     "off_palette": 20,
+     "off_palette_px": 53,
+     "reserved": [],
+     "semi_transparent_px": 0
+    },
+    {
+     "direction": "east",
+     "file": "player/east.png",
+     "sha256": "ef5f9dd2fe2ed42fe9ee0b9990af4e0a01ae5ac4512eb1bfd041c7bb76a91474",
+     "bbox": [
+      20,
+      8,
+      46,
+      57
+     ],
+     "lowest_opaque_row": 56,
+     "height_top_to_lowest_row": 49,
+     "colours": 20,
+     "off_palette": 9,
+     "off_palette_px": 11,
+     "reserved": [],
+     "semi_transparent_px": 0
+    },
+    {
+     "direction": "north-east",
+     "file": "player/north-east.png",
+     "sha256": "79261eb0329ff8a75cc0206ae6c5e9c9a09098b8bc10fd4a0e669e1c7a4ea956",
+     "bbox": [
+      17,
+      6,
+      51,
+      55
+     ],
+     "lowest_opaque_row": 54,
+     "height_top_to_lowest_row": 49,
+     "colours": 11,
+     "off_palette": 0,
+     "off_palette_px": 0,
+     "reserved": [],
+     "semi_transparent_px": 0
+    },
+    {
+     "direction": "north",
+     "file": "player/north.png",
+     "sha256": "cc2681362f263a2476bf641df47d167676efe09d875e5536e8a83cdccf1578f5",
+     "bbox": [
+      18,
+      6,
+      48,
+      54
+     ],
+     "lowest_opaque_row": 53,
+     "height_top_to_lowest_row": 48,
+     "colours": 8,
+     "off_palette": 0,
+     "off_palette_px": 0,
+     "reserved": [],
+     "semi_transparent_px": 0
+    },
+    {
+     "direction": "north-west",
+     "file": "player/north-west.png",
+     "sha256": "2edbc9235e0b664c38f80370b0b54a2e255019cd6db6a4e55be6a874ba9f7af2",
+     "bbox": [
+      21,
+      7,
+      46,
+      56
+     ],
+     "lowest_opaque_row": 55,
+     "height_top_to_lowest_row": 49,
+     "colours": 9,
+     "off_palette": 0,
+     "off_palette_px": 0,
+     "reserved": [],
+     "semi_transparent_px": 0
+    },
+    {
+     "direction": "west",
+     "file": "player/west.png",
+     "sha256": "d2f373bf57c87f3461ac80c41d7f43c056bb9d9ef2117410d14d822ff567036a",
+     "bbox": [
+      22,
+      8,
+      44,
+      57
+     ],
+     "lowest_opaque_row": 56,
+     "height_top_to_lowest_row": 49,
+     "colours": 27,
+     "off_palette": 16,
+     "off_palette_px": 20,
+     "reserved": [],
+     "semi_transparent_px": 0
+    },
+    {
+     "direction": "south-west",
+     "file": "player/south-west.png",
+     "sha256": "68834277170f9ef47496ba0658a95a9cc454bcfe65b664706068e19fa81ec154",
+     "bbox": [
+      13,
+      6,
+      47,
+      56
+     ],
+     "lowest_opaque_row": 55,
+     "height_top_to_lowest_row": 50,
+     "colours": 28,
+     "off_palette": 17,
+     "off_palette_px": 50,
+     "reserved": [],
+     "semi_transparent_px": 0
+    }
+   ]
+  },
+  "walk_skel": {
+   "tool": "animate_character",
+   "arguments": {
+    "character_id": "815123a2-d502-4db6-b77b-b01aad7d892f",
+    "mode": "skeleton-v3",
+    "template_animation_id": "walking-6-frames",
+    "directions": [
+     "south",
+     "south-east",
+     "east",
+     "north-east",
+     "north"
+    ],
+    "animation_name": "walk-skel"
+   },
+   "group": "ef53c6b7-532f-4693-a924-7482a07022c4",
+   "job_ids": {
+    "south": "a98f032a-ba1d-48a2-9018-f414311bde81",
+    "south-east": "ce81041f-8fa7-481d-9348-2132d195ee02",
+    "east": "20418cbd-4371-42b0-8bd6-bfa4a2a791ca",
+    "north-east": "1aac3224-6c0c-42c6-96b9-742b55080593",
+    "north": "69e30773-ecaf-488e-b3d6-2ff2bc5fe098"
+   },
+   "generations": 15,
+   "generations_source": "quoted '15 generations (3/dir x 5)'",
+   "retakes": 0,
+   "seed": "animate_character has no seed parameter",
+   "outputs": [
+    {
+     "direction": "south",
+     "frames": 6,
+     "canvas": [
+      80,
+      80
+     ],
+     "lowest_opaque_row_range": [
+      61,
+      63
+     ],
+     "colours_total": 11,
+     "max_colours_per_frame": 11,
+     "off_palette": 0,
+     "off_palette_px": 0,
+     "reserved": [],
+     "semi_transparent_px": 0,
+     "files": [
+      {
+       "file": "player/walk-skel/south/frame-0.png",
+       "sha256": "53f1a0b25872d8e7ad2f90f8eb250ae41e589c3c128fcda3a51514d06f9486e2",
+       "bbox": [
+        24,
+        14,
+        55,
+        62
+       ],
+       "lowest_opaque_row": 61
+      },
+      {
+       "file": "player/walk-skel/south/frame-1.png",
+       "sha256": "c05f271b0c6243105f71a8cb86090b1b28d21983b478dd53e7e568e240fbbef7",
+       "bbox": [
+        26,
+        14,
+        53,
+        64
+       ],
+       "lowest_opaque_row": 63
+      },
+      {
+       "file": "player/walk-skel/south/frame-2.png",
+       "sha256": "1de40ed263dfcb2e4c0bc42c59917847160ae6e8e35147339b4b59519e2d2c46",
+       "bbox": [
+        26,
+        14,
+        53,
+        63
+       ],
+       "lowest_opaque_row": 62
+      },
+      {
+       "file": "player/walk-skel/south/frame-3.png",
+       "sha256": "57831eb2ff7d20df2cf186f612ddfffe612918f9b0e46565386ccfd585a217d5",
+       "bbox": [
+        23,
+        14,
+        54,
+        62
+       ],
+       "lowest_opaque_row": 61
+      },
+      {
+       "file": "player/walk-skel/south/frame-4.png",
+       "sha256": "bed0ab01bd360f3b1d8af461fba1b4bc9e86a5cf4b88767763b1ae78a889ae23",
+       "bbox": [
+        21,
+        14,
+        55,
+        64
+       ],
+       "lowest_opaque_row": 63
+      },
+      {
+       "file": "player/walk-skel/south/frame-5.png",
+       "sha256": "e71c677f2fd827749294248fec23d983c7adf532eb1114a3de0acb69a5c932c6",
+       "bbox": [
+        21,
+        14,
+        55,
+        63
+       ],
+       "lowest_opaque_row": 62
+      }
+     ]
+    },
+    {
+     "direction": "south-east",
+     "frames": 6,
+     "canvas": [
+      80,
+      80
+     ],
+     "lowest_opaque_row_range": [
+      63,
+      64
+     ],
+     "colours_total": 30,
+     "max_colours_per_frame": 29,
+     "off_palette": 19,
+     "off_palette_px": 510,
+     "reserved": [],
+     "semi_transparent_px": 0,
+     "files": [
+      {
+       "file": "player/walk-skel/south-east/frame-0.png",
+       "sha256": "2ca8bf7cfb96b3bb682890d83b236e7523c8bfcaeab73c97ac23bf40151594ba",
+       "bbox": [
+        25,
+        15,
+        53,
+        65
+       ],
+       "lowest_opaque_row": 64
+      },
+      {
+       "file": "player/walk-skel/south-east/frame-1.png",
+       "sha256": "18a0faba76c6a0b143c520f4c2f0aa9cde7be9d07b0e0f37982c3cd493c2d805",
+       "bbox": [
+        25,
+        15,
+        53,
+        64
+       ],
+       "lowest_opaque_row": 63
+      },
+      {
+       "file": "player/walk-skel/south-east/frame-2.png",
+       "sha256": "6f999977dfdc4736ed95de87024d8d9561c327add9b93f455929153667f782a8",
+       "bbox": [
+        25,
+        15,
+        52,
+        64
+       ],
+       "lowest_opaque_row": 63
+      },
+      {
+       "file": "player/walk-skel/south-east/frame-3.png",
+       "sha256": "6217c2c993cedc60233a2025ec9865cd768dcae49ed795eca32a4259c7dce674",
+       "bbox": [
+        25,
+        15,
+        53,
+        65
+       ],
+       "lowest_opaque_row": 64
+      },
+      {
+       "file": "player/walk-skel/south-east/frame-4.png",
+       "sha256": "93fbb1f6213eb0f36e28031bf6976407159d2fff7cafd61204a02625a1d6fe80",
+       "bbox": [
+        26,
+        15,
+        57,
+        65
+       ],
+       "lowest_opaque_row": 64
+      },
+      {
+       "file": "player/walk-skel/south-east/frame-5.png",
+       "sha256": "7b31043c6bde10be172fd9feab3d195f5e642e29e4f4603b483c743a9e741671",
+       "bbox": [
+        26,
+        15,
+        55,
+        65
+       ],
+       "lowest_opaque_row": 64
+      }
+     ]
+    },
+    {
+     "direction": "east",
+     "frames": 6,
+     "canvas": [
+      80,
+      80
+     ],
+     "lowest_opaque_row_range": [
+      62,
+      64
+     ],
+     "colours_total": 21,
+     "max_colours_per_frame": 20,
+     "off_palette": 10,
+     "off_palette_px": 292,
+     "reserved": [],
+     "semi_transparent_px": 0,
+     "files": [
+      {
+       "file": "player/walk-skel/east/frame-0.png",
+       "sha256": "4dcfe9a094b6a551dc0a342d6ac49a0bca0b9ab8cb36f7e40ed49824ca7e0efb",
+       "bbox": [
+        26,
+        16,
+        60,
+        65
+       ],
+       "lowest_opaque_row": 64
+      },
+      {
+       "file": "player/walk-skel/east/frame-1.png",
+       "sha256": "e2bf8a10e2b099750a14e8239f09e0ac5123b7819699446891948199cd9e0e43",
+       "bbox": [
+        23,
+        16,
+        63,
+        65
+       ],
+       "lowest_opaque_row": 64
+      },
+      {
+       "file": "player/walk-skel/east/frame-2.png",
+       "sha256": "3055c1012f0ecbf3efd7ac8aa13531f876211ef563ee42e8c7742f518937bb1f",
+       "bbox": [
+        28,
+        16,
+        60,
+        65
+       ],
+       "lowest_opaque_row": 64
+      },
+      {
+       "file": "player/walk-skel/east/frame-3.png",
+       "sha256": "54396a9180957b10a7b7dcdcccd55363b10c0b214016c38aaa4498f4b0fd043a",
+       "bbox": [
+        28,
+        16,
+        54,
+        65
+       ],
+       "lowest_opaque_row": 64
+      },
+      {
+       "file": "player/walk-skel/east/frame-4.png",
+       "sha256": "59f729488e76f1372a51f82513cb17dc7f9ce9bae5db7cc58f6ecf01f5519695",
+       "bbox": [
+        27,
+        16,
+        53,
+        63
+       ],
+       "lowest_opaque_row": 62
+      },
+      {
+       "file": "player/walk-skel/east/frame-5.png",
+       "sha256": "a7b41575512f4124dc592816d7bcc5c2785730979a9140c6f1d2226bb2320c0c",
+       "bbox": [
+        28,
+        16,
+        53,
+        65
+       ],
+       "lowest_opaque_row": 64
+      }
+     ]
+    },
+    {
+     "direction": "north-east",
+     "frames": 6,
+     "canvas": [
+      80,
+      80
+     ],
+     "lowest_opaque_row_range": [
+      62,
+      64
+     ],
+     "colours_total": 11,
+     "max_colours_per_frame": 11,
+     "off_palette": 0,
+     "off_palette_px": 0,
+     "reserved": [],
+     "semi_transparent_px": 0,
+     "files": [
+      {
+       "file": "player/walk-skel/north-east/frame-0.png",
+       "sha256": "376760177f292c47ba1a5350af8edab8ba371860a9ce8f56d1d191e063c3da32",
+       "bbox": [
+        25,
+        14,
+        60,
+        63
+       ],
+       "lowest_opaque_row": 62
+      },
+      {
+       "file": "player/walk-skel/north-east/frame-1.png",
+       "sha256": "3511be1d61aca9b2ceae4c4b7ee272a8b2320cec0e7c673832424248f5f9fede",
+       "bbox": [
+        26,
+        14,
+        63,
+        65
+       ],
+       "lowest_opaque_row": 64
+      },
+      {
+       "file": "player/walk-skel/north-east/frame-2.png",
+       "sha256": "0d3554db5576dad88ae3abe01022a815027420e0ec7c3cc4c01e61300509a3d6",
+       "bbox": [
+        25,
+        14,
+        61,
+        64
+       ],
+       "lowest_opaque_row": 63
+      },
+      {
+       "file": "player/walk-skel/north-east/frame-3.png",
+       "sha256": "45941c35478cc85c01e5013b6cc0104e5d9f2d15a880a26a17ebd61e5c575ac1",
+       "bbox": [
+        25,
+        14,
+        59,
+        63
+       ],
+       "lowest_opaque_row": 62
+      },
+      {
+       "file": "player/walk-skel/north-east/frame-4.png",
+       "sha256": "d398bb13f77a648946af7cb54ad5016a57e60cb51f2aaba6501d8667cedbd9bc",
+       "bbox": [
+        25,
+        13,
+        56,
+        63
+       ],
+       "lowest_opaque_row": 62
+      },
+      {
+       "file": "player/walk-skel/north-east/frame-5.png",
+       "sha256": "1e8d3bc622c9c2a62457189a1fba589f169e8675a60fe348d85256fb65e59c08",
+       "bbox": [
+        25,
+        13,
+        58,
+        63
+       ],
+       "lowest_opaque_row": 62
+      }
+     ]
+    },
+    {
+     "direction": "north",
+     "frames": 6,
+     "canvas": [
+      80,
+      80
+     ],
+     "lowest_opaque_row_range": [
+      61,
+      63
+     ],
+     "colours_total": 7,
+     "max_colours_per_frame": 7,
+     "off_palette": 0,
+     "off_palette_px": 0,
+     "reserved": [],
+     "semi_transparent_px": 0,
+     "files": [
+      {
+       "file": "player/walk-skel/north/frame-0.png",
+       "sha256": "839b056c4270e37fee42f3d2e3f4bc32a132afaa4dca8429b370455d54deaa7b",
+       "bbox": [
+        26,
+        13,
+        56,
+        62
+       ],
+       "lowest_opaque_row": 61
+      },
+      {
+       "file": "player/walk-skel/north/frame-1.png",
+       "sha256": "f84ec9b5a5597c79298ccb5f9274fbaff68591c4b1d3be5a7978e0d484d13fde",
+       "bbox": [
+        27,
+        14,
+        56,
+        64
+       ],
+       "lowest_opaque_row": 63
+      },
+      {
+       "file": "player/walk-skel/north/frame-2.png",
+       "sha256": "b0ba0d8902060cbc989ef8ce1e7a135d989967eb41b878bb5769c0dc50566f61",
+       "bbox": [
+        27,
+        14,
+        56,
+        63
+       ],
+       "lowest_opaque_row": 62
+      },
+      {
+       "file": "player/walk-skel/north/frame-3.png",
+       "sha256": "088c2a877cb765ca3d0f6830159efb9a0a5b28c86c889fd7629b979ec7d39bef",
+       "bbox": [
+        26,
+        14,
+        56,
+        62
+       ],
+       "lowest_opaque_row": 61
+      },
+      {
+       "file": "player/walk-skel/north/frame-4.png",
+       "sha256": "83f2a9c37de266d4cc4b1201c0fd6a3ebd9b12da0bf3929384331a546d985637",
+       "bbox": [
+        26,
+        14,
+        56,
+        64
+       ],
+       "lowest_opaque_row": 63
+      },
+      {
+       "file": "player/walk-skel/north/frame-5.png",
+       "sha256": "9679826797a029ae8af03199e51097ab61db737fdc0ae3d2c9279103b6315b1a",
+       "bbox": [
+        26,
+        14,
+        56,
+        63
+       ],
+       "lowest_opaque_row": 62
+      }
+     ]
+    }
+   ]
+  },
+  "attack_v3": {
+   "tool": "animate_character",
+   "arguments": {
+    "character_id": "815123a2-d502-4db6-b77b-b01aad7d892f",
+    "mode": "v3",
+    "action_description": "a quick horizontal slash with the short hooked blade held in the right hand, then back to guard",
+    "frame_count": 6,
+    "directions": [
+     "east",
+     "south"
+    ],
+    "animation_name": "attack-v3"
+   },
+   "group": "5c317370-6f76-43e3-95d5-d45663a7db8b",
+   "job_ids": {
+    "east": "4e0cdebb-fefa-416e-ac25-ea95f8dee4d6",
+    "south": "d4215a3d-e77a-4082-ac8d-376a32bc7624"
+   },
+   "generations": 2,
+   "generations_source": "quoted '2 generations (1/dir x 2)'",
+   "retakes": 0,
+   "seed": "animate_character has no seed parameter",
+   "note": "keep_first_frame left at its default (true), as in Job 2: 7 frames stored, frame-0 is the rotation, frames 1-6 generated",
+   "outputs": [
+    {
+     "direction": "east",
+     "frames": 7,
+     "canvas": [
+      72,
+      72
+     ],
+     "lowest_opaque_row_range": [
+      60,
+      60
+     ],
+     "colours_total": 42,
+     "max_colours_per_frame": 29,
+     "off_palette": 31,
+     "off_palette_px": 169,
+     "reserved": [],
+     "semi_transparent_px": 0,
+     "files": [
+      {
+       "file": "player/attack-v3/east/frame-0.png",
+       "sha256": "94feefcc494c69c10300b5c9e30ca3b6c2166f07b73fe26a825d012da3584ca3",
+       "bbox": [
+        24,
+        12,
+        50,
+        61
+       ],
+       "lowest_opaque_row": 60
+      },
+      {
+       "file": "player/attack-v3/east/frame-1.png",
+       "sha256": "effe9a0e0ad46ca106075ed5eb4779650ca451ca7d888d60ee7c559ab9c96a5f",
+       "bbox": [
+        24,
+        12,
+        50,
+        61
+       ],
+       "lowest_opaque_row": 60
+      },
+      {
+       "file": "player/attack-v3/east/frame-2.png",
+       "sha256": "b39e76f552b364ef864c41e6d3d503907ae743c820d9618db780d73b1942d8dc",
+       "bbox": [
+        23,
+        12,
+        50,
+        61
+       ],
+       "lowest_opaque_row": 60
+      },
+      {
+       "file": "player/attack-v3/east/frame-3.png",
+       "sha256": "cea4c9136a93decba0559efcbc29b1997fb971d2b79822700222f0e7740f0f56",
+       "bbox": [
+        19,
+        14,
+        48,
+        61
+       ],
+       "lowest_opaque_row": 60
+      },
+      {
+       "file": "player/attack-v3/east/frame-4.png",
+       "sha256": "f0adf69113772d6b64b503bd4e6cf2e4bb052af78e0b793fa2b6330d2871158d",
+       "bbox": [
+        15,
+        15,
+        48,
+        61
+       ],
+       "lowest_opaque_row": 60
+      },
+      {
+       "file": "player/attack-v3/east/frame-5.png",
+       "sha256": "42b3e0d4edf8433158dd6d45f61eb196e6a19f61053587c8f25dcb7cce6dc4ed",
+       "bbox": [
+        14,
+        14,
+        50,
+        61
+       ],
+       "lowest_opaque_row": 60
+      },
+      {
+       "file": "player/attack-v3/east/frame-6.png",
+       "sha256": "88c6d6286bd040777d2b250a01926fb65eaba6ec2e64274d101fe8cb57f6c8e4",
+       "bbox": [
+        15,
+        13,
+        54,
+        61
+       ],
+       "lowest_opaque_row": 60
+      }
+     ]
+    },
+    {
+     "direction": "south",
+     "frames": 7,
+     "canvas": [
+      76,
+      76
+     ],
+     "lowest_opaque_row_range": [
+      59,
+      59
+     ],
+     "colours_total": 54,
+     "max_colours_per_frame": 32,
+     "off_palette": 43,
+     "off_palette_px": 339,
+     "reserved": [],
+     "semi_transparent_px": 0,
+     "files": [
+      {
+       "file": "player/attack-v3/south/frame-0.png",
+       "sha256": "1af56bcdd408fefed6b9508cea43a87861f239b21ff339832e9a7ad0e5507f82",
+       "bbox": [
+        21,
+        12,
+        52,
+        60
+       ],
+       "lowest_opaque_row": 59
+      },
+      {
+       "file": "player/attack-v3/south/frame-1.png",
+       "sha256": "667286555574df741fca4e538ba3dcbc2620af2b343c9fc0bbb30ef89491d1e9",
+       "bbox": [
+        18,
+        13,
+        53,
+        60
+       ],
+       "lowest_opaque_row": 59
+      },
+      {
+       "file": "player/attack-v3/south/frame-2.png",
+       "sha256": "e4070498f26b5862899914032be404aa9b3880f4e79efb638a2559a1d8b245a0",
+       "bbox": [
+        21,
+        14,
+        54,
+        60
+       ],
+       "lowest_opaque_row": 59
+      },
+      {
+       "file": "player/attack-v3/south/frame-3.png",
+       "sha256": "8b87c08877701efa6b9ccfaa4a55c19a97246bc9cfbb73c69c178b2f700deb41",
+       "bbox": [
+        19,
+        15,
+        55,
+        60
+       ],
+       "lowest_opaque_row": 59
+      },
+      {
+       "file": "player/attack-v3/south/frame-4.png",
+       "sha256": "ac6537fae909a60ed04ce34ab3e67cc99f452b6d4d6136c93a855d0c3d76ac51",
+       "bbox": [
+        17,
+        15,
+        55,
+        60
+       ],
+       "lowest_opaque_row": 59
+      },
+      {
+       "file": "player/attack-v3/south/frame-5.png",
+       "sha256": "c8eaac08be221b450ae4113098764ea0718064a1f78a39d7afa9007f6b3750c5",
+       "bbox": [
+        18,
+        14,
+        55,
+        60
+       ],
+       "lowest_opaque_row": 59
+      },
+      {
+       "file": "player/attack-v3/south/frame-6.png",
+       "sha256": "a47f5ff2cc7aa5591eb5f8c04d2b91c95c146ee59039f049d16e4e8f6049c6b9",
+       "bbox": [
+        18,
+        13,
+        54,
+        60
+       ],
+       "lowest_opaque_row": 59
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "npc-tally": {
+  "target_height_px": "45 (44-46)",
+  "step1": {
+   "tool": "create_image_pro",
+   "job_id": "501bccb8-d3fb-48f9-ba96-0405f0a96130",
+   "asset_id": "f15579b2-8bc1-536b-9099-8e185025d4e8",
+   "arguments": {
+    "description": "Tally, a young Kindled woman: a small figure of red terracotta clay, about 45 px tall, three amber freckles, dark violet hair tied up in a knot, a pale salt-stiff sailcloth tunic with a rope belt and a bronze buckle, dark trousers and boots, empty hands. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters. Facing the viewer, standing.",
+    "width": 44,
+    "height": 54,
+    "no_background": true,
+    "seed": 1234,
+    "palette": [
+     "#F4EFE6",
+     "#D9D2E9",
+     "#A99FC4",
+     "#5B5478",
+     "#2A2540",
+     "#F2B65A",
+     "#C9733A",
+     "#4A4E57",
+     "#7D8794",
+     "#3E5C7A",
+     "#A8743A",
+     "#C79A3E",
+     "#8A6420",
+     "#E9E4D4",
+     "#2F7F7A",
+     "#C98F78",
+     "#9C5B4A",
+     "#E3C29E",
+     "#24305A",
+     "#E8E2D6",
+     "#FFF4C7",
+     "#8C7F6E",
+     "#5E5448",
+     "#FBF8F0",
+     "#D8B24A",
+     "#F07A3A",
+     "#B5402E",
+     "#1C2147"
+    ],
+    "palette_name": "Islands of the One",
+    "max_colors": 12,
+    "reference_images": [
+     {
+      "url": "upload:802d0906-6309-413e-9e86-1ff4fe329b47",
+      "source": "art/anchors/kindled-ash-s-64.png",
+      "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a",
+      "usage": "character base: copy the proportions, the size on the 64x64 canvas, the clay-figure build, the outline and the shading style; NOT the outfit, colours or weapon"
+     }
+    ]
+   },
+   "same_as_job3_except": "height 54 instead of 60 (the anchor re-uploaded: same file, same sha256)",
+   "canvas_accepted": [
+    44,
+    54
+   ],
+   "candidates": 25,
+   "generations": 10,
+   "generations_source": "quoted 'cost: 10 generations'; get_image charged_generations 10",
+   "retakes": 0
+  },
+  "candidates": [
+   {
+    "index": 0,
+    "file": "npc-tally/candidates/candidate-00.png",
+    "sha256": "9455e3e62cb428038fa0b627b6b6f8eabe031c970c1ebea201cff2f51479985a",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     10,
+     3,
+     34,
+     51
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=0"
+   },
+   {
+    "index": 1,
+    "file": "npc-tally/candidates/candidate-01.png",
+    "sha256": "cb4fc889e27bdb878ce9f8547c5fe701d806020d10b64a9b42c2363173e47827",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     9,
+     3,
+     35,
+     51
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=1"
+   },
+   {
+    "index": 2,
+    "file": "npc-tally/candidates/candidate-02.png",
+    "sha256": "f8da2e6ea0a9874a9b65aca655ca2d3d6d8208cad4945a36f25b765b17165cba",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     12,
+     3,
+     34,
+     51
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=2"
+   },
+   {
+    "index": 3,
+    "file": "npc-tally/candidates/candidate-03.png",
+    "sha256": "fdc7f7d27ae3f113edd98c6449ae582bd722eb46956aa86de77482f6918518cd",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     10,
+     3,
+     34,
+     51
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=3"
+   },
+   {
+    "index": 4,
+    "file": "npc-tally/candidates/candidate-04.png",
+    "sha256": "93071d69fb3f92afbbb8ba771bae07bfd3f6aa8f4ccd28255f178133a6b9e0fe",
+    "height": 47,
+    "head_top_row": 4,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     10,
+     4,
+     34,
+     51
+    ],
+    "colours": 8,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=4"
+   },
+   {
+    "index": 5,
+    "file": "npc-tally/candidates/candidate-05.png",
+    "sha256": "37305d8fc44e2f7f26f713f48c855c66ce8eb07627332c268858004569a2ed36",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     6,
+     3,
+     38,
+     51
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=5"
+   },
+   {
+    "index": 6,
+    "file": "npc-tally/candidates/candidate-06.png",
+    "sha256": "2cce49d4848e7aa8d1a0f75def5ff0eb79229385beb7cca8a847688dcc7294a6",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     9,
+     3,
+     35,
+     51
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=6"
+   },
+   {
+    "index": 7,
+    "file": "npc-tally/candidates/candidate-07.png",
+    "sha256": "70fcd633ab6703063bca32c1bf88e5cfa5dea1e263a12c615ab338067f0e413f",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     10,
+     3,
+     34,
+     51
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=7"
+   },
+   {
+    "index": 8,
+    "file": "npc-tally/candidates/candidate-08.png",
+    "sha256": "f295f811a0a250c0c144f1a2a59aca6a77286b06ba401564f0f784a27a6670ac",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     10,
+     3,
+     35,
+     51
+    ],
+    "colours": 11,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=8"
+   },
+   {
+    "index": 9,
+    "file": "npc-tally/candidates/candidate-09.png",
+    "sha256": "c3e5996d2aebf00fd45a6118ba86a1fbc234a974aa49499c1b588835bfe54198",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     10,
+     3,
+     35,
+     51
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=9"
+   },
+   {
+    "index": 10,
+    "file": "npc-tally/candidates/candidate-10.png",
+    "sha256": "5d31ff8c4f9346a09cbba4ae9ed736ae1967bd8e5ba6e9797794341a85db9390",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     8,
+     3,
+     35,
+     51
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=10"
+   },
+   {
+    "index": 11,
+    "file": "npc-tally/candidates/candidate-11.png",
+    "sha256": "bf215dd0c0733b9f7bb5f4376e6a79e1151d14ff299357f5dd51dbede1a5b878",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     9,
+     3,
+     35,
+     51
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=11"
+   },
+   {
+    "index": 12,
+    "file": "npc-tally/candidates/candidate-12.png",
+    "sha256": "27de0c00eb60d0076f9f484ac3611544e63c79d5f3da3d53e71d78db0d6aa840",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     9,
+     3,
+     35,
+     51
+    ],
+    "colours": 8,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=12"
+   },
+   {
+    "index": 13,
+    "file": "npc-tally/candidates/candidate-13.png",
+    "sha256": "84614f4e5de172186c5f912b4edad6468dc04465caa9f49731ad607440588378",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     10,
+     3,
+     35,
+     51
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=13"
+   },
+   {
+    "index": 14,
+    "file": "npc-tally/candidates/candidate-14.png",
+    "sha256": "9378fe9b8e953d0c7e06a1f3fc53cf45014f7b688d34920400e4dbe0ac325887",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     10,
+     3,
+     35,
+     51
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=14"
+   },
+   {
+    "index": 15,
+    "file": "npc-tally/candidates/candidate-15.png",
+    "sha256": "d382c55914f5c46fbfd1f87b55263cbd3481e0dc28841ea2f4d75a807f18fda3",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     8,
+     3,
+     35,
+     51
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=15"
+   },
+   {
+    "index": 16,
+    "file": "npc-tally/candidates/candidate-16.png",
+    "sha256": "03085ce4d137c583c12067605cb887436e3df1be960069bdf0141febce5295fa",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     9,
+     3,
+     35,
+     51
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=16"
+   },
+   {
+    "index": 17,
+    "file": "npc-tally/candidates/candidate-17.png",
+    "sha256": "6cde2611e2b472fe2bbddd4310ad558dc96a73d8017a41e083abf3106bafac6c",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     9,
+     3,
+     35,
+     51
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=17"
+   },
+   {
+    "index": 18,
+    "file": "npc-tally/candidates/candidate-18.png",
+    "sha256": "391fb704e8bf824713d8cd7ea9f6484c56bbb206f8eb34f49f0c2dc074a928c2",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     9,
+     3,
+     35,
+     51
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=18"
+   },
+   {
+    "index": 19,
+    "file": "npc-tally/candidates/candidate-19.png",
+    "sha256": "108f6cb180fe34cbfdd246a685608708c73583d0ea154c9b35b669c945fc5664",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     9,
+     3,
+     35,
+     51
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=19"
+   },
+   {
+    "index": 20,
+    "file": "npc-tally/candidates/candidate-20.png",
+    "sha256": "cca23dd07334651613f3f25690d9d8987b49a0fc1ad5ffc248ee304ce2a5158f",
+    "height": 49,
+    "head_top_row": 2,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     8,
+     2,
+     35,
+     51
+    ],
+    "colours": 11,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=20"
+   },
+   {
+    "index": 21,
+    "file": "npc-tally/candidates/candidate-21.png",
+    "sha256": "965307e38f0207fc1e365515ab28c5aec0cc9316d14a702543e308d0cce9b8aa",
+    "height": 48,
+    "head_top_row": 3,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     8,
+     3,
+     35,
+     51
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=21"
+   },
+   {
+    "index": 22,
+    "file": "npc-tally/candidates/candidate-22.png",
+    "sha256": "c90282b969f5b48922374c0ca1723ec6cd437ffd2cfcdbb89a990ccd53d73543",
+    "height": 49,
+    "head_top_row": 2,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     9,
+     2,
+     35,
+     51
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=22"
+   },
+   {
+    "index": 23,
+    "file": "npc-tally/candidates/candidate-23.png",
+    "sha256": "fbc5bff419bc816f70e0ce107b8c85ca98071d83e026bce080c5ed4fcc0039c8",
+    "height": 49,
+    "head_top_row": 2,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     8,
+     2,
+     35,
+     51
+    ],
+    "colours": 10,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=23"
+   },
+   {
+    "index": 24,
+    "file": "npc-tally/candidates/candidate-24.png",
+    "sha256": "9a014bee2adb88b328bb5379b777b228b6306e56ed3c9d51797c293a3a120840",
+    "height": 49,
+    "head_top_row": 2,
+    "lowest_opaque_row": 50,
+    "bbox": [
+     8,
+     2,
+     35,
+     51
+    ],
+    "colours": 9,
+    "off_palette": 0,
+    "url": "https://api.pixellab.ai/mcp/images/501bccb8-d3fb-48f9-ba96-0405f0a96130/download?index=24"
+   }
+  ],
+  "candidates_sheet": "npc-tally/candidates.png",
+  "candidate_heights": {
+   "min": 47,
+   "max": 49,
+   "all": [
+    48,
+    48,
+    48,
+    48,
+    47,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    48,
+    49,
+    48,
+    49,
+    49,
+    49
+   ]
+  },
+  "pick": {
+   "index": 4,
+   "height": 47,
+   "file": "npc-tally/pick.png",
+   "sha256": "93071d69fb3f92afbbb8ba771bae07bfd3f6aa8f4ccd28255f178133a6b9e0fe",
+   "bbox": [
+    10,
+    4,
+    34,
+    51
+   ],
+   "head_top_row": 4,
+   "sole_row": 50,
+   "colours": 8,
+   "off_palette": 0,
+   "reserved": [],
+   "semi_transparent_px": 0,
+   "palette_used": [
+    "#1C2147",
+    "#2A2540",
+    "#5B5478",
+    "#5E5448",
+    "#9C5B4A",
+    "#C98F78",
+    "#E3C29E",
+    "#E9E4D4"
+   ],
+   "why": "Closest to 45 and the only candidate under 48: 47 px (+2, within 2 px). It keeps the design (terracotta clay, dark violet hair in a knot, pale tunic with a rope belt, dark trousers and boots, empty hands, front-on). Its freckles are not amber (no #F2B65A in the image) and the buckle reads as rope colour, not bronze."
+  },
+  "pick_64": {
+   "file": "npc-tally/pick-64.png",
+   "sha256": "0708610829625bfd3df2836adf53a657966ca8bd5ccc676a082eea3aea88433f",
+   "paste_offset": [
+    10,
+    3
+   ],
+   "bbox": [
+    20,
+    7,
+    44,
+    54
+   ],
+   "sole_row": 53,
+   "rule": "pick canvas pasted unscaled, centred horizontally ((64-44)//2 = 10), lowest opaque row on row 53"
+  },
+  "rotation": {
+   "tool": "create_character",
+   "character_id": "34727518-2d78-4b35-802d-362ac245b05d",
+   "arguments": {
+    "description": "Tally, a young Kindled woman: a small figure of red terracotta clay, about 45 px tall, three amber freckles, dark violet hair tied up in a knot, a pale salt-stiff sailcloth tunic with a rope belt and a bronze buckle, dark trousers and boots, empty hands. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+    "mode": "v3",
+    "reference_image_url": "upload:053c27e3-b96d-46cd-abbe-62a8cfa210b2",
+    "n_directions": 8,
+    "name": "npc-tally (g13b-job4)"
+   },
+   "reference_note": "upload of npc-tally/pick-64.png, byte for byte",
+   "seed": "create_character has no seed parameter",
+   "generations": 1,
+   "generations_source": "quoted 'v3 reference (1 generations, 8 directions)'",
+   "files": "<direction>.png and character-metadata.json from the character zip",
+   "south_vs_pick64": "identical on every visible pixel",
+   "outputs": [
+    {
+     "direction": "south",
+     "file": "npc-tally/south.png",
+     "sha256": "d1814ade0e00f428714ed68fe30545992b39e1c01d504a8630bb060a918c39f2",
+     "bbox": [
+      20,
+      7,
+      44,
+      54
+     ],
+     "lowest_opaque_row": 53,
+     "height_top_to_lowest_row": 47,
+     "colours": 8,
+     "off_palette": 0,
+     "off_palette_px": 0,
+     "reserved": [],
+     "semi_transparent_px": 0
+    },
+    {
+     "direction": "south-east",
+     "file": "npc-tally/south-east.png",
+     "sha256": "501666a19576a4c3ceb7400c93015a9c3ca5a0395e620fc36ad2e48cb2a275b2",
+     "bbox": [
+      19,
+      8,
+      42,
+      55
+     ],
+     "lowest_opaque_row": 54,
+     "height_top_to_lowest_row": 47,
+     "colours": 24,
+     "off_palette": 16,
+     "off_palette_px": 42,
+     "reserved": [],
+     "semi_transparent_px": 0
+    },
+    {
+     "direction": "east",
+     "file": "npc-tally/east.png",
+     "sha256": "c7858f6e4ba41055d7e56b39d31b948cf52ba993fdeff37168cdf2a4302fa7b7",
+     "bbox": [
+      19,
+      10,
+      42,
+      57
+     ],
+     "lowest_opaque_row": 56,
+     "height_top_to_lowest_row": 47,
+     "colours": 21,
+     "off_palette": 13,
+     "off_palette_px": 27,
+     "reserved": [],
+     "semi_transparent_px": 0
+    },
+    {
+     "direction": "north-east",
+     "file": "npc-tally/north-east.png",
+     "sha256": "967a77942d8b80507919108db93d9ce4187e2bfb47448f9aa55a58a39293b42a",
+     "bbox": [
+      22,
+      9,
+      43,
+      55
+     ],
+     "lowest_opaque_row": 54,
+     "height_top_to_lowest_row": 46,
+     "colours": 24,
+     "off_palette": 16,
+     "off_palette_px": 48,
+     "reserved": [],
+     "semi_transparent_px": 0
+    },
+    {
+     "direction": "north",
+     "file": "npc-tally/north.png",
+     "sha256": "74a7d81135f0cbfb24d97c153c7db067c320161e26e93a0039c099919999a59d",
+     "bbox": [
+      20,
+      8,
+      43,
+      54
+     ],
+     "lowest_opaque_row": 53,
+     "height_top_to_lowest_row": 46,
+     "colours": 18,
+     "off_palette": 10,
+     "off_palette_px": 50,
+     "reserved": [],
+     "semi_transparent_px": 0
+    },
+    {
+     "direction": "north-west",
+     "file": "npc-tally/north-west.png",
+     "sha256": "d32d7be744a4a1d6b4ae33408a7efa627681d3145e59ce5a5223f37dd3c61642",
+     "bbox": [
+      22,
+      9,
+      45,
+      56
+     ],
+     "lowest_opaque_row": 55,
+     "height_top_to_lowest_row": 47,
+     "colours": 21,
+     "off_palette": 13,
+     "off_palette_px": 38,
+     "reserved": [],
+     "semi_transparent_px": 0
+    },
+    {
+     "direction": "west",
+     "file": "npc-tally/west.png",
+     "sha256": "47d097a176d6223d7996c8257bf31636196898093a8d32ed4ee84f58bbfdab1d",
+     "bbox": [
+      21,
+      8,
+      44,
+      57
+     ],
+     "lowest_opaque_row": 56,
+     "height_top_to_lowest_row": 49,
+     "colours": 19,
+     "off_palette": 11,
+     "off_palette_px": 20,
+     "reserved": [],
+     "semi_transparent_px": 0
+    },
+    {
+     "direction": "south-west",
+     "file": "npc-tally/south-west.png",
+     "sha256": "daa4b9f935b634ff339ac2413f1f1252eb531208fc4cc0843c2ec98e25ec2534",
+     "bbox": [
+      21,
+      6,
+      43,
+      55
+     ],
+     "lowest_opaque_row": 54,
+     "height_top_to_lowest_row": 49,
+     "colours": 26,
+     "off_palette": 18,
+     "off_palette_px": 50,
+     "reserved": [],
+     "semi_transparent_px": 0
+    }
+   ]
+  }
+ },
+ "surprises": [
+  "Canvas fill is higher than the style sheet predicts: the player filled 48/56 = 86 % of its canvas (sheet: 75-85 % for Kindled) and Tally 48/54 = 89 % (sheet: /0.75 for everyone else). Cutting Tally's canvas by 6 rows (60 -> 54) lowered her typical height by only 2 px (50 -> 48).",
+  "Both create_image_pro calls returned 25 candidates (the tool doc says 16 for a 51-64 px larger side; Job 3 got 16 at 44x60).",
+  "Every player candidate that keeps the design (blade on the viewer's left, hood, freckles) is 48 px; the 46-47 px ones all drop or move the blade.",
+  "Tally's pick is outlined in dream-night #1C2147 (132 of 133 edge pixels), the player-only outline colour; Job 3's Tally used hollow-deep #2A2540. Her freckles are not amber (no #F2B65A).",
+  "The walk directions whose rotation came out on-palette (S, NE, N) stayed fully on-palette in all 6 skeleton-v3 frames; SE and E carried the rotation's off-palette colours.",
+  "In walk-skel S the blade shortens to a stub in frames 1-2 and lengthens again in 4-5."
+ ],
+ "contact_sheets": {
+  "contact-cast-b.png": "old player anchor, new player pick-64, Kesh (Job 3 pick-64), new Tally pick-64, clerk (Job 3 pick-64), husk anchor, clay jar anchor; every 64x64 cell as delivered (all already have their soles on row 53), at 2x on #D9D2E9 then 4x on #5B5478; tick marks between cells mark row 53; measured heights under the cells (Kesh and clerk from the Job 3 manifest; husk 18 and jar 19 = rows 36/35..53).",
+  "contact-player-b.png": "at 2x on #D9D2E9: rotations S, SE, E, NE, N, NW, W, SW; walk-skel S, SE, E, NE, N (6 frames); attack-v3 E, S (7 frames, frame 0 = rotation). Each frame on a 96x96 cell, canvas centred horizontally, shifted vertically so its lowest opaque row sits on cell row 87 (the line). Not scaled, snapped or recoloured."
+ },
+ "files_sha256": {
+  "balance.json": "7f1e0e399c211e1456b85577478957bc11ddc41fc328a5f5eb80d6b7c405d910",
+  "contact-cast-b.png": "6a573cce4ad1efb1b3db337b3add1af3e9bda8684c16062b1cb385d397984eee",
+  "contact-player-b.png": "05351d84a7eb9af11802ba9cba5278eb8b2ad5eb2590e8561450a743a7e14376",
+  "npc-tally/candidates.png": "2b7f4d6bfd333496f3055ce94bc9508772934c179a1411b6031f2f78dceb221f",
+  "npc-tally/candidates/candidate-00.png": "9455e3e62cb428038fa0b627b6b6f8eabe031c970c1ebea201cff2f51479985a",
+  "npc-tally/candidates/candidate-01.png": "cb4fc889e27bdb878ce9f8547c5fe701d806020d10b64a9b42c2363173e47827",
+  "npc-tally/candidates/candidate-02.png": "f8da2e6ea0a9874a9b65aca655ca2d3d6d8208cad4945a36f25b765b17165cba",
+  "npc-tally/candidates/candidate-03.png": "fdc7f7d27ae3f113edd98c6449ae582bd722eb46956aa86de77482f6918518cd",
+  "npc-tally/candidates/candidate-04.png": "93071d69fb3f92afbbb8ba771bae07bfd3f6aa8f4ccd28255f178133a6b9e0fe",
+  "npc-tally/candidates/candidate-05.png": "37305d8fc44e2f7f26f713f48c855c66ce8eb07627332c268858004569a2ed36",
+  "npc-tally/candidates/candidate-06.png": "2cce49d4848e7aa8d1a0f75def5ff0eb79229385beb7cca8a847688dcc7294a6",
+  "npc-tally/candidates/candidate-07.png": "70fcd633ab6703063bca32c1bf88e5cfa5dea1e263a12c615ab338067f0e413f",
+  "npc-tally/candidates/candidate-08.png": "f295f811a0a250c0c144f1a2a59aca6a77286b06ba401564f0f784a27a6670ac",
+  "npc-tally/candidates/candidate-09.png": "c3e5996d2aebf00fd45a6118ba86a1fbc234a974aa49499c1b588835bfe54198",
+  "npc-tally/candidates/candidate-10.png": "5d31ff8c4f9346a09cbba4ae9ed736ae1967bd8e5ba6e9797794341a85db9390",
+  "npc-tally/candidates/candidate-11.png": "bf215dd0c0733b9f7bb5f4376e6a79e1151d14ff299357f5dd51dbede1a5b878",
+  "npc-tally/candidates/candidate-12.png": "27de0c00eb60d0076f9f484ac3611544e63c79d5f3da3d53e71d78db0d6aa840",
+  "npc-tally/candidates/candidate-13.png": "84614f4e5de172186c5f912b4edad6468dc04465caa9f49731ad607440588378",
+  "npc-tally/candidates/candidate-14.png": "9378fe9b8e953d0c7e06a1f3fc53cf45014f7b688d34920400e4dbe0ac325887",
+  "npc-tally/candidates/candidate-15.png": "d382c55914f5c46fbfd1f87b55263cbd3481e0dc28841ea2f4d75a807f18fda3",
+  "npc-tally/candidates/candidate-16.png": "03085ce4d137c583c12067605cb887436e3df1be960069bdf0141febce5295fa",
+  "npc-tally/candidates/candidate-17.png": "6cde2611e2b472fe2bbddd4310ad558dc96a73d8017a41e083abf3106bafac6c",
+  "npc-tally/candidates/candidate-18.png": "391fb704e8bf824713d8cd7ea9f6484c56bbb206f8eb34f49f0c2dc074a928c2",
+  "npc-tally/candidates/candidate-19.png": "108f6cb180fe34cbfdd246a685608708c73583d0ea154c9b35b669c945fc5664",
+  "npc-tally/candidates/candidate-20.png": "cca23dd07334651613f3f25690d9d8987b49a0fc1ad5ffc248ee304ce2a5158f",
+  "npc-tally/candidates/candidate-21.png": "965307e38f0207fc1e365515ab28c5aec0cc9316d14a702543e308d0cce9b8aa",
+  "npc-tally/candidates/candidate-22.png": "c90282b969f5b48922374c0ca1723ec6cd437ffd2cfcdbb89a990ccd53d73543",
+  "npc-tally/candidates/candidate-23.png": "fbc5bff419bc816f70e0ce107b8c85ca98071d83e026bce080c5ed4fcc0039c8",
+  "npc-tally/candidates/candidate-24.png": "9a014bee2adb88b328bb5379b777b228b6306e56ed3c9d51797c293a3a120840",
+  "npc-tally/character-metadata.json": "765051de8b470a394735c6e49c8d0f7ffb36a3f09facac6126fdc8502264cdb1",
+  "npc-tally/east.png": "c7858f6e4ba41055d7e56b39d31b948cf52ba993fdeff37168cdf2a4302fa7b7",
+  "npc-tally/north-east.png": "967a77942d8b80507919108db93d9ce4187e2bfb47448f9aa55a58a39293b42a",
+  "npc-tally/north-west.png": "d32d7be744a4a1d6b4ae33408a7efa627681d3145e59ce5a5223f37dd3c61642",
+  "npc-tally/north.png": "74a7d81135f0cbfb24d97c153c7db067c320161e26e93a0039c099919999a59d",
+  "npc-tally/pick-64.png": "0708610829625bfd3df2836adf53a657966ca8bd5ccc676a082eea3aea88433f",
+  "npc-tally/pick.png": "93071d69fb3f92afbbb8ba771bae07bfd3f6aa8f4ccd28255f178133a6b9e0fe",
+  "npc-tally/south-east.png": "501666a19576a4c3ceb7400c93015a9c3ca5a0395e620fc36ad2e48cb2a275b2",
+  "npc-tally/south-west.png": "daa4b9f935b634ff339ac2413f1f1252eb531208fc4cc0843c2ec98e25ec2534",
+  "npc-tally/south.png": "d1814ade0e00f428714ed68fe30545992b39e1c01d504a8630bb060a918c39f2",
+  "npc-tally/west.png": "47d097a176d6223d7996c8257bf31636196898093a8d32ed4ee84f58bbfdab1d",
+  "player/attack-v3/east/frame-0.png": "94feefcc494c69c10300b5c9e30ca3b6c2166f07b73fe26a825d012da3584ca3",
+  "player/attack-v3/east/frame-1.png": "effe9a0e0ad46ca106075ed5eb4779650ca451ca7d888d60ee7c559ab9c96a5f",
+  "player/attack-v3/east/frame-2.png": "b39e76f552b364ef864c41e6d3d503907ae743c820d9618db780d73b1942d8dc",
+  "player/attack-v3/east/frame-3.png": "cea4c9136a93decba0559efcbc29b1997fb971d2b79822700222f0e7740f0f56",
+  "player/attack-v3/east/frame-4.png": "f0adf69113772d6b64b503bd4e6cf2e4bb052af78e0b793fa2b6330d2871158d",
+  "player/attack-v3/east/frame-5.png": "42b3e0d4edf8433158dd6d45f61eb196e6a19f61053587c8f25dcb7cce6dc4ed",
+  "player/attack-v3/east/frame-6.png": "88c6d6286bd040777d2b250a01926fb65eaba6ec2e64274d101fe8cb57f6c8e4",
+  "player/attack-v3/south/frame-0.png": "1af56bcdd408fefed6b9508cea43a87861f239b21ff339832e9a7ad0e5507f82",
+  "player/attack-v3/south/frame-1.png": "667286555574df741fca4e538ba3dcbc2620af2b343c9fc0bbb30ef89491d1e9",
+  "player/attack-v3/south/frame-2.png": "e4070498f26b5862899914032be404aa9b3880f4e79efb638a2559a1d8b245a0",
+  "player/attack-v3/south/frame-3.png": "8b87c08877701efa6b9ccfaa4a55c19a97246bc9cfbb73c69c178b2f700deb41",
+  "player/attack-v3/south/frame-4.png": "ac6537fae909a60ed04ce34ab3e67cc99f452b6d4d6136c93a855d0c3d76ac51",
+  "player/attack-v3/south/frame-5.png": "c8eaac08be221b450ae4113098764ea0718064a1f78a39d7afa9007f6b3750c5",
+  "player/attack-v3/south/frame-6.png": "a47f5ff2cc7aa5591eb5f8c04d2b91c95c146ee59039f049d16e4e8f6049c6b9",
+  "player/candidates.png": "2516ce5eef761e8800c1a152d19cdfe06aa918c2176baa71044e6f27933d5a86",
+  "player/candidates/candidate-00.png": "94823cc4aac8a0c3f540719a182164f496ec8de71fd99fc381fa3fe114e2790a",
+  "player/candidates/candidate-01.png": "f3bb67962df032efd7be7d7345bdd2ff1483a57fcdd8a12797947274d40824cc",
+  "player/candidates/candidate-02.png": "43a5ce73deff4bb4a56b44301fe0c237c05ef3dce5bb2ca1c284183e9b0229a8",
+  "player/candidates/candidate-03.png": "093fda0db50b34fd9fe0acafb700b6fe90f2a09754a042b07d2d57af43762b26",
+  "player/candidates/candidate-04.png": "7d929e74d094379acae1e5d71a5d231ca5cbfb4dd63395b04888e085d249be41",
+  "player/candidates/candidate-05.png": "f7e3855ea668af6fff860b36abbfe9e475f2b2261792e1483a22748b3e78a1cf",
+  "player/candidates/candidate-06.png": "7a0568b8b6298770fa8f8b8facc4068b468a1482af0b45bd39088b9b8084ce7e",
+  "player/candidates/candidate-07.png": "a5c15df76ab7adc78b756ce75461309a757320c40fbb547d2242534aafb6d31f",
+  "player/candidates/candidate-08.png": "e43e454662bc10475d261997629c65a61d303d86cab6be19b235e8ae96a72b16",
+  "player/candidates/candidate-09.png": "1bc58e2e6836b1a5fa7d2e5b0dd0343bd5f1ff9249211e46e4824436a713045d",
+  "player/candidates/candidate-10.png": "3df094fa7161c05f63c1dde89747b9ab4845335a98d5a61567e1bef7b7069c9d",
+  "player/candidates/candidate-11.png": "7f4cbee398246067b50cb13b7bb50315be1648fe090b163119ea10db7266f481",
+  "player/candidates/candidate-12.png": "1c4a7117fe873433fcc1022547f24c2e6362abae0334f2c91208143ea191f19c",
+  "player/candidates/candidate-13.png": "7c4011c8e3d519f028c244eae24b614bb90a8dbef04f5fcf6c9d8d7e48355414",
+  "player/candidates/candidate-14.png": "31f38c80a6ca44ab7e5a9ff923e8fb7b056824aaf1bff5d6a03e5ed13f3e0e01",
+  "player/candidates/candidate-15.png": "f26637a19a87749fb6d0cf293d3e7f27dd5aaa048d6536137595cbfaf017a9a6",
+  "player/candidates/candidate-16.png": "b930d28c658470a25fd4dda5c2b28b5958f0863bb7e50b05f500ab25978f651c",
+  "player/candidates/candidate-17.png": "68fc0c01772b528f033145d54072d52b55aeeae16d93db10f8a9fbb3579e4e57",
+  "player/candidates/candidate-18.png": "e66c54e3750f5ea752c50c2b97231ddd23a9692baecdec0ed125180587d13854",
+  "player/candidates/candidate-19.png": "d19ed5752ea412e30665065146c7ed2f43961dd4389db911959ad6dab930dab3",
+  "player/candidates/candidate-20.png": "cba49374950af1cec8e0e15d90384685278900266d42afeb4ba0acb6ab97b2fa",
+  "player/candidates/candidate-21.png": "1ffd8309368661e8d9b8d9a90c1e9c4abd129770d7beadccdb4f4ff2d7d7f33a",
+  "player/candidates/candidate-22.png": "c084945013c7615f7ed447807dd43d0bcf082638bd00f0b2ba18bc9dfe673232",
+  "player/candidates/candidate-23.png": "11da104b63864b0a3f088bcbf7e52b9eac14b6b418cce0aaa80f941cabdbc1fe",
+  "player/candidates/candidate-24.png": "70be6dd4290b3a9736aef97cdea8c0e561fcea21e893bad7244053f8044469da",
+  "player/character-metadata.json": "20aeff3719b542767d4eff4eb5b83d570ad469df5a868003459918ac3fcdb5e9",
+  "player/east.png": "ef5f9dd2fe2ed42fe9ee0b9990af4e0a01ae5ac4512eb1bfd041c7bb76a91474",
+  "player/north-east.png": "79261eb0329ff8a75cc0206ae6c5e9c9a09098b8bc10fd4a0e669e1c7a4ea956",
+  "player/north-west.png": "2edbc9235e0b664c38f80370b0b54a2e255019cd6db6a4e55be6a874ba9f7af2",
+  "player/north.png": "cc2681362f263a2476bf641df47d167676efe09d875e5536e8a83cdccf1578f5",
+  "player/pick-64.png": "018c85438123cfdf1d08a889f38f59c5647b4f541b3b836b61a959e63b992ce4",
+  "player/pick.png": "94823cc4aac8a0c3f540719a182164f496ec8de71fd99fc381fa3fe114e2790a",
+  "player/south-east.png": "77a272b79f5431adb4d40605c505d7eff063ae96ea77e135e30338a30b47fb5b",
+  "player/south-west.png": "68834277170f9ef47496ba0658a95a9cc454bcfe65b664706068e19fa81ec154",
+  "player/south.png": "e3d58bc853258fa51d225ee7f56ed55ef6663d645cf71edaa31dd40ad4b6edbb",
+  "player/walk-skel/east/frame-0.png": "4dcfe9a094b6a551dc0a342d6ac49a0bca0b9ab8cb36f7e40ed49824ca7e0efb",
+  "player/walk-skel/east/frame-1.png": "e2bf8a10e2b099750a14e8239f09e0ac5123b7819699446891948199cd9e0e43",
+  "player/walk-skel/east/frame-2.png": "3055c1012f0ecbf3efd7ac8aa13531f876211ef563ee42e8c7742f518937bb1f",
+  "player/walk-skel/east/frame-3.png": "54396a9180957b10a7b7dcdcccd55363b10c0b214016c38aaa4498f4b0fd043a",
+  "player/walk-skel/east/frame-4.png": "59f729488e76f1372a51f82513cb17dc7f9ce9bae5db7cc58f6ecf01f5519695",
+  "player/walk-skel/east/frame-5.png": "a7b41575512f4124dc592816d7bcc5c2785730979a9140c6f1d2226bb2320c0c",
+  "player/walk-skel/north-east/frame-0.png": "376760177f292c47ba1a5350af8edab8ba371860a9ce8f56d1d191e063c3da32",
+  "player/walk-skel/north-east/frame-1.png": "3511be1d61aca9b2ceae4c4b7ee272a8b2320cec0e7c673832424248f5f9fede",
+  "player/walk-skel/north-east/frame-2.png": "0d3554db5576dad88ae3abe01022a815027420e0ec7c3cc4c01e61300509a3d6",
+  "player/walk-skel/north-east/frame-3.png": "45941c35478cc85c01e5013b6cc0104e5d9f2d15a880a26a17ebd61e5c575ac1",
+  "player/walk-skel/north-east/frame-4.png": "d398bb13f77a648946af7cb54ad5016a57e60cb51f2aaba6501d8667cedbd9bc",
+  "player/walk-skel/north-east/frame-5.png": "1e8d3bc622c9c2a62457189a1fba589f169e8675a60fe348d85256fb65e59c08",
+  "player/walk-skel/north/frame-0.png": "839b056c4270e37fee42f3d2e3f4bc32a132afaa4dca8429b370455d54deaa7b",
+  "player/walk-skel/north/frame-1.png": "f84ec9b5a5597c79298ccb5f9274fbaff68591c4b1d3be5a7978e0d484d13fde",
+  "player/walk-skel/north/frame-2.png": "b0ba0d8902060cbc989ef8ce1e7a135d989967eb41b878bb5769c0dc50566f61",
+  "player/walk-skel/north/frame-3.png": "088c2a877cb765ca3d0f6830159efb9a0a5b28c86c889fd7629b979ec7d39bef",
+  "player/walk-skel/north/frame-4.png": "83f2a9c37de266d4cc4b1201c0fd6a3ebd9b12da0bf3929384331a546d985637",
+  "player/walk-skel/north/frame-5.png": "9679826797a029ae8af03199e51097ab61db737fdc0ae3d2c9279103b6315b1a",
+  "player/walk-skel/south-east/frame-0.png": "2ca8bf7cfb96b3bb682890d83b236e7523c8bfcaeab73c97ac23bf40151594ba",
+  "player/walk-skel/south-east/frame-1.png": "18a0faba76c6a0b143c520f4c2f0aa9cde7be9d07b0e0f37982c3cd493c2d805",
+  "player/walk-skel/south-east/frame-2.png": "6f999977dfdc4736ed95de87024d8d9561c327add9b93f455929153667f782a8",
+  "player/walk-skel/south-east/frame-3.png": "6217c2c993cedc60233a2025ec9865cd768dcae49ed795eca32a4259c7dce674",
+  "player/walk-skel/south-east/frame-4.png": "93fbb1f6213eb0f36e28031bf6976407159d2fff7cafd61204a02625a1d6fe80",
+  "player/walk-skel/south-east/frame-5.png": "7b31043c6bde10be172fd9feab3d195f5e642e29e4f4603b483c743a9e741671",
+  "player/walk-skel/south/frame-0.png": "53f1a0b25872d8e7ad2f90f8eb250ae41e589c3c128fcda3a51514d06f9486e2",
+  "player/walk-skel/south/frame-1.png": "c05f271b0c6243105f71a8cb86090b1b28d21983b478dd53e7e568e240fbbef7",
+  "player/walk-skel/south/frame-2.png": "1de40ed263dfcb2e4c0bc42c59917847160ae6e8e35147339b4b59519e2d2c46",
+  "player/walk-skel/south/frame-3.png": "57831eb2ff7d20df2cf186f612ddfffe612918f9b0e46565386ccfd585a217d5",
+  "player/walk-skel/south/frame-4.png": "bed0ab01bd360f3b1d8af461fba1b4bc9e86a5cf4b88767763b1ae78a889ae23",
+  "player/walk-skel/south/frame-5.png": "e71c677f2fd827749294248fec23d983c7adf532eb1114a3de0acb69a5c932c6",
+  "player/west.png": "d2f373bf57c87f3461ac80c41d7f43c056bb9d9ef2117410d14d822ff567036a"
+ }
+}

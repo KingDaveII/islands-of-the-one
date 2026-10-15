@@ -1,0 +1,49 @@
+{
+  "job": "g13b-job4",
+  "budget": "about 40, hard cap 50",
+  "readings": [
+    {
+      "when": "before the first call",
+      "generations_remaining": 1606.9,
+      "generations_used": 393.1
+    },
+    {
+      "when": "end (after both create_image_pro, both v3 rotations, walk-skel and attack-v3)",
+      "generations_remaining": 1567.9,
+      "generations_used": 432.1,
+      "spent": 39.0
+    }
+  ],
+  "per_call": [
+    {
+      "call": "create_image_pro player 44x56",
+      "quoted": 10,
+      "charged": 10
+    },
+    {
+      "call": "create_image_pro npc-tally 44x54",
+      "quoted": 10,
+      "charged": 10
+    },
+    {
+      "call": "create_character v3 player",
+      "quoted": 1
+    },
+    {
+      "call": "create_character v3 npc-tally",
+      "quoted": 1
+    },
+    {
+      "call": "animate_character skeleton-v3 walk-skel x5",
+      "quoted": 15
+    },
+    {
+      "call": "animate_character v3 attack-v3 x2",
+      "quoted": 2
+    }
+  ],
+  "per_call_note": "create_image_pro charges read from get_image (charged_generations 10 each); the others ran together, and their quotes sum to 39 - 20 = 19, exactly the measured difference",
+  "total_spent": 39.0,
+  "allowance_left_this_cycle": 1567.9,
+  "cycle_resets": "2026-11-15"
+}
