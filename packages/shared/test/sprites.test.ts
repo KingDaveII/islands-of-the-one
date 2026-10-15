@@ -5,16 +5,27 @@ import {
   HUSK_ANIMS,
   hexOf,
   isKindledSheet,
+  isV2Sheet,
   KINDLED_ANIMS,
   kindledAnimKey,
   kindledFrameName,
+  LEGACY_PIXEL_SCALE,
   paletteData,
+  sheetPixelScale,
+  skinMaskName,
+  SPRITE_CANVAS,
+  SPRITE_CELLS,
   SPRITE_FACINGS,
   SPRITE_SHEET_NAMES,
+  SPRITE_WHITELIST,
+  spriteCellSpecFor,
   spriteSheets,
+  WORLD_PX_PER_UNIT,
   type SpriteSheet,
 } from '../src/index.js';
+import fixtureSheet from './fixtures/kindled-fixture.json' with { type: 'json' };
 import { decodePng } from './png.js';
+import { v2Problems, type Rgba } from './sheetChecks.js';
 
 /**
  * Every animated sheet in packages/shared/assets/sprites against its PNG
@@ -22,18 +33,36 @@ import { decodePng } from './png.js';
  * cell grid, every anim frame exists and every frame is used, Kindled sheets
  * carry the whole animation × facing matrix, the anchor is the origin, every
  * opaque pixel is a palette token (telegraph colours only in telegraph
- * frames, pure white nowhere) and the palette swaps are valid.
+ * frames, pure white nowhere) and the palette swaps are valid. A v2 sheet
+ * also follows the v2 contract (sheetChecks.ts): its kind's cell and origin,
+ * pixelScale 1, nothing clipped at a cell's edge, the colour whitelist, and
+ * its skin mask. The v2 fixture in test/fixtures runs through the same checks.
  */
 const SHEETS: [string, SpriteSheet][] = SPRITE_SHEET_NAMES.map((name) => [name, spriteSheets[name]]);
 
 const assetUrl = (image: string): URL => new URL(`../assets/sprites/${image}`, import.meta.url);
+const fixtureUrl = (image: string): URL => new URL(`./fixtures/${image}`, import.meta.url);
 
 const PALETTE = new Set(Object.values(paletteData.tokens).map((h) => h.toLowerCase()));
 const TELEGRAPH = new Set(paletteData.signals.telegraph.map((h) => h.toLowerCase()));
 const WHITE = paletteData.signals.hit.toLowerCase();
 
 describe.each(SHEETS)('the %s sprite sheet', (name, sheet) => {
-  const file = assetUrl(sheet.meta.image);
+  sheetSuite(name, sheet, assetUrl, true);
+});
+
+describe('the v2 fixture sheet (test/fixtures/kindled-fixture)', () => {
+  const sheet: SpriteSheet = fixtureSheet;
+  it('is a v2 Kindled sheet', () => {
+    expect(isV2Sheet(sheet)).toBe(true);
+    expect(sheetPixelScale(sheet)).toBe(1);
+  });
+  sheetSuite('kindled-fixture', sheet, fixtureUrl, false);
+});
+
+/** The checks of §6 for one sheet; `shipped` sheets also carry the whole M1 animation table. */
+function sheetSuite(name: string, sheet: SpriteSheet, url: (image: string) => URL, shipped: boolean): void {
+  const file = url(sheet.meta.image);
   const { cell, origin } = sheet.meta;
   const frames = Object.entries(sheet.frames);
 
@@ -140,7 +169,7 @@ describe.each(SHEETS)('the %s sprite sheet', (name, sheet) => {
     }
   });
 
-  if (isKindledSheet(name)) {
+  if (isKindledSheet(name) && shipped) {
     it('lists the 8 facings in sheet order and carries every M1 animation for every facing it lists', () => {
       expect(sheet.meta.facings).toEqual([...SPRITE_FACINGS]);
       for (const a of KINDLED_ANIMS) {
@@ -156,7 +185,9 @@ describe.each(SHEETS)('the %s sprite sheet', (name, sheet) => {
         }
       }
     });
+  }
 
+  if (isKindledSheet(name)) {
     it('is drawn in one clay tone and swaps to the other tones with hex values that occur in the PNG', () => {
       const palette = sheet.palette;
       expect(palette).toBeDefined();
@@ -178,7 +209,7 @@ describe.each(SHEETS)('the %s sprite sheet', (name, sheet) => {
         }
       }
     });
-  } else {
+  } else if (!isKindledSheet(name)) {
     it('is a Husk sheet: no facings, no palette block, pre-tinted telegraph frames', () => {
       expect(sheet.meta.facings).toBeUndefined();
       expect(sheet.palette).toBeUndefined();
@@ -201,7 +232,23 @@ describe.each(SHEETS)('the %s sprite sheet', (name, sheet) => {
       expect(tinted).toBeGreaterThan(0);
     });
   }
-});
+
+  if (isV2Sheet(sheet)) {
+    it('follows the v2 contract: cell, origin, pixelScale, nothing clipped, the whitelist, the skin mask', () => {
+      const maskFile = sheet.palette?.mask ? url(sheet.palette.mask) : null;
+      if (maskFile) expect(existsSync(maskFile), sheet.palette?.mask).toBe(true);
+      const mask = maskFile && existsSync(maskFile) ? decodePng(readFileSync(maskFile)) : null;
+      expect(v2Problems(name, sheet, png, mask)).toEqual([]);
+    });
+  } else {
+    it('is a v1 sheet: version "1", no pixelScale, drawn at the legacy 2×', () => {
+      expect(sheet.meta.version).toBe('1');
+      expect(sheet.meta.pixelScale).toBeUndefined();
+      expect(sheet.palette?.mask).toBeUndefined();
+      expect(sheetPixelScale(sheet)).toBe(LEGACY_PIXEL_SCALE);
+    });
+  }
+}
 
 describe('the palette', () => {
   it("holds the design system's 32 raw colours, each once, and the drawn clay tone's values among them", () => {
@@ -221,6 +268,123 @@ describe('the palette', () => {
       expect(PALETTE.has(t.shade), `${tone} shade`).toBe(true);
     }
     expect(tones[paletteData.clay.drawn]?.skin).toBe(paletteData.tokens['unwritten-sail']);
+  });
+});
+
+describe('the v2 contract (sprites.md §2, §5)', () => {
+  it('draws the world at 2× and M1 art at 2×', () => {
+    expect(WORLD_PX_PER_UNIT).toBe(2);
+    expect(LEGACY_PIXEL_SCALE).toBe(2);
+  });
+
+  it('puts the 64×64 canvas in each cell with the soles on the row above the origin', () => {
+    expect(SPRITE_CANVAS).toEqual({ w: 64, h: 64, soleRow: 53 });
+    expect(SPRITE_CELLS.kindled).toEqual({ cell: { w: 112, h: 80 }, origin: { x: 56, y: 64 }, canvasAt: { x: 24, y: 10 } });
+    expect(SPRITE_CELLS.other).toEqual({ cell: { w: 64, h: 64 }, origin: { x: 32, y: 54 }, canvasAt: { x: 0, y: 0 } });
+    for (const spec of Object.values(SPRITE_CELLS)) {
+      // Canvas row 53 is the cell row just above the origin; the canvas is centred horizontally.
+      expect(spec.canvasAt.y + SPRITE_CANVAS.soleRow).toBe(spec.origin.y - 1);
+      expect(spec.canvasAt.x * 2 + SPRITE_CANVAS.w).toBe(spec.cell.w);
+      expect(spec.origin.x).toBe(spec.cell.w / 2);
+    }
+    expect(spriteCellSpecFor('kindled-ash')).toBe(SPRITE_CELLS.kindled);
+    expect(spriteCellSpecFor('husk-peeling')).toBe(SPRITE_CELLS.other);
+    expect(spriteCellSpecFor('npc-tally')).toBe(SPRITE_CELLS.other);
+    expect(skinMaskName('kindled-ash')).toBe('kindled-ash.skin.png');
+  });
+
+  it("derives the 28-colour whitelist from palette.json: the style sheet's list", () => {
+    // art/anchors/style-sheet.md, "Whitelist (28)".
+    const styleSheet =
+      '#F4EFE6 #D9D2E9 #A99FC4 #5B5478 #2A2540 #F2B65A #C9733A #4A4E57 #7D8794 #3E5C7A #A8743A #C79A3E #8A6420 #E9E4D4 ' +
+      '#2F7F7A #C98F78 #9C5B4A #E3C29E #24305A #E8E2D6 #FFF4C7 #8C7F6E #5E5448 #FBF8F0 #D8B24A #F07A3A #B5402E #1C2147';
+    expect(SPRITE_WHITELIST).toHaveLength(28);
+    expect([...SPRITE_WHITELIST].sort()).toEqual(styleSheet.toLowerCase().split(' ').sort());
+    for (const banned of ['#ffffff', '#ffe7a3', ...paletteData.signals.telegraph]) expect(SPRITE_WHITELIST).not.toContain(banned);
+  });
+
+  describe('the checks catch a broken v2 sheet', () => {
+    const sheet: SpriteSheet = fixtureSheet;
+    let png: Rgba = { width: 0, height: 0, rgba: new Uint8Array(0) };
+    let mask: Rgba = png;
+    beforeAll(() => {
+      png = decodePng(readFileSync(fixtureUrl(sheet.meta.image)));
+      mask = decodePng(readFileSync(fixtureUrl(sheet.palette?.mask ?? '')));
+    });
+    const copy = (img: Rgba): Rgba => ({ ...img, rgba: img.rgba.slice() });
+    const paint = (img: Rgba, x: number, y: number, hex: string, a = 255): void => {
+      const i = (y * img.width + x) * 4;
+      const v = parseInt(hex.slice(1), 16);
+      img.rgba.set([(v >> 16) & 0xff, (v >> 8) & 0xff, v & 0xff, a], i);
+    };
+    /** The first opaque pixel of a colour in the sheet. */
+    const find = (hex: string): [number, number] => {
+      for (let i = 0; i < png.width * png.height; i++) {
+        if ((png.rgba[i * 4 + 3] ?? 0) === 0) continue;
+        if (hexOf(png.rgba[i * 4] ?? 0, png.rgba[i * 4 + 1] ?? 0, png.rgba[i * 4 + 2] ?? 0) === hex) return [i % png.width, Math.floor(i / png.width)];
+      }
+      throw new Error(`no ${hex}`);
+    };
+
+    it('passes as drawn', () => {
+      expect(v2Problems('kindled-fixture', sheet, png, mask)).toEqual([]);
+    });
+
+    it('a wrong cell, origin or pixel scale for the kind', () => {
+      const husk = v2Problems('husk-fixture', sheet, png, mask);
+      expect(husk.some((p) => p.startsWith('cell 112×80'))).toBe(true);
+      expect(husk.some((p) => p.startsWith('origin (56, 64)'))).toBe(true);
+      const scaled = { ...sheet, meta: { ...sheet.meta, pixelScale: 2 } };
+      expect(v2Problems('kindled-fixture', scaled, png, mask)).toEqual(['meta.pixelScale is 2, not 1']);
+    });
+
+    it('a pixel on a cell edge', () => {
+      const p = copy(png);
+      paint(p, 112 + 111, 40, paletteData.tokens['dream-night']);
+      expect(v2Problems('kindled-fixture', sheet, p, mask)).toEqual(['opaque pixels on the outer 1 px ring (clipped?): idle_S_1']);
+    });
+
+    it('spark-glow, pure white, an off-palette colour, a telegraph colour outside a telegraph frame', () => {
+      const p = copy(png);
+      paint(p, 40, 40, paletteData.tokens['spark-glow']);
+      paint(p, 41, 40, paletteData.signals.hit);
+      paint(p, 42, 40, '#123456');
+      paint(p, 43, 40, paletteData.tokens['signal-telegraph']);
+      const problems = v2Problems('kindled-fixture', sheet, p, mask);
+      expect(problems).toContain('colours outside the whitelist: #123456');
+      expect(problems).toContain('colours never allowed in a sheet: #ffe7a3, #ffffff');
+      expect(problems).toContain('telegraph colours outside telegraph frames: idle_S_0');
+    });
+
+    it('a mask that is missing, the wrong size, over a non-key colour, or leaves a key uncovered', () => {
+      expect(v2Problems('kindled-fixture', sheet, png, null)).toEqual(['no skin mask']);
+      expect(v2Problems('kindled-fixture', sheet, png, { width: 1, height: 1, rgba: new Uint8Array(4) })).toEqual(['mask 1×1, sheet 224×80']);
+      const over = copy(mask);
+      const [ex, ey] = find(paletteData.tokens['dream-night']);
+      paint(over, ex, ey, '#ffffff');
+      expect(v2Problems('kindled-fixture', sheet, png, over)).toEqual(['1 masked pixels are not a swap-key colour']);
+      // Clear the mask over every shade pixel: the shade key is no longer covered.
+      const bare = copy(mask);
+      const shade = paletteData.clay.tones['clay-grey-ochre'].shade;
+      for (let i = 0; i < png.width * png.height; i++) {
+        if (hexOf(png.rgba[i * 4] ?? 0, png.rgba[i * 4 + 1] ?? 0, png.rgba[i * 4 + 2] ?? 0) === shade) bare.rgba[i * 4 + 3] = 0;
+      }
+      expect(v2Problems('kindled-fixture', sheet, png, bare)).toEqual([`swap keys with no masked pixel: ${shade}`]);
+    });
+
+    it('leaves the belt and boots out of the mask though they share the skin shade', () => {
+      const shade = paletteData.clay.tones['clay-grey-ochre'].shade;
+      let masked = 0;
+      let unmasked = 0;
+      for (let i = 0; i < png.width * png.height; i++) {
+        if ((png.rgba[i * 4 + 3] ?? 0) === 0) continue;
+        if (hexOf(png.rgba[i * 4] ?? 0, png.rgba[i * 4 + 1] ?? 0, png.rgba[i * 4 + 2] ?? 0) !== shade) continue;
+        if ((mask.rgba[i * 4 + 3] ?? 0) > 0) masked++;
+        else unmasked++;
+      }
+      expect(masked).toBeGreaterThan(0);
+      expect(unmasked).toBeGreaterThan(0);
+    });
   });
 });
 

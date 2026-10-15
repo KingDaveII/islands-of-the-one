@@ -1,0 +1,110 @@
+{
+  "frames": {
+    "idle_S_0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 80
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.8
+      }
+    },
+    "idle_S_1": {
+      "frame": {
+        "x": 112,
+        "y": 0,
+        "w": 112,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 80
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.8
+      }
+    }
+  },
+  "meta": {
+    "image": "kindled-fixture.png",
+    "size": {
+      "w": 224,
+      "h": 80
+    },
+    "scale": "1",
+    "format": "RGBA8888",
+    "app": "fixture",
+    "version": "2",
+    "cell": {
+      "w": 112,
+      "h": 80
+    },
+    "origin": {
+      "x": 56,
+      "y": 64
+    },
+    "facings": [
+      "S",
+      "SE",
+      "E",
+      "NE",
+      "N",
+      "NW",
+      "W",
+      "SW"
+    ],
+    "pixelScale": 1
+  },
+  "anims": {
+    "idle_S": {
+      "frames": [
+        "idle_S_0",
+        "idle_S_1"
+      ],
+      "frameRate": 2,
+      "repeat": -1
+    }
+  },
+  "palette": {
+    "drawn": "clay-grey-ochre",
+    "mask": "kindled-fixture.skin.png",
+    "swaps": {
+      "clay-pale": {
+        "#8c7f6e": "#e8e2d6",
+        "#5e5448": "#8c7f6e"
+      },
+      "clay-red": {
+        "#8c7f6e": "#c98f78",
+        "#5e5448": "#9c5b4a"
+      },
+      "clay-river-dark": {
+        "#8c7f6e": "#5e5448",
+        "#5e5448": "#2a2540"
+      }
+    }
+  }
+}
