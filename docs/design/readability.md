@@ -1,6 +1,13 @@
 # Visual readability
 
-How the fight is drawn so that everything that matters reads at 1× (480 × 270) in a busy room.
+How the fight is drawn so that everything that matters reads at 1× in a busy room. Two pixel grids
+(G1.5): the **world** renders at 2× (one sim pixel is two world px, a tile 32), in a view of up to
+960 × 432–540 world px that flexes with the window; the **UI** keeps M1's 480 × 270 design in UI
+px. Only M1's assets (the three v1 sheets, hookblade-fx and the procedural room) draw at 2 world px per
+pixel until ART's B versions replace them; the engine's own world drawings (shadows, decals, the
+slash arc and thrust line, particles, rings, poise bars, the pad reticle, the Haul guide) are at 1
+world px per pixel, on the world camera; sim lengths (reach, radii, `*Px` tuning) are ×2 there.
+Text, the HUD, the menus and the mouse reticle (the cursor in a run) are UI px on the UI camera.
 Combat rules are in [`combat.md`](combat.md). Colors are the design-system tokens in
 [`apps/client/src/palette.ts`](../../apps/client/src/palette.ts); never use a color that is not a
 token.
@@ -33,7 +40,8 @@ particles, text, dev panels):
   player always has the highest-contrast outline in the room**: `dream-night` (`#1C2147`), the
   darkest value. Husks use `hollow-deep` (`#2A2540`).
 - **Grounding shadow.** Every character and enemy sits on a small dithered `hollow-deep` ellipse,
-  soft and directly underneath (never cast sideways), so position reads on pale floors.
+  soft and directly underneath (never cast sideways), so position reads on pale floors: 20 × 6
+  world px under a Kindled, a Husk's scaled by its radius against the player's.
 - **Husk cores.** The bright `husk-core` gets a 1 px `hollow-deep` ring wherever it shows, so it
   never merges with the pale floor.
 - **Telegraphs.** During a wind-up the whole Husk turns telegraph pink (dark pink shade and
@@ -65,8 +73,9 @@ particles, text, dev panels):
   `spark-amber` clasp; opened, the lid stands up and the inside is the Hollow.
 - **Aim.** The reticle marks the exact 360° aim: four broken rims on the diagonals around a spark,
   `hollow-light` with a `ui-outline` outline (never a cross or plus). With the mouse it sits on the
-  pointer; on the gamepad (Playtest 2) it is drawn `juice.padReticleDistPx` (32) out along the aim,
-  and snaps onto the soft-locked Husk while there is one, so the stick's aim is always visible.
+  pointer, as the cursor (UI camera, UI px); on the gamepad (Playtest 2) it is drawn in the world
+  `juice.padReticleDistPx` (32 sim px, 64 world px) out along the aim, and snaps onto the
+  soft-locked Husk while there is one, so the stick's aim is always visible.
   Sprites turn to the nearest of 8 facings, in sheet order **S, SE, E, NE, N, NW, W, SW**
   (`apps/client/src/render/facing.ts`).
 - **Haul guide** (gamepad only). While the Haul is ready, a dotted line runs from the player along
@@ -78,17 +87,18 @@ particles, text, dev panels):
 - **Room.** Pale `hollow-lavender` floors with `hollow-light` flecks and a dithered edge where they
   meet walls; walls show a `hollow-below` face with `hollow-deep` lines; outside the room is
   `hollow-deep`.
-- Pixel rules: whole game pixels only, flat shading in 2–3 steps, dithering instead of gradients,
-  and a zoom of **whole device pixels** per game pixel (×4 at 1080p). The zoom is chosen in
-  device pixels, not CSS pixels (`apps/client/src/game/zoom.ts`): on a display scaled to 125 % a
-  CSS zoom of 3 would be 3.75 device pixels and 1 px strokes would come out 3 or 4 wide at random,
-  which is what made the start screen's text look wrong in Playtest 2; 4 device pixels there is a
-  CSS zoom of 3.2.
+- Pixel rules: whole pixels only, flat shading in 2–3 steps, dithering instead of gradients. The
+  canvas runs at device resolution and each grid is drawn at **whole device pixels** per pixel:
+  the world camera at `zW` per world px (2 in a 1080p browser window, a 960 × 456 view), the UI
+  camera at `zU` per UI px (3 there; 4 fullscreen, as in M1). Both are chosen in device pixels,
+  not CSS pixels (`apps/client/src/game/view.ts`): on a display scaled to 125 % a CSS zoom of 3
+  would be 3.75 device pixels and 1 px strokes would come out 3 or 4 wide at random, which is
+  what made the start screen's text look wrong in Playtest 2.
 
 ## 3. HUD
 
-HUD elements sit in the **four screen corners**, 8 px in from the edge, and never over the center
-of the screen where the fight happens:
+HUD elements sit in the **four corners of the world view** (its rectangle in UI px, rounded
+inwards), 8 UI px in from its edge, and never over the center where the fight happens:
 
 | Corner       | Contents                                                                                                                                                                             |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -104,8 +114,10 @@ of the screen where the fight happens:
 - **The HUD never hides the room** (Playtest 2). The camera may scroll past the room's edges by
   the panels' extents (their safe margins, read from the panels the HUD drew), so a player
   standing in a room corner is always drawn in the clear area between them; a room that fits the
-  area the HUD leaves free is centered in it (`apps/client/src/render/camera.ts`). And while the
-  player or a hostile is behind a panel, the panel's fill and frame turn into a **50 % checkerboard
+  area the HUD leaves free is centered in it (`apps/client/src/render/camera.ts`; the margins go
+  from UI px to world px through the two zooms). And while the player or a hostile is behind a
+  panel (its body projected from the world onto the UI grid), the panel's fill and frame turn
+  into a **50 % checkerboard
   dither** of `ui-panel` (every other pixel shows the room) and its ink, bars, icons and glyphs
   stay solid: the readout keeps its contrast and the colours stay in the palette, where an alpha
   fade would blend off-palette and drop the ink to 2.4:1.
@@ -140,7 +152,8 @@ of the screen where the fight happens:
 - **Words over the world are dark ink.** Text drawn straight over the world without a panel (the
   floaters BREAK and CRACK, the room banner and its sub line, YOU FELL, SHARD CLEARED) is
   `hollow-deep` (`worldWord` in `text.ts`): 10:1 on `hollow-lavender` and 11:1 on `husk-shell`,
-  the pale floor and shells it lands on. Nothing under it: no panel, no shadow, no box, and no rim
+  the pale floor and shells it lands on. Like all text it is UI px, on the UI camera, placed at
+  its world position projected onto the UI grid and rounded to whole UI pixels. Nothing under it: no panel, no shadow, no box, and no rim
   (a rim fills the 1 px counters of a letter with its own color and E reads as B). `dream-night`
   would read 10.6:1, but it stays the Kindled's outline, the darkest value in the room.
 - **Coloured numbers and pickups over the world carry a 1 px `dream-night` drop shadow.** The
