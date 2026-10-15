@@ -31,10 +31,10 @@ The visual rules every generated asset is judged against. Exemplars in this fold
 | Outline, everyone else | hollow-deep #2A2540 |
 | Clay skin (grey-ochre) + freckles | unwritten-sail #8C7F6E, unwritten-tar #5E5448; freckles spark-amber #F2B65A |
 | Soot cloth | watcher-stone #7D8794, watcher-iron #4A4E57, hollow-deep #2A2540 |
-| Ember singe | choir-flame #F07A3A, spark-ember #C9733A, unwritten-tar #5E5448 |
+| Ember singe | choir-flame #F07A3A, spark-ember #C9733A, sleeper-ochre #9C5B4A |
 | Fired red clay | sleeper-soil #E3C29E, sleeper-flesh #C98F78, sleeper-ochre #9C5B4A |
 | Brass and gold | choir-gold #D8B24A, wheel-brass #C79A3E, wheel-brass-dark #8A6420 |
-| Bronze, wood, rope | watcher-bronze #A8743A, unwritten-sail #8C7F6E, unwritten-tar #5E5448 |
+| Bronze, wood, rope, leather | watcher-bronze #A8743A, wheel-brass-dark #8A6420, hollow-deep #2A2540 |
 | Pale shell (Husks) + core | hollow-light #F4EFE6, husk-shell #E8E2D6, hollow-dusk #A99FC4; core husk-core #FFF4C7 with a 1 px hollow-deep ring |
 | Stone, floor, wall | hollow-lavender #D9D2E9, hollow-dusk #A99FC4, hollow-below #5B5478, hollow-deep #2A2540 |
 | Water, patina, rain | wheel-patina #2F7F7A, watcher-rain #3E5C7A, sleeper-night #24305A |
@@ -49,6 +49,7 @@ Whitelist (28): #F4EFE6 #D9D2E9 #A99FC4 #5B5478 #2A2540 #F2B65A #C9733A #4A4E57 
 - No dither on characters, enemies or props (only on big floor tiles). No anti-aliasing, no soft or semi-transparent pixels, no pure white or black, no glow.
 - Transparent background. No baked shadow: the engine draws the grounding shadow.
 - No letters, numbers or text on anything.
+- **The skin ramp is for skin only on player Kindled sheets.** Those sheets are swapped to the four clay tones at load under a skin mask (G1.2), so nothing else may use unwritten-sail #8C7F6E or unwritten-tar #5E5448. Belts and boots take watcher-iron and hollow-deep; grips, wood, rope and leather take the bronze and leather ramp; ember singe ends in sleeper-ochre. Cleanup recolours any stray pixels.
 - Kindled are clay folk: two eyes of at most 2×2 px (a dark pupil, at most one eye-white pixel), 3 amber freckles, a mouth at most 2 px of shade, skin in the clay ramp. The Hookblade (a short blade with a hook at the tip) sits in the right hand.
 - Husks are hollow shells: pale shell ramp, one bright core with its ring, no face, eyes or legs.
 - Silhouette first: everything must read as a flat shape at 1×.
