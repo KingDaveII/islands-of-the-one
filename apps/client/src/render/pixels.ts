@@ -68,6 +68,28 @@ export function groundShadow(g: G, cx: number, footY: number, rx: number, ry = 2
   }
 }
 
+/**
+ * The grounding shadow at the world's own density: a dithered hollow-deep
+ * ellipse filling a `w` × `h` box whose top-left pixel is (x, y), solid in
+ * the middle and checkered at the edge (20 × 6 under a Kindled).
+ */
+export function shadowEllipse(g: G, x: number, y: number, w: number, h: number): void {
+  const x0 = Math.round(x);
+  const y0 = Math.round(y);
+  const rx = w / 2;
+  const ry = h / 2;
+  g.fillStyle(Palette.ground, 1);
+  for (let j = 0; j < h; j++) {
+    for (let i = 0; i < w; i++) {
+      const dx = (i + 0.5 - rx) / rx;
+      const dy = (j + 0.5 - ry) / ry;
+      const d = dx * dx + dy * dy;
+      if (d > 1) continue;
+      if (d < 0.3 || ((x0 + i + y0 + j) & 1) === 0) g.fillRect(x0 + i, y0 + j, 1, 1);
+    }
+  }
+}
+
 /** A rect with a 1 px outline around it. */
 export function outlinedRect(g: G, x: number, y: number, w: number, h: number, fill: number, outline: number): void {
   g.fillStyle(outline, 1).fillRect(x - 1, y - 1, w + 2, h + 2);

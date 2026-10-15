@@ -1,5 +1,5 @@
 /**
- * Draw order inside the world layer (Phaser sorts a layer's children by
+ * Draw order inside a layer (Phaser sorts a layer's children by
  * depth, ties by insertion). Bodies sort among themselves by their feet's y
  * so a Husk in front of the Kindled draws over it.
  */
@@ -20,4 +20,6 @@ export const DEPTH = {
   fx: 30,
   floaters: 31,
   prompt: 40,
+  /** The mouse reticle, over everything on the UI camera. */
+  cursor: 50,
 } as const;

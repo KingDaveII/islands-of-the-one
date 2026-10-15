@@ -1,37 +1,53 @@
 import type Phaser from 'phaser';
 import {
-  CLAY_TONES,
   SPRITE_SHEET_NAMES,
+  sheetPixelScale,
   spriteSheets,
   type ClayTone,
   type SpriteSheet,
   type SpriteSheetName,
 } from '@iot/shared';
-import huskNutshellUrl from '@iot/shared/assets/sprites/husk-nutshell.png';
-import huskPeelingUrl from '@iot/shared/assets/sprites/husk-peeling.png';
-import kindledAshUrl from '@iot/shared/assets/sprites/kindled-ash.png';
+import { swapTone } from './toneSwap.js';
 
 /**
  * The animated character sheets (packages/shared/assets/sprites) as Phaser
- * atlases (docs/design/sprites.md, "Engine"): `preloadSpriteSheets` from a
- * scene's preload loads each PNG with its JSON Hash contract (the frames'
- * `anchor` becomes the sprite origin); `registerSpriteSheets` from create
- * builds one Phaser animation per entry of the JSON `anims` block, named
- * `<key>/<anim>`, and the palette-swapped textures of the Kindled sheets:
- * one texture per clay tone from the `palette.swaps` block, built once from
- * the drawn sheet's pixels and cached game-wide, with its own animations
- * under `<key>@<tone>/<anim>`. Both calls are safe to repeat from later scenes.
+ * atlases (docs/design/sprites.md §8): `preloadSpriteSheets` from a scene's
+ * preload loads each PNG with its JSON Hash contract (the frames' `anchor`
+ * becomes the sprite origin) and, for a v2 Kindled sheet, its skin mask;
+ * `registerSpriteSheets` from create builds one Phaser animation per entry of
+ * the JSON `anims` block, named `<key>/<anim>`. Both are safe to repeat from
+ * later scenes. A sheet draws at `sheetPixelScale` world px per sheet px:
+ * 1 for a v2 sheet, 2 for M1's v1 sheets.
+ *
+ * Clay tones are built lazily (`toneTextureKey`): the first time a tone is
+ * used, its texture is the drawn sheet's pixels with `palette.swaps[tone]`
+ * applied (under the skin mask for a v2 sheet, everywhere for a v1 sheet),
+ * registered as the same atlas under `<key>@<tone>` with its own
+ * `<key>@<tone>/<anim>` animations, and cached game-wide.
  */
-const URLS: Record<SpriteSheetName, string> = {
-  'kindled-ash': kindledAshUrl,
-  'husk-peeling': huskPeelingUrl,
-  'husk-nutshell': huskNutshellUrl,
-};
 
-/** Texture key of a sheet in a clay tone: the sheet's own key for the drawn tone. */
-export function toneTextureKey(name: SpriteSheetName, tone: ClayTone): string {
-  const sheet = spriteSheets[name];
-  return !sheet.palette || tone === sheet.palette.drawn ? name : `${name}@${tone}`;
+/** Every PNG next to the sheets, by file name: the sheets and their skin masks. */
+const PNG_URLS: Record<string, string> = Object.fromEntries(
+  Object.entries(
+    import.meta.glob<string>('../../../../packages/shared/assets/sprites/*.png', {
+      eager: true,
+      query: '?url',
+      import: 'default',
+    }),
+  ).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1), url]),
+);
+
+/** The URL of a PNG in packages/shared/assets/sprites (a sheet or a skin mask), if it exists. */
+export function spritePngUrl(file: string): string | undefined {
+  return PNG_URLS[file];
+}
+
+/** Texture key of a sheet's skin mask. */
+const maskKey = (name: SpriteSheetName): string => `${name}.skin`;
+
+/** World px per sheet px for a sheet's sprites (sprites.md §5). */
+export function spriteScale(name: SpriteSheetName): number {
+  return sheetPixelScale(spriteSheets[name]);
 }
 
 /** Phaser animation key for a sheet animation: `<textureKey>/<anim>`. */
@@ -41,30 +57,43 @@ export function animKey(textureKey: string, anim: string): string {
 
 export function preloadSpriteSheets(scene: Phaser.Scene): void {
   for (const name of SPRITE_SHEET_NAMES) {
-    if (scene.textures.exists(name)) continue;
+    const sheet = spriteSheets[name];
+    const url = spritePngUrl(sheet.meta.image);
+    if (!url) throw new Error(`no PNG for the ${name} sheet`);
     // The JSON contract is bundled with the code; Phaser takes it in place of a URL.
-    scene.load.atlas(name, URLS[name], spriteSheets[name]);
+    if (!scene.textures.exists(name)) scene.load.atlas(name, url, sheet);
+    const mask = sheet.palette?.mask;
+    if (!mask || scene.textures.exists(maskKey(name))) continue;
+    const maskUrl = spritePngUrl(mask);
+    if (!maskUrl) throw new Error(`no skin mask ${mask} for the ${name} sheet`);
+    scene.load.image(maskKey(name), maskUrl);
   }
 }
 
 export function registerSpriteSheets(scene: Phaser.Scene): void {
   for (const name of SPRITE_SHEET_NAMES) {
-    if (!scene.textures.exists(name)) continue;
-    const sheet = spriteSheets[name];
-    createAnims(scene, name, sheet);
-    if (!sheet.palette) continue;
-    for (const tone of CLAY_TONES) {
-      const key = toneTextureKey(name, tone);
-      if (key === name || scene.textures.exists(key)) continue;
-      const swaps = sheet.palette.swaps[tone];
-      if (!swaps) continue;
-      const canvas = swappedCanvas(scene, name, swaps);
-      if (!canvas) continue;
-      // The swapped sheet is the same atlas over a recoloured copy of the pixels.
-      scene.textures.addAtlasJSONHash(key, canvas as unknown as HTMLImageElement, sheet);
-      createAnims(scene, key, sheet);
-    }
+    if (scene.textures.exists(name)) createAnims(scene, name, spriteSheets[name]);
   }
+}
+
+/**
+ * Texture key of a sheet in a clay tone: the sheet's own key for the drawn
+ * tone (or a sheet without tones), else `<name>@<tone>`, built on first use
+ * and cached. Falls back to the drawn sheet when the tone can't be built.
+ */
+export function toneTextureKey(scene: Phaser.Scene, name: SpriteSheetName, tone: ClayTone): string {
+  const sheet = spriteSheets[name];
+  const swaps = sheet.palette?.swaps[tone];
+  if (!sheet.palette || tone === sheet.palette.drawn || !swaps) return name;
+  const key = `${name}@${tone}`;
+  if (scene.textures.exists(key)) return key;
+  if (!scene.textures.exists(name)) return name;
+  const canvas = swappedCanvas(scene, name, swaps, sheet.palette.mask ? maskKey(name) : null);
+  if (!canvas) return name;
+  // The swapped sheet is the same atlas over a recoloured copy of the pixels.
+  scene.textures.addAtlasJSONHash(key, canvas as unknown as HTMLImageElement, sheet);
+  createAnims(scene, key, sheet);
+  return key;
 }
 
 function createAnims(scene: Phaser.Scene, textureKey: string, sheet: SpriteSheet): void {
@@ -81,17 +110,9 @@ function createAnims(scene: Phaser.Scene, textureKey: string, sheet: SpriteSheet
   }
 }
 
-/** The hex colour of a pixel's RGB, lowercase, as the swaps block spells it. */
-const hexOf = (r: number, g: number, b: number): string =>
-  `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
-
-/** A copy of a loaded sheet's pixels with the swap applied, on a canvas (null without a 2D context). */
-function swappedCanvas(
-  scene: Phaser.Scene,
-  name: string,
-  swaps: Record<string, string>,
-): HTMLCanvasElement | null {
-  const source = scene.textures.get(name).getSourceImage();
+/** A texture's pixels, on a canvas of their own (null without a 2D context or an image). */
+function pixelsOf(scene: Phaser.Scene, key: string): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D; image: ImageData } | null {
+  const source = scene.textures.get(key).getSourceImage();
   if (!(source instanceof HTMLImageElement) && !(source instanceof HTMLCanvasElement)) return null;
   const canvas = document.createElement('canvas');
   canvas.width = source.width;
@@ -99,19 +120,26 @@ function swappedCanvas(
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
   ctx.drawImage(source, 0, 0);
-  const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const table = new Map<string, [number, number, number]>();
-  for (const [from, to] of Object.entries(swaps)) {
-    const v = parseInt(to.slice(1), 16);
-    table.set(from.toLowerCase(), [(v >> 16) & 0xff, (v >> 8) & 0xff, v & 0xff]);
+  return { canvas, ctx, image: ctx.getImageData(0, 0, canvas.width, canvas.height) };
+}
+
+/** A copy of a loaded sheet's pixels with the swap applied (under the mask, when it has one), on a canvas. */
+function swappedCanvas(
+  scene: Phaser.Scene,
+  name: string,
+  swaps: Record<string, string>,
+  mask: string | null,
+): HTMLCanvasElement | null {
+  const sheet = pixelsOf(scene, name);
+  if (!sheet) return null;
+  let maskPixels: Uint8ClampedArray | null = null;
+  if (mask) {
+    const m = scene.textures.exists(mask) ? pixelsOf(scene, mask) : null;
+    // A v2 sheet without its mask would recolour belts and boots: keep the drawn tone instead.
+    if (!m || m.image.data.length !== sheet.image.data.length) return null;
+    maskPixels = m.image.data;
   }
-  const d = image.data;
-  for (let i = 0; i < d.length; i += 4) {
-    if ((d[i + 3] ?? 0) === 0) continue;
-    const to = table.get(hexOf(d[i] ?? 0, d[i + 1] ?? 0, d[i + 2] ?? 0));
-    if (!to) continue;
-    [d[i], d[i + 1], d[i + 2]] = to;
-  }
-  ctx.putImageData(image, 0, 0);
-  return canvas;
+  swapTone(sheet.image.data, swaps, maskPixels);
+  sheet.ctx.putImageData(sheet.image, 0, 0);
+  return sheet.canvas;
 }

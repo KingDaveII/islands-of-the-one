@@ -24,10 +24,13 @@ import { debugFlags } from '../ui/debugFlags.js';
 import { chargeStage } from './charge.js';
 import { CharacterSprites } from './characters.js';
 import { DEPTH } from './depth.js';
+import { PLAYER_FEET } from './feet.js';
 import { facingIndex, facingStep } from './facing.js';
 import type { Fx } from './fx.js';
 import { HookbladeFx } from './hookblade.js';
-import { disc, ditherDisc, groundShadow, outlinedRect, pixelLine, ring } from './pixels.js';
+import { disc, ditherDisc, groundShadow, outlinedRect, pixelLine, ring, shadowEllipse } from './pixels.js';
+import { legacyGraphics, snapToArt, worldPx } from './scale.js';
+import { spriteScale } from './spriteSheets.js';
 
 const RAD = (Math.PI * 2) / TURN;
 
@@ -76,9 +79,15 @@ const HIT: HuskInk = {
   coreRing: Palette.hit,
 };
 
-/** The Haul guide starts this far from the player (clear of the sprite) and tests the wall every GUIDE_STEP px. */
+/** The Haul guide starts this far from the player (sim px, clear of the sprite) and tests the wall every GUIDE_STEP sim px. */
 const GUIDE_START = 10;
 const GUIDE_STEP = 2;
+
+/** The Kindled's grounding shadow, world px (G1.5); a Husk's scales with its radius against the player's. */
+const SHADOW_W = 20;
+const SHADOW_H = 6;
+
+type Point = { x: number; y: number };
 
 /** Alpha of the debug hitbox shapes drawn over the sprites (F3). */
 const DEBUG_ALPHA = 0.6;
@@ -89,12 +98,22 @@ const DEBUG_ALPHA = 0.6;
  * posed by the animation state machine), the attack hitbox flashes, poise
  * bars and the reticle. Purely a view: it reads state, never changes it.
  * With the F3 debug flag the old placeholder shapes draw over the sprites.
+ *
+ * Two densities (scale.ts): M1's procedural room (tiles, doors, chests) is
+ * drawn in sim px into legacy Graphics shown at 2×, like the v1 sheets and
+ * hookblade-fx; the engine's own drawings (decals, shadows, pickups, the
+ * slash arc and thrust line, poise bars, the charge meter, the pad reticle
+ * and the Haul guide) are drawn in world px at 1 world px per pixel: their
+ * positions and sim lengths ×2, their pixel sizes as written. The F3 debug
+ * shapes stay M1's placeholder figures at 2×, over the v1 sprites.
  */
 export class WorldRenderer {
   private readonly room: G;
-  /** Floor layer: decals, shadows, pickups (under the chain and the bodies). */
+  /** The room's furniture, M1 art at 2×: doors and chests (sim px). */
+  private readonly props: G;
+  /** Floor layer, world px: decals, shadows, pickups (under the chain and the bodies). */
   private readonly floor: G;
-  /** Overlays: hitbox flashes, poise bars, the charge meter, the reticle. */
+  /** Overlays, world px: hitbox flashes, poise bars, the charge meter, the pad reticle, the Haul guide. */
   private readonly gfx: G;
   /** The old hitbox shapes over the sprites, when debugFlags.shapes is on. */
   private readonly debug: G;
@@ -107,18 +126,19 @@ export class WorldRenderer {
     layer: Phaser.GameObjects.Layer,
     private readonly juice: () => JuiceTuning,
   ) {
-    this.room = scene.add.graphics().setDepth(DEPTH.room);
+    this.room = legacyGraphics(scene).setDepth(DEPTH.room);
+    this.props = legacyGraphics(scene).setDepth(DEPTH.floor);
     this.floor = scene.add.graphics().setDepth(DEPTH.floor);
     this.gfx = scene.add.graphics().setDepth(DEPTH.overlay);
-    this.debug = scene.add.graphics().setDepth(DEPTH.debug).setAlpha(DEBUG_ALPHA);
-    layer.add([this.room, this.floor, this.gfx, this.debug]);
+    this.debug = legacyGraphics(scene).setDepth(DEPTH.debug).setAlpha(DEBUG_ALPHA);
+    layer.add([this.room, this.props, this.floor, this.gfx, this.debug]);
     // Chain links go under the bodies, the hook head and charge spark over them.
     this.hookblade = new HookbladeFx(scene);
     this.hookblade.mount(layer);
     this.characters = new CharacterSprites(scene, layer);
   }
 
-  /** Room size in pixels. */
+  /** Room size in sim px. */
   static roomSize(s: RunState): { w: number; h: number } {
     return { w: s.room.cols * TILE_PX, h: s.room.rows * TILE_PX };
   }
@@ -288,46 +308,60 @@ export class WorldRenderer {
     this.drawRoom(s);
     const f = this.floor;
     const g = this.gfx;
+    this.props.clear();
     f.clear();
     g.clear();
     this.debug.clear();
     this.hookblade.begin();
-    this.drawDoors(f, s, timeMs);
+    this.drawDoors(this.props, s, timeMs);
 
-    const huskPos = new Map<number, { x: number; y: number }>();
+    // Interpolated body centres: raw sim px for the sprites (each snaps to its own art grid),
+    // whole sim px for M1's art (the chain, the debug shapes), whole world px for the engine's drawings.
+    const huskRaw = new Map<number, Point>();
+    const huskPos = new Map<number, Point>();
+    const huskW = new Map<number, Point>();
     for (const h of s.husks) {
       const p = session.lerp(`h${h.id}`, h.x, h.y);
+      huskRaw.set(h.id, p);
       huskPos.set(h.id, { x: Math.round(p.x), y: Math.round(p.y) });
+      huskW.set(h.id, toWorld(p));
     }
     const pl = session.lerp('p', s.player.x, s.player.y);
     const player = { x: Math.round(pl.x), y: Math.round(pl.y) };
+    const pw = toWorld(pl);
+    const huskAt = (h: HuskState): Point => huskW.get(h.id) ?? toWorld({ x: h.x / SUB, y: h.y / SUB });
 
-    // Floor layer: telegraph decals, grounding shadows, pickups, the dodge trail.
-    for (const h of s.husks) this.drawTelegraphDecal(f, run, h, huskPos.get(h.id) ?? h);
+    // Floor layer: telegraph decals, grounding shadows, chests, pickups, the chain.
+    for (const h of s.husks) this.drawTelegraphDecal(f, run, h, huskAt(h));
+    const playerR = run.params.player.radius / SUB;
     for (const h of s.husks) {
       if (h.action === 'spawn') continue;
-      const pos = huskPos.get(h.id) ?? h;
+      const raw = huskRaw.get(h.id) ?? { x: h.x / SUB, y: h.y / SUB };
       const r = huskParams(run.params, h.kind).radius / SUB;
-      groundShadow(f, pos.x, pos.y + r, r + 1, 2);
+      const k = r / Math.max(1, playerR);
+      const scale = spriteScale(h.kind === 'peeling' ? 'husk-peeling' : 'husk-nutshell');
+      this.shadowAt(f, snapToArt(raw.x, scale), snapToArt(raw.y + r, scale), SHADOW_W * k, SHADOW_H * k);
     }
-    groundShadow(f, player.x, player.y + 6, 5, 2);
-    for (const c of s.chests) this.drawChest(f, c, timeMs);
-    for (const k of s.pickups) this.drawPickup(f, session.lerp(`k${k.id}`, k.x, k.y), timeMs);
+    const ks = spriteScale('kindled-ash');
+    this.shadowAt(f, snapToArt(pl.x, ks), snapToArt(pl.y + PLAYER_FEET, ks), SHADOW_W, SHADOW_H);
+    for (const c of s.chests) this.drawChest(this.props, c, timeMs);
+    for (const k of s.pickups) this.drawPickup(f, toWorld(session.lerp(`k${k.id}`, k.x, k.y)), timeMs);
     this.drawChain(f, session, player, huskPos);
 
     // Bodies: the sprites, posed from the sim state; Husk spawn-in and stagger marks are engine effects.
     const blink = Math.floor((timeMs / 1000) * this.juice().telegraphBlinkHz) % 2 === 0;
-    for (const h of s.husks) this.drawHuskEffects(g, run, h, huskPos.get(h.id) ?? h, timeMs);
-    this.characters.draw(session, fx, player, huskPos, blink, dtWorldMs, dtRealMs);
-    this.drawPlayerEffects(g, run, player, huskPos);
+    for (const h of s.husks) this.drawHuskEffects(g, run, h, huskAt(h), timeMs);
+    this.characters.draw(session, fx, pl, huskRaw, blink, dtWorldMs, dtRealMs);
+    this.drawPlayerEffects(g, run, player, pw, huskW);
 
-    // Overlays: poise bars and the charge meter.
-    for (const h of s.husks) this.drawPoise(g, run, h, huskPos.get(h.id) ?? h, timeMs);
-    this.drawChargeMeter(g, run, player);
-    if (reticle?.kind === 'pad') this.drawHaulGuide(g, run, player, reticle.aim);
-    if (reticle) {
-      const at = this.reticleAt(reticle, s, player, huskPos);
-      this.drawReticle(g, at.x, at.y);
+    // Overlays: poise bars, the charge meter, and on the pad the Haul guide and the reticle
+    // (the mouse reticle is the cursor: the UI camera draws it, GameScene).
+    for (const h of s.husks) this.drawPoise(g, run, h, huskAt(h), timeMs);
+    this.drawChargeMeter(g, run, pw);
+    if (reticle?.kind === 'pad') {
+      this.drawHaulGuide(g, run, pw, reticle.aim);
+      const at = this.padReticleAt(reticle, s, pw, huskW);
+      drawReticle(g, at.x, at.y);
     }
 
     if (debugFlags.shapes) {
@@ -337,20 +371,21 @@ export class WorldRenderer {
     }
   }
 
-  /** Husk effects that are not in the sheet: the spawn-in ring and the stagger marks. */
-  private drawHuskEffects(
-    g: G,
-    run: Run,
-    h: HuskState,
-    pos: { x: number; y: number },
-    timeMs: number,
-  ): void {
+  /** A grounding shadow `w` × `h` world px, centred on x, its middle row on the line under the soles (footY). */
+  private shadowAt(g: G, x: number, footY: number, w: number, h: number): void {
+    const sw = Math.max(2, Math.round(w));
+    const sh = Math.max(2, Math.round(h));
+    shadowEllipse(g, x - Math.floor(sw / 2), footY - Math.floor(sh / 2), sw, sh);
+  }
+
+  /** Husk effects that are not in the sheet (world px): the spawn-in ring and the stagger marks. */
+  private drawHuskEffects(g: G, run: Run, h: HuskState, pos: Point, timeMs: number): void {
     const hp = huskParams(run.params, h.kind);
-    const r = Math.round(hp.radius / SUB);
+    const r = Math.round(worldPx(hp.radius / SUB));
     const { x, y } = pos;
     if (h.action === 'spawn') {
       const f = h.t / Math.max(1, hp.spawn);
-      ring(g, x, y, Math.max(1, Math.round(r + (1 - f) * 8)), Palette.floorEdge);
+      ring(g, x, y, Math.max(1, Math.round(r + (1 - f) * worldPx(8))), Palette.floorEdge);
       if (f > 0.5) disc(g, x, y, 1, Palette.core);
       return;
     }
@@ -367,18 +402,17 @@ export class WorldRenderer {
     }
   }
 
-  /** Player effects that are not in the sheet: the hitbox flashes (slash arc, thrust line) and the charge spark. */
-  private drawPlayerEffects(
-    g: G,
-    run: Run,
-    pos: { x: number; y: number },
-    huskPos: Map<number, { x: number; y: number }>,
-  ): void {
+  /**
+   * Player effects that are not in the sheet: the hitbox flashes (slash arc,
+   * thrust line; world px at `pw`) and the charge spark (hookblade-fx, M1
+   * art: placed in sim px from `pos`).
+   */
+  private drawPlayerEffects(g: G, run: Run, pos: Point, pw: Point, huskW: Map<number, Point>): void {
     const p = run.state.player;
     const { x, y } = pos;
     if (p.action === 'dead') return;
-    if (p.action === 'heavy') this.drawThrust(g, run, x, y, huskPos);
-    else this.drawSlash(g, run, x, y);
+    if (p.action === 'heavy') this.drawThrust(g, run, pw.x, pw.y, huskW);
+    else this.drawSlash(g, run, pw.x, pw.y);
     if (p.action === 'charge') {
       // The charge spark (hookblade-fx) at the hook tip: spark_0 as the charge starts, spark_2 held at full charge.
       const stage = chargeStage(p.charge, run.params.weapon.heavy);
@@ -433,8 +467,10 @@ export class WorldRenderer {
     const hy = player.y - 2;
     const set = hk.hitId >= 0;
     if (set) {
-      pixelLine(g, hx, hy, ex, ey, Palette.chainOutline, 1, 3);
-      pixelLine(g, hx, hy, ex, ey, Palette.chainTaut);
+      // The taut line under the links is the engine's (world px); the links and hook are hookblade-fx (sim px, 2×).
+      const [wx0, wy0, wx1, wy1] = [hx, hy, ex, ey].map(worldPx) as [number, number, number, number];
+      pixelLine(g, wx0, wy0, wx1, wy1, Palette.chainOutline, 1, 3);
+      pixelLine(g, wx0, wy0, wx1, wy1, Palette.chainTaut);
     }
     this.hookblade.chain(hx, hy, ex, ey, set);
     this.hookblade.hook(ex, ey, rad(hk.dir), set);
@@ -443,33 +479,28 @@ export class WorldRenderer {
   /**
    * The Hook-thrust: a straight line hitbox flash along the aim (where the
    * light attack is an arc), drawn back during startup. A held husk shows
-   * pinned on the line.
+   * pinned on the line. World px: the sim's lengths ×2, the strokes in pixels.
    */
-  private drawThrust(
-    g: G,
-    run: Run,
-    x: number,
-    y: number,
-    huskPos: Map<number, { x: number; y: number }>,
-  ): void {
+  private drawThrust(g: G, run: Run, x: number, y: number, huskW: Map<number, Point>): void {
     const P = run.params;
     const p = run.state.player;
     const h = P.weapon.heavy;
     const tm = heavyTiming(P, p.charge);
     const phase = playerAttackPhase(p, P);
-    const length = h.length / SUB;
-    const width = (h.halfWidth * 2) / SUB;
+    const length = worldPx(h.length / SUB);
+    const width = worldPx((h.halfWidth * 2) / SUB);
     const a = rad(p.dir);
-    const cy = y - 3;
+    const cy = y - worldPx(3);
     const activeEnd = tm.startup + tm.active;
     if (phase === 'startup') {
-      const back = 6 + Math.round((p.t / Math.max(1, tm.startup)) * 4);
+      const back = worldPx(6 + Math.round((p.t / Math.max(1, tm.startup)) * 4));
+      const front = worldPx(4);
       pixelLine(
         g,
         x - Math.cos(a) * back,
         cy - Math.sin(a) * back,
-        x + Math.cos(a) * 4,
-        cy + Math.sin(a) * 4,
+        x + Math.cos(a) * front,
+        cy + Math.sin(a) * front,
         Palette.playerOutline,
         1,
         3,
@@ -478,8 +509,8 @@ export class WorldRenderer {
         g,
         x - Math.cos(a) * back,
         cy - Math.sin(a) * back,
-        x + Math.cos(a) * 4,
-        cy + Math.sin(a) * 4,
+        x + Math.cos(a) * front,
+        cy + Math.sin(a) * front,
         Palette.blade,
       );
       return;
@@ -505,16 +536,17 @@ export class WorldRenderer {
     }
     // Pinned: the line runs out to each held husk for the hold.
     for (const k of held) {
-      const pos = huskPos.get(k.id) ?? { x: k.x / SUB, y: k.y / SUB };
+      const pos = huskW.get(k.id) ?? toWorld({ x: k.x / SUB, y: k.y / SUB });
       pixelLine(g, x, cy, pos.x, pos.y, Palette.playerOutline, 1, 4);
       pixelLine(g, x, cy, pos.x, pos.y, Palette.blade, 1, 2);
     }
   }
 
-  private drawPickup(g: G, p: { x: number; y: number }, timeMs: number): void {
+  /** A Sparkglass piece on the floor at a world-px point. */
+  private drawPickup(g: G, p: Point, timeMs: number): void {
     const x = Math.round(p.x);
     const y = Math.round(p.y);
-    const tw = Math.sin(timeMs / 120 + p.x) > 0.6;
+    const tw = Math.sin(timeMs / 120 + p.x / 2) > 0.6;
     // Outlined Sparkglass piece.
     g.fillStyle(Palette.uiPanel, 1)
       .fillRect(x - 1, y - 4, 3, 9)
@@ -530,14 +562,14 @@ export class WorldRenderer {
     if (tw) g.fillStyle(Palette.floorFleck, 1).fillRect(x, y - 2, 1, 1);
   }
 
-  /** Telegraph ground decals: Peeling lunge path, Nutshell slam area. */
-  private drawTelegraphDecal(g: G, run: Run, h: HuskState, pos: { x: number; y: number }): void {
+  /** Telegraph ground decals (world px): Peeling lunge path, Nutshell slam area. */
+  private drawTelegraphDecal(g: G, run: Run, h: HuskState, pos: Point): void {
     if (h.action !== 'windup') return;
     const P = run.params;
     const hp = huskParams(P, h.kind);
     const f = Math.min(1, h.t / hp.startup);
     if (h.kind === 'peeling') {
-      const len = (P.husks.peeling.lungeSpeed * P.husks.peeling.active) / SUB;
+      const len = worldPx((P.husks.peeling.lungeSpeed * P.husks.peeling.active) / SUB);
       const a = rad(h.attackDir);
       const shown = len * (0.35 + 0.65 * f);
       pixelLine(
@@ -555,9 +587,9 @@ export class WorldRenderer {
       if (f >= 1) g.fillStyle(Palette.telegraph, 1).fillRect(ex, ey, 1, 1);
     } else {
       const c = slamCenter({ s: run.state, P, events: [] }, h);
-      const r = Math.round(P.husks.nutshell.slamRadius / SUB);
-      const cx = Math.round((c.x - h.x) / SUB + pos.x);
-      const cy = Math.round((c.y - h.y) / SUB + pos.y);
+      const r = Math.round(worldPx(P.husks.nutshell.slamRadius / SUB));
+      const cx = Math.round(worldPx((c.x - h.x) / SUB) + pos.x);
+      const cy = Math.round(worldPx((c.y - h.y) / SUB) + pos.y);
       // The landing area fills in as the slam winds up; the edge is there from the start.
       disc(g, cx, cy, Math.max(1, Math.round(r * f)), Palette.telegraph, 0.28);
       ditherDisc(g, cx, cy, r, Palette.telegraph, 0, r - 2);
@@ -688,15 +720,9 @@ export class WorldRenderer {
   /**
    * Poise bar (16×2 inside a 1 px outline), shown only once the husk has taken
    * damage. Crack notch under 30%; broken (staggered or no shell left) gets a
-   * lit outline: it marks the player's opening.
+   * lit outline: it marks the player's opening. World px over the Husk.
    */
-  private drawPoise(
-    g: G,
-    run: Run,
-    h: HuskState,
-    pos: { x: number; y: number },
-    timeMs: number,
-  ): void {
+  private drawPoise(g: G, run: Run, h: HuskState, pos: Point, timeMs: number): void {
     if (h.action === 'spawn') return;
     const hp = huskParams(run.params, h.kind);
     const damaged = h.shell.some((v, i) => v < (hp.shell[i] ?? 0)) || h.core < hp.core;
@@ -704,7 +730,7 @@ export class WorldRenderer {
     const layer = h.shell.findIndex((v) => v > 0);
     const broken = layer < 0 || h.action === 'stagger' || h.action === 'held';
     const x = pos.x - 9;
-    const top = pos.y - Math.round(hp.radius / SUB) - 8 - (h.shell.length - 1) * 5;
+    const top = pos.y - Math.round(worldPx(hp.radius / SUB)) - 8 - (h.shell.length - 1) * 5;
     if (broken) {
       const on = Math.floor(timeMs / 150) % 2 === 0;
       const y = top + (h.shell.length - 1) * 5;
@@ -727,13 +753,13 @@ export class WorldRenderer {
     });
   }
 
-  /** Heavy charge: three stage pips on an outline chip, just below the player while held. */
-  private drawChargeMeter(g: G, run: Run, pos: { x: number; y: number }): void {
+  /** Heavy charge: three stage pips on an outline chip, just below the player's feet while held (world px). */
+  private drawChargeMeter(g: G, run: Run, pos: Point): void {
     const p = run.state.player;
     if (p.action !== 'charge') return;
     const stage = chargeStage(p.charge, run.params.weapon.heavy);
     const x = pos.x - 6;
-    const y = pos.y + 10;
+    const y = pos.y + worldPx(PLAYER_FEET) + 4;
     g.fillStyle(Palette.uiOutline, 1).fillRect(x, y, 13, 4);
     for (let i = 0; i < 3; i++) {
       const on = i < stage;
@@ -771,31 +797,23 @@ export class WorldRenderer {
     drawKindled(g, x, y, facing, ink, step, !attacking);
   }
 
-  /** Slash arcs for light strikes (exact aim direction, not the 8-way facing); the heavy is a line, see drawThrust. */
+  /** Slash arcs for light strikes (exact aim direction, not the 8-way facing; world px); the heavy is a line, see drawThrust. */
   private drawSlash(g: G, run: Run, x: number, y: number): void {
     const P = run.params;
     const p = run.state.player;
     if (p.action !== 'light') return;
     const phase = playerAttackPhase(p, P);
     const st = lightStrike(P, p.comboStep);
-    const reach = st.reach / SUB;
+    const reach = worldPx(st.reach / SUB);
     const half = rad(st.halfArc);
     const dir = rad(p.dir);
     const activeEnd = st.startup + st.active;
-    const cy = y - 3;
+    const cy = y - worldPx(3);
     if (phase === 'startup') {
       const back = dir + (p.comboStep % 2 === 0 ? -1 : 1) * half;
-      pixelLine(
-        g,
-        x,
-        cy,
-        x + Math.cos(back) * 9,
-        cy + Math.sin(back) * 9,
-        Palette.playerOutline,
-        1,
-        3,
-      );
-      pixelLine(g, x, cy, x + Math.cos(back) * 9, cy + Math.sin(back) * 9, Palette.blade);
+      const len = worldPx(9);
+      pixelLine(g, x, cy, x + Math.cos(back) * len, cy + Math.sin(back) * len, Palette.playerOutline, 1, 3);
+      pixelLine(g, x, cy, x + Math.cos(back) * len, cy + Math.sin(back) * len, Palette.blade);
       return;
     }
     if (!(phase === 'active' || (phase === 'recovery' && p.t <= activeEnd + 3))) return;
@@ -818,24 +836,24 @@ export class WorldRenderer {
   }
 
   /**
-   * Where the reticle sits: on the mouse pointer, or (pad) on the soft-locked
-   * Husk when there is one, else `juice.padReticleDistPx` out along the aim.
+   * Where the pad reticle sits (world px): on the soft-locked Husk when there
+   * is one, else `juice.padReticleDistPx` (sim px, ×2) out along the aim.
    */
-  private reticleAt(
-    reticle: Reticle,
+  private padReticleAt(
+    reticle: Extract<Reticle, { kind: 'pad' }>,
     s: RunState,
-    player: { x: number; y: number },
-    huskPos: Map<number, { x: number; y: number }>,
-  ): { x: number; y: number } {
-    if (reticle.kind === 'mouse') return reticle;
-    const target = reticle.targetId === null ? undefined : huskPos.get(reticle.targetId);
+    player: Point,
+    huskW: Map<number, Point>,
+  ): Point {
+    const lift = worldPx(3);
+    const target = reticle.targetId === null ? undefined : huskW.get(reticle.targetId);
     const husk =
       reticle.targetId === null ? undefined : s.husks.find((h) => h.id === reticle.targetId);
     if (target && husk && husk.core > 0 && husk.action !== 'spawn')
-      return { x: target.x, y: target.y - 3 };
+      return { x: target.x, y: target.y - lift };
     const a = rad(reticle.aim);
-    const d = this.juice().padReticleDistPx;
-    return { x: player.x + Math.cos(a) * d, y: player.y - 3 + Math.sin(a) * d };
+    const d = worldPx(this.juice().padReticleDistPx);
+    return { x: player.x + Math.cos(a) * d, y: player.y - lift + Math.sin(a) * d };
   }
 
   /**
@@ -844,7 +862,7 @@ export class WorldRenderer {
    * before it is made. Hidden during the cooldown (and so while the hook is
    * out) and when the slot is locked. Muted ink, never a signal color.
    */
-  private drawHaulGuide(g: G, run: Run, player: { x: number; y: number }, aim: number): void {
+  private drawHaulGuide(g: G, run: Run, player: Point, aim: number): void {
     const s = run.state;
     const p = s.player;
     const haul = run.params.weapon.abilities[0];
@@ -861,37 +879,47 @@ export class WorldRenderer {
       end = d;
     }
     if (end <= GUIDE_START) return;
+    // Drawn in world px from the player (sim px ×2): 1 px dots every 4 px.
     const x = player.x;
-    const y = player.y - 3;
+    const y = player.y - worldPx(3);
     pixelLine(
       g,
-      x + cos * GUIDE_START,
-      y + sin * GUIDE_START,
-      x + cos * end,
-      y + sin * end,
+      x + cos * worldPx(GUIDE_START),
+      y + sin * worldPx(GUIDE_START),
+      x + cos * worldPx(end),
+      y + sin * worldPx(end),
       Palette.uiInkMuted,
       4,
     );
   }
+}
 
-  /** Aim reticle: four broken rims on the diagonals around a spark. Never a cross or plus. */
-  private drawReticle(g: G, px: number, py: number): void {
-    const cx = Math.round(px);
-    const cy = Math.round(py);
-    const pts: [number, number][] = [[0, 0]];
-    for (const [sx, sy] of [
-      [-1, -1],
-      [1, -1],
-      [1, 1],
-      [-1, 1],
-    ] as const) {
-      pts.push([sx * 5, sy * 3], [sx * 5, sy * 4], [sx * 4, sy * 5], [sx * 3, sy * 5]);
-    }
-    g.fillStyle(Palette.uiOutline, 1);
-    for (const [dx, dy] of pts) g.fillRect(cx + dx - 1, cy + dy - 1, 3, 3);
-    g.fillStyle(Palette.uiInk, 1);
-    for (const [dx, dy] of pts) g.fillRect(cx + dx, cy + dy, 1, 1);
+/** A sim-px point in whole world px. */
+function toWorld(p: Point): Point {
+  return { x: Math.round(worldPx(p.x)), y: Math.round(worldPx(p.y)) };
+}
+
+/**
+ * Aim reticle: four broken rims on the diagonals around a spark. Never a
+ * cross or plus. Drawn by the world camera for the pad (world px) and by the
+ * UI camera on the mouse pointer, where it is the cursor (UI px).
+ */
+export function drawReticle(g: G, px: number, py: number): void {
+  const cx = Math.round(px);
+  const cy = Math.round(py);
+  const pts: [number, number][] = [[0, 0]];
+  for (const [sx, sy] of [
+    [-1, -1],
+    [1, -1],
+    [1, 1],
+    [-1, 1],
+  ] as const) {
+    pts.push([sx * 5, sy * 3], [sx * 5, sy * 4], [sx * 4, sy * 5], [sx * 3, sy * 5]);
   }
+  g.fillStyle(Palette.uiOutline, 1);
+  for (const [dx, dy] of pts) g.fillRect(cx + dx - 1, cy + dy - 1, 3, 3);
+  g.fillStyle(Palette.uiInk, 1);
+  for (const [dx, dy] of pts) g.fillRect(cx + dx, cy + dy, 1, 1);
 }
 
 /** Checkerboard pixels inside a rotated band: from (x, y) along angle `a` for `len`, `half` wide each side. */

@@ -1,16 +1,16 @@
-import type { SpriteSheet } from '@iot/shared';
+import { huskParams, SUB, type HuskKind, type Params } from '@iot/sim';
 
 /**
  * Where a sprite stands: its origin is the point between the feet, while the
- * sim's position is the body center. The Kindled's feet are 5 px below the
- * center (the 16x24 body, docs/design/readability.md); a Husk's are its
+ * sim's position is the body center. The feet come from sim units (×2 in
+ * world px at the render boundary), never from a sheet's cell geometry, so a
+ * v2 sheet drops in without moving anyone: the Kindled's are 5 sim px below
+ * the center (the 16x24 body, docs/design/readability.md); a Husk's are its
  * radius below, where its grounding shadow sits.
  */
 export const PLAYER_FEET = 5;
 
-/** A Husk sheet's feet offset from the body center: half its body height (origin y minus the cell's body top). */
-export function feetOffset(sheet: SpriteSheet): number {
-  // Peeling: 12x9 body on a (12, 18) origin → 4; Nutshell: 24x24 on (20, 34) → 12.
-  const { cell, origin } = sheet.meta;
-  return Math.round((origin.y - (cell.h - origin.y)) / 4);
+/** A Husk's feet below its body center, sim px: its radius. */
+export function huskFeet(P: Params, kind: HuskKind): number {
+  return Math.round(huskParams(P, kind).radius / SUB);
 }

@@ -24,8 +24,8 @@ export type AimSource = 'mouse' | 'gamepad';
 
 /**
  * Where the reticle goes: on the mouse pointer in mouse mode (null until the
- * mouse has moved), or along the pad aim in pad mode, on the soft-locked Husk
- * when there is one (`targetId`).
+ * mouse has moved; sim px, read through the world camera), or along the pad
+ * aim in pad mode, on the soft-locked Husk when there is one (`targetId`).
  */
 export type Reticle =
   | { kind: 'mouse'; x: number; y: number }
@@ -47,9 +47,12 @@ const PRESS_ACTIONS = Object.keys(PRESS_BUTTON) as ControlAction[];
 /** Keys whose browser default (scrolling, moving focus) must not fire while a run is on. */
 const CAPTURED_KEYS: ReadonlySet<string> = new Set(['Space', 'Tab']);
 
+/** A pointer's position in the world, sim px: read through the world camera (the UI camera is on top of it). */
+export type PointerToSim = (pointer: Phaser.Input.Pointer) => { x: number; y: number };
+
 /** What the sampler needs to know about the world this tick. */
 export interface SampleContext {
-  /** Enemy offsets from the player, world px, with their ids (for the soft lock and its reticle). */
+  /** Enemy offsets from the player, sim px, with their ids (for the soft lock and its reticle). */
   enemies: readonly LockCandidate[];
   /** The sim's input context: a binding marked per context fires only in its own. */
   context: InputContext;
@@ -82,13 +85,17 @@ export class Controls {
   private readonly domListeners: [string, (e: Event) => void][] = [];
   /** The context the latest sample resolved presses with (hints follow it). */
   context: InputContext = 'calm';
-  private pointer: { x: number; y: number } | null = null;
+  /** Whether the mouse has moved over the canvas since the run started (the reticle waits for it). */
+  private pointerMoved = false;
   private captured: number[] = [];
   private padId = '';
   lastInput: TickInput = { aim: 0, moveDir: 0, moveMag: 0, buttons: 0 };
   gamepadConnected = false;
 
-  constructor(private readonly scene: Phaser.Scene) {
+  constructor(
+    private readonly scene: Phaser.Scene,
+    private readonly pointerToSim: PointerToSim,
+  ) {
     const kb = scene.input.keyboard;
     if (!kb) throw new Error('keyboard input unavailable');
     this.moveKeys = kb.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT', true) as Record<string, Phaser.Input.Keyboard.Key>;
@@ -133,8 +140,8 @@ export class Controls {
       canvas.addEventListener(type, swallowMiddle);
       this.domListeners.push([type, swallowMiddle]);
     }
-    scene.input.on('pointermove', (p: Phaser.Input.Pointer) => {
-      this.pointer = { x: p.worldX, y: p.worldY };
+    scene.input.on('pointermove', () => {
+      this.pointerMoved = true;
     });
   }
 
@@ -186,12 +193,12 @@ export class Controls {
   /** Where to draw the reticle this frame (see Reticle), or null before the mouse has moved. */
   reticle(): Reticle | null {
     if (this.aimSource === 'gamepad') return { kind: 'pad', aim: this.aim, targetId: this.lockTargetId >= 0 ? this.lockTargetId : null };
-    if (!this.pointer) return null;
-    const p = this.scene.input.activePointer;
-    return { kind: 'mouse', x: p.worldX, y: p.worldY };
+    if (!this.pointerMoved) return null;
+    const p = this.pointerToSim(this.scene.input.activePointer);
+    return { kind: 'mouse', x: p.x, y: p.y };
   }
 
-  /** Build this tick's input. `px, py` is the player position in world pixels. */
+  /** Build this tick's input. `px, py` is the player position in sim px. */
   sample(px: number, py: number, ctx: SampleContext): number {
     this.context = ctx.context;
     const k = this.moveKeys;
@@ -245,9 +252,9 @@ export class Controls {
 
     if (!padMode) {
       this.lockTargetId = -1;
-      if (this.pointer) {
-        const p = this.scene.input.activePointer;
-        if (p.worldX !== px || p.worldY !== py) this.aim = quantizeAngle(Math.atan2(p.worldY - py, p.worldX - px));
+      if (this.pointerMoved) {
+        const p = this.pointerToSim(this.scene.input.activePointer);
+        if (p.x !== px || p.y !== py) this.aim = quantizeAngle(Math.atan2(p.y - py, p.x - px));
       }
     }
 
