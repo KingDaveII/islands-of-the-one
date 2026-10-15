@@ -1,0 +1,50 @@
+{
+  "job": "g13b-job3",
+  "budget": "about 40, hard cap 45",
+  "readings": [
+    {
+      "when": "before the first call",
+      "generations_remaining": 1639.9,
+      "generations_used": 360.1
+    },
+    {
+      "when": "after 3 create_image_pro + 3 create_character v3 (end)",
+      "generations_remaining": 1606.9,
+      "generations_used": 393.1,
+      "spent": 33.0
+    }
+  ],
+  "per_call": [
+    {
+      "call": "create_image_pro npc-kesh",
+      "quoted": 10,
+      "charged": 10
+    },
+    {
+      "call": "create_image_pro npc-tally",
+      "quoted": 10,
+      "charged": 10
+    },
+    {
+      "call": "create_image_pro npc-clerk",
+      "quoted": 10,
+      "charged": 10
+    },
+    {
+      "call": "create_character v3 npc-kesh",
+      "quoted": 1
+    },
+    {
+      "call": "create_character v3 npc-tally",
+      "quoted": 1
+    },
+    {
+      "call": "create_character v3 npc-clerk",
+      "quoted": 1
+    }
+  ],
+  "per_call_note": "create_image_pro charges read from get_image (charged_generations 10 each); rotations: 33 - 30 = 3, 1 each as quoted",
+  "total_spent": 33.0,
+  "allowance_left_this_cycle": 1606.9,
+  "cycle_resets": "2026-11-15"
+}

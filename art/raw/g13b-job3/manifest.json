@@ -1,0 +1,2004 @@
+{
+ "job": "g13b-job3",
+ "date": "2026-10-15",
+ "purpose": "G1.3b pilot: option B (Kindled 44-46 px, Scattered folk 48 px, soles on row 53 of 64x64) at true size, by generating on a canvas of about target / 0.75 and picking the candidate closest to the target height.",
+ "style_sentence": "Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+ "description_rule": "Job 1's create_character description for the NPC (it already ends with STYLE) with the height changed, + ' Facing the viewer, standing.' (= Job 1 (c) / Job 2 (a) Pro description with the new height). Rotations use the same description without the facing sentence, as in Jobs 1 and 2.",
+ "references_rule": "exactly Job 2's reference_images (art/anchors/kindled-ash-s-64.png, same usage text), palette (28 whitelist colours), palette_name and max_colors (12); the anchor was re-uploaded because Job 2's upload ref expires after 3 days (same file, same sha256).",
+ "height_rule": "opaque rows from the top of the head (hair, hood or crown) to the lowest opaque row; a rod rising above the head is not counted (measured with a pole tracer and checked by eye on every Kesh candidate). The player anchor's soles are on row 53; its Hookblade hangs to row 59, so it is 40 px.",
+ "images_passed_as": "upload:<id> references from get_upload_url; no inline base64 anywhere",
+ "seed": "1234 on every create_image_pro call; create_character takes none. No retake, so 1235 was never used.",
+ "anchors": {
+  "kindled-ash-s-64.png": {
+   "upload": "upload:36850920-de36-4df5-b399-bc39add8cfd8",
+   "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a",
+   "source": "art/anchors/kindled-ash-s-64.png"
+  }
+ },
+ "generations": {
+  "create_image_pro": 30,
+  "rotations": 3,
+  "total": 33,
+  "budget": "about 40, hard cap 45",
+  "measured": "get_balance 1639.90 -> 1606.90 = 33.00"
+ },
+ "retakes": {
+  "used": 0,
+  "note": "npc-tally met the hard-failure rule (no candidate within 4 px of 45: all 16 are 50-51 px). The retake was allowed but not used: all 16 candidates landed within 1 px of each other, so height is set by the canvas, not the seed, and seed 1235 on the same canvas would almost surely land at 50-51 again; a retake would also have cost the rotations for all three NPCs."
+ },
+ "rejected_calls_not_charged": [
+  "1 of 16 parallel candidate downloads for npc-clerk was reset by the network and fetched again (no generation cost)"
+ ],
+ "assets": [
+  {
+   "id": "npc-kesh",
+   "target_height_px": "45 (44-46)",
+   "step1": {
+    "tool": "create_image_pro",
+    "job_id": "71158707-b7f5-4048-a4ca-7cc6ddf68a51",
+    "asset_id": "dc7a57c8-995f-57f5-8f61-e9326a90294d",
+    "arguments": {
+     "description": "Old Kesh, a Kindled hermit and fisherman: a small figure made of river-dark brown-black clay, about 45 px tall, with a few widely spaced amber freckles like small lights, long white hair and a white beard, a patched grey-ochre sailcloth tunic with a wet grey patch, dark trousers and wrapped dark feet. He holds a long wooden casting rod upright at his side. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters. Facing the viewer, standing.",
+     "width": 44,
+     "height": 60,
+     "no_background": true,
+     "reference_images": [
+      {
+       "url": "upload:36850920-de36-4df5-b399-bc39add8cfd8",
+       "usage": "character base: copy the proportions, the size on the 64x64 canvas, the clay-figure build, the outline and the shading style; NOT the outfit, colours or weapon",
+       "source": "art/anchors/kindled-ash-s-64.png",
+       "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+      }
+     ],
+     "palette": [
+      "#F4EFE6",
+      "#D9D2E9",
+      "#A99FC4",
+      "#5B5478",
+      "#2A2540",
+      "#F2B65A",
+      "#C9733A",
+      "#4A4E57",
+      "#7D8794",
+      "#3E5C7A",
+      "#A8743A",
+      "#C79A3E",
+      "#8A6420",
+      "#E9E4D4",
+      "#2F7F7A",
+      "#C98F78",
+      "#9C5B4A",
+      "#E3C29E",
+      "#24305A",
+      "#E8E2D6",
+      "#FFF4C7",
+      "#8C7F6E",
+      "#5E5448",
+      "#FBF8F0",
+      "#D8B24A",
+      "#F07A3A",
+      "#B5402E",
+      "#1C2147"
+     ],
+     "palette_name": "Islands of the One",
+     "max_colors": 12,
+     "seed": 1234
+    },
+    "canvas_accepted": [
+     44,
+     60
+    ],
+    "candidates": 16,
+    "generations": 10,
+    "generations_source": "quoted 'cost: 10 generations'; get_image reports charged_generations 10",
+    "retakes": 0
+   },
+   "candidates": [
+    {
+     "index": 0,
+     "file": "npc-kesh/candidates/candidate-00.png",
+     "sha256": "a11d96b18a95d0f9180dc026965472c3968db6a9107ffd89e4a620852368cf22",
+     "height": 46,
+     "head_top_row": 8,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      7,
+      5,
+      38,
+      54
+     ],
+     "width": 31,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=0"
+    },
+    {
+     "index": 1,
+     "file": "npc-kesh/candidates/candidate-01.png",
+     "sha256": "9993d381599353d47ca7dac089afd65a0dae1b77ce98b0c559fa2656c27a5598",
+     "height": 46,
+     "head_top_row": 8,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      6,
+      6,
+      37,
+      54
+     ],
+     "width": 31,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=1"
+    },
+    {
+     "index": 2,
+     "file": "npc-kesh/candidates/candidate-02.png",
+     "sha256": "dbe33a8da32bfe1c6589e3f434806e45edc6577dc3e4a5d102216f1ae9ccfe31",
+     "height": 48,
+     "head_top_row": 6,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      4,
+      6,
+      39,
+      54
+     ],
+     "width": 35,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=2"
+    },
+    {
+     "index": 3,
+     "file": "npc-kesh/candidates/candidate-03.png",
+     "sha256": "122f8fa81ad32715302bed73bbb66e98c0e906ae04960a6c9df25f5195f13db0",
+     "height": 48,
+     "head_top_row": 6,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      5,
+      6,
+      37,
+      54
+     ],
+     "width": 32,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=3"
+    },
+    {
+     "index": 4,
+     "file": "npc-kesh/candidates/candidate-04.png",
+     "sha256": "c8b24aef1eb7bf3f74b5ee7e0ff10b1123743a580385de2c2eae8b8e565ec673",
+     "height": 45,
+     "head_top_row": 9,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      7,
+      9,
+      38,
+      54
+     ],
+     "width": 31,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=4"
+    },
+    {
+     "index": 5,
+     "file": "npc-kesh/candidates/candidate-05.png",
+     "sha256": "a6ce29b840e6eaa6eeaa5328c702b58118a115bc980d0b43f5488d7e8cbcd0fe",
+     "height": 47,
+     "head_top_row": 7,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      7,
+      5,
+      38,
+      54
+     ],
+     "width": 31,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=5"
+    },
+    {
+     "index": 6,
+     "file": "npc-kesh/candidates/candidate-06.png",
+     "sha256": "62265240d372b6e73f90e89947633c022ec9a0b92f67a15eae0aeb42ae6f8b78",
+     "height": 48,
+     "head_top_row": 6,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      6,
+      5,
+      39,
+      54
+     ],
+     "width": 33,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=6"
+    },
+    {
+     "index": 7,
+     "file": "npc-kesh/candidates/candidate-07.png",
+     "sha256": "b3c813fd249262e56ba0811975fe9bcfbe442e83418d71f4a68a74f865f8a99f",
+     "height": 46,
+     "head_top_row": 8,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      5,
+      6,
+      33,
+      54
+     ],
+     "width": 28,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=7"
+    },
+    {
+     "index": 8,
+     "file": "npc-kesh/candidates/candidate-08.png",
+     "sha256": "7b7b311eefe8be36e125f52d31b5d3c19fe96546072e80bacb5ee51ff584f8bc",
+     "height": 46,
+     "head_top_row": 8,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      7,
+      8,
+      39,
+      54
+     ],
+     "width": 32,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=8"
+    },
+    {
+     "index": 9,
+     "file": "npc-kesh/candidates/candidate-09.png",
+     "sha256": "a73e5520efa272e2fb88bd27d8bbc7705e5155ab85a54e7651a4d10ad3415a25",
+     "height": 45,
+     "head_top_row": 9,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      6,
+      6,
+      38,
+      54
+     ],
+     "width": 32,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=9"
+    },
+    {
+     "index": 10,
+     "file": "npc-kesh/candidates/candidate-10.png",
+     "sha256": "a6638af3328559cc57d92170d3d6336f23e960937e084dca17457f5419160512",
+     "height": 48,
+     "head_top_row": 6,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      6,
+      5,
+      39,
+      54
+     ],
+     "width": 33,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 10,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=10"
+    },
+    {
+     "index": 11,
+     "file": "npc-kesh/candidates/candidate-11.png",
+     "sha256": "7374fc4e811d83eb3e4305fd6cd122fc9997d47667cf4a2c87506829e3c61357",
+     "height": 46,
+     "head_top_row": 8,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      5,
+      6,
+      35,
+      54
+     ],
+     "width": 30,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=11"
+    },
+    {
+     "index": 12,
+     "file": "npc-kesh/candidates/candidate-12.png",
+     "sha256": "fef791c92de5d6fc02d6d53bfc1e7d2af3987f28940f5bed03602f182395ef64",
+     "height": 46,
+     "head_top_row": 8,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      5,
+      6,
+      39,
+      54
+     ],
+     "width": 34,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=12"
+    },
+    {
+     "index": 13,
+     "file": "npc-kesh/candidates/candidate-13.png",
+     "sha256": "b55c27e096df3ca8cbcae68448d29d309db681dddb110665b9de789ce60f4a22",
+     "height": 47,
+     "head_top_row": 7,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      6,
+      6,
+      39,
+      54
+     ],
+     "width": 33,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=13"
+    },
+    {
+     "index": 14,
+     "file": "npc-kesh/candidates/candidate-14.png",
+     "sha256": "b7d4033f99681147e8c1909bc669b484fa044fba941300913840706cf58eacb3",
+     "height": 48,
+     "head_top_row": 6,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      9,
+      6,
+      38,
+      54
+     ],
+     "width": 29,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 10,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=14"
+    },
+    {
+     "index": 15,
+     "file": "npc-kesh/candidates/candidate-15.png",
+     "sha256": "3b9358b3d253893a1b85cea9b9273b529ce1fd596790030858a85081aaa621ef",
+     "height": 46,
+     "head_top_row": 8,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      7,
+      8,
+      40,
+      54
+     ],
+     "width": 33,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/71158707-b7f5-4048-a4ca-7cc6ddf68a51/download?index=15"
+    }
+   ],
+   "candidates_sheet": "npc-kesh/candidates.png",
+   "candidate_heights": {
+    "min": 45,
+    "max": 48,
+    "all": [
+     46,
+     46,
+     48,
+     48,
+     45,
+     47,
+     48,
+     46,
+     46,
+     45,
+     48,
+     46,
+     46,
+     47,
+     48,
+     46
+    ]
+   },
+   "pick": {
+    "index": 4,
+    "height": 45,
+    "head_top_row": 9,
+    "rod_or_item_rows_above_head": 0,
+    "why": "Two candidates hit 45 px exactly (#4, #9); both face south and sit whole inside the canvas. #4 matches more of the description: amber freckle-lights and eyes, patched grey-ochre tunic, wrapped feet, rod held upright at his side. #9 has the longer rod (rising above the head) but carries an undescribed checkered net that reads as dither. Trade-off: #4's rod is shorter than 'long' and stays below the head.",
+    "file": "npc-kesh/pick.png",
+    "sha256": "c8b24aef1eb7bf3f74b5ee7e0ff10b1123743a580385de2c2eae8b8e565ec673",
+    "bbox": [
+     7,
+     9,
+     38,
+     54
+    ],
+    "width": 31,
+    "colours": {
+     "colours_total": 9,
+     "off_whitelist": 0,
+     "off_colours": [],
+     "reserved": [],
+     "semi_transparent_px": 0,
+     "palette_used": [
+      "#1C2147",
+      "#2A2540",
+      "#5E5448",
+      "#8A6420",
+      "#8C7F6E",
+      "#A99FC4",
+      "#C79A3E",
+      "#D9D2E9",
+      "#E8E2D6"
+     ]
+    }
+   },
+   "pick_64": {
+    "file": "npc-kesh/pick-64.png",
+    "sha256": "1117ae84191731c1c62a84bf2cc5db8d811a7ec850f127d29ced1770175080e9",
+    "paste_offset": [
+     10,
+     0
+    ],
+    "bbox": [
+     17,
+     9,
+     48,
+     54
+    ],
+    "lowest_opaque_row": 53,
+    "fits": true,
+    "rule": "pick canvas pasted unscaled, canvas centred horizontally ((64-w)//2 = 10), lowest opaque row on row 53; for the clerk (lowest row 55 on a 64-tall canvas) the top 2 rows, all transparent, fell off"
+   },
+   "rotation": {
+    "tool": "create_character",
+    "character_id": "8fbb8b65-0614-45c7-8751-c1475b7f41d2",
+    "arguments": {
+     "description": "Old Kesh, a Kindled hermit and fisherman: a small figure made of river-dark brown-black clay, about 45 px tall, with a few widely spaced amber freckles like small lights, long white hair and a white beard, a patched grey-ochre sailcloth tunic with a wet grey patch, dark trousers and wrapped dark feet. He holds a long wooden casting rod upright at his side. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+     "mode": "v3",
+     "reference_image_url": "upload:3d1705f2-80d6-48ec-aadc-0a8f152f4295",
+     "n_directions": 8,
+     "name": "npc-kesh (g13b-job3)"
+    },
+    "reference_note": "upload of pick-64.png, byte for byte (sha256 above)",
+    "seed": "create_character has no seed parameter",
+    "generations": 1,
+    "generations_source": "quoted 'v3 reference (1 generations, 8 directions)'",
+    "retakes": 0,
+    "files": "<direction>.png and character-metadata.json from the character zip (api.pixellab.ai/mcp/characters/<id>/download)",
+    "south_vs_pick64": "identical on every visible pixel (only the RGB of fully transparent pixels differs)",
+    "outputs": [
+     {
+      "direction": "south",
+      "file": "npc-kesh/south.png",
+      "sha256": "7b99bf2105a1b5ef1765a246d69534f54bbc7794732ee6a1f29985417f24d98c",
+      "bbox": [
+       17,
+       9,
+       48,
+       54
+      ],
+      "lowest_opaque_row": 53,
+      "height_top_to_lowest_row": 45,
+      "colours": {
+       "colours_total": 9,
+       "off_whitelist": 0,
+       "off_whitelist_px": 0,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "south-east",
+      "file": "npc-kesh/south-east.png",
+      "sha256": "72e3f21b3068a7a48f8f626baa8ec311f368ea0bb8b7fb934b55347fad4737a1",
+      "bbox": [
+       21,
+       9,
+       45,
+       55
+      ],
+      "lowest_opaque_row": 54,
+      "height_top_to_lowest_row": 46,
+      "colours": {
+       "colours_total": 27,
+       "off_whitelist": 18,
+       "off_whitelist_px": 64,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "east",
+      "file": "npc-kesh/east.png",
+      "sha256": "65fc3ff9e2624efbbbdf0c20da63bcc7219a71ee5480182190da69e6981dc9e4",
+      "bbox": [
+       21,
+       9,
+       41,
+       55
+      ],
+      "lowest_opaque_row": 54,
+      "height_top_to_lowest_row": 46,
+      "colours": {
+       "colours_total": 23,
+       "off_whitelist": 14,
+       "off_whitelist_px": 38,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "north-east",
+      "file": "npc-kesh/north-east.png",
+      "sha256": "d01f5d47eb1253b1dec6ebf3b20c4e51d6750de90e51747304c26c81ebad0037",
+      "bbox": [
+       18,
+       8,
+       45,
+       54
+      ],
+      "lowest_opaque_row": 53,
+      "height_top_to_lowest_row": 46,
+      "colours": {
+       "colours_total": 24,
+       "off_whitelist": 16,
+       "off_whitelist_px": 67,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "north",
+      "file": "npc-kesh/north.png",
+      "sha256": "540458aec59df410d074cdc6760591491624d4102d5c3039e6323bfba9dcf854",
+      "bbox": [
+       16,
+       8,
+       46,
+       54
+      ],
+      "lowest_opaque_row": 53,
+      "height_top_to_lowest_row": 46,
+      "colours": {
+       "colours_total": 24,
+       "off_whitelist": 16,
+       "off_whitelist_px": 41,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "north-west",
+      "file": "npc-kesh/north-west.png",
+      "sha256": "5a3e99e8f04532cdf8363aec2daea9732651f30b7a2d39fd7445125148a79639",
+      "bbox": [
+       19,
+       9,
+       43,
+       55
+      ],
+      "lowest_opaque_row": 54,
+      "height_top_to_lowest_row": 46,
+      "colours": {
+       "colours_total": 26,
+       "off_whitelist": 17,
+       "off_whitelist_px": 51,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "west",
+      "file": "npc-kesh/west.png",
+      "sha256": "036f165955518554714145df21d1e2cf83e81d4429784477c5de6ef2a8f3971d",
+      "bbox": [
+       22,
+       9,
+       42,
+       56
+      ],
+      "lowest_opaque_row": 55,
+      "height_top_to_lowest_row": 47,
+      "colours": {
+       "colours_total": 24,
+       "off_whitelist": 15,
+       "off_whitelist_px": 40,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "south-west",
+      "file": "npc-kesh/south-west.png",
+      "sha256": "5b658f36ffd1e5b360f0343561caeb155288223fe2bc45521d8ff0c47872120d",
+      "bbox": [
+       19,
+       9,
+       45,
+       55
+      ],
+      "lowest_opaque_row": 54,
+      "height_top_to_lowest_row": 46,
+      "colours": {
+       "colours_total": 25,
+       "off_whitelist": 16,
+       "off_whitelist_px": 68,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     }
+    ]
+   },
+   "generations": 11,
+   "retakes": 0
+  },
+  {
+   "id": "npc-tally",
+   "target_height_px": "45 (44-46)",
+   "step1": {
+    "tool": "create_image_pro",
+    "job_id": "51008bb3-02eb-4107-9a95-639646d252f1",
+    "asset_id": "d18233b0-e62c-5a8f-b138-bda88da89003",
+    "arguments": {
+     "description": "Tally, a young Kindled woman: a small figure of red terracotta clay, about 45 px tall, three amber freckles, dark violet hair tied up in a knot, a pale salt-stiff sailcloth tunic with a rope belt and a bronze buckle, dark trousers and boots, empty hands. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters. Facing the viewer, standing.",
+     "width": 44,
+     "height": 60,
+     "no_background": true,
+     "reference_images": [
+      {
+       "url": "upload:36850920-de36-4df5-b399-bc39add8cfd8",
+       "usage": "character base: copy the proportions, the size on the 64x64 canvas, the clay-figure build, the outline and the shading style; NOT the outfit, colours or weapon",
+       "source": "art/anchors/kindled-ash-s-64.png",
+       "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+      }
+     ],
+     "palette": [
+      "#F4EFE6",
+      "#D9D2E9",
+      "#A99FC4",
+      "#5B5478",
+      "#2A2540",
+      "#F2B65A",
+      "#C9733A",
+      "#4A4E57",
+      "#7D8794",
+      "#3E5C7A",
+      "#A8743A",
+      "#C79A3E",
+      "#8A6420",
+      "#E9E4D4",
+      "#2F7F7A",
+      "#C98F78",
+      "#9C5B4A",
+      "#E3C29E",
+      "#24305A",
+      "#E8E2D6",
+      "#FFF4C7",
+      "#8C7F6E",
+      "#5E5448",
+      "#FBF8F0",
+      "#D8B24A",
+      "#F07A3A",
+      "#B5402E",
+      "#1C2147"
+     ],
+     "palette_name": "Islands of the One",
+     "max_colors": 12,
+     "seed": 1234
+    },
+    "canvas_accepted": [
+     44,
+     60
+    ],
+    "candidates": 16,
+    "generations": 10,
+    "generations_source": "quoted 'cost: 10 generations'; get_image reports charged_generations 10",
+    "retakes": 0
+   },
+   "candidates": [
+    {
+     "index": 0,
+     "file": "npc-tally/candidates/candidate-00.png",
+     "sha256": "629bbea893de33960e192bc1f2442ae5e809e60a6dfd4d9341ade289c3e8bb48",
+     "height": 50,
+     "head_top_row": 4,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      9,
+      4,
+      35,
+      54
+     ],
+     "width": 26,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=0"
+    },
+    {
+     "index": 1,
+     "file": "npc-tally/candidates/candidate-01.png",
+     "sha256": "3f98a60fcc6f2111e57ab8940a8fb20d05d4947ebfc257f96747c736d3d2bf41",
+     "height": 50,
+     "head_top_row": 4,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      10,
+      4,
+      35,
+      54
+     ],
+     "width": 25,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=1"
+    },
+    {
+     "index": 2,
+     "file": "npc-tally/candidates/candidate-02.png",
+     "sha256": "56b44c2d4115b1cb93cf7d9ea84fe78ab0afb5353ca7c37992fbe3c608504080",
+     "height": 50,
+     "head_top_row": 4,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      8,
+      4,
+      34,
+      54
+     ],
+     "width": 26,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=2"
+    },
+    {
+     "index": 3,
+     "file": "npc-tally/candidates/candidate-03.png",
+     "sha256": "2c9b2df656c37eb75826c698034d3b7a140656d7d7ff2982a6ce7c680d290d9a",
+     "height": 50,
+     "head_top_row": 4,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      9,
+      4,
+      35,
+      54
+     ],
+     "width": 26,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=3"
+    },
+    {
+     "index": 4,
+     "file": "npc-tally/candidates/candidate-04.png",
+     "sha256": "97b153da6257392b38e6dbcc8f89c97781cdd73849107c5a87051c19b2e46779",
+     "height": 50,
+     "head_top_row": 4,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      8,
+      4,
+      35,
+      54
+     ],
+     "width": 27,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 7,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=4"
+    },
+    {
+     "index": 5,
+     "file": "npc-tally/candidates/candidate-05.png",
+     "sha256": "dbe9c37af8924941417f3ae5a7b2025e888ce8fb0df299371fe5c99865c3e49f",
+     "height": 50,
+     "head_top_row": 4,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      10,
+      4,
+      35,
+      54
+     ],
+     "width": 25,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=5"
+    },
+    {
+     "index": 6,
+     "file": "npc-tally/candidates/candidate-06.png",
+     "sha256": "cb04945d5b5de3b2d8b2dcc742f38eddbdc5b0b370456eea9aea1231293f9fda",
+     "height": 50,
+     "head_top_row": 4,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      8,
+      4,
+      36,
+      54
+     ],
+     "width": 28,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=6"
+    },
+    {
+     "index": 7,
+     "file": "npc-tally/candidates/candidate-07.png",
+     "sha256": "f47a28319da857f0ea15bf411c2c89d5c839afc8593fcaf628293880c753f03d",
+     "height": 50,
+     "head_top_row": 4,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      9,
+      4,
+      36,
+      54
+     ],
+     "width": 27,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=7"
+    },
+    {
+     "index": 8,
+     "file": "npc-tally/candidates/candidate-08.png",
+     "sha256": "b461a8e198086d047173935ca731b72dd052ddea078c0f6c98295d0f7bfe30eb",
+     "height": 50,
+     "head_top_row": 4,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      8,
+      4,
+      35,
+      54
+     ],
+     "width": 27,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=8"
+    },
+    {
+     "index": 9,
+     "file": "npc-tally/candidates/candidate-09.png",
+     "sha256": "626d2989014e3c3f8775e9caa81e0da60b6e089c17204585480682e90bcdaba1",
+     "height": 50,
+     "head_top_row": 4,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      9,
+      4,
+      35,
+      54
+     ],
+     "width": 26,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 7,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=9"
+    },
+    {
+     "index": 10,
+     "file": "npc-tally/candidates/candidate-10.png",
+     "sha256": "537cfc38f6d034c0d41758308e74ee7fe8b7e2347f61b9d42ed1d96168ae0924",
+     "height": 50,
+     "head_top_row": 4,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      9,
+      4,
+      35,
+      54
+     ],
+     "width": 26,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=10"
+    },
+    {
+     "index": 11,
+     "file": "npc-tally/candidates/candidate-11.png",
+     "sha256": "9cb7a632093ab7defb9e5329140081a0c419c4ec273986ebe8c9843dd76726ea",
+     "height": 50,
+     "head_top_row": 4,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      9,
+      4,
+      35,
+      54
+     ],
+     "width": 26,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=11"
+    },
+    {
+     "index": 12,
+     "file": "npc-tally/candidates/candidate-12.png",
+     "sha256": "e4e545776e41603f769f3065503eeafb171d8d7e406e53206f0f278333501c83",
+     "height": 51,
+     "head_top_row": 3,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      8,
+      3,
+      35,
+      54
+     ],
+     "width": 27,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=12"
+    },
+    {
+     "index": 13,
+     "file": "npc-tally/candidates/candidate-13.png",
+     "sha256": "531ff506fff50af0d16e50fa532dd7346b8f4facaca209f1857b5d4e03eb289e",
+     "height": 51,
+     "head_top_row": 3,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      11,
+      3,
+      34,
+      54
+     ],
+     "width": 23,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=13"
+    },
+    {
+     "index": 14,
+     "file": "npc-tally/candidates/candidate-14.png",
+     "sha256": "f62234278aff7f08d32482d86e80906a101ed6c80154e6e30005cb8cfe60840d",
+     "height": 51,
+     "head_top_row": 3,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      8,
+      3,
+      36,
+      54
+     ],
+     "width": 28,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=14"
+    },
+    {
+     "index": 15,
+     "file": "npc-tally/candidates/candidate-15.png",
+     "sha256": "0ed860963b47e6bd99beb3faa203ae61c098277c42f8830a86888c2ccc6605b1",
+     "height": 50,
+     "head_top_row": 4,
+     "lowest_opaque_row": 53,
+     "bbox": [
+      9,
+      4,
+      35,
+      54
+     ],
+     "width": 26,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/51008bb3-02eb-4107-9a95-639646d252f1/download?index=15"
+    }
+   ],
+   "candidates_sheet": "npc-tally/candidates.png",
+   "candidate_heights": {
+    "min": 50,
+    "max": 51,
+    "all": [
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     51,
+     51,
+     51,
+     50
+    ]
+   },
+   "pick": {
+    "index": 3,
+    "height": 50,
+    "head_top_row": 4,
+    "rod_or_item_rows_above_head": 0,
+    "why": "No candidate is within 2 px (or 4 px) of 45: all 16 are 50-51 px. Closest = 50 px (13 candidates). Of those, #3 matches the description best: three amber freckles on each cheek, dark violet hair in a knot, rope belt with a bronze buckle, dark trousers and boots, empty hands at the sides, front-on and symmetric.",
+    "file": "npc-tally/pick.png",
+    "sha256": "2c9b2df656c37eb75826c698034d3b7a140656d7d7ff2982a6ce7c680d290d9a",
+    "bbox": [
+     9,
+     4,
+     35,
+     54
+    ],
+    "width": 26,
+    "colours": {
+     "colours_total": 9,
+     "off_whitelist": 0,
+     "off_colours": [],
+     "reserved": [],
+     "semi_transparent_px": 0,
+     "palette_used": [
+      "#2A2540",
+      "#4A4E57",
+      "#5B5478",
+      "#5E5448",
+      "#8C7F6E",
+      "#9C5B4A",
+      "#C79A3E",
+      "#E3C29E",
+      "#E8E2D6"
+     ]
+    }
+   },
+   "pick_64": {
+    "file": "npc-tally/pick-64.png",
+    "sha256": "b8c1e3fd3031fdd6743e267a973daabc02751152f20733f517c228ff8db31bb6",
+    "paste_offset": [
+     10,
+     0
+    ],
+    "bbox": [
+     19,
+     4,
+     45,
+     54
+    ],
+    "lowest_opaque_row": 53,
+    "fits": true,
+    "rule": "pick canvas pasted unscaled, canvas centred horizontally ((64-w)//2 = 10), lowest opaque row on row 53; for the clerk (lowest row 55 on a 64-tall canvas) the top 2 rows, all transparent, fell off"
+   },
+   "rotation": {
+    "tool": "create_character",
+    "character_id": "7c30709b-590b-4a24-bcab-c184f9338a40",
+    "arguments": {
+     "description": "Tally, a young Kindled woman: a small figure of red terracotta clay, about 45 px tall, three amber freckles, dark violet hair tied up in a knot, a pale salt-stiff sailcloth tunic with a rope belt and a bronze buckle, dark trousers and boots, empty hands. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+     "mode": "v3",
+     "reference_image_url": "upload:addf701f-81f4-44d9-a2ee-4b10faa61c9e",
+     "n_directions": 8,
+     "name": "npc-tally (g13b-job3)"
+    },
+    "reference_note": "upload of pick-64.png, byte for byte (sha256 above)",
+    "seed": "create_character has no seed parameter",
+    "generations": 1,
+    "generations_source": "quoted 'v3 reference (1 generations, 8 directions)'",
+    "retakes": 0,
+    "files": "<direction>.png and character-metadata.json from the character zip (api.pixellab.ai/mcp/characters/<id>/download)",
+    "south_vs_pick64": "identical on every visible pixel (only the RGB of fully transparent pixels differs)",
+    "outputs": [
+     {
+      "direction": "south",
+      "file": "npc-tally/south.png",
+      "sha256": "8203e2d3048b3fb851b29b5b664c378fcb5feedd85d96ce6dec5e7182587959b",
+      "bbox": [
+       19,
+       4,
+       45,
+       54
+      ],
+      "lowest_opaque_row": 53,
+      "height_top_to_lowest_row": 50,
+      "colours": {
+       "colours_total": 9,
+       "off_whitelist": 0,
+       "off_whitelist_px": 0,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "south-east",
+      "file": "npc-tally/south-east.png",
+      "sha256": "dc951e4e996ab069af6614773a04a3f1b50fd7fb43990bf3be2c72c2e0fb0c2f",
+      "bbox": [
+       20,
+       5,
+       44,
+       56
+      ],
+      "lowest_opaque_row": 55,
+      "height_top_to_lowest_row": 51,
+      "colours": {
+       "colours_total": 22,
+       "off_whitelist": 13,
+       "off_whitelist_px": 41,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "east",
+      "file": "npc-tally/east.png",
+      "sha256": "831b6059f67c66b669a1169f7518fd8510c276f2b55d0dd38359bad703682661",
+      "bbox": [
+       17,
+       9,
+       41,
+       57
+      ],
+      "lowest_opaque_row": 56,
+      "height_top_to_lowest_row": 48,
+      "colours": {
+       "colours_total": 19,
+       "off_whitelist": 10,
+       "off_whitelist_px": 20,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "north-east",
+      "file": "npc-tally/north-east.png",
+      "sha256": "031ea862afbfadb4553f3766ed119f8e14a68c401c27e148e16e487c6e4445af",
+      "bbox": [
+       20,
+       7,
+       44,
+       56
+      ],
+      "lowest_opaque_row": 55,
+      "height_top_to_lowest_row": 49,
+      "colours": {
+       "colours_total": 20,
+       "off_whitelist": 12,
+       "off_whitelist_px": 30,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "north",
+      "file": "npc-tally/north.png",
+      "sha256": "28251ba4574613c48db616effbca9a14f202208a3ba71b26c9bf9839786b497f",
+      "bbox": [
+       19,
+       7,
+       45,
+       55
+      ],
+      "lowest_opaque_row": 54,
+      "height_top_to_lowest_row": 48,
+      "colours": {
+       "colours_total": 17,
+       "off_whitelist": 9,
+       "off_whitelist_px": 16,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "north-west",
+      "file": "npc-tally/north-west.png",
+      "sha256": "a66e61a97906f51f0f819b1c290b04ef55072c40e19d1bc3f49ee02fa84f0495",
+      "bbox": [
+       21,
+       7,
+       46,
+       56
+      ],
+      "lowest_opaque_row": 55,
+      "height_top_to_lowest_row": 49,
+      "colours": {
+       "colours_total": 16,
+       "off_whitelist": 8,
+       "off_whitelist_px": 19,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "west",
+      "file": "npc-tally/west.png",
+      "sha256": "d463e8655d1daa0a1baf183a2db93310869ae97ed948e18f2a2470e3f308ea76",
+      "bbox": [
+       23,
+       9,
+       47,
+       57
+      ],
+      "lowest_opaque_row": 56,
+      "height_top_to_lowest_row": 48,
+      "colours": {
+       "colours_total": 21,
+       "off_whitelist": 12,
+       "off_whitelist_px": 20,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "south-west",
+      "file": "npc-tally/south-west.png",
+      "sha256": "7934b965fdae664c9be1494c3fc7d1db0840bf6f17185cee047f9fdac0200c79",
+      "bbox": [
+       20,
+       6,
+       45,
+       56
+      ],
+      "lowest_opaque_row": 55,
+      "height_top_to_lowest_row": 50,
+      "colours": {
+       "colours_total": 23,
+       "off_whitelist": 14,
+       "off_whitelist_px": 37,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     }
+    ]
+   },
+   "generations": 11,
+   "retakes": 0
+  },
+  {
+   "id": "npc-clerk",
+   "target_height_px": "48",
+   "step1": {
+    "tool": "create_image_pro",
+    "job_id": "170ab9b9-56e4-4787-8c4a-6dd7fa64e57f",
+    "asset_id": "8ac198d7-c166-5c10-a731-4150fdbee9aa",
+    "arguments": {
+     "description": "A Concord weigh-house clerk: a Scattered man about 48 px tall with warm tan skin and a shaved head, an iron-grey fringed wrap robe in an ancient Mesopotamian style with ochre trim. He holds a small bronze balance in one hand and a blank clay tablet in the other. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters. Facing the viewer, standing.",
+     "width": 44,
+     "height": 64,
+     "no_background": true,
+     "reference_images": [
+      {
+       "url": "upload:36850920-de36-4df5-b399-bc39add8cfd8",
+       "usage": "character base: copy the proportions, the size on the 64x64 canvas, the clay-figure build, the outline and the shading style; NOT the outfit, colours or weapon",
+       "source": "art/anchors/kindled-ash-s-64.png",
+       "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+      }
+     ],
+     "palette": [
+      "#F4EFE6",
+      "#D9D2E9",
+      "#A99FC4",
+      "#5B5478",
+      "#2A2540",
+      "#F2B65A",
+      "#C9733A",
+      "#4A4E57",
+      "#7D8794",
+      "#3E5C7A",
+      "#A8743A",
+      "#C79A3E",
+      "#8A6420",
+      "#E9E4D4",
+      "#2F7F7A",
+      "#C98F78",
+      "#9C5B4A",
+      "#E3C29E",
+      "#24305A",
+      "#E8E2D6",
+      "#FFF4C7",
+      "#8C7F6E",
+      "#5E5448",
+      "#FBF8F0",
+      "#D8B24A",
+      "#F07A3A",
+      "#B5402E",
+      "#1C2147"
+     ],
+     "palette_name": "Islands of the One",
+     "max_colors": 12,
+     "seed": 1234
+    },
+    "canvas_accepted": [
+     44,
+     64
+    ],
+    "candidates": 16,
+    "generations": 10,
+    "generations_source": "quoted 'cost: 10 generations'; get_image reports charged_generations 10",
+    "retakes": 0
+   },
+   "candidates": [
+    {
+     "index": 0,
+     "file": "npc-clerk/candidates/candidate-00.png",
+     "sha256": "ffd6825604469a153cb359fa190e0217704e091b179dff73d48a52f890cfaff1",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      9,
+      8,
+      39,
+      56
+     ],
+     "width": 30,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=0"
+    },
+    {
+     "index": 1,
+     "file": "npc-clerk/candidates/candidate-01.png",
+     "sha256": "51ba3ded804dc53d48d9362dc5014f4aaa550d999b286d5c0cd39000100cac5f",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      4,
+      8,
+      39,
+      56
+     ],
+     "width": 35,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=1"
+    },
+    {
+     "index": 2,
+     "file": "npc-clerk/candidates/candidate-02.png",
+     "sha256": "b68268ca44a584ecc499aaec959da25463405183dba387ee6be0341cc9dc0915",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      4,
+      8,
+      39,
+      56
+     ],
+     "width": 35,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 10,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=2"
+    },
+    {
+     "index": 3,
+     "file": "npc-clerk/candidates/candidate-03.png",
+     "sha256": "cacf2cac56678fb31939eb67965983294d8b4a533b54915b90ead97d07571802",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      3,
+      8,
+      39,
+      56
+     ],
+     "width": 36,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=3"
+    },
+    {
+     "index": 4,
+     "file": "npc-clerk/candidates/candidate-04.png",
+     "sha256": "da15173feb4213ccf86a56238ce09ff8eced9bb74563d9035b284979e65b8691",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      4,
+      8,
+      39,
+      56
+     ],
+     "width": 35,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=4"
+    },
+    {
+     "index": 5,
+     "file": "npc-clerk/candidates/candidate-05.png",
+     "sha256": "28550170162fb22f7dc39ec77cdddd7329660112babaf43e7dce731197780d97",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      4,
+      8,
+      39,
+      56
+     ],
+     "width": 35,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 10,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=5"
+    },
+    {
+     "index": 6,
+     "file": "npc-clerk/candidates/candidate-06.png",
+     "sha256": "2ed1ff4651292661ec4ef2c16f43fe4e2e5fd5f72e7d53b1415ed77005400e48",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      4,
+      8,
+      39,
+      56
+     ],
+     "width": 35,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 10,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=6"
+    },
+    {
+     "index": 7,
+     "file": "npc-clerk/candidates/candidate-07.png",
+     "sha256": "73c5458e1444bb839b177071c969607f2cb01115cd287a00ca260a0486fd9f6a",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      5,
+      8,
+      39,
+      56
+     ],
+     "width": 34,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=7"
+    },
+    {
+     "index": 8,
+     "file": "npc-clerk/candidates/candidate-08.png",
+     "sha256": "b7956a51a31c68eee1d7b5931db31e135f59dea36f6ad50b25571cad22e1fe38",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      9,
+      8,
+      39,
+      56
+     ],
+     "width": 30,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=8"
+    },
+    {
+     "index": 9,
+     "file": "npc-clerk/candidates/candidate-09.png",
+     "sha256": "17536075ea8cc3768fd221b6d01bc3ccf8148782d7c10dffb122578e4c8c5904",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      4,
+      8,
+      39,
+      56
+     ],
+     "width": 35,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=9"
+    },
+    {
+     "index": 10,
+     "file": "npc-clerk/candidates/candidate-10.png",
+     "sha256": "202d8e710a471092a26f6dea05de963387d3694660890c7b38e143271dea01ed",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      5,
+      8,
+      39,
+      56
+     ],
+     "width": 34,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=10"
+    },
+    {
+     "index": 11,
+     "file": "npc-clerk/candidates/candidate-11.png",
+     "sha256": "4fe701dadf98e16c4fa49c3e3f7eac56b64cfb3de46155071d5e2da1f8f360fe",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      4,
+      8,
+      39,
+      56
+     ],
+     "width": 35,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 8,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=11"
+    },
+    {
+     "index": 12,
+     "file": "npc-clerk/candidates/candidate-12.png",
+     "sha256": "74761b922c6a641e880a07c84375c88600149aee636e9211f58bfc96b7dd7f8e",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      9,
+      8,
+      40,
+      56
+     ],
+     "width": 31,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 10,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=12"
+    },
+    {
+     "index": 13,
+     "file": "npc-clerk/candidates/candidate-13.png",
+     "sha256": "a593b0bb522eacc826f4dcd277f261432ca589c24dee624712da4744e07944aa",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      4,
+      8,
+      38,
+      56
+     ],
+     "width": 34,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 9,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=13"
+    },
+    {
+     "index": 14,
+     "file": "npc-clerk/candidates/candidate-14.png",
+     "sha256": "1e0bde488f73a53fdeefc6f7b2a413a4f8239f091967adc97c585cd036f8402c",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      7,
+      8,
+      38,
+      56
+     ],
+     "width": 31,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 6,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=14"
+    },
+    {
+     "index": 15,
+     "file": "npc-clerk/candidates/candidate-15.png",
+     "sha256": "bd993ec6aeff440477f82268a0e3273c9de2377b9cf09c12b2281d8846e8849f",
+     "height": 48,
+     "head_top_row": 8,
+     "lowest_opaque_row": 55,
+     "bbox": [
+      7,
+      8,
+      38,
+      56
+     ],
+     "width": 31,
+     "touches_edge": [],
+     "stray_px": 0,
+     "colours": 6,
+     "url": "https://api.pixellab.ai/mcp/images/170ab9b9-56e4-4787-8c4a-6dd7fa64e57f/download?index=15"
+    }
+   ],
+   "candidates_sheet": "npc-clerk/candidates.png",
+   "candidate_heights": {
+    "min": 48,
+    "max": 48,
+    "all": [
+     48,
+     48,
+     48,
+     48,
+     48,
+     48,
+     48,
+     48,
+     48,
+     48,
+     48,
+     48,
+     48,
+     48,
+     48,
+     48
+    ]
+   },
+   "pick": {
+    "index": 5,
+    "height": 48,
+    "head_top_row": 8,
+    "rod_or_item_rows_above_head": 0,
+    "why": "All 16 candidates are exactly 48 px. #5 matches best: shaved head, warm tan skin, iron-grey fringed wrap robe with ochre trim, a bronze balance with both pans clear in one hand and a blank tablet in the other. (#0, #8 have no tablet; #7, #10-15 have a much darker robe.)",
+    "file": "npc-clerk/pick.png",
+    "sha256": "28550170162fb22f7dc39ec77cdddd7329660112babaf43e7dce731197780d97",
+    "bbox": [
+     4,
+     8,
+     39,
+     56
+    ],
+    "width": 35,
+    "colours": {
+     "colours_total": 10,
+     "off_whitelist": 0,
+     "off_colours": [],
+     "reserved": [],
+     "semi_transparent_px": 0,
+     "palette_used": [
+      "#2A2540",
+      "#4A4E57",
+      "#5E5448",
+      "#7D8794",
+      "#8A6420",
+      "#8C7F6E",
+      "#A8743A",
+      "#C79A3E",
+      "#C98F78",
+      "#FBF8F0"
+     ]
+    }
+   },
+   "pick_64": {
+    "file": "npc-clerk/pick-64.png",
+    "sha256": "182c56bf954fcf99f2221bca92b06c2df79dda28598bc2d62a69ea46400eb23d",
+    "paste_offset": [
+     10,
+     -2
+    ],
+    "bbox": [
+     14,
+     6,
+     49,
+     54
+    ],
+    "lowest_opaque_row": 53,
+    "fits": true,
+    "rule": "pick canvas pasted unscaled, canvas centred horizontally ((64-w)//2 = 10), lowest opaque row on row 53; for the clerk (lowest row 55 on a 64-tall canvas) the top 2 rows, all transparent, fell off"
+   },
+   "rotation": {
+    "tool": "create_character",
+    "character_id": "f6cd2689-8dfa-4461-812f-4391774c47bf",
+    "arguments": {
+     "description": "A Concord weigh-house clerk: a Scattered man about 48 px tall with warm tan skin and a shaved head, an iron-grey fringed wrap robe in an ancient Mesopotamian style with ochre trim. He holds a small bronze balance in one hand and a blank clay tablet in the other. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+     "mode": "v3",
+     "reference_image_url": "upload:5b12edae-5491-4226-9156-d056e00762dc",
+     "n_directions": 8,
+     "name": "npc-clerk (g13b-job3)"
+    },
+    "reference_note": "upload of pick-64.png, byte for byte (sha256 above)",
+    "seed": "create_character has no seed parameter",
+    "generations": 1,
+    "generations_source": "quoted 'v3 reference (1 generations, 8 directions)'",
+    "retakes": 0,
+    "files": "<direction>.png and character-metadata.json from the character zip (api.pixellab.ai/mcp/characters/<id>/download)",
+    "south_vs_pick64": "identical on every visible pixel (only the RGB of fully transparent pixels differs)",
+    "outputs": [
+     {
+      "direction": "south",
+      "file": "npc-clerk/south.png",
+      "sha256": "8520efd43e13bcefdae30b5f976f934555f755bad66d2c7f38f731d00b92097b",
+      "bbox": [
+       14,
+       6,
+       49,
+       54
+      ],
+      "lowest_opaque_row": 53,
+      "height_top_to_lowest_row": 48,
+      "colours": {
+       "colours_total": 10,
+       "off_whitelist": 0,
+       "off_whitelist_px": 0,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "south-east",
+      "file": "npc-clerk/south-east.png",
+      "sha256": "6bfb4269cef59dee6ef00d864db675f2f92dc36136016d01bf39782867b29205",
+      "bbox": [
+       20,
+       7,
+       51,
+       56
+      ],
+      "lowest_opaque_row": 55,
+      "height_top_to_lowest_row": 49,
+      "colours": {
+       "colours_total": 31,
+       "off_whitelist": 21,
+       "off_whitelist_px": 139,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "east",
+      "file": "npc-clerk/east.png",
+      "sha256": "ce8ac245c014f6b4fe0b2e8f07ba55f5d01ec54f33798ee19f6625e2e6972674",
+      "bbox": [
+       22,
+       9,
+       47,
+       58
+      ],
+      "lowest_opaque_row": 57,
+      "height_top_to_lowest_row": 49,
+      "colours": {
+       "colours_total": 29,
+       "off_whitelist": 19,
+       "off_whitelist_px": 83,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "north-east",
+      "file": "npc-clerk/north-east.png",
+      "sha256": "5449aaf228c6d301697fc667ce65dcdc514ca9aa6be531254c5bf7d288733bff",
+      "bbox": [
+       21,
+       7,
+       51,
+       56
+      ],
+      "lowest_opaque_row": 55,
+      "height_top_to_lowest_row": 49,
+      "colours": {
+       "colours_total": 30,
+       "off_whitelist": 21,
+       "off_whitelist_px": 95,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "north",
+      "file": "npc-clerk/north.png",
+      "sha256": "41045961f1c2dd9d877a5b80e07b77fc1c3a0770cf0af001fa301511e3240a3a",
+      "bbox": [
+       15,
+       6,
+       51,
+       54
+      ],
+      "lowest_opaque_row": 53,
+      "height_top_to_lowest_row": 48,
+      "colours": {
+       "colours_total": 27,
+       "off_whitelist": 18,
+       "off_whitelist_px": 91,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "north-west",
+      "file": "npc-clerk/north-west.png",
+      "sha256": "b3ccd776badaad4f64dd65324faf3b692abaa0630752934ea8ad1819133b3d78",
+      "bbox": [
+       12,
+       7,
+       43,
+       56
+      ],
+      "lowest_opaque_row": 55,
+      "height_top_to_lowest_row": 49,
+      "colours": {
+       "colours_total": 30,
+       "off_whitelist": 22,
+       "off_whitelist_px": 86,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "west",
+      "file": "npc-clerk/west.png",
+      "sha256": "19c8964a29cb575c8cc6f724593d52a859ccab805e65eb929e894793ffd785ac",
+      "bbox": [
+       18,
+       9,
+       42,
+       58
+      ],
+      "lowest_opaque_row": 57,
+      "height_top_to_lowest_row": 49,
+      "colours": {
+       "colours_total": 30,
+       "off_whitelist": 21,
+       "off_whitelist_px": 86,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     },
+     {
+      "direction": "south-west",
+      "file": "npc-clerk/south-west.png",
+      "sha256": "bc6e18fefab0578c3408a00a034d03d8cdf4355fc265af34d6814831881a1cc2",
+      "bbox": [
+       12,
+       7,
+       44,
+       56
+      ],
+      "lowest_opaque_row": 55,
+      "height_top_to_lowest_row": 49,
+      "colours": {
+       "colours_total": 31,
+       "off_whitelist": 21,
+       "off_whitelist_px": 119,
+       "reserved": [],
+       "semi_transparent_px": 0
+      }
+     }
+    ]
+   },
+   "generations": 11,
+   "retakes": 0
+  }
+ ],
+ "contact_sheet": {
+  "file": "contact-sizes.png",
+  "layout": "one block per NPC: player anchor, Job 1 (c) south, Job 2 (a) south, Job 3 pick-64, each in a 64x64 cell with its lowest opaque row (anchor: soles) on row 53; blocks at 2x on #D9D2E9, then at 4x on #5B5478; below, Job 3 rotations S..SW at 2x on the floor, as delivered (not re-grounded). Labels in DejaVu Sans outside the cells. Job 1's clerk (60 px) rises above the top of its cell after being moved down to row 53; it is drawn over the page rather than clipped."
+ },
+ "files_sha256": {
+  "contact-sizes.png": "51cc820c1c478eede70d2147d2490bb438fb81d5600210d1e6223801732b2f56",
+  "npc-clerk/candidates.png": "72fb87a581e25202076d8cd38c52d0314a83d076542c013d18e343341946b750",
+  "npc-clerk/candidates/candidate-00.png": "ffd6825604469a153cb359fa190e0217704e091b179dff73d48a52f890cfaff1",
+  "npc-clerk/candidates/candidate-01.png": "51ba3ded804dc53d48d9362dc5014f4aaa550d999b286d5c0cd39000100cac5f",
+  "npc-clerk/candidates/candidate-02.png": "b68268ca44a584ecc499aaec959da25463405183dba387ee6be0341cc9dc0915",
+  "npc-clerk/candidates/candidate-03.png": "cacf2cac56678fb31939eb67965983294d8b4a533b54915b90ead97d07571802",
+  "npc-clerk/candidates/candidate-04.png": "da15173feb4213ccf86a56238ce09ff8eced9bb74563d9035b284979e65b8691",
+  "npc-clerk/candidates/candidate-05.png": "28550170162fb22f7dc39ec77cdddd7329660112babaf43e7dce731197780d97",
+  "npc-clerk/candidates/candidate-06.png": "2ed1ff4651292661ec4ef2c16f43fe4e2e5fd5f72e7d53b1415ed77005400e48",
+  "npc-clerk/candidates/candidate-07.png": "73c5458e1444bb839b177071c969607f2cb01115cd287a00ca260a0486fd9f6a",
+  "npc-clerk/candidates/candidate-08.png": "b7956a51a31c68eee1d7b5931db31e135f59dea36f6ad50b25571cad22e1fe38",
+  "npc-clerk/candidates/candidate-09.png": "17536075ea8cc3768fd221b6d01bc3ccf8148782d7c10dffb122578e4c8c5904",
+  "npc-clerk/candidates/candidate-10.png": "202d8e710a471092a26f6dea05de963387d3694660890c7b38e143271dea01ed",
+  "npc-clerk/candidates/candidate-11.png": "4fe701dadf98e16c4fa49c3e3f7eac56b64cfb3de46155071d5e2da1f8f360fe",
+  "npc-clerk/candidates/candidate-12.png": "74761b922c6a641e880a07c84375c88600149aee636e9211f58bfc96b7dd7f8e",
+  "npc-clerk/candidates/candidate-13.png": "a593b0bb522eacc826f4dcd277f261432ca589c24dee624712da4744e07944aa",
+  "npc-clerk/candidates/candidate-14.png": "1e0bde488f73a53fdeefc6f7b2a413a4f8239f091967adc97c585cd036f8402c",
+  "npc-clerk/candidates/candidate-15.png": "bd993ec6aeff440477f82268a0e3273c9de2377b9cf09c12b2281d8846e8849f",
+  "npc-clerk/character-metadata.json": "bd249ff0b0b2df5b9bf143085328d6a8c1282b59618cc2bea0d6563e8a7a2767",
+  "npc-clerk/east.png": "ce8ac245c014f6b4fe0b2e8f07ba55f5d01ec54f33798ee19f6625e2e6972674",
+  "npc-clerk/north-east.png": "5449aaf228c6d301697fc667ce65dcdc514ca9aa6be531254c5bf7d288733bff",
+  "npc-clerk/north-west.png": "b3ccd776badaad4f64dd65324faf3b692abaa0630752934ea8ad1819133b3d78",
+  "npc-clerk/north.png": "41045961f1c2dd9d877a5b80e07b77fc1c3a0770cf0af001fa301511e3240a3a",
+  "npc-clerk/pick-64.png": "182c56bf954fcf99f2221bca92b06c2df79dda28598bc2d62a69ea46400eb23d",
+  "npc-clerk/pick.png": "28550170162fb22f7dc39ec77cdddd7329660112babaf43e7dce731197780d97",
+  "npc-clerk/south-east.png": "6bfb4269cef59dee6ef00d864db675f2f92dc36136016d01bf39782867b29205",
+  "npc-clerk/south-west.png": "bc6e18fefab0578c3408a00a034d03d8cdf4355fc265af34d6814831881a1cc2",
+  "npc-clerk/south.png": "8520efd43e13bcefdae30b5f976f934555f755bad66d2c7f38f731d00b92097b",
+  "npc-clerk/west.png": "19c8964a29cb575c8cc6f724593d52a859ccab805e65eb929e894793ffd785ac",
+  "npc-kesh/candidates.png": "8493924d68c2c3e637289a798d87b62f502cc6b2e651a1380124d7f35ef15d50",
+  "npc-kesh/candidates/candidate-00.png": "a11d96b18a95d0f9180dc026965472c3968db6a9107ffd89e4a620852368cf22",
+  "npc-kesh/candidates/candidate-01.png": "9993d381599353d47ca7dac089afd65a0dae1b77ce98b0c559fa2656c27a5598",
+  "npc-kesh/candidates/candidate-02.png": "dbe33a8da32bfe1c6589e3f434806e45edc6577dc3e4a5d102216f1ae9ccfe31",
+  "npc-kesh/candidates/candidate-03.png": "122f8fa81ad32715302bed73bbb66e98c0e906ae04960a6c9df25f5195f13db0",
+  "npc-kesh/candidates/candidate-04.png": "c8b24aef1eb7bf3f74b5ee7e0ff10b1123743a580385de2c2eae8b8e565ec673",
+  "npc-kesh/candidates/candidate-05.png": "a6ce29b840e6eaa6eeaa5328c702b58118a115bc980d0b43f5488d7e8cbcd0fe",
+  "npc-kesh/candidates/candidate-06.png": "62265240d372b6e73f90e89947633c022ec9a0b92f67a15eae0aeb42ae6f8b78",
+  "npc-kesh/candidates/candidate-07.png": "b3c813fd249262e56ba0811975fe9bcfbe442e83418d71f4a68a74f865f8a99f",
+  "npc-kesh/candidates/candidate-08.png": "7b7b311eefe8be36e125f52d31b5d3c19fe96546072e80bacb5ee51ff584f8bc",
+  "npc-kesh/candidates/candidate-09.png": "a73e5520efa272e2fb88bd27d8bbc7705e5155ab85a54e7651a4d10ad3415a25",
+  "npc-kesh/candidates/candidate-10.png": "a6638af3328559cc57d92170d3d6336f23e960937e084dca17457f5419160512",
+  "npc-kesh/candidates/candidate-11.png": "7374fc4e811d83eb3e4305fd6cd122fc9997d47667cf4a2c87506829e3c61357",
+  "npc-kesh/candidates/candidate-12.png": "fef791c92de5d6fc02d6d53bfc1e7d2af3987f28940f5bed03602f182395ef64",
+  "npc-kesh/candidates/candidate-13.png": "b55c27e096df3ca8cbcae68448d29d309db681dddb110665b9de789ce60f4a22",
+  "npc-kesh/candidates/candidate-14.png": "b7d4033f99681147e8c1909bc669b484fa044fba941300913840706cf58eacb3",
+  "npc-kesh/candidates/candidate-15.png": "3b9358b3d253893a1b85cea9b9273b529ce1fd596790030858a85081aaa621ef",
+  "npc-kesh/character-metadata.json": "396a668f6523881314ee6bc6351ff80f17bf4deee31f8634b5ed80c59ae5cb4a",
+  "npc-kesh/east.png": "65fc3ff9e2624efbbbdf0c20da63bcc7219a71ee5480182190da69e6981dc9e4",
+  "npc-kesh/north-east.png": "d01f5d47eb1253b1dec6ebf3b20c4e51d6750de90e51747304c26c81ebad0037",
+  "npc-kesh/north-west.png": "5a3e99e8f04532cdf8363aec2daea9732651f30b7a2d39fd7445125148a79639",
+  "npc-kesh/north.png": "540458aec59df410d074cdc6760591491624d4102d5c3039e6323bfba9dcf854",
+  "npc-kesh/pick-64.png": "1117ae84191731c1c62a84bf2cc5db8d811a7ec850f127d29ced1770175080e9",
+  "npc-kesh/pick.png": "c8b24aef1eb7bf3f74b5ee7e0ff10b1123743a580385de2c2eae8b8e565ec673",
+  "npc-kesh/south-east.png": "72e3f21b3068a7a48f8f626baa8ec311f368ea0bb8b7fb934b55347fad4737a1",
+  "npc-kesh/south-west.png": "5b658f36ffd1e5b360f0343561caeb155288223fe2bc45521d8ff0c47872120d",
+  "npc-kesh/south.png": "7b99bf2105a1b5ef1765a246d69534f54bbc7794732ee6a1f29985417f24d98c",
+  "npc-kesh/west.png": "036f165955518554714145df21d1e2cf83e81d4429784477c5de6ef2a8f3971d",
+  "npc-tally/candidates.png": "2c05465013790f8d3302561a6f712e81858af1fb4a12d857303f033e1d75d17d",
+  "npc-tally/candidates/candidate-00.png": "629bbea893de33960e192bc1f2442ae5e809e60a6dfd4d9341ade289c3e8bb48",
+  "npc-tally/candidates/candidate-01.png": "3f98a60fcc6f2111e57ab8940a8fb20d05d4947ebfc257f96747c736d3d2bf41",
+  "npc-tally/candidates/candidate-02.png": "56b44c2d4115b1cb93cf7d9ea84fe78ab0afb5353ca7c37992fbe3c608504080",
+  "npc-tally/candidates/candidate-03.png": "2c9b2df656c37eb75826c698034d3b7a140656d7d7ff2982a6ce7c680d290d9a",
+  "npc-tally/candidates/candidate-04.png": "97b153da6257392b38e6dbcc8f89c97781cdd73849107c5a87051c19b2e46779",
+  "npc-tally/candidates/candidate-05.png": "dbe9c37af8924941417f3ae5a7b2025e888ce8fb0df299371fe5c99865c3e49f",
+  "npc-tally/candidates/candidate-06.png": "cb04945d5b5de3b2d8b2dcc742f38eddbdc5b0b370456eea9aea1231293f9fda",
+  "npc-tally/candidates/candidate-07.png": "f47a28319da857f0ea15bf411c2c89d5c839afc8593fcaf628293880c753f03d",
+  "npc-tally/candidates/candidate-08.png": "b461a8e198086d047173935ca731b72dd052ddea078c0f6c98295d0f7bfe30eb",
+  "npc-tally/candidates/candidate-09.png": "626d2989014e3c3f8775e9caa81e0da60b6e089c17204585480682e90bcdaba1",
+  "npc-tally/candidates/candidate-10.png": "537cfc38f6d034c0d41758308e74ee7fe8b7e2347f61b9d42ed1d96168ae0924",
+  "npc-tally/candidates/candidate-11.png": "9cb7a632093ab7defb9e5329140081a0c419c4ec273986ebe8c9843dd76726ea",
+  "npc-tally/candidates/candidate-12.png": "e4e545776e41603f769f3065503eeafb171d8d7e406e53206f0f278333501c83",
+  "npc-tally/candidates/candidate-13.png": "531ff506fff50af0d16e50fa532dd7346b8f4facaca209f1857b5d4e03eb289e",
+  "npc-tally/candidates/candidate-14.png": "f62234278aff7f08d32482d86e80906a101ed6c80154e6e30005cb8cfe60840d",
+  "npc-tally/candidates/candidate-15.png": "0ed860963b47e6bd99beb3faa203ae61c098277c42f8830a86888c2ccc6605b1",
+  "npc-tally/character-metadata.json": "d1c222318c70bc10b386d8e9022937e55a8c55629f6d2b7a610ac1bf88ef3d14",
+  "npc-tally/east.png": "831b6059f67c66b669a1169f7518fd8510c276f2b55d0dd38359bad703682661",
+  "npc-tally/north-east.png": "031ea862afbfadb4553f3766ed119f8e14a68c401c27e148e16e487c6e4445af",
+  "npc-tally/north-west.png": "a66e61a97906f51f0f819b1c290b04ef55072c40e19d1bc3f49ee02fa84f0495",
+  "npc-tally/north.png": "28251ba4574613c48db616effbca9a14f202208a3ba71b26c9bf9839786b497f",
+  "npc-tally/pick-64.png": "b8c1e3fd3031fdd6743e267a973daabc02751152f20733f517c228ff8db31bb6",
+  "npc-tally/pick.png": "2c9b2df656c37eb75826c698034d3b7a140656d7d7ff2982a6ce7c680d290d9a",
+  "npc-tally/south-east.png": "dc951e4e996ab069af6614773a04a3f1b50fd7fb43990bf3be2c72c2e0fb0c2f",
+  "npc-tally/south-west.png": "7934b965fdae664c9be1494c3fc7d1db0840bf6f17185cee047f9fdac0200c79",
+  "npc-tally/south.png": "8203e2d3048b3fb851b29b5b664c378fcb5feedd85d96ce6dec5e7182587959b",
+  "npc-tally/west.png": "d463e8655d1daa0a1baf183a2db93310869ae97ed948e18f2a2470e3f308ea76"
+ }
+}
