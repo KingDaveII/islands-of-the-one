@@ -1,0 +1,3394 @@
+{
+  "job": "g13b-job2",
+  "date": "2026-10-15",
+  "purpose": "G1.3b pilot: (A) size control for Job 1 option (c): Pro on a canvas the size of the target, padded onto 64x64; (B) the player (Job 0 Kindled) at 32x48: walks, one Hookblade attack on three engines, the Tide outfit, dialog portraits.",
+  "palette": [
+    "#F4EFE6",
+    "#D9D2E9",
+    "#A99FC4",
+    "#5B5478",
+    "#2A2540",
+    "#F2B65A",
+    "#C9733A",
+    "#4A4E57",
+    "#7D8794",
+    "#3E5C7A",
+    "#A8743A",
+    "#C79A3E",
+    "#8A6420",
+    "#E9E4D4",
+    "#2F7F7A",
+    "#C98F78",
+    "#9C5B4A",
+    "#E3C29E",
+    "#24305A",
+    "#E8E2D6",
+    "#FFF4C7",
+    "#8C7F6E",
+    "#5E5448",
+    "#FBF8F0",
+    "#D8B24A",
+    "#F07A3A",
+    "#B5402E",
+    "#1C2147"
+  ],
+  "anchors": {
+    "kindled-ash-s-64.png": {
+      "upload": "upload:8bdde4b7-dcf5-4b29-a5ca-c1a918fc8d4a",
+      "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a",
+      "source": "art/anchors/kindled-ash-s-64.png"
+    },
+    "husk-peeling-64.png": {
+      "upload": "upload:2e4ae9a6-cdf3-4014-b3e3-b0588eebb212",
+      "sha256": "8d6497ac2d06ad326d25fa41e07613b7cf329af50cb4d75a1610919cdd1f2d82",
+      "source": "art/anchors/husk-peeling-64.png"
+    },
+    "prop-clay-jar-64.png": {
+      "upload": "upload:a0baa282-c30a-4162-9616-4a3e242a9dd3",
+      "sha256": "9f08705fb367fa0208ce1e9036a13cba6d7717310f982e7cb04d979a96fc4710",
+      "source": "art/anchors/prop-clay-jar-64.png"
+    }
+  },
+  "images_passed_as": "upload:<id> references (POST https://api.pixellab.ai/v2/uploads) or the no-auth PixelLab CDN URLs of earlier results; no inline base64 anywhere",
+  "seed": "1234 on every call that takes one (create_image_pro, create_character_state, transfer_outfit, create_portrait_character). create_character and animate_character take none. No retakes, so 1235 was never used.",
+  "description_rule": "Part A descriptions are Job 1 (c) create_image_pro descriptions verbatim; they already end with the STYLE sentence (and the NPC ones with 'Facing the viewer, standing.'), so nothing more was appended. NPC rotations reuse Job 1's create_character description.",
+  "get_character_kindled": {
+    "character_id": "8d666a0b-3521-4d4e-a81a-902347b65d1d",
+    "available_animations": [
+      "backflip",
+      "breathing-idle",
+      "cross-punch",
+      "crouched-walking",
+      "crouching",
+      "drinking",
+      "falling-back-death",
+      "fight-stance-idle-8-frames",
+      "fireball",
+      "flying-kick",
+      "front-flip",
+      "getting-up",
+      "high-kick",
+      "hurricane-kick",
+      "jumping-1",
+      "jumping-2",
+      "lead-jab",
+      "leg-sweep",
+      "picking-up",
+      "pull-heavy-object",
+      "pushing",
+      "roundhouse-kick",
+      "running-4-frames",
+      "running-6-frames",
+      "running-8-frames",
+      "running-jump",
+      "running-slide",
+      "sad-walk",
+      "scary-walk",
+      "surprise-uppercut",
+      "taking-punch",
+      "throw-object",
+      "two-footed-jump",
+      "walk",
+      "walk-1",
+      "walk-2",
+      "walking",
+      "walking-10",
+      "walking-2",
+      "walking-3",
+      "walking-4",
+      "walking-4-frames",
+      "walking-5",
+      "walking-6",
+      "walking-6-frames",
+      "walking-7",
+      "walking-8",
+      "walking-8-frames",
+      "walking-9"
+    ],
+    "walk_template_used": "walking-6-frames",
+    "attack_templates_in_list": [
+      "cross-punch",
+      "lead-jab",
+      "surprise-uppercut",
+      "high-kick",
+      "flying-kick",
+      "roundhouse-kick",
+      "hurricane-kick",
+      "leg-sweep",
+      "fireball",
+      "throw-object"
+    ],
+    "sword_or_one_handed_swing_template": null
+  },
+  "generations": {
+    "part_a_pro": 100,
+    "part_a_rotations": 3,
+    "part_a": 103,
+    "part_b_itemised": {
+      "walk-template": 5,
+      "walk-skel": 15,
+      "attack-pixminimax": 2,
+      "attack-v3": 2,
+      "attack-skel": 2,
+      "tide-walk (transfer_outfit)": 10
+    },
+    "unsplit": {
+      "calls": [
+        "create_character_state Tide",
+        "create_portrait_character 64",
+        "create_portrait_character 128"
+      ],
+      "total": 40,
+      "how": "balance 1718.90 after Part A Pro, 1649.90 with every job but transfer_outfit done: 69 = 3 rotations + 26 animations + these 40. They ran concurrently, so the split is not measured. Quotes: state ~10-25, each portrait ~15 (doc: 10 and 15), which points to 10 + 15 + 15."
+    },
+    "part_b": 76,
+    "total": 179.0,
+    "budget": 320,
+    "measured": "get_balance 1818.90 -> 1639.90 = 179.00"
+  },
+  "retakes": "none (every Part A item had at least one whole candidate; nothing in Part B hit a hard failure)",
+  "rejected_calls_not_charged": [
+    "3 uploads refused: the 15-minute upload URL had expired; a new one was fetched"
+  ],
+  "assets": [
+    {
+      "id": "npc-kesh",
+      "part": "A",
+      "tool": "create_image_pro",
+      "job_id": "e3c27521-8c26-4b76-bdae-123445168bac",
+      "arguments": {
+        "description": "Old Kesh, a Kindled hermit and fisherman: a small figure made of river-dark brown-black clay, about 40 px tall, with a few widely spaced amber freckles like small lights, long white hair and a white beard, a patched grey-ochre sailcloth tunic with a wet grey patch, dark trousers and wrapped dark feet. He holds a long wooden casting rod upright at his side. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters. Facing the viewer, standing.",
+        "width": 32,
+        "height": 44,
+        "no_background": true,
+        "reference_images": [
+          {
+            "url": "upload:8bdde4b7-dcf5-4b29-a5ca-c1a918fc8d4a",
+            "usage": "character base: copy the proportions, the size on the 64x64 canvas, the clay-figure build, the outline and the shading style; NOT the outfit, colours or weapon",
+            "source": "art/anchors/kindled-ash-s-64.png",
+            "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+          }
+        ],
+        "palette": [
+          "#F4EFE6",
+          "#D9D2E9",
+          "#A99FC4",
+          "#5B5478",
+          "#2A2540",
+          "#F2B65A",
+          "#C9733A",
+          "#4A4E57",
+          "#7D8794",
+          "#3E5C7A",
+          "#A8743A",
+          "#C79A3E",
+          "#8A6420",
+          "#E9E4D4",
+          "#2F7F7A",
+          "#C98F78",
+          "#9C5B4A",
+          "#E3C29E",
+          "#24305A",
+          "#E8E2D6",
+          "#FFF4C7",
+          "#8C7F6E",
+          "#5E5448",
+          "#FBF8F0",
+          "#D8B24A",
+          "#F07A3A",
+          "#B5402E",
+          "#1C2147"
+        ],
+        "palette_name": "Islands of the One",
+        "max_colors": 12,
+        "seed": 1234
+      },
+      "canvas_requested": [
+        32,
+        44
+      ],
+      "canvas_accepted": [
+        32,
+        44
+      ],
+      "candidates": 36,
+      "generations": 10,
+      "generations_source": "quoted 'cost: 10 generations'; get_image reports charged_generations 10 where read",
+      "retakes": 0,
+      "pick_index": 0,
+      "pick_why": "faces the viewer, long rod upright at his side, white hair and beard, amber freckles visible; same pick index as Job 1",
+      "whole_candidates_note": "a candidate counts as whole when its main shape touches the canvas edge only with outline pixels (#2A2540/#1C2147)",
+      "pick": {
+        "file": "a/npc-kesh/pick.png",
+        "sha256": "22356f05884662f42768c23cd0ef931db14c178c03f6cbbea0f765c861412c83",
+        "subject_bbox": [
+          5,
+          5,
+          25,
+          38
+        ],
+        "subject_size_wh": [
+          20,
+          33
+        ],
+        "stray_px_outside_subject": 0
+      },
+      "pick_64": {
+        "file": "a/npc-kesh/pick-64.png",
+        "sha256": "3a6eb4a6130f1a914b0a67e1f5c2ea9bf20e8825ce5bc6b1045e3527c37330cd",
+        "paste_offset": [
+          16,
+          16
+        ],
+        "bbox": [
+          21,
+          21,
+          41,
+          54
+        ],
+        "rule": "whole pick canvas pasted unscaled, canvas centred horizontally ((64-w)//2), lowest opaque row of the subject (largest connected shape) on row 53; only transparent rows fell off the canvas"
+      },
+      "candidates_dir": "a/npc-kesh/candidates",
+      "candidates_sheet": "a/npc-kesh/candidates.png",
+      "colours": {
+        "colours_total": 8,
+        "max_colours_per_image": 8,
+        "off_whitelist": 0,
+        "reserved": [],
+        "semi_transparent_px": 0
+      },
+      "rotation": {
+        "tool": "create_character",
+        "character_id": "003e510d-e48d-4ca3-ab54-0dd03c25f67a",
+        "arguments": {
+          "description": "Old Kesh, a Kindled hermit and fisherman: a small figure made of river-dark brown-black clay, about 40 px tall, with a few widely spaced amber freckles like small lights, long white hair and a white beard, a patched grey-ochre sailcloth tunic with a wet grey patch, dark trousers and wrapped dark feet. He holds a long wooden casting rod upright at his side. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "mode": "v3",
+          "reference_image_url": "upload:079d44c3-0904-42ef-b110-0cbaede20e41",
+          "n_directions": 8,
+          "name": "npc-kesh (g13b-job2)"
+        },
+        "reference_note": "upload of pick-64.png, byte for byte (sha256 above)",
+        "seed": "create_character has no seed parameter",
+        "generations": 1,
+        "generations_source": "quoted 'v3 reference (1 generations, 8 directions)'",
+        "retakes": 0,
+        "outputs": [
+          {
+            "direction": "south",
+            "file": "a/npc-kesh/south.png",
+            "sha256": "d75ba01fa4ed84db7811fa20b99b4a8db506227147be2138a45fca9f0355ae23",
+            "colours": {
+              "colours_total": 8,
+              "max_colours_per_image": 8,
+              "off_whitelist": 0,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "south-east",
+            "file": "a/npc-kesh/south-east.png",
+            "sha256": "644941ce71d8010a7a3516ce7dad84f706559fb90ed69b772104a9c834d1a7bf",
+            "colours": {
+              "colours_total": 23,
+              "max_colours_per_image": 23,
+              "off_whitelist": 15,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "east",
+            "file": "a/npc-kesh/east.png",
+            "sha256": "4fa4141afee5e5916254b57c381b0605c7397755828eb599e2ddcb1e2c834be7",
+            "colours": {
+              "colours_total": 16,
+              "max_colours_per_image": 16,
+              "off_whitelist": 8,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "north-east",
+            "file": "a/npc-kesh/north-east.png",
+            "sha256": "3bdc0fd3ce897b24377f72e7616ed701e5e2e6a5dff297cf108395a260279a01",
+            "colours": {
+              "colours_total": 14,
+              "max_colours_per_image": 14,
+              "off_whitelist": 8,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "north",
+            "file": "a/npc-kesh/north.png",
+            "sha256": "b8e26185558078b72a34d7ba4e27ecd21cff275ca254b5c52caded187d9f4298",
+            "colours": {
+              "colours_total": 11,
+              "max_colours_per_image": 11,
+              "off_whitelist": 5,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "north-west",
+            "file": "a/npc-kesh/north-west.png",
+            "sha256": "6bbc2acf1395e7288d5709d63219f45472b596419b9e245c3f38e648d4efad62",
+            "colours": {
+              "colours_total": 16,
+              "max_colours_per_image": 16,
+              "off_whitelist": 10,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "west",
+            "file": "a/npc-kesh/west.png",
+            "sha256": "49289056e2a04e86b285408570e045f02217161c23098da35679a64123305a5e",
+            "colours": {
+              "colours_total": 14,
+              "max_colours_per_image": 14,
+              "off_whitelist": 6,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "south-west",
+            "file": "a/npc-kesh/south-west.png",
+            "sha256": "9ea62b2b1bf4103a7949ee8fb6f7d7ff92479a63827c29adcac70d90aae3c35a",
+            "colours": {
+              "colours_total": 22,
+              "max_colours_per_image": 22,
+              "off_whitelist": 14,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          }
+        ],
+        "metadata": "a/npc-kesh/character-metadata.json",
+        "note": "south keeps every opaque pixel of pick-64 unchanged (only the RGB of fully transparent pixels differs)"
+      }
+    },
+    {
+      "id": "npc-tally",
+      "part": "A",
+      "tool": "create_image_pro",
+      "job_id": "52bf2c23-bffa-481f-9bc6-434694915b2f",
+      "arguments": {
+        "description": "Tally, a young Kindled woman: a small figure of red terracotta clay, about 40 px tall, three amber freckles, dark violet hair tied up in a knot, a pale salt-stiff sailcloth tunic with a rope belt and a bronze buckle, dark trousers and boots, empty hands. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters. Facing the viewer, standing.",
+        "width": 32,
+        "height": 44,
+        "no_background": true,
+        "reference_images": [
+          {
+            "url": "upload:8bdde4b7-dcf5-4b29-a5ca-c1a918fc8d4a",
+            "usage": "character base: copy the proportions, the size on the 64x64 canvas, the clay-figure build, the outline and the shading style; NOT the outfit, colours or weapon",
+            "source": "art/anchors/kindled-ash-s-64.png",
+            "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+          }
+        ],
+        "palette": [
+          "#F4EFE6",
+          "#D9D2E9",
+          "#A99FC4",
+          "#5B5478",
+          "#2A2540",
+          "#F2B65A",
+          "#C9733A",
+          "#4A4E57",
+          "#7D8794",
+          "#3E5C7A",
+          "#A8743A",
+          "#C79A3E",
+          "#8A6420",
+          "#E9E4D4",
+          "#2F7F7A",
+          "#C98F78",
+          "#9C5B4A",
+          "#E3C29E",
+          "#24305A",
+          "#E8E2D6",
+          "#FFF4C7",
+          "#8C7F6E",
+          "#5E5448",
+          "#FBF8F0",
+          "#D8B24A",
+          "#F07A3A",
+          "#B5402E",
+          "#1C2147"
+        ],
+        "palette_name": "Islands of the One",
+        "max_colors": 12,
+        "seed": 1234
+      },
+      "canvas_requested": [
+        32,
+        44
+      ],
+      "canvas_accepted": [
+        32,
+        44
+      ],
+      "candidates": 36,
+      "generations": 10,
+      "generations_source": "quoted 'cost: 10 generations'; get_image reports charged_generations 10 where read",
+      "retakes": 0,
+      "pick_index": 6,
+      "pick_why": "faces the viewer, symmetric, hair knot on top, rope belt with buckle, empty hands; no candidate shows the three freckles clearly",
+      "whole_candidates_note": "a candidate counts as whole when its main shape touches the canvas edge only with outline pixels (#2A2540/#1C2147)",
+      "pick": {
+        "file": "a/npc-tally/pick.png",
+        "sha256": "2f2b6f9201db5f1f758ba8d9458628205c99a6fe5db90727b265c146febb153a",
+        "subject_bbox": [
+          7,
+          7,
+          25,
+          41
+        ],
+        "subject_size_wh": [
+          18,
+          34
+        ],
+        "stray_px_outside_subject": 0
+      },
+      "pick_64": {
+        "file": "a/npc-tally/pick-64.png",
+        "sha256": "3394820c3b73eb8906a55c48415fd95dc0c9f3c45497adc886ab503114dab8a4",
+        "paste_offset": [
+          16,
+          13
+        ],
+        "bbox": [
+          23,
+          20,
+          41,
+          54
+        ],
+        "rule": "whole pick canvas pasted unscaled, canvas centred horizontally ((64-w)//2), lowest opaque row of the subject (largest connected shape) on row 53; only transparent rows fell off the canvas"
+      },
+      "candidates_dir": "a/npc-tally/candidates",
+      "candidates_sheet": "a/npc-tally/candidates.png",
+      "colours": {
+        "colours_total": 8,
+        "max_colours_per_image": 8,
+        "off_whitelist": 0,
+        "reserved": [],
+        "semi_transparent_px": 0
+      },
+      "rotation": {
+        "tool": "create_character",
+        "character_id": "c9b873e7-c336-43e3-a531-f6b29450f554",
+        "arguments": {
+          "description": "Tally, a young Kindled woman: a small figure of red terracotta clay, about 40 px tall, three amber freckles, dark violet hair tied up in a knot, a pale salt-stiff sailcloth tunic with a rope belt and a bronze buckle, dark trousers and boots, empty hands. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "mode": "v3",
+          "reference_image_url": "upload:cb9af952-06af-455c-9925-31155a14b65e",
+          "n_directions": 8,
+          "name": "npc-tally (g13b-job2)"
+        },
+        "reference_note": "upload of pick-64.png, byte for byte (sha256 above)",
+        "seed": "create_character has no seed parameter",
+        "generations": 1,
+        "generations_source": "quoted 'v3 reference (1 generations, 8 directions)'",
+        "retakes": 0,
+        "outputs": [
+          {
+            "direction": "south",
+            "file": "a/npc-tally/south.png",
+            "sha256": "aa06b147cd77cf02690e79707651e24c2ce9900fce63d8b818f7fd1ba09361df",
+            "colours": {
+              "colours_total": 8,
+              "max_colours_per_image": 8,
+              "off_whitelist": 0,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "south-east",
+            "file": "a/npc-tally/south-east.png",
+            "sha256": "6f19aefe40076e09a9856f71cd1505d5a8e97263d888a6e5046034a39f35493f",
+            "colours": {
+              "colours_total": 19,
+              "max_colours_per_image": 19,
+              "off_whitelist": 11,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "east",
+            "file": "a/npc-tally/east.png",
+            "sha256": "d968f6d71be0d45ecd07c7d8ccfc0319e1995d5b4419ef4fa9d18bbec7b7a2e5",
+            "colours": {
+              "colours_total": 14,
+              "max_colours_per_image": 14,
+              "off_whitelist": 8,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "north-east",
+            "file": "a/npc-tally/north-east.png",
+            "sha256": "f85193bbe631498ecf16c92e1d4518aa386ccbb43d0d3e4309fdadff4372ea7d",
+            "colours": {
+              "colours_total": 19,
+              "max_colours_per_image": 19,
+              "off_whitelist": 12,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "north",
+            "file": "a/npc-tally/north.png",
+            "sha256": "ece507ba348e55ac8ba0fdacdd9faa6bbc25d61a86fca0eef78cce2881156ca3",
+            "colours": {
+              "colours_total": 17,
+              "max_colours_per_image": 17,
+              "off_whitelist": 9,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "north-west",
+            "file": "a/npc-tally/north-west.png",
+            "sha256": "25ec51c3f7eff95ef25d1e4f7436d2ae31c079322b91bdd26b808c82fabe5dc0",
+            "colours": {
+              "colours_total": 20,
+              "max_colours_per_image": 20,
+              "off_whitelist": 12,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "west",
+            "file": "a/npc-tally/west.png",
+            "sha256": "bb9afe9e3c0a2f473e1d033d4075897ddaaa272f1aa8a2be4e12adcaf9acfe05",
+            "colours": {
+              "colours_total": 18,
+              "max_colours_per_image": 18,
+              "off_whitelist": 12,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "south-west",
+            "file": "a/npc-tally/south-west.png",
+            "sha256": "d3856a7d15f5ff0f1396925156cc69c0f551d400e1dd1f1f0552d197bcbd3f81",
+            "colours": {
+              "colours_total": 23,
+              "max_colours_per_image": 23,
+              "off_whitelist": 15,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          }
+        ],
+        "metadata": "a/npc-tally/character-metadata.json",
+        "note": "south keeps every opaque pixel of pick-64 unchanged (only the RGB of fully transparent pixels differs)"
+      }
+    },
+    {
+      "id": "npc-clerk",
+      "part": "A",
+      "tool": "create_image_pro",
+      "job_id": "c92fab55-19b6-4eb5-84b3-cc9ba2b60bb5",
+      "arguments": {
+        "description": "A Concord weigh-house clerk: a Scattered man about 43 px tall with warm tan skin and a shaved head, an iron-grey fringed wrap robe in an ancient Mesopotamian style with ochre trim. He holds a small bronze balance in one hand and a blank clay tablet in the other. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters. Facing the viewer, standing.",
+        "width": 32,
+        "height": 48,
+        "no_background": true,
+        "reference_images": [
+          {
+            "url": "upload:8bdde4b7-dcf5-4b29-a5ca-c1a918fc8d4a",
+            "usage": "character base: copy the proportions, the size on the 64x64 canvas, the clay-figure build, the outline and the shading style; NOT the outfit, colours or weapon",
+            "source": "art/anchors/kindled-ash-s-64.png",
+            "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+          }
+        ],
+        "palette": [
+          "#F4EFE6",
+          "#D9D2E9",
+          "#A99FC4",
+          "#5B5478",
+          "#2A2540",
+          "#F2B65A",
+          "#C9733A",
+          "#4A4E57",
+          "#7D8794",
+          "#3E5C7A",
+          "#A8743A",
+          "#C79A3E",
+          "#8A6420",
+          "#E9E4D4",
+          "#2F7F7A",
+          "#C98F78",
+          "#9C5B4A",
+          "#E3C29E",
+          "#24305A",
+          "#E8E2D6",
+          "#FFF4C7",
+          "#8C7F6E",
+          "#5E5448",
+          "#FBF8F0",
+          "#D8B24A",
+          "#F07A3A",
+          "#B5402E",
+          "#1C2147"
+        ],
+        "palette_name": "Islands of the One",
+        "max_colors": 12,
+        "seed": 1234
+      },
+      "canvas_requested": [
+        32,
+        48
+      ],
+      "canvas_accepted": [
+        32,
+        48
+      ],
+      "candidates": 36,
+      "generations": 10,
+      "generations_source": "quoted 'cost: 10 generations'; get_image reports charged_generations 10 where read",
+      "retakes": 0,
+      "pick_index": 4,
+      "pick_why": "faces the viewer, iron-grey wrap robe with ochre belt, balance in one hand AND a blank tablet in the other (#0, the lighter robe, has no tablet)",
+      "whole_candidates_note": "a candidate counts as whole when its main shape touches the canvas edge only with outline pixels (#2A2540/#1C2147)",
+      "pick": {
+        "file": "a/npc-clerk/pick.png",
+        "sha256": "7337e2d995455100c0b386131762052d32d6991b5058c9f9bf30e1cc9a6a519a",
+        "subject_bbox": [
+          5,
+          9,
+          26,
+          37
+        ],
+        "subject_size_wh": [
+          21,
+          28
+        ],
+        "stray_px_outside_subject": 0
+      },
+      "pick_64": {
+        "file": "a/npc-clerk/pick-64.png",
+        "sha256": "6cb659bebe531863bdb9efaef78e474aba7dd6972c9fc4b1119c58d35d902f73",
+        "paste_offset": [
+          16,
+          17
+        ],
+        "bbox": [
+          21,
+          26,
+          42,
+          54
+        ],
+        "rule": "whole pick canvas pasted unscaled, canvas centred horizontally ((64-w)//2), lowest opaque row of the subject (largest connected shape) on row 53; only transparent rows fell off the canvas"
+      },
+      "candidates_dir": "a/npc-clerk/candidates",
+      "candidates_sheet": "a/npc-clerk/candidates.png",
+      "colours": {
+        "colours_total": 8,
+        "max_colours_per_image": 8,
+        "off_whitelist": 0,
+        "reserved": [],
+        "semi_transparent_px": 0
+      },
+      "rotation": {
+        "tool": "create_character",
+        "character_id": "38443297-4d80-4bd9-b3fc-ffe4526601cc",
+        "arguments": {
+          "description": "A Concord weigh-house clerk: a Scattered man about 43 px tall with warm tan skin and a shaved head, an iron-grey fringed wrap robe in an ancient Mesopotamian style with ochre trim. He holds a small bronze balance in one hand and a blank clay tablet in the other. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+          "mode": "v3",
+          "reference_image_url": "upload:91f87237-37fd-4cc4-863a-cb960dcd3977",
+          "n_directions": 8,
+          "name": "npc-clerk (g13b-job2)"
+        },
+        "reference_note": "upload of pick-64.png, byte for byte (sha256 above)",
+        "seed": "create_character has no seed parameter",
+        "generations": 1,
+        "generations_source": "quoted 'v3 reference (1 generations, 8 directions)'",
+        "retakes": 0,
+        "outputs": [
+          {
+            "direction": "south",
+            "file": "a/npc-clerk/south.png",
+            "sha256": "29b6d28f15fe82b0eefc605005e10e1798878ebfc3458046e7380c9aca059a97",
+            "colours": {
+              "colours_total": 8,
+              "max_colours_per_image": 8,
+              "off_whitelist": 0,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "south-east",
+            "file": "a/npc-clerk/south-east.png",
+            "sha256": "3a9568a9a4a9e8c57d5e362902d06b70015ce1997ef8677613929a32e2768f0b",
+            "colours": {
+              "colours_total": 23,
+              "max_colours_per_image": 23,
+              "off_whitelist": 15,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "east",
+            "file": "a/npc-clerk/east.png",
+            "sha256": "c70cb3d686bfecd101634c48ec11750333e701bf9d030a1b9a343035bd002b23",
+            "colours": {
+              "colours_total": 17,
+              "max_colours_per_image": 17,
+              "off_whitelist": 9,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "north-east",
+            "file": "a/npc-clerk/north-east.png",
+            "sha256": "ec90a758bcefa15a26437f8f81acbf35d842804304c408f9053f8dd5db45d60b",
+            "colours": {
+              "colours_total": 17,
+              "max_colours_per_image": 17,
+              "off_whitelist": 10,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "north",
+            "file": "a/npc-clerk/north.png",
+            "sha256": "b4391e6ad55b18ce6561866c260de71933a318be337a99a5c82e7a112eadba01",
+            "colours": {
+              "colours_total": 14,
+              "max_colours_per_image": 14,
+              "off_whitelist": 8,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "north-west",
+            "file": "a/npc-clerk/north-west.png",
+            "sha256": "78ad0abcf3ee3ca81b9a3ee90258fac3adfc54cc33daa48e84cbf77a621a3316",
+            "colours": {
+              "colours_total": 17,
+              "max_colours_per_image": 17,
+              "off_whitelist": 10,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "west",
+            "file": "a/npc-clerk/west.png",
+            "sha256": "7685b8d08ef30ee46b25e4e1b88929c11914c0d11997b06c48557f5e87f95578",
+            "colours": {
+              "colours_total": 17,
+              "max_colours_per_image": 17,
+              "off_whitelist": 9,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          },
+          {
+            "direction": "south-west",
+            "file": "a/npc-clerk/south-west.png",
+            "sha256": "a005f4ce42926322b7bbe6aee78e51d9d431ab80350bbede2847dda11e1bbcc0",
+            "colours": {
+              "colours_total": 21,
+              "max_colours_per_image": 21,
+              "off_whitelist": 13,
+              "reserved": [],
+              "semi_transparent_px": 0
+            }
+          }
+        ],
+        "metadata": "a/npc-clerk/character-metadata.json",
+        "note": "south keeps every opaque pixel of pick-64 unchanged (only the RGB of fully transparent pixels differs)"
+      }
+    },
+    {
+      "id": "enemy-hungerling",
+      "part": "A",
+      "tool": "create_image_pro",
+      "job_id": "b92ae307-ffb0-4f2b-9de2-ff2de392eda4",
+      "arguments": {
+        "description": "A Hungerling, a Dream-Spawn creature: a giant's hunger given legs. A squat, wrong-scaled thing about 26 px wide and 24 px tall: a huge round belly with a wide toothy mouth, short stubby giant's legs and oversized hands, warm flesh-pink skin with night-blue shadows, no eyes. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+        "width": 32,
+        "height": 28,
+        "no_background": true,
+        "reference_images": [
+          {
+            "url": "upload:2e4ae9a6-cdf3-4014-b3e3-b0588eebb212",
+            "usage": "enemy style: outline, shading, amount of detail",
+            "source": "art/anchors/husk-peeling-64.png",
+            "sha256": "8d6497ac2d06ad326d25fa41e07613b7cf329af50cb4d75a1610919cdd1f2d82"
+          },
+          {
+            "url": "upload:8bdde4b7-dcf5-4b29-a5ca-c1a918fc8d4a",
+            "usage": "scale only: this is the player; the creature stands beside it",
+            "source": "art/anchors/kindled-ash-s-64.png",
+            "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+          }
+        ],
+        "palette": [
+          "#F4EFE6",
+          "#D9D2E9",
+          "#A99FC4",
+          "#5B5478",
+          "#2A2540",
+          "#F2B65A",
+          "#C9733A",
+          "#4A4E57",
+          "#7D8794",
+          "#3E5C7A",
+          "#A8743A",
+          "#C79A3E",
+          "#8A6420",
+          "#E9E4D4",
+          "#2F7F7A",
+          "#C98F78",
+          "#9C5B4A",
+          "#E3C29E",
+          "#24305A",
+          "#E8E2D6",
+          "#FFF4C7",
+          "#8C7F6E",
+          "#5E5448",
+          "#FBF8F0",
+          "#D8B24A",
+          "#F07A3A",
+          "#B5402E",
+          "#1C2147"
+        ],
+        "palette_name": "Islands of the One",
+        "max_colors": 10,
+        "seed": 1234
+      },
+      "canvas_requested": [
+        32,
+        28
+      ],
+      "canvas_accepted": [
+        32,
+        28
+      ],
+      "candidates": 64,
+      "generations": 10,
+      "generations_source": "quoted 'cost: 10 generations'; get_image reports charged_generations 10 where read",
+      "retakes": 0,
+      "pick_index": 0,
+      "pick_why": "wide toothy mouth on the belly, no eyes, oversized hands, faces south; same pick index as Job 1",
+      "whole_candidates_note": "a candidate counts as whole when its main shape touches the canvas edge only with outline pixels (#2A2540/#1C2147)",
+      "pick": {
+        "file": "a/enemy-hungerling/pick.png",
+        "sha256": "7a74431572f256e6d2f2ae7753f649a2da22f1f367e1653f064600103f7c4e66",
+        "subject_bbox": [
+          4,
+          1,
+          29,
+          28
+        ],
+        "subject_size_wh": [
+          25,
+          27
+        ],
+        "stray_px_outside_subject": 0
+      },
+      "pick_64": {
+        "file": "a/enemy-hungerling/pick-64.png",
+        "sha256": "1003d5dceba44c2f1a7fd0f50c7a55bf84c519adf8f6f4c74d2f2a7e09cee7d7",
+        "paste_offset": [
+          16,
+          26
+        ],
+        "bbox": [
+          20,
+          27,
+          45,
+          54
+        ],
+        "rule": "whole pick canvas pasted unscaled, canvas centred horizontally ((64-w)//2), lowest opaque row of the subject (largest connected shape) on row 53; only transparent rows fell off the canvas"
+      },
+      "candidates_dir": "a/enemy-hungerling/candidates",
+      "candidates_sheet": "a/enemy-hungerling/candidates.png",
+      "colours": {
+        "colours_total": 7,
+        "max_colours_per_image": 7,
+        "off_whitelist": 0,
+        "reserved": [],
+        "semi_transparent_px": 0
+      }
+    },
+    {
+      "id": "enemy-gardener",
+      "part": "A",
+      "tool": "create_image_pro",
+      "job_id": "c0f2046f-d454-4d2b-a7da-2a8be014107f",
+      "arguments": {
+        "description": "A Felled Gardener, a Dream-Spawn creature: a tall stooped gardener about 40 px tall, made of dream-stuff, with a man's shape like a burnt sapling, a broken pruning hook in one hand, warm flesh tones fading into night blue, faint echo outlines trailing from its back. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+        "width": 32,
+        "height": 44,
+        "no_background": true,
+        "reference_images": [
+          {
+            "url": "upload:2e4ae9a6-cdf3-4014-b3e3-b0588eebb212",
+            "usage": "enemy style: outline, shading, amount of detail",
+            "source": "art/anchors/husk-peeling-64.png",
+            "sha256": "8d6497ac2d06ad326d25fa41e07613b7cf329af50cb4d75a1610919cdd1f2d82"
+          },
+          {
+            "url": "upload:8bdde4b7-dcf5-4b29-a5ca-c1a918fc8d4a",
+            "usage": "scale only: this is the player; the creature stands beside it",
+            "source": "art/anchors/kindled-ash-s-64.png",
+            "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+          }
+        ],
+        "palette": [
+          "#F4EFE6",
+          "#D9D2E9",
+          "#A99FC4",
+          "#5B5478",
+          "#2A2540",
+          "#F2B65A",
+          "#C9733A",
+          "#4A4E57",
+          "#7D8794",
+          "#3E5C7A",
+          "#A8743A",
+          "#C79A3E",
+          "#8A6420",
+          "#E9E4D4",
+          "#2F7F7A",
+          "#C98F78",
+          "#9C5B4A",
+          "#E3C29E",
+          "#24305A",
+          "#E8E2D6",
+          "#FFF4C7",
+          "#8C7F6E",
+          "#5E5448",
+          "#FBF8F0",
+          "#D8B24A",
+          "#F07A3A",
+          "#B5402E",
+          "#1C2147"
+        ],
+        "palette_name": "Islands of the One",
+        "max_colors": 10,
+        "seed": 1234
+      },
+      "canvas_requested": [
+        32,
+        44
+      ],
+      "canvas_accepted": [
+        32,
+        44
+      ],
+      "candidates": 36,
+      "generations": 10,
+      "generations_source": "quoted 'cost: 10 generations'; get_image reports charged_generations 10 where read",
+      "retakes": 0,
+      "pick_index": 0,
+      "pick_why": "faces the viewer, broken pruning hook in hand, stooped, flesh fading to night blue; whole figure inside",
+      "whole_candidates_note": "a candidate counts as whole when its main shape touches the canvas edge only with outline pixels (#2A2540/#1C2147)",
+      "pick": {
+        "file": "a/enemy-gardener/pick.png",
+        "sha256": "d25624f3b13bf73031be3ff1078ab00d535081bbc91d946c4f39e3cec3639b6d",
+        "subject_bbox": [
+          2,
+          7,
+          23,
+          38
+        ],
+        "subject_size_wh": [
+          21,
+          31
+        ],
+        "stray_px_outside_subject": 0
+      },
+      "pick_64": {
+        "file": "a/enemy-gardener/pick-64.png",
+        "sha256": "7d47d240fa9510a79b23ef31341b495910778d0e1209a1b4c86a85bab37dc20d",
+        "paste_offset": [
+          16,
+          16
+        ],
+        "bbox": [
+          18,
+          23,
+          39,
+          54
+        ],
+        "rule": "whole pick canvas pasted unscaled, canvas centred horizontally ((64-w)//2), lowest opaque row of the subject (largest connected shape) on row 53; only transparent rows fell off the canvas"
+      },
+      "candidates_dir": "a/enemy-gardener/candidates",
+      "candidates_sheet": "a/enemy-gardener/candidates.png",
+      "colours": {
+        "colours_total": 6,
+        "max_colours_per_image": 6,
+        "off_whitelist": 0,
+        "reserved": [],
+        "semi_transparent_px": 0
+      }
+    },
+    {
+      "id": "prop-basket",
+      "part": "A",
+      "tool": "create_image_pro",
+      "job_id": "534e77af-60bf-4942-9b71-6de0d7051baa",
+      "arguments": {
+        "description": "An upturned reed basket, used as a seat, about 20 px wide. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+        "width": 24,
+        "height": 24,
+        "no_background": true,
+        "reference_images": [
+          {
+            "url": "upload:a0baa282-c30a-4162-9616-4a3e242a9dd3",
+            "usage": "prop style: outline, shading, amount of detail",
+            "source": "art/anchors/prop-clay-jar-64.png",
+            "sha256": "9f08705fb367fa0208ce1e9036a13cba6d7717310f982e7cb04d979a96fc4710"
+          },
+          {
+            "url": "upload:8bdde4b7-dcf5-4b29-a5ca-c1a918fc8d4a",
+            "usage": "scale only: this is the player",
+            "source": "art/anchors/kindled-ash-s-64.png",
+            "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+          }
+        ],
+        "palette": [
+          "#F4EFE6",
+          "#D9D2E9",
+          "#A99FC4",
+          "#5B5478",
+          "#2A2540",
+          "#F2B65A",
+          "#C9733A",
+          "#4A4E57",
+          "#7D8794",
+          "#3E5C7A",
+          "#A8743A",
+          "#C79A3E",
+          "#8A6420",
+          "#E9E4D4",
+          "#2F7F7A",
+          "#C98F78",
+          "#9C5B4A",
+          "#E3C29E",
+          "#24305A",
+          "#E8E2D6",
+          "#FFF4C7",
+          "#8C7F6E",
+          "#5E5448",
+          "#FBF8F0",
+          "#D8B24A",
+          "#F07A3A",
+          "#B5402E",
+          "#1C2147"
+        ],
+        "palette_name": "Islands of the One",
+        "max_colors": 8,
+        "seed": 1234
+      },
+      "canvas_requested": [
+        24,
+        24
+      ],
+      "canvas_accepted": [
+        24,
+        24
+      ],
+      "candidates": 64,
+      "generations": 10,
+      "generations_source": "quoted 'cost: 10 generations'; get_image reports charged_generations 10 where read",
+      "retakes": 0,
+      "pick_index": 27,
+      "pick_why": "woven reed, closed flat top (reads as upturned), whole; only 6 of 64 candidates are whole (19, 20, 27, 28, 35, 36)",
+      "whole_candidates_note": "a candidate counts as whole when its main shape touches the canvas edge only with outline pixels (#2A2540/#1C2147)",
+      "pick": {
+        "file": "a/prop-basket/pick.png",
+        "sha256": "d45df4d7db80bac7258a069bc9f1705c24e038682de3f5f5dc15dbfc2ffe49a7",
+        "subject_bbox": [
+          0,
+          2,
+          23,
+          22
+        ],
+        "subject_size_wh": [
+          23,
+          20
+        ],
+        "stray_px_outside_subject": 0
+      },
+      "pick_64": {
+        "file": "a/prop-basket/pick-64.png",
+        "sha256": "7d076dcb7d9b4258aa3fca82dcaa833446315d5085d0352ed2dba6559565efaa",
+        "paste_offset": [
+          20,
+          32
+        ],
+        "bbox": [
+          20,
+          34,
+          43,
+          54
+        ],
+        "rule": "whole pick canvas pasted unscaled, canvas centred horizontally ((64-w)//2), lowest opaque row of the subject (largest connected shape) on row 53; only transparent rows fell off the canvas"
+      },
+      "candidates_dir": "a/prop-basket/candidates",
+      "candidates_sheet": "a/prop-basket/candidates.png",
+      "colours": {
+        "colours_total": 8,
+        "max_colours_per_image": 8,
+        "off_whitelist": 0,
+        "reserved": [],
+        "semi_transparent_px": 0
+      }
+    },
+    {
+      "id": "prop-balance",
+      "part": "A",
+      "tool": "create_image_pro",
+      "job_id": "bc468bdf-db39-47db-a067-b5fbe482b5a9",
+      "arguments": {
+        "description": "A small bronze weighing balance on a short wooden stand, two pans, about 24 px tall. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+        "width": 24,
+        "height": 28,
+        "no_background": true,
+        "reference_images": [
+          {
+            "url": "upload:a0baa282-c30a-4162-9616-4a3e242a9dd3",
+            "usage": "prop style: outline, shading, amount of detail",
+            "source": "art/anchors/prop-clay-jar-64.png",
+            "sha256": "9f08705fb367fa0208ce1e9036a13cba6d7717310f982e7cb04d979a96fc4710"
+          },
+          {
+            "url": "upload:8bdde4b7-dcf5-4b29-a5ca-c1a918fc8d4a",
+            "usage": "scale only: this is the player",
+            "source": "art/anchors/kindled-ash-s-64.png",
+            "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+          }
+        ],
+        "palette": [
+          "#F4EFE6",
+          "#D9D2E9",
+          "#A99FC4",
+          "#5B5478",
+          "#2A2540",
+          "#F2B65A",
+          "#C9733A",
+          "#4A4E57",
+          "#7D8794",
+          "#3E5C7A",
+          "#A8743A",
+          "#C79A3E",
+          "#8A6420",
+          "#E9E4D4",
+          "#2F7F7A",
+          "#C98F78",
+          "#9C5B4A",
+          "#E3C29E",
+          "#24305A",
+          "#E8E2D6",
+          "#FFF4C7",
+          "#8C7F6E",
+          "#5E5448",
+          "#FBF8F0",
+          "#D8B24A",
+          "#F07A3A",
+          "#B5402E",
+          "#1C2147"
+        ],
+        "palette_name": "Islands of the One",
+        "max_colors": 8,
+        "seed": 1234
+      },
+      "canvas_requested": [
+        24,
+        28
+      ],
+      "canvas_accepted": [
+        24,
+        28
+      ],
+      "candidates": 64,
+      "generations": 10,
+      "generations_source": "quoted 'cost: 10 generations'; get_image reports charged_generations 10 where read",
+      "retakes": 0,
+      "pick_index": 34,
+      "pick_why": "two pans on a short stand, bronze and wood, whole; only 6 of 64 are whole (26, 27, 34-37); carries 4 stray px of the neighbouring cell below it",
+      "whole_candidates_note": "a candidate counts as whole when its main shape touches the canvas edge only with outline pixels (#2A2540/#1C2147)",
+      "pick": {
+        "file": "a/prop-balance/pick.png",
+        "sha256": "f19e70caba5a8776a346aaec7e7468671c5d9d492ae39289da618964ae96b247",
+        "subject_bbox": [
+          4,
+          2,
+          23,
+          24
+        ],
+        "subject_size_wh": [
+          19,
+          22
+        ],
+        "stray_px_outside_subject": 4
+      },
+      "pick_64": {
+        "file": "a/prop-balance/pick-64.png",
+        "sha256": "0899e135da4a1b203940ae77820d7b2d51bf62bb817fc2c58fea93bcdfaebf3e",
+        "paste_offset": [
+          20,
+          30
+        ],
+        "bbox": [
+          24,
+          32,
+          43,
+          58
+        ],
+        "rule": "whole pick canvas pasted unscaled, canvas centred horizontally ((64-w)//2), lowest opaque row of the subject (largest connected shape) on row 53; only transparent rows fell off the canvas"
+      },
+      "candidates_dir": "a/prop-balance/candidates",
+      "candidates_sheet": "a/prop-balance/candidates.png",
+      "colours": {
+        "colours_total": 7,
+        "max_colours_per_image": 7,
+        "off_whitelist": 0,
+        "reserved": [],
+        "semi_transparent_px": 0
+      }
+    },
+    {
+      "id": "prop-lamp",
+      "part": "A",
+      "tool": "create_image_pro",
+      "job_id": "c88894f4-3c82-4edc-8851-16d9ac03204f",
+      "arguments": {
+        "description": "A clay oil lamp on a low clay stand, lit with a small orange flame, about 18 px tall. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+        "width": 20,
+        "height": 20,
+        "no_background": true,
+        "reference_images": [
+          {
+            "url": "upload:a0baa282-c30a-4162-9616-4a3e242a9dd3",
+            "usage": "prop style: outline, shading, amount of detail",
+            "source": "art/anchors/prop-clay-jar-64.png",
+            "sha256": "9f08705fb367fa0208ce1e9036a13cba6d7717310f982e7cb04d979a96fc4710"
+          },
+          {
+            "url": "upload:8bdde4b7-dcf5-4b29-a5ca-c1a918fc8d4a",
+            "usage": "scale only: this is the player",
+            "source": "art/anchors/kindled-ash-s-64.png",
+            "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+          }
+        ],
+        "palette": [
+          "#F4EFE6",
+          "#D9D2E9",
+          "#A99FC4",
+          "#5B5478",
+          "#2A2540",
+          "#F2B65A",
+          "#C9733A",
+          "#4A4E57",
+          "#7D8794",
+          "#3E5C7A",
+          "#A8743A",
+          "#C79A3E",
+          "#8A6420",
+          "#E9E4D4",
+          "#2F7F7A",
+          "#C98F78",
+          "#9C5B4A",
+          "#E3C29E",
+          "#24305A",
+          "#E8E2D6",
+          "#FFF4C7",
+          "#8C7F6E",
+          "#5E5448",
+          "#FBF8F0",
+          "#D8B24A",
+          "#F07A3A",
+          "#B5402E",
+          "#1C2147"
+        ],
+        "palette_name": "Islands of the One",
+        "max_colors": 8,
+        "seed": 1234
+      },
+      "canvas_requested": [
+        20,
+        20
+      ],
+      "canvas_accepted": [
+        20,
+        20
+      ],
+      "candidates": 64,
+      "generations": 10,
+      "generations_source": "quoted 'cost: 10 generations'; get_image reports charged_generations 10 where read",
+      "retakes": 0,
+      "pick_index": 26,
+      "pick_why": "fired-clay lamp on a low stand with a small orange flame, whole",
+      "whole_candidates_note": "a candidate counts as whole when its main shape touches the canvas edge only with outline pixels (#2A2540/#1C2147)",
+      "pick": {
+        "file": "a/prop-lamp/pick.png",
+        "sha256": "7c496db094f2f1eec97d4156ba2297e8a44d12f63b81a0e09fe7ddc7f1f83499",
+        "subject_bbox": [
+          1,
+          4,
+          16,
+          19
+        ],
+        "subject_size_wh": [
+          15,
+          15
+        ],
+        "stray_px_outside_subject": 0
+      },
+      "pick_64": {
+        "file": "a/prop-lamp/pick-64.png",
+        "sha256": "40a35de061d8ca31a197d0a65f35aeea341c60da95d7f99141a9af3ab7d5eb10",
+        "paste_offset": [
+          22,
+          35
+        ],
+        "bbox": [
+          23,
+          39,
+          38,
+          54
+        ],
+        "rule": "whole pick canvas pasted unscaled, canvas centred horizontally ((64-w)//2), lowest opaque row of the subject (largest connected shape) on row 53; only transparent rows fell off the canvas"
+      },
+      "candidates_dir": "a/prop-lamp/candidates",
+      "candidates_sheet": "a/prop-lamp/candidates.png",
+      "colours": {
+        "colours_total": 7,
+        "max_colours_per_image": 7,
+        "off_whitelist": 0,
+        "reserved": [],
+        "semi_transparent_px": 0
+      }
+    },
+    {
+      "id": "prop-sailcloth",
+      "part": "A",
+      "tool": "create_image_pro",
+      "job_id": "4ad9e934-ed86-4672-93c3-498b6f61d98e",
+      "arguments": {
+        "description": "A bundle of folded pale sailcloth tied with rope, about 22 px wide. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+        "width": 24,
+        "height": 24,
+        "no_background": true,
+        "reference_images": [
+          {
+            "url": "upload:a0baa282-c30a-4162-9616-4a3e242a9dd3",
+            "usage": "prop style: outline, shading, amount of detail",
+            "source": "art/anchors/prop-clay-jar-64.png",
+            "sha256": "9f08705fb367fa0208ce1e9036a13cba6d7717310f982e7cb04d979a96fc4710"
+          },
+          {
+            "url": "upload:8bdde4b7-dcf5-4b29-a5ca-c1a918fc8d4a",
+            "usage": "scale only: this is the player",
+            "source": "art/anchors/kindled-ash-s-64.png",
+            "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+          }
+        ],
+        "palette": [
+          "#F4EFE6",
+          "#D9D2E9",
+          "#A99FC4",
+          "#5B5478",
+          "#2A2540",
+          "#F2B65A",
+          "#C9733A",
+          "#4A4E57",
+          "#7D8794",
+          "#3E5C7A",
+          "#A8743A",
+          "#C79A3E",
+          "#8A6420",
+          "#E9E4D4",
+          "#2F7F7A",
+          "#C98F78",
+          "#9C5B4A",
+          "#E3C29E",
+          "#24305A",
+          "#E8E2D6",
+          "#FFF4C7",
+          "#8C7F6E",
+          "#5E5448",
+          "#FBF8F0",
+          "#D8B24A",
+          "#F07A3A",
+          "#B5402E",
+          "#1C2147"
+        ],
+        "palette_name": "Islands of the One",
+        "max_colors": 8,
+        "seed": 1234
+      },
+      "canvas_requested": [
+        24,
+        24
+      ],
+      "canvas_accepted": [
+        24,
+        24
+      ],
+      "candidates": 64,
+      "generations": 10,
+      "generations_source": "quoted 'cost: 10 generations'; get_image reports charged_generations 10 where read",
+      "retakes": 0,
+      "pick_index": 0,
+      "pick_why": "folded pale bundle tied with rope, seen in three-quarter view, whole",
+      "whole_candidates_note": "a candidate counts as whole when its main shape touches the canvas edge only with outline pixels (#2A2540/#1C2147)",
+      "pick": {
+        "file": "a/prop-sailcloth/pick.png",
+        "sha256": "329c4679c3d0f11e3c1198c2a2eba4c188c84eb2c051d02bab54ebfe8947e135",
+        "subject_bbox": [
+          2,
+          3,
+          23,
+          23
+        ],
+        "subject_size_wh": [
+          21,
+          20
+        ],
+        "stray_px_outside_subject": 0
+      },
+      "pick_64": {
+        "file": "a/prop-sailcloth/pick-64.png",
+        "sha256": "66e30e77da8c23acf3334490fae84bcd0f791fb3e1773e54814723bc03158c3c",
+        "paste_offset": [
+          20,
+          31
+        ],
+        "bbox": [
+          22,
+          34,
+          43,
+          54
+        ],
+        "rule": "whole pick canvas pasted unscaled, canvas centred horizontally ((64-w)//2), lowest opaque row of the subject (largest connected shape) on row 53; only transparent rows fell off the canvas"
+      },
+      "candidates_dir": "a/prop-sailcloth/candidates",
+      "candidates_sheet": "a/prop-sailcloth/candidates.png",
+      "colours": {
+        "colours_total": 6,
+        "max_colours_per_image": 6,
+        "off_whitelist": 0,
+        "reserved": [],
+        "semi_transparent_px": 0
+      }
+    },
+    {
+      "id": "prop-bricks",
+      "part": "A",
+      "tool": "create_image_pro",
+      "job_id": "39eeebbf-285a-478b-af9d-a5f4763542e1",
+      "arguments": {
+        "description": "A small stack of sun-dried mud bricks, about 28 px wide. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+        "width": 32,
+        "height": 32,
+        "no_background": true,
+        "reference_images": [
+          {
+            "url": "upload:a0baa282-c30a-4162-9616-4a3e242a9dd3",
+            "usage": "prop style: outline, shading, amount of detail",
+            "source": "art/anchors/prop-clay-jar-64.png",
+            "sha256": "9f08705fb367fa0208ce1e9036a13cba6d7717310f982e7cb04d979a96fc4710"
+          },
+          {
+            "url": "upload:8bdde4b7-dcf5-4b29-a5ca-c1a918fc8d4a",
+            "usage": "scale only: this is the player",
+            "source": "art/anchors/kindled-ash-s-64.png",
+            "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+          }
+        ],
+        "palette": [
+          "#F4EFE6",
+          "#D9D2E9",
+          "#A99FC4",
+          "#5B5478",
+          "#2A2540",
+          "#F2B65A",
+          "#C9733A",
+          "#4A4E57",
+          "#7D8794",
+          "#3E5C7A",
+          "#A8743A",
+          "#C79A3E",
+          "#8A6420",
+          "#E9E4D4",
+          "#2F7F7A",
+          "#C98F78",
+          "#9C5B4A",
+          "#E3C29E",
+          "#24305A",
+          "#E8E2D6",
+          "#FFF4C7",
+          "#8C7F6E",
+          "#5E5448",
+          "#FBF8F0",
+          "#D8B24A",
+          "#F07A3A",
+          "#B5402E",
+          "#1C2147"
+        ],
+        "palette_name": "Islands of the One",
+        "max_colors": 8,
+        "seed": 1234
+      },
+      "canvas_requested": [
+        32,
+        32
+      ],
+      "canvas_accepted": [
+        32,
+        32
+      ],
+      "candidates": 64,
+      "generations": 10,
+      "generations_source": "quoted 'cost: 10 generations'; get_image reports charged_generations 10 where read",
+      "retakes": 0,
+      "pick_index": 35,
+      "pick_why": "mud-brick stack about 24 px wide, mud colours, whole",
+      "whole_candidates_note": "a candidate counts as whole when its main shape touches the canvas edge only with outline pixels (#2A2540/#1C2147)",
+      "pick": {
+        "file": "a/prop-bricks/pick.png",
+        "sha256": "84569ef491f485b0d06f39713749b0423c307ce58d98af7e62320ee373035962",
+        "subject_bbox": [
+          4,
+          5,
+          28,
+          29
+        ],
+        "subject_size_wh": [
+          24,
+          24
+        ],
+        "stray_px_outside_subject": 0
+      },
+      "pick_64": {
+        "file": "a/prop-bricks/pick-64.png",
+        "sha256": "94e16de50475b1b1edf6c6c994762849d343a271dcd91eca3d22defdd43cdcd7",
+        "paste_offset": [
+          16,
+          25
+        ],
+        "bbox": [
+          20,
+          30,
+          44,
+          54
+        ],
+        "rule": "whole pick canvas pasted unscaled, canvas centred horizontally ((64-w)//2), lowest opaque row of the subject (largest connected shape) on row 53; only transparent rows fell off the canvas"
+      },
+      "candidates_dir": "a/prop-bricks/candidates",
+      "candidates_sheet": "a/prop-bricks/candidates.png",
+      "colours": {
+        "colours_total": 4,
+        "max_colours_per_image": 4,
+        "off_whitelist": 0,
+        "reserved": [],
+        "semi_transparent_px": 0
+      }
+    }
+  ],
+  "part_b": [
+    {
+      "id": "walk-template",
+      "tool": "animate_character",
+      "arguments": {
+        "character_id": "8d666a0b-3521-4d4e-a81a-902347b65d1d",
+        "mode": "template",
+        "template_animation_id": "walking-6-frames",
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north"
+        ],
+        "animation_name": "walk-template"
+      },
+      "group": "16d73767-597c-4a60-a955-268b615baca7",
+      "job_ids": {
+        "south": "d9012c4b-30fe-4fb9-a532-8ada0c33954d",
+        "south-east": "d20d7be4-1d05-47f4-8b34-8b97893d2ce5",
+        "east": "7d396910-8d75-42e5-a291-77fe51d722d2",
+        "north-east": "dcf179f4-b592-4605-a263-32d76d8a3fce",
+        "north": "8842c871-3514-4513-806b-eb9206b555f5"
+      },
+      "generations": 5,
+      "generations_source": "quoted '5 generations (1/dir x 5)'",
+      "retakes": 0,
+      "seed": "animate_character has no seed parameter",
+      "outputs": [
+        {
+          "direction": "south",
+          "frames": 6,
+          "canvas": [
+            64,
+            64
+          ],
+          "colours": {
+            "colours_total": 14,
+            "max_colours_per_image": 14,
+            "off_whitelist": 2,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/walk-template/south/frame-0.png",
+              "sha256": "bfbd45ddb24c499fe21f233ddf173c926d1c7df5e0c2b52b72a1cd0021bdf8d5"
+            },
+            {
+              "file": "b/walk-template/south/frame-1.png",
+              "sha256": "fc094cf5fcfb94075ec9d4e3bdbc23acc8a83bad3801a6880dbd907051d542e7"
+            },
+            {
+              "file": "b/walk-template/south/frame-2.png",
+              "sha256": "0667a9708982f7420d1429e92c99fcb5b99467e7fbd97ff4a2baf7591c10e518"
+            },
+            {
+              "file": "b/walk-template/south/frame-3.png",
+              "sha256": "c4cd8a1a5d68279e408d8e94752925f6dfd221c646a408f110eb9293a37f2f1e"
+            },
+            {
+              "file": "b/walk-template/south/frame-4.png",
+              "sha256": "4298f0f3c99d25c2ac836f598ecc15f88a29bed946d97ecbb6670c408735fc28"
+            },
+            {
+              "file": "b/walk-template/south/frame-5.png",
+              "sha256": "cbaf8b9a78691a86edb259451e8ff43e7ea91ca32cf14939ea859c6821ea34ad"
+            }
+          ]
+        },
+        {
+          "direction": "south-east",
+          "frames": 6,
+          "canvas": [
+            64,
+            64
+          ],
+          "colours": {
+            "colours_total": 35,
+            "max_colours_per_image": 32,
+            "off_whitelist": 23,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/walk-template/south-east/frame-0.png",
+              "sha256": "19a949764e81bc5af6b8ebf9a10662e7b4475c2ef883caeed6dcede94cf44f75"
+            },
+            {
+              "file": "b/walk-template/south-east/frame-1.png",
+              "sha256": "67079fb3086e24253945f240cfb697efcf5b06346b9f2101e7a0e105b91bd295"
+            },
+            {
+              "file": "b/walk-template/south-east/frame-2.png",
+              "sha256": "a18f46812220e3a7968f0058f18832c2a7c86ad113445639121569ab8d88cc19"
+            },
+            {
+              "file": "b/walk-template/south-east/frame-3.png",
+              "sha256": "8a449fb31910019c5cac4c1ea0897286271bcdb419f6fdee765d7885d349c5a5"
+            },
+            {
+              "file": "b/walk-template/south-east/frame-4.png",
+              "sha256": "9d626d1df2efe25af54d47cfb0e8775229cd2149ea6d65c14485f14d8450d43d"
+            },
+            {
+              "file": "b/walk-template/south-east/frame-5.png",
+              "sha256": "b768f3bda0b24db1fe0110cf98dece901e31d5c8554c3ad0c591cb38d301362f"
+            }
+          ]
+        },
+        {
+          "direction": "east",
+          "frames": 6,
+          "canvas": [
+            64,
+            64
+          ],
+          "colours": {
+            "colours_total": 23,
+            "max_colours_per_image": 20,
+            "off_whitelist": 13,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/walk-template/east/frame-0.png",
+              "sha256": "ac004411455259c4b045d936676346da85bd207a446ab2e0aa21ce9d39bd1bf2"
+            },
+            {
+              "file": "b/walk-template/east/frame-1.png",
+              "sha256": "c3ba0a50ff4e5ddca132b02703dc7b5471df54f05cc9a52aaff5970b03efdee6"
+            },
+            {
+              "file": "b/walk-template/east/frame-2.png",
+              "sha256": "441126a0052b983426c2472406f45e3a0ac8201cdbe95b43763572e7830b3ef8"
+            },
+            {
+              "file": "b/walk-template/east/frame-3.png",
+              "sha256": "bb2f3fcb6e93a60be5e9d3d8eb46583c21c0d7b774059e0e98a336545980925b"
+            },
+            {
+              "file": "b/walk-template/east/frame-4.png",
+              "sha256": "82bb0ab75e3c0623269d8ce461ee1da41a65a5eaf1286338e21503691c85ce89"
+            },
+            {
+              "file": "b/walk-template/east/frame-5.png",
+              "sha256": "5a909f4169d6984a93e0a7bcb547f40644a8639e1cad5b29a9f3277fa05c2132"
+            }
+          ]
+        },
+        {
+          "direction": "north-east",
+          "frames": 6,
+          "canvas": [
+            64,
+            64
+          ],
+          "colours": {
+            "colours_total": 19,
+            "max_colours_per_image": 17,
+            "off_whitelist": 11,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/walk-template/north-east/frame-0.png",
+              "sha256": "0eb41804d7645e326798e628b31ed28f2d42cf57d1c6d0f1d9dfa1bc76616d0b"
+            },
+            {
+              "file": "b/walk-template/north-east/frame-1.png",
+              "sha256": "174495a17f4774658c5d1b267a01a4b43da178b7aa8dbaf5cb2164844f2caa2b"
+            },
+            {
+              "file": "b/walk-template/north-east/frame-2.png",
+              "sha256": "fad51cd83651dce26c9ac4af2ab2d35cce4581f08936cf6c3640ee84c9761c8b"
+            },
+            {
+              "file": "b/walk-template/north-east/frame-3.png",
+              "sha256": "82c6a3b4bbecb5f7d3d814481522e40df197e331b0ad8a0717b565fd912fa09a"
+            },
+            {
+              "file": "b/walk-template/north-east/frame-4.png",
+              "sha256": "bc4cfbeabf95a5c0db02d2672e0571b5f639fe21108574301346a7764714f22c"
+            },
+            {
+              "file": "b/walk-template/north-east/frame-5.png",
+              "sha256": "6d5130dab1a18115ab1ec4944ab5971f5a150f8054d832ddfdc26349352d7fd2"
+            }
+          ]
+        },
+        {
+          "direction": "north",
+          "frames": 6,
+          "canvas": [
+            64,
+            64
+          ],
+          "colours": {
+            "colours_total": 15,
+            "max_colours_per_image": 14,
+            "off_whitelist": 8,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/walk-template/north/frame-0.png",
+              "sha256": "5c8932f5d8c34d4398ce8cfa1cdd5495d243f59b8924de49dc79229a64f2cdf2"
+            },
+            {
+              "file": "b/walk-template/north/frame-1.png",
+              "sha256": "43c25468118ce93bb2b9227e1decf37a031c9c7b6032affd89be1f98ea23cde6"
+            },
+            {
+              "file": "b/walk-template/north/frame-2.png",
+              "sha256": "9d2eacb1b2f3a68c3de34f2d60a6791773e355bb334eb2ada08e3dda5c6fdec6"
+            },
+            {
+              "file": "b/walk-template/north/frame-3.png",
+              "sha256": "5484cc7c4faeb396a83a7ad77919f33badeb3c1f24d79c9d47ea76f057e714fe"
+            },
+            {
+              "file": "b/walk-template/north/frame-4.png",
+              "sha256": "1291d388ed2fe2b00b8c0844fa89b7b1a9b9f7dbd00278a468404882a12a1c01"
+            },
+            {
+              "file": "b/walk-template/north/frame-5.png",
+              "sha256": "13ad05e9695ea2e1aa1877d1c6494bbfb5061d32a8899eab9be0a82cadbbc992"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "walk-skel",
+      "tool": "animate_character",
+      "arguments": {
+        "character_id": "8d666a0b-3521-4d4e-a81a-902347b65d1d",
+        "mode": "skeleton-v3",
+        "template_animation_id": "walking-6-frames",
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north"
+        ],
+        "animation_name": "walk-skel"
+      },
+      "group": "cba7c29b-0316-4f5b-994b-42753031b1e7",
+      "job_ids": {
+        "south": "656b0dff-b8dc-4538-be74-3c24e76dea70",
+        "south-east": "a6050b4f-c5da-4072-b1bb-7a83ce80ad94",
+        "east": "76a3b1b2-40ae-4f01-84c4-6eef95c9eadf",
+        "north-east": "f2f667fe-d9cb-4226-9871-4ced1adf6798",
+        "north": "18ad00a4-3eb9-49f4-bc04-9a5037595764"
+      },
+      "generations": 15,
+      "generations_source": "quoted '15 generations (3/dir x 5)'",
+      "retakes": 0,
+      "seed": "animate_character has no seed parameter",
+      "outputs": [
+        {
+          "direction": "south",
+          "frames": 6,
+          "canvas": [
+            80,
+            80
+          ],
+          "colours": {
+            "colours_total": 27,
+            "max_colours_per_image": 26,
+            "off_whitelist": 15,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/walk-skel/south/frame-0.png",
+              "sha256": "d1f9da18deadb054f994c862674aee3e51145db486fb643c2b67250e4a34b1ec"
+            },
+            {
+              "file": "b/walk-skel/south/frame-1.png",
+              "sha256": "e6b97fc1cce381ad0ebb040e559b7304831ef22f0c76b26c2f937ddfb5696f2f"
+            },
+            {
+              "file": "b/walk-skel/south/frame-2.png",
+              "sha256": "05dc33ccea86d0ebdcf5347bc3ca538ff1e0b53db384f001c185ee2544aa2503"
+            },
+            {
+              "file": "b/walk-skel/south/frame-3.png",
+              "sha256": "9262e1b546c9366a8763869fd26038e66b2e47da584ecce58d4815c7916c6752"
+            },
+            {
+              "file": "b/walk-skel/south/frame-4.png",
+              "sha256": "c65d93570e4e37a7c33c10b1a95dea4342b848bf21fdf8a268fe67a141af5808"
+            },
+            {
+              "file": "b/walk-skel/south/frame-5.png",
+              "sha256": "7954d1d980093434a5b6a64885b2d8c06f1367f99af2a8e76b864e4925dc603e"
+            }
+          ]
+        },
+        {
+          "direction": "south-east",
+          "frames": 6,
+          "canvas": [
+            96,
+            96
+          ],
+          "colours": {
+            "colours_total": 25,
+            "max_colours_per_image": 24,
+            "off_whitelist": 14,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/walk-skel/south-east/frame-0.png",
+              "sha256": "4431afb67f03d61fc41743912aebb9464ab3a1fd7df688abc15935dcb671c41f"
+            },
+            {
+              "file": "b/walk-skel/south-east/frame-1.png",
+              "sha256": "d0301d9be56891ed744948e798929d535fc3d5f0020db70cb1d0fd3ee0954337"
+            },
+            {
+              "file": "b/walk-skel/south-east/frame-2.png",
+              "sha256": "5be5339ad923f7a020585879ae418f54e32b9d6535712cbbabecb6519767fd1d"
+            },
+            {
+              "file": "b/walk-skel/south-east/frame-3.png",
+              "sha256": "2bc41290a1f7fb432d63b6af9ad337aaddf1d9be7f8a3fda3edf6b20cdc45a1e"
+            },
+            {
+              "file": "b/walk-skel/south-east/frame-4.png",
+              "sha256": "6b6f3175d06de581d753a7c9281d8546393c8eba78ed9bfcca747e8187ffd46b"
+            },
+            {
+              "file": "b/walk-skel/south-east/frame-5.png",
+              "sha256": "be728ef1ed270024f0444ae78975213e48d138688c45c555b9884ebd975f5ab0"
+            }
+          ]
+        },
+        {
+          "direction": "east",
+          "frames": 6,
+          "canvas": [
+            80,
+            80
+          ],
+          "colours": {
+            "colours_total": 18,
+            "max_colours_per_image": 18,
+            "off_whitelist": 8,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/walk-skel/east/frame-0.png",
+              "sha256": "95dfab19d49ab1aff051eb0694ae24925e8f8984078c9219c3984b22652f413d"
+            },
+            {
+              "file": "b/walk-skel/east/frame-1.png",
+              "sha256": "e8a62895ac85807a753b64e8b717cbea90d3813b7507b830fba0514bce79eb11"
+            },
+            {
+              "file": "b/walk-skel/east/frame-2.png",
+              "sha256": "841bb6d600266770d3f9979824a1712e76bd98a307a6d4e62eab3d1004a99a13"
+            },
+            {
+              "file": "b/walk-skel/east/frame-3.png",
+              "sha256": "8f12473dd8f8e6337ae5ba1671fc8e1a438a54ec9d8ae2ff2b83cf6ed7919949"
+            },
+            {
+              "file": "b/walk-skel/east/frame-4.png",
+              "sha256": "c054fb0e3e444e259c4da18d71a5308cc0a21af9fd9006b2753a1d9b745aa9a5"
+            },
+            {
+              "file": "b/walk-skel/east/frame-5.png",
+              "sha256": "889c1c61b5303ca7a4595241b08fb370282a9f8ba97a98de90b37b83bd19675b"
+            }
+          ]
+        },
+        {
+          "direction": "north-east",
+          "frames": 6,
+          "canvas": [
+            64,
+            64
+          ],
+          "colours": {
+            "colours_total": 17,
+            "max_colours_per_image": 17,
+            "off_whitelist": 9,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/walk-skel/north-east/frame-0.png",
+              "sha256": "430bddb71935ca430ce521d4865d01a7e5a410d3a1f1d8110a69d6e3bfd7fbe6"
+            },
+            {
+              "file": "b/walk-skel/north-east/frame-1.png",
+              "sha256": "ee742a5b8590837eee225608ca1b1f0c3d4fabda9ddf21352e316be0c721b028"
+            },
+            {
+              "file": "b/walk-skel/north-east/frame-2.png",
+              "sha256": "efda27090af7b3cd0c719a8c4d647f893c065e31d40f9fa5ead9c64a52f9bf05"
+            },
+            {
+              "file": "b/walk-skel/north-east/frame-3.png",
+              "sha256": "696af70ce416638fa6bfa950f168462510bf4ba2630f844f6a1869902b9cf746"
+            },
+            {
+              "file": "b/walk-skel/north-east/frame-4.png",
+              "sha256": "c6a14b2d3b9aff6df3339a0fa075024dc1d9990e29d18d2538e31b0f1db09aeb"
+            },
+            {
+              "file": "b/walk-skel/north-east/frame-5.png",
+              "sha256": "4120b4eda3e2306a3454ac210bbab700da48a5389f8e4f29f526375cf1b4ed4d"
+            }
+          ]
+        },
+        {
+          "direction": "north",
+          "frames": 6,
+          "canvas": [
+            80,
+            80
+          ],
+          "colours": {
+            "colours_total": 13,
+            "max_colours_per_image": 13,
+            "off_whitelist": 5,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/walk-skel/north/frame-0.png",
+              "sha256": "44dccd059064fd16fe0e302fd9b600fc1a72c5f1da654389efe9f57cbdfcad0d"
+            },
+            {
+              "file": "b/walk-skel/north/frame-1.png",
+              "sha256": "1b88f4c106d7148206ef0efd8dfe8a16cb81371dd40fe75053a8e1a8eccc477b"
+            },
+            {
+              "file": "b/walk-skel/north/frame-2.png",
+              "sha256": "ce76554edc643860c19e6feb5818712ccb629549c3f6f830caee9d98459d121f"
+            },
+            {
+              "file": "b/walk-skel/north/frame-3.png",
+              "sha256": "1088a3005455988e9a4c9753f004209eec3113a959f86342e83c41b64cb5a58f"
+            },
+            {
+              "file": "b/walk-skel/north/frame-4.png",
+              "sha256": "30315eb127220e228f58d43442eedec29278c1aa0ade6fef762b9a6ba20a8234"
+            },
+            {
+              "file": "b/walk-skel/north/frame-5.png",
+              "sha256": "d8f850f2fdf7ab25a0ac2595e0fb389481ab826edfd3414990b241bb29f2b0d6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "attack-pixminimax",
+      "tool": "animate_character",
+      "arguments": {
+        "character_id": "8d666a0b-3521-4d4e-a81a-902347b65d1d",
+        "mode": "pixminimax",
+        "action_description": "a quick horizontal slash with the short hooked blade held in the right hand, then back to guard",
+        "frame_count": 8,
+        "directions": [
+          "east",
+          "south"
+        ],
+        "animation_name": "attack-pixminimax"
+      },
+      "group": "6f903302-e662-4fd7-bd40-f547cf30fb46",
+      "job_ids": {
+        "east": "9bec553b-476e-4290-a108-58ee9e6df225",
+        "south": "c37807b8-16ad-40f0-a5a3-408bd342e992"
+      },
+      "generations": 2,
+      "generations_source": "quoted '2 generations (1/dir x 2)'",
+      "retakes": 0,
+      "seed": "animate_character has no seed parameter",
+      "note": "keep_first_frame defaults to true: 9 frames stored, frame-0 is the rotation, frames 1-8 generated",
+      "outputs": [
+        {
+          "direction": "east",
+          "frames": 9,
+          "canvas": [
+            68,
+            68
+          ],
+          "colours": {
+            "colours_total": 47,
+            "max_colours_per_image": 29,
+            "off_whitelist": 37,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/attack-pixminimax/east/frame-0.png",
+              "sha256": "7bee8ec8d82327b2b2b80d720cff41721da6ec0459c880856b10f570c27f0daa"
+            },
+            {
+              "file": "b/attack-pixminimax/east/frame-1.png",
+              "sha256": "4f8cc7b0b65c1c7f51e0347312cb1f46b89c9ecc591e08896ed11cd1084cee9d"
+            },
+            {
+              "file": "b/attack-pixminimax/east/frame-2.png",
+              "sha256": "e400c41855546d9263d677aed71354a1621398361bb3fe2ab0904146410b16a8"
+            },
+            {
+              "file": "b/attack-pixminimax/east/frame-3.png",
+              "sha256": "71cdedf1edac6356d3f1dd286ee54694d7fbefbf15aed6fa2e071f26f14fa681"
+            },
+            {
+              "file": "b/attack-pixminimax/east/frame-4.png",
+              "sha256": "7c89d538004c8560f4c13a6d34e70a45701f869036866844b4c938f5bc956568"
+            },
+            {
+              "file": "b/attack-pixminimax/east/frame-5.png",
+              "sha256": "82a091c3d00b17a5463dfdd8da368e87fa3dc0dc3f3f696879dc031b22dac979"
+            },
+            {
+              "file": "b/attack-pixminimax/east/frame-6.png",
+              "sha256": "2ea129ff2e3b541c04c2e7cd817451f3f33dde1459471f31f55fd11831f67d81"
+            },
+            {
+              "file": "b/attack-pixminimax/east/frame-7.png",
+              "sha256": "ae30be2c3ee984006cd9c188914d5d15f6cf834537b5a614a07314a442c21583"
+            },
+            {
+              "file": "b/attack-pixminimax/east/frame-8.png",
+              "sha256": "ad1dec8aac49d0deca4b34a31e0e9c62d2e9d43759090dddcd37e0d62d10a9b4"
+            }
+          ]
+        },
+        {
+          "direction": "south",
+          "frames": 9,
+          "canvas": [
+            80,
+            80
+          ],
+          "colours": {
+            "colours_total": 24,
+            "max_colours_per_image": 24,
+            "off_whitelist": 12,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/attack-pixminimax/south/frame-0.png",
+              "sha256": "d1ab11585559756b050df1393c7712bff2969d6a4976035eceb17c0f1085fdb9"
+            },
+            {
+              "file": "b/attack-pixminimax/south/frame-1.png",
+              "sha256": "2b003acbbe5f4bc7bbbe0913e1c02b4bcf280bd5053fc1b769d3dc2583453e18"
+            },
+            {
+              "file": "b/attack-pixminimax/south/frame-2.png",
+              "sha256": "03ef79e400fddc1b481200932d80ddf3231e611f42b7059c22827f409d944fe0"
+            },
+            {
+              "file": "b/attack-pixminimax/south/frame-3.png",
+              "sha256": "f0fe1dff87f81880d3d8356b2f27ae2ab24ca6ef0e79b58b3997f0c706c6b513"
+            },
+            {
+              "file": "b/attack-pixminimax/south/frame-4.png",
+              "sha256": "3f65c39a8f550c8d750cc59c95c2c09240f5398bd24a2845053cb012a2769e6d"
+            },
+            {
+              "file": "b/attack-pixminimax/south/frame-5.png",
+              "sha256": "ce652e9f00430e6e0cfcae575185f02e869435d2b7418158bca15bf21aff8849"
+            },
+            {
+              "file": "b/attack-pixminimax/south/frame-6.png",
+              "sha256": "ab529e662fe718bdcc8c988261b8df9c3b2c2689fa8aedaf24b44aba0568738d"
+            },
+            {
+              "file": "b/attack-pixminimax/south/frame-7.png",
+              "sha256": "8c0d180e2ad535b4f713a4cb8094e746b32022d06b3cf9812c3d3c8be90049f6"
+            },
+            {
+              "file": "b/attack-pixminimax/south/frame-8.png",
+              "sha256": "9cb335ffec7d8d2ea71a98ed8ec9ac4a276520e0be7e6f98c7a4a949e92e0f5c"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "attack-v3",
+      "tool": "animate_character",
+      "arguments": {
+        "character_id": "8d666a0b-3521-4d4e-a81a-902347b65d1d",
+        "mode": "v3",
+        "action_description": "a quick horizontal slash with the short hooked blade held in the right hand, then back to guard",
+        "frame_count": 6,
+        "directions": [
+          "east",
+          "south"
+        ],
+        "animation_name": "attack-v3"
+      },
+      "group": "0ddccd08-dbb3-48cc-91fb-c890335c5d46",
+      "job_ids": {
+        "east": "d5970727-cc43-4efc-9438-d5c18950be87",
+        "south": "51813315-4fa9-4cbd-b24b-3612bb1e1df6"
+      },
+      "generations": 2,
+      "generations_source": "quoted '2 generations (1/dir x 2)'",
+      "retakes": 0,
+      "seed": "animate_character has no seed parameter",
+      "note": "7 frames stored: frame-0 is the rotation, frames 1-6 generated",
+      "outputs": [
+        {
+          "direction": "east",
+          "frames": 7,
+          "canvas": [
+            68,
+            68
+          ],
+          "colours": {
+            "colours_total": 55,
+            "max_colours_per_image": 32,
+            "off_whitelist": 45,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/attack-v3/east/frame-0.png",
+              "sha256": "7bee8ec8d82327b2b2b80d720cff41721da6ec0459c880856b10f570c27f0daa"
+            },
+            {
+              "file": "b/attack-v3/east/frame-1.png",
+              "sha256": "33d67174ae4c6ab65a38d10a9dcbddb39b5c4e73c1f119057a76e25a01a55aba"
+            },
+            {
+              "file": "b/attack-v3/east/frame-2.png",
+              "sha256": "b049c2befcf7619b76b0202d1c62eec14d152c71082aad39786bb916110c5279"
+            },
+            {
+              "file": "b/attack-v3/east/frame-3.png",
+              "sha256": "7d975a99dbd5ca0ab8bfc7f529ed3124ea58dc1f7f1986757d57ea820b7dd4f5"
+            },
+            {
+              "file": "b/attack-v3/east/frame-4.png",
+              "sha256": "5830b8c056a648bec6b2508a61378d188f597c66198d48f8af85fa0749bd845e"
+            },
+            {
+              "file": "b/attack-v3/east/frame-5.png",
+              "sha256": "a47fcff3436b7d1cb55f1042619f0a08f222735e3f5a39427c37eafc29daea2b"
+            },
+            {
+              "file": "b/attack-v3/east/frame-6.png",
+              "sha256": "424866b6da1aaf152ed69b766ac750c0ec40df9e39fade842d15e3b4928755c5"
+            }
+          ]
+        },
+        {
+          "direction": "south",
+          "frames": 7,
+          "canvas": [
+            80,
+            80
+          ],
+          "colours": {
+            "colours_total": 59,
+            "max_colours_per_image": 31,
+            "off_whitelist": 47,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/attack-v3/south/frame-0.png",
+              "sha256": "d1ab11585559756b050df1393c7712bff2969d6a4976035eceb17c0f1085fdb9"
+            },
+            {
+              "file": "b/attack-v3/south/frame-1.png",
+              "sha256": "3a37a3b314738b92da144a76f770ab112690c06757b5fee9db57b8fcf459146a"
+            },
+            {
+              "file": "b/attack-v3/south/frame-2.png",
+              "sha256": "c156e6bb369cefa53bd8843bb1f1c4c4247ce041a37431aa9a010d607bd9d926"
+            },
+            {
+              "file": "b/attack-v3/south/frame-3.png",
+              "sha256": "14c1999e3a4b706547bc8a26ec082cff3912e16d2450ba4a11bdf71f6e2166fc"
+            },
+            {
+              "file": "b/attack-v3/south/frame-4.png",
+              "sha256": "a4ebb8145af65ebcc34a952751215260ed7b75fe08b11c9fb2864a3bbf4584c0"
+            },
+            {
+              "file": "b/attack-v3/south/frame-5.png",
+              "sha256": "0dfd3bedfc21ca97c538ea9d750ecee4566ee8a1d143bb0cf9faeebb397f85aa"
+            },
+            {
+              "file": "b/attack-v3/south/frame-6.png",
+              "sha256": "464293151180a917b4e6048904d518bd60f8d29c6227134a720a670b3eacc01e"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "attack-skel",
+      "tool": "animate_character",
+      "arguments": {
+        "character_id": "8d666a0b-3521-4d4e-a81a-902347b65d1d",
+        "mode": "template",
+        "template_animation_id": "cross-punch",
+        "directions": [
+          "east",
+          "south"
+        ],
+        "animation_name": "attack-skel"
+      },
+      "template_choice": "no sword slash or one-handed swing in the template list (the attack templates are punches, kicks, 'fireball' and 'throw-object'), so per the brief mode 'template' (not skeleton-v3) with the nearest attack: 'cross-punch', a horizontal strike with one arm",
+      "group": "c616b9d3-73b4-4274-8b34-46825843dd7e",
+      "job_ids": {
+        "east": "f75c1ace-f02a-4bd1-82d4-ff1e312169fd",
+        "south": "7ae42a9c-6ca4-4509-8c94-c76a235155bd"
+      },
+      "generations": 2,
+      "generations_source": "quoted '2 generations (1/dir x 2)'",
+      "retakes": 0,
+      "seed": "animate_character has no seed parameter",
+      "outputs": [
+        {
+          "direction": "east",
+          "frames": 6,
+          "canvas": [
+            64,
+            64
+          ],
+          "colours": {
+            "colours_total": 25,
+            "max_colours_per_image": 24,
+            "off_whitelist": 16,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/attack-skel/east/frame-0.png",
+              "sha256": "f10e045df8ce9ebd98d3422bde8a28a91e704a84f82769082f5ac77646d435d2"
+            },
+            {
+              "file": "b/attack-skel/east/frame-1.png",
+              "sha256": "109b2879588088d4ea2904988455f23b0fbc55043ea28e18c431ef39638e5813"
+            },
+            {
+              "file": "b/attack-skel/east/frame-2.png",
+              "sha256": "0e6687ed3ca5b104d2eb039ad55ad6415931837de94451d7388702dcd3ef631e"
+            },
+            {
+              "file": "b/attack-skel/east/frame-3.png",
+              "sha256": "0ff815d51fa618cee0b675ca69aaf55bad725b8e375dfe6d3fc3b312b379ea92"
+            },
+            {
+              "file": "b/attack-skel/east/frame-4.png",
+              "sha256": "f4439c03e168aa9f46d87bdaaaf07e73146cc3639b1390f7d06370790a3f857d"
+            },
+            {
+              "file": "b/attack-skel/east/frame-5.png",
+              "sha256": "df9c2a555f1975dc039cad2939178cc177cef54d1bd2b16c86044ad42a06143d"
+            }
+          ]
+        },
+        {
+          "direction": "south",
+          "frames": 6,
+          "canvas": [
+            64,
+            64
+          ],
+          "colours": {
+            "colours_total": 20,
+            "max_colours_per_image": 19,
+            "off_whitelist": 9,
+            "reserved": [],
+            "semi_transparent_px": 0
+          },
+          "files": [
+            {
+              "file": "b/attack-skel/south/frame-0.png",
+              "sha256": "ba21f489ad746b330daabaafd161a18bebce49b705c4a5504a9746895969d472"
+            },
+            {
+              "file": "b/attack-skel/south/frame-1.png",
+              "sha256": "7e0703217aba501b2a00c08e745565ee84d5c16382d483b263960a175e4f76c3"
+            },
+            {
+              "file": "b/attack-skel/south/frame-2.png",
+              "sha256": "1440b14badd44e2609bfda22f359d0133cc4f7c4dc2a2791c8ed048d4b72ad54"
+            },
+            {
+              "file": "b/attack-skel/south/frame-3.png",
+              "sha256": "28bbabddda31600295680177a272b0bf35f08e0271ca580578d99c9439990f7f"
+            },
+            {
+              "file": "b/attack-skel/south/frame-4.png",
+              "sha256": "dd3b26facc371c51f5a65f63951567dbd5bc76f7edf8dfffd45452a251baeafd"
+            },
+            {
+              "file": "b/attack-skel/south/frame-5.png",
+              "sha256": "54805d03fe1d25c9cb2d17c7e284109525baad972bbae6f27a008ce8f3e785c5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tide",
+      "tool": "create_character_state",
+      "arguments": {
+        "character_id": "8d666a0b-3521-4d4e-a81a-902347b65d1d",
+        "edit_description": "wearing the Tide Remembrance instead of the hooded cloak: a pale salt-stiff sailcloth tunic with a rope belt and a bronze buckle, dark trousers and boots, no hood, short dark hair; the same clay face with three amber freckles and the same short hooked blade in the right hand",
+        "state_name": "Tide",
+        "seed": 1234
+      },
+      "character_id": "918f83a7-2388-4d5c-8cdb-07dcc63383a2",
+      "job_id": "a0f4bc95-fceb-4133-a3e9-7cb87a0c11ac",
+      "generations": "see generations.unsplit: quoted ~10-25; with the two portraits it measured 40",
+      "retakes": 0,
+      "outputs": [
+        {
+          "direction": "south",
+          "file": "b/tide/south.png",
+          "sha256": "f787107477b52c7d73a0d5d506f3bdbc92f38bdda70dd6c3a658c5d0205de6eb",
+          "colours": {
+            "colours_total": 17,
+            "max_colours_per_image": 17,
+            "off_whitelist": 17,
+            "reserved": [],
+            "semi_transparent_px": 0
+          }
+        },
+        {
+          "direction": "south-east",
+          "file": "b/tide/south-east.png",
+          "sha256": "d20a6ba0b24c279bcfb27fd1b8f7c09d81d849522dbb0903b5aa779b44e6a06c",
+          "colours": {
+            "colours_total": 16,
+            "max_colours_per_image": 16,
+            "off_whitelist": 16,
+            "reserved": [],
+            "semi_transparent_px": 0
+          }
+        },
+        {
+          "direction": "east",
+          "file": "b/tide/east.png",
+          "sha256": "c3f6c794fdcadd83ad835dae8c0c69dcb1ca25faae0944937d30c2a707784df6",
+          "colours": {
+            "colours_total": 16,
+            "max_colours_per_image": 16,
+            "off_whitelist": 16,
+            "reserved": [],
+            "semi_transparent_px": 0
+          }
+        },
+        {
+          "direction": "north-east",
+          "file": "b/tide/north-east.png",
+          "sha256": "48b7c0567f4eb28400efec9c4593d5a9f5500d22cbbf2faf34d19d9413ac0e36",
+          "colours": {
+            "colours_total": 15,
+            "max_colours_per_image": 15,
+            "off_whitelist": 15,
+            "reserved": [],
+            "semi_transparent_px": 0
+          }
+        },
+        {
+          "direction": "north",
+          "file": "b/tide/north.png",
+          "sha256": "3b7353b90171f724c8d2a4de460ba76b91ac8f20ed7fc0d196c9c83f3d9002f1",
+          "colours": {
+            "colours_total": 15,
+            "max_colours_per_image": 15,
+            "off_whitelist": 15,
+            "reserved": [],
+            "semi_transparent_px": 0
+          }
+        },
+        {
+          "direction": "north-west",
+          "file": "b/tide/north-west.png",
+          "sha256": "7606b56b2ac11b4930380cae18534d473ae3383637669219ca854f8315774c46",
+          "colours": {
+            "colours_total": 11,
+            "max_colours_per_image": 11,
+            "off_whitelist": 11,
+            "reserved": [],
+            "semi_transparent_px": 0
+          }
+        },
+        {
+          "direction": "west",
+          "file": "b/tide/west.png",
+          "sha256": "b0853fdb7575e3e7588d00ca2bda226d06d37b684c83c079e1599319bd8137a0",
+          "colours": {
+            "colours_total": 16,
+            "max_colours_per_image": 16,
+            "off_whitelist": 16,
+            "reserved": [],
+            "semi_transparent_px": 0
+          }
+        },
+        {
+          "direction": "south-west",
+          "file": "b/tide/south-west.png",
+          "sha256": "d802b149b5261cc3fd7e636c819b8391ed48ef476e47dfe31aefde549b00b369",
+          "colours": {
+            "colours_total": 17,
+            "max_colours_per_image": 17,
+            "off_whitelist": 17,
+            "reserved": [],
+            "semi_transparent_px": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "tide-walk",
+      "tool": "transfer_outfit",
+      "job_id": "722eae5d-406d-43f2-a6b5-335307871ac4",
+      "arguments": {
+        "frame_urls": [
+          "<walk-skel south frame 0: backblaze .../animations/4c76abf2-f61a-4492-ba4a-4205e9117325/south/0.png>",
+          "<walk-skel south frame 1: backblaze .../animations/4c76abf2-f61a-4492-ba4a-4205e9117325/south/1.png>",
+          "<walk-skel south frame 2: backblaze .../animations/4c76abf2-f61a-4492-ba4a-4205e9117325/south/2.png>",
+          "<walk-skel south frame 3: backblaze .../animations/4c76abf2-f61a-4492-ba4a-4205e9117325/south/3.png>",
+          "<walk-skel south frame 4: backblaze .../animations/4c76abf2-f61a-4492-ba4a-4205e9117325/south/4.png>",
+          "<walk-skel south frame 5: backblaze .../animations/4c76abf2-f61a-4492-ba4a-4205e9117325/south/5.png>"
+        ],
+        "reference_image_url": "<Tide south rotation: backblaze .../918f83a7-2388-4d5c-8cdb-07dcc63383a2/rotations/south.png>",
+        "additional_instructions": "keep the hooked blade in the right hand",
+        "seed": 1234
+      },
+      "input_frames": "walk-skel south (skel did not fail), 80x80; files b/walk-skel/south/frame-0..5.png",
+      "output_canvas": [
+        80,
+        80
+      ],
+      "generations": 10,
+      "generations_source": "get_image charged_generations 10; balance 1649.90 -> 1639.90",
+      "retakes": 0,
+      "outputs": [
+        {
+          "file": "b/tide-walk/frame-0.png",
+          "sha256": "14e9f27abfdbc46276d7582ad7357d0a6eaf7769d4c8f5518bf4246c16f16278"
+        },
+        {
+          "file": "b/tide-walk/frame-1.png",
+          "sha256": "ec5bb0facca658c11294906a959d860ca4c62a014fc62be425e11aba308eb727"
+        },
+        {
+          "file": "b/tide-walk/frame-2.png",
+          "sha256": "824c75f8d99333d701e4fe5e3336753c04db9affb96080e489f6e1402598e820"
+        },
+        {
+          "file": "b/tide-walk/frame-3.png",
+          "sha256": "e6661a0c1de8f328a14511576bab56c863c0004b5c5d390283f334b6eae2c2b6"
+        },
+        {
+          "file": "b/tide-walk/frame-4.png",
+          "sha256": "35e3032125b635917393befcdfdb32913e5c9bd17224f3cfcca9b32dc5a2240c"
+        },
+        {
+          "file": "b/tide-walk/frame-5.png",
+          "sha256": "f93cf72f026942c8368cb757959250830bae22b293488ad9fc93d259e3851ed3"
+        }
+      ],
+      "colours": {
+        "colours_total": 25,
+        "max_colours_per_image": 25,
+        "off_whitelist": 25,
+        "reserved": [],
+        "semi_transparent_px": 0
+      }
+    },
+    {
+      "id": "portrait-64",
+      "tool": "create_portrait_character",
+      "job_id": "b70f5078-28c6-4562-a341-223823b23718",
+      "arguments": {
+        "image_url": "upload:8bdde4b7-dcf5-4b29-a5ca-c1a918fc8d4a",
+        "direction": "character_to_portrait",
+        "view": "low top-down",
+        "result_size": 64,
+        "seed": 1234
+      },
+      "input": {
+        "source": "art/anchors/kindled-ash-s-64.png",
+        "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+      },
+      "generations": "quoted ~15 (the tool doc says 10 for 64, 15 for 128); see generations.unsplit",
+      "retakes": 0,
+      "outputs": [
+        {
+          "file": "b/portrait-64.png",
+          "sha256": "8c7b56193ef8b378fa6dd12c8383b56b528c31f7ac12175ac8f81f5eee12e1f2"
+        }
+      ],
+      "colours": {
+        "colours_total": 23,
+        "max_colours_per_image": 23,
+        "off_whitelist": 23,
+        "reserved": [],
+        "semi_transparent_px": 0
+      }
+    },
+    {
+      "id": "portrait-128",
+      "tool": "create_portrait_character",
+      "job_id": "b955a7fa-475c-438c-a214-bea87d2c2b7e",
+      "arguments": {
+        "image_url": "upload:8bdde4b7-dcf5-4b29-a5ca-c1a918fc8d4a",
+        "direction": "character_to_portrait",
+        "view": "low top-down",
+        "result_size": 128,
+        "seed": 1234
+      },
+      "input": {
+        "source": "art/anchors/kindled-ash-s-64.png",
+        "sha256": "8e0a1c0198c4c49cff0f23f96fa1f56f2236721cf539e22aec9a29cd5046f02a"
+      },
+      "generations": "quoted ~15 (the tool doc says 10 for 64, 15 for 128); see generations.unsplit",
+      "retakes": 0,
+      "outputs": [
+        {
+          "file": "b/portrait-128.png",
+          "sha256": "440d9fe87cbca826a823f8fa38824776daa05ab531d4fd2bc5abef1135de2112"
+        }
+      ],
+      "colours": {
+        "colours_total": 29,
+        "max_colours_per_image": 29,
+        "off_whitelist": 29,
+        "reserved": [],
+        "semi_transparent_px": 0
+      }
+    }
+  ],
+  "contact_sheets": [
+    "contact-size.png",
+    "contact-walks.png",
+    "contact-attacks.png",
+    "contact-tide-portrait.png"
+  ],
+  "files_sha256": {
+    "a/enemy-gardener/candidates.png": "9bdb58e5e29769d4d508e65d493b8edf649b8cfd6d2c43773f874961b02c3340",
+    "a/enemy-gardener/candidates/candidate-00.png": "d25624f3b13bf73031be3ff1078ab00d535081bbc91d946c4f39e3cec3639b6d",
+    "a/enemy-gardener/candidates/candidate-01.png": "5609730c9219c5be69426d7b516bed9e165acbf502bd72c97f2c46a2fad2d9ff",
+    "a/enemy-gardener/candidates/candidate-02.png": "f75817a045818dcf3641923b63dcf36c0cd4f484848916070e18d0f4a2e5f57f",
+    "a/enemy-gardener/candidates/candidate-03.png": "de4ebe957748005c387b7e133016e4607a9a023c647bea1c124050277589fa49",
+    "a/enemy-gardener/candidates/candidate-04.png": "a37cffa90f0c91f0d761c0c46668f6b5f40e5347ee37128906a0b0bf401f157e",
+    "a/enemy-gardener/candidates/candidate-05.png": "4ff130dce8e0cdb39806aeeb63befdd04b528a127f8cbee1b991cd706f471507",
+    "a/enemy-gardener/candidates/candidate-06.png": "7dfade3c12903049c9b157380a4c085382df8b3070aa5ea23fb26778e40c32fc",
+    "a/enemy-gardener/candidates/candidate-07.png": "3fa9f7dfcb41517a63808028b8e1610224895008c71d6545b370591663c97977",
+    "a/enemy-gardener/candidates/candidate-08.png": "21e09f2f67a33b6de506bcca4cf19029451236df93e5871f62a72bee4a8382a8",
+    "a/enemy-gardener/candidates/candidate-09.png": "ee0501d4e2dcd9c5f20b50675054580668056c661e22a0c2df822794ce184275",
+    "a/enemy-gardener/candidates/candidate-10.png": "b63fc20a80ae6ddbd188698706d2c099de27bde0819ba94cfef71943a7427351",
+    "a/enemy-gardener/candidates/candidate-11.png": "a11299525ffb40d8a349538d3e9c305f9d1ccd2a652b4d4d97ad87ed181167c0",
+    "a/enemy-gardener/candidates/candidate-12.png": "dde115543a7ba6f63171a7cfe187506b5b571fccb8bec3f26f4220f4d6117d4b",
+    "a/enemy-gardener/candidates/candidate-13.png": "ae0fe2380729feb094e13d63688fba8c2463b948597ff4395c8bab8b44daed72",
+    "a/enemy-gardener/candidates/candidate-14.png": "ac4fbea420b38ee3b6cdae9de2a737ea74dd68438a8338d3e1fc7eb5d47014e3",
+    "a/enemy-gardener/candidates/candidate-15.png": "a7e1a3bf5a34888ff32847b816c1b61fe060381695e03603a730c507f6cadca5",
+    "a/enemy-gardener/candidates/candidate-16.png": "45de4a50699042e615018000bdda2967cb63f7437549ff690f1fe31c1ba515f0",
+    "a/enemy-gardener/candidates/candidate-17.png": "00cc119691fd8b4e8d410168d905aba113cabd6cf4d0eec569c7a9e585d42039",
+    "a/enemy-gardener/candidates/candidate-18.png": "40f94cfd25dbe11a6199ee09247b547c8080c377983740f946d3f8e06ce3d41b",
+    "a/enemy-gardener/candidates/candidate-19.png": "15acf83fc34e1ed28eafcb844a0cd678a4e1a0b1c6bb2ef1d02c2a3f2333c4c0",
+    "a/enemy-gardener/candidates/candidate-20.png": "7c870cc4b444436e1f0e74810c4573b88ab538393e753554dd1f9e7b9900adfc",
+    "a/enemy-gardener/candidates/candidate-21.png": "f0bd2a4ff9b062c15bfc18c10c52c1bbd369ba4fbe9cc518a406426e17592af0",
+    "a/enemy-gardener/candidates/candidate-22.png": "9be61a9fb891120af4e23f2f89642a5f9627c1652f873947f900e0fd41398c17",
+    "a/enemy-gardener/candidates/candidate-23.png": "e37cb86747ef993e79e67aa470c5ae72daef2d172dd579caa51879bec6a10c80",
+    "a/enemy-gardener/candidates/candidate-24.png": "7405fdee6c86c5fccc6e13034101e50e19defce553dd0bb77e8d59177d266e33",
+    "a/enemy-gardener/candidates/candidate-25.png": "f7493d40a7e9fff32d0638e051cb01d5ba6dbc30e2cb7eb66cfbda21a1c36162",
+    "a/enemy-gardener/candidates/candidate-26.png": "34f2ee3ff428fe712c165a42ad41375008eee8ac4aed7c657cc4e8a775babda0",
+    "a/enemy-gardener/candidates/candidate-27.png": "c6b371a860d7e13335346cf89fac3750314fb87375ece0ff3121a4ae69feefbf",
+    "a/enemy-gardener/candidates/candidate-28.png": "aad698e7b28b5bcbf71f3f774f69b2006ab1103b74821b3f92a621c373e409dc",
+    "a/enemy-gardener/candidates/candidate-29.png": "a0feca9e48d5018a0f044635dc5b36ff0863ba9ac647b99b203483de131503da",
+    "a/enemy-gardener/candidates/candidate-30.png": "c884cf8489e228a223a9c188f3c07d58d2ad17b9931a0964a68172b72a2ded3b",
+    "a/enemy-gardener/candidates/candidate-31.png": "d62bd511a7d2abd8d388e81876f46427fb6180954452a4bf8d7153997960f9ce",
+    "a/enemy-gardener/candidates/candidate-32.png": "23a0838ca82068523fd696da874d9cdde865bc08cdca83e6d9d886f6f445ca8b",
+    "a/enemy-gardener/candidates/candidate-33.png": "86aaed998db07a05619320ffd123590803593c49dcc1a021aad1c9be8fc5360a",
+    "a/enemy-gardener/candidates/candidate-34.png": "b403983b364dfe7726679fc7e8134d9331b0a1c68109853a13b10f5acfec1caa",
+    "a/enemy-gardener/candidates/candidate-35.png": "2d6f6b5b55c4eb3367393220da40f8a93f956c8f4879cc35567b505db3acf98b",
+    "a/enemy-gardener/pick-64.png": "7d47d240fa9510a79b23ef31341b495910778d0e1209a1b4c86a85bab37dc20d",
+    "a/enemy-gardener/pick.png": "d25624f3b13bf73031be3ff1078ab00d535081bbc91d946c4f39e3cec3639b6d",
+    "a/enemy-hungerling/candidates.png": "cd03e66879688c92bd321f8d78a73a1e5ec047788fe3374e14a257a6b981db9c",
+    "a/enemy-hungerling/candidates/candidate-00.png": "7a74431572f256e6d2f2ae7753f649a2da22f1f367e1653f064600103f7c4e66",
+    "a/enemy-hungerling/candidates/candidate-01.png": "4290a16acfe70f38d58a3b4782015f91396f33b705a6530751f480a559d38d92",
+    "a/enemy-hungerling/candidates/candidate-02.png": "8ca8fff90379307f847b06566da631ab360f44344a04efb4cfa21eaa4594a624",
+    "a/enemy-hungerling/candidates/candidate-03.png": "5ead93faf30ab98817d8d21eaa15bdac5bb590e793c6ea8baab830d87136aacc",
+    "a/enemy-hungerling/candidates/candidate-04.png": "bcda89364e941e711482492c933d9329bfbea114d4da68734aab09cb25f98cc1",
+    "a/enemy-hungerling/candidates/candidate-05.png": "4caf9e69e5a83d67ff77a3e3404e8f110ed9a95be03605fd02627b69d4a0dcdf",
+    "a/enemy-hungerling/candidates/candidate-06.png": "d2cda68844995dbefdc9a5bf3afa8f441ba1ae13fa44b54f60b72af74a497583",
+    "a/enemy-hungerling/candidates/candidate-07.png": "c6dbb636e4384e8f75c34fcd745075a95fd0d1c2a6f3ad4deb7ed679801b2f10",
+    "a/enemy-hungerling/candidates/candidate-08.png": "c7a2f3a6dd94f5f33931590c59ad35fbf3643ac718536a068a9494c1905f316a",
+    "a/enemy-hungerling/candidates/candidate-09.png": "1aa52e44b483d9b9a2c86f67d45bdcddcc35983a7a26774c72910efce8040755",
+    "a/enemy-hungerling/candidates/candidate-10.png": "4803bc0482163d95f79955226039a85d2f26ab495841c940710fc5d057527f78",
+    "a/enemy-hungerling/candidates/candidate-11.png": "6eb8db433d809c2e9af0d6c772d842ee1408e20c9c49f43929e0dd453b06a645",
+    "a/enemy-hungerling/candidates/candidate-12.png": "c61ec0c635ec893b9e3c68c7fcb907d0ef318001240cadcd175b187a7fb660e8",
+    "a/enemy-hungerling/candidates/candidate-13.png": "540adb0102a86cbe5aa1aa2c49f793c1b0ecb31f753351c5737408cb1156d528",
+    "a/enemy-hungerling/candidates/candidate-14.png": "471addef0fe6aac5fa9a130daf615721d5521688cb8b6b62ba570476de478dea",
+    "a/enemy-hungerling/candidates/candidate-15.png": "898e2fe482a8463eea4c19bdc375d7256b41cea9575cd9d6b32f95e1379d2058",
+    "a/enemy-hungerling/candidates/candidate-16.png": "996f967dfd3d5ec718d400ed37a09a190b1741ace9bb307045e3884526c9b84b",
+    "a/enemy-hungerling/candidates/candidate-17.png": "f5f853f9649f62d3449cb8706dd6bd3898f253f6a396682c5b550b04accf3b3e",
+    "a/enemy-hungerling/candidates/candidate-18.png": "b30d815d5fb50aa6bec01a45a77b6d150f92fd919014568b6687eb02c74e0d23",
+    "a/enemy-hungerling/candidates/candidate-19.png": "383858c9fea631b2b1bb5e4f71ee3be16458f1d094480813b5a3512b389a0678",
+    "a/enemy-hungerling/candidates/candidate-20.png": "ce6818a2586d09fd4dbe5b0b79efedba1f87d7d2306c9ffc38f27c9aa1a43f26",
+    "a/enemy-hungerling/candidates/candidate-21.png": "89dd09efbd56e50536163da3452386d6809feda4dd5e056e11e06d4a8274672e",
+    "a/enemy-hungerling/candidates/candidate-22.png": "e87473e14ebcc4c792d1600a652eb4e8cd0376f803fda2c924538b536470ea81",
+    "a/enemy-hungerling/candidates/candidate-23.png": "111cbdae2527345b432c30c730a068e487558856456c7e5f0349bda1774c1be1",
+    "a/enemy-hungerling/candidates/candidate-24.png": "632d4604c0326605d1486755378a7f75c788e188ae079fd758d4cccab244e322",
+    "a/enemy-hungerling/candidates/candidate-25.png": "23138d8cd4dd1f007a110bc0f62472c3b420b4c9e20cbb545afc7d4ca6bdd5a4",
+    "a/enemy-hungerling/candidates/candidate-26.png": "d529c01f98429537b349e2ad3c04aa80cba96682dfaabd7b69bfbc6a1c375952",
+    "a/enemy-hungerling/candidates/candidate-27.png": "3e1c1bf621d2a114f052f5bb0c8d0cd493543b59cfa84f3dab898a255452d134",
+    "a/enemy-hungerling/candidates/candidate-28.png": "02954ecf6bf92796c96109f79803763909c142de1baf19fc9047f3d5e63d459e",
+    "a/enemy-hungerling/candidates/candidate-29.png": "10866971ade095c205af249af45eac699668ba199037a1735b89ef32b5146a6c",
+    "a/enemy-hungerling/candidates/candidate-30.png": "c9ad7f248b602bd567ab48f487307caab7b3a0c7261550c621ad05fa110dde6c",
+    "a/enemy-hungerling/candidates/candidate-31.png": "eadcff9d483724a44ba81a403f51355c35a21c99e5f7cb6aa83960fb1a69c873",
+    "a/enemy-hungerling/candidates/candidate-32.png": "0ac9e890581b9e162672def54ba92956bffa9e8513096697f76de6ef35440d8e",
+    "a/enemy-hungerling/candidates/candidate-33.png": "a27c042159eabe303a74431e3ff3e9fe75190432c2d4b6bcddd3dd96607533f3",
+    "a/enemy-hungerling/candidates/candidate-34.png": "96befe732234a4224c115b386f0451fbfa5168eee6b14e8b053677f815dc9178",
+    "a/enemy-hungerling/candidates/candidate-35.png": "196d616d48de249163a06e743aabf7287ecacba6b22a71d363a0bbe596be8d98",
+    "a/enemy-hungerling/candidates/candidate-36.png": "50b364d7e45c109ffd94254bd75ddfe83e2c38065be41c17482d4b954aabf097",
+    "a/enemy-hungerling/candidates/candidate-37.png": "2dbc3c3a2cbe408388a1a0a80d0454babd990bba8bde79da7c435683bee6abfe",
+    "a/enemy-hungerling/candidates/candidate-38.png": "43eacfcdc41ba273544e2a0d46fa3a3231f001e84a243f2a2b132c3d3137ef94",
+    "a/enemy-hungerling/candidates/candidate-39.png": "a8418e69eed269d5365528cee5e0e7311ffc6f6dcd9a6b8e5d1cfde69fa3024f",
+    "a/enemy-hungerling/candidates/candidate-40.png": "70b28f49e1bf7df2559fdd315d8bac7916dc4e404d0e70a6c9e7e7de75de2628",
+    "a/enemy-hungerling/candidates/candidate-41.png": "2e8657fe006076028d15e46a8ef8857c89d75ea8dfa6b36c7a4bef55f8fc0db7",
+    "a/enemy-hungerling/candidates/candidate-42.png": "9b40825863709ab56014a685da2825afbc65b5c87a88c8209428aa49bb9aef54",
+    "a/enemy-hungerling/candidates/candidate-43.png": "44e8a60592375f444bc188242f8c7585e856f31ef4e6959b0783267dc573b163",
+    "a/enemy-hungerling/candidates/candidate-44.png": "8867dbf97394ae40dfcaa66e074c734cf4f1c920805a216ed4c247fbfc16e710",
+    "a/enemy-hungerling/candidates/candidate-45.png": "46284efbecfd8ca0e5f2a6e04322f23ba233c6949341f092ab76fd37520b20c2",
+    "a/enemy-hungerling/candidates/candidate-46.png": "9977ae9323d113725b72176983433fddc133ce51b94e8debf79cee4097791dd6",
+    "a/enemy-hungerling/candidates/candidate-47.png": "e9ebaef9c42cf004488ec4084f205dc294ffeda772cbd1a2e42cb61f86b14697",
+    "a/enemy-hungerling/candidates/candidate-48.png": "4951787d04d956c65720eca30fabd17db5f40fb0b645763a93ebcbfb71189a3e",
+    "a/enemy-hungerling/candidates/candidate-49.png": "1c898594d54f332022c623ecb00572f3ede7780f953d84f9b6d5b25cddca1aca",
+    "a/enemy-hungerling/candidates/candidate-50.png": "faec7b1cacff9d64d78fb7967fe2a0a0cbef3034bf85867618a4230de303bf68",
+    "a/enemy-hungerling/candidates/candidate-51.png": "abe78dac20370cf3c2540546df8ab737fdd593fdb60cdf101e7ea32c62d91259",
+    "a/enemy-hungerling/candidates/candidate-52.png": "2579ad67b7a21ac285960683b1f4654a4ad984a5d10088213c070963d9cc767e",
+    "a/enemy-hungerling/candidates/candidate-53.png": "1912f16a44f884f314738a2d22207ae28824b2478f5994e89e9f767c5306f578",
+    "a/enemy-hungerling/candidates/candidate-54.png": "f7674e6a9bbb9277f26160a1cda6155f878753b67580d9add22df7997ba25804",
+    "a/enemy-hungerling/candidates/candidate-55.png": "79940fd573468f79170a11aef22efe0c334fa908d2d14f520e2d03cc39188436",
+    "a/enemy-hungerling/candidates/candidate-56.png": "a8a76616f74de111f431e273e4bf02fb61261263a715c2d537d7e840b30519a8",
+    "a/enemy-hungerling/candidates/candidate-57.png": "671c4519f796ddd5dc0b83f11f0c3206fbcb014f7ced377aa12c130e064f0e36",
+    "a/enemy-hungerling/candidates/candidate-58.png": "05a535e134ffb522eb750bfb879a04c701dac923aae53067f88d969e42c556d1",
+    "a/enemy-hungerling/candidates/candidate-59.png": "acea12da35862b04ad4fa5868c41732cc65b199a0f9374248605f6ae7831e1f3",
+    "a/enemy-hungerling/candidates/candidate-60.png": "66528d6d843dc131c6cf6f3d529f8e21ebec473c46eb36793e6c0e17a940eb20",
+    "a/enemy-hungerling/candidates/candidate-61.png": "5300c8f1774497b46b5a0e0f411742aa974dbe54ff1644ac83b1edf7ee1c49ab",
+    "a/enemy-hungerling/candidates/candidate-62.png": "788a9aecb97763d1e18499f1f176d7abafe94af624b5a1eedc0162cda564fa64",
+    "a/enemy-hungerling/candidates/candidate-63.png": "7fc70d45110212a4d970cc9d07d9f660e7c3e4665e2702f4dcacd2ab58a19ecc",
+    "a/enemy-hungerling/pick-64.png": "1003d5dceba44c2f1a7fd0f50c7a55bf84c519adf8f6f4c74d2f2a7e09cee7d7",
+    "a/enemy-hungerling/pick.png": "7a74431572f256e6d2f2ae7753f649a2da22f1f367e1653f064600103f7c4e66",
+    "a/npc-clerk/candidates.png": "0919da20183cd601fdaaec9f90aab6de1a153b8b41744f7ea2e93031f179f061",
+    "a/npc-clerk/candidates/candidate-00.png": "6d494483a81c8742c77eef165961dfbb33767f8c5502edb8345e1141efbc5ca6",
+    "a/npc-clerk/candidates/candidate-01.png": "ef5cd6311820a1139fcdc8243f50d319594670f1739f3f6e7d13d3fb29e142d3",
+    "a/npc-clerk/candidates/candidate-02.png": "dd1caa19b2f9c9c89db9b9619484f00f44c91d00e22c6eee6dce8ac1f463bbc1",
+    "a/npc-clerk/candidates/candidate-03.png": "8d385ec86dd454bf07f8cb453a204f6409e6145f6370ed1b72ce60855f3748e4",
+    "a/npc-clerk/candidates/candidate-04.png": "7337e2d995455100c0b386131762052d32d6991b5058c9f9bf30e1cc9a6a519a",
+    "a/npc-clerk/candidates/candidate-05.png": "470465ce6e576313bd3e89cca1c0dc4e50289b6dadbc0f105696e76e23508aae",
+    "a/npc-clerk/candidates/candidate-06.png": "cfb483a9dc3cffd3e68eb0315ba5be126a63ec6d7692ebca342a0963b0152f79",
+    "a/npc-clerk/candidates/candidate-07.png": "63cc11f205688fb554b33e6479a2c4cd7870ceed2ce487db1e4f0b07017bef11",
+    "a/npc-clerk/candidates/candidate-08.png": "dc3cb47df1b6c2d25faa7506bb923ede2656f60decbf7470dfdcacbcff3b3fbb",
+    "a/npc-clerk/candidates/candidate-09.png": "586d8206c3fdfc7b49a52afcd1d4ad413464e46ab6faaaa655e00d2c301c18b1",
+    "a/npc-clerk/candidates/candidate-10.png": "0fafe60d6989784990a4d1e3acc5a58363ef6e93d9ba146af5d7068f6507dbb1",
+    "a/npc-clerk/candidates/candidate-11.png": "82f53ea47baa7afe694561775fe1e89ee11648471b7abe4d177d0a016eb72379",
+    "a/npc-clerk/candidates/candidate-12.png": "01a845473debde109ef60a417535f98cbfbf156ea870541101a03f207c9c7da3",
+    "a/npc-clerk/candidates/candidate-13.png": "ad599cc768524e7f2ac28f8e6d6ce3b049e309cd98a643b1bb279a2e667d028e",
+    "a/npc-clerk/candidates/candidate-14.png": "272a0b0d7df2fa667a08e8c8ef770665e9fc0f07351016fd8963a66c8c06569f",
+    "a/npc-clerk/candidates/candidate-15.png": "6613ec281bee4c3f256e785718d3af06e3a413b016698c04047b7dcb3b0113ee",
+    "a/npc-clerk/candidates/candidate-16.png": "2927da0a344512e78ea7ae9c5d49a23417482dfcb60ba69f9287097dd20481c1",
+    "a/npc-clerk/candidates/candidate-17.png": "54a6a189995c8f8ee1c46a9ce6f5056d05e7e2ff3938fbba059777b11b4c28e1",
+    "a/npc-clerk/candidates/candidate-18.png": "3266009c4d43def485758eb1d3dca55f02d3bb67dce2bc0dfd37702ca279f527",
+    "a/npc-clerk/candidates/candidate-19.png": "207842f601d8ee1c3ac6a0ccf7c1b493fa8a6e10e3db8ec9b0e6f661de03431d",
+    "a/npc-clerk/candidates/candidate-20.png": "755c228efed52a07aaa13bff375aa19c0d441ab8c6fc28b4e5c1b00b3fb2f272",
+    "a/npc-clerk/candidates/candidate-21.png": "f46e1bfc2da61f8c3048ef06e50485541ae3e373af011eaa71cb33c7c4bdd6d3",
+    "a/npc-clerk/candidates/candidate-22.png": "a0df4923aab667e0589294e007d41ec43f1cc5bf6052f6ffe8d82af0dbbad0a1",
+    "a/npc-clerk/candidates/candidate-23.png": "5c0582d7c9702bef368f788e50c6f584194d9455aad2fa3b9da34f4629c234bb",
+    "a/npc-clerk/candidates/candidate-24.png": "9f2281f0d919bc21b9e6e5e13df5c145679e383ff065b634f7480865d3249bc4",
+    "a/npc-clerk/candidates/candidate-25.png": "66ecdb984cbcc37b4df63f3ba93ce04fa479fd9ac134fa46fc3fbbd52f55bf19",
+    "a/npc-clerk/candidates/candidate-26.png": "3ddc1fdd96825af72491a682dc826b92caccb4b2b5d6aeb746a3237d4fa6fb7c",
+    "a/npc-clerk/candidates/candidate-27.png": "6afcba55c8f69baa430ccef47b64490196014615b03ace5c4b1cc14240327ed5",
+    "a/npc-clerk/candidates/candidate-28.png": "8f71acd6a05042fe884bd83bb98ae879502a3da2e72c331fb09d65a742f4c482",
+    "a/npc-clerk/candidates/candidate-29.png": "fec1e7cc5e80cc4baace03c7a4f26a3af2db5e1bee9dbeb911c7dd1c22b94f59",
+    "a/npc-clerk/candidates/candidate-30.png": "1c7281a1d1c45735eb7211e61f0955b5f0d3b9de442008cfde891335088ea572",
+    "a/npc-clerk/candidates/candidate-31.png": "dcbbb5b84f3d8d0b4bf9ac252ab0f37a017c9dbaa98b7cbe02fb9dafcb02c15a",
+    "a/npc-clerk/candidates/candidate-32.png": "cbadc7dc9fe0bfc246ee137f97954ff32ce9a34240bf46f08f090084f99412b7",
+    "a/npc-clerk/candidates/candidate-33.png": "35e2e439026fec2e148030180ad5a79a0230241fd7befb984582e92816913ed5",
+    "a/npc-clerk/candidates/candidate-34.png": "d1383687ef43489155d1ee4e14d6ad5cda62ac4e215993415837bcd2d9a05a53",
+    "a/npc-clerk/candidates/candidate-35.png": "6e595c93ce6e4b756c1c32552e69a1d0ff2320119c6f90dcb88fc9ce3ceff063",
+    "a/npc-clerk/east.png": "c70cb3d686bfecd101634c48ec11750333e701bf9d030a1b9a343035bd002b23",
+    "a/npc-clerk/north-east.png": "ec90a758bcefa15a26437f8f81acbf35d842804304c408f9053f8dd5db45d60b",
+    "a/npc-clerk/north-west.png": "78ad0abcf3ee3ca81b9a3ee90258fac3adfc54cc33daa48e84cbf77a621a3316",
+    "a/npc-clerk/north.png": "b4391e6ad55b18ce6561866c260de71933a318be337a99a5c82e7a112eadba01",
+    "a/npc-clerk/pick-64.png": "6cb659bebe531863bdb9efaef78e474aba7dd6972c9fc4b1119c58d35d902f73",
+    "a/npc-clerk/pick.png": "7337e2d995455100c0b386131762052d32d6991b5058c9f9bf30e1cc9a6a519a",
+    "a/npc-clerk/south-east.png": "3a9568a9a4a9e8c57d5e362902d06b70015ce1997ef8677613929a32e2768f0b",
+    "a/npc-clerk/south-west.png": "a005f4ce42926322b7bbe6aee78e51d9d431ab80350bbede2847dda11e1bbcc0",
+    "a/npc-clerk/south.png": "29b6d28f15fe82b0eefc605005e10e1798878ebfc3458046e7380c9aca059a97",
+    "a/npc-clerk/west.png": "7685b8d08ef30ee46b25e4e1b88929c11914c0d11997b06c48557f5e87f95578",
+    "a/npc-kesh/candidates.png": "cbdc633b2e77769709e09c66a962e9d3274fb21e12e126b3edfca9c5d4703f5c",
+    "a/npc-kesh/candidates/candidate-00.png": "22356f05884662f42768c23cd0ef931db14c178c03f6cbbea0f765c861412c83",
+    "a/npc-kesh/candidates/candidate-01.png": "c6cb2eb2ae9ebdd8cfc8d720300ef4cf25d4662f169fc2f8d0f97c58bf8e5334",
+    "a/npc-kesh/candidates/candidate-02.png": "bb73a415749d517a6974fd74e08150a43e65462b6d03b6b8a7464ce909844c53",
+    "a/npc-kesh/candidates/candidate-03.png": "d5cd3a525d701fe5bebb8c5387bb0094eefea72baa14cf34adfc65bd459755db",
+    "a/npc-kesh/candidates/candidate-04.png": "3ef54e72a36418365243bed6b37b4f205a888c84ed13f63bb74c5fcde43a28d6",
+    "a/npc-kesh/candidates/candidate-05.png": "3b910df01371ceb0fdb7857b65bb16f2aaacef4862715cccfb230fec18f6d366",
+    "a/npc-kesh/candidates/candidate-06.png": "a2b865be90f35bbb937d58127f25c155100dd1832457e5f9b5b0704ab93dc755",
+    "a/npc-kesh/candidates/candidate-07.png": "ec61aa233706ac2f885f8107f3547fa832e6b295041849c2c44b7b0c44757d83",
+    "a/npc-kesh/candidates/candidate-08.png": "1619c96c34102a7ebb3a1be314e52feb8cd3097406707bcfc20e0f11f4c2c863",
+    "a/npc-kesh/candidates/candidate-09.png": "aedcb67be8e82526c691ef8c3855953e500af120581a65e446ddc306da58101b",
+    "a/npc-kesh/candidates/candidate-10.png": "1a02953b338f0d703ad8c1cad8bfeae4f7e4f5e8b4094706058daad38cb3b872",
+    "a/npc-kesh/candidates/candidate-11.png": "e13506757cd06e6565295af4004794bc988528a9dddaa27ba8697db27061237f",
+    "a/npc-kesh/candidates/candidate-12.png": "c96eec3c1c66fd672a59cc9b3a43338ca053a188a49a4abdce0c90b2a941c959",
+    "a/npc-kesh/candidates/candidate-13.png": "a298e2ff3b587cce16a3df3560a7db937c5425d161f6ba9fa0fbd87b25a6f6ee",
+    "a/npc-kesh/candidates/candidate-14.png": "8126c35094d1f6ad09850c25b455e3cb071581c1c22f7aa3b3756cd5a8a43317",
+    "a/npc-kesh/candidates/candidate-15.png": "ae0367d1e94c83fb9bcb254ad1e93458757d62a1363241ae04d2b146d1a987d3",
+    "a/npc-kesh/candidates/candidate-16.png": "bd27602a169ae4a1aec582199f31ccb45c4dda2d30de97869052410a33bf55fa",
+    "a/npc-kesh/candidates/candidate-17.png": "ac6e63bb86ad010b5b86952a742d55e614de2a837339bf29c1c1133ba98af2d9",
+    "a/npc-kesh/candidates/candidate-18.png": "2a1bc884400f1ea933a0eb84bd5dfb674dac5a44be261810219ceda0ac0bb8f9",
+    "a/npc-kesh/candidates/candidate-19.png": "f8abf16d4d1c64a7979823fff574f5cf7331144f65df3d5362021bd93a2f07c7",
+    "a/npc-kesh/candidates/candidate-20.png": "30b867967a4f9d22900d752071095d984d4c11cb3a7ae296632af66ff097a923",
+    "a/npc-kesh/candidates/candidate-21.png": "450e76d6e4d76b05d192d6ca9fa041b64d00af30d2e7fcd2d2fbb3b92252341d",
+    "a/npc-kesh/candidates/candidate-22.png": "50ea4c113615fa0921f258080f9ccadd7d4bfdaee5ac197ddc55027423c5b3b8",
+    "a/npc-kesh/candidates/candidate-23.png": "d4d2a5010b63a99226b191ed21262e1efb18b47336bf08a2fab522fcc7e80c6c",
+    "a/npc-kesh/candidates/candidate-24.png": "1bf00cbe82edfedd7aee9989970c9fb71e1d36b3f8e23f526a383c5b67cbf50c",
+    "a/npc-kesh/candidates/candidate-25.png": "7f31becefe6e76eb5ff9f1662a0bb0c80b32da089f5300e02a4d0712b58a33d9",
+    "a/npc-kesh/candidates/candidate-26.png": "ff858f232efe4b84ad227e7c5967665f899c86c3fc99f1295bea42b0e2b9fc24",
+    "a/npc-kesh/candidates/candidate-27.png": "8dbef6b7140b76cc93cbc05b41007f36149d4d06dd146c3d0c421641446f3698",
+    "a/npc-kesh/candidates/candidate-28.png": "45c3f40764e6a598572983ee8f57c03ee40ada2b02bd890ca3dda7e3b0f85bc6",
+    "a/npc-kesh/candidates/candidate-29.png": "8ec238914c0b8feac3dcc36273993ce3dee597d8e9bb62b7e6a9c4fc799fe23b",
+    "a/npc-kesh/candidates/candidate-30.png": "702000232d67a7a1389bed9e504d92ce6a763377d3dcec2a62d3e69f50bbc613",
+    "a/npc-kesh/candidates/candidate-31.png": "e0ed539213947e61c41693e17c3db83a49d2084e322d343fb32e087fb862f1e5",
+    "a/npc-kesh/candidates/candidate-32.png": "d31136ff44b760459043f4883b43dba9f6cd441c748638e749c8f1f4025362d1",
+    "a/npc-kesh/candidates/candidate-33.png": "069ab2102002f55393a2147704e0e21fe76cce6bd972fb280c832a59cae644ce",
+    "a/npc-kesh/candidates/candidate-34.png": "a6721326ef71361be851336299984dbdd3961a48178802516b3e7c7f7e509e0c",
+    "a/npc-kesh/candidates/candidate-35.png": "fbe5ead07083d1939df839093ea88443b71a27f2fc189dc934c74f6198ced5e6",
+    "a/npc-kesh/east.png": "4fa4141afee5e5916254b57c381b0605c7397755828eb599e2ddcb1e2c834be7",
+    "a/npc-kesh/north-east.png": "3bdc0fd3ce897b24377f72e7616ed701e5e2e6a5dff297cf108395a260279a01",
+    "a/npc-kesh/north-west.png": "6bbc2acf1395e7288d5709d63219f45472b596419b9e245c3f38e648d4efad62",
+    "a/npc-kesh/north.png": "b8e26185558078b72a34d7ba4e27ecd21cff275ca254b5c52caded187d9f4298",
+    "a/npc-kesh/pick-64.png": "3a6eb4a6130f1a914b0a67e1f5c2ea9bf20e8825ce5bc6b1045e3527c37330cd",
+    "a/npc-kesh/pick.png": "22356f05884662f42768c23cd0ef931db14c178c03f6cbbea0f765c861412c83",
+    "a/npc-kesh/south-east.png": "644941ce71d8010a7a3516ce7dad84f706559fb90ed69b772104a9c834d1a7bf",
+    "a/npc-kesh/south-west.png": "9ea62b2b1bf4103a7949ee8fb6f7d7ff92479a63827c29adcac70d90aae3c35a",
+    "a/npc-kesh/south.png": "d75ba01fa4ed84db7811fa20b99b4a8db506227147be2138a45fca9f0355ae23",
+    "a/npc-kesh/west.png": "49289056e2a04e86b285408570e045f02217161c23098da35679a64123305a5e",
+    "a/npc-tally/candidates.png": "b108d161d12e40019ae2bde184ba8404cb5a18a39dfd758b123adaf4d4f10636",
+    "a/npc-tally/candidates/candidate-00.png": "77ca01d9788f95ec0402f7d681026dcf7f0a14824ba5cadfee589a1ca3d7d116",
+    "a/npc-tally/candidates/candidate-01.png": "5258d18334563279f99dee76f91a5c4bd1dc12fd055720067650ad5b351e84f3",
+    "a/npc-tally/candidates/candidate-02.png": "ee761e2c46128ef7b9c8bd9171b1fd7c6c19c6a6fb30200ed2f38152fc217390",
+    "a/npc-tally/candidates/candidate-03.png": "4642be6adfe38d6ec1d807d8aceb923c644c4afd1a995d27a534052dc96cb49a",
+    "a/npc-tally/candidates/candidate-04.png": "a2de55347fd702e1ae2502a9d813ab5827e37812206fbd4fc7b03123ad022fdf",
+    "a/npc-tally/candidates/candidate-05.png": "cec2c9eb35f4d28f67c4426ecaf7ba563323a1260f4f1711fa868fe7dca9dc7a",
+    "a/npc-tally/candidates/candidate-06.png": "2f2b6f9201db5f1f758ba8d9458628205c99a6fe5db90727b265c146febb153a",
+    "a/npc-tally/candidates/candidate-07.png": "cba9f7aa4c852ccd88c15935852921cb0654540e5be68e8331763818d6c9a00e",
+    "a/npc-tally/candidates/candidate-08.png": "3a0ae8fed00872f536c310febeda795df06f398471475fb87fd70d2873585ae0",
+    "a/npc-tally/candidates/candidate-09.png": "c6bea5be5610723bc2658f7dd63ecc2ebcc9f6a5cffdcaac1810b3474010e0cb",
+    "a/npc-tally/candidates/candidate-10.png": "0721ecd7d528fb21fce3556d97f1572d1ec4973c7247cdb64c7a0be8774f2856",
+    "a/npc-tally/candidates/candidate-11.png": "391f4a2e136ccfe0001b273528e90cd71d48d441a933ae3acb2245ffa833f67c",
+    "a/npc-tally/candidates/candidate-12.png": "737765192c883ef10b3d8c51e8d6857ae6bb76244e8f204d32145d014014b2e8",
+    "a/npc-tally/candidates/candidate-13.png": "27bad94c086fb560bd3b54f545f5b30a40e92b2457cfcfbd4427803cac8d8a64",
+    "a/npc-tally/candidates/candidate-14.png": "197bac9535ee4086d5081d012e4a862579da8516303e22e95ad70ec1e659be21",
+    "a/npc-tally/candidates/candidate-15.png": "fec1a43df100ac17dd89d2fff51b608b063a8d87cac0b0b5b44df34aa39d01e2",
+    "a/npc-tally/candidates/candidate-16.png": "878b9f51e2badc9bf93cdd9a2c70a0daa9c9a785e68305151b5fd88eafb55de2",
+    "a/npc-tally/candidates/candidate-17.png": "0170389ec2e67b6cf3d8a8acfdab8700b4db1b993bf4c0433d4c645883796038",
+    "a/npc-tally/candidates/candidate-18.png": "f30a302e330bc79e37ff620b3ecc928c5449176e1d17a0cced4d81200ebd28a1",
+    "a/npc-tally/candidates/candidate-19.png": "8bc7db7bd05659eaf3c9dd0e73a69f4614f8f1089d53e09a18bd04f9a0680a8d",
+    "a/npc-tally/candidates/candidate-20.png": "abde008ca23e0534c57903fca97bafbfaa39e68dd1a5890782ab410c35d90739",
+    "a/npc-tally/candidates/candidate-21.png": "bd754b0526c6e99ef73e4784ed5eec409f9b2de4c2c23630c511fc4bf7e0dc5e",
+    "a/npc-tally/candidates/candidate-22.png": "e4206f4714e410ad47ce1081d42f5ff5108342baa967eb25bab344e4ad0c16f1",
+    "a/npc-tally/candidates/candidate-23.png": "bc08a0a4b659b322a80d76cab9a8d22819e363f7334130168a1715940e463ed5",
+    "a/npc-tally/candidates/candidate-24.png": "560e0ba12185a08c4006aa38595049e5dfa89ed5f01afbe1d2f4e28be565bff1",
+    "a/npc-tally/candidates/candidate-25.png": "a3eea939606322ccdbe52cdf6acf480244147c403e77c9fcb76bf929d9d929de",
+    "a/npc-tally/candidates/candidate-26.png": "907caaa7ef559b6dab19255e821f60824a2f25c61fde5c07015a84717163e8ff",
+    "a/npc-tally/candidates/candidate-27.png": "271fe8ace8d9ff24f83bbe3951e91061b13c5cdcec249a22f5cdfdd651164d4b",
+    "a/npc-tally/candidates/candidate-28.png": "9d7cee7ddc563979a0215022a7ab7d3b0e2243986c9863ad68069ce3227dbabf",
+    "a/npc-tally/candidates/candidate-29.png": "d2408142fcb83eed2533864ce36bfcfe9b48011d544d7dcf49648ed2593abad6",
+    "a/npc-tally/candidates/candidate-30.png": "74cd96a8af21d7f9109923c07c42547bfae57e646c4b61e99089f58a4381b2e3",
+    "a/npc-tally/candidates/candidate-31.png": "ab4021e472dc347a9d1492919ff398127460a5d5d5ce2f9fefe2e52c3060dacd",
+    "a/npc-tally/candidates/candidate-32.png": "eb6b97712358c9656edcef916f07389aacace9f8f2ca9dba0a99f4954690cf46",
+    "a/npc-tally/candidates/candidate-33.png": "b0f26869132a08efb1359e6d83be0f86733d6c58ee0e7ef225fdb9d8cd092701",
+    "a/npc-tally/candidates/candidate-34.png": "6fdb493e31b2a04b5e384fa5ff97d77048bee0c32c367e918eeca67559c85731",
+    "a/npc-tally/candidates/candidate-35.png": "abf27d9e105519e6ce77191604f8af3f34bf30bdec9afb74691ff6588e657618",
+    "a/npc-tally/east.png": "d968f6d71be0d45ecd07c7d8ccfc0319e1995d5b4419ef4fa9d18bbec7b7a2e5",
+    "a/npc-tally/north-east.png": "f85193bbe631498ecf16c92e1d4518aa386ccbb43d0d3e4309fdadff4372ea7d",
+    "a/npc-tally/north-west.png": "25ec51c3f7eff95ef25d1e4f7436d2ae31c079322b91bdd26b808c82fabe5dc0",
+    "a/npc-tally/north.png": "ece507ba348e55ac8ba0fdacdd9faa6bbc25d61a86fca0eef78cce2881156ca3",
+    "a/npc-tally/pick-64.png": "3394820c3b73eb8906a55c48415fd95dc0c9f3c45497adc886ab503114dab8a4",
+    "a/npc-tally/pick.png": "2f2b6f9201db5f1f758ba8d9458628205c99a6fe5db90727b265c146febb153a",
+    "a/npc-tally/south-east.png": "6f19aefe40076e09a9856f71cd1505d5a8e97263d888a6e5046034a39f35493f",
+    "a/npc-tally/south-west.png": "d3856a7d15f5ff0f1396925156cc69c0f551d400e1dd1f1f0552d197bcbd3f81",
+    "a/npc-tally/south.png": "aa06b147cd77cf02690e79707651e24c2ce9900fce63d8b818f7fd1ba09361df",
+    "a/npc-tally/west.png": "bb9afe9e3c0a2f473e1d033d4075897ddaaa272f1aa8a2be4e12adcaf9acfe05",
+    "a/prop-balance/candidates.png": "cac588877226e9d92bc8a58ed5a900c235e3d8814d20e71665960943eb1c184f",
+    "a/prop-balance/candidates/candidate-00.png": "427f3570de2c547d066240a09a17386edd2afd1d85ce4b686b9f5a7d59fb87d1",
+    "a/prop-balance/candidates/candidate-01.png": "dee828f41d181a1043c31f2c974c234252b700da1d8bedcaadcda65d2a64c103",
+    "a/prop-balance/candidates/candidate-02.png": "9a3c47fba5df593b2dfaee66b08409b0288404b0a1efd1a8fc8e41ef3514df7c",
+    "a/prop-balance/candidates/candidate-03.png": "2a96ac8c9562beebaefa406dd0aa7c1e49c9f0f5309e43bda33eba1d31fbf0fe",
+    "a/prop-balance/candidates/candidate-04.png": "36df81466c32f648ecdbd89670d59bdf243e324a45f5848d3a7f6fd6645995ef",
+    "a/prop-balance/candidates/candidate-05.png": "54f4e2c42f7bc236883aeca6868661e33cd306176bd748ae700371b0ac577dc7",
+    "a/prop-balance/candidates/candidate-06.png": "da0e7832b113af83690de35d7ee816d9570523dba370d530265b05419ce56fd0",
+    "a/prop-balance/candidates/candidate-07.png": "b022389890542361be50b76de02334603462e20a35009cb278ced6822810ca07",
+    "a/prop-balance/candidates/candidate-08.png": "09d48aea1cb0f307645c59c50fb7c95dba2b49f02c1a86d7b5a84cd9aa7c120a",
+    "a/prop-balance/candidates/candidate-09.png": "f16ec388dbff62bb15aacfc1a7e4a1fd80fedceeaafa05f9b7781ba96235b9a0",
+    "a/prop-balance/candidates/candidate-10.png": "ca624ba1c6e10df188634d0057dc6ff38651ebeea08e52e29b6238f936b91ab7",
+    "a/prop-balance/candidates/candidate-11.png": "8525d4412821300ca988599c82cf3482a5942ff28d6abef84c4a53a8bff42041",
+    "a/prop-balance/candidates/candidate-12.png": "adecc4e8605f802076b28e232733ebded63bc19f11a006e6af20becf29505d26",
+    "a/prop-balance/candidates/candidate-13.png": "7abf88ce0f713ac1627e802e4c34b7306492e2589ccdef289e9dc5d10a4fb827",
+    "a/prop-balance/candidates/candidate-14.png": "e493a9073e67dfe4c00dc96703b456e76079c74974802cdcf7733f65bdefd134",
+    "a/prop-balance/candidates/candidate-15.png": "d2c6be793c478f34f99ea2a6e050047b0117dde074c776752d1226f85c8430c0",
+    "a/prop-balance/candidates/candidate-16.png": "b35bf5bd02b8d20ada44df15d6ff9cc30cba95381ba0b906f49ec61da00b6ec1",
+    "a/prop-balance/candidates/candidate-17.png": "966048dc07c51c95d8da10ecf048134c96f122cd3f8e62887d256e2353e39775",
+    "a/prop-balance/candidates/candidate-18.png": "3744746714f1db41493a35df43fb24e6bfbec4400fa7e559f499b76ee6838e9e",
+    "a/prop-balance/candidates/candidate-19.png": "fdf6d136bc1246c2c869a5455665e278f907ccaa2b30225ef3206ce6f50e9e4c",
+    "a/prop-balance/candidates/candidate-20.png": "b3d41fdf7c756c000e082c6ff242b0cfb1f8120b35f9ca906db742febaea7e7d",
+    "a/prop-balance/candidates/candidate-21.png": "b73a57454054ba9a4a380164791cd173b052baf2d68301570978a48d2bc3d828",
+    "a/prop-balance/candidates/candidate-22.png": "039422633f017c1f4d8d42ee2dba6722277c61a727420af3bb8fe42119c1e71c",
+    "a/prop-balance/candidates/candidate-23.png": "b5ca8a6c4975772bdcda5cb99691aa756bed68f88fc525296f7cfc423ecab33a",
+    "a/prop-balance/candidates/candidate-24.png": "63c03e73909ac8e1f51c06addcf3b6d6fd8dc9e4b39a65bb3645a760efcd37d1",
+    "a/prop-balance/candidates/candidate-25.png": "6af930d9e67ac416b79c3264b412c964e49a28de776e2d76f780f59ae841ba19",
+    "a/prop-balance/candidates/candidate-26.png": "0b2ad31ce580ab8ee886f2a3c1efbb4530554c4e4319421ba3ad6aa72910952f",
+    "a/prop-balance/candidates/candidate-27.png": "e4203396227d771bd743beaaf3476c05f9a8d073ee515540d748a61c4f54ec94",
+    "a/prop-balance/candidates/candidate-28.png": "01ef9dc3caac75d347ca283142b92544134e053bf90cf54b9c9f6389e0cb4ce6",
+    "a/prop-balance/candidates/candidate-29.png": "9db2385dba1250737be82bc1639b411482e6d6d43459399ca5651c7391b3e655",
+    "a/prop-balance/candidates/candidate-30.png": "b0bd0849d8cee2cc6e42e64808be4af3555be04c014b745aa06df0f1b01652dd",
+    "a/prop-balance/candidates/candidate-31.png": "3c41fd53dfe1bd9748628baf9dc2838d8071b4c7f7ccb380f9479d217fb4a1fe",
+    "a/prop-balance/candidates/candidate-32.png": "7d0d7a01467c64fa2d0d14a6e39e3fe03d8185621394db696a7906f532e43cca",
+    "a/prop-balance/candidates/candidate-33.png": "b58e1aa145a818af4234f304f5ae8e85400299e355d4d2d52319fc6d5ce4a5d6",
+    "a/prop-balance/candidates/candidate-34.png": "f19e70caba5a8776a346aaec7e7468671c5d9d492ae39289da618964ae96b247",
+    "a/prop-balance/candidates/candidate-35.png": "76f03fb01be950230d5c8b560bb75ee738307c7306420522537dd80becde8185",
+    "a/prop-balance/candidates/candidate-36.png": "282a65156a471f59463665c95a60c56c11c338a3e7857bb0b64529fd94136c89",
+    "a/prop-balance/candidates/candidate-37.png": "1828073a812394493d104d3ef1df8242aff204189600126a9ae3869694931075",
+    "a/prop-balance/candidates/candidate-38.png": "d14c836dcdc22c5eb6eedd30ca4ea7412c319e97a628077bb3f528584da53848",
+    "a/prop-balance/candidates/candidate-39.png": "1d69f8bc97ee17a0942c2982ef2a15380fcee048c13eff9e103fdf7116c7e28a",
+    "a/prop-balance/candidates/candidate-40.png": "633225f71644a0e3a6789c00dbff92e4a28bc0b7abd316c5d55ba2780a9fda32",
+    "a/prop-balance/candidates/candidate-41.png": "b3f71a2faf0ac747c04f0282d25dee4eea0967de00a12434a9e12e22f976e5bf",
+    "a/prop-balance/candidates/candidate-42.png": "c02dcac68a82aa13de9b23048705bb84f6b3880abc9b159e11af6c5fd117cdfd",
+    "a/prop-balance/candidates/candidate-43.png": "a05b8f3fc7335b680f64c3c5ea91a3c0b2db8b7c68e64c587db205c1b420d1cd",
+    "a/prop-balance/candidates/candidate-44.png": "128df37ec6f7a60fb0e8051a09d32556f6ec01cd2aef1a2237f33c61a9b142d7",
+    "a/prop-balance/candidates/candidate-45.png": "9431b8e36a787787f1c6d00ca51d60abf165a90d894e3da82f0be64373ed2f5a",
+    "a/prop-balance/candidates/candidate-46.png": "d77c183d233d1ff2d909a35ffe78516ddf4e6403b5e09f68ddfc81aa341a4ba4",
+    "a/prop-balance/candidates/candidate-47.png": "5913069b370b2f29341f5c4de06c7d697c1cccef60fb9051fe12a83a39871c03",
+    "a/prop-balance/candidates/candidate-48.png": "74847a48e6ba2692d39f24e9903792e0fa0ba5460fb2ec052f88bd00e1955ec7",
+    "a/prop-balance/candidates/candidate-49.png": "62fd8cdbbd3bb70b1925c54e059c1d55c9b073526ace4bee0432c0a5f44c3838",
+    "a/prop-balance/candidates/candidate-50.png": "c6775858876e1a00374cb3038eb5f7c52c5b860d8c0f391f6ba0c712bc5f28e1",
+    "a/prop-balance/candidates/candidate-51.png": "75f6eeb8195312308dcdf2369477aaf02355181c834daf953761cbb89c694c10",
+    "a/prop-balance/candidates/candidate-52.png": "9983b51f539991e2abfac3eeac5d3526e0fe6c1815dc1861f1798eb65eb82032",
+    "a/prop-balance/candidates/candidate-53.png": "581aedd4a927bb1f331972a625d2dfa5be0e1bb2c772b6d5b4a5f75b24f2a2e2",
+    "a/prop-balance/candidates/candidate-54.png": "45ed05d03e34466ff5d610be9700daa77e53613c7a705d2ec846cc49a05b1c8f",
+    "a/prop-balance/candidates/candidate-55.png": "c7c8b61845bc6657e53c60156229693dff2284102706ad7c291f3da12e0b7102",
+    "a/prop-balance/candidates/candidate-56.png": "3ca32a0c3e420b69954d53fd835ac8e2c55536bdb1e1481f68b4b6cbc7f4a6e9",
+    "a/prop-balance/candidates/candidate-57.png": "c400492423a08973db7e1227ebea868ecf6bd9a66d3611206a53951e5bf0ba10",
+    "a/prop-balance/candidates/candidate-58.png": "192a580920fd2550f85c229f1f06e7a3e2e08d6c61345b8a9de18fb3bb9076d1",
+    "a/prop-balance/candidates/candidate-59.png": "b1ab0cdac043a98e0b677606bfcac3dd1da999ccae0803304fc764b8c996f5af",
+    "a/prop-balance/candidates/candidate-60.png": "e70352e8cf7fccc1eae1c74be09c91685c8f1d3073c7fe881490621ff3c67aa5",
+    "a/prop-balance/candidates/candidate-61.png": "d3f130b062eb6c28e0c03fa2c048bc220970648349b7a399b91505489cc5ee4a",
+    "a/prop-balance/candidates/candidate-62.png": "dd209296ff260a1d699cc221a3c0b975e3ebe1e5bc73bfce385ccc4f766d2ab9",
+    "a/prop-balance/candidates/candidate-63.png": "5695beb84575c0eb32ac2620de216320249ade908fac61afd635ab96970ece49",
+    "a/prop-balance/pick-64.png": "0899e135da4a1b203940ae77820d7b2d51bf62bb817fc2c58fea93bcdfaebf3e",
+    "a/prop-balance/pick.png": "f19e70caba5a8776a346aaec7e7468671c5d9d492ae39289da618964ae96b247",
+    "a/prop-basket/candidates.png": "0684270734d7590181e3b10b03fd10992465b4b39124647336166c7bd669c95b",
+    "a/prop-basket/candidates/candidate-00.png": "001944e1cb61313ace79185668d74b4a187653d4474a43c377b93e86e5518392",
+    "a/prop-basket/candidates/candidate-01.png": "e41fa84b0faf0e5ea81f4ff27c3574fe711de0fdf2af0089b3f07fbd8ba242ac",
+    "a/prop-basket/candidates/candidate-02.png": "312bd1e815c4298e373dafe56b3264ae7d0e6a523488bc6728f1ebf559788a9b",
+    "a/prop-basket/candidates/candidate-03.png": "3bf74b59c3587101bfac9f888086e4646fc988be104eee3171d51726f768259b",
+    "a/prop-basket/candidates/candidate-04.png": "5ee85250d430cc9b697aa29cd52eee2da7a16260fde1614c50ebf8c4f8c45e7a",
+    "a/prop-basket/candidates/candidate-05.png": "b486ce176787f296dfab448a7667fa0c296baf2b523614c09965e58ad77b2768",
+    "a/prop-basket/candidates/candidate-06.png": "92d32f2824ca49fadee2c4eb6b9305d1f60a26ba8a604c8f82795f3430eb1e48",
+    "a/prop-basket/candidates/candidate-07.png": "e23f3593bb94208ddfab12872cbbc245b8b298cf0a1e99e6b0eaac77b2418292",
+    "a/prop-basket/candidates/candidate-08.png": "8fa6dad083b33b1630293c5d75cad255f4d8b0b4b5513adb6580ff8ee1d04a1a",
+    "a/prop-basket/candidates/candidate-09.png": "709681a80a6c4df456774967aaadc082ebebff429fb413cb005c6db6a7b48075",
+    "a/prop-basket/candidates/candidate-10.png": "77d9c05507e125d59ef24236e39ee4487db52772a587e7117a961031eb105b14",
+    "a/prop-basket/candidates/candidate-11.png": "3202957fbf237bdc6a11e2ff76cab977ac52891e1811b58c58c57594a5fbcb58",
+    "a/prop-basket/candidates/candidate-12.png": "f81fccd56dfcc1daa74163cd32409f01f8bdde4a89e7cb850ab16c6bc5eb05d8",
+    "a/prop-basket/candidates/candidate-13.png": "7a3c1dea4f24a1011b785799e54dcdf286ac1b06d09c50a118bbf6f990d80fef",
+    "a/prop-basket/candidates/candidate-14.png": "de02fefdcff4f77ba2abc786222798070dad2e0351ecc1b450e9a9ea5e4ae43b",
+    "a/prop-basket/candidates/candidate-15.png": "2118218f5591427ac35e6c7780e12680db90972837e076bcacdd823a25769b7d",
+    "a/prop-basket/candidates/candidate-16.png": "f427d16dee78dde2bac5ec8939d5d9760d2fb9ca0b937d762d86df4c7bbab4a8",
+    "a/prop-basket/candidates/candidate-17.png": "6d2ec1ad4f3af00ff76ce34ea3cb7a143f8ad672e8d94c63ed7e1627758643b0",
+    "a/prop-basket/candidates/candidate-18.png": "12e73444bca171c0f2808179b99887a97a352689f1fe63a71cf414f8afc26c7b",
+    "a/prop-basket/candidates/candidate-19.png": "f748a7de9ce057b3b4f1c45202ca42c362f4489a97a0af56bdbf2a88eb9bdd0d",
+    "a/prop-basket/candidates/candidate-20.png": "290b040f0878ed9ec74c367b32d7180e588ed0b36260709a8be316ff898b68aa",
+    "a/prop-basket/candidates/candidate-21.png": "8a7a92a0c3ecc2a148b6c3cabec17fed3f3119baf0845ac7ed5bcc2b2d1ccf35",
+    "a/prop-basket/candidates/candidate-22.png": "01200840c2214bf54aab110794fc63987cb4a4344d417260ea783c2d2ac8c802",
+    "a/prop-basket/candidates/candidate-23.png": "6d89c994cd4dad0612c57f4cabb7eb068494b8cc20c745f5b36aab03f4ceb77f",
+    "a/prop-basket/candidates/candidate-24.png": "017f9dc486ffa295ed41b587fc83fe6dce18780b1c04fa879545d327a7829f69",
+    "a/prop-basket/candidates/candidate-25.png": "34d62a09bc4394dc9597a5dd7fd9b49b6abf6dd9b3e6e52d61fd2b4409e23cec",
+    "a/prop-basket/candidates/candidate-26.png": "e188f10fe2f4f06d23ecd9460b0faf4ed2b35548c664a9475432107e1c60c32b",
+    "a/prop-basket/candidates/candidate-27.png": "d45df4d7db80bac7258a069bc9f1705c24e038682de3f5f5dc15dbfc2ffe49a7",
+    "a/prop-basket/candidates/candidate-28.png": "c297060435e39183e6ac69493b616f0f66931557c1dabfde7e3279319d2fa147",
+    "a/prop-basket/candidates/candidate-29.png": "e28c8140300daece4fc85fe477a7eadc239da2e037785ed6e2c9117d23831faf",
+    "a/prop-basket/candidates/candidate-30.png": "027e3bda7cf5ecc40d4967f31e805b2566147e6bff1e47382bc37b613365a312",
+    "a/prop-basket/candidates/candidate-31.png": "362f9b18073a8222be4990d8ef53fdcab454714fe59b291f518fe12face8b030",
+    "a/prop-basket/candidates/candidate-32.png": "2b8c810b02c9559fa02ffeaa1862f4d7dfe4908a8ef5465ecfa2f7c07062450a",
+    "a/prop-basket/candidates/candidate-33.png": "d23a5f4697dba3c4251905b94bd5206a9e7a57d31ff4e13f01891992fb2a9e1c",
+    "a/prop-basket/candidates/candidate-34.png": "c27c92b46802b8d4861307a0bd46eefb964f9ee12b015e93341e641798b73a6d",
+    "a/prop-basket/candidates/candidate-35.png": "c3dc3ec009abe125262acbd8e2526a954ee7628222ad6a4766b6d6a9f0b7bd91",
+    "a/prop-basket/candidates/candidate-36.png": "3402dcbc386cf09b5802a069eeca1308889da51041e09d44255b42d4f98ce55f",
+    "a/prop-basket/candidates/candidate-37.png": "2461078b5d6216380c175496498da8da36d34cbd30e58ced02b6bcdbc73a880b",
+    "a/prop-basket/candidates/candidate-38.png": "069e0a96afbdc862b708420ec8f4dd3053fc448dc75e37b89389cb7d6a6d744a",
+    "a/prop-basket/candidates/candidate-39.png": "bfdacff74819e7fc13e16aea5df1ca220cbc0c147744852f1ff127ef31f52649",
+    "a/prop-basket/candidates/candidate-40.png": "2b44f642a7fcb4ce2a50f44a0d0ad88d08ef3dc0bf3675b106d670884129981f",
+    "a/prop-basket/candidates/candidate-41.png": "80b959a1405fd45847c3fa6375b1e17f1734d6856631803341b1d307de37bafd",
+    "a/prop-basket/candidates/candidate-42.png": "1b5c9988de39b8fa382390814f48933d10fe423d072460854ba20733d3918f93",
+    "a/prop-basket/candidates/candidate-43.png": "30ddebcb5dc0118fa335f1960d025012ef66af8f2ee6c92fe593b27dc737b894",
+    "a/prop-basket/candidates/candidate-44.png": "8843cebb6d7be53527b40386744b552e72c1770008486d35cf167945f153061b",
+    "a/prop-basket/candidates/candidate-45.png": "ef25db2dc9b5419f7bf018693e19e2e91d6d83fdce44304f8e4e807cc1b333a1",
+    "a/prop-basket/candidates/candidate-46.png": "d520de54d98f4fde33964d87a6958af4edde6bfaca43489a9d3c343279458c32",
+    "a/prop-basket/candidates/candidate-47.png": "5b6b2ff9ae1e92677a8703979a79662a9bc95a7fad9e486ca004a6ecef8b1842",
+    "a/prop-basket/candidates/candidate-48.png": "34ad63a063bd2a08a63aae996ae57ebe17575cc9ff5cb09d956d58dbc838fedb",
+    "a/prop-basket/candidates/candidate-49.png": "1d17b7879068a9a062b093367df123dfcd6e209afbb8db17dd8c21072ac13797",
+    "a/prop-basket/candidates/candidate-50.png": "13497e670e6393c3b10416316ee1f6c85480c4bd316df856cfb0babdade6d10b",
+    "a/prop-basket/candidates/candidate-51.png": "f0203f5efa2d65a292b117ba76525b5c02ed891d3e1d298f7280a83cfb3e51b3",
+    "a/prop-basket/candidates/candidate-52.png": "a9fdc05572433209953bdcb2e525dbf0c5bf57e574a87483d2c76268b10bce26",
+    "a/prop-basket/candidates/candidate-53.png": "85b91d6acab5cc057f7e7a30f89533c98d10b5ff4da0b1d1cb5f9822243265c3",
+    "a/prop-basket/candidates/candidate-54.png": "35342187caf0ea541a7edd57420aaea370b83ead73964a3f5e3211ca28091905",
+    "a/prop-basket/candidates/candidate-55.png": "6a451b6b6e2fdf858587872b30b3f093773a183bbfaf76f0a1ca61ac7e1869be",
+    "a/prop-basket/candidates/candidate-56.png": "dd1b113d72e62196fc6f833ed77cd11456fd01acd061ec3372d2d3c46bf1862e",
+    "a/prop-basket/candidates/candidate-57.png": "e3f2420835ab2fcf4d75600869575d5914fb781826e5a5ce31f487a7c067e217",
+    "a/prop-basket/candidates/candidate-58.png": "ac8449789a375617a12d5c5426fab55673883284bb5836e233f27f14b4c26622",
+    "a/prop-basket/candidates/candidate-59.png": "6cc99c19cab57765012881b466dd136ccf2ec9493e8292e80feecc2a0c5446e5",
+    "a/prop-basket/candidates/candidate-60.png": "33a330d3030d4a593871a3760727281455b8bbca69fa66cf8151698abd3730b9",
+    "a/prop-basket/candidates/candidate-61.png": "93bb445a206123f60ea3b053e81c738c5d14394b0081b9c6a4e68267889990a2",
+    "a/prop-basket/candidates/candidate-62.png": "f4b366e81ef80561ecb3146e3095a10c881057caf338bee8eef5cff9502d5fec",
+    "a/prop-basket/candidates/candidate-63.png": "3e6327e10f3ffce29b2731fbf0d518f1da8ad50399132da5379723926f291709",
+    "a/prop-basket/pick-64.png": "7d076dcb7d9b4258aa3fca82dcaa833446315d5085d0352ed2dba6559565efaa",
+    "a/prop-basket/pick.png": "d45df4d7db80bac7258a069bc9f1705c24e038682de3f5f5dc15dbfc2ffe49a7",
+    "a/prop-bricks/candidates.png": "da677af982d1e1e2928a794351784eb89ad6b36e99cc7fcf8bcfedc2b1fa90cf",
+    "a/prop-bricks/candidates/candidate-00.png": "4ce32ffdc2ea7eea26f7cc1ab1c08c853eb7d575884ac2f23096d115e9d2b41c",
+    "a/prop-bricks/candidates/candidate-01.png": "bb91829ce422fdd165181493317b20df3da0dea2929a6ef9eff820ba88782b77",
+    "a/prop-bricks/candidates/candidate-02.png": "7fc24dd91edbdbde8c3615bae63aae063a0f723865cae3dac7521d15bf6bf542",
+    "a/prop-bricks/candidates/candidate-03.png": "02c22f3343b8288fbbdb51a5e724079c677d793fe6e2714257d5c9a4f4d265aa",
+    "a/prop-bricks/candidates/candidate-04.png": "225575010ba360d453ca80a5cbac550eb6c15debecd73c9dfd4ca9b726c0c8aa",
+    "a/prop-bricks/candidates/candidate-05.png": "3adf6526b27f554b7ff806dbd5d00fc7f1472c24ccffb69eacd6819cad9c450f",
+    "a/prop-bricks/candidates/candidate-06.png": "83eaa3ac8bc855c4d77bd16401e4618f22a2501a43cc9afc1996ca539cad2e5b",
+    "a/prop-bricks/candidates/candidate-07.png": "37c9c81a2aa7fce62c3afa97a23d6a105675213b6cb883bc09ed258ae546ee34",
+    "a/prop-bricks/candidates/candidate-08.png": "be9c564978d07ae557f63c45140ff1e68d38ccda1b6730b167ec78d57570e929",
+    "a/prop-bricks/candidates/candidate-09.png": "f62e5e87af70b4b73256ced971c191139edf1131769f2d3ba93be7b0d4feac4d",
+    "a/prop-bricks/candidates/candidate-10.png": "7b71247a0b2665019e65548835af36a91b742f4e3a0805a7bc63abf25ce4befa",
+    "a/prop-bricks/candidates/candidate-11.png": "b7edaaa731eb67e75cfde9e65aa88e371ee74e52584a3ca3247fb17e0cf429f5",
+    "a/prop-bricks/candidates/candidate-12.png": "8b17d8de88dec8edc33512234f3b7269e32a82ebcfadc842802519e5298564ce",
+    "a/prop-bricks/candidates/candidate-13.png": "ee91b224435feb37139d90afbbfc11ad4ff023740f87aac627cb802de124bdf8",
+    "a/prop-bricks/candidates/candidate-14.png": "2e0c778026b42bbd40c048a9b99ee0c105aaab0ea6bf669741a1d195024307b7",
+    "a/prop-bricks/candidates/candidate-15.png": "e6d73fc40f7312c72c997a6b6c3072e8373cee422158bddf28c00e30b3537ccb",
+    "a/prop-bricks/candidates/candidate-16.png": "6556a941204cfe51e2c01f2737e901e6f63eb20431779103e865ec832ab2e564",
+    "a/prop-bricks/candidates/candidate-17.png": "be7cd19e9c32e09c90c352f25268d1a2a7ff432c9d00e680571230ef92c409c9",
+    "a/prop-bricks/candidates/candidate-18.png": "89196dd33c8350d97ee0164d2a2e9c1b8d128aca68a098b5b2d0cdec8c0194df",
+    "a/prop-bricks/candidates/candidate-19.png": "4e6327f36bb6ab0ee47bf110e3fa7cbeaf123f724a65ef0f6588fb5150037987",
+    "a/prop-bricks/candidates/candidate-20.png": "89f4d603de47e250de3a2ff60c498ec1a6fe69a63bce5f9a3209b7e9f41b16eb",
+    "a/prop-bricks/candidates/candidate-21.png": "1fbb9c76e19bdd66735088121761034f34dec931924f674dacda64d329ef3928",
+    "a/prop-bricks/candidates/candidate-22.png": "36fa5a41acf3efe7c5ce9808d65dac9585e13d385317bbbeaed0823b6661c0aa",
+    "a/prop-bricks/candidates/candidate-23.png": "ddbb4442f60f74cc8b80cfb49240726ea5c1ec8a5639ec68289855d0bd71db6d",
+    "a/prop-bricks/candidates/candidate-24.png": "a227d94939bad9e494cd592769f651bb409579a607d44f03460080a5184e47dc",
+    "a/prop-bricks/candidates/candidate-25.png": "e0a1e726c71de4f469b39a0f59750f1e950aa0851d0377296626382e88146510",
+    "a/prop-bricks/candidates/candidate-26.png": "1b2d04fc85ed89c05fe420ba1dfce2026e6260af764e23b03ce0d400e4055062",
+    "a/prop-bricks/candidates/candidate-27.png": "9db39b9a53a25e5647c20c661aac5627dc630d382dfa823b2390a9c2d3fe6560",
+    "a/prop-bricks/candidates/candidate-28.png": "487af4126ec5c0a79728bde906918e387cda3ff8a734e282dd4fa4f5348bf3cd",
+    "a/prop-bricks/candidates/candidate-29.png": "0985a73a3e96f5fa65c27d51b57166506f6dbed853eeb4404599552481dfab57",
+    "a/prop-bricks/candidates/candidate-30.png": "d7e54ad2bea8dd372f1a20a1b9b47c5acd4d8076148948a694d40b6840c67f98",
+    "a/prop-bricks/candidates/candidate-31.png": "94f9ef235108352fb8711a3689dba62c883023cfea4d17e608385553e0df0caa",
+    "a/prop-bricks/candidates/candidate-32.png": "70c89708305fbd0bd93c1220a3641155bdb82e5ea1d4af1af034c1828bde9b42",
+    "a/prop-bricks/candidates/candidate-33.png": "21aa96cf6e45c92a20629552df21d492420635ed1ce148e1c2e6e88e75f61ed8",
+    "a/prop-bricks/candidates/candidate-34.png": "a1170743d9d8ac24ffc0976a3a3aede345bb08e1967b991e74e2431cafcf58dd",
+    "a/prop-bricks/candidates/candidate-35.png": "84569ef491f485b0d06f39713749b0423c307ce58d98af7e62320ee373035962",
+    "a/prop-bricks/candidates/candidate-36.png": "268eafddc0f6a067001c4a5f9dfed7bd650a04c6af81bb31aa0bfee0423aa3eb",
+    "a/prop-bricks/candidates/candidate-37.png": "0baebb59ac9325798698684946cc47569087ca23034c7e0300d86b8e4fadc683",
+    "a/prop-bricks/candidates/candidate-38.png": "deef70a168f84ba47b4fa68130a5a9607532d750ddf4832e6a47f42274a57724",
+    "a/prop-bricks/candidates/candidate-39.png": "6f96c454b1d93c1c23a73bad2ded6e743b6a753ae19410445c2386338020fac7",
+    "a/prop-bricks/candidates/candidate-40.png": "def53a7b5247f8b3652247b12bd380cb573ae3a92073f65b49bd183cbdecaf93",
+    "a/prop-bricks/candidates/candidate-41.png": "16a13fb019fc946cad619b035312769a998b4cd70fed861d2d8b9761e6a9bb5e",
+    "a/prop-bricks/candidates/candidate-42.png": "b21383325434de6b848fbe2926a6f05014dbfaeee09e8a57612faeafa2ad0e38",
+    "a/prop-bricks/candidates/candidate-43.png": "0aa21b117474d58db614eb0658df105135991e6feda1820d5b75f9228b688ab4",
+    "a/prop-bricks/candidates/candidate-44.png": "29411ab55206957654bfd3083aaa0676f125611eadd76495dfc755f247e32219",
+    "a/prop-bricks/candidates/candidate-45.png": "571b023b05913ac36547d4d6f2e525c1c610330533ea33f7a28433b9550ebd1d",
+    "a/prop-bricks/candidates/candidate-46.png": "7d97554fbe5be8b9b8250c51c42bd5d72046d9194d0fb3a13deb5c9b29b85e73",
+    "a/prop-bricks/candidates/candidate-47.png": "811e81cb409878b781f5f3ad7dca092687bdb1df2feb2ad41d132dc75775905e",
+    "a/prop-bricks/candidates/candidate-48.png": "d14d5e98c09676a9ceeec3ab7f3ebd43bfa1da98a382161f6501eb3eef0778f4",
+    "a/prop-bricks/candidates/candidate-49.png": "c89e47643c615778e0c45bd030c601533b289dfbafeb53507259261c0e5d2bf2",
+    "a/prop-bricks/candidates/candidate-50.png": "7752b5042742517865ce558bab0c7f9572691baabc0c3ba21e5f5d05e9374dc9",
+    "a/prop-bricks/candidates/candidate-51.png": "855117889b56df987ff5b5b3840c6d1126f11fcfec9f0619f78bf412b17cf5ed",
+    "a/prop-bricks/candidates/candidate-52.png": "96f12a788999b8c17ec26f1d68065a69bc2395f4fce41657451733cefe253916",
+    "a/prop-bricks/candidates/candidate-53.png": "4cb7514f7c54cd3fd336afe70bb9d75f2f5354a6afd5e1b1db7115212e2a2d6b",
+    "a/prop-bricks/candidates/candidate-54.png": "b553e2790cd0675e19235ddab929940c414e99796e4670882d50a36a8dd88250",
+    "a/prop-bricks/candidates/candidate-55.png": "8538e895afab866e9393b902243e5267479a0671106159cd9bef699427505a34",
+    "a/prop-bricks/candidates/candidate-56.png": "685a1f31966289ce89724ea1a3e4bccefbdd5fef387f6f7125338a3c5ff8f335",
+    "a/prop-bricks/candidates/candidate-57.png": "757a6c461bc2f4f6212b5f7c6c7709d493d593b416f4ea034152874f960f731a",
+    "a/prop-bricks/candidates/candidate-58.png": "4f3fcf01d6131f3a04f8c19ab81b359a34e5b3352f8ed95e21fc194018809988",
+    "a/prop-bricks/candidates/candidate-59.png": "2ada4f3054e2b62c90aca24d1edcc07f0918272518319f1e26a255b9e7c79701",
+    "a/prop-bricks/candidates/candidate-60.png": "5f6d436be2c3cad8fbabaf552cafea957d63502b54dfd0b59c3334d58360beed",
+    "a/prop-bricks/candidates/candidate-61.png": "7823f7d00d74794df4737306dee4ab00b4646e33aa4cece60936aa2c5b217e68",
+    "a/prop-bricks/candidates/candidate-62.png": "d6a7232caa7de3ac05502362268427b87b651c95af5c449285948fa62aa82fd4",
+    "a/prop-bricks/candidates/candidate-63.png": "c6d3d13a2205aa493af7f11704bc18681fbea72f69b1ff1dd25b96b8afa51e2c",
+    "a/prop-bricks/pick-64.png": "94e16de50475b1b1edf6c6c994762849d343a271dcd91eca3d22defdd43cdcd7",
+    "a/prop-bricks/pick.png": "84569ef491f485b0d06f39713749b0423c307ce58d98af7e62320ee373035962",
+    "a/prop-lamp/candidates.png": "f1fba7d077d2ad227370cc9ae09ff7a7ef362369078af696918ecb5253dbc3fc",
+    "a/prop-lamp/candidates/candidate-00.png": "e76a81f6ca96181ca6e678f745e6f57e26e4b938d2eccf1f01eba2f1e9357f0e",
+    "a/prop-lamp/candidates/candidate-01.png": "e840b561b5a7678e1d156f12a9e4c969dad20a1a4dd96893806a3e40bb805fa8",
+    "a/prop-lamp/candidates/candidate-02.png": "1a1ea2345fb938deff74dce27d4cd974768b3283145d1b3328d5d62ea94a0959",
+    "a/prop-lamp/candidates/candidate-03.png": "0edec926c3c2082d10c0a8fe19d239797f7bce0b37ada77b010575763d507711",
+    "a/prop-lamp/candidates/candidate-04.png": "df46d7fedb79d684fac66fdef83314622e65d90007477d79ace750b57d487a13",
+    "a/prop-lamp/candidates/candidate-05.png": "9525ef79fbc866651b96fd963f9d53da26a1d3da8ec396e953ad734aeeba6705",
+    "a/prop-lamp/candidates/candidate-06.png": "998fc6345c103f687f904f84d3018b26e156be591cc4028010e89633919f81b3",
+    "a/prop-lamp/candidates/candidate-07.png": "981c5fe0a05140e42ab34463e9a810641b7a7e7913c0e7725e4391354cd45f50",
+    "a/prop-lamp/candidates/candidate-08.png": "4eee67e8b10c9596f7d99aedec8fd31362d16947df9002d0b2a3c1385c50d2da",
+    "a/prop-lamp/candidates/candidate-09.png": "69b34ab34f0a68ac4bbbecc0b80a85249f254bc755bf0dc2f9a5f60cafddbd23",
+    "a/prop-lamp/candidates/candidate-10.png": "c7b5ad19764731ebee7e9a0a91b1d3dd3236cac7ccedc3c2dbb0e7aaafeb5d78",
+    "a/prop-lamp/candidates/candidate-11.png": "dce1251bf14af5c877b904293a9bb2d1eab3011a6b55f91029b1b62ea1f16be1",
+    "a/prop-lamp/candidates/candidate-12.png": "9b91c37d16c8810d3faa6bb396d2a862390724872bead9e1e4cf55d58ec95201",
+    "a/prop-lamp/candidates/candidate-13.png": "742f3b54b3920b2afd2786099f2a4977ae9943fb6021a00ccd61e3f6e129d472",
+    "a/prop-lamp/candidates/candidate-14.png": "bc57453edca856548bda34e145eb4f314a29daed9ddf7a69e8479461c913d7ec",
+    "a/prop-lamp/candidates/candidate-15.png": "447bdd8cb437f39fbfa3aadfdf59a616c7073b2d9c615a80cec69ce978f6b8b5",
+    "a/prop-lamp/candidates/candidate-16.png": "3e2a321c5bcbe41719f799bde508e3dd4e18d907125e6652e2ad112ffef90574",
+    "a/prop-lamp/candidates/candidate-17.png": "57b13cf383cfa45ec6d6b9ccf5751d5f1cb1e793db5fb9769c9ffbefd1da57a9",
+    "a/prop-lamp/candidates/candidate-18.png": "665a56bc5932090a077cb4ff75f73cc13ff14eb9c26d976e31fd32c6813d744e",
+    "a/prop-lamp/candidates/candidate-19.png": "cb4d6363e1e5d0c76493879e637e72e29206c52723fc8afba2f58c158d68353d",
+    "a/prop-lamp/candidates/candidate-20.png": "0af946a940e5a2ab12c9ecc8012454accdfdce0600488b9c3325be550aab9398",
+    "a/prop-lamp/candidates/candidate-21.png": "50146f0f5afca45006f1139ec593fcad6d1bd55816ccef973ccb40effc4efdb7",
+    "a/prop-lamp/candidates/candidate-22.png": "3eed03fdafd29952362e0f56cd6b997058aed2dd85685df37115877b8d23b290",
+    "a/prop-lamp/candidates/candidate-23.png": "1fb321b9bc442f7c9005f5c4741c5680b3bff5cf6de032c145c9d0c4a7a37663",
+    "a/prop-lamp/candidates/candidate-24.png": "13befc0e3dbff64fd1e790664c06d8a2062c4af26ae7833d26cd3f0f2acd2c7c",
+    "a/prop-lamp/candidates/candidate-25.png": "9810061e898bf8169925cb952d8b6972a075580805d2da5ae6a023d0a4a8559e",
+    "a/prop-lamp/candidates/candidate-26.png": "7c496db094f2f1eec97d4156ba2297e8a44d12f63b81a0e09fe7ddc7f1f83499",
+    "a/prop-lamp/candidates/candidate-27.png": "84c20ef44e11b5984ee8644c4919abab9ddc572dc7fbeb0ff510b2073111f886",
+    "a/prop-lamp/candidates/candidate-28.png": "cb28e7d2dbc0e61932ddbbd55bd1b1b7e2f4c2aafc5b13cc1b4d626343e4759f",
+    "a/prop-lamp/candidates/candidate-29.png": "97742d85a154904b48d2bd9c596c99a05a12e5739c595536c3c0762207d432aa",
+    "a/prop-lamp/candidates/candidate-30.png": "19c040b045ad7819acfeff7fe4a90a38efe615317dd1965db122fe556b1c37ad",
+    "a/prop-lamp/candidates/candidate-31.png": "94645723a8d329f33f066764d764b9776e3d04c71d1d70346407c20244ea55b4",
+    "a/prop-lamp/candidates/candidate-32.png": "ca3b1da4afb40092b74a66bb0dfd48dbe52acab8c906012909a9df517cffc4b3",
+    "a/prop-lamp/candidates/candidate-33.png": "a4be0cc85c410d1be99d01596aab95978fc23c7586dc32d5f975b4b8bf5b23fc",
+    "a/prop-lamp/candidates/candidate-34.png": "1fbf0b5b81518951d4b8c729d48cf0ffc242d6f454a25678f013aca51b1071c4",
+    "a/prop-lamp/candidates/candidate-35.png": "b503c4621baf33f75e41f3b0185dc66f9eccea5f3c644080b8a702e5a2a0c694",
+    "a/prop-lamp/candidates/candidate-36.png": "96a262d3f8507ae13d0e5746c17c27fab80b4ce5204fe42bec49ae263d819813",
+    "a/prop-lamp/candidates/candidate-37.png": "f8133da53f6f245e87783bdcb1109692e5b59853258be648d1af001642cda336",
+    "a/prop-lamp/candidates/candidate-38.png": "764870fc4ebfded6ca2226050c587f73fea7c450120f4ca4fbb25fa3f324d5db",
+    "a/prop-lamp/candidates/candidate-39.png": "6bc88737539909ee8d17414dd34eb91165075f2f10d634b971d0972d2f361864",
+    "a/prop-lamp/candidates/candidate-40.png": "9cdf1db4b8d9c93cf483b1f83d9b8c767d80bb86c6294ef9fa84ecf974b50544",
+    "a/prop-lamp/candidates/candidate-41.png": "20d949b64704b9780195183d7ea058fceb3603e45aea779813321d7d694edb27",
+    "a/prop-lamp/candidates/candidate-42.png": "855bfb2f841fea3383b72d50427cca30c91c09eb5c472f85ee3af7b86fdf764b",
+    "a/prop-lamp/candidates/candidate-43.png": "c176a8a63c990057632a3721b4cc120d8d961f91ca7da065ab820cfc96d74c29",
+    "a/prop-lamp/candidates/candidate-44.png": "943cd077e35f59e84a7c76af2901f1c6fb5f645c55a922f52b957ecaa27c8443",
+    "a/prop-lamp/candidates/candidate-45.png": "9f0ff8d9b67f1fc1506bd4e8e078279db1c98d8c1613179c44ede17357bd58ad",
+    "a/prop-lamp/candidates/candidate-46.png": "790f797d861f6448294aabb471323522856ef769b0b84cce7082e68a91735ce2",
+    "a/prop-lamp/candidates/candidate-47.png": "12dd230bd30aa9bff93d4048f0c128f044908affb8fb72f3495718c4487a6d0e",
+    "a/prop-lamp/candidates/candidate-48.png": "4beb3247d756f92fcdaa692dac8e1355c1c4d308196e66db56d8013f87752b68",
+    "a/prop-lamp/candidates/candidate-49.png": "2516d17218600176c93dcdb85a047ff81b29eb65353afe479e646f8375bd8719",
+    "a/prop-lamp/candidates/candidate-50.png": "0da8f122136f63becf4a2b350c62685b1d7f95482cc496d09900cb2b6cc64ff7",
+    "a/prop-lamp/candidates/candidate-51.png": "20b36f313cc7f0448aa20d745ab2224c41a68ffe0ba4f4fa66366cf393d0dc26",
+    "a/prop-lamp/candidates/candidate-52.png": "01f8429d12341914cfedff8723b9b5f6707f49d7aaadd220062ba584b958c48b",
+    "a/prop-lamp/candidates/candidate-53.png": "45b90be1d10d122ad20d61de7b3a62744e310cfcd5e0f6c6323ac33228225984",
+    "a/prop-lamp/candidates/candidate-54.png": "a473c3044c80027b9f2dc58f492bb3712e049a1d63f99c79c6436575f386a978",
+    "a/prop-lamp/candidates/candidate-55.png": "68ae5152c9a0cc2ef21d662286ce20901f03a73020568aa0644add64ead1a749",
+    "a/prop-lamp/candidates/candidate-56.png": "fbf870b5280ce3f93af24ef8f09394fdff19eca0e56813e3e93e773b5694ec06",
+    "a/prop-lamp/candidates/candidate-57.png": "d0551a0d17d4b4b860e285f9f7dcaf951596cd27892d7f0b226e49698b20c4bb",
+    "a/prop-lamp/candidates/candidate-58.png": "ebe7a6f7d76c4e347527712fe9e5a2339eed156eaa38dc65c07dc2db80bd9c89",
+    "a/prop-lamp/candidates/candidate-59.png": "5fefbc77173263a64dc5b460b5eebf429a3ecc1be0627f00607a102a3d12c5ea",
+    "a/prop-lamp/candidates/candidate-60.png": "ba62eb28436456cbb10d070bd3c589db980f25199888d55afc67b543de17c600",
+    "a/prop-lamp/candidates/candidate-61.png": "b26be8d2e3b7e0db1c871654a48a9921bd2b4f5f341e1d823fb6e4aa04eb45c3",
+    "a/prop-lamp/candidates/candidate-62.png": "bf9168c0a13edb8018e7958e7f22a36fe405535ce543741c29afe0f0d6e40b96",
+    "a/prop-lamp/candidates/candidate-63.png": "91bb3121a26e7ed18434db0c72295c76b3b64df7802215fad1ea1240e7db3b7b",
+    "a/prop-lamp/pick-64.png": "40a35de061d8ca31a197d0a65f35aeea341c60da95d7f99141a9af3ab7d5eb10",
+    "a/prop-lamp/pick.png": "7c496db094f2f1eec97d4156ba2297e8a44d12f63b81a0e09fe7ddc7f1f83499",
+    "a/prop-sailcloth/candidates.png": "8bc3b626e019090644930b11e22d4bffc7f457a441070bbc76003e2c2c4e2fef",
+    "a/prop-sailcloth/candidates/candidate-00.png": "329c4679c3d0f11e3c1198c2a2eba4c188c84eb2c051d02bab54ebfe8947e135",
+    "a/prop-sailcloth/candidates/candidate-01.png": "8e816c23454172b94295e4bc5e863ade9641c4d098a1b611993c9f776224f269",
+    "a/prop-sailcloth/candidates/candidate-02.png": "dd30ede6db49a3fe39e9c1163c9c126b6a16511b13143197e17b42b98c7c41b9",
+    "a/prop-sailcloth/candidates/candidate-03.png": "d345519f7eb1190807105a71dd3f4de4b8ab3c4823514a40cc93719966f8b3ed",
+    "a/prop-sailcloth/candidates/candidate-04.png": "6d7fa95c9ee3d53a0dacddda8f440b7537b23d8ec5ffc90581241aeef19fa4bd",
+    "a/prop-sailcloth/candidates/candidate-05.png": "4d8856e12bd99e962c9df84b7bc1eeb870b8549a71eed047656d23a71ca4ef2a",
+    "a/prop-sailcloth/candidates/candidate-06.png": "b21db4d80331c4c2cb81fa3949ac10c2ae56173be33be1f12a972da14717cc0f",
+    "a/prop-sailcloth/candidates/candidate-07.png": "b447a1e681cac86d806feb41705d3a02fd4f2e1db819844b142ec14f1fa76852",
+    "a/prop-sailcloth/candidates/candidate-08.png": "d9c55e12caa88d040df23a8fbb89cee06fde48b070609ea752ac6726c4b2c270",
+    "a/prop-sailcloth/candidates/candidate-09.png": "08df83bd506aeebe429fa5f2d813f75205c8eaf5e99ac9a32700184ecefca71f",
+    "a/prop-sailcloth/candidates/candidate-10.png": "668bb7dcbdbfa9e3120916e2db3780475a00fbb7fb940949f4a09efb3cacd060",
+    "a/prop-sailcloth/candidates/candidate-11.png": "55e8f4a411c1bfb41d384393dcc62c67f8ba119d51e5aa161dd7098be98f1c4f",
+    "a/prop-sailcloth/candidates/candidate-12.png": "e699b9e5d055f18caf17d26663f772e3c7160dcfe1ba1ef6fcc91758d7b7d06b",
+    "a/prop-sailcloth/candidates/candidate-13.png": "738870b12c122d3a64f61889f3dc5674054535ffc4223eeb54bff869fdd4d60e",
+    "a/prop-sailcloth/candidates/candidate-14.png": "7d841d0904d0f70146019d7a32e4033d63ada1518f90c638de06910410c8ea53",
+    "a/prop-sailcloth/candidates/candidate-15.png": "60c47809a0f9303e848af2843a3c65b4f3774885773a2764cb6bebd4f3eb04b4",
+    "a/prop-sailcloth/candidates/candidate-16.png": "48a33ca34bce363d8ffc02611d69d7fbf5c4325ab1c552921436cdc76c8870e4",
+    "a/prop-sailcloth/candidates/candidate-17.png": "b7f7fc797417d7ef1cd2997089d4ab1fb7949034349802b564792ccabfdf9675",
+    "a/prop-sailcloth/candidates/candidate-18.png": "8566ebffb4e07ff87530f7731ab536c88f5eb25d05337a2deffff75f034b74b9",
+    "a/prop-sailcloth/candidates/candidate-19.png": "52e3b27b459aeae0b8818037c3ad2046fd9e1206127560f85d41160e43db391b",
+    "a/prop-sailcloth/candidates/candidate-20.png": "e06fe4af1bff2ac6dc97f9e5ef5aabed26f6871193ffe877848d8908f5bdfe89",
+    "a/prop-sailcloth/candidates/candidate-21.png": "f31140d327c67d8513e564e9fe4d2125219a8f074f311fab1960e4ea72056f05",
+    "a/prop-sailcloth/candidates/candidate-22.png": "e49d301661ee6139cfb9b5d45a27f624e49eaa31b7121892e801366125b55a83",
+    "a/prop-sailcloth/candidates/candidate-23.png": "2f64328689fb76ac0aef008f0d461d9cd17bed56a9e39f5ad0738675317050fc",
+    "a/prop-sailcloth/candidates/candidate-24.png": "9799e302104f62e447e3ea0a956686cdf52aee0f5d0f0427e875a81db8fe2b3e",
+    "a/prop-sailcloth/candidates/candidate-25.png": "8225e101f79648fffb268dc283d97552f36c616d8f288431f5eb93ca3dd76f01",
+    "a/prop-sailcloth/candidates/candidate-26.png": "ef0bc922359623aebe6ab0a33bc209d8b50a918e0a7578a234c76fff00ccdf7d",
+    "a/prop-sailcloth/candidates/candidate-27.png": "ed2cbc879ffd24d7546a90677a3678ccb870972213bd1e00247fdc0650fc7035",
+    "a/prop-sailcloth/candidates/candidate-28.png": "7efdb6bb9b5634edbce35524c1d1e674c391968bd4140fbfd8687383f72a1c49",
+    "a/prop-sailcloth/candidates/candidate-29.png": "9e7c6093760ef7fe8687f736e5fae98695ce82de30e7436afa69c11e734abf18",
+    "a/prop-sailcloth/candidates/candidate-30.png": "99aedfe36cef8f78d053e856c9107104ee21f03eab3fa8302b8951d56176b8a2",
+    "a/prop-sailcloth/candidates/candidate-31.png": "f81500bbefa22c76d2c30061e61c6c3a4c05ce4ab36a2f41b651ac2adadc1360",
+    "a/prop-sailcloth/candidates/candidate-32.png": "e2c4221d87a8a266ceb6f6274cd374589f17a308e22ab1960ef987285e85a888",
+    "a/prop-sailcloth/candidates/candidate-33.png": "fc961dbc0b71ca466016034866754444c10571593fe1da6f8b85b8e20f65fd80",
+    "a/prop-sailcloth/candidates/candidate-34.png": "96291d6a03bff94adb6a8be783c6ff928ce6c432644cfc99413a0044aead8ca3",
+    "a/prop-sailcloth/candidates/candidate-35.png": "2c2eac53dac5d380177b4acc8a5b84f1ba23228be446c4f7c6c684f1d29bd398",
+    "a/prop-sailcloth/candidates/candidate-36.png": "8b140d90010d611dfea5e6d312a1479f5480700533cb6827a91c7a91e1210b7c",
+    "a/prop-sailcloth/candidates/candidate-37.png": "a59f39a428938138cb69403d4b77a64ea58672461fd91606123cb9c9a9505d21",
+    "a/prop-sailcloth/candidates/candidate-38.png": "8680519eb96f4170b13a67f983ee757c28a228d5ad09376e658c9d319e564a8e",
+    "a/prop-sailcloth/candidates/candidate-39.png": "b05d85a7e4d429dd8f12c49e621e5fff27706d0aa77afaa51127d0fe32c30004",
+    "a/prop-sailcloth/candidates/candidate-40.png": "f0fcd0f3de910325734baa21cc2f7b61d830c1e269b405728efcca80817300da",
+    "a/prop-sailcloth/candidates/candidate-41.png": "bfea18233c43c6264659d6452d57bb6bd38cfb5a0fb2a3034921f29fcb0747ff",
+    "a/prop-sailcloth/candidates/candidate-42.png": "209f108b396990df18ee42faa7390174eb2e67be62a56d01117213f8a2f3b2b9",
+    "a/prop-sailcloth/candidates/candidate-43.png": "33743650522493f9034b54efca366bc46d21c1ba355a49356245be2334ab9649",
+    "a/prop-sailcloth/candidates/candidate-44.png": "203b79dcc8d02deb5d60b88fc2d7ceb1e5bbc60c992444596934ae5174ab1cb6",
+    "a/prop-sailcloth/candidates/candidate-45.png": "0b025cb6070f23fd59be8633ae2dd70426e81ec091c3861be4eb04998ae0d5fd",
+    "a/prop-sailcloth/candidates/candidate-46.png": "71ce896549bd8228794b4b9ca41c4eb7189eeea027cddb28c3a2deae4781f02d",
+    "a/prop-sailcloth/candidates/candidate-47.png": "c7624649f462da28ced00b848855d9214f7d26942bfe65c4d0d37aeb850b5b55",
+    "a/prop-sailcloth/candidates/candidate-48.png": "aefc09f6e222aae9f2c26f4df3592c1612a2544028e2935e43c43c77e4c676a3",
+    "a/prop-sailcloth/candidates/candidate-49.png": "3314aadcbce28a2ebed96e17c4d6f5b215115268fe19d13be44bbe52a94089df",
+    "a/prop-sailcloth/candidates/candidate-50.png": "bfdc6ae4f7498d3707f97b30398ee2605681904feded41a8853988410f8d3eee",
+    "a/prop-sailcloth/candidates/candidate-51.png": "03fc171d95ea99b8beea717b0383a1a4cbc0e1330e55ffbaa7ce4212f213a58b",
+    "a/prop-sailcloth/candidates/candidate-52.png": "3c26c08f4db67a317b1f818c10f7ba7b577d6466c07623a0c3efd28bd3698a39",
+    "a/prop-sailcloth/candidates/candidate-53.png": "d715e6401a684450ca5d853efb8efc1f1f9d5b12c06870472452ceb83ddfdcd1",
+    "a/prop-sailcloth/candidates/candidate-54.png": "566a9e32fec3bd366b3e4e662ea3442b8d6bbbad3fd94f2564b671c491ae78e5",
+    "a/prop-sailcloth/candidates/candidate-55.png": "916dbe0980ddb1aa539f1cc8244c4cbf2b2a90234c2a52dd40966bdaeeb5a555",
+    "a/prop-sailcloth/candidates/candidate-56.png": "b4abb8b1516ccb963caae78a1c34ffc71fe3c1ec38b8a4762f762fc3993980c2",
+    "a/prop-sailcloth/candidates/candidate-57.png": "254e3fa6b0dabca4f9dfc86fa2552f4625b5d126e5670ab37a0f92ee6048daac",
+    "a/prop-sailcloth/candidates/candidate-58.png": "7ff0312558fe359be90621232d20383fa7c2d1168ba787801d6f5ea178783a5b",
+    "a/prop-sailcloth/candidates/candidate-59.png": "c4dcaa592518d60134f38214524e546baba7df2bd17a69b0873e17ea5e688462",
+    "a/prop-sailcloth/candidates/candidate-60.png": "8df6f52374af7bb85c218148b15f44a3ad578c8522737bdd0c61edec1f504bca",
+    "a/prop-sailcloth/candidates/candidate-61.png": "37040dc3b2910be11e45fc9f53ca3cec8acd366e57056affb57d37a1dce647d0",
+    "a/prop-sailcloth/candidates/candidate-62.png": "a46564382cd8e601d86b454cf263dbc647c2451bd5d2e81f37404fbfa1c9cb01",
+    "a/prop-sailcloth/candidates/candidate-63.png": "8beeba13f51220ff2a96f1cff886f2fc1bb14f39541af23f9fffd0a359693df3",
+    "a/prop-sailcloth/pick-64.png": "66e30e77da8c23acf3334490fae84bcd0f791fb3e1773e54814723bc03158c3c",
+    "a/prop-sailcloth/pick.png": "329c4679c3d0f11e3c1198c2a2eba4c188c84eb2c051d02bab54ebfe8947e135",
+    "b/attack-pixminimax/east/frame-0.png": "7bee8ec8d82327b2b2b80d720cff41721da6ec0459c880856b10f570c27f0daa",
+    "b/attack-pixminimax/east/frame-1.png": "4f8cc7b0b65c1c7f51e0347312cb1f46b89c9ecc591e08896ed11cd1084cee9d",
+    "b/attack-pixminimax/east/frame-2.png": "e400c41855546d9263d677aed71354a1621398361bb3fe2ab0904146410b16a8",
+    "b/attack-pixminimax/east/frame-3.png": "71cdedf1edac6356d3f1dd286ee54694d7fbefbf15aed6fa2e071f26f14fa681",
+    "b/attack-pixminimax/east/frame-4.png": "7c89d538004c8560f4c13a6d34e70a45701f869036866844b4c938f5bc956568",
+    "b/attack-pixminimax/east/frame-5.png": "82a091c3d00b17a5463dfdd8da368e87fa3dc0dc3f3f696879dc031b22dac979",
+    "b/attack-pixminimax/east/frame-6.png": "2ea129ff2e3b541c04c2e7cd817451f3f33dde1459471f31f55fd11831f67d81",
+    "b/attack-pixminimax/east/frame-7.png": "ae30be2c3ee984006cd9c188914d5d15f6cf834537b5a614a07314a442c21583",
+    "b/attack-pixminimax/east/frame-8.png": "ad1dec8aac49d0deca4b34a31e0e9c62d2e9d43759090dddcd37e0d62d10a9b4",
+    "b/attack-pixminimax/south/frame-0.png": "d1ab11585559756b050df1393c7712bff2969d6a4976035eceb17c0f1085fdb9",
+    "b/attack-pixminimax/south/frame-1.png": "2b003acbbe5f4bc7bbbe0913e1c02b4bcf280bd5053fc1b769d3dc2583453e18",
+    "b/attack-pixminimax/south/frame-2.png": "03ef79e400fddc1b481200932d80ddf3231e611f42b7059c22827f409d944fe0",
+    "b/attack-pixminimax/south/frame-3.png": "f0fe1dff87f81880d3d8356b2f27ae2ab24ca6ef0e79b58b3997f0c706c6b513",
+    "b/attack-pixminimax/south/frame-4.png": "3f65c39a8f550c8d750cc59c95c2c09240f5398bd24a2845053cb012a2769e6d",
+    "b/attack-pixminimax/south/frame-5.png": "ce652e9f00430e6e0cfcae575185f02e869435d2b7418158bca15bf21aff8849",
+    "b/attack-pixminimax/south/frame-6.png": "ab529e662fe718bdcc8c988261b8df9c3b2c2689fa8aedaf24b44aba0568738d",
+    "b/attack-pixminimax/south/frame-7.png": "8c0d180e2ad535b4f713a4cb8094e746b32022d06b3cf9812c3d3c8be90049f6",
+    "b/attack-pixminimax/south/frame-8.png": "9cb335ffec7d8d2ea71a98ed8ec9ac4a276520e0be7e6f98c7a4a949e92e0f5c",
+    "b/attack-skel/east/frame-0.png": "f10e045df8ce9ebd98d3422bde8a28a91e704a84f82769082f5ac77646d435d2",
+    "b/attack-skel/east/frame-1.png": "109b2879588088d4ea2904988455f23b0fbc55043ea28e18c431ef39638e5813",
+    "b/attack-skel/east/frame-2.png": "0e6687ed3ca5b104d2eb039ad55ad6415931837de94451d7388702dcd3ef631e",
+    "b/attack-skel/east/frame-3.png": "0ff815d51fa618cee0b675ca69aaf55bad725b8e375dfe6d3fc3b312b379ea92",
+    "b/attack-skel/east/frame-4.png": "f4439c03e168aa9f46d87bdaaaf07e73146cc3639b1390f7d06370790a3f857d",
+    "b/attack-skel/east/frame-5.png": "df9c2a555f1975dc039cad2939178cc177cef54d1bd2b16c86044ad42a06143d",
+    "b/attack-skel/south/frame-0.png": "ba21f489ad746b330daabaafd161a18bebce49b705c4a5504a9746895969d472",
+    "b/attack-skel/south/frame-1.png": "7e0703217aba501b2a00c08e745565ee84d5c16382d483b263960a175e4f76c3",
+    "b/attack-skel/south/frame-2.png": "1440b14badd44e2609bfda22f359d0133cc4f7c4dc2a2791c8ed048d4b72ad54",
+    "b/attack-skel/south/frame-3.png": "28bbabddda31600295680177a272b0bf35f08e0271ca580578d99c9439990f7f",
+    "b/attack-skel/south/frame-4.png": "dd3b26facc371c51f5a65f63951567dbd5bc76f7edf8dfffd45452a251baeafd",
+    "b/attack-skel/south/frame-5.png": "54805d03fe1d25c9cb2d17c7e284109525baad972bbae6f27a008ce8f3e785c5",
+    "b/attack-v3/east/frame-0.png": "7bee8ec8d82327b2b2b80d720cff41721da6ec0459c880856b10f570c27f0daa",
+    "b/attack-v3/east/frame-1.png": "33d67174ae4c6ab65a38d10a9dcbddb39b5c4e73c1f119057a76e25a01a55aba",
+    "b/attack-v3/east/frame-2.png": "b049c2befcf7619b76b0202d1c62eec14d152c71082aad39786bb916110c5279",
+    "b/attack-v3/east/frame-3.png": "7d975a99dbd5ca0ab8bfc7f529ed3124ea58dc1f7f1986757d57ea820b7dd4f5",
+    "b/attack-v3/east/frame-4.png": "5830b8c056a648bec6b2508a61378d188f597c66198d48f8af85fa0749bd845e",
+    "b/attack-v3/east/frame-5.png": "a47fcff3436b7d1cb55f1042619f0a08f222735e3f5a39427c37eafc29daea2b",
+    "b/attack-v3/east/frame-6.png": "424866b6da1aaf152ed69b766ac750c0ec40df9e39fade842d15e3b4928755c5",
+    "b/attack-v3/south/frame-0.png": "d1ab11585559756b050df1393c7712bff2969d6a4976035eceb17c0f1085fdb9",
+    "b/attack-v3/south/frame-1.png": "3a37a3b314738b92da144a76f770ab112690c06757b5fee9db57b8fcf459146a",
+    "b/attack-v3/south/frame-2.png": "c156e6bb369cefa53bd8843bb1f1c4c4247ce041a37431aa9a010d607bd9d926",
+    "b/attack-v3/south/frame-3.png": "14c1999e3a4b706547bc8a26ec082cff3912e16d2450ba4a11bdf71f6e2166fc",
+    "b/attack-v3/south/frame-4.png": "a4ebb8145af65ebcc34a952751215260ed7b75fe08b11c9fb2864a3bbf4584c0",
+    "b/attack-v3/south/frame-5.png": "0dfd3bedfc21ca97c538ea9d750ecee4566ee8a1d143bb0cf9faeebb397f85aa",
+    "b/attack-v3/south/frame-6.png": "464293151180a917b4e6048904d518bd60f8d29c6227134a720a670b3eacc01e",
+    "b/portrait-128.png": "440d9fe87cbca826a823f8fa38824776daa05ab531d4fd2bc5abef1135de2112",
+    "b/portrait-64.png": "8c7b56193ef8b378fa6dd12c8383b56b528c31f7ac12175ac8f81f5eee12e1f2",
+    "b/tide-walk/frame-0.png": "14e9f27abfdbc46276d7582ad7357d0a6eaf7769d4c8f5518bf4246c16f16278",
+    "b/tide-walk/frame-1.png": "ec5bb0facca658c11294906a959d860ca4c62a014fc62be425e11aba308eb727",
+    "b/tide-walk/frame-2.png": "824c75f8d99333d701e4fe5e3336753c04db9affb96080e489f6e1402598e820",
+    "b/tide-walk/frame-3.png": "e6661a0c1de8f328a14511576bab56c863c0004b5c5d390283f334b6eae2c2b6",
+    "b/tide-walk/frame-4.png": "35e3032125b635917393befcdfdb32913e5c9bd17224f3cfcca9b32dc5a2240c",
+    "b/tide-walk/frame-5.png": "f93cf72f026942c8368cb757959250830bae22b293488ad9fc93d259e3851ed3",
+    "b/tide/east.png": "c3f6c794fdcadd83ad835dae8c0c69dcb1ca25faae0944937d30c2a707784df6",
+    "b/tide/north-east.png": "48b7c0567f4eb28400efec9c4593d5a9f5500d22cbbf2faf34d19d9413ac0e36",
+    "b/tide/north-west.png": "7606b56b2ac11b4930380cae18534d473ae3383637669219ca854f8315774c46",
+    "b/tide/north.png": "3b7353b90171f724c8d2a4de460ba76b91ac8f20ed7fc0d196c9c83f3d9002f1",
+    "b/tide/south-east.png": "d20a6ba0b24c279bcfb27fd1b8f7c09d81d849522dbb0903b5aa779b44e6a06c",
+    "b/tide/south-west.png": "d802b149b5261cc3fd7e636c819b8391ed48ef476e47dfe31aefde549b00b369",
+    "b/tide/south.png": "f787107477b52c7d73a0d5d506f3bdbc92f38bdda70dd6c3a658c5d0205de6eb",
+    "b/tide/west.png": "b0853fdb7575e3e7588d00ca2bda226d06d37b684c83c079e1599319bd8137a0",
+    "b/walk-skel/east/frame-0.png": "95dfab19d49ab1aff051eb0694ae24925e8f8984078c9219c3984b22652f413d",
+    "b/walk-skel/east/frame-1.png": "e8a62895ac85807a753b64e8b717cbea90d3813b7507b830fba0514bce79eb11",
+    "b/walk-skel/east/frame-2.png": "841bb6d600266770d3f9979824a1712e76bd98a307a6d4e62eab3d1004a99a13",
+    "b/walk-skel/east/frame-3.png": "8f12473dd8f8e6337ae5ba1671fc8e1a438a54ec9d8ae2ff2b83cf6ed7919949",
+    "b/walk-skel/east/frame-4.png": "c054fb0e3e444e259c4da18d71a5308cc0a21af9fd9006b2753a1d9b745aa9a5",
+    "b/walk-skel/east/frame-5.png": "889c1c61b5303ca7a4595241b08fb370282a9f8ba97a98de90b37b83bd19675b",
+    "b/walk-skel/north-east/frame-0.png": "430bddb71935ca430ce521d4865d01a7e5a410d3a1f1d8110a69d6e3bfd7fbe6",
+    "b/walk-skel/north-east/frame-1.png": "ee742a5b8590837eee225608ca1b1f0c3d4fabda9ddf21352e316be0c721b028",
+    "b/walk-skel/north-east/frame-2.png": "efda27090af7b3cd0c719a8c4d647f893c065e31d40f9fa5ead9c64a52f9bf05",
+    "b/walk-skel/north-east/frame-3.png": "696af70ce416638fa6bfa950f168462510bf4ba2630f844f6a1869902b9cf746",
+    "b/walk-skel/north-east/frame-4.png": "c6a14b2d3b9aff6df3339a0fa075024dc1d9990e29d18d2538e31b0f1db09aeb",
+    "b/walk-skel/north-east/frame-5.png": "4120b4eda3e2306a3454ac210bbab700da48a5389f8e4f29f526375cf1b4ed4d",
+    "b/walk-skel/north/frame-0.png": "44dccd059064fd16fe0e302fd9b600fc1a72c5f1da654389efe9f57cbdfcad0d",
+    "b/walk-skel/north/frame-1.png": "1b88f4c106d7148206ef0efd8dfe8a16cb81371dd40fe75053a8e1a8eccc477b",
+    "b/walk-skel/north/frame-2.png": "ce76554edc643860c19e6feb5818712ccb629549c3f6f830caee9d98459d121f",
+    "b/walk-skel/north/frame-3.png": "1088a3005455988e9a4c9753f004209eec3113a959f86342e83c41b64cb5a58f",
+    "b/walk-skel/north/frame-4.png": "30315eb127220e228f58d43442eedec29278c1aa0ade6fef762b9a6ba20a8234",
+    "b/walk-skel/north/frame-5.png": "d8f850f2fdf7ab25a0ac2595e0fb389481ab826edfd3414990b241bb29f2b0d6",
+    "b/walk-skel/south-east/frame-0.png": "4431afb67f03d61fc41743912aebb9464ab3a1fd7df688abc15935dcb671c41f",
+    "b/walk-skel/south-east/frame-1.png": "d0301d9be56891ed744948e798929d535fc3d5f0020db70cb1d0fd3ee0954337",
+    "b/walk-skel/south-east/frame-2.png": "5be5339ad923f7a020585879ae418f54e32b9d6535712cbbabecb6519767fd1d",
+    "b/walk-skel/south-east/frame-3.png": "2bc41290a1f7fb432d63b6af9ad337aaddf1d9be7f8a3fda3edf6b20cdc45a1e",
+    "b/walk-skel/south-east/frame-4.png": "6b6f3175d06de581d753a7c9281d8546393c8eba78ed9bfcca747e8187ffd46b",
+    "b/walk-skel/south-east/frame-5.png": "be728ef1ed270024f0444ae78975213e48d138688c45c555b9884ebd975f5ab0",
+    "b/walk-skel/south/frame-0.png": "d1f9da18deadb054f994c862674aee3e51145db486fb643c2b67250e4a34b1ec",
+    "b/walk-skel/south/frame-1.png": "e6b97fc1cce381ad0ebb040e559b7304831ef22f0c76b26c2f937ddfb5696f2f",
+    "b/walk-skel/south/frame-2.png": "05dc33ccea86d0ebdcf5347bc3ca538ff1e0b53db384f001c185ee2544aa2503",
+    "b/walk-skel/south/frame-3.png": "9262e1b546c9366a8763869fd26038e66b2e47da584ecce58d4815c7916c6752",
+    "b/walk-skel/south/frame-4.png": "c65d93570e4e37a7c33c10b1a95dea4342b848bf21fdf8a268fe67a141af5808",
+    "b/walk-skel/south/frame-5.png": "7954d1d980093434a5b6a64885b2d8c06f1367f99af2a8e76b864e4925dc603e",
+    "b/walk-template/east/frame-0.png": "ac004411455259c4b045d936676346da85bd207a446ab2e0aa21ce9d39bd1bf2",
+    "b/walk-template/east/frame-1.png": "c3ba0a50ff4e5ddca132b02703dc7b5471df54f05cc9a52aaff5970b03efdee6",
+    "b/walk-template/east/frame-2.png": "441126a0052b983426c2472406f45e3a0ac8201cdbe95b43763572e7830b3ef8",
+    "b/walk-template/east/frame-3.png": "bb2f3fcb6e93a60be5e9d3d8eb46583c21c0d7b774059e0e98a336545980925b",
+    "b/walk-template/east/frame-4.png": "82bb0ab75e3c0623269d8ce461ee1da41a65a5eaf1286338e21503691c85ce89",
+    "b/walk-template/east/frame-5.png": "5a909f4169d6984a93e0a7bcb547f40644a8639e1cad5b29a9f3277fa05c2132",
+    "b/walk-template/north-east/frame-0.png": "0eb41804d7645e326798e628b31ed28f2d42cf57d1c6d0f1d9dfa1bc76616d0b",
+    "b/walk-template/north-east/frame-1.png": "174495a17f4774658c5d1b267a01a4b43da178b7aa8dbaf5cb2164844f2caa2b",
+    "b/walk-template/north-east/frame-2.png": "fad51cd83651dce26c9ac4af2ab2d35cce4581f08936cf6c3640ee84c9761c8b",
+    "b/walk-template/north-east/frame-3.png": "82c6a3b4bbecb5f7d3d814481522e40df197e331b0ad8a0717b565fd912fa09a",
+    "b/walk-template/north-east/frame-4.png": "bc4cfbeabf95a5c0db02d2672e0571b5f639fe21108574301346a7764714f22c",
+    "b/walk-template/north-east/frame-5.png": "6d5130dab1a18115ab1ec4944ab5971f5a150f8054d832ddfdc26349352d7fd2",
+    "b/walk-template/north/frame-0.png": "5c8932f5d8c34d4398ce8cfa1cdd5495d243f59b8924de49dc79229a64f2cdf2",
+    "b/walk-template/north/frame-1.png": "43c25468118ce93bb2b9227e1decf37a031c9c7b6032affd89be1f98ea23cde6",
+    "b/walk-template/north/frame-2.png": "9d2eacb1b2f3a68c3de34f2d60a6791773e355bb334eb2ada08e3dda5c6fdec6",
+    "b/walk-template/north/frame-3.png": "5484cc7c4faeb396a83a7ad77919f33badeb3c1f24d79c9d47ea76f057e714fe",
+    "b/walk-template/north/frame-4.png": "1291d388ed2fe2b00b8c0844fa89b7b1a9b9f7dbd00278a468404882a12a1c01",
+    "b/walk-template/north/frame-5.png": "13ad05e9695ea2e1aa1877d1c6494bbfb5061d32a8899eab9be0a82cadbbc992",
+    "b/walk-template/south-east/frame-0.png": "19a949764e81bc5af6b8ebf9a10662e7b4475c2ef883caeed6dcede94cf44f75",
+    "b/walk-template/south-east/frame-1.png": "67079fb3086e24253945f240cfb697efcf5b06346b9f2101e7a0e105b91bd295",
+    "b/walk-template/south-east/frame-2.png": "a18f46812220e3a7968f0058f18832c2a7c86ad113445639121569ab8d88cc19",
+    "b/walk-template/south-east/frame-3.png": "8a449fb31910019c5cac4c1ea0897286271bcdb419f6fdee765d7885d349c5a5",
+    "b/walk-template/south-east/frame-4.png": "9d626d1df2efe25af54d47cfb0e8775229cd2149ea6d65c14485f14d8450d43d",
+    "b/walk-template/south-east/frame-5.png": "b768f3bda0b24db1fe0110cf98dece901e31d5c8554c3ad0c591cb38d301362f",
+    "b/walk-template/south/frame-0.png": "bfbd45ddb24c499fe21f233ddf173c926d1c7df5e0c2b52b72a1cd0021bdf8d5",
+    "b/walk-template/south/frame-1.png": "fc094cf5fcfb94075ec9d4e3bdbc23acc8a83bad3801a6880dbd907051d542e7",
+    "b/walk-template/south/frame-2.png": "0667a9708982f7420d1429e92c99fcb5b99467e7fbd97ff4a2baf7591c10e518",
+    "b/walk-template/south/frame-3.png": "c4cd8a1a5d68279e408d8e94752925f6dfd221c646a408f110eb9293a37f2f1e",
+    "b/walk-template/south/frame-4.png": "4298f0f3c99d25c2ac836f598ecc15f88a29bed946d97ecbb6670c408735fc28",
+    "b/walk-template/south/frame-5.png": "cbaf8b9a78691a86edb259451e8ff43e7ea91ca32cf14939ea859c6821ea34ad",
+    "contact-attacks.png": "19244d3b6f9ad6ff3f386c83b717666ad1fb4d10235adab394e40dfcfc8c10e0",
+    "contact-size.png": "164cb4ddf10a49b872b6340e5c85ac80b5705f93ba18382b227539ac4bcddad4",
+    "contact-tide-portrait.png": "1479006d9e6edaef09a4d850ebe028dbf4815bb395ba7e288c8a43bea4fd3571",
+    "contact-walks.png": "a3d07accda86a8f4c787e747fd45a0a98ce415acceb04bf5ec2c916fb73656a0"
+  }
+}

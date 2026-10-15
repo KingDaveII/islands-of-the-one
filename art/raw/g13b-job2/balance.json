@@ -1,0 +1,30 @@
+{
+  "job": "g13b-job2",
+  "budget": 320,
+  "readings": [
+    {
+      "when": "before the first call",
+      "generations_remaining": 1818.9,
+      "generations_used": 181.1
+    },
+    {
+      "when": "after Part A Pro (10 create_image_pro)",
+      "generations_remaining": 1718.9,
+      "spent": 100.0
+    },
+    {
+      "when": "after Part A rotations and all of Part B except transfer_outfit",
+      "generations_remaining": 1649.9,
+      "spent": 69.0
+    },
+    {
+      "when": "after transfer_outfit (end)",
+      "generations_remaining": 1639.9,
+      "spent": 10.0
+    }
+  ],
+  "total_spent": 179.0,
+  "budget_left": 141.0,
+  "allowance_left_this_cycle": 1639.9,
+  "cycle_resets": "2026-11-15"
+}
