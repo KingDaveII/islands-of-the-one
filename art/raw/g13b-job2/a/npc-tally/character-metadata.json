@@ -1,0 +1,36 @@
+{
+  "group_id": "6bce82b4-592e-4c4e-b130-eb0465434455",
+  "states": [
+    {
+      "character": {
+        "id": "c9b873e7-c336-43e3-a531-f6b29450f554",
+        "name": "Idle",
+        "prompt": "Tally, a young Kindled woman: a small figure of red terracotta clay, about 40 px tall, three amber freckles, dark violet hair tied up in a knot, a pale salt-stiff sailcloth tunic with a rope belt and a bronze buckle, dark trousers and boots, empty hands. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-15T11:48:50.698770+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-15T11:52:12.008047"
+}

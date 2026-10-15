@@ -1,0 +1,212 @@
+{
+  "group_id": "b595a416-5431-41d1-a14e-5b454fb8fe17",
+  "states": [
+    {
+      "character": {
+        "id": "8d666a0b-3521-4d4e-a81a-902347b65d1d",
+        "name": "Idle",
+        "prompt": "Small clay figure with grey-ochre clay skin and three amber freckles, in a soot-grey hooded cloak with an ember-singed hem over a grey tunic, tan collar, dark belt, dark trousers and boots. Holds a short hooked blade in its right hand. Pixel art with a 1 px dark navy outline.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-15T10:11:04.461224+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "attack-v3": {
+            "east": [
+              "Idle/animations/attack-v3/east/frame_000.png",
+              "Idle/animations/attack-v3/east/frame_001.png",
+              "Idle/animations/attack-v3/east/frame_002.png",
+              "Idle/animations/attack-v3/east/frame_003.png",
+              "Idle/animations/attack-v3/east/frame_004.png",
+              "Idle/animations/attack-v3/east/frame_005.png",
+              "Idle/animations/attack-v3/east/frame_006.png"
+            ],
+            "south": [
+              "Idle/animations/attack-v3/south/frame_000.png",
+              "Idle/animations/attack-v3/south/frame_001.png",
+              "Idle/animations/attack-v3/south/frame_002.png",
+              "Idle/animations/attack-v3/south/frame_003.png",
+              "Idle/animations/attack-v3/south/frame_004.png",
+              "Idle/animations/attack-v3/south/frame_005.png",
+              "Idle/animations/attack-v3/south/frame_006.png"
+            ]
+          },
+          "walk-template": {
+            "north": [
+              "Idle/animations/walk-template/north/frame_000.png",
+              "Idle/animations/walk-template/north/frame_001.png",
+              "Idle/animations/walk-template/north/frame_002.png",
+              "Idle/animations/walk-template/north/frame_003.png",
+              "Idle/animations/walk-template/north/frame_004.png",
+              "Idle/animations/walk-template/north/frame_005.png"
+            ],
+            "south": [
+              "Idle/animations/walk-template/south/frame_000.png",
+              "Idle/animations/walk-template/south/frame_001.png",
+              "Idle/animations/walk-template/south/frame_002.png",
+              "Idle/animations/walk-template/south/frame_003.png",
+              "Idle/animations/walk-template/south/frame_004.png",
+              "Idle/animations/walk-template/south/frame_005.png"
+            ],
+            "north-east": [
+              "Idle/animations/walk-template/north-east/frame_000.png",
+              "Idle/animations/walk-template/north-east/frame_001.png",
+              "Idle/animations/walk-template/north-east/frame_002.png",
+              "Idle/animations/walk-template/north-east/frame_003.png",
+              "Idle/animations/walk-template/north-east/frame_004.png",
+              "Idle/animations/walk-template/north-east/frame_005.png"
+            ],
+            "east": [
+              "Idle/animations/walk-template/east/frame_000.png",
+              "Idle/animations/walk-template/east/frame_001.png",
+              "Idle/animations/walk-template/east/frame_002.png",
+              "Idle/animations/walk-template/east/frame_003.png",
+              "Idle/animations/walk-template/east/frame_004.png",
+              "Idle/animations/walk-template/east/frame_005.png"
+            ],
+            "south-east": [
+              "Idle/animations/walk-template/south-east/frame_000.png",
+              "Idle/animations/walk-template/south-east/frame_001.png",
+              "Idle/animations/walk-template/south-east/frame_002.png",
+              "Idle/animations/walk-template/south-east/frame_003.png",
+              "Idle/animations/walk-template/south-east/frame_004.png",
+              "Idle/animations/walk-template/south-east/frame_005.png"
+            ]
+          },
+          "attack-pixminimax": {
+            "south": [
+              "Idle/animations/attack-pixminimax/south/frame_000.png",
+              "Idle/animations/attack-pixminimax/south/frame_001.png",
+              "Idle/animations/attack-pixminimax/south/frame_002.png",
+              "Idle/animations/attack-pixminimax/south/frame_003.png",
+              "Idle/animations/attack-pixminimax/south/frame_004.png",
+              "Idle/animations/attack-pixminimax/south/frame_005.png",
+              "Idle/animations/attack-pixminimax/south/frame_006.png",
+              "Idle/animations/attack-pixminimax/south/frame_007.png",
+              "Idle/animations/attack-pixminimax/south/frame_008.png"
+            ],
+            "east": [
+              "Idle/animations/attack-pixminimax/east/frame_000.png",
+              "Idle/animations/attack-pixminimax/east/frame_001.png",
+              "Idle/animations/attack-pixminimax/east/frame_002.png",
+              "Idle/animations/attack-pixminimax/east/frame_003.png",
+              "Idle/animations/attack-pixminimax/east/frame_004.png",
+              "Idle/animations/attack-pixminimax/east/frame_005.png",
+              "Idle/animations/attack-pixminimax/east/frame_006.png",
+              "Idle/animations/attack-pixminimax/east/frame_007.png",
+              "Idle/animations/attack-pixminimax/east/frame_008.png"
+            ]
+          },
+          "attack-skel": {
+            "south": [
+              "Idle/animations/attack-skel/south/frame_000.png",
+              "Idle/animations/attack-skel/south/frame_001.png",
+              "Idle/animations/attack-skel/south/frame_002.png",
+              "Idle/animations/attack-skel/south/frame_003.png",
+              "Idle/animations/attack-skel/south/frame_004.png",
+              "Idle/animations/attack-skel/south/frame_005.png"
+            ],
+            "east": [
+              "Idle/animations/attack-skel/east/frame_000.png",
+              "Idle/animations/attack-skel/east/frame_001.png",
+              "Idle/animations/attack-skel/east/frame_002.png",
+              "Idle/animations/attack-skel/east/frame_003.png",
+              "Idle/animations/attack-skel/east/frame_004.png",
+              "Idle/animations/attack-skel/east/frame_005.png"
+            ]
+          },
+          "walk-skel": {
+            "east": [
+              "Idle/animations/walk-skel/east/frame_000.png",
+              "Idle/animations/walk-skel/east/frame_001.png",
+              "Idle/animations/walk-skel/east/frame_002.png",
+              "Idle/animations/walk-skel/east/frame_003.png",
+              "Idle/animations/walk-skel/east/frame_004.png",
+              "Idle/animations/walk-skel/east/frame_005.png"
+            ],
+            "south": [
+              "Idle/animations/walk-skel/south/frame_000.png",
+              "Idle/animations/walk-skel/south/frame_001.png",
+              "Idle/animations/walk-skel/south/frame_002.png",
+              "Idle/animations/walk-skel/south/frame_003.png",
+              "Idle/animations/walk-skel/south/frame_004.png",
+              "Idle/animations/walk-skel/south/frame_005.png"
+            ],
+            "south-east": [
+              "Idle/animations/walk-skel/south-east/frame_000.png",
+              "Idle/animations/walk-skel/south-east/frame_001.png",
+              "Idle/animations/walk-skel/south-east/frame_002.png",
+              "Idle/animations/walk-skel/south-east/frame_003.png",
+              "Idle/animations/walk-skel/south-east/frame_004.png",
+              "Idle/animations/walk-skel/south-east/frame_005.png"
+            ],
+            "north": [
+              "Idle/animations/walk-skel/north/frame_000.png",
+              "Idle/animations/walk-skel/north/frame_001.png",
+              "Idle/animations/walk-skel/north/frame_002.png",
+              "Idle/animations/walk-skel/north/frame_003.png",
+              "Idle/animations/walk-skel/north/frame_004.png",
+              "Idle/animations/walk-skel/north/frame_005.png"
+            ],
+            "north-east": [
+              "Idle/animations/walk-skel/north-east/frame_000.png",
+              "Idle/animations/walk-skel/north-east/frame_001.png",
+              "Idle/animations/walk-skel/north-east/frame_002.png",
+              "Idle/animations/walk-skel/north-east/frame_003.png",
+              "Idle/animations/walk-skel/north-east/frame_004.png",
+              "Idle/animations/walk-skel/north-east/frame_005.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "918f83a7-2388-4d5c-8cdb-07dcc63383a2",
+        "name": "Tide",
+        "prompt": "Small clay figure with grey-ochre clay skin and three amber freckles, in a soot-grey hooded cloak with an ember-singed hem over a grey tunic, tan collar, dark belt, dark trousers and boots. Holds a short hooked blade in its right hand. Pixel art with a 1 px dark navy outline.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-15T11:53:06.105696+00:00"
+      },
+      "folder": "Tide",
+      "frames": {
+        "rotations": {
+          "south": "Tide/rotations/south.png",
+          "south-east": "Tide/rotations/south-east.png",
+          "east": "Tide/rotations/east.png",
+          "north-east": "Tide/rotations/north-east.png",
+          "north": "Tide/rotations/north.png",
+          "north-west": "Tide/rotations/north-west.png",
+          "west": "Tide/rotations/west.png",
+          "south-west": "Tide/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-15T11:56:17.637177"
+}
