@@ -1,0 +1,36 @@
+{
+  "group_id": "5da034cc-38c0-4621-8ebf-1b302ddcbd12",
+  "states": [
+    {
+      "character": {
+        "id": "887f648c-2679-4db7-8908-e3a602240ef9",
+        "name": "Idle",
+        "prompt": "Old Kesh, a Kindled hermit and fisherman: a small figure made of river-dark brown-black clay, about 40 px tall, with a few widely spaced amber freckles like small lights, long white hair and a white beard, a patched grey-ochre sailcloth tunic with a wet grey patch, dark trousers and wrapped dark feet. He holds a long wooden casting rod upright at his side. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark navy-violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-15T10:45:54.953654+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-15T10:50:19.718689"
+}
