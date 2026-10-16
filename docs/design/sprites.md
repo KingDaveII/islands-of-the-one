@@ -27,6 +27,7 @@ The engine, the §6 test and the G1.2 pipeline read these numbers from `packages
 |---|---|---|---|
 | Kindled player sheets (`kindled-<rem>`) | 96×80 | (48, 64) | (16, 10), so canvas row 53 is cell row 63 |
 | Every other sheet (Husks and other enemies, NPCs) | 64×64 | (32, 54) | (0, 0) |
+| Room tiles (`tiles-<set>`, G1.5e) | 32×32 per piece; doors 64×32 (`door_n`) or 32×64 (`door_w`, `door_e`) | none: a piece's top left sits on its cell's | no canvas: a piece is its own size, on one 16 sim px cell ("Tiles", §10) |
 
 - The Kindled's extra room is for actions: the heavy thrust, the Haul throw and the death fall. SS-01 measured
   the reach at most 34 px from the feet in any action (v3 draws actions on a 68×68 canvas, so ±34 is its
@@ -76,8 +77,9 @@ right frame count), and the engine plays its stand-in: `run` falls back to `walk
 with the row, MAIN removes it from the list in a one-line change, and from then on the row is required like
 any other at or before `REQUIRED_MILESTONE`.
 
-**Which kind a sheet is comes from its name's prefix:** `kindled-`, `husk-`, `npc-`, `prop-`. One function,
-`spriteSheetSpec(name)`, maps a name to its kind, its cell (§2) and its table; an unknown prefix fails. A later enemy
+**Which kind a sheet is comes from its name's prefix:** `kindled-`, `husk-`, `npc-`, `prop-`, `tiles-`. One function,
+`spriteSheetSpec(name)`, maps a name to its kind, its cell (§2) and its table; an unknown prefix fails. A `tiles-`
+sheet's table is its doors' animations; its pieces are in §10. A later enemy
 adds its own table to `HUSK_TABLES` the same way; until then only a draft of it can be built.
 
 Frame rates are per animation; `hold` means the last frame stays until the state ends. Durations in the design tables stay the authority for timing (the engine stretches or cuts frames to fit the combat windows; the art gives the count).
@@ -275,6 +277,16 @@ tasks register NPC sheets as they use them). Every name must have a known kind (
    1 px ring; a finished sheet has every required point on every frame of `heavy_charge` and the four `haul_*`
    animations.
 
+9. A tile sheet (`tiles-<set>`, §10; `tileSheetProblems` in `packages/shared/test/tileChecks.ts`) skips 1–8 and has
+   its own checks: meta `version` "2", `pixelScale` 1 and `app` `"iot-art-pipeline"`, the PNG the size of
+   `meta.size`; every piece and door frame of `packages/shared/src/tiles.ts` present at its size (32×32, 64×32,
+   32×64), inside the PNG, on no other frame, and nothing else; each door's `_closed` (1 frame), `_opening`
+   (6 frames at 12 fps) and `_open` (1 frame), played once and held; the `tiles` block, `tileSize` 32 and
+   `floorWeights` four positive integers; only the whitelist's colours (no telegraph colours, never #FFFFFF or
+   #FFE7A3) and no soft alpha; `floor_*`, `face_*`, `top_*` and every door frame fully opaque. They run on
+   `packages/shared/test/fixtures/tiles-fixture.*` (made by the `.py` beside it) and broken copies of it until
+   ART's `tiles-cave` lands, then on every tile sheet on disk.
+
 The v2 checks run on a small fixture sheet with a mask (`packages/shared/test/fixtures/kindled-fixture.*`, made by the `.py` beside it; it doesn't ship), and on broken copies of it, so they are tested before the first v2 sheet arrives. The client tests its masked swap on the same fixture, and the point checks run on copies of it with `heavy_charge` and `haul_throw` frames.
 
 Until a sheet exists, Claude Code draws the placeholder from this table (a 16×24 rectangle in the Remembrance's outfit colour with the frame name under it) so the animation state machine can be built and tested now.
@@ -290,7 +302,7 @@ Until a sheet exists, Claude Code draws the placeholder from this table (a 16×2
 What `apps/client` does with a sheet (MAIN, M1 task 5). Nothing here is in the sheets: a hand-drawn sheet that follows §2–§5 replaces a placeholder with no engine change.
 
 - **Loading.** `apps/client/src/render/spriteSheets.ts`: every sheet in `packages/shared/assets/sprites` (listed in `packages/shared/src/sprites.ts`) loads as a Phaser JSON Hash atlas (`load.atlas(name, png, json)`), keyed by its file name (`kindled-ash`, `husk-peeling`, `husk-nutshell`), with its skin mask when it names one. The frames' `anchor` becomes the sprite origin, so a sprite is placed at the point between its feet (the sim's position is the body centre; the engine adds the feet offset, 5 sim px for the Kindled, the radius for a Husk, where the grounding shadow sits).
-- **Scale.** The world renders at 2× (`WORLD_PX_PER_UNIT`): sprite positions are the sim's ×2 in world px, each snapped to its own art grid. A sprite draws at its sheet's `pixelScale` (`sheetPixelScale`): 1 for a v2 sheet, 2 for a v1 sheet, so M1's sheets look as they did. Only M1's assets draw at 2: the three v1 sheets, hookblade-fx (at its own `meta.pixelScale`, 2 today; "Engine sheets" in §5) and the procedural room. The engine's own drawings (the slash arc, the thrust line, particles, the perfect-dodge trail's rim, the grounding shadow, poise bars, the pad reticle, the Haul guide) are at the new density, 1 world px per pixel (`apps/client/src/render/scale.ts`); the hit flash is a fill tint of the sprite, so it is the sprite's own pixels.
+- **Scale.** The world renders at 2× (`WORLD_PX_PER_UNIT`): sprite positions are the sim's ×2 in world px, each snapped to its own art grid. A sprite draws at its sheet's `pixelScale` (`sheetPixelScale`): 1 for a v2 sheet, 2 for a v1 sheet, so M1's sheets look as they did. Only M1's assets draw at 2: the three v1 sheets, hookblade-fx (at its own `meta.pixelScale`, 2 today; "Engine sheets" in §5) and the procedural room (the fallback until ART's tile sheet lands; a tile sheet draws at 1, §10). The engine's own drawings (the slash arc, the thrust line, particles, the perfect-dodge trail's rim, the grounding shadow, poise bars, the pad reticle, the Haul guide) are at the new density, 1 world px per pixel (`apps/client/src/render/scale.ts`); the hit flash is a fill tint of the sprite, so it is the sprite's own pixels.
 - **Animations.** One Phaser animation per entry of the JSON `anims` block, named `<key>/<anim>` (`kindled-ash/walk_S`, `husk-peeling/telegraph`), with its `frameRate` and `repeat`. They exist for tooling; in play the frame is chosen directly (below), so hitstop, slow-mo and the sim's windows stay exact.
 - **Palette swaps.** For a Kindled sheet the engine builds a tone's texture the first time that tone is used (`toneTextureKey`): the drawn sheet's pixels are copied with each `from → to` hex replaced (`toneSwap.ts`; under the skin mask for a v2 sheet, everywhere for a v1 sheet) and registered as the same atlas under `<key>@<tone>` (`kindled-ash@clay-red`) with its own `<key>@<tone>/<anim>` animations, cached game-wide; tones never used are never built. `window.__iot.setClayTone(tone)` switches the Kindled in a run.
 - **The state machine** (`apps/client/src/render/animState.ts`, pure and tested in node) maps sim state to a frame every render frame; the client never decides gameplay. The Kindled:
@@ -314,3 +326,56 @@ What `apps/client` does with a sheet (MAIN, M1 task 5). Nothing here is in the s
 ## 9. Answers to the PR #12 questions (ART, 2026-10-13)
 
 Done: §4 carries the answers (Husk `spawn`, `haul_recover`, the 2-frame `hit`, the Nutshell's `walk` and `slam` in place of `roll`, `heavy_hold` through the hitstop as the engine already did), §8 describes the engine that plays them, and the lists in `packages/shared/src/sprites.ts`, `animState.ts` and `tools/placeholder-sheets.py` match (M1 task 7). The hand-drawn `kindled-ash`, `husk-peeling` and `husk-nutshell` sheets follow this contract.
+
+## 10. Tiles (G1.5e)
+
+The room is drawn from a tile sheet: named 32×32 world px pieces, one per room cell, chosen by a 4-neighbour rule
+(ART's design, B). Not a 16-tile corner set: a corner set can't draw a wall's front face, and on a dual grid its
+transitions straddle the sim's collision edges; named pieces sit exactly on the sim's 16 sim px cells. The names,
+sizes and the rule are in `packages/shared/src/tiles.ts`; `tileAt(template, col, row, floorWeights)` is a pure
+function with no runtime dependencies, so the engine and the art pipeline's review (`rooms.png`) draw a room the
+same way. The first sheet is `tiles-cave` (`packages/shared/assets/sprites/tiles-cave.png` + `.json`), made by
+ART through the pipeline's `tiles` kind ([`art-pipeline.md`](art-pipeline.md)).
+
+**Cells.** From the template legend (`rooms.json`): `#`, `o` and `D` are solid (a door counts as wall for its
+neighbours and draws its own piece), and so is every cell outside the room (and past a short row's end). Everything
+else is open: `.`, `P`, `S` and `C` draw as plain floor. The chest stays the engine's drawing until ART's
+`prop-chest`.
+
+**The rule.** Everything draws under the sprites. Open sides in a name are always in the order n, w, e.
+
+| Cell | Piece | Overlays, stacked in this order |
+|---|---|---|
+| open | `floor_0` … `floor_3`, by an integer hash of (template name, col, row) weighted by the sheet's `floorWeights`; no `Math.random`, so a room always looks the same | `shade_n`, `shade_w`, `shade_e` where that neighbour is solid; `shade_nw` where NW is solid and N and W are both open, `shade_ne` the same way. No south shade |
+| solid, not a door, S open: a wall face (the bottom 24 px the face, the top 8 px the cap) | `face_` + the open sides among N, W, E: `face_n`, `face_w`, `face_e`, `face_nw`, `face_ne`, `face_we`, `face_nwe`; with none open `face_mid_0` or `face_mid_1` by the hash (the second is ART's repeat variant) | none |
+| solid, not a door, S solid: a wall top | `top_` + the open sides the same way (`top_n` … `top_nwe`); with none open `top_mid_0` or `top_mid_1` by the hash (the spare plain top for thick masses) | `corner_nw` where N and W are solid and NW is open, `corner_ne` the same way |
+| `D` | its door, below | |
+
+**Doors**, by the wall the door's two cells sit in: `door_n` (64×32) covers a `DD` in the north wall (row 0),
+`door_w` and `door_e` (32×64) a vertical `DD` in the west or east wall. Each has three animations: `<door>_closed`
+(1 frame), `<door>_opening` (6 frames, played once at 12 fps when the client sees `doorOpen` turn true; ART may ask
+to change the rate) and `<door>_open` (1 frame, held). The open frame draws the passage floor itself; a room that
+loads with the door already open shows `_open`. No template has a south door: a `D` the rule can't place (a south
+door, a single `D` or a longer run, a pair away from the border) fails the test over `rooms.json` with the
+template's name (`tileDoors`), so a new template that needs a new piece is caught early.
+
+**The sheet.** The JSON shape of the other sheets: named frames (`floor_0`, `door_n_opening_3`), each `frame`
+its size, `anchor` (0, 0); door animations under `anims` (`door_n_opening`: its frames, `frameRate`, `repeat` 0,
+`hold`); `meta` with `"version": "2"` and `"pixelScale": 1`; and a `tiles` block:
+
+```json
+"tiles": { "tileSize": 32, "floorWeights": [6, 3, 2, 1] }
+```
+
+`floorWeights` lives in the sheet, never in code. Colours: the 28-colour whitelist only, no telegraph colours,
+never #FFFFFF or #FFE7A3. `floor_*`, `face_*`, `top_*` and every door frame are fully opaque; shades and corners
+may be transparent. Checked by §6 item 9.
+
+**The engine** (`apps/client/src/render/roomTiles.ts`). When the tile sheet is loaded, the room's static pieces
+are drawn once per room into a texture on the world layer at `DEPTH.room`, a cell (c, r) at world (c × 32,
+r × 32), no piece scaled; the doors are images over it (`DEPTH.roomDoors`) whose frame comes from the state's
+`doorOpen` on the client clock (the client only renders it). Depth, camera clamping and the hollow margin around
+the room are unchanged. Without the sheet, M1's procedural room stays as it was, at 2×: the fallback until ART's
+`tiles-cave` lands (a later task removes it). `window.__iot.useTileSheet(sheet, pngUrl)` hands the client a sheet
+for a playtest; `tools/screenshots-g15.mjs --rooms` uses it to shoot the five M1 rooms from the test fixture
+(`docs/screenshots/g15e/`).

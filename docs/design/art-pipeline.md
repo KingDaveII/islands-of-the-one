@@ -24,7 +24,7 @@ sheet, review image or report fails CI. Change the recipe or the source files an
 
 | Recipe | Writes |
 |---|---|
-| every recipe, draft or not | `art/review/<sheet>/contact.png`, `report.md`, `report.json`, `tones.png` for a Kindled sheet, and `points.png` when an animation carries points |
+| every recipe, draft or not | `art/review/<sheet>/contact.png`, `report.md`, `report.json`, `tones.png` for a Kindled sheet, `points.png` when an animation carries points, and `rooms.png` for a tiles recipe |
 | non-draft only | `packages/shared/assets/sprites/<sheet>.png` and `.json`, and `<sheet>.skin.png` for a Kindled sheet |
 
 - **`contact.png`**: one row per animation and facing, in sheet order, frames left to right at 2×, on the
@@ -39,6 +39,8 @@ sheet, review image or report fails CI. Change the recipe or the source files an
   telegraph pink #E0457B: four arms of one sheet pixel round the point's pixel, which stays visible. Review
   images never ship, so the reserved colour is fine here. Check that each cross sits on the hook's tip or the
   throwing hand.
+- **`rooms.png`** (tiles recipes, "Tiles" below): every room of `rooms.json` drawn with the engine's rule from
+  the built pieces. This is the image ART judges a tile set by.
 - **`report.md` / `report.json`**: the numbers below, per frame and per animation, and the flags. The points
   per frame (in the cell and in source pixels, and the twin a mirrored one came from) and any required points
   missing. Two
@@ -98,9 +100,9 @@ file fails the build with a message naming the field.
 
 | Field | Meaning |
 |---|---|
-| `sheet` | The sheet's name, the same as the file name. Its prefix is its kind: `kindled-`, `husk-`, `npc-` or `prop-` (see "Kinds"). |
-| `kind` | `kindled`, `husk`, `npc` or `prop`, and the one the name's prefix says. |
-| `outline` | `"player"` (dream-night, Kindled sheets only) or `"other"` (hollow-deep). |
+| `sheet` | The sheet's name, the same as the file name. Its prefix is its kind: `kindled-`, `husk-`, `npc-`, `prop-` or `tiles-` (see "Kinds"). |
+| `kind` | `kindled`, `husk`, `npc`, `prop` or `tiles`, and the one the name's prefix says. |
+| `outline` | `"player"` (dream-night, Kindled sheets only) or `"other"` (hollow-deep; every tiles recipe). |
 | `draft` | `true` builds the review folder only, from any subset of animations, facings and frames. `false` must be complete (every required animation, facing and frame count in the table; see "Kinds") and also writes the sheet. |
 | `notes` | Optional text; the pipeline ignores it. |
 | `anims.<name>` | An animation, named in the sheet's table (see "Kinds"). Only a Husk with no table yet may use any `lower_snake` name, in a draft. |
@@ -115,6 +117,8 @@ file fails the build with a message naming the field.
 | `fixes` | Pixel fixes, per output frame name (`walk_S_1`, or `idle_3` without facings), in that frame's **source** pixels (after any downscale and any `flipX`): `[x, y, "#rrggbb"]` sets a whitelist colour (telegraph colours too in a `telegraph*` frame), `[x, y, null]` makes it transparent. |
 | `remap` | Colour rules applied before the snap (step 4), in order: generator greys to the right ramp. See "Remap". |
 | `skin.add`, `skin.remove` | Kindled only, per output frame name, in source pixels (after any downscale and any `flipX`): lists of pixels `[x, y]` or rectangles `[[x0, y0], [x1, y1]]` (corners included). See step 10. |
+| `floorWeights` | Tiles only: the weights of `floor_0` … `floor_3`, four positive integers, written to the sheet's `tiles` block (see "Tiles"). |
+| `pieces` | Tiles only, in place of `anims`: the pieces by name, each `{ "src": …, "frames": [i] }` (see "Tiles"). |
 | `points` | Kindled only: named points (`sprites.md` §5), keyed by point name, then by output frame name, `[x, y]` in that frame's **source** pixels (after any downscale and any `flipX`), like `fixes`. See "Points". |
 
 ## Mirrored sources
@@ -198,6 +202,7 @@ contact (frame 0 is a foot landing). `run` grounds like `walk` (`"frame"` by def
 | `husk-` | `husk` | 64×64 | none | the Husk's own in `HUSK_TABLES` (`peeling`, `nutshell`); a Husk without one builds only as a draft | no |
 | `npc-` | `npc` | 64×64 | all 8 | `NPC_ANIMS`: `idle` 2 frames at 2 fps, `walk` 6 at 10, both looping | no |
 | `prop-` | `prop` | 64×64 | none | `idle` only, 1–8 frames, at the recipe's `fps` (default 8), looping with more than one frame | no |
+| `tiles-` | `tiles` | each piece its own size: 32×32, doors 64×32 or 32×64 | none | the pieces and door animations of `packages/shared/src/tiles.ts` (`sprites.md` §10), listed under `pieces` | no |
 
 Husk `telegraph*` frames may carry the two telegraph colours (they are pre-tinted); every other frame may not.
 
@@ -206,6 +211,54 @@ Frame names are `<anim>_<FACING>_<n>` with facings and `<anim>_<n>` without; `n`
 
 A pick that is too tall is trimmed by whole rows by you, into `art/clean/`, before it reaches a recipe;
 the pipeline never does it. The same goes for a stubby blade or anything else that needs drawing.
+
+### Tiles
+
+A `tiles-<set>` recipe (G1.5e) builds a tile sheet (`sprites.md` §10): it lists pieces rather than animations,
+with the floor weights the sheet carries, and always `"outline": "other"`.
+
+```json
+{
+  "sheet": "tiles-cave",
+  "kind": "tiles",
+  "outline": "other",
+  "draft": true,
+  "floorWeights": [6, 3, 2, 1],
+  "pieces": {
+    "floor_0": { "src": "art/clean/tiles-cave/floor_0.png" },
+    "door_n_opening": { "src": "art/clean/tiles-cave/door_n_opening", "frames": [0, 1, 2, 3, 4, 5] }
+  }
+}
+```
+
+- **Pieces.** Every static piece (`floor_0` … `floor_3`, `shade_*`, `face_*`, `top_*`, `corner_nw`,
+  `corner_ne`) is one frame: `src` and, optionally, `"frames": [i]` (default `[0]`). Each door animation
+  (`door_n_closed`, `door_n_opening`, `door_n_open`, the same for `door_w` and `door_e`) lists its source
+  frames in order: 1, 6 and 1. A piece may set `"despeckle": true`. `downscale` and `flipX` are not piece
+  fields: nothing is scaled or mirrored.
+- **Frame names.** A static piece's frame is its own name (`floor_0`); a door's are `<anim>_<n>`
+  (`door_n_opening_3`). `fixes` and `remap`'s `frames` take these; `remap`'s `anims` takes piece names.
+- **The steps** are the props': read, `fixes`, `remap`, the reserved-colour check, the snap, the outline by role,
+  and `despeckle` where asked. The differences:
+  - **No placement.** A piece's source must already be the piece's exact size (32×32, 64×32 or 32×64); otherwise
+    the build fails, naming the piece and both sizes. Nothing is ever scaled or shifted.
+  - **The outline is drawn only against transparency inside the piece.** A piece's border is where it meets the
+    next piece, not an edge: an opaque pixel on the border is neither recoloured nor an outline gap.
+  - No skin mask, no ground, no bob or seam checks.
+  - **Opacity.** `floor_*`, `face_*`, `top_*` and every door frame must be fully opaque; shades and corners may
+    be transparent.
+- **Packing.** In the contract's order, left to right in rows of at most 256 px, each row as tall as its tallest
+  frame; door frames stay whole, never split into cells. The JSON is `sprites.md` §10: named frames, the door
+  `anims`, `meta` (`version` "2", `pixelScale` 1, `app` `"iot-art-pipeline"`) and the `tiles` block.
+- **Finished and draft.** A finished recipe carries every piece and every door frame. A draft may hold any subset;
+  its report lists what's missing, and so does `rooms.png`.
+- **Review.** `contact.png`: every built piece at 2× on the floor #D9D2E9 (left) and the wall face #5B5478
+  (right), a row each for the floors, shades, faces, tops and corners, then a row per door animation.
+  **`rooms.png`: every template of `rooms.json` drawn with `tileAt` and the built pieces, at 1×, doors closed**,
+  one under the other on hollow-deep, 16 px apart. In a draft a missing piece draws as a hollow-deep box with a
+  1 px telegraph-pink cross corner to corner (a review image never ships, so the pink is fine). `report.md` and
+  `report.json` list the pieces (source, size, off-palette pixels, ΔE, outline gaps, colours, holes), what's
+  missing, each room with the pieces it needed that are missing, the remap rules and the snapped colours.
 
 ## The steps, per frame, in order
 
@@ -228,7 +281,8 @@ the pipeline never does it. The same goes for a stubby blade or anything else th
 7. **Outline by role.** An edge pixel is opaque and 4-adjacent to transparency or the frame's border. Edge
    pixels in dream-night, hollow-deep or sleeper-night become the role's outline colour; interior pixels
    stay. Reported: edge pixels in any other colour (outline gaps) and, on non-player sheets, interior
-   dream-night pixels.
+   dream-night pixels. For a tile piece only transparency inside the piece makes an edge, never its border
+   ("Tiles").
 8. **Place in the cell.** Horizontally by the frame's canvas centre: the frame's column
    `floor(width / 2)` goes on the origin's column, whatever the bounding box (a blade on one side never
    shifts the body). A mirrored frame is placed the same way. Vertically by `ground`:
@@ -335,8 +389,8 @@ unless the message says otherwise; read failures give the file's own.
 | `<file>: a recipe is a JSON object` | The file must hold one `{ … }`. |
 | `<file>: <path> is not a recipe field` | A misspelt or unsupported key. Remove or rename it (fields above). |
 | `sheet must be a lowercase name like "kindled-ash"` / `sheet is "<x>" but the file is <y>.json` | Make `sheet` match the file name. |
-| `kind must be one of kindled, husk, npc, prop` | Pick one. |
-| `sheet "<s>" has no known kind: a sheet name starts with kindled-, husk-, npc-, prop-` | Rename the sheet (and the file) with its kind's prefix. |
+| `kind must be one of kindled, husk, npc, prop, tiles` | Pick one. |
+| `sheet "<s>" has no known kind: a sheet name starts with kindled-, husk-, npc-, prop-, tiles-` | Rename the sheet (and the file) with its kind's prefix. |
 | `kind is <k> but the name "<s>" makes it <k2>` | The name decides how the engine and the sheet test treat a sheet; rename the sheet or fix the kind. |
 | `anims.<a>.fps is only for props …` / `must be a whole number, 0 or more` | Other kinds take their rates from the table. |
 | `outline must be "player" or "other"` / `outline is "player" but only Kindled sheets use the player outline` | Use `"other"` for everyone but the player. |
@@ -375,6 +429,14 @@ unless the message says otherwise; read failures give the file's own.
 | `points.<p>.<f> names "<f>", which is not a frame this recipe builds` | Use an output frame name (`heavy_charge_S_0`). |
 | `points.<p>.<f> is on <anim>, which carries no <p> point (<p> goes on …)` | `tip` goes on `heavy_charge`, `hand` on the four `haul_*` animations; only on Kindled sheets. |
 | `points.<p>.<f> must be [x, y], whole pixels in the frame's source` | Two whole numbers from 0. |
+| `anims is not a recipe field` (a tiles recipe) / `floorWeights is not a recipe field` (any other) | A tiles recipe has `pieces` and `floorWeights` in place of `anims`, `skin` and `points`. |
+| `floorWeights must be four positive integers (the weights of floor_0 … floor_3)` | One whole number above 0 per floor piece. |
+| `pieces must be an object with at least one piece` | Add a piece. |
+| `pieces.<p> is not a tile piece (…)` | Use a name from the list (`sprites.md` §10); a door's pieces are its animations (`door_n_opening`). |
+| `pieces.<p> must be an object with "src" (and "frames" for a door animation)` / `pieces.<p>.<k> is not a piece field` | A piece has `src`, `frames` and `despeckle` only. |
+| `pieces.<p>.frames must list the <n> source frames of <p>, in order` | A door animation names its source frames. |
+| `pieces.<p>.frames lists <n> frames; <p> is one frame` / `…; <p> has <m>` | A static piece is one frame; a door animation has the contract's count (fewer only in a draft). |
+| `pieces.<p>.despeckle must be true or false` | |
 
 ### Building
 
@@ -403,6 +465,10 @@ unless the message says otherwise; read failures give the file's own.
 | `<sheet>: a prop's idle has 1 to 8 frames, not <n>` | Pick at most 8 frames. |
 | `<sheet>: no masked pixel is <hex>; every swap key needs some skin in it` | The sheet test needs both skin colours under the mask somewhere. Check the skin is still in the clay ramp after the snap. |
 | `<sheet>: <n> frames of <w>×<h> need a <W>×<H> sheet; the most is 2048×2048` | Too many frames for one sheet; ask MAIN to split it. |
+| `<frame> (<src> frame <n>): the source is <w>×<h>, but <piece> is <W>×<H>; a piece's source must be its exact size (nothing is scaled or shifted)` | Tiles: crop or redraw the piece to its size in `art/clean/`. |
+| `<sheet>: <piece> is missing (a finished tile sheet carries every piece and door frame)` / `<sheet>: <piece> has <n> frames; the contract says <m>` | Tiles: add it, or keep `"draft": true` (a draft reports it). |
+| `<sheet>: <frame> has <n> transparent pixels, the first at (x, y); floor, face, top and door pieces are fully opaque` | Tiles: fill the holes (`fixes`, or the cleaned file). In a draft this is reported, not failed. |
+| `rooms.json: <template>: the D cells at (c, r) … are not a pair; …` / `… are a south door; …` / `… are not in the north, west or east border wall, …` | A room template has a door no piece can draw (the shared test over `rooms.json` fails too). Ask MAIN: a new template needs its door piece in the contract first. |
 
 ### Checking
 
