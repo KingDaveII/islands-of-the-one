@@ -30,6 +30,7 @@ import { hookbladePoint, type PlayerFrame } from './hookbladePoints.js';
 import type { Fx } from './fx.js';
 import { HookbladeFx } from './hookblade.js';
 import { disc, ditherDisc, groundShadow, outlinedRect, pixelLine, ring, shadowEllipse } from './pixels.js';
+import { activeTileSheet, roomRenderer, TileRoom } from './roomTiles.js';
 import { legacyGraphics, snapToArt, worldPx } from './scale.js';
 import { lightSlashMark } from './slash.js';
 import { spriteScale } from './spriteSheets.js';
@@ -101,8 +102,12 @@ const DEBUG_ALPHA = 0.6;
  * bars and the reticle. Purely a view: it reads state, never changes it.
  * With the F3 debug flag the old placeholder shapes draw over the sprites.
  *
- * Two densities (scale.ts): M1's procedural room (tiles, doors, chests) is
- * drawn in sim px into legacy Graphics shown at 2×, like the v1 sheets and
+ * The room comes from ART's tile sheet when it is loaded (roomTiles.ts, G1.5e):
+ * the pieces `tileAt` picks, in world px at 1×, and the doors animated from
+ * `doorOpen`. Without the sheet, M1's procedural room is the fallback.
+ *
+ * Two densities (scale.ts): M1's procedural room (tiles, doors) and the chests
+ * are drawn in sim px into legacy Graphics shown at 2×, like the v1 sheets and
  * hookblade-fx; the engine's own drawings (decals, shadows, pickups, the
  * slash arc and thrust line, poise bars, the charge meter, the pad reticle
  * and the Haul guide) are drawn in world px at 1 world px per pixel: their
@@ -121,6 +126,8 @@ export class WorldRenderer {
   private readonly debug: G;
   private readonly hookblade: HookbladeFx;
   readonly characters: CharacterSprites;
+  /** The room drawn from the tile sheet, when one is loaded; null draws the procedural fallback. */
+  readonly tiles: TileRoom | null;
   private roomKey = '';
 
   constructor(
@@ -139,6 +146,11 @@ export class WorldRenderer {
     this.hookblade = new HookbladeFx(scene);
     this.hookblade.mount(layer);
     this.characters = new CharacterSprites(scene, layer, anim);
+    const sheet = activeTileSheet();
+    this.tiles =
+      sheet && roomRenderer((key) => scene.textures.exists(key)) === 'tiles'
+        ? new TileRoom(scene, layer, sheet)
+        : null;
   }
 
   /** Room size in sim px. */
@@ -151,10 +163,25 @@ export class WorldRenderer {
     this.characters.perfectDodge();
   }
 
-  private drawRoom(s: RunState): void {
+  private drawRoom(run: Run): void {
+    const s = run.state;
     const key = `${s.roomIndex}:${s.room.template}`;
     if (key === this.roomKey) return;
     this.roomKey = key;
+    if (this.tiles) {
+      // The room's template by name (the floors' hash reads it) over the sim's rows, padded with wall as tileAt reads them.
+      const name = run.templates[s.room.template]?.name ?? String(s.room.template);
+      this.tiles.build({ name, tiles: s.room.tiles });
+      return;
+    }
+    this.drawProceduralRoom(s);
+  }
+
+  /**
+   * M1's procedural room, in sim px at 2×: the fallback while ART's tiles-cave
+   * is not on disk (G1.5e); a later task removes it once the sheet lands.
+   */
+  private drawProceduralRoom(s: RunState): void {
     const g = this.room;
     g.clear();
     const { room } = s;
@@ -277,8 +304,13 @@ export class WorldRenderer {
     }
   }
 
+  /** The doors: the tile room's animated images, else the procedural fallback's (sim px at 2×). */
   private drawDoors(g: G, s: RunState, timeMs: number): void {
     const { room } = s;
+    if (this.tiles) {
+      this.tiles.update(room.doorOpen, timeMs);
+      return;
+    }
     for (let r = 0; r < room.rows; r++) {
       for (let c = 0; c < room.cols; c++) {
         if (tileAt(room, c, r) !== 'D') continue;
@@ -308,7 +340,7 @@ export class WorldRenderer {
   ): void {
     const run = session.run;
     const s = run.state;
-    this.drawRoom(s);
+    this.drawRoom(run);
     const f = this.floor;
     const g = this.gfx;
     this.props.clear();

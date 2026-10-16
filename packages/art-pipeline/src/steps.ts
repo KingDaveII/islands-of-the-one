@@ -113,23 +113,33 @@ export interface OutlineResult {
   interiorDreamNight: number;
 }
 
-/** True for an opaque pixel 4-adjacent to transparency or the image border. */
-export function isEdge(img: Img, x: number, y: number): boolean {
+/**
+ * True for an opaque pixel 4-adjacent to transparency or the image border.
+ * With `border` false (tiles), only transparency inside the image counts: a
+ * piece's border is where it meets the next piece, not an edge.
+ */
+export function isEdge(img: Img, x: number, y: number, border = true): boolean {
+  const inside = (nx: number, ny: number): boolean => nx >= 0 && ny >= 0 && nx < img.w && ny < img.h;
+  const clear = (nx: number, ny: number): boolean =>
+    (border || inside(nx, ny)) && !opaqueAt(img, nx, ny);
   return (
-    opaqueAt(img, x, y) &&
-    (!opaqueAt(img, x - 1, y) ||
-      !opaqueAt(img, x + 1, y) ||
-      !opaqueAt(img, x, y - 1) ||
-      !opaqueAt(img, x, y + 1))
+    opaqueAt(img, x, y) && (clear(x - 1, y) || clear(x + 1, y) || clear(x, y - 1) || clear(x, y + 1))
   );
 }
 
 /**
  * Step 7: edge pixels in an outline colour become the role's outline:
  * dream-night for the player, hollow-deep for everyone else. Interior pixels
- * stay; gaps (edge pixels in other colours) are counted, not filled.
+ * stay; gaps (edge pixels in other colours) are counted, not filled. A tile
+ * piece passes `border: false`: it is outlined only against its own
+ * transparency, so an opaque pixel on its border is neither recoloured nor a gap.
  */
-export function outline(img: Img, role: 'player' | 'other'): OutlineResult {
+export function outline(
+  img: Img,
+  role: 'player' | 'other',
+  opts: { border?: boolean } = {},
+): OutlineResult {
+  const border = opts.border ?? true;
   const colour = role === 'player' ? DREAM_NIGHT : HOLLOW_DEEP;
   const out = cloneImg(img);
   let gaps = 0;
@@ -138,7 +148,7 @@ export function outline(img: Img, role: 'player' | 'other'): OutlineResult {
     for (let x = 0; x < img.w; x++) {
       if (!opaqueAt(img, x, y)) continue;
       const hex = hexAt(img, x, y);
-      if (isEdge(img, x, y)) {
+      if (isEdge(img, x, y, border)) {
         if (OUTLINE_SET.includes(hex)) setPixel(out, x, y, colour);
         else gaps++;
       } else if (role === 'other' && hex === DREAM_NIGHT) {

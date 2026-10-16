@@ -10,6 +10,7 @@ import {
   TICK_HZ,
   type AutopilotOptions,
   type Params,
+  type RoomTemplate,
   type Run,
   type RunState,
   type RunResults,
@@ -50,9 +51,10 @@ export class Session {
     readonly seed: number,
     readonly weapon: string,
     private readonly controls: Controls,
+    rooms: readonly RoomTemplate[] = roomTemplates,
   ) {
     // One weapon per run: it is part of the run config and never changes mid-run.
-    this.run = createRun({ seed, tuning: tuningStore.get(), rooms: roomTemplates, weapon });
+    this.run = createRun({ seed, tuning: tuningStore.get(), rooms: [...rooms], weapon });
     this.pending = this.run.events;
     this.unsubscribe = tuningStore.subscribe((t) => {
       if (this.run.state.status === 'playing') setRunTuning(this.run, t);

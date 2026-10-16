@@ -219,7 +219,8 @@ export const SNAPPED_TOP = 20;
 
 const round2 = (v: number): number => Math.round(v * 100) / 100;
 
-function colourCount(img: Img): number {
+/** How many colours a frame's opaque pixels use. */
+export function colourCount(img: Img): number {
   const set = new Set<string>();
   for (let y = 0; y < img.h; y++)
     for (let x = 0; x < img.w; x++) if (opaqueAt(img, x, y)) set.add(hexAt(img, x, y));
@@ -363,9 +364,11 @@ function missingAgainstTable(recipe: Recipe, anims: readonly BuiltAnim[]): strin
 }
 
 /** Every off-palette source colour the snap moved, most pixels first (ties: further moved, then by hex). */
-function snappedColours(anims: readonly BuiltAnim[]): SnappedColour[] {
+export function snappedColours(
+  frames: readonly Pick<BuiltFrame, 'name' | 'moved'>[],
+): SnappedColour[] {
   const all = new Map<string, SnappedColour>();
-  for (const f of anims.flatMap((a) => a.frames)) {
+  for (const f of frames) {
     for (const [colour, m] of f.moved) {
       const key = `${colour} ${m.to}`;
       const hit = all.get(key);
@@ -470,7 +473,7 @@ export function writeReport(
     outlineGaps: frames.reduce((s, f) => s + f.outlineGaps, 0),
   };
   if (recipe.kind === 'kindled') totals.masked = frames.reduce((s, f) => s + (f.masked ?? 0), 0);
-  const snapped = snappedColours(anims);
+  const snapped = snappedColours(anims.flatMap((a) => a.frames));
   const json: SheetReport = {
     sheet: recipe.sheet,
     kind: recipe.kind,

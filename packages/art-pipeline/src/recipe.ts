@@ -1,10 +1,12 @@
 import { existsSync, statSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import {
+  isFloorWeights,
   isKindledPoint,
   KINDLED_POINT_ANIMS,
   KINDLED_POINTS,
   spritePointsFor,
+  TILE_RECIPE_PIECES,
   type KindledPoint,
   type SpriteAnimSpec,
 } from '@iot/shared';
@@ -60,6 +62,18 @@ export interface RecipeAnim {
   fps?: number;
 }
 
+/** One piece of a tiles recipe: its source (one frame for a static piece, the door's frames in order) and despeckle. */
+export interface TileSource extends FrameSource {
+  despeckle?: boolean;
+}
+
+/** What a tiles recipe (kind `tiles`) has in place of `anims`: the floor weights and the pieces, by name. */
+export interface TilesRecipe {
+  /** The weights of floor_0 … floor_3, four positive integers, written to the sheet's `tiles` block. */
+  floorWeights: number[];
+  pieces: Record<string, TileSource>;
+}
+
 /** A pixel `[x, y]` or a rectangle `[[x0, y0], [x1, y1]]` (both corners included), in the source frame's pixels. */
 export type Area = [number, number] | [[number, number], [number, number]];
 
@@ -80,6 +94,8 @@ export interface Recipe {
    * each with its frame; a `flipX` facing inherits its unmirrored twin's points, mirrored.
    */
   points: Partial<Record<KindledPoint, Record<string, [number, number]>>>;
+  /** Tiles only (kind `tiles`): its `floorWeights` and `pieces`; `anims` is empty. */
+  tiles?: TilesRecipe;
 }
 
 type Json = unknown;
@@ -92,9 +108,17 @@ const isPoint = (v: Json): v is [number, number] =>
 const isArea = (v: Json): v is Area =>
   isPoint(v) || (Array.isArray(v) && v.length === 2 && v.every((p) => isPoint(p)));
 
-/** Every frame a recipe produces, with its animation and facing, in no particular order. */
-export function recipeFrames(recipe: Pick<Recipe, 'kind' | 'anims'>): FrameRef[] {
+/** A tile piece's frame name: the piece's own name for a static piece, `<anim>_<n>` for a door's animation. */
+export function tileFrameName(piece: string, n: number): string {
+  return piece.startsWith('door_') ? `${piece}_${n}` : piece;
+}
+
+/** Every frame a recipe produces, with its animation (a tiles recipe: its piece) and facing, in no particular order. */
+export function recipeFrames(recipe: Pick<Recipe, 'kind' | 'anims' | 'tiles'>): FrameRef[] {
   const out: FrameRef[] = [];
+  for (const [piece, s] of Object.entries(recipe.tiles?.pieces ?? {})) {
+    s.frames.forEach((_, n) => out.push({ name: tileFrameName(piece, n), anim: piece, facing: null }));
+  }
   for (const [anim, a] of Object.entries(recipe.anims)) {
     for (const [facing, s] of animSources(recipe.kind, a)) {
       s.frames.forEach((_, n) => out.push({ name: frameName(anim, facing, n), anim, facing }));
@@ -104,7 +128,7 @@ export function recipeFrames(recipe: Pick<Recipe, 'kind' | 'anims'>): FrameRef[]
 }
 
 /** The frame names a recipe produces, in no particular order. */
-export function recipeFrameNames(recipe: Pick<Recipe, 'kind' | 'anims'>): Set<string> {
+export function recipeFrameNames(recipe: Pick<Recipe, 'kind' | 'anims' | 'tiles'>): Set<string> {
   return new Set(recipeFrames(recipe).map((f) => f.name));
 }
 
@@ -130,21 +154,22 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
   };
 
   if (!isObj(json)) throw new PipelineError(`${file}: a recipe is a JSON object`);
+  const sheet = json.sheet;
+  const expected = basename(file, '.json');
+  // A tiles recipe lists pieces, not animations (docs/design/art-pipeline.md, "Kinds").
+  const tilesRecipe =
+    json.kind === 'tiles' || (typeof sheet === 'string' && kindOfName(sheet) === 'tiles');
   unknownKeys('', json, [
     'sheet',
     'kind',
     'outline',
     'draft',
     'notes',
-    'anims',
+    ...(tilesRecipe ? ['floorWeights', 'pieces'] : ['anims', 'skin', 'points']),
     'fixes',
     'remap',
-    'skin',
-    'points',
   ]);
 
-  const sheet = json.sheet;
-  const expected = basename(file, '.json');
   if (typeof sheet !== 'string' || !/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(sheet))
     bad('sheet', 'must be a lowercase name like "kindled-ash"');
   else if (sheet !== expected) bad('sheet', `is "${sheet}" but the file is ${expected}.json`);
@@ -174,7 +199,10 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
   if (json.notes !== undefined && typeof json.notes !== 'string') bad('notes', 'must be a string');
 
   const anims: Record<string, RecipeAnim> = {};
-  if (!isObj(json.anims) || Object.keys(json.anims).length === 0)
+  const tiles = tilesRecipe ? parseTiles(json, root, bad) : undefined;
+  if (tilesRecipe) {
+    // Pieces in place of animations: parseTiles above.
+  } else if (!isObj(json.anims) || Object.keys(json.anims).length === 0)
     bad('anims', 'must be an object with at least one animation');
   else if (kindOk && typeof sheet === 'string') {
     const k = kind as Kind;
@@ -253,6 +281,7 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
     remap: [],
     points: {},
   };
+  if (tiles) partial.tiles = tiles;
   if (typeof json.notes === 'string') partial.notes = json.notes;
   const frames = recipeFrameNames(partial);
   const unknownFrame = (path: string, name: Json): boolean => {
@@ -391,6 +420,67 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
 
   if (problems.length) throw new PipelineError(problems);
   return partial;
+}
+
+/**
+ * A tiles recipe's `floorWeights` and `pieces`: every piece named in the
+ * contract (`TILE_RECIPE_PIECES`), with a `src`, its `frames` (a static piece
+ * one, default [0]; a door animation its frames in order, at most the
+ * contract's count) and an optional `despeckle`. Nothing is scaled or
+ * mirrored, so `downscale` and `flipX` are not piece fields.
+ */
+function parseTiles(
+  json: Record<string, Json>,
+  root: string,
+  bad: (p: string, m: string) => void,
+): TilesRecipe {
+  const out: TilesRecipe = { floorWeights: [], pieces: {} };
+  if (!isFloorWeights(json.floorWeights))
+    bad('floorWeights', 'must be four positive integers (the weights of floor_0 … floor_3)');
+  else out.floorWeights = [...json.floorWeights];
+  if (!isObj(json.pieces) || Object.keys(json.pieces).length === 0) {
+    bad('pieces', 'must be an object with at least one piece');
+    return out;
+  }
+  for (const [name, v] of Object.entries(json.pieces)) {
+    const path = `pieces.${name}`;
+    const spec = TILE_RECIPE_PIECES.find((p) => p.name === name);
+    if (!spec) {
+      bad(path, `is not a tile piece (${TILE_RECIPE_PIECES.map((p) => p.name).join(', ')})`);
+      continue;
+    }
+    if (!isObj(v)) {
+      bad(path, 'must be an object with "src" (and "frames" for a door animation)');
+      continue;
+    }
+    for (const k of Object.keys(v))
+      if (!['src', 'frames', 'despeckle'].includes(k)) bad(`${path}.${k}`, 'is not a piece field');
+    const door = name.startsWith('door_');
+    if (v.frames === undefined && door) {
+      bad(`${path}.frames`, `must list the ${spec.frames} source frames of ${name}, in order`);
+      continue;
+    }
+    const frames = v.frames ?? [0];
+    if (Array.isArray(frames) && frames.length > spec.frames) {
+      bad(
+        `${path}.frames`,
+        spec.frames === 1
+          ? `lists ${frames.length} frames; ${name} is one frame`
+          : `lists ${frames.length} frames; ${name} has ${spec.frames}`,
+      );
+      continue;
+    }
+    if (v.despeckle !== undefined && typeof v.despeckle !== 'boolean') {
+      bad(`${path}.despeckle`, 'must be true or false');
+      continue;
+    }
+    const src = parseSource({ src: v.src, frames }, path, root, undefined, bad, () => undefined);
+    if (!src) continue;
+    const piece: TileSource = src;
+    if (v.despeckle === true) piece.despeckle = true;
+    out.pieces[name] = piece;
+  }
+  return out;
 }
 
 function parseGround(

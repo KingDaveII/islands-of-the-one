@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { buildRecipe, type BuildResult } from './build.js';
 import { PipelineError } from './errors.js';
 import { parseRecipe, type Recipe } from './recipe.js';
+import { buildTiles, type TileBuildResult } from './tiles.js';
 
 /** The repo root, from this file's place in packages/art-pipeline/src. */
 export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -33,9 +34,17 @@ export function loadRecipe(sheet: string, root = REPO_ROOT): Recipe {
   return parseRecipe(json, file, root);
 }
 
+/** A built recipe of any kind: a sprite sheet's (build.ts) or a tile sheet's (tiles.ts). */
+export type AnyBuildResult = BuildResult | TileBuildResult;
+
+/** Builds a recipe in memory by its kind: tiles.ts for `tiles`, build.ts for every sprite kind. */
+export function buildAny(recipe: Recipe, root = REPO_ROOT): AnyBuildResult {
+  return recipe.kind === 'tiles' ? buildTiles(recipe, root) : buildRecipe(recipe, root);
+}
+
 /** Builds a recipe and writes its outputs. Returns what it built. */
-export function buildAndWrite(sheet: string, root = REPO_ROOT): BuildResult {
-  const result = buildRecipe(loadRecipe(sheet, root), root);
+export function buildAndWrite(sheet: string, root = REPO_ROOT): AnyBuildResult {
+  const result = buildAny(loadRecipe(sheet, root), root);
   for (const [path, bytes] of result.outputs) {
     const abs = join(root, path);
     mkdirSync(dirname(abs), { recursive: true });
@@ -52,9 +61,9 @@ export function buildAndWrite(sheet: string, root = REPO_ROOT): BuildResult {
 export function checkAll(root = REPO_ROOT): string[] {
   const problems: string[] = [];
   for (const sheet of recipeNames(root)) {
-    let result: BuildResult;
+    let result: AnyBuildResult;
     try {
-      result = buildRecipe(loadRecipe(sheet, root), root);
+      result = buildAny(loadRecipe(sheet, root), root);
     } catch (e) {
       if (!(e instanceof PipelineError)) throw e;
       problems.push(...e.problems.map((p) => `${sheet}: ${p}`));

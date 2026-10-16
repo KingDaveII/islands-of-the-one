@@ -4,6 +4,7 @@ export * from './letters.js';
 export * from './safe-letters.js';
 export * from './sheets.js';
 export * from './sprites.js';
+export * from './tiles.js';
 export * from './controls.js';
 export * from './fonts.js';
 export * from './accounts.js';

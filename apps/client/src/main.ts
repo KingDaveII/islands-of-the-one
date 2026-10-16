@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import type { ClayTone } from '@iot/shared';
+import type { ClayTone, TileSheet } from '@iot/shared';
 import {
   replayRun,
   hashRunState,
@@ -13,6 +13,7 @@ import { connectedPad, padSnapshot } from './game/gamepad.js';
 import { eventKeyFor, keyboardBinding } from './game/keyboard.js';
 import { Palette } from './palette.js';
 import { deviceNow, fitCanvasToWindow } from './render/cameras.js';
+import { setTileSheet } from './render/roomTiles.js';
 import { GameScene, type GameData } from './scenes/GameScene.js';
 import { AccountScene } from './scenes/AccountScene.js';
 import { ControlsScene } from './scenes/ControlsScene.js';
@@ -126,10 +127,26 @@ function startGame(): void {
   const hooks = {
     game,
     scene: activeGame,
-    startRun(seed: number, weapon = 'hookblade'): void {
+    /** Start a run; `rooms` keeps it to those templates of rooms.json, by name (screenshots of one room). */
+    startRun(seed: number, weapon = 'hookblade', rooms?: string[]): void {
       game.scene.getScenes(true).forEach((s) => game.scene.stop(s.scene.key));
-      const data: GameData = { seed, weapon };
+      const data: GameData = rooms ? { seed, weapon, rooms } : { seed, weapon };
       game.scene.start('game', data);
+    },
+    /**
+     * Draw rooms from this tile sheet from the next run on, while ART's tiles-cave is not on disk
+     * (screenshots: the test fixture); `url` is its PNG, a data URL will do. null goes back.
+     */
+    useTileSheet(sheet: TileSheet | null, url = '', key = 'tiles-fixture'): void {
+      setTileSheet(sheet ? { key, sheet, url } : null);
+    },
+    /** The tile room at 1× (its pieces and doors as drawn now) as a PNG data URL, or null with the procedural room. */
+    roomImage(): Promise<string | null> {
+      return activeGame()?.world.tiles?.snapshot() ?? Promise.resolve(null);
+    },
+    /** The tile room's door frames this render frame (empty with the procedural room). */
+    doorFrames(): string[] {
+      return activeGame()?.world.tiles?.doorFrames() ?? [];
     },
     setAutopilot(opts: AutopilotOptions | null): void {
       const s = activeGame();
