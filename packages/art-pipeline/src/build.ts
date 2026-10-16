@@ -1,4 +1,4 @@
-import { isRequiredAnim, paletteData, skinMaskName } from '@iot/shared';
+import { isRequiredAnim, optionalReason, paletteData, skinMaskName } from '@iot/shared';
 import {
   animKey,
   animNames,
@@ -224,7 +224,7 @@ export function completenessProblems(recipe: Recipe, anims: readonly BuiltAnim[]
         problems.push(
           required
             ? `${recipe.sheet}: ${key} is missing (a finished sheet carries every animation and facing)`
-            : `${recipe.sheet}: ${key} is missing (${row.name} is optional until ${row.milestone}, but a finished sheet that has it carries every facing)`,
+            : `${recipe.sheet}: ${key} is missing (${row.name} is ${optionalReason(row)}, but a finished sheet that has it carries every facing)`,
         );
       else if (n !== row.frames)
         problems.push(`${recipe.sheet}: ${key} has ${n} frames; the table says ${row.frames}`);

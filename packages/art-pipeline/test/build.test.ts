@@ -184,9 +184,10 @@ describe('a finished Kindled sheet', () => {
     ]);
   });
 
-  it('passes without the M2 animations (carry_idle, carry_walk, sit), on the shared sheet checks too', () => {
+  it('passes without the M2 animations (carry_idle, carry_walk, sit) and run (awaiting art), on the shared sheet checks too', () => {
     const m1 = KINDLED_ANIMS.filter(isRequiredAnim);
     expect(KINDLED_ANIMS.filter((a) => !isRequiredAnim(a)).map((a) => a.name)).toEqual([
+      'run',
       'carry_idle',
       'carry_walk',
       'sit',
@@ -213,7 +214,22 @@ describe('a finished Kindled sheet', () => {
         { width: sheetMask.w, height: sheetMask.h, rgba: sheetMask.data },
       ),
     ).toEqual([]);
-    expect(r.report.optional).toEqual(['carry_idle (M2)', 'carry_walk (M2)', 'sit (M2)']);
+    expect(r.report.optional).toEqual(['run (awaiting art)', 'carry_idle (M2)', 'carry_walk (M2)', 'sit (M2)']);
+  });
+
+  it('builds a recipe that carries run while it awaits art, and fails one with run incomplete', () => {
+    const rows = KINDLED_ANIMS.filter((a) => isRequiredAnim(a) || a.name === 'run');
+    const r = build(root, fullKindled('art/clean/fig.png', {}, rows));
+    const json = JSON.parse(
+      r.outputs.get('packages/shared/assets/sprites/kindled-test.json')?.toString() ?? '{}',
+    ) as SpriteSheet;
+    expect(json.anims.run_NW?.frames).toHaveLength(6);
+    expect(tableProblems('kindled-test', json, KINDLED_ANIMS)).toEqual([]);
+    const partial = fullKindled('art/clean/fig.png', {}, rows);
+    delete (partial.anims as Record<string, { facings: Record<string, unknown> }>).run?.facings.SW;
+    expect(problemsOf(() => build(root, partial))).toEqual([
+      'kindled-test: run_SW is missing (run is awaiting art, but a finished sheet that has it carries every facing)',
+    ]);
   });
 
   it('fails an optional animation that is there but incomplete', () => {

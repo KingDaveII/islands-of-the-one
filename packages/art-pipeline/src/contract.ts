@@ -89,9 +89,9 @@ export function animRow(
   return sheetTable(sheet, prop)?.find((a) => a.name === anim);
 }
 
-/** idle, walk and carry stand on their own feet per frame; everything else keeps one shift per facing. */
+/** idle, walk, run and carry stand on their own feet per frame; everything else keeps one shift per facing. */
 export function defaultGround(anim: string): 'frame' | { ref: number } {
-  return ['idle', 'walk', 'carry_idle', 'carry_walk'].includes(anim) ? 'frame' : { ref: 0 };
+  return ['idle', 'walk', 'run', 'carry_idle', 'carry_walk'].includes(anim) ? 'frame' : { ref: 0 };
 }
 
 /** The frame name: `<anim>_<FACING>_<n>` with facings, `<anim>_<n>` without. */

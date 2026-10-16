@@ -69,6 +69,13 @@ optional. An optional animation that is there is still complete (every facing, t
 Kindled's `carry_idle`, `carry_walk` and `sit` are M2 (the Milestone column below); every other row of every
 table is M1. M2 Task 9, or whichever task first uses carry or sit, moves `REQUIRED_MILESTONE` to `"M2"`.
 
+**Awaiting art (G1.5c).** A row can be in the contract before ART has drawn it. `ANIMS_AWAITING_ART`
+(`packages/shared/src/sprites.ts`, `['run']` today) lists those rows. While a row is on it, the sheet test and
+the art pipeline treat it as optional, whatever its milestone, but complete when present (every facing, the
+right frame count), and the engine plays its stand-in: `run` falls back to `walk` (§8). When ART's sheet lands
+with the row, MAIN removes it from the list in a one-line change, and from then on the row is required like
+any other at or before `REQUIRED_MILESTONE`.
+
 **Which kind a sheet is comes from its name's prefix:** `kindled-`, `husk-`, `npc-`, `prop-`. One function,
 `spriteSheetSpec(name)`, maps a name to its kind, its cell (§2) and its table; an unknown prefix fails. A later enemy
 adds its own table to `HUSK_TABLES` the same way; until then only a draft of it can be built.
@@ -80,7 +87,8 @@ Frame rates are per animation; `hold` means the last frame stays until the state
 | Name | Frames | fps | Loop | Facings | Milestone | Notes |
 |---|---|---|---|---|---|---|
 | `idle` | 2 | 2 | yes | 8 | M1 | a breath: one pixel of chest and hood |
-| `walk` | 6 | 10 | yes | 8 | M1 | 8 px per cycle; the blade bobs with the hand |
+| `walk` | 6 | 10 | yes | 8 | M1 | the blade bobs with the hand; on a v2 sheet it plays by distance, one cycle per `anim.walkCyclePx` (64 world px, §8). In encounters the engine plays it only as `run`'s stand-in; walking for its own sake is M2's holding |
+| `run` | 6 | 10 | yes | 8 | M1 | the Kindled's movement in encounters, Combat and Calm alike (GAME DESIGN 2026-10-16); plays by distance, one cycle per `anim.runCyclePx` (96 world px, §8). On `ANIMS_AWAITING_ART`: optional in a finished sheet until ART draws it, and the engine plays `walk` (at the run's cycle) in its place |
 | `dodge` | 4 | 16 | no | 8 | M1 | 1 = crouch, 2–3 = the roll (body a 12×12 ball), 4 = recover; frame 2–3 are the perfect-dodge window art |
 | `light_1`, `light_2`, `light_3` | 3 each | 15 | no | 8 | M1 | wind-up, swing (the arc), recover; `light_3` ends lower |
 | `heavy_charge` | 3 | 12 | hold last | 8 | M1 | the drawn-back stance; the spark comes from `hookblade-fx` at the tip, not from the sheet |
