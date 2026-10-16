@@ -2,31 +2,56 @@ import { existsSync, readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
   controllerGlyphsSheet,
+  ENGINE_SHEET_DEFAULTS,
+  engineSheetMeta,
   hookbladeFxSheet,
+  paletteData,
   sheetCellNamed,
   type CellSheet,
+  type HookbladeFxSheet,
   type SheetCell,
 } from '../src/index.js';
+import fixtureJson from './fixtures/hookblade-fixture.json' with { type: 'json' };
 import { decodePng } from './png.js';
+import { engineColourProblems, type Rgba } from './sheetChecks.js';
 
 /**
  * Every cell sheet in packages/shared/assets against its PNG: the image
  * exists, cells lie inside it and don't overlap, every cell has ink, names are
- * unique, and the pixels are only white or transparent (the sheets are tinted
- * at draw time).
+ * unique, and the colours follow the sheet's `meta.tinted` (sprites.md "Engine
+ * sheets"): a tinted sheet (the controller glyphs, today's hookblade-fx) is
+ * only white or transparent, an untinted one keeps to the v2 sprite colours.
+ * The hookblade fixture (test/fixtures, a B sheet drawn in its own colours)
+ * runs through the same checks.
  */
-const SHEETS: [string, CellSheet][] = [
-  ['controller-glyphs', controllerGlyphsSheet],
-  ['hookblade-fx', hookbladeFxSheet],
+const fixtureSheet: HookbladeFxSheet = fixtureJson;
+const SHEETS: [string, CellSheet & { meta?: { tinted?: boolean } }, (image: string) => URL][] = [
+  [
+    'controller-glyphs',
+    controllerGlyphsSheet,
+    (image) => new URL(`../assets/${image}`, import.meta.url),
+  ],
+  ['hookblade-fx', hookbladeFxSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
+  ['hookblade-fixture', fixtureSheet, (image) => new URL(`./fixtures/${image}`, import.meta.url)],
 ];
 
-const assetUrl = (image: string): URL => new URL(`../assets/${image}`, import.meta.url);
+/** What breaks a tinted sheet's colours: any opaque pixel that is not pure white, or a soft alpha. */
+function tintedColourProblems(png: Rgba): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < png.width * png.height; i++) {
+    const [r, g, b, a] = [0, 1, 2, 3].map((k) => png.rgba[i * 4 + k] ?? 0);
+    if (a === 0) continue;
+    if (a !== 255 || r !== 255 || g !== 255 || b !== 255)
+      out.push(`pixel ${i % png.width},${Math.floor(i / png.width)}`);
+  }
+  return out;
+}
 
 const overlaps = (a: SheetCell, b: SheetCell): boolean =>
   a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
-describe.each(SHEETS)('the %s sheet', (_name, sheet) => {
-  const file = assetUrl(sheet.image);
+describe.each(SHEETS)('the %s sheet', (_name, sheet, url) => {
+  const file = url(sheet.image);
 
   it('has its image next to it', () => {
     expect(existsSync(file), sheet.image).toBe(true);
@@ -76,14 +101,15 @@ describe.each(SHEETS)('the %s sheet', (_name, sheet) => {
     for (const name of names) expect(sheetCellNamed(sheet, name)?.name).toBe(name);
   });
 
-  it('is white on transparent only (tinted at draw time)', () => {
-    for (let i = 0; i < png.width * png.height; i++) {
-      const [r, g, b, a] = [0, 1, 2, 3].map((k) => png.rgba[i * 4 + k] ?? 0);
-      const pixel = `pixel ${i % png.width},${Math.floor(i / png.width)}`;
-      expect(a === 0 || a === 255, pixel).toBe(true);
-      if (a === 255) expect([r, g, b], pixel).toEqual([255, 255, 255]);
-    }
-  });
+  const tinted = sheet.meta?.tinted ?? ENGINE_SHEET_DEFAULTS.tinted;
+  it(
+    tinted
+      ? 'is white on transparent only (tinted at draw time)'
+      : 'keeps to the v2 sprite colours (drawn untinted)',
+    () => {
+      expect(tinted ? tintedColourProblems(png) : engineColourProblems(png)).toEqual([]);
+    },
+  );
 });
 
 describe('the controller glyphs sheet', () => {
@@ -117,5 +143,66 @@ describe('the hookblade-fx sheet', () => {
     expect(oy).toBeGreaterThanOrEqual(0);
     expect(ox).toBeLessThan(flight.w);
     expect(oy).toBeLessThan(flight.h);
+  });
+});
+
+describe('engine sheet meta (sprites.md "Engine sheets")', () => {
+  it('reads a sheet without meta as version 1, drawn at 2, tinted: hookblade-fx today says so itself', () => {
+    expect(ENGINE_SHEET_DEFAULTS).toEqual({ version: '1', pixelScale: 2, tinted: true });
+    expect(engineSheetMeta({})).toEqual(ENGINE_SHEET_DEFAULTS);
+    expect(hookbladeFxSheet.meta).toEqual({ version: '1', pixelScale: 2 });
+    expect(engineSheetMeta(hookbladeFxSheet)).toEqual({
+      version: '1',
+      pixelScale: 2,
+      tinted: true,
+    });
+    expect(engineSheetMeta({ meta: { tinted: false } })).toEqual({
+      version: '1',
+      pixelScale: 2,
+      tinted: false,
+    });
+  });
+
+  it("reads the fixture as ART's B redraw: version 2, at 1, untinted", () => {
+    expect(engineSheetMeta(fixtureSheet)).toEqual({ version: '2', pixelScale: 1, tinted: false });
+  });
+
+  describe('checks the colours by meta.tinted', () => {
+    let fixture: Rgba = { width: 0, height: 0, rgba: new Uint8Array(0) };
+    let shipped: Rgba = fixture;
+    beforeAll(() => {
+      fixture = decodePng(
+        readFileSync(new URL(`./fixtures/${fixtureSheet.image}`, import.meta.url)),
+      );
+      shipped = decodePng(
+        readFileSync(new URL(`../assets/${hookbladeFxSheet.image}`, import.meta.url)),
+      );
+    });
+    const paint = (img: Rgba, x: number, y: number, hex: string): Rgba => {
+      const out = { ...img, rgba: img.rgba.slice() };
+      const v = parseInt(hex.slice(1), 16);
+      out.rgba.set([(v >> 16) & 0xff, (v >> 8) & 0xff, v & 0xff, 255], (y * img.width + x) * 4);
+      return out;
+    };
+
+    it('tinted: white shapes pass, a coloured sheet fails', () => {
+      expect(tintedColourProblems(shipped)).toEqual([]);
+      expect(tintedColourProblems(fixture).length).toBeGreaterThan(0);
+    });
+
+    it('untinted: the whitelist passes; pure white, spark-glow, a telegraph colour or an off-palette colour fails', () => {
+      expect(engineColourProblems(fixture)).toEqual([]);
+      expect(engineColourProblems(shipped)).toEqual(['colours never allowed in a sheet: #ffffff']);
+      const broken = [
+        paletteData.tokens['spark-glow'],
+        paletteData.tokens['signal-telegraph'],
+        '#123456',
+      ].reduce((img, hex, i) => paint(img, 7 + i, 0, hex), fixture);
+      expect(engineColourProblems(broken)).toEqual([
+        'colours outside the whitelist: #123456',
+        'colours never allowed in a sheet: #ffe7a3',
+        'telegraph colours (only Husk telegraph frames may use them): #e0457b',
+      ]);
+    });
   });
 });

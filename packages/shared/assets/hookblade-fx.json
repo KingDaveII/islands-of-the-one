@@ -1,5 +1,9 @@
 {
  "image": "hookblade-fx.png",
+ "meta": {
+  "version": "1",
+  "pixelScale": 2
+ },
  "cells": [
   {
    "name": "chain_link",
@@ -67,7 +71,7 @@
   "link": "chain_link",
   "spacing": 16,
   "taut": "chain_link_taut",
-  "note": "one link per 16 px from the hand to the hook; on a hit every link swaps to taut for the pull"
+  "note": "one link per 16 sheet px (spacing × meta.pixelScale world px) from the hand to the hook; on a hit every link swaps to taut for the pull"
  },
  "hook": {
   "flight": "hook",
@@ -76,6 +80,6 @@
    0,
    1
   ],
-  "note": "drawn pointing right, rotate to the throw angle; origin is the shank end where the chain attaches"
+  "note": "drawn pointing right, rotate to the throw angle; origin is the shank end where the chain attaches, in sheet px"
  }
 }

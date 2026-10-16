@@ -10,7 +10,7 @@ import { LEGACY_PIXEL_SCALE, WORLD_PX_PER_UNIT } from '@iot/shared';
  * Two densities in the world:
  * - M1's assets draw at `LEGACY_PIXEL_SCALE` (2) world px per pixel until ART
  *   replaces them: the three v1 sheets and hookblade-fx (sprites at scale 2
- *   at world positions) and the procedural room (tiles, doors, chests), drawn
+ *   at world positions; hookblade-fx at its `meta.pixelScale`, 2 today) and the procedural room (tiles, doors, chests), drawn
  *   in M1 pixels, which are sim pixels, into a `legacyGraphics`, whose scale
  *   of 2 is both conversions at once. The F3 debug shapes, M1's placeholder
  *   figures over the v1 sprites, draw that way too.

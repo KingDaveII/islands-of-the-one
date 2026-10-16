@@ -1,4 +1,11 @@
-import { isAwaitingArt, isRequiredAnim, paletteData, REQUIRED_MILESTONE } from '@iot/shared';
+import {
+  isAwaitingArt,
+  isRequiredAnim,
+  KINDLED_POINTS,
+  paletteData,
+  REQUIRED_MILESTONE,
+  spritePointsFor,
+} from '@iot/shared';
 import type { BuiltAnim, BuiltFrame } from './build.js';
 import { describeHex, FLOOR, HOLLOW_DEEP, SKIN, SKIN_SHADE, WALL } from './colour.js';
 import { animKey, cellFor, hasFacings, solesRow } from './contract.js';
@@ -18,6 +25,7 @@ import {
 import { materialsOf } from './materials.js';
 import { recipeTable, type Recipe } from './recipe.js';
 import { ruleMaps, ruleScope, staleRules, staleRuleText, type RemapCounts } from './remap.js';
+import { missingPoints } from './points.js';
 import { skinProblemText, type SkinProblem } from './steps.js';
 
 /**
@@ -27,9 +35,15 @@ import { skinProblemText, type SkinProblem } from './steps.js';
  */
 
 const SCALE = 2;
+/** points.png's scale: big enough to read a single pixel. */
+export const POINTS_SCALE = 4;
 const GAP = 4;
 const MARGIN = 2;
 const TICK = paletteData.tokens['spark-amber'].toLowerCase();
+/** The point crosses in points.png: telegraph pink, reserved in the game, fine in a review image that never ships. */
+export const POINT_MARK = paletteData.tokens['signal-telegraph'].toLowerCase();
+
+type Box = { x: number; y: number; w: number; h: number };
 
 /** The part of the cell every review image shows: the union of all frames' ink and the soles row, plus a margin. */
 function viewBox(
@@ -43,6 +57,12 @@ function viewBox(
   let x1 = 0;
   let y1 = soles;
   for (const f of anims.flatMap((a) => a.frames)) {
+    for (const p of Object.values(f.points)) {
+      x0 = Math.min(x0, p.x);
+      x1 = Math.max(x1, p.x);
+      y0 = Math.min(y0, p.y);
+      y1 = Math.max(y1, p.y);
+    }
     for (let y = 0; y < cell.h; y++) {
       for (let x = 0; x < cell.w; x++) {
         if (!opaqueAt(f.cell, x, y)) continue;
@@ -83,17 +103,19 @@ function grid(
   recipe: Recipe,
   anims: readonly BuiltAnim[],
   panels: readonly { bg: string; frame: (f: BuiltFrame) => Img }[],
+  scale = SCALE,
+  mark?: (out: Img, f: BuiltFrame, tile: Box, box: Box) => void,
 ): Img {
   const box = viewBox(recipe, anims);
-  const tileW = box.w * SCALE;
-  const tileH = box.h * SCALE;
+  const tileW = box.w * scale;
+  const tileH = box.h * scale;
   const maxN = Math.max(1, ...anims.map((a) => a.frames.length));
   const panelW = maxN * (tileW + GAP);
   const width = GAP + panels.length * (panelW + GAP * 2);
   const height = GAP + anims.length * (tileH + GAP);
   const out = blank(width, height);
   fillRect(out, 0, 0, width, height, HOLLOW_DEEP);
-  const solesY = (solesRow(recipe.kind) - box.y) * SCALE;
+  const solesY = (solesRow(recipe.kind) - box.y) * scale;
   anims.forEach((a, row) => {
     const y = GAP + row * (tileH + GAP);
     panels.forEach((p, pi) => {
@@ -101,8 +123,9 @@ function grid(
       a.frames.forEach((f, n) => {
         const x = px + n * (tileW + GAP) + GAP;
         fillRect(out, x, y, tileW, tileH, p.bg);
-        fillRect(out, x - GAP, y + solesY, GAP, SCALE, TICK);
-        blit(out, crop(p.frame(f), box), x, y, SCALE);
+        fillRect(out, x - GAP, y + solesY, GAP, scale, TICK);
+        blit(out, crop(p.frame(f), box), x, y, scale);
+        mark?.(out, f, { x, y, w: tileW, h: tileH }, box);
       });
     });
   });
@@ -115,6 +138,45 @@ export function renderContact(recipe: Recipe, anims: readonly BuiltAnim[]): Img 
     { bg: FLOOR, frame: (f) => f.cell },
     { bg: WALL, frame: (f) => f.cell },
   ]);
+}
+
+/** The animations points.png shows: those whose frames carry points, or must (`spritePointsFor`). */
+function pointRows(recipe: Recipe, anims: readonly BuiltAnim[]): BuiltAnim[] {
+  return anims.filter(
+    (a) =>
+      spritePointsFor(recipe.sheet, a.anim).length > 0 ||
+      a.frames.some((f) => Object.keys(f.points).length > 0),
+  );
+}
+
+/**
+ * points.png: the contact rows of the animations that carry points, at 4× on
+ * the floor, each point marked by a 1 px cross in telegraph pink: four arms of
+ * one sheet pixel round the point's pixel, which stays visible. Null when no
+ * animation carries points.
+ */
+export function renderPoints(recipe: Recipe, anims: readonly BuiltAnim[]): Img | null {
+  const rows = pointRows(recipe, anims);
+  if (!rows.length) return null;
+  const s = POINTS_SCALE;
+  return grid(recipe, rows, [{ bg: FLOOR, frame: (f) => f.cell }], s, (out, f, tile, box) => {
+    for (const p of Object.values(f.points)) {
+      const px = tile.x + (p.x - box.x) * s;
+      const py = tile.y + (p.y - box.y) * s;
+      const mid = Math.floor(s / 2);
+      for (let k = 0; k < s; k++) {
+        for (const [x, y] of [
+          [px - 1 - k, py + mid],
+          [px + s + k, py + mid],
+          [px + mid, py - 1 - k],
+          [px + mid, py + s + k],
+        ] as const) {
+          if (x >= tile.x && y >= tile.y && x < tile.x + tile.w && y < tile.y + tile.h)
+            setPixel(out, x, y, POINT_MARK);
+        }
+      }
+    }
+  });
 }
 
 /** A frame in another clay tone: the swaps applied under its mask only. */
@@ -179,6 +241,11 @@ export interface FrameReport {
   despeckled?: number;
   masked?: number;
   colours: number;
+  /** Its points in the cell (`[x, y]`), with the twin a mirrored one came from. */
+  points?: Record<
+    string,
+    { at: [number, number]; source: [number, number]; mirroredFrom?: string }
+  >;
 }
 
 export interface AnimReport {
@@ -230,6 +297,8 @@ export interface SheetReport {
   /** Table rows after `REQUIRED_MILESTONE` or awaiting art: a finished sheet may leave them out. */
   optional: string[];
   skinProblems: string[];
+  /** Required points the frames lack (a finished sheet fails on them, a draft reports them). */
+  missingPoints: string[];
   remap: RemapReport[];
   staleRemap: string[];
   /** How many distinct off-palette source colours reached the snap. */
@@ -375,6 +444,17 @@ export function writeReport(
       if (f.interiorDreamNight !== null) r.interiorDreamNight = f.interiorDreamNight;
       if (f.despeckled !== null) r.despeckled = f.despeckled;
       if (f.masked !== null) r.masked = f.masked;
+      const points = KINDLED_POINTS.flatMap((name) => {
+        const p = f.points[name];
+        if (!p) return [];
+        const entry: NonNullable<FrameReport['points']>[string] = {
+          at: [p.x, p.y],
+          source: p.source,
+        };
+        if (p.from) entry.mirroredFrom = p.from;
+        return [[name, entry] as const];
+      });
+      if (points.length) r.points = Object.fromEntries(points);
       return r;
     }),
   );
@@ -411,6 +491,10 @@ export function writeReport(
       .filter((r) => !isRequiredAnim(r))
       .map((r) => `${r.name} (${isAwaitingArt(r) ? 'awaiting art' : r.milestone})`),
     skinProblems: skinProblems.map(skinProblemText),
+    missingPoints: missingPoints(
+      recipe,
+      anims.flatMap((a) => a.frames),
+    ),
     remap: recipe.remap.map((rule, i) => {
       const counts = remapCounts[i] ?? new Map<string, number>();
       const total = [...counts.values()].reduce((s, n) => s + n, 0);
@@ -462,6 +546,13 @@ function markdown(r: SheetReport): string {
       `- Skin regions to resolve: ${r.skinProblems.length}${r.skinProblems.length && r.draft ? ' (reported because this is a draft; a finished sheet fails on them)' : ''}.`,
     );
   }
+  const placed = r.frames.flatMap((f) => Object.values(f.points ?? {}));
+  if (placed.length || r.missingPoints.length) {
+    lines.push(
+      `- Points: ${placed.length} placed (${placed.filter((p) => p.mirroredFrom).length} mirrored from their twin); ` +
+        `missing: ${r.missingPoints.length}${r.missingPoints.length && r.draft ? ' (reported because this is a draft; a finished sheet fails on them)' : ''}.`,
+    );
+  }
   if (r.remap.length) {
     const stale = r.remap.filter((x) => x.stale).map((x) => `remap[${x.rule}]`);
     lines.push(
@@ -488,6 +579,12 @@ function markdown(r: SheetReport): string {
     `Rows, top to bottom: ${r.rows.join(', ')}.`,
     '',
   );
+  if (r.outputs.some((o) => o.endsWith('/points.png'))) {
+    lines.push(
+      `\`points.png\` has the rows of the animations that carry points, at ${POINTS_SCALE}× on the floor, each point marked by a 1 px cross in telegraph pink round its pixel (listed under "Points").`,
+      '',
+    );
+  }
   lines.push('## Animations', '');
   lines.push(
     '| Anim | Frames | Seam (last→first / mean) | Bob (tops above the soles) | Held |',
@@ -565,6 +662,27 @@ function markdown(r: SheetReport): string {
       lines.push(
         `| ${c.colour} | ${c.pixels} | ${describeHex(c.to)} | ${c.deltaE} | ${c.materials.join(', ')} | ${compactFrames(c.frames)} |`,
       );
+    }
+  }
+  if (placed.length || r.missingPoints.length) {
+    lines.push('', '## Points', '');
+    lines.push(
+      "Each point in the cell (where the sheet stores it) and in the frame's source pixels (where the recipe's `points` gives it). " +
+        "A mirrored facing inherits its twin's points, mirrored, unless the recipe lists its own.",
+      '',
+      '| Frame | Point | Cell | Source | From |',
+      '|---|---|---|---|---|',
+    );
+    for (const f of r.frames) {
+      for (const [name, p] of Object.entries(f.points ?? {})) {
+        lines.push(
+          `| ${f.name} | ${name} | ${p.at.join(', ')} | ${p.source.join(', ')} | ${p.mirroredFrom ? `${p.mirroredFrom}, mirrored` : 'recipe'} |`,
+        );
+      }
+    }
+    if (r.missingPoints.length) {
+      lines.push('', 'Missing:', '');
+      for (const m of r.missingPoints) lines.push(`- ${m}`);
     }
   }
   if (r.skinProblems.length) {

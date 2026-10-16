@@ -16,7 +16,7 @@ import {
   type RunState,
 } from '@iot/sim';
 import type { AnimTuning, JuiceTuning } from '@iot/shared';
-import { SPRITE_FACINGS, spriteSheets } from '@iot/shared';
+import { SPRITE_FACINGS } from '@iot/shared';
 import { Palette } from '../palette.js';
 import type { Reticle } from '../game/controls.js';
 import type { Session } from '../game/session.js';
@@ -26,6 +26,7 @@ import { CharacterSprites } from './characters.js';
 import { DEPTH } from './depth.js';
 import { PLAYER_FEET } from './feet.js';
 import { facingIndex, facingStep } from './facing.js';
+import { hookbladePoint, type PlayerFrame } from './hookbladePoints.js';
 import type { Fx } from './fx.js';
 import { HookbladeFx } from './hookblade.js';
 import { disc, ditherDisc, groundShadow, outlinedRect, pixelLine, ring, shadowEllipse } from './pixels.js';
@@ -344,17 +345,19 @@ export class WorldRenderer {
       const scale = spriteScale(h.kind === 'peeling' ? 'husk-peeling' : 'husk-nutshell');
       this.shadowAt(f, snapToArt(raw.x, scale), snapToArt(raw.y + r, scale), SHADOW_W * k, SHADOW_H * k);
     }
-    const ks = spriteScale('kindled-ash');
+    const ks = this.characters.kindledScale;
     this.shadowAt(f, snapToArt(pl.x, ks), snapToArt(pl.y + PLAYER_FEET, ks), SHADOW_W, SHADOW_H);
     for (const c of s.chests) this.drawChest(this.props, c, timeMs);
     for (const k of s.pickups) this.drawPickup(f, toWorld(session.lerp(`k${k.id}`, k.x, k.y)), timeMs);
-    this.drawChain(f, session, player, huskPos);
 
     // Bodies: the sprites, posed from the sim state; Husk spawn-in and stagger marks are engine effects.
     const blink = Math.floor((timeMs / 1000) * this.juice().telegraphBlinkHz) % 2 === 0;
     for (const h of s.husks) this.drawHuskEffects(g, run, h, huskAt(h), timeMs);
     this.characters.draw(session, fx, pl, huskRaw, blink, dtWorldMs, dtRealMs);
-    this.drawPlayerEffects(g, run, player, pw, huskW);
+    // The chain (floor layer) and the spark leave from points in the player's frame, so they come after it is posed.
+    const frame = this.playerFrame(player);
+    this.drawChain(f, session, frame, huskW);
+    this.drawPlayerEffects(g, run, frame, pw, huskW);
 
     // Overlays: poise bars, the charge meter, and on the pad the Haul guide and the reticle
     // (the mouse reticle is the cursor: the UI camera draws it, GameScene).
@@ -404,25 +407,32 @@ export class WorldRenderer {
     }
   }
 
+  /** The player as drawn this frame, for the Hookblade's points; `body` is the centre in whole sim px (the v1 fallback's). */
+  private playerFrame(body: Point): PlayerFrame {
+    return {
+      sheet: this.characters.playerSheet,
+      frame: this.characters.playerFrame,
+      anchor: this.characters.playerAnchor,
+      facing: Math.max(0, SPRITE_FACINGS.indexOf(this.characters.pose?.facing ?? 'S')),
+      body,
+    };
+  }
+
   /**
    * Player effects that are not in the sheet: the hitbox flashes (slash arc,
-   * thrust line; world px at `pw`) and the charge spark (hookblade-fx, M1
-   * art: placed in sim px from `pos`).
+   * thrust line; world px at `pw`) and the charge spark (hookblade-fx) at the
+   * frame's `tip`, in world px.
    */
-  private drawPlayerEffects(g: G, run: Run, pos: Point, pw: Point, huskW: Map<number, Point>): void {
+  private drawPlayerEffects(g: G, run: Run, frame: PlayerFrame, pw: Point, huskW: Map<number, Point>): void {
     const p = run.state.player;
-    const { x, y } = pos;
     if (p.action === 'dead') return;
     if (p.action === 'heavy') this.drawThrust(g, run, pw.x, pw.y, huskW);
     else this.drawSlash(g, run, pw.x, pw.y);
     if (p.action === 'charge') {
-      // The charge spark (hookblade-fx) at the hook tip: spark_0 as the charge starts, spark_2 held at full charge.
+      // The charge spark at the hook tip: spark_0 as the charge starts, spark_2 held at full charge.
       const stage = chargeStage(p.charge, run.params.weapon.heavy);
-      const facing = Math.max(0, SPRITE_FACINGS.indexOf(this.characters.pose?.facing ?? 'S'));
-      const dir = facingStep(facing);
-      const tx = x + (dir.x === 0 ? (facing >= 5 ? -5 : 5) : dir.x * 12);
-      const ty = y + 1 + Math.max(0, dir.y) + dir.y * 6 - (dir.x !== 0 && dir.y === 0 ? 2 : 0);
-      this.hookblade.spark(tx, ty, stage);
+      const tip = hookbladePoint(frame, 'tip');
+      this.hookblade.spark(tip.x, tip.y, stage);
     }
   }
 
@@ -448,34 +458,26 @@ export class WorldRenderer {
   }
 
   /**
-   * The Haul chain from hookblade-fx: a link every 16 px from the hand to the
-   * hook head, the hook rotated to the throw angle around its shank end. Once
-   * the hook lands every link goes taut over a straight spark-amber line while
-   * the husk, or the player, slides along it.
+   * The Haul chain from hookblade-fx, world px: a link every `chain.spacing`
+   * from the frame's `hand` to the hook head, the hook rotated to the throw
+   * angle around its shank end, at the sim's hook position (or the hooked
+   * Husk's). Once the hook lands every link goes taut over a straight
+   * spark-amber line while the husk, or the player, slides along it.
    */
-  private drawChain(
-    g: G,
-    session: Session,
-    player: { x: number; y: number },
-    huskPos: Map<number, { x: number; y: number }>,
-  ): void {
+  private drawChain(g: G, session: Session, frame: PlayerFrame, huskW: Map<number, Point>): void {
     const p = session.state.player;
     const hk = p.hook;
     if (!hk) return;
-    const hit = hk.hitId >= 0 ? huskPos.get(hk.hitId) : undefined;
-    const ex = hit ? hit.x : hk.x / SUB;
-    const ey = hit ? hit.y : hk.y / SUB;
-    const hx = player.x;
-    const hy = player.y - 2;
+    const hit = hk.hitId >= 0 ? huskW.get(hk.hitId) : undefined;
+    const end = hit ?? toWorld({ x: hk.x / SUB, y: hk.y / SUB });
+    const hand = hookbladePoint(frame, 'hand');
     const set = hk.hitId >= 0;
     if (set) {
-      // The taut line under the links is the engine's (world px); the links and hook are hookblade-fx (sim px, 2×).
-      const [wx0, wy0, wx1, wy1] = [hx, hy, ex, ey].map(worldPx) as [number, number, number, number];
-      pixelLine(g, wx0, wy0, wx1, wy1, Palette.chainOutline, 1, 3);
-      pixelLine(g, wx0, wy0, wx1, wy1, Palette.chainTaut);
+      pixelLine(g, hand.x, hand.y, end.x, end.y, Palette.chainOutline, 1, 3);
+      pixelLine(g, hand.x, hand.y, end.x, end.y, Palette.chainTaut);
     }
-    this.hookblade.chain(hx, hy, ex, ey, set);
-    this.hookblade.hook(ex, ey, rad(hk.dir), set);
+    this.hookblade.chain(hand.x, hand.y, end.x, end.y, set);
+    this.hookblade.hook(end.x, end.y, rad(hk.dir), set);
   }
 
   /**
@@ -814,7 +816,7 @@ export class WorldRenderer {
     const dir = rad(p.dir);
     const activeEnd = st.startup + st.active;
     const cy = y - worldPx(3);
-    const mark = lightSlashMark(spriteSheets['kindled-ash'], phase, p.t - activeEnd);
+    const mark = lightSlashMark(this.characters.playerSheet, phase, p.t - activeEnd);
     if (mark === 'windup') {
       const back = dir + (p.comboStep % 2 === 0 ? -1 : 1) * half;
       const len = worldPx(9);

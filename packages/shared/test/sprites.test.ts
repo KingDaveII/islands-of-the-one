@@ -2,7 +2,11 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
   CLAY_TONES,
+  framePoint,
   hexOf,
+  KINDLED_POINT_ANIMS,
+  KINDLED_POINTS,
+  spritePointsFor,
   isV2Sheet,
   kindledAnimKey,
   kindledFrameName,
@@ -32,7 +36,7 @@ import {
 } from '../src/index.js';
 import fixtureSheet from './fixtures/kindled-fixture.json' with { type: 'json' };
 import { decodePng } from './png.js';
-import { tableProblems, v2Problems, type Rgba } from './sheetChecks.js';
+import { pointProblems, tableProblems, v2Problems, type Rgba } from './sheetChecks.js';
 
 /**
  * Every animated sheet in packages/shared/assets/sprites against its PNG
@@ -287,8 +291,13 @@ function sheetSuite(name: string, sheet: SpriteSheet, url: (image: string) => UR
       const mask = maskFile && existsSync(maskFile) ? decodePng(readFileSync(maskFile)) : null;
       expect(v2Problems(name, sheet, png, mask)).toEqual([]);
     });
+
+    it(`carries its points: known names, only where allowed, inside the cell${shipped ? ', every required one' : ''}`, () => {
+      expect(pointProblems(name, sheet, shipped)).toEqual([]);
+    });
   } else {
-    it('is a v1 sheet: version "1", no pixelScale, drawn at the legacy 2×', () => {
+    it('is a v1 sheet: version "1", no pixelScale, drawn at the legacy 2×, no points', () => {
+      expect(pointProblems(name, sheet)).toEqual([]);
       expect(sheet.meta.version).toBe('1');
       expect(sheet.meta.pixelScale).toBeUndefined();
       expect(sheet.palette?.mask).toBeUndefined();
@@ -444,6 +453,105 @@ describe('the v2 contract (sprites.md §2, §5)', () => {
       expect(masked).toBeGreaterThan(0);
       expect(unmasked).toBeGreaterThan(0);
     });
+  });
+});
+
+describe('points (sprites.md §5)', () => {
+  it('names tip and hand, required on heavy_charge and the four haul animations of a Kindled sheet', () => {
+    expect(KINDLED_POINTS).toEqual(['tip', 'hand']);
+    expect(KINDLED_POINT_ANIMS).toEqual({
+      tip: ['heavy_charge'],
+      hand: ['haul_throw', 'haul_pull', 'haul_slide', 'haul_recover'],
+    });
+    expect(spritePointsFor('kindled-ash', 'heavy_charge')).toEqual(['tip']);
+    expect(spritePointsFor('kindled-ash', 'haul_slide')).toEqual(['hand']);
+    expect(spritePointsFor('kindled-ash', 'heavy_thrust')).toEqual([]);
+    expect(spritePointsFor('husk-peeling', 'heavy_charge')).toEqual([]);
+    for (const anims of Object.values(KINDLED_POINT_ANIMS)) {
+      for (const a of anims) expect(KINDLED_ANIMS.map((r) => r.name)).toContain(a);
+    }
+  });
+
+  /** The fixture's cells as a sheet with heavy_charge_S (2 frames) and haul_throw_W (1 frame), points as given. */
+  const cell = fixtureSheet.frames.idle_S_0;
+  const withPoints = (points: Record<string, Record<string, number[]> | undefined>): SpriteSheet => {
+    const frame = (x: number, p: Record<string, number[]> | undefined) => ({
+      ...cell,
+      frame: { ...cell.frame, x },
+      ...(p ? { points: p } : {}),
+    });
+    return {
+      ...fixtureSheet,
+      frames: {
+        heavy_charge_S_0: frame(0, points.heavy_charge_S_0),
+        heavy_charge_S_1: frame(96, points.heavy_charge_S_1),
+        haul_throw_W_0: frame(192, points.haul_throw_W_0),
+        idle_S_0: frame(288, points.idle_S_0),
+      },
+      anims: {
+        heavy_charge_S: { frames: ['heavy_charge_S_0', 'heavy_charge_S_1'], frameRate: 12, repeat: 0, hold: true },
+        haul_throw_W: { frames: ['haul_throw_W_0'], frameRate: 15, repeat: 0, hold: true },
+        idle_S: { frames: ['idle_S_0'], frameRate: 2, repeat: -1 },
+      },
+    };
+  };
+  const good = {
+    heavy_charge_S_0: { tip: [30, 40] },
+    heavy_charge_S_1: { tip: [29, 41] },
+    haul_throw_W_0: { hand: [60, 37] },
+  };
+
+  it('passes a sheet with every required point', () => {
+    expect(pointProblems('kindled-test', withPoints(good))).toEqual([]);
+  });
+
+  it('fails a missing required point on a finished sheet only', () => {
+    const sheet = withPoints({ ...good, heavy_charge_S_1: undefined, haul_throw_W_0: { tip: [40, 40] } });
+    expect(pointProblems('kindled-test', sheet)).toEqual([
+      'haul_throw_W_0: a tip point, but its animation carries hand',
+      'heavy_charge_S_1 has no tip point',
+      'haul_throw_W_0 has no hand point',
+    ]);
+    expect(pointProblems('kindled-test', sheet, false)).toEqual(['haul_throw_W_0: a tip point, but its animation carries hand']);
+  });
+
+  it('fails an unknown name and a point on a frame that may not carry one', () => {
+    const sheet = withPoints({ ...good, heavy_charge_S_0: { tip: [30, 40], hilt: [20, 20] }, idle_S_0: { hand: [30, 30] } });
+    expect(pointProblems('kindled-test', sheet)).toEqual([
+      'heavy_charge_S_0: unknown point "hilt"',
+      'idle_S_0: a hand point, but its animation carries no points',
+    ]);
+  });
+
+  it('fails a point outside the cell or on its outer 1 px ring, or not two whole numbers', () => {
+    const sheet = withPoints({
+      heavy_charge_S_0: { tip: [95, 40] },
+      heavy_charge_S_1: { tip: [12, 0] },
+      haul_throw_W_0: { hand: [96.5, 3] },
+    });
+    expect(pointProblems('kindled-test', sheet)).toEqual([
+      'heavy_charge_S_0: tip at (95, 40) is outside the 96×80 cell or on its outer 1 px ring',
+      'heavy_charge_S_1: tip at (12, 0) is outside the 96×80 cell or on its outer 1 px ring',
+      'haul_throw_W_0: hand is [96.5,3], not [x, y] in whole pixels',
+    ]);
+    expect(pointProblems('kindled-test', withPoints({ ...good, heavy_charge_S_0: { tip: [94, 78] } }))).toEqual([]);
+  });
+
+  it('fails any point on a v1 sheet', () => {
+    const v1 = { ...withPoints(good), meta: { ...fixtureSheet.meta, version: '1' } };
+    expect(pointProblems('kindled-test', v1)).toEqual([
+      'points on a v1 sheet: heavy_charge_S_0, heavy_charge_S_1, haul_throw_W_0',
+    ]);
+    const bare = withPoints({});
+    expect(pointProblems('kindled-test', { ...bare, meta: { ...bare.meta, version: '1' } })).toEqual([]);
+  });
+
+  it('reads a point as { x, y } in the cell, null where a frame has none', () => {
+    const sheet = withPoints(good);
+    expect(framePoint(sheet, 'heavy_charge_S_1', 'tip')).toEqual({ x: 29, y: 41 });
+    expect(framePoint(sheet, 'heavy_charge_S_1', 'hand')).toBeNull();
+    expect(framePoint(sheet, 'idle_S_0', 'tip')).toBeNull();
+    expect(framePoint(sheet, 'no_such_frame', 'tip')).toBeNull();
   });
 });
 

@@ -21,7 +21,8 @@
  * `--poses` (G1.5b, no account needed) poses the Kindled at 1920 × 912 in
  * each of the 8 facings and shoots the page plus a 4× crop around the
  * player: the `heavy_charge` last frame at full charge (the charge spark),
- * the `haul_throw` last frame while the hook flies (the chain's start), and
+ * the `haul_throw` last frame while the hook flies, 32 sim px out (the chain
+ * leaving the hand; G1.5d puts both on the frame's points), and
  * a light wind-up (`light_1` frame 0, the startup) facing E and S. With
  * `--only <facing>`, the shots of that facing alone.
  *
@@ -355,6 +356,9 @@ async function posed(page, seed, input, until) {
   await sleep(250);
 }
 
+/** Sim px the hook has flown when the Haul shot is taken (G1.5d: two links of chain out of the hand). */
+const HAUL_SHOT_REACH = 32;
+
 async function poseShots() {
   const context = await browser.newContext({ viewport: { width: 1920, height: 912 } });
   const page = await context.newPage();
@@ -379,7 +383,9 @@ async function poseShots() {
       page,
       12,
       `(s) => (s.player.action === 'idle' && !s.player.hook ? ${packed(aim, BUTTON.Ability1)} : ${packed(aim, 0)})`,
-      `(s, pose) => pose?.anim === 'haul_throw_${facing}' && pose.frame === 1 && Boolean(s.player.hook)`,
+      // G1.5d: far enough out that the chain shows a few links leaving the hand.
+      `(s, pose) => pose?.anim === 'haul_throw_${facing}' && pose.frame === 1 && Boolean(s.player.hook) &&
+        Math.hypot(s.player.hook.x - s.player.x, s.player.hook.y - s.player.y) / 256 >= ${HAUL_SHOT_REACH}`,
     );
     await shot(page, `haul-${facing}`);
     await playerCrop(page, `haul-${facing}-4x`);

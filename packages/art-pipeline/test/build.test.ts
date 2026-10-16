@@ -9,15 +9,16 @@ import {
   propIdleSpec,
   isRequiredAnim,
   SPRITE_FACINGS,
+  spritePointsFor,
   spriteSheetSpec,
   type SpriteAnimSpec,
   type SpriteSheet,
 } from '@iot/shared';
-import { tableProblems, v2Problems } from '../../shared/test/sheetChecks.js';
+import { pointProblems, tableProblems, v2Problems } from '../../shared/test/sheetChecks.js';
 import { APP_ID, buildRecipe, pack, type BuiltAnim } from '../src/build.js';
 import { PipelineError } from '../src/errors.js';
 import { blank, blit, flipX, hexAt, opaqueAt, sameImg } from '../src/image.js';
-import { animChecks, BOB_FLAG } from '../src/review.js';
+import { animChecks, BOB_FLAG, POINT_MARK, POINTS_SCALE } from '../src/review.js';
 import { decodePng } from '../src/png.js';
 import { parseRecipe, type Recipe } from '../src/recipe.js';
 import { buildAndWrite, checkAll } from '../src/sheets.js';
@@ -43,13 +44,50 @@ function fullKindled(
     outline: 'player',
     draft: false,
     anims,
+    points: requiredPoints(rows),
     ...extra,
   };
 }
 
+/** Every point the table's rows require (sprites.md §5), at one pixel of the figure, for every facing and frame. */
+function requiredPoints(rows: readonly SpriteAnimSpec[], at: [number, number] = [24, 33]) {
+  const points: Record<string, Record<string, [number, number]>> = {};
+  for (const a of rows) {
+    for (const point of spritePointsFor('kindled-test', a.name)) {
+      for (const f of a.facings) {
+        for (let n = 0; n < a.frames; n++)
+          (points[point] ??= {})[kindledFrameName(a.name, f, n)] = at;
+      }
+    }
+  }
+  return points;
+}
+
 function build(root: string, json: Record<string, unknown>) {
-  const recipe: Recipe = parseRecipe(json, `art/sheets/${String(json.sheet)}.json`, root);
+  const recipe: Recipe = parseRecipe(
+    keepPointsOfAnims(json),
+    `art/sheets/${String(json.sheet)}.json`,
+    root,
+  );
   return buildRecipe(recipe, root);
+}
+
+/** `fullKindled`'s stock points, trimmed to the animations a test keeps when it narrows `anims`. */
+function keepPointsOfAnims(json: Record<string, unknown>): Record<string, unknown> {
+  const points = json.points as Record<string, Record<string, unknown>> | undefined;
+  const anims = Object.keys(json.anims ?? {});
+  if (!points) return json;
+  const kept = Object.fromEntries(
+    Object.entries(points).map(([p, frames]) => [
+      p,
+      Object.fromEntries(
+        Object.entries(frames).filter(([f]) =>
+          anims.some((a) => new RegExp(`^${a}_[A-Z]+_\\d+$`).test(f)),
+        ),
+      ),
+    ]),
+  );
+  return { ...json, points: kept };
 }
 
 const problemsOf = (fn: () => unknown): readonly string[] => {
@@ -80,6 +118,7 @@ describe('a finished Kindled sheet', () => {
   it('writes the PNG, the JSON, the mask and the review folder', () => {
     expect([...result.outputs.keys()].sort()).toEqual([
       'art/review/kindled-test/contact.png',
+      'art/review/kindled-test/points.png',
       'art/review/kindled-test/report.json',
       'art/review/kindled-test/report.md',
       'art/review/kindled-test/tones.png',
@@ -549,6 +588,181 @@ describe('mirrored sources (flipX)', () => {
     const mask = f.mask ?? blank(1, 1);
     expect(opaqueAt(mask, 16 + 40, 10 + 32)).toBe(false); // the removed hand
     expect(opaqueAt(mask, 16 + 23, 10 + 32)).toBe(true); // the other hand
+  });
+});
+
+describe('points', () => {
+  const root = tempRoot();
+  // A 68×68 action frame with a blade to the right: frame 0 stands 4 rows low (its lowest row is 57),
+  // frame 1 on the canvas (53), so "frame", "canvas" (row 55 of a 68 px frame) and { ref: 1 } differ.
+  const low = blank(68, 68);
+  blit(low, figure(C['watcher-iron']).img, 2, 4);
+  rect(low, 46, 34, 14, 2, C['watcher-stone']);
+  const high = blank(68, 68);
+  blit(high, figure(C['watcher-iron']).img, 2, 0);
+  writeImg(root, 'art/raw/act/east/frame-0.png', low);
+  writeImg(root, 'art/raw/act/east/frame-1.png', high);
+  writeImg(root, 'art/raw/act/other/frame-0.png', low);
+  writeImg(root, 'art/raw/act/other/frame-1.png', high);
+  writeImg(root, 'art/clean/fig.png', figure(C['watcher-iron']).img);
+  const src = 'art/raw/act/east';
+  const draft = (extra: Record<string, unknown>) => ({
+    sheet: 'kindled-test',
+    kind: 'kindled',
+    outline: 'player',
+    draft: true,
+    anims: {
+      heavy_charge: {
+        ground: 'frame',
+        facings: {
+          E: { src, frames: [0, 0, 0] },
+          W: { src, frames: [0, 0, 0], flipX: true },
+        },
+      },
+      haul_pull: { ground: 'canvas', facings: { E: { src, frames: [0, 0] } } },
+      haul_slide: {
+        ground: { ref: 1 },
+        facings: {
+          E: { src, frames: [0, 0] },
+          W: { src: 'art/raw/act/other', frames: [0, 0], flipX: true },
+        },
+      },
+    },
+    ...extra,
+  });
+  const points = {
+    tip: {
+      heavy_charge_E_0: [59, 35],
+      heavy_charge_E_1: [58, 35],
+      heavy_charge_E_2: [57, 35],
+      heavy_charge_W_2: [10, 10],
+    },
+    hand: {
+      haul_pull_E_0: [30, 30],
+      haul_pull_E_1: [30, 31],
+      haul_slide_E_0: [30, 30],
+      haul_slide_E_1: [31, 30],
+    },
+  };
+  const r = build(root, draft({ points }));
+  const frame = (name: string) => {
+    const f = r.anims.flatMap((a) => a.frames).find((x) => x.name === name);
+    if (!f) throw new Error(`no ${name}`);
+    return f;
+  };
+
+  it('moves each point with its frame: the horizontal centring and each ground mode', () => {
+    // Column 34 of a 68 px frame goes on the origin's column 48: dx 14. The soles row is 63.
+    expect([frame('heavy_charge_E_0').dx, frame('heavy_charge_E_0').dy]).toEqual([14, 6]); // "frame": 63 − 57
+    expect(frame('heavy_charge_E_0').points.tip).toEqual({ x: 73, y: 41, source: [59, 35] });
+    expect([frame('haul_pull_E_0').dx, frame('haul_pull_E_0').dy]).toEqual([14, 8]); // "canvas": 63 − 55
+    expect(frame('haul_pull_E_1').points.hand).toEqual({ x: 44, y: 39, source: [30, 31] });
+    expect([frame('haul_slide_E_0').dx, frame('haul_slide_E_0').dy]).toEqual([14, 10]); // ref 1: 63 − 53
+    expect(frame('haul_slide_E_1').points.hand).toEqual({ x: 45, y: 40, source: [31, 30] });
+    expect(frame('heavy_charge_E_0').points.hand).toBeUndefined();
+  });
+
+  it('gives a flipX facing its twin’s points, mirrored, unless it lists its own', () => {
+    // Source column x of the twin is column 67 − x of the mirrored frame; in the cell that is 95 − x.
+    expect(frame('heavy_charge_W_0').points.tip).toEqual({
+      x: 22,
+      y: 41,
+      source: [8, 35],
+      from: 'heavy_charge_E_0',
+    });
+    expect(frame('heavy_charge_W_1').points.tip).toEqual({
+      x: 23,
+      y: 41,
+      source: [9, 35],
+      from: 'heavy_charge_E_1',
+    });
+    expect(95 - (frame('heavy_charge_E_1').points.tip?.x ?? 0)).toBe(23);
+    expect(frame('heavy_charge_W_2').points.tip).toEqual({ x: 24, y: 16, source: [10, 10] });
+    // haul_slide W mirrors a file no facing reads unmirrored: no twin, nothing inherited.
+    expect(frame('haul_slide_W_0').points).toEqual({});
+  });
+
+  it('reports the points per frame and, in a draft, the required ones missing', () => {
+    expect(r.report.missingPoints).toEqual([
+      'kindled-test: haul_slide_W_0 has no hand point (points.hand.haul_slide_W_0)',
+      'kindled-test: haul_slide_W_1 has no hand point (points.hand.haul_slide_W_1)',
+    ]);
+    const json = r.report.frames.find((f) => f.name === 'heavy_charge_W_0');
+    expect(json?.points).toEqual({
+      tip: { at: [22, 41], source: [8, 35], mirroredFrom: 'heavy_charge_E_0' },
+    });
+    const md = r.outputs.get('art/review/kindled-test/report.md')?.toString() ?? '';
+    expect(md).toContain(
+      '- Points: 10 placed (2 mirrored from their twin); missing: 2 (reported because this is a draft;',
+    );
+    expect(md).toContain(
+      '| heavy_charge_W_0 | tip | 22, 41 | 8, 35 | heavy_charge_E_0, mirrored |',
+    );
+    expect(md).toContain('| heavy_charge_W_2 | tip | 24, 16 | 10, 10 | recipe |');
+    expect(md).toContain(
+      '- kindled-test: haul_slide_W_0 has no hand point (points.hand.haul_slide_W_0)',
+    );
+  });
+
+  it('writes points.png: the rows that carry points at 4×, a 1 px telegraph-pink cross round each point', () => {
+    const bytes = r.outputs.get('art/review/kindled-test/points.png');
+    expect(bytes).toBeDefined();
+    const img = decodePng(bytes ?? Buffer.alloc(0));
+    let pink = 0;
+    for (let y = 0; y < img.h; y++)
+      for (let x = 0; x < img.w; x++)
+        if (opaqueAt(img, x, y) && hexAt(img, x, y) === POINT_MARK) pink++;
+    // Four arms of one sheet pixel (4 px at 4×) per point; 10 points.
+    expect(POINT_MARK).toBe('#e0457b');
+    expect(pink).toBe(10 * 4 * POINTS_SCALE);
+    // A recipe whose animations carry no points has no points.png.
+    const idle = build(root, {
+      ...draft({}),
+      anims: { idle: { facings: { S: { src: 'art/clean/fig.png', frames: [0] } } } },
+    });
+    expect([...idle.outputs.keys()].some((k) => k.endsWith('points.png'))).toBe(false);
+  });
+
+  it('fails a finished sheet on a missing required point', () => {
+    expect(
+      problemsOf(() => build(root, fullKindled('art/clean/fig.png', { points: {} }))),
+    ).toContain('kindled-test: heavy_charge_S_0 has no tip point (points.tip.heavy_charge_S_0)');
+  });
+
+  it('writes the points into the finished sheet in cell pixels, and the sheet passes the §6 point checks', () => {
+    const done = build(root, fullKindled('art/clean/fig.png'));
+    const sheet = JSON.parse(
+      done.outputs.get('packages/shared/assets/sprites/kindled-test.json')?.toString() ?? '{}',
+    ) as SpriteSheet;
+    // [24, 33] in a 64×64 source: dx 16, dy 10.
+    expect(sheet.frames.heavy_charge_S_0?.points).toEqual({ tip: [40, 43] });
+    expect(sheet.frames.haul_recover_SW_1?.points).toEqual({ hand: [40, 43] });
+    expect(sheet.frames.idle_S_0?.points).toBeUndefined();
+    expect(pointProblems('kindled-test', sheet)).toEqual([]);
+  });
+
+  it('fails a point outside the source frame, in a draft too', () => {
+    expect(
+      problemsOf(() => build(root, draft({ points: { tip: { heavy_charge_E_0: [68, 35] } } }))),
+    ).toEqual([
+      'art/sheets/kindled-test.json: points.tip.heavy_charge_E_0 [68, 35] is outside the 68×68 source frame',
+    ]);
+  });
+
+  it('fails a point that lands outside the cell or on its outer 1 px ring', () => {
+    const tall = blank(64, 90);
+    blit(tall, figure(C['watcher-iron']).img, 0, 0);
+    writeImg(root, 'art/raw/tall.png', tall);
+    const json = {
+      ...draft({}),
+      anims: {
+        heavy_charge: { ground: 'frame', facings: { S: { src: 'art/raw/tall.png', frames: [0] } } },
+      },
+      points: { tip: { heavy_charge_S_0: [5, 69] } },
+    };
+    expect(problemsOf(() => build(root, json))).toEqual([
+      'heavy_charge_S_0: points.tip at source (5, 69) lands at (21, 79), outside the 96×80 cell or on its outer 1 px ring',
+    ]);
   });
 });
 
