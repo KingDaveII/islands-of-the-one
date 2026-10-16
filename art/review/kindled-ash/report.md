@@ -14,6 +14,7 @@ Kind kindled, outline player, cell 96×80, origin (48, 64).
 - Held frames (identical neighbours): none.
 - Frames with more than 12 colours: idle_S_1, idle_SE_0, idle_SE_1, idle_E_0, idle_E_1, idle_SW_0, idle_SW_1, walk_S_2, walk_SE_0, walk_SE_1, walk_SE_2, walk_SE_3, walk_SE_4, walk_SE_5, walk_E_0, walk_E_1, walk_E_2, walk_E_3, walk_E_4, walk_E_5, walk_SW_0, walk_SW_1, walk_SW_2, walk_SW_3, walk_SW_4, walk_SW_5, run_S_3, run_S_4, run_SE_0, run_SE_1, run_SE_2, run_SE_3, run_SE_4, run_SE_5, run_SE_6, run_SE_7, run_E_1, run_E_2, run_E_3, run_E_4, run_E_5, run_E_6, run_E_7, run_NE_3, run_SW_0, run_SW_1, run_SW_2, run_SW_3, run_SW_4, run_SW_5, run_SW_6, run_SW_7, dodge_S_0, dodge_S_1, dodge_S_2, dodge_S_3, dodge_SE_0, dodge_SE_1, dodge_SE_2, dodge_SE_3, dodge_E_1, dodge_E_2, dodge_NE_0, dodge_NE_1, dodge_NE_2, dodge_NE_3, dodge_N_1, dodge_N_2, dodge_NW_0, dodge_NW_1, dodge_NW_2, dodge_NW_3, dodge_W_1, dodge_W_2, dodge_SW_0, dodge_SW_1, dodge_SW_2, dodge_SW_3, light_1_S_0, light_1_S_1, light_1_S_2, light_1_SE_0, light_1_SE_1, light_1_SE_2, light_1_E_0, light_1_E_1, light_1_E_2, light_1_NE_0, light_1_NW_0, light_1_W_0, light_1_W_1, light_1_W_2, light_1_SW_0, light_1_SW_1, light_1_SW_2, light_2_S_0, light_2_S_1, light_2_S_2, light_2_SE_0, light_2_SE_1, light_2_SE_2, light_2_E_0, light_2_E_1, light_2_E_2, light_2_NW_0, light_2_NW_1, light_2_NW_2, light_2_W_0, light_2_W_1, light_2_W_2, light_2_SW_0, light_2_SW_1, light_2_SW_2, light_3_S_0, light_3_S_1, light_3_S_2, light_3_SE_0, light_3_SE_1, light_3_SE_2, light_3_E_0, light_3_E_1, light_3_E_2, light_3_NE_0, light_3_NW_0, light_3_W_0, light_3_SW_0, light_3_SW_1, light_3_SW_2, heavy_charge_S_0, heavy_charge_S_1, heavy_charge_S_2, heavy_charge_SE_0, heavy_charge_SE_1, heavy_charge_SE_2, heavy_charge_E_0, heavy_charge_E_1, heavy_charge_E_2, heavy_charge_NE_1, heavy_charge_NW_1, heavy_charge_W_0, heavy_charge_W_1, heavy_charge_SW_0, heavy_charge_SW_1, heavy_charge_SW_2, heavy_thrust_S_0, heavy_thrust_S_1, heavy_thrust_SE_0, heavy_thrust_SE_1, heavy_thrust_E_0, heavy_thrust_E_1, heavy_thrust_NE_1, heavy_thrust_NW_1, heavy_thrust_SW_0, heavy_thrust_SW_1, heavy_hold_S_0, heavy_hold_SE_0, heavy_hold_E_0, heavy_hold_NE_0, heavy_hold_NW_0, heavy_hold_SW_0, heavy_recover_S_0, heavy_recover_S_1, heavy_recover_SE_0, heavy_recover_SE_1, heavy_recover_E_0, heavy_recover_E_1, heavy_recover_NE_0, heavy_recover_NW_0, heavy_recover_W_0, heavy_recover_W_1, heavy_recover_SW_0, heavy_recover_SW_1, haul_throw_S_0, haul_throw_S_1, haul_throw_SE_0, haul_throw_SE_1, haul_throw_E_0, haul_throw_E_1, haul_throw_NE_1, haul_throw_W_0, haul_throw_W_1, haul_throw_SW_0, haul_throw_SW_1, haul_recover_S_1, haul_recover_SE_0, haul_recover_SE_1, haul_recover_E_0, haul_recover_E_1, haul_recover_W_0, haul_recover_W_1, haul_recover_SW_0, haul_recover_SW_1, haul_pull_S_0, haul_pull_S_1, haul_pull_SE_0, haul_pull_SE_1, haul_pull_E_0, haul_pull_E_1, haul_pull_NE_1, haul_pull_NW_1, haul_pull_SW_0, haul_pull_SW_1, haul_slide_S_0, haul_slide_S_1, haul_slide_SE_0, haul_slide_SE_1, haul_slide_E_0, haul_slide_E_1, haul_slide_NE_0, haul_slide_NE_1, haul_slide_W_0, haul_slide_SW_0, haul_slide_SW_1, hit_S_0, hit_S_1, hit_E_1, hit_W_1, death_E_0, death_E_2.
 - Skin regions to resolve: 0.
+- Points: 88 placed (11 mirrored from their twin); missing: 0.
 - Remap rules: 8; stale (match no pixel in any frame they apply to): none.
 - Missing against the contract's table: carry_idle (all facings), carry_walk (all facings), sit (all facings).
 - Optional (after M1, or awaiting art: a finished sheet may leave them out, but carries every facing of any it has): carry_idle (M2), carry_walk (M2), sit (M2).
@@ -23,6 +24,8 @@ Kind kindled, outline player, cell 96×80, origin (48, 64).
 `contact.png` has one row per animation and facing, frames in order at 2×, on the floor (left) and the wall face (right); the amber tick marks the soles row. `tones.png` has the same rows in the four clay tones, through the mask: clay-grey-ochre, clay-pale, clay-red, clay-river-dark.
 
 Rows, top to bottom: idle_S, idle_SE, idle_E, idle_NE, idle_N, idle_NW, idle_W, idle_SW, walk_S, walk_SE, walk_E, walk_NE, walk_N, walk_NW, walk_W, walk_SW, run_S, run_SE, run_E, run_NE, run_N, run_NW, run_W, run_SW, dodge_S, dodge_SE, dodge_E, dodge_NE, dodge_N, dodge_NW, dodge_W, dodge_SW, light_1_S, light_1_SE, light_1_E, light_1_NE, light_1_N, light_1_NW, light_1_W, light_1_SW, light_2_S, light_2_SE, light_2_E, light_2_NE, light_2_N, light_2_NW, light_2_W, light_2_SW, light_3_S, light_3_SE, light_3_E, light_3_NE, light_3_N, light_3_NW, light_3_W, light_3_SW, heavy_charge_S, heavy_charge_SE, heavy_charge_E, heavy_charge_NE, heavy_charge_N, heavy_charge_NW, heavy_charge_W, heavy_charge_SW, heavy_thrust_S, heavy_thrust_SE, heavy_thrust_E, heavy_thrust_NE, heavy_thrust_N, heavy_thrust_NW, heavy_thrust_W, heavy_thrust_SW, heavy_hold_S, heavy_hold_SE, heavy_hold_E, heavy_hold_NE, heavy_hold_N, heavy_hold_NW, heavy_hold_W, heavy_hold_SW, heavy_recover_S, heavy_recover_SE, heavy_recover_E, heavy_recover_NE, heavy_recover_N, heavy_recover_NW, heavy_recover_W, heavy_recover_SW, haul_throw_S, haul_throw_SE, haul_throw_E, haul_throw_NE, haul_throw_N, haul_throw_NW, haul_throw_W, haul_throw_SW, haul_recover_S, haul_recover_SE, haul_recover_E, haul_recover_NE, haul_recover_N, haul_recover_NW, haul_recover_W, haul_recover_SW, haul_pull_S, haul_pull_SE, haul_pull_E, haul_pull_NE, haul_pull_N, haul_pull_NW, haul_pull_W, haul_pull_SW, haul_slide_S, haul_slide_SE, haul_slide_E, haul_slide_NE, haul_slide_N, haul_slide_NW, haul_slide_W, haul_slide_SW, hit_S, hit_E, hit_N, hit_W, death_S, death_E, death_N, death_W.
+
+`points.png` has the rows of the animations that carry points, at 4× on the floor, each point marked by a 1 px cross in telegraph pink round its pixel (listed under "Points").
 
 ## Animations
 
@@ -597,3 +600,98 @@ Each rule of the recipe's `remap`, in order, and the pixels it took per animatio
 | #9e7642 | 95 | watcher-bronze #a8743a | 1.74 | leather | idle_E 0 1; walk_E 0–5; run_E 2 3 5–7; light_1_E 0–2; light_2_E 0–2; light_3_E 0–2; heavy_charge_E 1; heavy_thrust_E 1; heavy_hold_E 0; heavy_recover_E 0; haul_throw_E 0 1; haul_throw_W 0 1; haul_recover_E 1; haul_recover_W 1; haul_pull_E 0 1; haul_slide_E 0 1; death_E 0 2 |
 | #ac814a | 92 | watcher-bronze #a8743a | 3.48 | leather | idle_E 0 1; walk_E 3–5; light_1_E 0–2; light_3_E 0–2; heavy_charge_E 0 1; heavy_thrust_E 0 1; heavy_hold_E 0; heavy_recover_E 0 1; haul_throw_E 0 1; haul_throw_W 0 1; haul_recover_E 0 1; haul_recover_W 0 1; haul_pull_E 1; hit_E 1; death_E 0 |
 | #222959 | 90 | sleeper-night #24305a | 2.17 | water, hair | dodge_NE 1–3; dodge_N 1 2; dodge_NW 1–3 |
+
+## Points
+
+Each point in the cell (where the sheet stores it) and in the frame's source pixels (where the recipe's `points` gives it). A mirrored facing inherits its twin's points, mirrored, unless the recipe lists its own.
+
+| Frame | Point | Cell | Source | From |
+|---|---|---|---|---|
+| heavy_charge_S_0 | tip | 26, 55 | 12, 47 | recipe |
+| heavy_charge_S_1 | tip | 26, 55 | 12, 47 | recipe |
+| heavy_charge_S_2 | tip | 25, 51 | 11, 43 | recipe |
+| heavy_charge_SE_0 | tip | 36, 61 | 22, 54 | recipe |
+| heavy_charge_SE_1 | tip | 28, 56 | 14, 49 | recipe |
+| heavy_charge_SE_2 | tip | 24, 52 | 10, 45 | recipe |
+| heavy_charge_E_0 | tip | 51, 52 | 37, 45 | recipe |
+| heavy_charge_E_1 | tip | 50, 57 | 36, 50 | recipe |
+| heavy_charge_E_2 | tip | 49, 56 | 35, 49 | recipe |
+| heavy_charge_NE_0 | tip | 33, 33 | 19, 26 | recipe |
+| heavy_charge_NE_1 | tip | 36, 33 | 22, 26 | recipe |
+| heavy_charge_NE_2 | tip | 36, 34 | 22, 27 | recipe |
+| heavy_charge_N_0 | tip | 64, 61 | 48, 52 | recipe |
+| heavy_charge_N_1 | tip | 68, 59 | 52, 50 | recipe |
+| heavy_charge_N_2 | tip | 70, 57 | 54, 48 | recipe |
+| heavy_charge_NW_0 | tip | 62, 33 | 48, 26 | heavy_charge_NE_0, mirrored |
+| heavy_charge_NW_1 | tip | 59, 33 | 45, 26 | heavy_charge_NE_1, mirrored |
+| heavy_charge_NW_2 | tip | 59, 34 | 45, 27 | heavy_charge_NE_2, mirrored |
+| heavy_charge_W_0 | tip | 35, 55 | 21, 48 | recipe |
+| heavy_charge_W_1 | tip | 66, 57 | 52, 50 | recipe |
+| heavy_charge_W_2 | tip | 66, 57 | 52, 50 | recipe |
+| heavy_charge_SW_0 | tip | 24, 55 | 10, 48 | recipe |
+| heavy_charge_SW_1 | tip | 24, 55 | 10, 48 | recipe |
+| heavy_charge_SW_2 | tip | 23, 44 | 9, 37 | recipe |
+| haul_throw_S_0 | hand | 54, 51 | 40, 43 | recipe |
+| haul_throw_S_1 | hand | 54, 51 | 40, 43 | recipe |
+| haul_throw_SE_0 | hand | 59, 50 | 45, 43 | recipe |
+| haul_throw_SE_1 | hand | 60, 42 | 46, 35 | recipe |
+| haul_throw_E_0 | hand | 48, 52 | 34, 45 | recipe |
+| haul_throw_E_1 | hand | 58, 44 | 44, 37 | recipe |
+| haul_throw_NE_0 | hand | 57, 50 | 43, 43 | recipe |
+| haul_throw_NE_1 | hand | 62, 39 | 48, 32 | recipe |
+| haul_throw_N_0 | hand | 48, 50 | 34, 43 | recipe |
+| haul_throw_N_1 | hand | 48, 50 | 34, 43 | recipe |
+| haul_throw_NW_0 | hand | 33, 47 | 19, 40 | recipe |
+| haul_throw_NW_1 | hand | 25, 44 | 11, 37 | recipe |
+| haul_throw_W_0 | hand | 47, 52 | 33, 45 | haul_throw_E_0, mirrored |
+| haul_throw_W_1 | hand | 37, 44 | 23, 37 | haul_throw_E_1, mirrored |
+| haul_throw_SW_0 | hand | 36, 50 | 22, 43 | haul_throw_SE_0, mirrored |
+| haul_throw_SW_1 | hand | 35, 42 | 21, 35 | haul_throw_SE_1, mirrored |
+| haul_recover_S_0 | hand | 37, 55 | 23, 47 | recipe |
+| haul_recover_S_1 | hand | 35, 55 | 21, 47 | recipe |
+| haul_recover_SE_0 | hand | 60, 44 | 46, 37 | recipe |
+| haul_recover_SE_1 | hand | 53, 51 | 39, 44 | recipe |
+| haul_recover_E_0 | hand | 55, 48 | 41, 41 | recipe |
+| haul_recover_E_1 | hand | 50, 51 | 36, 44 | recipe |
+| haul_recover_NE_0 | hand | 60, 44 | 46, 37 | recipe |
+| haul_recover_NE_1 | hand | 60, 46 | 46, 39 | recipe |
+| haul_recover_N_0 | hand | 48, 50 | 34, 43 | recipe |
+| haul_recover_N_1 | hand | 48, 50 | 34, 43 | recipe |
+| haul_recover_NW_0 | hand | 35, 49 | 21, 42 | recipe |
+| haul_recover_NW_1 | hand | 48, 50 | 34, 43 | recipe |
+| haul_recover_W_0 | hand | 40, 48 | 26, 41 | haul_recover_E_0, mirrored |
+| haul_recover_W_1 | hand | 45, 51 | 31, 44 | haul_recover_E_1, mirrored |
+| haul_recover_SW_0 | hand | 35, 44 | 21, 37 | haul_recover_SE_0, mirrored |
+| haul_recover_SW_1 | hand | 42, 51 | 28, 44 | haul_recover_SE_1, mirrored |
+| haul_pull_S_0 | hand | 53, 55 | 39, 47 | recipe |
+| haul_pull_S_1 | hand | 44, 52 | 30, 44 | recipe |
+| haul_pull_SE_0 | hand | 56, 57 | 42, 50 | recipe |
+| haul_pull_SE_1 | hand | 70, 51 | 56, 44 | recipe |
+| haul_pull_E_0 | hand | 52, 48 | 38, 41 | recipe |
+| haul_pull_E_1 | hand | 56, 42 | 42, 35 | recipe |
+| haul_pull_NE_0 | hand | 53, 45 | 39, 38 | recipe |
+| haul_pull_NE_1 | hand | 58, 44 | 44, 37 | recipe |
+| haul_pull_N_0 | hand | 48, 50 | 34, 43 | recipe |
+| haul_pull_N_1 | hand | 48, 50 | 34, 43 | recipe |
+| haul_pull_NW_0 | hand | 31, 51 | 17, 44 | recipe |
+| haul_pull_NW_1 | hand | 38, 39 | 24, 32 | recipe |
+| haul_pull_W_0 | hand | 36, 49 | 22, 42 | recipe |
+| haul_pull_W_1 | hand | 40, 44 | 26, 37 | recipe |
+| haul_pull_SW_0 | hand | 41, 52 | 27, 45 | recipe |
+| haul_pull_SW_1 | hand | 38, 51 | 24, 44 | recipe |
+| haul_slide_S_0 | hand | 39, 55 | 25, 47 | recipe |
+| haul_slide_S_1 | hand | 54, 57 | 40, 49 | recipe |
+| haul_slide_SE_0 | hand | 57, 52 | 43, 45 | recipe |
+| haul_slide_SE_1 | hand | 61, 56 | 47, 49 | recipe |
+| haul_slide_E_0 | hand | 48, 51 | 34, 44 | recipe |
+| haul_slide_E_1 | hand | 45, 51 | 31, 44 | recipe |
+| haul_slide_NE_0 | hand | 56, 51 | 42, 44 | recipe |
+| haul_slide_NE_1 | hand | 56, 51 | 42, 44 | recipe |
+| haul_slide_N_0 | hand | 48, 50 | 34, 43 | recipe |
+| haul_slide_N_1 | hand | 48, 50 | 34, 43 | recipe |
+| haul_slide_NW_0 | hand | 35, 50 | 21, 43 | recipe |
+| haul_slide_NW_1 | hand | 34, 59 | 20, 52 | recipe |
+| haul_slide_W_0 | hand | 40, 45 | 26, 38 | recipe |
+| haul_slide_W_1 | hand | 37, 52 | 23, 45 | recipe |
+| haul_slide_SW_0 | hand | 38, 52 | 24, 45 | recipe |
+| haul_slide_SW_1 | hand | 39, 52 | 25, 45 | recipe |

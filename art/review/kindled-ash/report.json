@@ -387,6 +387,7 @@
     "sit (M2)"
   ],
   "skinProblems": [],
+  "missingPoints": [],
   "remap": [
     {
       "rule": 0,
@@ -6606,7 +6607,19 @@
       "shift": 0,
       "outlineGaps": 1,
       "colours": 14,
-      "masked": 162
+      "masked": 162,
+      "points": {
+        "tip": {
+          "at": [
+            26,
+            55
+          ],
+          "source": [
+            12,
+            47
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_S_1",
@@ -6618,7 +6631,19 @@
       "shift": 0,
       "outlineGaps": 1,
       "colours": 14,
-      "masked": 156
+      "masked": 156,
+      "points": {
+        "tip": {
+          "at": [
+            26,
+            55
+          ],
+          "source": [
+            12,
+            47
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_S_2",
@@ -6630,7 +6655,19 @@
       "shift": 0,
       "outlineGaps": 1,
       "colours": 15,
-      "masked": 145
+      "masked": 145,
+      "points": {
+        "tip": {
+          "at": [
+            25,
+            51
+          ],
+          "source": [
+            11,
+            43
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_SE_0",
@@ -6642,7 +6679,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 16,
-      "masked": 149
+      "masked": 149,
+      "points": {
+        "tip": {
+          "at": [
+            36,
+            61
+          ],
+          "source": [
+            22,
+            54
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_SE_1",
@@ -6654,7 +6703,19 @@
       "shift": -1,
       "outlineGaps": 3,
       "colours": 17,
-      "masked": 137
+      "masked": 137,
+      "points": {
+        "tip": {
+          "at": [
+            28,
+            56
+          ],
+          "source": [
+            14,
+            49
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_SE_2",
@@ -6666,7 +6727,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 16,
-      "masked": 150
+      "masked": 150,
+      "points": {
+        "tip": {
+          "at": [
+            24,
+            52
+          ],
+          "source": [
+            10,
+            45
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_E_0",
@@ -6678,7 +6751,19 @@
       "shift": -1,
       "outlineGaps": 4,
       "colours": 16,
-      "masked": 78
+      "masked": 78,
+      "points": {
+        "tip": {
+          "at": [
+            51,
+            52
+          ],
+          "source": [
+            37,
+            45
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_E_1",
@@ -6690,7 +6775,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 15,
-      "masked": 83
+      "masked": 83,
+      "points": {
+        "tip": {
+          "at": [
+            50,
+            57
+          ],
+          "source": [
+            36,
+            50
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_E_2",
@@ -6702,7 +6799,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 13,
-      "masked": 77
+      "masked": 77,
+      "points": {
+        "tip": {
+          "at": [
+            49,
+            56
+          ],
+          "source": [
+            35,
+            49
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_NE_0",
@@ -6714,7 +6823,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 11,
-      "masked": 2
+      "masked": 2,
+      "points": {
+        "tip": {
+          "at": [
+            33,
+            33
+          ],
+          "source": [
+            19,
+            26
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_NE_1",
@@ -6726,7 +6847,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 13,
-      "masked": 2
+      "masked": 2,
+      "points": {
+        "tip": {
+          "at": [
+            36,
+            33
+          ],
+          "source": [
+            22,
+            26
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_NE_2",
@@ -6738,7 +6871,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 12,
-      "masked": 4
+      "masked": 4,
+      "points": {
+        "tip": {
+          "at": [
+            36,
+            34
+          ],
+          "source": [
+            22,
+            27
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_N_0",
@@ -6750,7 +6895,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 9,
-      "masked": 4
+      "masked": 4,
+      "points": {
+        "tip": {
+          "at": [
+            64,
+            61
+          ],
+          "source": [
+            48,
+            52
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_N_1",
@@ -6762,7 +6919,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 9,
-      "masked": 4
+      "masked": 4,
+      "points": {
+        "tip": {
+          "at": [
+            68,
+            59
+          ],
+          "source": [
+            52,
+            50
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_N_2",
@@ -6774,7 +6943,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 9,
-      "masked": 4
+      "masked": 4,
+      "points": {
+        "tip": {
+          "at": [
+            70,
+            57
+          ],
+          "source": [
+            54,
+            48
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_NW_0",
@@ -6787,7 +6968,20 @@
       "outlineGaps": 1,
       "colours": 11,
       "mirrored": true,
-      "masked": 2
+      "masked": 2,
+      "points": {
+        "tip": {
+          "at": [
+            62,
+            33
+          ],
+          "source": [
+            48,
+            26
+          ],
+          "mirroredFrom": "heavy_charge_NE_0"
+        }
+      }
     },
     {
       "name": "heavy_charge_NW_1",
@@ -6800,7 +6994,20 @@
       "outlineGaps": 1,
       "colours": 13,
       "mirrored": true,
-      "masked": 2
+      "masked": 2,
+      "points": {
+        "tip": {
+          "at": [
+            59,
+            33
+          ],
+          "source": [
+            45,
+            26
+          ],
+          "mirroredFrom": "heavy_charge_NE_1"
+        }
+      }
     },
     {
       "name": "heavy_charge_NW_2",
@@ -6813,7 +7020,20 @@
       "outlineGaps": 0,
       "colours": 12,
       "mirrored": true,
-      "masked": 4
+      "masked": 4,
+      "points": {
+        "tip": {
+          "at": [
+            59,
+            34
+          ],
+          "source": [
+            45,
+            27
+          ],
+          "mirroredFrom": "heavy_charge_NE_2"
+        }
+      }
     },
     {
       "name": "heavy_charge_W_0",
@@ -6825,7 +7045,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 13,
-      "masked": 72
+      "masked": 72,
+      "points": {
+        "tip": {
+          "at": [
+            35,
+            55
+          ],
+          "source": [
+            21,
+            48
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_W_1",
@@ -6837,7 +7069,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 13,
-      "masked": 66
+      "masked": 66,
+      "points": {
+        "tip": {
+          "at": [
+            66,
+            57
+          ],
+          "source": [
+            52,
+            50
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_W_2",
@@ -6849,7 +7093,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 12,
-      "masked": 71
+      "masked": 71,
+      "points": {
+        "tip": {
+          "at": [
+            66,
+            57
+          ],
+          "source": [
+            52,
+            50
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_SW_0",
@@ -6861,7 +7117,19 @@
       "shift": -1,
       "outlineGaps": 2,
       "colours": 17,
-      "masked": 151
+      "masked": 151,
+      "points": {
+        "tip": {
+          "at": [
+            24,
+            55
+          ],
+          "source": [
+            10,
+            48
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_SW_1",
@@ -6873,7 +7141,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 15,
-      "masked": 141
+      "masked": 141,
+      "points": {
+        "tip": {
+          "at": [
+            24,
+            55
+          ],
+          "source": [
+            10,
+            48
+          ]
+        }
+      }
     },
     {
       "name": "heavy_charge_SW_2",
@@ -6885,7 +7165,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 14,
-      "masked": 106
+      "masked": 106,
+      "points": {
+        "tip": {
+          "at": [
+            23,
+            44
+          ],
+          "source": [
+            9,
+            37
+          ]
+        }
+      }
     },
     {
       "name": "heavy_thrust_S_0",
@@ -7387,7 +7679,19 @@
       "shift": 0,
       "outlineGaps": 2,
       "colours": 14,
-      "masked": 142
+      "masked": 142,
+      "points": {
+        "hand": {
+          "at": [
+            54,
+            51
+          ],
+          "source": [
+            40,
+            43
+          ]
+        }
+      }
     },
     {
       "name": "haul_throw_S_1",
@@ -7399,7 +7703,19 @@
       "shift": 0,
       "outlineGaps": 4,
       "colours": 14,
-      "masked": 149
+      "masked": 149,
+      "points": {
+        "hand": {
+          "at": [
+            54,
+            51
+          ],
+          "source": [
+            40,
+            43
+          ]
+        }
+      }
     },
     {
       "name": "haul_throw_SE_0",
@@ -7411,7 +7727,19 @@
       "shift": -1,
       "outlineGaps": 3,
       "colours": 15,
-      "masked": 136
+      "masked": 136,
+      "points": {
+        "hand": {
+          "at": [
+            59,
+            50
+          ],
+          "source": [
+            45,
+            43
+          ]
+        }
+      }
     },
     {
       "name": "haul_throw_SE_1",
@@ -7423,7 +7751,19 @@
       "shift": -1,
       "outlineGaps": 21,
       "colours": 13,
-      "masked": 113
+      "masked": 113,
+      "points": {
+        "hand": {
+          "at": [
+            60,
+            42
+          ],
+          "source": [
+            46,
+            35
+          ]
+        }
+      }
     },
     {
       "name": "haul_throw_E_0",
@@ -7435,7 +7775,19 @@
       "shift": -1,
       "outlineGaps": 2,
       "colours": 16,
-      "masked": 75
+      "masked": 75,
+      "points": {
+        "hand": {
+          "at": [
+            48,
+            52
+          ],
+          "source": [
+            34,
+            45
+          ]
+        }
+      }
     },
     {
       "name": "haul_throw_E_1",
@@ -7447,7 +7799,19 @@
       "shift": -1,
       "outlineGaps": 3,
       "colours": 15,
-      "masked": 75
+      "masked": 75,
+      "points": {
+        "hand": {
+          "at": [
+            58,
+            44
+          ],
+          "source": [
+            44,
+            37
+          ]
+        }
+      }
     },
     {
       "name": "haul_throw_NE_0",
@@ -7459,7 +7823,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 12,
-      "masked": 17
+      "masked": 17,
+      "points": {
+        "hand": {
+          "at": [
+            57,
+            50
+          ],
+          "source": [
+            43,
+            43
+          ]
+        }
+      }
     },
     {
       "name": "haul_throw_NE_1",
@@ -7471,7 +7847,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 15,
-      "masked": 10
+      "masked": 10,
+      "points": {
+        "hand": {
+          "at": [
+            62,
+            39
+          ],
+          "source": [
+            48,
+            32
+          ]
+        }
+      }
     },
     {
       "name": "haul_throw_N_0",
@@ -7483,7 +7871,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 6,
-      "masked": 0
+      "masked": 0,
+      "points": {
+        "hand": {
+          "at": [
+            48,
+            50
+          ],
+          "source": [
+            34,
+            43
+          ]
+        }
+      }
     },
     {
       "name": "haul_throw_N_1",
@@ -7495,7 +7895,19 @@
       "shift": -1,
       "outlineGaps": 2,
       "colours": 10,
-      "masked": 0
+      "masked": 0,
+      "points": {
+        "hand": {
+          "at": [
+            48,
+            50
+          ],
+          "source": [
+            34,
+            43
+          ]
+        }
+      }
     },
     {
       "name": "haul_throw_NW_0",
@@ -7507,7 +7919,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 9,
-      "masked": 16
+      "masked": 16,
+      "points": {
+        "hand": {
+          "at": [
+            33,
+            47
+          ],
+          "source": [
+            19,
+            40
+          ]
+        }
+      }
     },
     {
       "name": "haul_throw_NW_1",
@@ -7519,7 +7943,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 10,
-      "masked": 16
+      "masked": 16,
+      "points": {
+        "hand": {
+          "at": [
+            25,
+            44
+          ],
+          "source": [
+            11,
+            37
+          ]
+        }
+      }
     },
     {
       "name": "haul_throw_W_0",
@@ -7532,7 +7968,20 @@
       "outlineGaps": 2,
       "colours": 16,
       "mirrored": true,
-      "masked": 75
+      "masked": 75,
+      "points": {
+        "hand": {
+          "at": [
+            47,
+            52
+          ],
+          "source": [
+            33,
+            45
+          ],
+          "mirroredFrom": "haul_throw_E_0"
+        }
+      }
     },
     {
       "name": "haul_throw_W_1",
@@ -7545,7 +7994,20 @@
       "outlineGaps": 3,
       "colours": 15,
       "mirrored": true,
-      "masked": 75
+      "masked": 75,
+      "points": {
+        "hand": {
+          "at": [
+            37,
+            44
+          ],
+          "source": [
+            23,
+            37
+          ],
+          "mirroredFrom": "haul_throw_E_1"
+        }
+      }
     },
     {
       "name": "haul_throw_SW_0",
@@ -7558,7 +8020,20 @@
       "outlineGaps": 3,
       "colours": 15,
       "mirrored": true,
-      "masked": 136
+      "masked": 136,
+      "points": {
+        "hand": {
+          "at": [
+            36,
+            50
+          ],
+          "source": [
+            22,
+            43
+          ],
+          "mirroredFrom": "haul_throw_SE_0"
+        }
+      }
     },
     {
       "name": "haul_throw_SW_1",
@@ -7571,7 +8046,20 @@
       "outlineGaps": 21,
       "colours": 13,
       "mirrored": true,
-      "masked": 113
+      "masked": 113,
+      "points": {
+        "hand": {
+          "at": [
+            35,
+            42
+          ],
+          "source": [
+            21,
+            35
+          ],
+          "mirroredFrom": "haul_throw_SE_1"
+        }
+      }
     },
     {
       "name": "haul_recover_S_0",
@@ -7583,7 +8071,19 @@
       "shift": 0,
       "outlineGaps": 1,
       "colours": 12,
-      "masked": 170
+      "masked": 170,
+      "points": {
+        "hand": {
+          "at": [
+            37,
+            55
+          ],
+          "source": [
+            23,
+            47
+          ]
+        }
+      }
     },
     {
       "name": "haul_recover_S_1",
@@ -7595,7 +8095,19 @@
       "shift": 0,
       "outlineGaps": 4,
       "colours": 15,
-      "masked": 156
+      "masked": 156,
+      "points": {
+        "hand": {
+          "at": [
+            35,
+            55
+          ],
+          "source": [
+            21,
+            47
+          ]
+        }
+      }
     },
     {
       "name": "haul_recover_SE_0",
@@ -7607,7 +8119,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 16,
-      "masked": 118
+      "masked": 118,
+      "points": {
+        "hand": {
+          "at": [
+            60,
+            44
+          ],
+          "source": [
+            46,
+            37
+          ]
+        }
+      }
     },
     {
       "name": "haul_recover_SE_1",
@@ -7619,7 +8143,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 14,
-      "masked": 125
+      "masked": 125,
+      "points": {
+        "hand": {
+          "at": [
+            53,
+            51
+          ],
+          "source": [
+            39,
+            44
+          ]
+        }
+      }
     },
     {
       "name": "haul_recover_E_0",
@@ -7631,7 +8167,19 @@
       "shift": -1,
       "outlineGaps": 2,
       "colours": 14,
-      "masked": 77
+      "masked": 77,
+      "points": {
+        "hand": {
+          "at": [
+            55,
+            48
+          ],
+          "source": [
+            41,
+            41
+          ]
+        }
+      }
     },
     {
       "name": "haul_recover_E_1",
@@ -7643,7 +8191,19 @@
       "shift": -1,
       "outlineGaps": 2,
       "colours": 15,
-      "masked": 76
+      "masked": 76,
+      "points": {
+        "hand": {
+          "at": [
+            50,
+            51
+          ],
+          "source": [
+            36,
+            44
+          ]
+        }
+      }
     },
     {
       "name": "haul_recover_NE_0",
@@ -7655,7 +8215,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 12,
-      "masked": 20
+      "masked": 20,
+      "points": {
+        "hand": {
+          "at": [
+            60,
+            44
+          ],
+          "source": [
+            46,
+            37
+          ]
+        }
+      }
     },
     {
       "name": "haul_recover_NE_1",
@@ -7667,7 +8239,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 11,
-      "masked": 15
+      "masked": 15,
+      "points": {
+        "hand": {
+          "at": [
+            60,
+            46
+          ],
+          "source": [
+            46,
+            39
+          ]
+        }
+      }
     },
     {
       "name": "haul_recover_N_0",
@@ -7679,7 +8263,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 7,
-      "masked": 0
+      "masked": 0,
+      "points": {
+        "hand": {
+          "at": [
+            48,
+            50
+          ],
+          "source": [
+            34,
+            43
+          ]
+        }
+      }
     },
     {
       "name": "haul_recover_N_1",
@@ -7691,7 +8287,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 5,
-      "masked": 0
+      "masked": 0,
+      "points": {
+        "hand": {
+          "at": [
+            48,
+            50
+          ],
+          "source": [
+            34,
+            43
+          ]
+        }
+      }
     },
     {
       "name": "haul_recover_NW_0",
@@ -7703,7 +8311,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 9,
-      "masked": 22
+      "masked": 22,
+      "points": {
+        "hand": {
+          "at": [
+            35,
+            49
+          ],
+          "source": [
+            21,
+            42
+          ]
+        }
+      }
     },
     {
       "name": "haul_recover_NW_1",
@@ -7715,7 +8335,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 8,
-      "masked": 6
+      "masked": 6,
+      "points": {
+        "hand": {
+          "at": [
+            48,
+            50
+          ],
+          "source": [
+            34,
+            43
+          ]
+        }
+      }
     },
     {
       "name": "haul_recover_W_0",
@@ -7728,7 +8360,20 @@
       "outlineGaps": 2,
       "colours": 14,
       "mirrored": true,
-      "masked": 77
+      "masked": 77,
+      "points": {
+        "hand": {
+          "at": [
+            40,
+            48
+          ],
+          "source": [
+            26,
+            41
+          ],
+          "mirroredFrom": "haul_recover_E_0"
+        }
+      }
     },
     {
       "name": "haul_recover_W_1",
@@ -7741,7 +8386,20 @@
       "outlineGaps": 2,
       "colours": 15,
       "mirrored": true,
-      "masked": 76
+      "masked": 76,
+      "points": {
+        "hand": {
+          "at": [
+            45,
+            51
+          ],
+          "source": [
+            31,
+            44
+          ],
+          "mirroredFrom": "haul_recover_E_1"
+        }
+      }
     },
     {
       "name": "haul_recover_SW_0",
@@ -7754,7 +8412,20 @@
       "outlineGaps": 0,
       "colours": 16,
       "mirrored": true,
-      "masked": 118
+      "masked": 118,
+      "points": {
+        "hand": {
+          "at": [
+            35,
+            44
+          ],
+          "source": [
+            21,
+            37
+          ],
+          "mirroredFrom": "haul_recover_SE_0"
+        }
+      }
     },
     {
       "name": "haul_recover_SW_1",
@@ -7767,7 +8438,20 @@
       "outlineGaps": 0,
       "colours": 14,
       "mirrored": true,
-      "masked": 125
+      "masked": 125,
+      "points": {
+        "hand": {
+          "at": [
+            42,
+            51
+          ],
+          "source": [
+            28,
+            44
+          ],
+          "mirroredFrom": "haul_recover_SE_1"
+        }
+      }
     },
     {
       "name": "haul_pull_S_0",
@@ -7779,7 +8463,19 @@
       "shift": 0,
       "outlineGaps": 0,
       "colours": 16,
-      "masked": 144
+      "masked": 144,
+      "points": {
+        "hand": {
+          "at": [
+            53,
+            55
+          ],
+          "source": [
+            39,
+            47
+          ]
+        }
+      }
     },
     {
       "name": "haul_pull_S_1",
@@ -7791,7 +8487,19 @@
       "shift": 0,
       "outlineGaps": 0,
       "colours": 17,
-      "masked": 136
+      "masked": 136,
+      "points": {
+        "hand": {
+          "at": [
+            44,
+            52
+          ],
+          "source": [
+            30,
+            44
+          ]
+        }
+      }
     },
     {
       "name": "haul_pull_SE_0",
@@ -7803,7 +8511,19 @@
       "shift": -1,
       "outlineGaps": 4,
       "colours": 15,
-      "masked": 141
+      "masked": 141,
+      "points": {
+        "hand": {
+          "at": [
+            56,
+            57
+          ],
+          "source": [
+            42,
+            50
+          ]
+        }
+      }
     },
     {
       "name": "haul_pull_SE_1",
@@ -7815,7 +8535,19 @@
       "shift": -1,
       "outlineGaps": 2,
       "colours": 15,
-      "masked": 118
+      "masked": 118,
+      "points": {
+        "hand": {
+          "at": [
+            70,
+            51
+          ],
+          "source": [
+            56,
+            44
+          ]
+        }
+      }
     },
     {
       "name": "haul_pull_E_0",
@@ -7827,7 +8559,19 @@
       "shift": -1,
       "outlineGaps": 3,
       "colours": 17,
-      "masked": 95
+      "masked": 95,
+      "points": {
+        "hand": {
+          "at": [
+            52,
+            48
+          ],
+          "source": [
+            38,
+            41
+          ]
+        }
+      }
     },
     {
       "name": "haul_pull_E_1",
@@ -7839,7 +8583,19 @@
       "shift": -1,
       "outlineGaps": 4,
       "colours": 14,
-      "masked": 111
+      "masked": 111,
+      "points": {
+        "hand": {
+          "at": [
+            56,
+            42
+          ],
+          "source": [
+            42,
+            35
+          ]
+        }
+      }
     },
     {
       "name": "haul_pull_NE_0",
@@ -7851,7 +8607,19 @@
       "shift": -1,
       "outlineGaps": 4,
       "colours": 12,
-      "masked": 9
+      "masked": 9,
+      "points": {
+        "hand": {
+          "at": [
+            53,
+            45
+          ],
+          "source": [
+            39,
+            38
+          ]
+        }
+      }
     },
     {
       "name": "haul_pull_NE_1",
@@ -7863,7 +8631,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 13,
-      "masked": 12
+      "masked": 12,
+      "points": {
+        "hand": {
+          "at": [
+            58,
+            44
+          ],
+          "source": [
+            44,
+            37
+          ]
+        }
+      }
     },
     {
       "name": "haul_pull_N_0",
@@ -7875,7 +8655,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 5,
-      "masked": 0
+      "masked": 0,
+      "points": {
+        "hand": {
+          "at": [
+            48,
+            50
+          ],
+          "source": [
+            34,
+            43
+          ]
+        }
+      }
     },
     {
       "name": "haul_pull_N_1",
@@ -7887,7 +8679,19 @@
       "shift": -1,
       "outlineGaps": 2,
       "colours": 6,
-      "masked": 0
+      "masked": 0,
+      "points": {
+        "hand": {
+          "at": [
+            48,
+            50
+          ],
+          "source": [
+            34,
+            43
+          ]
+        }
+      }
     },
     {
       "name": "haul_pull_NW_0",
@@ -7899,7 +8703,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 12,
-      "masked": 19
+      "masked": 19,
+      "points": {
+        "hand": {
+          "at": [
+            31,
+            51
+          ],
+          "source": [
+            17,
+            44
+          ]
+        }
+      }
     },
     {
       "name": "haul_pull_NW_1",
@@ -7911,7 +8727,19 @@
       "shift": -1,
       "outlineGaps": 4,
       "colours": 15,
-      "masked": 34
+      "masked": 34,
+      "points": {
+        "hand": {
+          "at": [
+            38,
+            39
+          ],
+          "source": [
+            24,
+            32
+          ]
+        }
+      }
     },
     {
       "name": "haul_pull_W_0",
@@ -7923,7 +8751,19 @@
       "shift": -1,
       "outlineGaps": 4,
       "colours": 12,
-      "masked": 61
+      "masked": 61,
+      "points": {
+        "hand": {
+          "at": [
+            36,
+            49
+          ],
+          "source": [
+            22,
+            42
+          ]
+        }
+      }
     },
     {
       "name": "haul_pull_W_1",
@@ -7935,7 +8775,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 12,
-      "masked": 65
+      "masked": 65,
+      "points": {
+        "hand": {
+          "at": [
+            40,
+            44
+          ],
+          "source": [
+            26,
+            37
+          ]
+        }
+      }
     },
     {
       "name": "haul_pull_SW_0",
@@ -7947,7 +8799,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 17,
-      "masked": 138
+      "masked": 138,
+      "points": {
+        "hand": {
+          "at": [
+            41,
+            52
+          ],
+          "source": [
+            27,
+            45
+          ]
+        }
+      }
     },
     {
       "name": "haul_pull_SW_1",
@@ -7959,7 +8823,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 14,
-      "masked": 146
+      "masked": 146,
+      "points": {
+        "hand": {
+          "at": [
+            38,
+            51
+          ],
+          "source": [
+            24,
+            44
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_S_0",
@@ -7971,7 +8847,19 @@
       "shift": 0,
       "outlineGaps": 5,
       "colours": 15,
-      "masked": 167
+      "masked": 167,
+      "points": {
+        "hand": {
+          "at": [
+            39,
+            55
+          ],
+          "source": [
+            25,
+            47
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_S_1",
@@ -7983,7 +8871,19 @@
       "shift": 0,
       "outlineGaps": 12,
       "colours": 15,
-      "masked": 142
+      "masked": 142,
+      "points": {
+        "hand": {
+          "at": [
+            54,
+            57
+          ],
+          "source": [
+            40,
+            49
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_SE_0",
@@ -7995,7 +8895,19 @@
       "shift": -1,
       "outlineGaps": 7,
       "colours": 18,
-      "masked": 149
+      "masked": 149,
+      "points": {
+        "hand": {
+          "at": [
+            57,
+            52
+          ],
+          "source": [
+            43,
+            45
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_SE_1",
@@ -8007,7 +8919,19 @@
       "shift": -1,
       "outlineGaps": 7,
       "colours": 15,
-      "masked": 153
+      "masked": 153,
+      "points": {
+        "hand": {
+          "at": [
+            61,
+            56
+          ],
+          "source": [
+            47,
+            49
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_E_0",
@@ -8019,7 +8943,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 15,
-      "masked": 76
+      "masked": 76,
+      "points": {
+        "hand": {
+          "at": [
+            48,
+            51
+          ],
+          "source": [
+            34,
+            44
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_E_1",
@@ -8031,7 +8967,19 @@
       "shift": -1,
       "outlineGaps": 3,
       "colours": 16,
-      "masked": 91
+      "masked": 91,
+      "points": {
+        "hand": {
+          "at": [
+            45,
+            51
+          ],
+          "source": [
+            31,
+            44
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_NE_0",
@@ -8043,7 +8991,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 14,
-      "masked": 6
+      "masked": 6,
+      "points": {
+        "hand": {
+          "at": [
+            56,
+            51
+          ],
+          "source": [
+            42,
+            44
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_NE_1",
@@ -8055,7 +9015,19 @@
       "shift": -1,
       "outlineGaps": 5,
       "colours": 15,
-      "masked": 20
+      "masked": 20,
+      "points": {
+        "hand": {
+          "at": [
+            56,
+            51
+          ],
+          "source": [
+            42,
+            44
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_N_0",
@@ -8067,7 +9039,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 4,
-      "masked": 0
+      "masked": 0,
+      "points": {
+        "hand": {
+          "at": [
+            48,
+            50
+          ],
+          "source": [
+            34,
+            43
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_N_1",
@@ -8079,7 +9063,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 6,
-      "masked": 0
+      "masked": 0,
+      "points": {
+        "hand": {
+          "at": [
+            48,
+            50
+          ],
+          "source": [
+            34,
+            43
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_NW_0",
@@ -8091,7 +9087,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 11,
-      "masked": 12
+      "masked": 12,
+      "points": {
+        "hand": {
+          "at": [
+            35,
+            50
+          ],
+          "source": [
+            21,
+            43
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_NW_1",
@@ -8103,7 +9111,19 @@
       "shift": -1,
       "outlineGaps": 3,
       "colours": 12,
-      "masked": 15
+      "masked": 15,
+      "points": {
+        "hand": {
+          "at": [
+            34,
+            59
+          ],
+          "source": [
+            20,
+            52
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_W_0",
@@ -8115,7 +9135,19 @@
       "shift": -1,
       "outlineGaps": 2,
       "colours": 18,
-      "masked": 64
+      "masked": 64,
+      "points": {
+        "hand": {
+          "at": [
+            40,
+            45
+          ],
+          "source": [
+            26,
+            38
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_W_1",
@@ -8127,7 +9159,19 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 12,
-      "masked": 15
+      "masked": 15,
+      "points": {
+        "hand": {
+          "at": [
+            37,
+            52
+          ],
+          "source": [
+            23,
+            45
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_SW_0",
@@ -8139,7 +9183,19 @@
       "shift": -1,
       "outlineGaps": 6,
       "colours": 16,
-      "masked": 134
+      "masked": 134,
+      "points": {
+        "hand": {
+          "at": [
+            38,
+            52
+          ],
+          "source": [
+            24,
+            45
+          ]
+        }
+      }
     },
     {
       "name": "haul_slide_SW_1",
@@ -8151,7 +9207,19 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 16,
-      "masked": 152
+      "masked": 152,
+      "points": {
+        "hand": {
+          "at": [
+            39,
+            52
+          ],
+          "source": [
+            25,
+            45
+          ]
+        }
+      }
     },
     {
       "name": "hit_S_0",
@@ -8540,6 +9608,7 @@
   ],
   "outputs": [
     "art/review/kindled-ash/contact.png",
+    "art/review/kindled-ash/points.png",
     "art/review/kindled-ash/report.json",
     "art/review/kindled-ash/report.md",
     "art/review/kindled-ash/tones.png",
