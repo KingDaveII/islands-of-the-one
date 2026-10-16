@@ -52,7 +52,7 @@ Whitelist (28): #F4EFE6 #D9D2E9 #A99FC4 #5B5478 #2A2540 #F2B65A #C9733A #4A4E57 
 - Transparent background. No baked shadow: the engine draws the grounding shadow.
 - No letters, numbers or text on anything.
 - **The skin ramp is for skin only on player Kindled sheets.** Those sheets are swapped to the four clay tones at load under a skin mask (G1.2), so nothing else may use unwritten-sail #8C7F6E or unwritten-tar #5E5448. Belts and boots take watcher-iron and hollow-deep; grips, wood, rope and leather take the bronze and leather ramp; ember singe ends in sleeper-ochre. Cleanup recolours any stray pixels.
-- Kindled are clay folk: two eyes of at most 2×2 px (a dark pupil, at most one eye-white pixel), 3 amber freckles, a mouth at most 2 px of shade, skin in the clay ramp. The Hookblade (a short blade with a hook at the tip) sits in the right hand.
+- Kindled are clay folk: two eyes of at most 2×2 px (a dark pupil, at most one eye-white pixel), 3 amber freckles, a mouth at most 2 px of shade, skin in the clay ramp. The Hookblade (a short blade with a hook at the tip) sits in the right hand. In W it may sit in the near hand, where the generator draws it, so the blade stays visible; in NW and N it may be hidden behind the body.
 - Husks are hollow shells: pale shell ramp, one bright core with its ring, no face, eyes or legs.
 - Silhouette first: everything must read as a flat shape at 1×.
 - Dream-night #1C2147 appears only on player sheets, as the outline and inside the figure. On everyone else its job goes to hollow-deep or sleeper-night.
