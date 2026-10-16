@@ -1,0 +1,45 @@
+{
+  "sheet": "npc-tally",
+  "kind": "npc",
+  "outline": "other",
+  "draft": true,
+  "notes": "G1.2 acceptance draft from g13b-job4's raw Tally: idle frame 0 in all 8 facings, from the rotations.",
+  "anims": {
+    "idle": {
+      "facings": {
+        "S": {
+          "src": "art/raw/g13b-job4/npc-tally/south.png",
+          "frames": [0]
+        },
+        "SE": {
+          "src": "art/raw/g13b-job4/npc-tally/south-east.png",
+          "frames": [0]
+        },
+        "E": {
+          "src": "art/raw/g13b-job4/npc-tally/east.png",
+          "frames": [0]
+        },
+        "NE": {
+          "src": "art/raw/g13b-job4/npc-tally/north-east.png",
+          "frames": [0]
+        },
+        "N": {
+          "src": "art/raw/g13b-job4/npc-tally/north.png",
+          "frames": [0]
+        },
+        "NW": {
+          "src": "art/raw/g13b-job4/npc-tally/north-west.png",
+          "frames": [0]
+        },
+        "W": {
+          "src": "art/raw/g13b-job4/npc-tally/west.png",
+          "frames": [0]
+        },
+        "SW": {
+          "src": "art/raw/g13b-job4/npc-tally/south-west.png",
+          "frames": [0]
+        }
+      }
+    }
+  }
+}

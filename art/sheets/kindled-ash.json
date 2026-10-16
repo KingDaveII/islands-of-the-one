@@ -1,0 +1,81 @@
+{
+  "sheet": "kindled-ash",
+  "kind": "kindled",
+  "outline": "player",
+  "draft": true,
+  "notes": "G1.2 acceptance draft from g13b-job4's raw player (the 48 px pick, not ART's 45 px exemplar). Proves the pipeline; not production art. light_1 uses v3 frames 1, 3 and 5 as stand-ins until ART picks.",
+  "anims": {
+    "idle": {
+      "facings": {
+        "S": {
+          "src": "art/raw/g13b-job4/player/south.png",
+          "frames": [0]
+        },
+        "SE": {
+          "src": "art/raw/g13b-job4/player/south-east.png",
+          "frames": [0]
+        },
+        "E": {
+          "src": "art/raw/g13b-job4/player/east.png",
+          "frames": [0]
+        },
+        "NE": {
+          "src": "art/raw/g13b-job4/player/north-east.png",
+          "frames": [0]
+        },
+        "N": {
+          "src": "art/raw/g13b-job4/player/north.png",
+          "frames": [0]
+        },
+        "NW": {
+          "src": "art/raw/g13b-job4/player/north-west.png",
+          "frames": [0]
+        },
+        "W": {
+          "src": "art/raw/g13b-job4/player/west.png",
+          "frames": [0]
+        },
+        "SW": {
+          "src": "art/raw/g13b-job4/player/south-west.png",
+          "frames": [0]
+        }
+      }
+    },
+    "walk": {
+      "facings": {
+        "S": {
+          "src": "art/raw/g13b-job4/player/walk-skel/south",
+          "frames": [0, 1, 2, 3, 4, 5]
+        },
+        "SE": {
+          "src": "art/raw/g13b-job4/player/walk-skel/south-east",
+          "frames": [0, 1, 2, 3, 4, 5]
+        },
+        "E": {
+          "src": "art/raw/g13b-job4/player/walk-skel/east",
+          "frames": [0, 1, 2, 3, 4, 5]
+        },
+        "NE": {
+          "src": "art/raw/g13b-job4/player/walk-skel/north-east",
+          "frames": [0, 1, 2, 3, 4, 5]
+        },
+        "N": {
+          "src": "art/raw/g13b-job4/player/walk-skel/north",
+          "frames": [0, 1, 2, 3, 4, 5]
+        }
+      }
+    },
+    "light_1": {
+      "facings": {
+        "S": {
+          "src": "art/raw/g13b-job4/player/attack-v3/south",
+          "frames": [1, 3, 5]
+        },
+        "E": {
+          "src": "art/raw/g13b-job4/player/attack-v3/east",
+          "frames": [1, 3, 5]
+        }
+      }
+    }
+  }
+}
