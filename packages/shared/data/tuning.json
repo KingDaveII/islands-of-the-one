@@ -376,6 +376,10 @@
     "telegraphBlinkHz": 12,
     "promptRangePx": 40
   },
+  "anim": {
+    "walkCyclePx": 64,
+    "runCyclePx": 96
+  },
   "view": {
     "widthPx": 960,
     "minWidthPx": 768,

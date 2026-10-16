@@ -1,4 +1,12 @@
-import { SPRITE_FACINGS, type SpriteAnim, type SpriteFacing, type SpriteSheet } from '@iot/shared';
+import {
+  isAwaitingArt,
+  isV2Sheet,
+  SPRITE_FACINGS,
+  type AnimTuning,
+  type SpriteAnim,
+  type SpriteFacing,
+  type SpriteSheet,
+} from '@iot/shared';
 import {
   abilityAt,
   heavyTiming,
@@ -27,8 +35,11 @@ import { facingIndex } from './facing.js';
  * Timing: the sim's move windows are the authority. An animation with a
  * window (dodge, lights, the thrust, Haul) is stretched or cut to fit its
  * startup / active / recovery ticks; looping and one-shot animations
- * (idle, walk, charge, telegraph, death) run at the sheet's frame rate from
- * the sim tick, so they freeze in hitstop and slow with slow-mo.
+ * (idle, charge, telegraph, death) run at the sheet's frame rate from the
+ * sim tick, so they freeze in hitstop and slow with slow-mo. The Kindled's
+ * walk and run on a v2 sheet play by distance instead (`Stride`): one cycle
+ * per `anim.walkCyclePx` / `anim.runCyclePx` world px the body moves, so the
+ * feet keep pace with the ground at any speed.
  */
 export interface Pose {
   /** Key of the sheet's `anims` entry (`walk_SE`, `telegraph`). */
@@ -58,6 +69,25 @@ export const HIT_MS = 100;
 /** The player's walk cycle plays once the body moves faster than this (units per tick). */
 const WALK_THRESHOLD = SUB / 4;
 
+/**
+ * How far the Kindled's body has moved, for the walk and run cycles: the
+ * world px between its interpolated render positions, summed by the renderer
+ * (`StrideMeter`). It keeps growing through stops, so a restart picks the
+ * cycle up where it stopped. It only picks a frame; the sim moves the body.
+ */
+export interface Stride {
+  /** World px moved so far. */
+  distancePx: number;
+  /** The `anim` tuning: world px per full walk cycle and per full run cycle. */
+  cycles: AnimTuning;
+}
+
+/** The Kindled's two ways of moving. In an encounter it always runs (GAME DESIGN 2026-10-16); walking is M2's holding. */
+export type Gait = 'walk' | 'run';
+
+/** The animation that plays for a row on `ANIMS_AWAITING_ART` until ART draws it. */
+const STAND_IN: Readonly<Record<string, string>> = { run: 'walk' };
+
 const ticks = (ms: number): number => (ms * TICK_HZ) / 1000;
 
 /** Frame of a looping animation at the sheet's rate, from a tick count. */
@@ -65,6 +95,16 @@ export function loopFrame(anim: SpriteAnim, tick: number): number {
   const n = anim.frames.length;
   if (n <= 1 || anim.frameRate <= 0) return 0;
   return Math.floor((Math.max(0, tick) * anim.frameRate) / TICK_HZ) % n;
+}
+
+/**
+ * Frame of a cycle played by distance: `cyclePx` world px per full cycle, so
+ * `floor(distance / cyclePx × frames) mod frames`.
+ */
+export function strideFrame(anim: SpriteAnim, distancePx: number, cyclePx: number): number {
+  const n = anim.frames.length;
+  if (n <= 1 || cyclePx <= 0) return 0;
+  return Math.floor((Math.max(0, distancePx) * n) / cyclePx) % n;
 }
 
 /** Frame of a one-shot animation at the sheet's rate, holding the last frame, from a tick count. */
@@ -158,6 +198,32 @@ function kindledPoseOf(
   return { name, facing, anim: key, frame: anim ? Math.max(0, Math.min(n - 1, frame(anim))) : 0 };
 }
 
+/** Whether the sheet has an animation in any facing. */
+function hasAnim(sheet: SpriteSheet, name: string): boolean {
+  return SPRITE_FACINGS.some((f) => `${name}_${f}` in sheet.anims);
+}
+
+/**
+ * The Kindled moving at a gait: `run` (or `walk` standing in while run is on
+ * `ANIMS_AWAITING_ART`, or missing from the sheet) at `anim.runCyclePx`, or
+ * `walk` at `anim.walkCyclePx`, the cycle by the gait either way. On a v2
+ * sheet the frame comes from the distance moved; a v1 sheet, or no stride
+ * (tools, tests of other states), keeps the sheet's frame rate on the tick.
+ */
+export function gaitPose(
+  sheet: SpriteSheet,
+  gait: Gait,
+  angle: number,
+  tick: number,
+  stride?: Stride,
+): KindledPose {
+  const standIn = STAND_IN[gait];
+  const name = standIn !== undefined && (isAwaitingArt({ name: gait }) || !hasAnim(sheet, gait)) ? standIn : gait;
+  if (!stride || !isV2Sheet(sheet)) return kindledPoseOf(sheet, name, angle, (a) => loopFrame(a, tick));
+  const cyclePx = gait === 'run' ? stride.cycles.runCyclePx : stride.cycles.walkCyclePx;
+  return kindledPoseOf(sheet, name, angle, (a) => strideFrame(a, stride.distancePx, cyclePx));
+}
+
 /** True while a Hook-thrust pins a Husk (the engine shows `heavy_hold`). */
 function pinning(s: RunState): boolean {
   return s.husks.some((h) => h.action === 'held');
@@ -166,7 +232,8 @@ function pinning(s: RunState): boolean {
 /**
  * The Kindled's pose from the player's sim state.
  *
- * - idle / walk from movement, facing the aim;
+ * - idle, or run while moving (walk standing in until ART draws run), facing
+ *   the aim; run plays by `stride` on a v2 sheet (`gaitPose`);
  * - dodge: crouch, the roll (2 frames) and recover over the dodge window;
  * - light_1..3 by combo step, wind-up / swing / recover over the strike window;
  * - heavy_charge at the sheet's rate holding the last frame → heavy_thrust over
@@ -184,6 +251,7 @@ export function kindledPose(
   P: Params,
   sheet: SpriteSheet,
   clocks: Clocks,
+  stride?: Stride,
 ): KindledPose {
   const p = s.player;
   const tick = s.tick;
@@ -222,7 +290,9 @@ export function kindledPose(
       break;
   }
   const moving = Math.abs(p.vx) + Math.abs(p.vy) > WALK_THRESHOLD;
-  return kindledPoseOf(sheet, moving ? 'walk' : 'idle', p.aim, (a) => loopFrame(a, tick));
+  // In an encounter (Combat and Calm alike) the Kindled always runs; walking is for outside encounters (M2).
+  if (moving) return gaitPose(sheet, 'run', p.aim, tick, stride);
+  return kindledPoseOf(sheet, 'idle', p.aim, (a) => loopFrame(a, tick));
 }
 
 function heavyPose(s: RunState, p: PlayerState, P: Params, sheet: SpriteSheet): KindledPose {

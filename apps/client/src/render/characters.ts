@@ -1,5 +1,11 @@
 import type Phaser from 'phaser';
-import { spriteSheets, type ClayTone, type SpriteSheet, type SpriteSheetName } from '@iot/shared';
+import {
+  spriteSheets,
+  type AnimTuning,
+  type ClayTone,
+  type SpriteSheet,
+  type SpriteSheetName,
+} from '@iot/shared';
 import { SUB, type HuskKind, type Params, type Run } from '@iot/sim';
 import type { Session } from '../game/session.js';
 import { Palette } from '../palette.js';
@@ -16,6 +22,7 @@ import { huskFeet, PLAYER_FEET } from './feet.js';
 import type { Fx } from './fx.js';
 import { snapToArt } from './scale.js';
 import { spriteScale, toneTextureKey } from './spriteSheets.js';
+import { StrideMeter } from './stride.js';
 
 type Sprite = Phaser.GameObjects.Sprite;
 
@@ -81,6 +88,8 @@ export class CharacterSprites {
   private readonly kindledSheet: SpriteSheet = spriteSheets['kindled-ash'];
   /** The run's params at the last draw (a corpse's feet come from its kind's radius). */
   private params: Params | null = null;
+  /** How far the player has moved (world px), for the run and walk cycles. */
+  private readonly stride = new StrideMeter();
   /** Recent player positions (sim px), for the trail to start behind the dodge. */
   private recent: { x: number; y: number; pose: KindledPose; age: number }[] = [];
   private trailLeft = 0;
@@ -93,6 +102,7 @@ export class CharacterSprites {
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly layer: Phaser.GameObjects.Layer,
+    private readonly anim: () => AnimTuning,
     tone: ClayTone = spriteSheets['kindled-ash'].palette?.drawn as ClayTone,
   ) {
     this.tone = tone;
@@ -244,7 +254,8 @@ export class CharacterSprites {
     // The player.
     if (p.action === 'dead' && this.deathAt < 0) this.deathAt = this.now;
     if (p.action !== 'dead') this.deathAt = -1;
-    const pose = kindledPose(s, P, this.kindledSheet, this.clocks('p'));
+    const stride = { distancePx: this.stride.step(player.x, player.y), cycles: this.anim() };
+    const pose = kindledPose(s, P, this.kindledSheet, this.clocks('p'), stride);
     this.pose = pose;
     this.show(this.player, this.playerTexture(), this.kindledSheet, pose);
     const invulnerable = p.iframes > 0 || p.hurtInvuln > 0;
