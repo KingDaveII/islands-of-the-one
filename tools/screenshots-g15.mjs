@@ -12,11 +12,19 @@
  * of one size; `--m1 <baseUrl> <name>` takes the 1920 × 912 fight shot from
  * another client (main before G1.5) as `<name>.png`.
  *
+ * `--poses` (G1.5b, no account needed) poses the Kindled at 1920 × 912 in
+ * each of the 8 facings and shoots the page plus a 4× crop around the
+ * player: the `heavy_charge` last frame at full charge (the charge spark),
+ * the `haul_throw` last frame while the hook flies (the chain's start), and
+ * a light wind-up (`light_1` frame 0, the startup) facing E and S. With
+ * `--only <facing>`, the shots of that facing alone.
+ *
  *   pnpm dev   # in another shell
  *   node tools/screenshots-g15.mjs [outDir] [baseUrl]
+ *   node tools/screenshots-g15.mjs --poses [outDir] [baseUrl]
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
@@ -36,6 +44,11 @@ const m1 = (() => {
   return { base, name };
 })();
 const only = flag('--only');
+const poses = (() => {
+  const i = args.indexOf('--poses');
+  if (i >= 0) args.splice(i, 1);
+  return i >= 0;
+})();
 const OUT = resolve(args[0] ?? join(ROOT, 'docs/screenshots/g15'));
 const BASE = args[1] ?? 'http://localhost:5173';
 
@@ -234,7 +247,146 @@ async function sizeShots(size, account) {
   await context.close();
 }
 
-if (m1) {
+/** The sheet's facings, in sheet order; a facing's aim is its sim angle (1/4096 turn, 0 = east, y down). */
+const FACINGS = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];
+const aimOf = (facing) => ((2 - FACINGS.indexOf(facing) + 8) % 8) * 512;
+/** Packed sim input (packages/sim/src/input.ts): the aim in bits 0-11, buttons from bit 23. */
+const BUTTON = { Light: 1, Heavy: 2, Ability1: 8 };
+const packed = (aim, buttons) => ((aim & 0xfff) | (buttons << 23)) >>> 0;
+
+/** The page's pixels around the player (`w` × `h` world px), each device px drawn 4 × 4. */
+async function playerCrop(page, name, w = 72, h = 64) {
+  const png = await page.screenshot();
+  const box = await page.evaluate(
+    ({ w, h }) => {
+      const scene = window.__iot.scene();
+      const s = scene.session.state;
+      const { zU } = scene.fits().ui;
+      const { zW } = scene.fits().world;
+      const c = scene.toUi(s.player.x / 256, s.player.y / 256);
+      return { x: Math.round(c.x * zU - (w / 2) * zW), y: Math.round(c.y * zU - (h / 2 + 8) * zW), w: w * zW, h: h * zW };
+    },
+    { w, h },
+  );
+  const data = await page.evaluate(
+    async ({ b64, box }) => {
+      const img = new Image();
+      img.src = `data:image/png;base64,${b64}`;
+      await img.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = box.w * 4;
+      canvas.height = box.h * 4;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, box.x, box.y, box.w, box.h, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL('image/png').split(',')[1];
+    },
+    { b64: png.toString('base64'), box },
+  );
+  writeFileSync(join(OUT, `${name}.png`), Buffer.from(data, 'base64'));
+  console.log(`  ${name}.png`);
+}
+
+/**
+ * Start a fresh run, play `input(state)` each tick until `until(state, pose)`
+ * holds in the page, then freeze the sim (speed 0) for the shots.
+ */
+async function posed(page, seed, input, until) {
+  await page.evaluate((seed) => window.__iot.startRun(seed), seed);
+  await waitScene(page, 'game');
+  await page.evaluate((src) => {
+    const TILE = 16;
+    const scene = window.__iot.scene();
+    // Nothing in the way: the first wave held off, the player on the floor tile farthest from any wall or pillar.
+    const s = scene.session.state;
+    s.husks.length = 0;
+    const { tiles, cols, rows } = s.room;
+    const solid = (c, r) => r < 0 || r >= rows || c < 0 || c >= cols || '#oD'.includes(tiles[r][c]);
+    let best = { c: 0, r: 0, d: -1 };
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (solid(c, r)) continue;
+        let d = 1;
+        while (d < 16 && ![...Array(2 * d + 1).keys()].some((i) => solid(c - d + i, r - d) || solid(c - d + i, r + d) || solid(c - d, r - d + i) || solid(c + d, r - d + i))) d++;
+        if (d > best.d) best = { c, r, d };
+      }
+    }
+    s.player.x = (best.c * TILE + TILE / 2) * 256;
+    s.player.y = (best.r * TILE + TILE / 2) * 256;
+    window.__iot.setSpeed(0.5);
+    window.__iot.setInputSource(new Function('s', `return (${src})(s);`));
+  }, input);
+  await page.waitForFunction(
+    (src) => {
+      const scene = window.__iot.scene();
+      if (!scene) return false;
+      scene.session.state.husks.length = 0;
+      const done = new Function('s', 'pose', `return (${src})(s, pose);`)(scene.session.state, window.__iot.pose());
+      // Frozen in the frame the pose shows up, before the next tick runs.
+      if (done) window.__iot.setSpeed(0);
+      return done;
+    },
+    until,
+    { polling: 'raf', timeout: 60000 },
+  );
+  const at = await page.evaluate(() => {
+    const p = window.__iot.scene().session.state.player;
+    const pose = window.__iot.pose();
+    return `${pose?.anim}#${pose?.frame} ${p.action} t${p.t}${p.hook ? ' hook' : ''}`;
+  });
+  console.log(`  posed: ${at}`);
+  await sleep(250);
+}
+
+async function poseShots() {
+  const context = await browser.newContext({ viewport: { width: 1920, height: 912 } });
+  const page = await context.newPage();
+  page.on('pageerror', (e) => console.error('page error:', e.message));
+  await page.goto(BASE);
+  for (let i = 0; i < 100 && !(await page.evaluate(() => Boolean(window.__iot))); i++) await sleep(100);
+  for (const facing of FACINGS) {
+    if (only && only !== facing) continue;
+    const aim = aimOf(facing);
+    // The heavy held to full charge: the charge spark at spark_2.
+    await posed(
+      page,
+      11,
+      `() => ${packed(aim, BUTTON.Heavy)}`,
+      `(s, pose) => pose?.anim === 'heavy_charge_${facing}' && pose.frame === 2 &&
+        s.player.charge >= window.__iot.scene().session.run.params.weapon.heavy.chargeMax`,
+    );
+    await shot(page, `charge-${facing}`);
+    await playerCrop(page, `charge-${facing}-4x`);
+    // The Haul thrown into open floor: the throw's last frame while the hook flies.
+    await posed(
+      page,
+      12,
+      `(s) => (s.player.action === 'idle' && !s.player.hook ? ${packed(aim, BUTTON.Ability1)} : ${packed(aim, 0)})`,
+      `(s, pose) => pose?.anim === 'haul_throw_${facing}' && pose.frame === 1 && Boolean(s.player.hook)`,
+    );
+    await shot(page, `haul-${facing}`);
+    await playerCrop(page, `haul-${facing}-4x`);
+  }
+  for (const facing of ['E', 'S']) {
+    if (only && only !== facing) continue;
+    const aim = aimOf(facing);
+    // One light press: the first strike's wind-up (light_1 frame 0, the startup).
+    await posed(
+      page,
+      13,
+      `(s) => (s.player.action === 'idle' && s.tick < 30 ? ${packed(aim, BUTTON.Light)} : ${packed(aim, 0)})`,
+      `(s, pose) => pose?.anim === 'light_1_${facing}' && pose.frame === 0 &&
+        s.player.action === 'light' && s.player.t >= 2`,
+    );
+    await shot(page, `windup-${facing}`);
+    await playerCrop(page, `windup-${facing}-4x`);
+  }
+  await context.close();
+}
+
+if (poses) {
+  await poseShots();
+} else if (m1) {
   // The same fight at 1920 × 912 on another client (main before G1.5), for comparison.
   const context = await browser.newContext({ viewport: { width: 1920, height: 912 } });
   const page = await context.newPage();
