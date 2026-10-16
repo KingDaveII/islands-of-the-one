@@ -135,10 +135,10 @@
   ],
   "totals": {
     "frames": 328,
-    "offPalette": 14414,
+    "offPalette": 14351,
     "maxDeltaE": 8.89,
-    "outlineGaps": 1284,
-    "masked": 24592
+    "outlineGaps": 1314,
+    "masked": 24597
   },
   "flags": {
     "seam": [
@@ -299,15 +299,17 @@
       "haul_throw_E_0",
       "haul_throw_E_1",
       "haul_throw_NE_1",
+      "haul_throw_W_0",
+      "haul_throw_W_1",
       "haul_throw_SW_0",
       "haul_throw_SW_1",
-      "haul_recover_S_0",
       "haul_recover_S_1",
       "haul_recover_SE_0",
       "haul_recover_SE_1",
       "haul_recover_E_0",
       "haul_recover_E_1",
       "haul_recover_W_0",
+      "haul_recover_W_1",
       "haul_recover_SW_0",
       "haul_recover_SW_1",
       "haul_pull_S_0",
@@ -403,14 +405,14 @@
         "heavy_thrust": 2,
         "heavy_hold": 1,
         "heavy_recover": 2,
-        "haul_throw": 7,
+        "haul_throw": 6,
         "haul_recover": 0,
         "haul_pull": 10,
         "haul_slide": 3,
         "hit": 1,
         "death": 0
       },
-      "total": 70,
+      "total": 69,
       "stale": false
     },
     {
@@ -454,13 +456,13 @@
         "heavy_hold": 13,
         "heavy_recover": 19,
         "haul_throw": 7,
-        "haul_recover": 11,
+        "haul_recover": 2,
         "haul_pull": 11,
         "haul_slide": 11,
         "hit": 11,
         "death": 10
       },
-      "total": 348,
+      "total": 339,
       "stale": false
     },
     {
@@ -478,14 +480,14 @@
         "heavy_thrust": 13,
         "heavy_hold": 5,
         "heavy_recover": 14,
-        "haul_throw": 5,
-        "haul_recover": 6,
+        "haul_throw": 10,
+        "haul_recover": 3,
         "haul_pull": 8,
         "haul_slide": 6,
         "hit": 14,
         "death": 8
       },
-      "total": 274,
+      "total": 276,
       "stale": false
     },
     {
@@ -503,14 +505,14 @@
         "heavy_thrust": 30,
         "heavy_hold": 10,
         "heavy_recover": 29,
-        "haul_throw": 61,
-        "haul_recover": 46,
+        "haul_throw": 53,
+        "haul_recover": 43,
         "haul_pull": 52,
         "haul_slide": 52,
         "hit": 6,
         "death": 0
       },
-      "total": 649,
+      "total": 638,
       "stale": false
     },
     {
@@ -528,23 +530,23 @@
         "heavy_thrust": 0,
         "heavy_hold": 0,
         "heavy_recover": 2,
-        "haul_throw": 2,
-        "haul_recover": 1,
+        "haul_throw": 4,
+        "haul_recover": 2,
         "haul_pull": 3,
         "haul_slide": 1,
         "hit": 5,
         "death": 12
       },
-      "total": 72,
+      "total": 75,
       "stale": false
     }
   ],
   "staleRemap": [],
-  "snappedColours": 973,
+  "snappedColours": 940,
   "snapped": [
     {
       "colour": "#3d3c4c",
-      "pixels": 1720,
+      "pixels": 1731,
       "to": "#4a4e57",
       "deltaE": 6.15,
       "materials": [
@@ -666,6 +668,8 @@
         "haul_throw_E_1",
         "haul_throw_NE_0",
         "haul_throw_NE_1",
+        "haul_throw_W_0",
+        "haul_throw_W_1",
         "haul_throw_SW_0",
         "haul_throw_SW_1",
         "haul_recover_SE_0",
@@ -674,6 +678,8 @@
         "haul_recover_E_1",
         "haul_recover_NE_0",
         "haul_recover_NE_1",
+        "haul_recover_W_0",
+        "haul_recover_W_1",
         "haul_recover_SW_0",
         "haul_recover_SW_1",
         "haul_pull_SE_0",
@@ -703,7 +709,7 @@
     },
     {
       "colour": "#363347",
-      "pixels": 1716,
+      "pixels": 1690,
       "to": "#24305a",
       "deltaE": 4.7,
       "materials": [
@@ -825,16 +831,12 @@
         "haul_throw_SE_1",
         "haul_throw_NW_0",
         "haul_throw_NW_1",
-        "haul_throw_W_0",
-        "haul_throw_W_1",
         "haul_throw_SW_0",
         "haul_throw_SW_1",
         "haul_recover_SE_0",
         "haul_recover_SE_1",
         "haul_recover_NW_0",
         "haul_recover_NW_1",
-        "haul_recover_W_0",
-        "haul_recover_W_1",
         "haul_recover_SW_0",
         "haul_recover_SW_1",
         "haul_pull_SE_0",
@@ -863,7 +865,7 @@
     },
     {
       "colour": "#7e7063",
-      "pixels": 1295,
+      "pixels": 1285,
       "to": "#8c7f6e",
       "deltaE": 4.93,
       "materials": [
@@ -1059,7 +1061,7 @@
     },
     {
       "colour": "#6f6356",
-      "pixels": 952,
+      "pixels": 939,
       "to": "#5e5448",
       "deltaE": 5.53,
       "materials": [
@@ -1201,8 +1203,6 @@
         "haul_recover_E_1",
         "haul_recover_W_0",
         "haul_recover_W_1",
-        "haul_recover_SW_0",
-        "haul_recover_SW_1",
         "haul_pull_SE_0",
         "haul_pull_SE_1",
         "haul_pull_E_0",
@@ -1243,7 +1243,7 @@
     },
     {
       "colour": "#685c56",
-      "pixels": 620,
+      "pixels": 639,
       "to": "#5e5448",
       "deltaE": 3.39,
       "materials": [
@@ -1352,6 +1352,7 @@
         "haul_throw_SE_1",
         "haul_throw_NW_0",
         "haul_throw_NW_1",
+        "haul_throw_SW_0",
         "haul_throw_SW_1",
         "haul_recover_SE_0",
         "haul_recover_SE_1",
@@ -1380,7 +1381,7 @@
     },
     {
       "colour": "#626383",
-      "pixels": 604,
+      "pixels": 599,
       "to": "#5b5478",
       "deltaE": 4.57,
       "materials": [
@@ -1492,13 +1493,10 @@
         "haul_throw_SE_0",
         "haul_throw_SE_1",
         "haul_throw_NW_1",
-        "haul_throw_W_0",
-        "haul_throw_W_1",
+        "haul_throw_SW_0",
         "haul_throw_SW_1",
         "haul_recover_SE_0",
         "haul_recover_SE_1",
-        "haul_recover_W_0",
-        "haul_recover_W_1",
         "haul_recover_SW_0",
         "haul_recover_SW_1",
         "haul_pull_SE_0",
@@ -1609,7 +1607,7 @@
     },
     {
       "colour": "#454069",
-      "pixels": 275,
+      "pixels": 272,
       "to": "#4a4e57",
       "deltaE": 6.1,
       "materials": [
@@ -1665,10 +1663,7 @@
         "heavy_recover_SE_1",
         "heavy_recover_W_1",
         "haul_throw_SE_0",
-        "haul_throw_W_0",
-        "haul_throw_W_1",
-        "haul_recover_W_0",
-        "haul_recover_W_1",
+        "haul_throw_SW_0",
         "haul_pull_SE_0",
         "haul_pull_W_0",
         "haul_slide_SE_1",
@@ -1770,9 +1765,9 @@
         "haul_throw_SE_1",
         "haul_throw_NE_0",
         "haul_throw_NE_1",
+        "haul_throw_SW_0",
         "haul_throw_SW_1",
         "haul_recover_NE_0",
-        "haul_recover_W_1",
         "haul_pull_SE_0",
         "haul_pull_SE_1",
         "haul_pull_NE_0",
@@ -1788,7 +1783,7 @@
     },
     {
       "colour": "#d67345",
-      "pixels": 240,
+      "pixels": 244,
       "to": "#c9733a",
       "deltaE": 2.67,
       "materials": [
@@ -1876,10 +1871,13 @@
         "haul_throw_SE_0",
         "haul_throw_SE_1",
         "haul_throw_E_1",
+        "haul_throw_W_1",
         "haul_throw_SW_0",
+        "haul_throw_SW_1",
         "haul_recover_SE_1",
         "haul_recover_E_1",
-        "haul_recover_SW_0",
+        "haul_recover_W_1",
+        "haul_recover_SW_1",
         "haul_pull_SE_0",
         "haul_pull_SE_1",
         "haul_pull_NE_0",
@@ -1900,7 +1898,7 @@
     },
     {
       "colour": "#ad644c",
-      "pixels": 212,
+      "pixels": 230,
       "to": "#9c5b4a",
       "deltaE": 4.1,
       "materials": [
@@ -1949,8 +1947,12 @@
         "heavy_recover_W_1",
         "haul_throw_SE_0",
         "haul_throw_SE_1",
+        "haul_throw_SW_0",
+        "haul_throw_SW_1",
         "haul_recover_SE_0",
         "haul_recover_SE_1",
+        "haul_recover_SW_0",
+        "haul_recover_SW_1",
         "haul_pull_SE_1",
         "haul_pull_W_0",
         "haul_slide_SE_0",
@@ -1968,7 +1970,7 @@
     },
     {
       "colour": "#3b3c5d",
-      "pixels": 189,
+      "pixels": 190,
       "to": "#24305a",
       "deltaE": 5.45,
       "materials": [
@@ -2024,7 +2026,6 @@
         "haul_throw_SE_0",
         "haul_throw_SW_0",
         "haul_recover_SE_1",
-        "haul_recover_SW_0",
         "haul_recover_SW_1",
         "haul_pull_SE_0",
         "haul_pull_SE_1",
@@ -2035,7 +2036,7 @@
     },
     {
       "colour": "#4e3844",
-      "pixels": 163,
+      "pixels": 147,
       "to": "#4a4e57",
       "deltaE": 6.52,
       "materials": [
@@ -2084,14 +2085,6 @@
         "heavy_thrust_W_0",
         "heavy_thrust_SW_0",
         "heavy_recover_SW_1",
-        "haul_throw_W_0",
-        "haul_throw_W_1",
-        "haul_throw_SW_0",
-        "haul_throw_SW_1",
-        "haul_recover_W_0",
-        "haul_recover_W_1",
-        "haul_recover_SW_0",
-        "haul_recover_SW_1",
         "haul_pull_W_0",
         "haul_pull_SW_0",
         "haul_pull_SW_1",
@@ -2108,7 +2101,7 @@
     },
     {
       "colour": "#bc6a4c",
-      "pixels": 110,
+      "pixels": 127,
       "to": "#c9733a",
       "deltaE": 4.15,
       "materials": [
@@ -2147,10 +2140,18 @@
         "haul_throw_SE_1",
         "haul_throw_E_0",
         "haul_throw_E_1",
+        "haul_throw_W_0",
+        "haul_throw_W_1",
+        "haul_throw_SW_0",
+        "haul_throw_SW_1",
         "haul_recover_SE_0",
         "haul_recover_SE_1",
         "haul_recover_E_0",
         "haul_recover_E_1",
+        "haul_recover_W_0",
+        "haul_recover_W_1",
+        "haul_recover_SW_0",
+        "haul_recover_SW_1",
         "haul_pull_SE_0",
         "haul_slide_SE_0",
         "haul_slide_SE_1",
@@ -2163,7 +2164,7 @@
     },
     {
       "colour": "#7c664f",
-      "pixels": 93,
+      "pixels": 94,
       "to": "#8a6420",
       "deltaE": 5.3,
       "materials": [
@@ -2208,11 +2209,12 @@
         "heavy_recover_SW_1",
         "haul_throw_E_0",
         "haul_throw_E_1",
-        "haul_throw_SW_0",
+        "haul_throw_W_0",
+        "haul_throw_W_1",
         "haul_recover_E_0",
         "haul_recover_E_1",
-        "haul_recover_SW_0",
-        "haul_recover_SW_1",
+        "haul_recover_W_0",
+        "haul_recover_W_1",
         "haul_pull_E_0",
         "haul_pull_E_1",
         "haul_pull_SW_0",
@@ -2226,28 +2228,8 @@
       ]
     },
     {
-      "colour": "#222959",
-      "pixels": 90,
-      "to": "#24305a",
-      "deltaE": 2.17,
-      "materials": [
-        "water",
-        "hair"
-      ],
-      "frames": [
-        "dodge_NE_1",
-        "dodge_NE_2",
-        "dodge_NE_3",
-        "dodge_N_1",
-        "dodge_N_2",
-        "dodge_NW_1",
-        "dodge_NW_2",
-        "dodge_NW_3"
-      ]
-    },
-    {
       "colour": "#ac814a",
-      "pixels": 81,
+      "pixels": 92,
       "to": "#a8743a",
       "deltaE": 3.48,
       "materials": [
@@ -2274,16 +2256,100 @@
         "heavy_recover_E_1",
         "haul_throw_E_0",
         "haul_throw_E_1",
+        "haul_throw_W_0",
+        "haul_throw_W_1",
         "haul_recover_E_0",
         "haul_recover_E_1",
+        "haul_recover_W_0",
+        "haul_recover_W_1",
         "haul_pull_E_1",
         "hit_E_1",
         "death_E_0"
       ]
     },
     {
+      "colour": "#222959",
+      "pixels": 90,
+      "to": "#24305a",
+      "deltaE": 2.17,
+      "materials": [
+        "water",
+        "hair"
+      ],
+      "frames": [
+        "dodge_NE_1",
+        "dodge_NE_2",
+        "dodge_NE_3",
+        "dodge_N_1",
+        "dodge_N_2",
+        "dodge_NW_1",
+        "dodge_NW_2",
+        "dodge_NW_3"
+      ]
+    },
+    {
+      "colour": "#9e7642",
+      "pixels": 86,
+      "to": "#a8743a",
+      "deltaE": 1.74,
+      "materials": [
+        "leather"
+      ],
+      "frames": [
+        "idle_E_0",
+        "idle_E_1",
+        "walk_E_0",
+        "walk_E_1",
+        "walk_E_2",
+        "walk_E_3",
+        "walk_E_4",
+        "walk_E_5",
+        "light_1_E_0",
+        "light_1_E_1",
+        "light_1_E_2",
+        "light_2_E_0",
+        "light_2_E_1",
+        "light_2_E_2",
+        "light_3_E_0",
+        "light_3_E_1",
+        "light_3_E_2",
+        "heavy_charge_E_1",
+        "heavy_thrust_E_1",
+        "heavy_hold_E_0",
+        "heavy_recover_E_0",
+        "haul_throw_E_0",
+        "haul_throw_E_1",
+        "haul_throw_W_0",
+        "haul_throw_W_1",
+        "haul_recover_E_1",
+        "haul_recover_W_1",
+        "haul_pull_E_0",
+        "haul_pull_E_1",
+        "haul_slide_E_0",
+        "haul_slide_E_1",
+        "death_E_0",
+        "death_E_2"
+      ]
+    },
+    {
+      "colour": "#181b36",
+      "pixels": 71,
+      "to": "#1c2147",
+      "deltaE": 3.62,
+      "materials": [
+        "player outline",
+        "paper"
+      ],
+      "frames": [
+        "haul_throw_NE_0",
+        "haul_throw_NE_1",
+        "haul_recover_NE_0",
+        "haul_recover_NE_1"
+      ]
+    },
+    {
       "colour": "#b25944",
-      "pixels": 80,
+      "pixels": 69,
       "to": "#9c5b4a",
       "deltaE": 4.04,
       "materials": [
@@ -2315,68 +2381,9 @@
         "heavy_thrust_SW_1",
         "heavy_hold_SW_0",
         "heavy_recover_SW_1",
-        "haul_throw_SW_0",
-        "haul_throw_SW_1",
         "haul_pull_SW_0",
         "haul_slide_SW_0",
         "haul_slide_SW_1"
-      ]
-    },
-    {
-      "colour": "#9e7642",
-      "pixels": 80,
-      "to": "#a8743a",
-      "deltaE": 1.74,
-      "materials": [
-        "leather"
-      ],
-      "frames": [
-        "idle_E_0",
-        "idle_E_1",
-        "walk_E_0",
-        "walk_E_1",
-        "walk_E_2",
-        "walk_E_3",
-        "walk_E_4",
-        "walk_E_5",
-        "light_1_E_0",
-        "light_1_E_1",
-        "light_1_E_2",
-        "light_2_E_0",
-        "light_2_E_1",
-        "light_2_E_2",
-        "light_3_E_0",
-        "light_3_E_1",
-        "light_3_E_2",
-        "heavy_charge_E_1",
-        "heavy_thrust_E_1",
-        "heavy_hold_E_0",
-        "heavy_recover_E_0",
-        "haul_throw_E_0",
-        "haul_throw_E_1",
-        "haul_recover_E_1",
-        "haul_pull_E_0",
-        "haul_pull_E_1",
-        "haul_slide_E_0",
-        "haul_slide_E_1",
-        "death_E_0",
-        "death_E_2"
-      ]
-    },
-    {
-      "colour": "#181b36",
-      "pixels": 71,
-      "to": "#1c2147",
-      "deltaE": 3.62,
-      "materials": [
-        "player outline",
-        "paper"
-      ],
-      "frames": [
-        "haul_throw_NE_0",
-        "haul_throw_NE_1",
-        "haul_recover_NE_0",
-        "haul_recover_NE_1"
       ]
     }
   ],
@@ -6115,27 +6122,27 @@
     },
     {
       "name": "haul_throw_S_0",
-      "source": "art/raw/ss01-kindled-ash/haul/south 2",
-      "offPalette": 48,
-      "maxDeltaE": 6.06,
-      "dx": 14,
-      "dy": 8,
-      "shift": 0,
-      "outlineGaps": 0,
-      "colours": 14,
-      "masked": 179
-    },
-    {
-      "name": "haul_throw_S_1",
-      "source": "art/raw/ss01-kindled-ash/haul/south 3",
-      "offPalette": 43,
-      "maxDeltaE": 7.06,
+      "source": "art/clean/kindled-ash/haul/south 7",
+      "offPalette": 52,
+      "maxDeltaE": 6.45,
       "dx": 14,
       "dy": 8,
       "shift": 0,
       "outlineGaps": 2,
-      "colours": 16,
-      "masked": 165
+      "colours": 14,
+      "masked": 142
+    },
+    {
+      "name": "haul_throw_S_1",
+      "source": "art/clean/kindled-ash/haul/south 8",
+      "offPalette": 19,
+      "maxDeltaE": 6.45,
+      "dx": 14,
+      "dy": 8,
+      "shift": 0,
+      "outlineGaps": 4,
+      "colours": 14,
+      "masked": 149
     },
     {
       "name": "haul_throw_SE_0",
@@ -6259,67 +6266,71 @@
     },
     {
       "name": "haul_throw_W_0",
-      "source": "art/clean/kindled-ash/haul/west 2",
-      "offPalette": 30,
-      "maxDeltaE": 6.58,
+      "source": "art/clean/kindled-ash/haul/east 2",
+      "offPalette": 36,
+      "maxDeltaE": 6.15,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 0,
-      "colours": 11,
-      "masked": 50
+      "outlineGaps": 2,
+      "colours": 16,
+      "mirrored": true,
+      "masked": 75
     },
     {
       "name": "haul_throw_W_1",
-      "source": "art/clean/kindled-ash/haul/west 3",
-      "offPalette": 53,
-      "maxDeltaE": 6.52,
+      "source": "art/clean/kindled-ash/haul/east 3",
+      "offPalette": 41,
+      "maxDeltaE": 6.4,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 4,
-      "colours": 12,
-      "masked": 60
+      "outlineGaps": 3,
+      "colours": 15,
+      "mirrored": true,
+      "masked": 75
     },
     {
       "name": "haul_throw_SW_0",
-      "source": "art/raw/ss01-kindled-ash/haul/south-west 2",
-      "offPalette": 55,
+      "source": "art/raw/ss01-kindled-ash/haul/south-east 2",
+      "offPalette": 77,
       "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 1,
+      "outlineGaps": 3,
       "colours": 15,
-      "masked": 137
+      "mirrored": true,
+      "masked": 136
     },
     {
       "name": "haul_throw_SW_1",
-      "source": "art/raw/ss01-kindled-ash/haul/south-west 4",
-      "offPalette": 52,
+      "source": "art/raw/ss01-kindled-ash/haul/south-east 4",
+      "offPalette": 37,
       "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 1,
-      "colours": 14,
-      "masked": 111
+      "outlineGaps": 21,
+      "colours": 13,
+      "mirrored": true,
+      "masked": 113
     },
     {
       "name": "haul_recover_S_0",
-      "source": "art/raw/ss01-kindled-ash/haul/south 6",
-      "offPalette": 20,
-      "maxDeltaE": 7.06,
+      "source": "art/clean/kindled-ash/haul/south 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
       "dx": 14,
       "dy": 8,
       "shift": 0,
-      "outlineGaps": 0,
-      "colours": 14,
-      "masked": 165
+      "outlineGaps": 1,
+      "colours": 12,
+      "masked": 170
     },
     {
       "name": "haul_recover_S_1",
-      "source": "art/raw/ss01-kindled-ash/haul/south 1",
+      "source": "art/clean/kindled-ash/haul/south 1",
       "offPalette": 67,
       "maxDeltaE": 7.06,
       "dx": 14,
@@ -6451,51 +6462,55 @@
     },
     {
       "name": "haul_recover_W_0",
-      "source": "art/clean/kindled-ash/haul/west 5",
-      "offPalette": 46,
-      "maxDeltaE": 6.58,
+      "source": "art/clean/kindled-ash/haul/east 5",
+      "offPalette": 48,
+      "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 1,
-      "colours": 13,
-      "masked": 65
+      "outlineGaps": 2,
+      "colours": 14,
+      "mirrored": true,
+      "masked": 77
     },
     {
       "name": "haul_recover_W_1",
-      "source": "art/clean/kindled-ash/haul/west 6",
-      "offPalette": 38,
-      "maxDeltaE": 6.52,
+      "source": "art/clean/kindled-ash/haul/east 6",
+      "offPalette": 30,
+      "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 1,
-      "colours": 12,
-      "masked": 63
+      "outlineGaps": 2,
+      "colours": 15,
+      "mirrored": true,
+      "masked": 76
     },
     {
       "name": "haul_recover_SW_0",
-      "source": "art/raw/ss01-kindled-ash/haul/south-west 5",
-      "offPalette": 53,
+      "source": "art/raw/ss01-kindled-ash/haul/south-east 5",
+      "offPalette": 41,
       "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
       "outlineGaps": 0,
       "colours": 16,
-      "masked": 119
+      "mirrored": true,
+      "masked": 118
     },
     {
       "name": "haul_recover_SW_1",
-      "source": "art/raw/ss01-kindled-ash/haul/south-west 6",
-      "offPalette": 38,
-      "maxDeltaE": 6.52,
+      "source": "art/raw/ss01-kindled-ash/haul/south-east 6",
+      "offPalette": 32,
+      "maxDeltaE": 6.55,
       "dx": 14,
       "dy": 7,
       "shift": -1,
       "outlineGaps": 0,
       "colours": 14,
-      "masked": 137
+      "mirrored": true,
+      "masked": 125
     },
     {
       "name": "haul_pull_S_0",
