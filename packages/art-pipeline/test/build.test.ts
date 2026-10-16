@@ -6,7 +6,7 @@ import {
   kindledAnimKey,
   HUSK_TABLES,
   kindledFrameName,
-  propIdleSpec,
+  propTableFor,
   isRequiredAnim,
   SPRITE_FACINGS,
   spritePointsFor,
@@ -874,7 +874,10 @@ describe('a finished Husk, NPC and prop sheet', () => {
     const spec = spriteSheetSpec(name);
     const table =
       spec.kind === 'prop'
-        ? [propIdleSpec(sheet.anims.idle?.frames.length ?? 0, sheet.anims.idle?.frameRate)]
+        ? (propTableFor(name, (a) => {
+            const def = sheet.anims[a];
+            return def ? { frames: def.frames.length, fps: def.frameRate } : undefined;
+          }) ?? [])
         : (spec.anims ?? []);
     problems.push(...tableProblems(name, sheet, table));
     if (
@@ -985,6 +988,70 @@ describe('a finished Husk, NPC and prop sheet', () => {
     };
     expect(problemsOf(() => build(root, json))).toEqual([
       "prop-jar: a prop's idle has 1 to 8 frames, not 9",
+    ]);
+  });
+
+  /** A chest recipe (the prop with a table of its own, G1.5f) with the given frame counts. */
+  const chestRecipe = (counts: Partial<Record<'closed' | 'opening' | 'open', number>>, extra: Record<string, unknown> = {}) => ({
+    sheet: 'prop-chest',
+    kind: 'prop',
+    outline: 'other',
+    draft: false,
+    anims: Object.fromEntries(
+      Object.entries(counts).map(([anim, n]) => [anim, { src: 'art/clean/plain.png', frames: Array.from({ length: n }, () => 0) }]),
+    ),
+    ...extra,
+  });
+
+  it('the chest: its own table, closed at the recipe\'s rate looping with 2 frames, opening once at 12 fps, open held', () => {
+    const json = chestRecipe({ closed: 2, opening: 4, open: 1 });
+    (json.anims.closed as Record<string, unknown>).fps = 2;
+    const r = finished(json);
+    expect(r.problems).toEqual([]);
+    expect(r.sheet.anims).toEqual({
+      closed: { frames: ['closed_0', 'closed_1'], frameRate: 2, repeat: -1 },
+      opening: { frames: ['opening_0', 'opening_1', 'opening_2', 'opening_3'], frameRate: 12, repeat: 0, hold: true },
+      open: { frames: ['open_0'], frameRate: 0, repeat: 0, hold: true },
+    });
+    expect(r.sheet.meta).toMatchObject({ cell: { w: 64, h: 64 }, origin: { x: 32, y: 54 } });
+    expect(Object.keys(r.sheet.frames)).toEqual(['closed_0', 'closed_1', 'opening_0', 'opening_1', 'opening_2', 'opening_3', 'open_0']);
+    // A 1-frame closed is still: held, at the default rate.
+    const still = finished(chestRecipe({ closed: 1, opening: 4, open: 1 }));
+    expect(still.problems).toEqual([]);
+    expect(still.sheet.anims.closed).toEqual({ frames: ['closed_0'], frameRate: 8, repeat: 0, hold: true });
+  });
+
+  it('a finished chest needs all three animations; closed has at most 2 frames', () => {
+    expect(problemsOf(() => build(root, chestRecipe({ closed: 2, open: 1 })))).toEqual([
+      'prop-chest: opening is missing (a finished sheet carries every animation and facing)',
+    ]);
+    expect(problemsOf(() => build(root, chestRecipe({ closed: 3, opening: 4, open: 1 })))).toEqual([
+      "prop-chest: a prop's closed has 1 to 2 frames, not 3",
+    ]);
+    expect(problemsOf(() => build(root, chestRecipe({ closed: 2, opening: 3, open: 1 })))).toEqual([
+      'prop-chest: opening has 3 frames; the table says 4',
+    ]);
+  });
+
+  it('a draft chest builds with any subset of its table, writing the review only', () => {
+    const r = build(root, chestRecipe({ closed: 2, open: 1 }, { draft: true }));
+    expect([...r.outputs.keys()].sort()).toEqual([
+      'art/review/prop-chest/contact.png',
+      'art/review/prop-chest/report.json',
+      'art/review/prop-chest/report.md',
+    ]);
+    expect(r.anims.map((a) => a.key)).toEqual(['closed', 'open']);
+  });
+
+  it('the chest takes fps on closed only; opening and open are rated by the table', () => {
+    const json = chestRecipe({ closed: 2, opening: 4, open: 1 });
+    (json.anims.opening as Record<string, unknown>).fps = 6;
+    expect(problemsOf(() => build(root, json))).toEqual([
+      'art/sheets/prop-chest.json: anims.opening.fps is only for closed (opening takes its rate from the prop animation table)',
+    ]);
+    const burn = chestRecipe({ closed: 2, opening: 4, open: 1 }, { anims: { burn: { src: 'art/clean/plain.png', frames: [0] } } });
+    expect(problemsOf(() => build(root, burn))).toEqual([
+      'art/sheets/prop-chest.json: anims.burn is not in the prop animation table (closed, opening, open)',
     ]);
   });
 });

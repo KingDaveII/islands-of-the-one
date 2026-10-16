@@ -3,6 +3,7 @@ import {
   KINDLED_POINTS,
   optionalReason,
   paletteData,
+  propFrameRangeProblem,
   skinMaskName,
 } from '@iot/shared';
 import {
@@ -14,7 +15,6 @@ import {
   frameName,
   hasFacings,
   MAX_SHEET,
-  PROP_IDLE,
   SPRITE_CANVAS,
   SPRITE_FACINGS,
   type Facing,
@@ -230,7 +230,8 @@ export function buildFrames(
 /**
  * What a non-draft sheet is missing against its kind's animation table, as
  * messages. Rows after `REQUIRED_MILESTONE` are optional, but complete when
- * any facing of them is there.
+ * any facing of them is there. A row the recipe rates (a prop's `idle`, the
+ * chest's `closed`) has its frame count within the row's range.
  */
 export function completenessProblems(recipe: Recipe, anims: readonly BuiltAnim[]): string[] {
   const table = recipeTable(recipe);
@@ -258,13 +259,10 @@ export function completenessProblems(recipe: Recipe, anims: readonly BuiltAnim[]
         problems.push(`${recipe.sheet}: ${key} has ${n} frames; the table says ${row.frames}`);
     }
   }
-  if (recipe.kind === 'prop') {
-    const n = built.get(PROP_IDLE.name) ?? 0;
-    if (n < PROP_IDLE.minFrames || n > PROP_IDLE.maxFrames) {
-      problems.push(
-        `${recipe.sheet}: a prop's idle has ${PROP_IDLE.minFrames} to ${PROP_IDLE.maxFrames} frames, not ${n}`,
-      );
-    }
+  for (const row of table) {
+    if (!row.fromRecipe) continue;
+    const range = propFrameRangeProblem(row.fromRecipe, built.get(row.name) ?? 0);
+    if (range) problems.push(`${recipe.sheet}: ${range}`);
   }
   return problems;
 }
