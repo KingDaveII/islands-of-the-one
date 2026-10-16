@@ -26,6 +26,13 @@ import { StrideMeter } from './stride.js';
 
 type Sprite = Phaser.GameObjects.Sprite;
 
+/**
+ * The player's sheet: the one place the client names it (the loader lists
+ * every sheet). Today every Remembrance wears kindled-ash; the engine reads
+ * the sheet, its scale and its points from `CharacterSprites.playerSheet`.
+ */
+export const PLAYER_SHEET: SpriteSheetName = 'kindled-ash';
+
 const HUSK_SHEET: Record<HuskKind, SpriteSheetName> = {
   peeling: 'husk-peeling',
   nutshell: 'husk-nutshell',
@@ -85,7 +92,8 @@ export class CharacterSprites {
   private deathAt = -1;
   private now = 0;
   private tone: ClayTone;
-  private readonly kindledSheet: SpriteSheet = spriteSheets['kindled-ash'];
+  /** The player's sheet (`PLAYER_SHEET`): the light strike's marks and the Hookblade's points read it. */
+  readonly playerSheet: SpriteSheet = spriteSheets[PLAYER_SHEET];
   /** The run's params at the last draw (a corpse's feet come from its kind's radius). */
   private params: Params | null = null;
   /** How far the player has moved (world px), for the run and walk cycles. */
@@ -96,6 +104,9 @@ export class CharacterSprites {
   private ghostClock = 0;
   /** The pose shown this frame (the debug overlay and playtests read it). */
   pose: KindledPose | null = null;
+  /** The player's frame this frame, and the world px it is drawn at (its origin): the Hookblade's points move with it. */
+  playerFrame = '';
+  playerAnchor = { x: 0, y: 0 };
   /** The Husks' poses this frame, in sim order (playtests). */
   huskPoses: Pose[] = [];
 
@@ -103,21 +114,21 @@ export class CharacterSprites {
     private readonly scene: Phaser.Scene,
     private readonly layer: Phaser.GameObjects.Layer,
     private readonly anim: () => AnimTuning,
-    tone: ClayTone = spriteSheets['kindled-ash'].palette?.drawn as ClayTone,
+    tone: ClayTone = spriteSheets[PLAYER_SHEET].palette?.drawn as ClayTone,
   ) {
     this.tone = tone;
     this.player = this.sprite(this.playerTexture(), this.kindledScale);
     this.player.setDepth(DEPTH.bodies);
   }
 
-  /** World px per sheet px of the Kindled's sheet. */
-  private get kindledScale(): number {
-    return spriteScale('kindled-ash');
+  /** World px per sheet px of the player's sheet. */
+  get kindledScale(): number {
+    return spriteScale(PLAYER_SHEET);
   }
 
   /** The Kindled's texture in the current tone (built on first use). */
   private playerTexture(): string {
-    return toneTextureKey(this.scene, 'kindled-ash', this.tone);
+    return toneTextureKey(this.scene, PLAYER_SHEET, this.tone);
   }
 
   private sprite(texture: string, scale: number, frame?: string): Sprite {
@@ -189,7 +200,7 @@ export class CharacterSprites {
       life: 0,
     };
     g.life = life;
-    const frame = this.frameName(this.kindledSheet, pose);
+    const frame = this.frameName(this.playerSheet, pose);
     const wx = snapToArt(x, scale);
     const wy = snapToArt(y + PLAYER_FEET, scale);
     g.ink
@@ -255,16 +266,18 @@ export class CharacterSprites {
     if (p.action === 'dead' && this.deathAt < 0) this.deathAt = this.now;
     if (p.action !== 'dead') this.deathAt = -1;
     const stride = { distancePx: this.stride.step(player.x, player.y), cycles: this.anim() };
-    const pose = kindledPose(s, P, this.kindledSheet, this.clocks('p'), stride);
+    const pose = kindledPose(s, P, this.playerSheet, this.clocks('p'), stride);
     this.pose = pose;
-    this.show(this.player, this.playerTexture(), this.kindledSheet, pose);
+    this.playerFrame = this.frameName(this.playerSheet, pose);
+    this.show(this.player, this.playerTexture(), this.playerSheet, pose);
     const invulnerable = p.iframes > 0 || p.hurtInvuln > 0;
     const flash = fx.isFlashing('p');
     const hidden = invulnerable && !flash && (s.tick & 1) === 1;
     // Sprites stand on their origin, the point between the feet; the sim position is the body center.
     const ks = this.kindledScale;
+    this.playerAnchor = { x: snapToArt(player.x, ks), y: snapToArt(player.y + PLAYER_FEET, ks) };
     this.player
-      .setPosition(snapToArt(player.x, ks), snapToArt(player.y + PLAYER_FEET, ks))
+      .setPosition(this.playerAnchor.x, this.playerAnchor.y)
       .setVisible(!hidden)
       .setDepth(DEPTH.bodies + player.y * DEPTH.perPixel);
     this.tint(this.player, flash);

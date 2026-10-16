@@ -13,6 +13,7 @@ import { deviceStore } from '../game/activeDevice.js';
 import { MENU_BUTTONS, padEdges, padEdgeState, type PadFamily } from '../game/gamepad.js';
 import { clayToneColors, Palette, remembranceColor } from '../palette.js';
 import { button, type Button } from '../render/button.js';
+import { PLAYER_SHEET } from '../render/characters.js';
 import { FIELD_H, FieldFrame } from '../render/field.js';
 import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
 import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
@@ -39,8 +40,8 @@ const SWATCH_GAP = 8;
 const NAME_Y = 176;
 const NAME_W = 200;
 const CONFIRM_Y = 222;
-/** The placeholder sheet every Remembrance wears until their own are drawn. */
-const SHEET = 'kindled-ash';
+/** The sheet every Remembrance wears until their own are drawn: the player's. */
+const SHEET = PLAYER_SHEET;
 
 /**
  * Kindled creation (docs/design/accounts.md): pick the Remembrance (four

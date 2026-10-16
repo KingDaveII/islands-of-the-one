@@ -22,9 +22,10 @@ import {
   type Clocks,
   type Stride,
 } from './animState.js';
+import { PLAYER_SHEET } from './characters.js';
 import { StrideMeter } from './stride.js';
 
-const KINDLED = spriteSheets['kindled-ash'];
+const KINDLED = spriteSheets[PLAYER_SHEET];
 const PEELING = spriteSheets['husk-peeling'];
 const NUTSHELL = spriteSheets['husk-nutshell'];
 const NO_CLOCKS: Clocks = { hitMs: -1 };

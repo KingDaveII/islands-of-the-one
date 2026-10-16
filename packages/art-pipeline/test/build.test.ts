@@ -75,7 +75,7 @@ function build(root: string, json: Record<string, unknown>) {
 /** `fullKindled`'s stock points, trimmed to the animations a test keeps when it narrows `anims`. */
 function keepPointsOfAnims(json: Record<string, unknown>): Record<string, unknown> {
   const points = json.points as Record<string, Record<string, unknown>> | undefined;
-  const anims = Object.keys((json.anims ?? {}) as Record<string, unknown>);
+  const anims = Object.keys(json.anims ?? {});
   if (!points) return json;
   const kept = Object.fromEntries(
     Object.entries(points).map(([p, frames]) => [

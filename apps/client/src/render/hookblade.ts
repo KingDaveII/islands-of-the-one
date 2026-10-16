@@ -1,21 +1,23 @@
 import type Phaser from 'phaser';
-import { hookbladeFxSheet as sheet, LEGACY_PIXEL_SCALE } from '@iot/shared';
+import { hookbladeFxSheet, type HookbladeFxSheet } from '@iot/shared';
 import { Palette } from '../palette.js';
 import { DEPTH } from './depth.js';
-import { worldPx } from './scale.js';
+import { chainLinks, hookbladeDraw } from './hookbladePoints.js';
 import { HOOKBLADE_TEXTURE } from './sheets.js';
 
 /**
  * The Hookblade's sprites from hookblade-fx (packages/shared/assets): the
- * Haul chain (one link per `chain.spacing` px, every link taut during the
- * pull), the hook head (in flight / set, rotated to the throw angle around
- * its shank end) and the charge spark at the hook tip. A pool of images the
- * world renderer re-poses every frame; links sit under the bodies, the hook
- * and spark over them. Tints are palette tokens; links and hook get a 1 px
- * player-outline rim from four offset copies.
+ * Haul chain (one link per `chain.spacing` sheet px, every link taut during
+ * the pull), the hook head (in flight / set, rotated to the throw angle
+ * around its shank end) and the charge spark at the hook tip. A pool of
+ * images the world renderer re-poses every frame; links sit under the bodies,
+ * the hook and spark over them.
  *
- * hookblade-fx is M1 art: callers pass sim px, the images stand at world px
- * and draw at the legacy 2× (its rim one sheet pixel, 2 world px).
+ * Callers pass world px. The sheet's `meta` (sprites.md "Engine sheets") says
+ * how it draws: at `pixelScale` world px per sheet px (2 for today's M1
+ * sheet), and either tinted (palette tokens, with a 1 sheet px
+ * player-outline rim from four offset copies) or, untinted, in the frames'
+ * own colours with no rim.
  */
 type Image = Phaser.GameObjects.Image;
 
@@ -26,7 +28,6 @@ const RIM: [number, number][] = [
   [0, -1],
   [0, 1],
 ];
-const SPARK_FRAMES = sheet.anims.charge_spark.frames;
 
 interface Slot {
   ink: Image;
@@ -37,12 +38,19 @@ export class HookbladeFx {
   private readonly links: Slot[] = [];
   private readonly hookSlot: Slot;
   private readonly sparkImage: Image;
+  private readonly draw: ReturnType<typeof hookbladeDraw>;
+  private readonly sparkFrames: readonly string[];
   private linksUsed = 0;
 
-  constructor(private readonly scene: Phaser.Scene) {
+  constructor(
+    private readonly scene: Phaser.Scene,
+    private readonly sheet: HookbladeFxSheet = hookbladeFxSheet,
+  ) {
+    this.draw = hookbladeDraw(sheet);
+    this.sparkFrames = sheet.anims.charge_spark.frames;
     for (let i = 0; i < MAX_LINKS; i++) this.links.push(this.slot(sheet.chain.link, 0.5, 0.5));
     this.hookSlot = this.slot(sheet.hook.flight, 0, 0);
-    this.sparkImage = this.image(SPARK_FRAMES[0] ?? sheet.hook.flight, 0.5, 0.5);
+    this.sparkImage = this.image(this.sparkFrames[0] ?? sheet.hook.flight, 0.5, 0.5);
   }
 
   /** Adds the pool to a layer: links under the bodies, the hook and spark over them (depth.ts). */
@@ -55,28 +63,30 @@ export class HookbladeFx {
     return this.scene.add
       .image(0, 0, HOOKBLADE_TEXTURE, frame)
       .setOrigin(ox, oy)
-      .setScale(LEGACY_PIXEL_SCALE)
+      .setScale(this.draw.scale)
       .setVisible(false);
   }
 
   private slot(frame: string, ox: number, oy: number): Slot {
     return {
       ink: this.image(frame, ox, oy),
-      rim: RIM.map(() => this.image(frame, ox, oy).setTint(Palette.chainOutline)),
+      // An untinted sheet has its outline drawn in: no rim.
+      rim: this.draw.tinted ? RIM.map(() => this.image(frame, ox, oy).setTint(Palette.chainOutline)) : [],
     };
   }
 
-  /** Pose a slot at a whole sim pixel (x, y). */
+  /** Pose a slot at world px (x, y), tinted when the sheet is. */
   private pose(s: Slot, frame: string, x: number, y: number, angle: number, tint: number): void {
     const all = [s.ink, ...s.rim];
     for (const img of all) {
       if (img.frame.name !== frame) img.setFrame(frame, true, false);
       img.setRotation(angle).setVisible(true);
     }
-    s.ink.setPosition(worldPx(x), worldPx(y)).setTint(tint);
+    s.ink.setPosition(x, y);
+    if (this.draw.tinted) s.ink.setTint(tint);
     s.rim.forEach((img, i) => {
       const [dx, dy] = RIM[i] ?? [0, 0];
-      img.setPosition(worldPx(x) + dx * LEGACY_PIXEL_SCALE, worldPx(y) + dy * LEGACY_PIXEL_SCALE);
+      img.setPosition(x + dx * this.draw.scale, y + dy * this.draw.scale);
     });
   }
 
@@ -93,45 +103,38 @@ export class HookbladeFx {
     this.linksUsed = 0;
   }
 
-  /** The chain from the hand (hx, hy) to the hook (ex, ey): a link every `spacing` px, taut links during the pull. */
+  /** The chain from the hand (hx, hy) to the hook (ex, ey), world px: a link every `spacing`, taut links during the pull. */
   chain(hx: number, hy: number, ex: number, ey: number, taut: boolean): void {
-    const len = Math.hypot(ex - hx, ey - hy);
-    if (len < 1) return;
-    const ux = (ex - hx) / len;
-    const uy = (ey - hy) / len;
-    const angle = Math.atan2(uy, ux);
-    const frame = taut ? sheet.chain.taut : sheet.chain.link;
-    const step = sheet.chain.spacing;
-    for (let d = step / 2; d < len - 2 && this.linksUsed < this.links.length; d += step) {
+    const frame = taut ? this.sheet.chain.taut : this.sheet.chain.link;
+    for (const link of chainLinks(this.sheet, hx, hy, ex, ey, this.links.length - this.linksUsed)) {
       const slot = this.links[this.linksUsed++];
       if (!slot) break;
-      this.pose(slot, frame, Math.round(hx + ux * d), Math.round(hy + uy * d), angle, taut ? Palette.chainTaut : Palette.chain);
+      this.pose(slot, frame, link.x, link.y, link.angle, taut ? Palette.chainTaut : Palette.chain);
     }
   }
 
-  /** The hook head with its shank end at (x, y), pointing along `angle` (radians); `set` once it has landed. */
+  /** The hook head with its shank end at world px (x, y), pointing along `angle` (radians); `set` once it has landed. */
   hook(x: number, y: number, angle: number, set: boolean): void {
-    const [ox = 0, oy = 0] = sheet.hook.origin;
-    const frame = set ? sheet.hook.set : sheet.hook.flight;
-    this.pose(this.hookSlot, frame, Math.round(x), Math.round(y), angle, Palette.chain);
-    // The origin is a pixel of the cell: rotate around that pixel's center.
+    const [ox = 0, oy = 0] = this.sheet.hook.origin;
+    const frame = set ? this.sheet.hook.set : this.sheet.hook.flight;
+    this.pose(this.hookSlot, frame, x, y, angle, Palette.chain);
+    // The origin is a pixel of the cell (sheet px): rotate around that pixel's center.
     for (const img of [this.hookSlot.ink, ...this.hookSlot.rim]) img.setDisplayOrigin(ox + 0.5, oy + 0.5);
   }
 
   /**
-   * The charge spark at the hook tip, by the charge meter's `stage` (0-3):
-   * spark_0 from the start through the first stage, spark_1 in the second,
-   * spark_2 held at full charge (stage 3, in husk-core).
+   * The charge spark at world px (x, y), the hook tip, by the charge meter's
+   * `stage` (0-3): spark_0 from the start through the first stage, spark_1 in
+   * the second, spark_2 held at full charge (stage 3, in husk-core when tinted).
    */
   spark(x: number, y: number, stage: number): void {
-    const index = Math.max(0, Math.min(SPARK_FRAMES.length - 1, stage - 1));
-    const frame = SPARK_FRAMES[index] ?? SPARK_FRAMES[0] ?? '';
-    const full = index === SPARK_FRAMES.length - 1;
+    const frames = this.sparkFrames;
+    const index = Math.max(0, Math.min(frames.length - 1, stage - 1));
+    const frame = frames[index] ?? frames[0] ?? '';
+    const full = index === frames.length - 1;
     const img = this.sparkImage;
     if (img.frame.name !== frame) img.setFrame(frame, true, false);
-    img
-      .setPosition(worldPx(Math.round(x)), worldPx(Math.round(y)))
-      .setTint(full ? Palette.chargeSparkFull : Palette.chargeSpark)
-      .setVisible(true);
+    img.setPosition(x, y).setVisible(true);
+    if (this.draw.tinted) img.setTint(full ? Palette.chargeSparkFull : Palette.chargeSpark);
   }
 }

@@ -1,8 +1,9 @@
 import { spriteSheets } from '@iot/shared';
 import { describe, expect, it } from 'vitest';
+import { PLAYER_SHEET } from './characters.js';
 import { ARC_TAIL_TICKS, lightSlashMark } from './slash.js';
 
-const v2 = spriteSheets['kindled-ash'];
+const v2 = spriteSheets[PLAYER_SHEET];
 const v1 = spriteSheets['husk-peeling'];
 
 describe('the light strike marks', () => {
