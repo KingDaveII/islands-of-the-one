@@ -16,7 +16,7 @@
           "frames": [0, 2]
         },
         "E": {
-          "src": "art/raw/ss01-kindled-ash/idle/east",
+          "src": "art/clean/kindled-ash/idle/east",
           "frames": [0, 2]
         },
         "NE": {
@@ -32,7 +32,7 @@
           "frames": [0, 2]
         },
         "W": {
-          "src": "art/raw/ss01-kindled-ash/idle/west",
+          "src": "art/clean/kindled-ash/idle/west",
           "frames": [0, 2]
         },
         "SW": {
@@ -52,7 +52,7 @@
           "frames": [0, 1, 2, 3, 4, 5]
         },
         "E": {
-          "src": "art/raw/ss01-kindled-ash/walk/east",
+          "src": "art/clean/kindled-ash/walk/east",
           "frames": [0, 1, 2, 3, 4, 5]
         },
         "NE": {
@@ -68,7 +68,7 @@
           "frames": [0, 1, 2, 3, 4, 5]
         },
         "W": {
-          "src": "art/raw/ss01-kindled-ash/walk/west",
+          "src": "art/clean/kindled-ash/walk/west",
           "frames": [0, 1, 2, 3, 4, 5]
         },
         "SW": {
@@ -133,7 +133,7 @@
           "frames": [2, 4, 6]
         },
         "E": {
-          "src": "art/raw/ss01-kindled-ash/light_1/east",
+          "src": "art/clean/kindled-ash/light_1/east",
           "frames": [2, 3, 6]
         },
         "NE": {
@@ -150,7 +150,7 @@
           "flipX": true
         },
         "W": {
-          "src": "art/raw/ss01-kindled-ash/light_1/west",
+          "src": "art/clean/kindled-ash/light_1/west",
           "frames": [4, 5, 6]
         },
         "SW": {
@@ -173,7 +173,7 @@
           "frames": [4, 5, 6]
         },
         "E": {
-          "src": "art/raw/ss01-kindled-ash/light_2/east",
+          "src": "art/clean/kindled-ash/light_2/east",
           "frames": [4, 5, 6]
         },
         "NE": {
@@ -189,7 +189,7 @@
           "frames": [2, 5, 6]
         },
         "W": {
-          "src": "art/raw/ss01-kindled-ash/light_2/west",
+          "src": "art/clean/kindled-ash/light_2/west",
           "frames": [2, 5, 6]
         },
         "SW": {
@@ -212,7 +212,7 @@
           "frames": [2, 3, 6]
         },
         "E": {
-          "src": "art/raw/ss01-kindled-ash/light_3/east",
+          "src": "art/clean/kindled-ash/light_3/east",
           "frames": [2, 4, 6]
         },
         "NE": {
@@ -229,7 +229,7 @@
           "frames": [2, 4, 6]
         },
         "W": {
-          "src": "art/raw/ss01-kindled-ash/light_3/west",
+          "src": "art/clean/kindled-ash/light_3/west",
           "frames": [2, 4, 6]
         },
         "SW": {
@@ -252,7 +252,7 @@
           "frames": [2, 3, 4]
         },
         "E": {
-          "src": "art/raw/ss01-kindled-ash/heavy/east",
+          "src": "art/clean/kindled-ash/heavy/east",
           "frames": [2, 3, 4]
         },
         "NE": {
@@ -269,7 +269,7 @@
           "flipX": true
         },
         "W": {
-          "src": "art/raw/ss01-kindled-ash/heavy/west",
+          "src": "art/clean/kindled-ash/heavy/west",
           "frames": [2, 3, 4]
         },
         "SW": {
@@ -292,7 +292,7 @@
           "frames": [7, 8]
         },
         "E": {
-          "src": "art/raw/ss01-kindled-ash/heavy/east",
+          "src": "art/clean/kindled-ash/heavy/east",
           "frames": [6, 7]
         },
         "NE": {
@@ -309,7 +309,7 @@
           "flipX": true
         },
         "W": {
-          "src": "art/raw/ss01-kindled-ash/heavy/west",
+          "src": "art/clean/kindled-ash/heavy/west",
           "frames": [7, 8]
         },
         "SW": {
@@ -332,7 +332,7 @@
           "frames": [8]
         },
         "E": {
-          "src": "art/raw/ss01-kindled-ash/heavy/east",
+          "src": "art/clean/kindled-ash/heavy/east",
           "frames": [8]
         },
         "NE": {
@@ -349,7 +349,7 @@
           "flipX": true
         },
         "W": {
-          "src": "art/raw/ss01-kindled-ash/heavy/west",
+          "src": "art/clean/kindled-ash/heavy/west",
           "frames": [8]
         },
         "SW": {
@@ -372,7 +372,7 @@
           "frames": [10, 1]
         },
         "E": {
-          "src": "art/raw/ss01-kindled-ash/heavy/east",
+          "src": "art/clean/kindled-ash/heavy/east",
           "frames": [10, 1]
         },
         "NE": {
@@ -389,7 +389,7 @@
           "flipX": true
         },
         "W": {
-          "src": "art/raw/ss01-kindled-ash/heavy/west",
+          "src": "art/clean/kindled-ash/heavy/west",
           "frames": [10, 1]
         },
         "SW": {
@@ -412,7 +412,7 @@
           "frames": [2, 4]
         },
         "E": {
-          "src": "art/raw/ss01-kindled-ash/haul/east",
+          "src": "art/clean/kindled-ash/haul/east",
           "frames": [2, 3]
         },
         "NE": {
@@ -428,7 +428,7 @@
           "frames": [1, 2]
         },
         "W": {
-          "src": "art/raw/ss01-kindled-ash/haul/west",
+          "src": "art/clean/kindled-ash/haul/west",
           "frames": [2, 3]
         },
         "SW": {
@@ -451,7 +451,7 @@
           "frames": [5, 6]
         },
         "E": {
-          "src": "art/raw/ss01-kindled-ash/haul/east",
+          "src": "art/clean/kindled-ash/haul/east",
           "frames": [5, 6]
         },
         "NE": {
@@ -467,7 +467,7 @@
           "frames": [5, 6]
         },
         "W": {
-          "src": "art/raw/ss01-kindled-ash/haul/west",
+          "src": "art/clean/kindled-ash/haul/west",
           "frames": [5, 6]
         },
         "SW": {
@@ -490,7 +490,7 @@
           "frames": [1, 4]
         },
         "E": {
-          "src": "art/raw/ss01-kindled-ash/haul_pull/east",
+          "src": "art/clean/kindled-ash/haul_pull/east",
           "frames": [1, 2]
         },
         "NE": {
@@ -506,7 +506,7 @@
           "frames": [1, 3]
         },
         "W": {
-          "src": "art/raw/ss01-kindled-ash/haul_pull/west",
+          "src": "art/clean/kindled-ash/haul_pull/west",
           "frames": [1, 4]
         },
         "SW": {
@@ -529,7 +529,7 @@
           "frames": [1, 4]
         },
         "E": {
-          "src": "art/raw/ss01-kindled-ash/haul_slide/east",
+          "src": "art/clean/kindled-ash/haul_slide/east",
           "frames": [1, 3]
         },
         "NE": {
@@ -545,7 +545,7 @@
           "frames": [1, 3]
         },
         "W": {
-          "src": "art/raw/ss01-kindled-ash/haul_slide/west",
+          "src": "art/clean/kindled-ash/haul_slide/west",
           "frames": [1, 4]
         },
         "SW": {
@@ -564,7 +564,7 @@
           "frames": [1, 2]
         },
         "E": {
-          "src": "art/raw/ss01-kindled-ash/hit/east",
+          "src": "art/clean/kindled-ash/hit/east",
           "frames": [1, 3]
         },
         "N": {
@@ -572,7 +572,7 @@
           "frames": [1, 3]
         },
         "W": {
-          "src": "art/raw/ss01-kindled-ash/hit/west",
+          "src": "art/clean/kindled-ash/hit/west",
           "frames": [1, 2]
         }
       }
@@ -587,7 +587,7 @@
           "frames": [1, 2, 3, 4, 5, 6]
         },
         "E": {
-          "src": "art/raw/ss01-kindled-ash/death/east",
+          "src": "art/clean/kindled-ash/death/east",
           "frames": [1, 2, 3, 4, 5, 6]
         },
         "N": {
@@ -595,7 +595,7 @@
           "frames": [1, 2, 3, 4, 5, 6]
         },
         "W": {
-          "src": "art/raw/ss01-kindled-ash/death/west",
+          "src": "art/clean/kindled-ash/death/west",
           "frames": [1, 2, 3, 4, 5, 6]
         }
       }
@@ -2197,10 +2197,7 @@
       "light_1_SE_0": [[41, 21]],
       "light_1_SE_2": [[42, 45]],
       "light_1_NE_0": [[42, 27]],
-      "light_1_W_2": [
-        [31, 34],
-        [29, 36]
-      ],
+      "light_1_W_2": [[29, 36]],
       "light_1_SW_1": [[33, 34]],
       "light_2_S_0": [[20, 38]],
       "light_2_SE_0": [[41, 28]],
@@ -2314,7 +2311,8 @@
         [38, 40],
         [42, 40]
       ],
-      "light_1_NW_0": [[25, 27]]
+      "light_1_NW_0": [[25, 27]],
+      "light_1_E_1": [[37, 37]]
     }
   }
 }
