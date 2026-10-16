@@ -13,6 +13,8 @@ reference). OVERRIDES fixes the few frames the rules misread. Colours outside th
 recipe's remap and snap handle them as before.
 
     python3 art/clean/kindled-ash/_scripts/blade_ew.py art/raw/ss01-kindled-ash art/clean/kindled-ash
+    python3 art/clean/kindled-ash/_scripts/blade_ew.py art/raw/run-kindled-ash art/clean/kindled-ash run
+(the folders to do can follow the two paths; without them, FOLDERS).
 """
 import math, os, sys
 from PIL import Image
@@ -44,11 +46,14 @@ STAMP = {**{(u, 0): SHELL for u in range(9)}, **{(u, 1): STONE for u in range(7)
 # on a sloping blade the hook turned back over would read as an arrowhead, so it flicks up past the tip
 STAMP_SLOPED = {**{(u, 0): SHELL for u in range(9)}, **{(u, 1): STONE for u in range(7)},
                 (9, 0): STONE, (9, -1): SHELL, (9, -2): SHELL}
-# per frame: "skip" leaves the frame as generated; otherwise root, dir, trim, mid_reach, erase (boxes)
+# per frame: "skip" leaves the frame as generated; otherwise root, dir, trim, mid_reach, erase (boxes taken
+# as blade), clear (boxes emptied at the end)
 OVERRIDES = {
     # walk W 1-2: the blade is held low across the far hip, under the near sleeve (same grey)
     "walk/west/frame-1.png": {"mid_reach": 1, "root": (35, 54), "dir": (-1, 0.3), "erase": [(23, 49, 26, 56)]},
     "walk/west/frame-2.png": {"mid_reach": 1, "root": (34, 54), "dir": (-1, 0.3), "erase": [(24, 48, 28, 54)]},
+    # haul pull W 4: a second hook behind the cloak
+    "haul_pull/west/frame-4.png": {"clear": [(50, 33, 63, 41)]},
     # death E 2 and 4: the blade flies loose in the fall; left as generated
     "death/east/frame-2.png": "skip",
     "death/east/frame-4.png": "skip",
@@ -281,6 +286,10 @@ def reshape(im, ov):
         if g2 is not main and len(g2) <= 10:
             for p in g2:
                 del px[p]
+    # boxes cleared outright (a second, stray blade the generator drew)
+    for (x0, y0, x1, y1) in ov.get("clear", []):
+        for p in [p for p in px if x0 <= p[0] <= x1 and y0 <= p[1] <= y1]:
+            del px[p]
     # last: any hole the erase left inside the figure takes its neighbours' colour
     outside, stack = set(), [(0, 0)]
     while stack:
@@ -301,8 +310,8 @@ def reshape(im, ov):
     return out, (root, tip, "x" if xmajor else "y", len(g), len(cut))
 
 
-def main(raw, clean):
-    for f in FOLDERS:
+def main(raw, clean, folders=FOLDERS):
+    for f in folders:
         for d in DIRS:
             src, dst = os.path.join(raw, f, d), os.path.join(clean, f, d)
             os.makedirs(dst, exist_ok=True)
@@ -318,4 +327,4 @@ def main(raw, clean):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1], sys.argv[2], sys.argv[3:] or FOLDERS)
