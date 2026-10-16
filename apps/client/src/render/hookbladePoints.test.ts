@@ -133,10 +133,10 @@ describe('the v1 fallback (M1 offsets, a frame without the point)', () => {
 describe('hookblade-fx draws at its own scale and tint (meta)', () => {
   const fixtureFx: HookbladeFxSheet = hookbladeFixtureJson;
 
-  it("draws today's sheet at 2, tinted, a link every 32 world px", () => {
-    expect(hookbladeDraw(hookbladeFxSheet)).toEqual({ scale: 2, tinted: true, spacing: 32, clear: 4 });
+  it("draws the shipped sheet (ART's B redraw) at 1, untinted, a link every 14 world px", () => {
+    expect(hookbladeDraw(hookbladeFxSheet)).toEqual({ scale: 1, tinted: false, spacing: 14, clear: 2 });
     const links = chainLinks(hookbladeFxSheet, 0, 0, 100, 0, 16);
-    expect(links.map((l) => l.x)).toEqual([16, 48, 80]);
+    expect(links.map((l) => l.x)).toEqual([7, 21, 35, 49, 63, 77, 91]);
   });
 
   it('draws an untinted B sheet at 1, in its own colours, with its spacing in sheet px', () => {
@@ -145,6 +145,6 @@ describe('hookblade-fx draws at its own scale and tint (meta)', () => {
     // A sheet without meta is M1's: 2, tinted.
     const bare: HookbladeFxSheet = { ...hookbladeFxSheet };
     delete bare.meta;
-    expect(hookbladeDraw(bare)).toEqual({ scale: 2, tinted: true, spacing: 32, clear: 4 });
+    expect(hookbladeDraw(bare)).toEqual({ scale: 2, tinted: true, spacing: 28, clear: 4 });
   });
 });
