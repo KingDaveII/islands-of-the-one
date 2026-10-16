@@ -1,0 +1,1211 @@
+{
+ "job": "tiles-cave",
+ "date": "2026-10-16",
+ "purpose": "Raw material for the cave tiles and the chest: a floor texture set, the wall, the north door (closed) and the chest (closed and open). ART cuts and composes the 29 static pieces and 24 door frames in art/clean/tiles-cave/ and writes the tiles-cave recipe. No recipe, no art:build, no code, nothing retouched, recoloured or cut here (chest/closed.png and chest/open.png are whole-pixel moves of a candidate onto 64x64, as the job asks).",
+ "style_sentence": "Top-down RPG pixel art seen from a high three-quarter view, light from the top left, flat shading in two or three steps per material, no anti-aliasing, no soft glow, no text, letters or symbols.",
+ "palette": [
+  "#F4EFE6",
+  "#D9D2E9",
+  "#A99FC4",
+  "#5B5478",
+  "#2A2540",
+  "#F2B65A",
+  "#C9733A",
+  "#4A4E57",
+  "#7D8794",
+  "#3E5C7A",
+  "#A8743A",
+  "#C79A3E",
+  "#8A6420",
+  "#E9E4D4",
+  "#2F7F7A",
+  "#C98F78",
+  "#9C5B4A",
+  "#E3C29E",
+  "#24305A",
+  "#E8E2D6",
+  "#FFF4C7",
+  "#8C7F6E",
+  "#5E5448",
+  "#FBF8F0",
+  "#D8B24A",
+  "#F07A3A",
+  "#B5402E",
+  "#1C2147"
+ ],
+ "images_passed_as": "upload:<id> references from get_upload_url (curl -F to the upload URL); no inline base64 anywhere",
+ "uploads": {
+  "art/anchors/tiles-blockout-wall-64.png": {
+   "upload": "upload:13c1c04c-ff5f-4990-a0c1-3d0ae4f64f96",
+   "sha256": "e30d0969fe3791a34a4ad006e143908aea2d495fa58e667945661e76b771af53"
+  },
+  "art/anchors/tiles-blockout-door-64.png": {
+   "upload": "upload:51a3790a-7408-4d52-822f-6c80f390df02",
+   "sha256": "465afa2d83b59ab9c922e82f92e04217278301caa07e3a5f23ee69f23e934420"
+  },
+  "art/anchors/prop-clay-jar-64.png": {
+   "upload": "upload:7ce0787e-e20b-4f1b-85b7-7c55ddfca1f4",
+   "sha256": "9f08705fb367fa0208ce1e9036a13cba6d7717310f982e7cb04d979a96fc4710"
+  },
+  "art/anchors/kindled-ash-s-64.png": {
+   "upload": "upload:f0e61b1a-6fbd-4d0e-9a70-88f6f5a78e5d",
+   "sha256": "a1225ab6ec082b93e2ff177796b9827d69ec21e21a434d63f6e29b54f7f89b58"
+  },
+  "art/anchors/palette-28.png": {
+   "upload": "upload:c31a479f-8eb4-4ffb-b316-33d280bf4a03",
+   "sha256": "0365cd32dc06ae726d3159cbfa13b988958b6a5f3ef6c10ae69d1c95673dfa25"
+  },
+  "art/raw/tiles-cave/chest/closed.png": {
+   "upload": "upload:211fce15-8e2a-4d2a-94fc-584f9f5a14bd",
+   "sha256": "a09558bbb42b31b1d595598773d0eba39fbae9c754a6b5d100ffb4fc5f892a81"
+  },
+  "floor/tiles/wang_0..wang_15 (for reduce_colors, in that order)": [
+   "upload:a9558b4b-5181-4c1a-8cd2-0b68c1a6fa2b",
+   "upload:5fe0e8a3-e396-4b0f-aa52-90237b94ff33",
+   "upload:223b4e79-013e-4362-8b5f-dd19c9a36ea8",
+   "upload:6dfc65f4-0d1c-4938-80ae-1fcd3acfe480",
+   "upload:3317b19f-44bc-4e0c-9575-395b4c352617",
+   "upload:031ae5b1-6623-43fe-9bc1-6a0e707ac4e2",
+   "upload:02d1c326-fa5e-4aec-9184-d6729ac63779",
+   "upload:262c680a-3529-4357-ba1f-14abc64148fb",
+   "upload:e5e560b6-8268-40a0-a39e-d10e69538bc9",
+   "upload:3b5a53ed-fbc4-425e-8a99-c7c90eb830af",
+   "upload:157ac051-a9fc-47dc-af7e-5b57a74b4f09",
+   "upload:9e08acca-2fdd-46bd-83b5-fe6aee93761f",
+   "upload:fa010e31-d4ee-4f69-8f48-61b5cf9d49bc",
+   "upload:5a786797-1a8b-4f7e-be1e-39c0537797a4",
+   "upload:313d3c1a-b52d-4fb8-83b5-838cd48b86f6",
+   "upload:9551bc01-5826-4690-b747-13c8ffbba03b"
+  ]
+ },
+ "seed": "create_image_pro took seed 1234; the one retake (the wall) used 1235. create_topdown_tileset takes no seed.",
+ "balance": {
+  "before": 1375.9,
+  "after_step1_and_steps2_4_charged": 1330.8,
+  "after_step5_and_wall_retake": 1310.8,
+  "end": 1310.8,
+  "spent": 65.1,
+  "note": "get_balance before the first call, after Step 1 (by then Steps 2-4, started in parallel, had also completed and been charged: 45.1 = 15 + 0.1 + 3 x 10), after Step 5 and the wall retake (20 more), and at the end. Every call's own quoted cost matches the balance exactly."
+ },
+ "generations": {
+  "create_topdown_tileset (floor, pro)": 15,
+  "reduce_colors (floor, 16 tiles)": 0.1,
+  "create_image_pro (wall, seed 1234)": 10,
+  "create_image_pro (wall retake, seed 1235)": 10,
+  "create_image_pro (door)": 10,
+  "create_image_pro (chest closed)": 10,
+  "create_image_pro (chest open)": 10,
+  "total": 65.1,
+  "budget": "about 56, hard cap 90; no call quoted more than 15"
+ },
+ "retakes": {
+  "wall": "1 (seed 1235): no take-1 candidate kept the blockout's band heights; take 2 did not either (failed twice)",
+  "floor": 0,
+  "door": 0,
+  "chest closed": 0,
+  "chest open": 0
+ },
+ "failed_twice": [
+  "wall: no candidate of either take keeps the blockout's three bands (8/24/32 rows); every candidate shrinks the floor to 15-20 rows. The pick is the closest of the 32."
+ ],
+ "step1_floor": {
+  "tool": "create_topdown_tileset",
+  "tileset_id": "40eea28e-892f-4793-bc86-202f0e91ef9d",
+  "job_id_seen_in_wait_for_jobs": "2f54167f-161c-4487-9098-da62c22b6179",
+  "arguments": {
+   "lower_description": "a pale lavender cave floor of fine shell grit, smooth and worn, a very quiet texture with only faint grit",
+   "upper_description": "the same pale lavender cave floor with a few small white shell flecks and two or three tiny pebbles",
+   "transition_description": "a light scatter of grit",
+   "tile_size": {
+    "width": 32,
+    "height": 32
+   },
+   "transition_size": 0,
+   "view": "high top-down",
+   "outline": "lineless",
+   "shading": "basic shading",
+   "detail": "low detail",
+   "mode": "pro"
+  },
+  "outline_option": "lineless (the tool's options are single color outline, selective outline, lineless; lineless is the most outline-free). The stored metadata's style_settings read outline/shading/detail null, so pro mode appears to record (and maybe use) none of the three.",
+  "transition_size": "0 accepted (the stored generation_parameters say requested_transition_size 0.0)",
+  "base_tile_ids": {
+   "lower": "e37644f0-6774-40f9-a32c-70330ab54908",
+   "upper": "0b2cc5dd-e3cb-437c-aca6-274b21f4cd19"
+  },
+  "generations": 15,
+  "retakes": 0,
+  "retake_check": "wang_0 (all lower) and wang_15 (all upper) have no outline, grid or stripes over the tile and both are lavender (raw median about #AFA7D0 and #CFC5DF), so no retake.",
+  "tiles": 16,
+  "files": "floor/sheet.png (/mcp/tilesets/<id>/image?inline=true), floor/metadata.json (/metadata: corners, pattern_4x4, bounding_box), floor/tiles/wang_<n>.png sliced by bounding_box, floor/example-map.png (the example map get_topdown_tileset returned inline, 128x128)",
+  "corners": {
+   "wang_13": {
+    "NE": "upper",
+    "NW": "upper",
+    "SE": "upper",
+    "SW": "lower"
+   },
+   "wang_10": {
+    "NE": "lower",
+    "NW": "upper",
+    "SE": "lower",
+    "SW": "upper"
+   },
+   "wang_4": {
+    "NE": "upper",
+    "NW": "lower",
+    "SE": "lower",
+    "SW": "lower"
+   },
+   "wang_12": {
+    "NE": "upper",
+    "NW": "upper",
+    "SE": "lower",
+    "SW": "lower"
+   },
+   "wang_6": {
+    "NE": "upper",
+    "NW": "lower",
+    "SE": "lower",
+    "SW": "upper"
+   },
+   "wang_8": {
+    "NE": "lower",
+    "NW": "upper",
+    "SE": "lower",
+    "SW": "lower"
+   },
+   "wang_0": {
+    "NE": "lower",
+    "NW": "lower",
+    "SE": "lower",
+    "SW": "lower"
+   },
+   "wang_1": {
+    "NE": "lower",
+    "NW": "lower",
+    "SE": "upper",
+    "SW": "lower"
+   },
+   "wang_11": {
+    "NE": "lower",
+    "NW": "upper",
+    "SE": "upper",
+    "SW": "upper"
+   },
+   "wang_3": {
+    "NE": "lower",
+    "NW": "lower",
+    "SE": "upper",
+    "SW": "upper"
+   },
+   "wang_2": {
+    "NE": "lower",
+    "NW": "lower",
+    "SE": "lower",
+    "SW": "upper"
+   },
+   "wang_5": {
+    "NE": "upper",
+    "NW": "lower",
+    "SE": "upper",
+    "SW": "lower"
+   },
+   "wang_15": {
+    "NE": "upper",
+    "NW": "upper",
+    "SE": "upper",
+    "SW": "upper"
+   },
+   "wang_14": {
+    "NE": "upper",
+    "NW": "upper",
+    "SE": "lower",
+    "SW": "upper"
+   },
+   "wang_9": {
+    "NE": "lower",
+    "NW": "upper",
+    "SE": "upper",
+    "SW": "lower"
+   },
+   "wang_7": {
+    "NE": "upper",
+    "NW": "lower",
+    "SE": "upper",
+    "SW": "upper"
+   }
+  },
+  "reduce_colors": {
+   "tool": "reduce_colors",
+   "job_id": "75912596-57d8-4faf-8511-a7e2377bc1cf",
+   "asset_id": "d9d43923-fbc9-5d27-84b6-656232ba18d8",
+   "arguments": {
+    "image_urls": "the 16 raw tiles wang_0..wang_15 in that order (uploads above), all 16 in one call",
+    "palette_image_url": "upload:c31a479f-8eb4-4ffb-b316-33d280bf4a03",
+    "palette_source": "art/anchors/palette-28.png",
+    "dithering": "none"
+   },
+   "generations": 0.1,
+   "result": "floor/tiles-reduced/wang_<n>.png, 32x32, fully opaque",
+   "colours_used": 8,
+   "colours": [
+    "#24305A",
+    "#2A2540",
+    "#5B5478",
+    "#7D8794",
+    "#A99FC4",
+    "#D9D2E9",
+    "#F4EFE6",
+    "#FBF8F0"
+   ],
+   "all_on_palette": true,
+   "full_tiles": {
+    "wang_0 (all lower)": "#A99FC4 x1017, #D9D2E9 x7: the faint grit is almost all lost; the lower floor reduces to flat hollow-dusk",
+    "wang_15 (all upper)": "#D9D2E9 x974, #A99FC4 x48, #FBF8F0 x2"
+   }
+  },
+  "repeat_check": "wang_0 and wang_15 repeat without a visible seam (contact.png, 6x4 patches): the mean colour step across the wrap edge is no larger than between neighbouring columns/rows inside the tile (raw wang_0: L/R 2.0 vs 3.1 inside, T/B 2.7 vs 3.0; raw wang_15: 2.0 vs 3.5, 1.1 vs 3.5).",
+  "notes": "With transition_size 0 the border between the two floors is drawn as a raised edge: a 1 px dark rim (hollow-deep/sleeper-night after reduction) with a lit top edge, and the upper floor reads as a step up. The lower floor is darker (dusk) than the upper (lavender)."
+ },
+ "step2_wall": {
+  "tool": "create_image_pro",
+  "takes": [
+   {
+    "take": 1,
+    "job_id": "c24078f7-0cd5-4e0d-b4ef-ba8e9868ba1f",
+    "asset_id": "a1284e95-6e54-5905-a858-5af6b1e4b1b7",
+    "arguments": {
+     "description": "A straight stretch of cave wall seen from above at a three-quarter angle, filling the whole image edge to edge so it can repeat sideways: at the top a thin strip of the dark violet stone wall top with a lit pale edge, below it the front face of the wall, rough layered dark violet stone with horizontal strata, small cracks and a dark foot, and below that the pale lavender shell-grit cave floor with a soft shadow at the foot of the wall. Top-down RPG pixel art seen from a high three-quarter view, light from the top left, flat shading in two or three steps per material, no anti-aliasing, no soft glow, no text, letters or symbols.",
+     "width": 64,
+     "height": 64,
+     "no_background": false,
+     "seed": 1234,
+     "palette": [
+      "#F4EFE6",
+      "#D9D2E9",
+      "#A99FC4",
+      "#5B5478",
+      "#2A2540",
+      "#F2B65A",
+      "#C9733A",
+      "#4A4E57",
+      "#7D8794",
+      "#3E5C7A",
+      "#A8743A",
+      "#C79A3E",
+      "#8A6420",
+      "#E9E4D4",
+      "#2F7F7A",
+      "#C98F78",
+      "#9C5B4A",
+      "#E3C29E",
+      "#24305A",
+      "#E8E2D6",
+      "#FFF4C7",
+      "#8C7F6E",
+      "#5E5448",
+      "#FBF8F0",
+      "#D8B24A",
+      "#F07A3A",
+      "#B5402E",
+      "#1C2147"
+     ],
+     "palette_name": "Islands of the One",
+     "reference_images": [
+      {
+       "url": "upload:13c1c04c-ff5f-4990-a0c1-3d0ae4f64f96",
+       "usage": "layout to follow exactly: the dark wall top at the top (rows 0–7, with its lit lip on row 7), the stone wall face below it (rows 8–31) with a dark foot, the pale floor below (rows 32–63) with a soft shade under the face. Keep every band at its height; replace the flat colours with stone and grit texture.",
+       "source": "art/anchors/tiles-blockout-wall-64.png"
+      },
+      {
+       "url": "upload:7ce0787e-e20b-4f1b-85b7-7c55ddfca1f4",
+       "usage": "style only: outline, shading, amount of detail",
+       "source": "art/anchors/prop-clay-jar-64.png"
+      }
+     ]
+    },
+    "generations": 10,
+    "candidates": 16,
+    "files": "wall/candidates/<n>.png, wall/candidates.png"
+   },
+   {
+    "take": 2,
+    "why": "no take-1 candidate keeps the three bands at roughly the blockout's heights: all split about 12-14 / 30-33 / 18-20 rows (top+lip / face / floor) against 8 / 24 / 32",
+    "job_id": "c172903d-ac57-4093-9502-9270ae99ff4f",
+    "asset_id": "ead0cd16-5073-5ee7-83eb-3710bfca3e42",
+    "arguments": {
+     "description": "A straight stretch of cave wall seen from above at a three-quarter angle, filling the whole image edge to edge so it can repeat sideways: at the top a thin strip of the dark violet stone wall top with a lit pale edge, below it the front face of the wall, rough layered dark violet stone with horizontal strata, small cracks and a dark foot, and below that the pale lavender shell-grit cave floor with a soft shadow at the foot of the wall. Top-down RPG pixel art seen from a high three-quarter view, light from the top left, flat shading in two or three steps per material, no anti-aliasing, no soft glow, no text, letters or symbols.",
+     "width": 64,
+     "height": 64,
+     "no_background": false,
+     "seed": 1235,
+     "palette": [
+      "#F4EFE6",
+      "#D9D2E9",
+      "#A99FC4",
+      "#5B5478",
+      "#2A2540",
+      "#F2B65A",
+      "#C9733A",
+      "#4A4E57",
+      "#7D8794",
+      "#3E5C7A",
+      "#A8743A",
+      "#C79A3E",
+      "#8A6420",
+      "#E9E4D4",
+      "#2F7F7A",
+      "#C98F78",
+      "#9C5B4A",
+      "#E3C29E",
+      "#24305A",
+      "#E8E2D6",
+      "#FFF4C7",
+      "#8C7F6E",
+      "#5E5448",
+      "#FBF8F0",
+      "#D8B24A",
+      "#F07A3A",
+      "#B5402E",
+      "#1C2147"
+     ],
+     "palette_name": "Islands of the One",
+     "reference_images": [
+      {
+       "url": "upload:13c1c04c-ff5f-4990-a0c1-3d0ae4f64f96",
+       "usage": "layout to follow exactly: the dark wall top at the top (rows 0–7, with its lit lip on row 7), the stone wall face below it (rows 8–31) with a dark foot, the pale floor below (rows 32–63) with a soft shade under the face. Keep every band at its height; replace the flat colours with stone and grit texture.",
+       "source": "art/anchors/tiles-blockout-wall-64.png"
+      },
+      {
+       "url": "upload:7ce0787e-e20b-4f1b-85b7-7c55ddfca1f4",
+       "usage": "style only: outline, shading, amount of detail",
+       "source": "art/anchors/prop-clay-jar-64.png"
+      }
+     ]
+    },
+    "generations": 10,
+    "candidates": 16,
+    "files": "wall/take2-seed1235/candidates/<n>.png, wall/take2-seed1235/candidates.png",
+    "result": "failed again: the top is closer (dark rows 1-6, a lit lip on rows 7-9) but the face grows to rows 10-47 and the floor shrinks to rows 48-62 (15 rows)"
+   }
+  ],
+  "band_measure": "median luminance per row; top = the dark rows from row 0, lip = the lit rows after it, floor = the last run of pale rows. Every candidate of both takes also has a 1 px dark frame on rows 0 and 63.",
+  "pick": {
+   "take": 1,
+   "index": 6,
+   "file": "wall/pick.png",
+   "source": "wall/candidates/6.png",
+   "bands": {
+    "top": "rows 0-11 (12 rows; row 0 the dark frame, 1-11 sleeper-night #24305A, not hollow-deep)",
+    "lip": "rows 12-13 (2 rows, hollow-lavender/hollow-light)",
+    "face": "rows 14-43 (30 rows: hollow-below strata with hollow-deep lines and watcher-stone streaks; dark foot on row 43)",
+    "floor": "rows 44-63 (20 rows: hollow-dusk shade 44-47, pale floor 48-62, dark frame row 63)"
+   },
+   "blockout_bands": {
+    "top": "rows 0-7 (lip on 7)",
+    "face": "rows 8-31",
+    "floor": "rows 32-63"
+   },
+   "why": "Tied closest to the blockout's rows (the 12/32/20 group of take 1; take 2 is further off on face and floor) and the only one of that group with a real lit lip and a face that reads as layered stone. Take 1 #0's face is almost the colour of its top with no lip, #4 has a pale top, #9 a light dust spill, #12 flat pale stripes, #13 two arches, #14 masonry blocks."
+  }
+ },
+ "step3_door": {
+  "tool": "create_image_pro",
+  "job_id": "287586d7-0d12-4815-9116-646d9142641a",
+  "asset_id": "08794de8-0594-59f9-b53f-7f119053bb44",
+  "arguments": {
+   "description": "A heavy closed gate set in the front face of a cave wall, seen from above at a three-quarter angle, filling the whole image: at the top a thin strip of the dark violet stone wall top with a lit pale edge; below it two heavy pale lavender shell-stone door leaves meeting in the middle, held by a bronze band, between two bronze posts; below that the pale lavender shell-grit cave floor with a soft shadow at the foot of the gate. No letters or symbols. Top-down RPG pixel art seen from a high three-quarter view, light from the top left, flat shading in two or three steps per material, no anti-aliasing, no soft glow, no text, letters or symbols.",
+   "width": 64,
+   "height": 64,
+   "no_background": false,
+   "seed": 1234,
+   "palette": [
+    "#F4EFE6",
+    "#D9D2E9",
+    "#A99FC4",
+    "#5B5478",
+    "#2A2540",
+    "#F2B65A",
+    "#C9733A",
+    "#4A4E57",
+    "#7D8794",
+    "#3E5C7A",
+    "#A8743A",
+    "#C79A3E",
+    "#8A6420",
+    "#E9E4D4",
+    "#2F7F7A",
+    "#C98F78",
+    "#9C5B4A",
+    "#E3C29E",
+    "#24305A",
+    "#E8E2D6",
+    "#FFF4C7",
+    "#8C7F6E",
+    "#5E5448",
+    "#FBF8F0",
+    "#D8B24A",
+    "#F07A3A",
+    "#B5402E",
+    "#1C2147"
+   ],
+   "palette_name": "Islands of the One",
+   "reference_images": [
+    {
+     "url": "upload:51a3790a-7408-4d52-822f-6c80f390df02",
+     "usage": "layout to follow exactly: the dark wall top at the top (rows 0–7, with its lit lip on row 7), the stone wall face below it (rows 8–31) with a dark foot, the pale floor below (rows 32–63) with a soft shade under the face. Keep every band at its height; replace the flat colours with stone and grit texture. The door fills the face band: bronze posts at both edges, two stone leaves meeting in the middle, a bronze band across them.",
+     "source": "art/anchors/tiles-blockout-door-64.png"
+    },
+    {
+     "url": "upload:7ce0787e-e20b-4f1b-85b7-7c55ddfca1f4",
+     "usage": "style only: outline, shading, amount of detail",
+     "source": "art/anchors/prop-clay-jar-64.png"
+    }
+   ]
+  },
+  "generations": 10,
+  "candidates": 16,
+  "retakes": 0,
+  "files": "door/candidates/<n>.png, door/candidates.png",
+  "pick": {
+   "index": 0,
+   "file": "door/pick.png",
+   "source": "door/candidates/0.png",
+   "why": "Two clear pale leaves meeting in a seam at x 31 (leaves x 10-30 and 32-53), bronze posts at both edges (x 5-8 and 54-57), and one bronze band across both leaves, as described. #1 has the same layout but its studs read as small crosses; #3 and #14 have two bands.",
+   "bands": "Drawn at a slight tilt, not level: the wall top is solid hollow-deep with no lit lip, down to row 16 on the left and row 10 on the right; the gate's top edge runs from row 17 (left post) to row 11 (right post), its foot from row 54 to row 51, and the dithered floor (hollow-dusk/hollow-lavender) starts at row 55 on the left and row 52 on the right. Against the blockout (top 0-7, face 8-31, floor 32-63) the gate is about 37 rows tall instead of 24. The columns outside the posts (x 0-4, 58-63) are hollow-deep, not face. Colours: hollow-deep, hollow-dusk, hollow-lavender, wheel-brass-dark, watcher-stone (leaf edges), watcher-bronze, spark-amber (band highlight), unwritten-tar x41, hollow-below, watcher-iron x1."
+  }
+ },
+ "step4_chest_closed": {
+  "tool": "create_image_pro",
+  "job_id": "147e8a06-28ca-4141-8290-e3a0d328d3c1",
+  "asset_id": "3845a8c1-6d00-5366-b6de-4eb5193e6c98",
+  "arguments": {
+   "description": "A small closed treasure chest about 24 px wide and 18 px tall, a squat coffer of dark bronze-brown wood bound with brass bands and a gold clasp on the front, seen from above at a three-quarter angle so its lid top and front both show, resting on the ground with a 1 px dark violet outline, transparent background. No letters or symbols. Top-down RPG pixel art seen from a high three-quarter view, light from the top left, flat shading in two or three steps per material, no anti-aliasing, no soft glow, no text, letters or symbols.",
+   "width": 64,
+   "height": 64,
+   "no_background": true,
+   "seed": 1234,
+   "palette": [
+    "#F4EFE6",
+    "#D9D2E9",
+    "#A99FC4",
+    "#5B5478",
+    "#2A2540",
+    "#F2B65A",
+    "#C9733A",
+    "#4A4E57",
+    "#7D8794",
+    "#3E5C7A",
+    "#A8743A",
+    "#C79A3E",
+    "#8A6420",
+    "#E9E4D4",
+    "#2F7F7A",
+    "#C98F78",
+    "#9C5B4A",
+    "#E3C29E",
+    "#24305A",
+    "#E8E2D6",
+    "#FFF4C7",
+    "#8C7F6E",
+    "#5E5448",
+    "#FBF8F0",
+    "#D8B24A",
+    "#F07A3A",
+    "#B5402E",
+    "#1C2147"
+   ],
+   "palette_name": "Islands of the One",
+   "reference_images": [
+    {
+     "url": "upload:7ce0787e-e20b-4f1b-85b7-7c55ddfca1f4",
+     "usage": "prop style: outline, shading, amount of detail",
+     "source": "art/anchors/prop-clay-jar-64.png"
+    },
+    {
+     "url": "upload:f0e61b1a-6fbd-4d0e-9a70-88f6f5a78e5d",
+     "usage": "scale only: this is the player, 45 px tall; the chest stands beside it",
+     "source": "art/anchors/kindled-ash-s-64.png"
+    }
+   ],
+   "max_colors": 10
+  },
+  "generations": 10,
+  "candidates_files": [
+   {
+    "index": 0,
+    "file": "chest/candidates/0.png",
+    "bbox": [
+     15,
+     19,
+     48,
+     49
+    ],
+    "width": 33,
+    "height": 30,
+    "lowest_opaque_row": 48
+   },
+   {
+    "index": 1,
+    "file": "chest/candidates/1.png",
+    "bbox": [
+     15,
+     18,
+     48,
+     50
+    ],
+    "width": 33,
+    "height": 32,
+    "lowest_opaque_row": 49
+   },
+   {
+    "index": 2,
+    "file": "chest/candidates/2.png",
+    "bbox": [
+     15,
+     18,
+     48,
+     50
+    ],
+    "width": 33,
+    "height": 32,
+    "lowest_opaque_row": 49
+   },
+   {
+    "index": 3,
+    "file": "chest/candidates/3.png",
+    "bbox": [
+     15,
+     18,
+     48,
+     50
+    ],
+    "width": 33,
+    "height": 32,
+    "lowest_opaque_row": 49
+   },
+   {
+    "index": 4,
+    "file": "chest/candidates/4.png",
+    "bbox": [
+     15,
+     15,
+     48,
+     50
+    ],
+    "width": 33,
+    "height": 35,
+    "lowest_opaque_row": 49
+   },
+   {
+    "index": 5,
+    "file": "chest/candidates/5.png",
+    "bbox": [
+     15,
+     17,
+     48,
+     50
+    ],
+    "width": 33,
+    "height": 33,
+    "lowest_opaque_row": 49
+   },
+   {
+    "index": 6,
+    "file": "chest/candidates/6.png",
+    "bbox": [
+     15,
+     18,
+     48,
+     50
+    ],
+    "width": 33,
+    "height": 32,
+    "lowest_opaque_row": 49
+   },
+   {
+    "index": 7,
+    "file": "chest/candidates/7.png",
+    "bbox": [
+     15,
+     18,
+     48,
+     50
+    ],
+    "width": 33,
+    "height": 32,
+    "lowest_opaque_row": 49
+   },
+   {
+    "index": 8,
+    "file": "chest/candidates/8.png",
+    "bbox": [
+     15,
+     18,
+     48,
+     50
+    ],
+    "width": 33,
+    "height": 32,
+    "lowest_opaque_row": 49
+   },
+   {
+    "index": 9,
+    "file": "chest/candidates/9.png",
+    "bbox": [
+     14,
+     17,
+     49,
+     50
+    ],
+    "width": 35,
+    "height": 33,
+    "lowest_opaque_row": 49
+   },
+   {
+    "index": 10,
+    "file": "chest/candidates/10.png",
+    "bbox": [
+     14,
+     15,
+     49,
+     50
+    ],
+    "width": 35,
+    "height": 35,
+    "lowest_opaque_row": 49
+   },
+   {
+    "index": 11,
+    "file": "chest/candidates/11.png",
+    "bbox": [
+     14,
+     18,
+     49,
+     50
+    ],
+    "width": 35,
+    "height": 32,
+    "lowest_opaque_row": 49
+   },
+   {
+    "index": 12,
+    "file": "chest/candidates/12.png",
+    "bbox": [
+     14,
+     15,
+     49,
+     48
+    ],
+    "width": 35,
+    "height": 33,
+    "lowest_opaque_row": 47
+   },
+   {
+    "index": 13,
+    "file": "chest/candidates/13.png",
+    "bbox": [
+     14,
+     17,
+     49,
+     47
+    ],
+    "width": 35,
+    "height": 30,
+    "lowest_opaque_row": 46
+   },
+   {
+    "index": 14,
+    "file": "chest/candidates/14.png",
+    "bbox": [
+     14,
+     16,
+     49,
+     49
+    ],
+    "width": 35,
+    "height": 33,
+    "lowest_opaque_row": 48
+   },
+   {
+    "index": 15,
+    "file": "chest/candidates/15.png",
+    "bbox": [
+     15,
+     15,
+     48,
+     50
+    ],
+    "width": 33,
+    "height": 35,
+    "lowest_opaque_row": 49
+   }
+  ],
+  "retakes": 0,
+  "files": "chest/candidates/<n>.png, chest/candidates.png",
+  "size_note": "No candidate is near 24 x 18: all are 33-35 wide and 30-35 tall (about 1.4x). The retake rule covers only 'no chest in that view', so no retake.",
+  "pick": {
+   "index": 13,
+   "file": "chest/pick.png",
+   "source": "chest/candidates/13.png",
+   "size": [
+    35,
+    30
+   ],
+   "why": "Closest to 24 x 18 among those that show both the lid top and the front (#13 35x30, #2 33x32; #0 is 33x30 but front-only, its lid top doesn't show). #13 shows the lid's planks from above, the front with its clasp, and the left side."
+  },
+  "placement": {
+   "file": "chest/closed.png",
+   "moved_by": [
+    0,
+    7
+   ],
+   "bbox": [
+    14,
+    24,
+    49,
+    54
+   ],
+   "lowest_opaque_row": 53,
+   "check": "every opaque pixel equals the candidate's, moved (0, +7); no scaling"
+  }
+ },
+ "step5_chest_open": {
+  "tool": "create_image_pro",
+  "job_id": "0a31464a-d5f5-40a2-a9e1-b8e7fd80b7c3",
+  "asset_id": "123db39f-d716-5909-b66f-08ed548747d0",
+  "arguments": {
+   "description": "The same small chest with its lid swung fully open and back, its empty dark inside showing, a faint amber glint inside, resting on the ground. Top-down RPG pixel art seen from a high three-quarter view, light from the top left, flat shading in two or three steps per material, no anti-aliasing, no soft glow, no text, letters or symbols.",
+   "width": 64,
+   "height": 64,
+   "no_background": true,
+   "seed": 1234,
+   "palette": [
+    "#F4EFE6",
+    "#D9D2E9",
+    "#A99FC4",
+    "#5B5478",
+    "#2A2540",
+    "#F2B65A",
+    "#C9733A",
+    "#4A4E57",
+    "#7D8794",
+    "#3E5C7A",
+    "#A8743A",
+    "#C79A3E",
+    "#8A6420",
+    "#E9E4D4",
+    "#2F7F7A",
+    "#C98F78",
+    "#9C5B4A",
+    "#E3C29E",
+    "#24305A",
+    "#E8E2D6",
+    "#FFF4C7",
+    "#8C7F6E",
+    "#5E5448",
+    "#FBF8F0",
+    "#D8B24A",
+    "#F07A3A",
+    "#B5402E",
+    "#1C2147"
+   ],
+   "palette_name": "Islands of the One",
+   "reference_images": [
+    {
+     "url": "upload:211fce15-8e2a-4d2a-94fc-584f9f5a14bd",
+     "usage": "the same chest: keep its size, materials, colours and outline exactly; only the lid changes",
+     "source": "art/raw/tiles-cave/chest/closed.png"
+    },
+    {
+     "url": "upload:f0e61b1a-6fbd-4d0e-9a70-88f6f5a78e5d",
+     "usage": "scale only: this is the player, 45 px tall; the chest stands beside it",
+     "source": "art/anchors/kindled-ash-s-64.png"
+    }
+   ],
+   "max_colors": 10
+  },
+  "generations": 10,
+  "candidates_files": [
+   {
+    "index": 0,
+    "file": "chest-open/candidates/0.png",
+    "bbox": [
+     8,
+     2,
+     53,
+     54
+    ],
+    "width": 45,
+    "height": 52,
+    "lowest_opaque_row": 53
+   },
+   {
+    "index": 1,
+    "file": "chest-open/candidates/1.png",
+    "bbox": [
+     8,
+     2,
+     51,
+     52
+    ],
+    "width": 43,
+    "height": 50,
+    "lowest_opaque_row": 51
+   },
+   {
+    "index": 2,
+    "file": "chest-open/candidates/2.png",
+    "bbox": [
+     11,
+     2,
+     56,
+     54
+    ],
+    "width": 45,
+    "height": 52,
+    "lowest_opaque_row": 53
+   },
+   {
+    "index": 3,
+    "file": "chest-open/candidates/3.png",
+    "bbox": [
+     13,
+     2,
+     56,
+     52
+    ],
+    "width": 43,
+    "height": 50,
+    "lowest_opaque_row": 51
+   },
+   {
+    "index": 4,
+    "file": "chest-open/candidates/4.png",
+    "bbox": [
+     16,
+     5,
+     48,
+     49
+    ],
+    "width": 32,
+    "height": 44,
+    "lowest_opaque_row": 48
+   },
+   {
+    "index": 5,
+    "file": "chest-open/candidates/5.png",
+    "bbox": [
+     8,
+     2,
+     52,
+     53
+    ],
+    "width": 44,
+    "height": 51,
+    "lowest_opaque_row": 52
+   },
+   {
+    "index": 6,
+    "file": "chest-open/candidates/6.png",
+    "bbox": [
+     12,
+     2,
+     56,
+     53
+    ],
+    "width": 44,
+    "height": 51,
+    "lowest_opaque_row": 52
+   },
+   {
+    "index": 7,
+    "file": "chest-open/candidates/7.png",
+    "bbox": [
+     12,
+     2,
+     56,
+     53
+    ],
+    "width": 44,
+    "height": 51,
+    "lowest_opaque_row": 52
+   },
+   {
+    "index": 8,
+    "file": "chest-open/candidates/8.png",
+    "bbox": [
+     7,
+     3,
+     55,
+     56
+    ],
+    "width": 48,
+    "height": 53,
+    "lowest_opaque_row": 55
+   },
+   {
+    "index": 9,
+    "file": "chest-open/candidates/9.png",
+    "bbox": [
+     7,
+     4,
+     55,
+     56
+    ],
+    "width": 48,
+    "height": 52,
+    "lowest_opaque_row": 55
+   },
+   {
+    "index": 10,
+    "file": "chest-open/candidates/10.png",
+    "bbox": [
+     16,
+     8,
+     48,
+     52
+    ],
+    "width": 32,
+    "height": 44,
+    "lowest_opaque_row": 51
+   },
+   {
+    "index": 11,
+    "file": "chest-open/candidates/11.png",
+    "bbox": [
+     10,
+     4,
+     57,
+     58
+    ],
+    "width": 47,
+    "height": 54,
+    "lowest_opaque_row": 57
+   },
+   {
+    "index": 12,
+    "file": "chest-open/candidates/12.png",
+    "bbox": [
+     12,
+     6,
+     56,
+     56
+    ],
+    "width": 44,
+    "height": 50,
+    "lowest_opaque_row": 55
+   },
+   {
+    "index": 13,
+    "file": "chest-open/candidates/13.png",
+    "bbox": [
+     10,
+     7,
+     56,
+     56
+    ],
+    "width": 46,
+    "height": 49,
+    "lowest_opaque_row": 55
+   },
+   {
+    "index": 14,
+    "file": "chest-open/candidates/14.png",
+    "bbox": [
+     10,
+     4,
+     56,
+     56
+    ],
+    "width": 46,
+    "height": 52,
+    "lowest_opaque_row": 55
+   },
+   {
+    "index": 15,
+    "file": "chest-open/candidates/15.png",
+    "bbox": [
+     10,
+     5,
+     55,
+     56
+    ],
+    "width": 45,
+    "height": 51,
+    "lowest_opaque_row": 55
+   }
+  ],
+  "retakes": 0,
+  "files": "chest-open/candidates/<n>.png, chest-open/candidates.png, chest-open/pick.png",
+  "body_check": "Best alignment of the closed chest's front (its bottom 14 rows) in each candidate: 14 of 16 turned the chest about 45 degrees (isometric) and match 35-48 %; #4 and #10 stay front-on and match 60 %.",
+  "pick": {
+   "index": 10,
+   "file": "chest-open/pick.png",
+   "source": "chest-open/candidates/10.png",
+   "size": [
+    32,
+    44
+   ],
+   "why": "One of the two that keep the closed chest's front-on body (brass-framed dark wood panel, hollow-deep outline), and it has the faint amber glint inside that the description asks for (#4 has none). Its body is 32 px wide against the closed chest's 35 (its rounded left side and lid planks are gone), so it keeps the body only roughly; not a retake under the job's rule."
+  },
+  "placement": {
+   "file": "chest/open.png",
+   "moved_by": [
+    4,
+    2
+   ],
+   "rule": "same lowest row (53) and same left edge of the body: the closed chest's front face starts at x 20 (x 14-19 is its left side seen in perspective), the open chest's at x 16",
+   "bbox": [
+    20,
+    10,
+    52,
+    54
+   ],
+   "lowest_opaque_row": 53,
+   "check": "every opaque pixel equals the candidate's, moved (+4, +2); no scaling"
+  }
+ },
+ "colour_notes": {
+  "chest": "Every closed-chest candidate draws the dark wood in unwritten-tar #5E5448 (skin ramp) and most add unwritten-sail #8C7F6E and husk-core #FFF4C7 as metal highlights; the pick #13 uses u-tar 410, brass 215, hollow-deep 152, watcher-bronze 138, husk-core 57, u-sail 27, choir-gold 8. Husk-core belongs to Husks only and the skin ramp to Kindled skin only, so ART's recipe maps them (wood to the bronze/leather ramp, the highlight to choir-gold). Not recoloured here, as the job says.",
+  "chest_open": "The pick #10 uses hollow-deep, wheel-brass-dark, unwritten-tar, wheel-brass, spark-amber (#F2B65A), choir-gold.",
+  "reserved": "No pixel in any pick is #FFFFFF, #FFE7A3, #E0457B or #8E2550 (every create_image_pro result is on the 28-colour palette)."
+ },
+ "picks": {
+  "wall": "wall/pick.png (take 1 #6)",
+  "door": "door/pick.png (#0)",
+  "chest_closed": "chest/pick.png (#13), placed as chest/closed.png",
+  "chest_open": "chest-open/pick.png (#10), placed as chest/open.png"
+ },
+ "contact": "contact.png: the 16 floor tiles raw and reduced at 4x, 6x4 patches of wang_0 and wang_15 at 2x, and the four picks at 4x beside their blockout or reference",
+ "files": {
+  "chest-open/candidates.png": "40e26d4071c8518ab03209d28b609396ba98c7cd92be2837bfb49616fb14da27",
+  "chest-open/candidates/0.png": "19f0c6f3bbd359d3e5ad91268cd3cc9cd79450c0a5df892632e06701ef1742da",
+  "chest-open/candidates/1.png": "a9196afb18d9695a324637fc277cff3344f27d27ebca0466973c861b1854a8d7",
+  "chest-open/candidates/10.png": "8d84d229fe79c4c4a032a9f7dd866fe139195fbb9a868e43c3d70763517a1701",
+  "chest-open/candidates/11.png": "83ca990caf4b711d273d3c9351848da8ca4d05eb512128b2d8aae9084abcbbf7",
+  "chest-open/candidates/12.png": "6950df209f24f1bbd3eb48c718040e8c02b3fe3d0e4ac513a220d87d3c8dfef0",
+  "chest-open/candidates/13.png": "04c45d3457899ede8913fccd58ba1a37d6a72d51b2f869e45c970832c3f76fae",
+  "chest-open/candidates/14.png": "372d5c9a096d0e318d5b11fcca807a570447154330f958d81b1540fd582a8ab5",
+  "chest-open/candidates/15.png": "854612e5dbf45850a13a31e1d186abf7d30c48a2fcf51c76ef3eb3cd3eca068d",
+  "chest-open/candidates/2.png": "86dfb43dd6495e22dbfeb00c6fcccb0d3940d5483972bfaf184a7f9b2991df22",
+  "chest-open/candidates/3.png": "c1aadb2743ed79e437dad231dbb8adc69b93be63f2059c68fdcd33afc1bd366c",
+  "chest-open/candidates/4.png": "7426e829a45c0f4f63c1a7d45332e7795b1d865933d4df4c4b27cc48dc50262a",
+  "chest-open/candidates/5.png": "83daf804d45fabaa3d572feef33c555521e49fa76de92326bc5940fbfb306a52",
+  "chest-open/candidates/6.png": "36f298bb4af7b525a0d779290f2b3c513aa765e136df347e10045d170f19e492",
+  "chest-open/candidates/7.png": "ba2334540e60e7c67ed2e8ae1c4ce23e2c6c8607e9ddeec1e7cc3c00be8535b0",
+  "chest-open/candidates/8.png": "e2fbd4cb964f7c3c86b8f258122156ddcbea5b87ef806a369ce41d43cdeafc8a",
+  "chest-open/candidates/9.png": "d2f8812146d013a6fb7492a8b502a57b519fc500497d1808d01ee171dcfe179b",
+  "chest-open/pick.png": "8d84d229fe79c4c4a032a9f7dd866fe139195fbb9a868e43c3d70763517a1701",
+  "chest/candidates.png": "bccd8d21f8094f30d0aec62de59c440e9537be29a56db5bf986eccd610243743",
+  "chest/candidates/0.png": "1fb9e6af960666e4d2c8b37de064a2dfcaaf43f72fb1e2b86b24d3943c43bc7a",
+  "chest/candidates/1.png": "9d88ce9a40784cb53f2da7806a3f059f123b0b2216aff3a03ace00c199810020",
+  "chest/candidates/10.png": "05c969e308211d98e9a039e20da219a4c64ee0995ca9582b6ed8dad1be6afd34",
+  "chest/candidates/11.png": "c998e8b2acdf664043d5a47a7f4c36d57a25a96e244393dda95b10e1d4f4cc11",
+  "chest/candidates/12.png": "44b3303ba2dcfa54e563f9cb1f481ef28fe8e7efff478f2cbf56720414843f2d",
+  "chest/candidates/13.png": "e7ce3d1e4aefcde97b54cbb19a6ec406b7341b824ebb7017b2070115d5d7ad56",
+  "chest/candidates/14.png": "c55462402eaf859905f928f67853eae7725f24aab3287ded7b8f3c1a2dfe9fb2",
+  "chest/candidates/15.png": "3bbbeab668a7b88de1f5a9f532a5f8308a507afde0b521c0750a149b061c1147",
+  "chest/candidates/2.png": "031d55f94517b918b98dacc3f90f9ea8327375792b5da58b5b28b22d5511d3a5",
+  "chest/candidates/3.png": "8fea35b8164226929805bf8c1f854ba4eb9fd514a7b1598bf36e752d77d18907",
+  "chest/candidates/4.png": "27e8c4ff231d1e27db0b7b1c24638e5e779977f479a619f331198163624d1bcb",
+  "chest/candidates/5.png": "5e115bb1d61266ceb78d9fb234ba5e2787c43d8cb6aa62e2912d566038029ee3",
+  "chest/candidates/6.png": "e769d0d58e3b045fc994bb74bbacde07f7b435f6b5ba5408486276a3daeb2dd4",
+  "chest/candidates/7.png": "6d305cba67cc3b2788706dd040b6a966b008d5bfb79b7c0a1dfdf24ea60c47e0",
+  "chest/candidates/8.png": "799bd637bbe4b65fcc5075710e471b2c4ac3fefb50745a75ef2bb47a27e3a919",
+  "chest/candidates/9.png": "5051a71a8be113b286f0d2811de51cbc3866b079aeb9d5dd47261161dd901aa6",
+  "chest/closed.png": "a09558bbb42b31b1d595598773d0eba39fbae9c754a6b5d100ffb4fc5f892a81",
+  "chest/open.png": "f0409017e537f8ef3daa62550f90e5e538ed42bd5221e9d9fb8f685757e19121",
+  "chest/pick.png": "e7ce3d1e4aefcde97b54cbb19a6ec406b7341b824ebb7017b2070115d5d7ad56",
+  "contact.png": "19b43df20a989d3db651215848ef282e98ce35b07ceb6b5e1bb0975059f471eb",
+  "door/candidates.png": "b5d9c76a80ab37b21dc9c074bcbf1feebcbb9cfba574e9662ef9d9f4e90aec50",
+  "door/candidates/0.png": "d53365a126c1c1cf1da40965f63d3e244820fc71ff8eb289613303bd7d7e4ff2",
+  "door/candidates/1.png": "2f2af385fb32fff391b3b513460c206429152ce10a0aca25c69a859a9284e110",
+  "door/candidates/10.png": "fbd60a869d5a25daba807e948d01cbd467c5f3e65f64489a1f24e6e5f3bdaacc",
+  "door/candidates/11.png": "fd053b9c00aa194f0396c887a1716c2c6c1b6e2b31e30c01aa727d63d59530c8",
+  "door/candidates/12.png": "3af56e072ffcba1510a8fb81b705cc13917af3201eb9d16f1ca1fc805f54f5ac",
+  "door/candidates/13.png": "ce39d1e53148d1ac2694665907c5974178ae03d7b6e0ffa00ff71f1b0a2cfdeb",
+  "door/candidates/14.png": "eae85b2ce95c7f0df7ffa3ae14055b0a8d38bb2d0a5e557fcac39dea869db414",
+  "door/candidates/15.png": "8dcf940561db309799e259e6f1b53040f3a78f4f202ecd7fab187cb4fc39a81b",
+  "door/candidates/2.png": "27c19f4edc34e5e905b00f6c04f43cadc7b04b460564e6c6a004381a5396afc5",
+  "door/candidates/3.png": "5f9c52b5e7abdfb64e0f8a3d1f7efe629abdd60ed52ba84c9f030204395b7e83",
+  "door/candidates/4.png": "66d9d3573a29d4ff0e1b4806730ad1c897a146b590444374aec81938166c5548",
+  "door/candidates/5.png": "010e879e45dc21901c9905f03ae606ee36c7013007c59f381559dcd4c5812846",
+  "door/candidates/6.png": "210dd1ee7f7cf0000e722d16cb124ec66978556470303226549ec5aff7e00791",
+  "door/candidates/7.png": "a61920e2195b91d978da74fe9503f9abc6594cf89df6318eaa47252f48e08015",
+  "door/candidates/8.png": "c6f60b2ca9d2dd7c7fa821a4b1d4de6ef798b8c115a851558d770e67e8033fa6",
+  "door/candidates/9.png": "1e5e26fdfb95632f35da3a4723a1ba24adcc3f7cfd921f9630f97519bd9bb809",
+  "door/pick.png": "d53365a126c1c1cf1da40965f63d3e244820fc71ff8eb289613303bd7d7e4ff2",
+  "floor/example-map.png": "6416833cd8768e85b9faf7d8a9f0b620db500414c41ca8b4cb01e66dc1d3313e",
+  "floor/metadata.json": "81d7d1020fe3bb38f10401809a82acfbecbeb1ed4205de5075c6ac39dd08fd5c",
+  "floor/sheet.png": "6fd5f4181135a2f7d95f58d5d1fa1690512dd75babe22f587fa21c13e9cc0c0a",
+  "floor/tiles-reduced/wang_0.png": "ba3eafc6b65582b6b97401ae139d7368a297c76f6dea744b655a5f5e4aa6f4c4",
+  "floor/tiles-reduced/wang_1.png": "08e0ccb27e0652e50c8362b99e1d4965bedbbdb4f4c7dc1a00809eb2ae6c928d",
+  "floor/tiles-reduced/wang_10.png": "007a454095680a30f6ea24da7dcbe6cd06dc0449d25aa61f3921b568ba5bc88d",
+  "floor/tiles-reduced/wang_11.png": "78d6c8e7b1af1fddfd84d2cd54721c1afc5ce19b014cb8386900ebd4a77b8566",
+  "floor/tiles-reduced/wang_12.png": "38fa407bb8734301368b1ef3a181e1f889d55c4db70d2f20d625b32ff4481185",
+  "floor/tiles-reduced/wang_13.png": "03ad4f780bd12414533f2cec18a40ef2cb2c5fc64387551fb6acacf649fcb5e8",
+  "floor/tiles-reduced/wang_14.png": "ee8f3e1303e22a75ae540df4562129260b4dbf81ba6e37748c676ee97534f6db",
+  "floor/tiles-reduced/wang_15.png": "7b25c214b3b8286975030ac409dafb45d8ab3d32b07b030b6eeb042eac889072",
+  "floor/tiles-reduced/wang_2.png": "d24f883ff682da1f224d3fee3434a425b4667d1b4d4e4b16fd1c5590297d303a",
+  "floor/tiles-reduced/wang_3.png": "856a3260957780ad492d1fee728a4d2a3e3921b5744488eca321137c0c97fe0a",
+  "floor/tiles-reduced/wang_4.png": "314419f65246e572888f7ef9534bb358bb46de327e2e23d7746268f8eab766b6",
+  "floor/tiles-reduced/wang_5.png": "3bc3af96089e7e32f5549750d6ef52ed34c0fb27ee58d91e84fc0a9933ebd4c7",
+  "floor/tiles-reduced/wang_6.png": "bbe24cc8a3d9c03ec2989d430f2dd30546b36d942043de451b1e3b229f1eb2d3",
+  "floor/tiles-reduced/wang_7.png": "dffa13672b1d9e535ecf9fe7a8275413b71abd4590fc167a4c86b8622ae41148",
+  "floor/tiles-reduced/wang_8.png": "382efe52da4518126929c0e19a1f658ea1b1c47c08dfa40fc605ed0927e93b7b",
+  "floor/tiles-reduced/wang_9.png": "a2f7ad7da9cbd62c20efec79c5761fcd198eea744b27a89165c81ed6a9ade499",
+  "floor/tiles/wang_0.png": "94d5a92e343e4a4833d70a3762aff38058dd9acb415133a8ce16fa244d96cb49",
+  "floor/tiles/wang_1.png": "d5481a146d5ce6752edc6d0a7d2f7ab2d4610e528763c9089dbdf1c909feed35",
+  "floor/tiles/wang_10.png": "8df301dcf1877c57eae791dc805412f9ececa81a14a076948e6649931bf65bf0",
+  "floor/tiles/wang_11.png": "981edbd96c8f48ead42b37085a9709242db853954fb5390e33c0e3e440ad2f7a",
+  "floor/tiles/wang_12.png": "0212c9ef9e6e2257c664da2360214411468029caf99f94fff0d586934b621c18",
+  "floor/tiles/wang_13.png": "2e2c4b8ab832dc701d84270934d0e9db9bd30f31fa7935eaf1a8bcc8c9296c78",
+  "floor/tiles/wang_14.png": "8a37c7a620f805c63a483a7f9e79ce9f93c379d3fc3f68790a6ad505fef4a37e",
+  "floor/tiles/wang_15.png": "1f2ec184150e25c771238c11398013c54a85745691615c2be4e93066b861f855",
+  "floor/tiles/wang_2.png": "01d953b26b11b882ceb3c0c6cdf1842964e19347d46a44cc93c5347f5f7682a5",
+  "floor/tiles/wang_3.png": "12dae3e969ad7b30115444f12cbb073efcaa71ac54157a3976386229dde31246",
+  "floor/tiles/wang_4.png": "9bca4c67ee2f312812d46f739b7b7f65197d99cf0e49710bb5def694158b41d7",
+  "floor/tiles/wang_5.png": "4fd07942bb6563b8bb84764a5ef096626c443c410b06759cd825568a6f9c2e22",
+  "floor/tiles/wang_6.png": "209e86bca069c1ed92b8eb64c31702eadd29f9e4eaac55100710b37c683bb2ee",
+  "floor/tiles/wang_7.png": "90dc3ca0d7e30d91df5d2532b0079564602776272c82c5a3b8786a49f17144bc",
+  "floor/tiles/wang_8.png": "d4c7f57eb655a44e67482b4b889a60feeeae12a798bb2d2a28e46ddeed72893f",
+  "floor/tiles/wang_9.png": "16e03b7fe4dbb1821766c8679ed6ff1f021196cd5a909e732ff3dc1eb3fc351d",
+  "wall/candidates.png": "89190ca7aac3d3a3b1dfdeb7f486e79188ce362050d3bc54590a5232ac6c1e90",
+  "wall/candidates/0.png": "5fb22a02760d0491e88011cad10c9bf2a6c75e4b8067ba41c05d3d13e5894ca9",
+  "wall/candidates/1.png": "aae46e28f4b7f4b8911c82cc39525ff4bee47850c44d15cc161d77af56a12417",
+  "wall/candidates/10.png": "a365c56152c3f393d2977e7a68ad75238ff950681d9997d2c046a582c205fc6a",
+  "wall/candidates/11.png": "3caf9588dcd05610826cc5fbf80280d34b8cab427161c498aef61b4a125ec16a",
+  "wall/candidates/12.png": "c8ee503954edb5d5bb6ffb574af1d10620d0be99543ef0adf659d3b4b1d428a2",
+  "wall/candidates/13.png": "a7a25098e0466cb30bcd4a1f697cd1e9d00042feac4fe192c9c16d7112d95786",
+  "wall/candidates/14.png": "e0d76c537e06ae041a2fe13bd62cea184ee3a82c6d349e63f6333f4047660b59",
+  "wall/candidates/15.png": "136bf3d54b0816c4294280cd77a97c5d27cdffdd91c3b1ea9169f999d986fe3c",
+  "wall/candidates/2.png": "9213d8f6f22483d295ab5bcc936de6ce99e5819a12382415acf694528bb3004b",
+  "wall/candidates/3.png": "03a77f48cc3d4a097ed36aea022d2d344a718aa4fa2bbe484454d03b84be3f47",
+  "wall/candidates/4.png": "d039ec9a650d80263186029b5d8cbfcfee49baee636d1365e657099c2003f953",
+  "wall/candidates/5.png": "0371b455764eae3b62bc831d91e6ee0d538979e5ea1ba10ccc755b9c8f6885b6",
+  "wall/candidates/6.png": "164588670940c1d1e71695bf5f8f634312a327c86175989d92c01c64f872c73e",
+  "wall/candidates/7.png": "c9e5fd381042506899cbb05801432f5233eaffb98c375f0e435f83b07c359b1f",
+  "wall/candidates/8.png": "81ea7e555b5ae82aa732e81219c4a2e60877b498a71d9e8f13fddd859722e37e",
+  "wall/candidates/9.png": "9cf8e6293195b651b52a8af1fcbd9cc6f08777f4c05ce5ae5f5200b3756e5c8a",
+  "wall/pick.png": "164588670940c1d1e71695bf5f8f634312a327c86175989d92c01c64f872c73e",
+  "wall/take2-seed1235/candidates.png": "861015ce3609df9f8ca9559557b71ca12ace90683c97804e413c6c85339f0cb6",
+  "wall/take2-seed1235/candidates/0.png": "4aae3659ccb399fa93cc220a5570d73e941b8f7808ec16a1aec0fb86d29c9b6b",
+  "wall/take2-seed1235/candidates/1.png": "51440bf18dedd2a77984527d6cc0fbf5f15e02a8b6ff45d83cb28de464ea2ee3",
+  "wall/take2-seed1235/candidates/10.png": "db9dba5502859c8a2f9bdf65d9858d75d79b7b7ca59e535622cb05be01e09ddb",
+  "wall/take2-seed1235/candidates/11.png": "f692d6f4f58f2d7fee4c8dc7cda548ead11d3b9a0115b2fcaea0f5f5c9c9a325",
+  "wall/take2-seed1235/candidates/12.png": "95dc25bf3d74d7eef6af76b050cc4a32ca681531f9b04c69e2eb724d3d91f0a2",
+  "wall/take2-seed1235/candidates/13.png": "ebfd64b1f1d167cd63e4f8caf5ead9e68f6b4655a39ad03b4f8db13079dd02b9",
+  "wall/take2-seed1235/candidates/14.png": "fdcb0ecb2f147aaecadc1f6753e8c9347604a8bdd17a1b82681fa091d095d1ce",
+  "wall/take2-seed1235/candidates/15.png": "dc4bd43febd00a9e946d7a4b1a057709716441aad4503398ff88e93d7be816f5",
+  "wall/take2-seed1235/candidates/2.png": "438695f4e11ba0cdbc6bd2f50f999bf9c64c46ef37f22d398aa90d87c074ff16",
+  "wall/take2-seed1235/candidates/3.png": "8e1ba117c7f26bcc4e3b76d4c47d8fab29e8916f09978b79d47cf283422df8b2",
+  "wall/take2-seed1235/candidates/4.png": "45d6b31029782cbbcedc857e37379058a311610069c5f9a479d99ba9e8af0de7",
+  "wall/take2-seed1235/candidates/5.png": "b589c809f753448cd68de7bb1cc0c67e860f8679717c41ee8a5ff407b2403288",
+  "wall/take2-seed1235/candidates/6.png": "ad452ccc98ab22bd5af6ccb1163a82e925fc934ef660a30530ee56739f71c40a",
+  "wall/take2-seed1235/candidates/7.png": "1881713c6c4d45efca30de44c9273bb302e861009e70d03bc1f832a169f6937d",
+  "wall/take2-seed1235/candidates/8.png": "b677977805bb9b215bd7d191dc964d4e55744906430900c842ca8feab8fd5d52",
+  "wall/take2-seed1235/candidates/9.png": "626ca26c6831ca9f56832d7ad9dcbebf29d84c4bb6723f7a4566d4bcebbbc0e8"
+ }
+}
