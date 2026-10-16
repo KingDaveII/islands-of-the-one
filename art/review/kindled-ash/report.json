@@ -135,7 +135,7 @@
   ],
   "totals": {
     "frames": 328,
-    "offPalette": 14808,
+    "offPalette": 14805,
     "maxDeltaE": 8.89,
     "outlineGaps": 1390,
     "masked": 24560
@@ -2411,8 +2411,8 @@
       "frames": 2,
       "held": [],
       "seam": {
-        "lastToFirst": 276,
-        "meanInCycle": 276,
+        "lastToFirst": 278,
+        "meanInCycle": 278,
         "flag": false
       },
       "bob": {
@@ -3338,7 +3338,7 @@
       "shift": -2,
       "outlineGaps": 4,
       "colours": 11,
-      "masked": 179
+      "masked": 178
     },
     {
       "name": "idle_S_1",
@@ -3350,7 +3350,7 @@
       "shift": -2,
       "outlineGaps": 5,
       "colours": 13,
-      "masked": 181
+      "masked": 180
     },
     {
       "name": "idle_SE_0",
@@ -4786,7 +4786,7 @@
     {
       "name": "light_2_S_0",
       "source": "art/raw/ss01-kindled-ash/light_2/south 2",
-      "offPalette": 35,
+      "offPalette": 34,
       "maxDeltaE": 6.45,
       "dx": 14,
       "dy": 8,
@@ -5069,7 +5069,7 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 18,
-      "masked": 151
+      "masked": 150
     },
     {
       "name": "light_3_S_0",
@@ -5110,14 +5110,14 @@
     {
       "name": "light_3_SE_0",
       "source": "art/raw/ss01-kindled-ash/light_3/south-east 2",
-      "offPalette": 64,
+      "offPalette": 62,
       "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
       "outlineGaps": 2,
       "colours": 17,
-      "masked": 152
+      "masked": 154
     },
     {
       "name": "light_3_SE_1",
@@ -5360,7 +5360,7 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 16,
-      "masked": 143
+      "masked": 142
     },
     {
       "name": "heavy_charge_S_0",
@@ -6148,7 +6148,7 @@
       "shift": 0,
       "outlineGaps": 0,
       "colours": 14,
-      "masked": 175
+      "masked": 179
     },
     {
       "name": "haul_throw_S_1",
@@ -6892,7 +6892,7 @@
       "shift": -1,
       "outlineGaps": 6,
       "colours": 16,
-      "masked": 135
+      "masked": 134
     },
     {
       "name": "haul_slide_SW_1",
@@ -6904,7 +6904,7 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 16,
-      "masked": 153
+      "masked": 152
     },
     {
       "name": "hit_S_0",

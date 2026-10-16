@@ -6,7 +6,7 @@ Kind kindled, outline player, cell 96×80, origin (48, 64).
 ## Summary
 
 - Frames: 328.
-- Off-palette pixels snapped: 14808 (largest ΔE 8.89).
+- Off-palette pixels snapped: 14805 (largest ΔE 8.89).
 - Outline gaps (edge pixels not in an outline colour): 1390.
 - Masked skin pixels: 24560.
 - Loop seam flags (last → first above 1.5× the mean change): walk_S.
@@ -28,7 +28,7 @@ Rows, top to bottom: idle_S, idle_SE, idle_E, idle_NE, idle_N, idle_NW, idle_W, 
 
 | Anim | Frames | Seam (last→first / mean) | Bob (tops above the soles) | Held |
 |---|---|---|---|---|
-| idle_S | 2 | 276 / 276 | 45 46 (range 1) |  |
+| idle_S | 2 | 278 / 278 | 45 46 (range 1) |  |
 | idle_SE | 2 | 340 / 340 | 44 45 (range 1) |  |
 | idle_E | 2 | 497 / 497 | 45 45 (range 0) |  |
 | idle_NE | 2 | 359 / 359 | 45 45 (range 0) |  |
@@ -155,8 +155,8 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 
 | Frame | Source | Off-palette | Max ΔE | Shift | dx, dy | Outline gaps | Colours | Masked |
 |---|---|---|---|---|---|---|---|---|
-| idle_S_0 | `art/raw/ss01-kindled-ash/idle/south 0` | 0 | 0 | -2 | 8, 0 | 4 | 11 | 179 |
-| idle_S_1 | `art/raw/ss01-kindled-ash/idle/south 2` | 8 | 7.27 | -2 | 8, 0 | 5 | 13 **flag** | 181 |
+| idle_S_0 | `art/raw/ss01-kindled-ash/idle/south 0` | 0 | 0 | -2 | 8, 0 | 4 | 11 | 178 |
+| idle_S_1 | `art/raw/ss01-kindled-ash/idle/south 2` | 8 | 7.27 | -2 | 8, 0 | 5 | 13 **flag** | 180 |
 | idle_SE_0 | `art/raw/ss01-kindled-ash/idle/south-east 0` | 81 | 6.92 | -1 | 8, 1 | 5 | 15 **flag** | 148 |
 | idle_SE_1 | `art/raw/ss01-kindled-ash/idle/south-east 2` | 78 | 6.92 | -1 | 8, 1 | 2 | 15 **flag** | 149 |
 | idle_E_0 | `art/raw/ss01-kindled-ash/idle/east 0` | 74 | 6.15 | -1 | 8, 1 | 18 | 14 **flag** | 65 |
@@ -275,7 +275,7 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 | light_1_SW_0 | `art/raw/ss01-kindled-ash/light_1/south-west 2` | 69 | 6.92 | -1 | 14, 7 | 1 | 18 **flag** | 153 |
 | light_1_SW_1 | `art/raw/ss01-kindled-ash/light_1/south-west 3` | 121 | 6.92 | -1 | 14, 7 | 18 | 18 **flag** | 131 |
 | light_1_SW_2 | `art/raw/ss01-kindled-ash/light_1/south-west 6` | 71 | 6.92 | -1 | 14, 7 | 4 | 17 **flag** | 141 |
-| light_2_S_0 | `art/raw/ss01-kindled-ash/light_2/south 2` | 35 | 6.45 | 0 | 14, 8 | 3 | 14 **flag** | 148 |
+| light_2_S_0 | `art/raw/ss01-kindled-ash/light_2/south 2` | 34 | 6.45 | 0 | 14, 8 | 3 | 14 **flag** | 148 |
 | light_2_S_1 | `art/raw/ss01-kindled-ash/light_2/south 4` | 30 | 6.45 | 0 | 14, 8 | 0 | 15 **flag** | 141 |
 | light_2_S_2 | `art/raw/ss01-kindled-ash/light_2/south 6` | 33 | 6.45 | 0 | 14, 8 | 0 | 13 **flag** | 143 |
 | light_2_SE_0 | `art/raw/ss01-kindled-ash/light_2/south-east 4` | 65 | 6.92 | -1 | 14, 7 | 0 | 14 **flag** | 164 |
@@ -298,11 +298,11 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 | light_2_W_2 | `art/raw/ss01-kindled-ash/light_2/west 6` | 17 | 6.98 | -1 | 14, 7 | 0 | 13 **flag** | 60 |
 | light_2_SW_0 | `art/raw/ss01-kindled-ash/light_2/south-west 2` | 56 | 6.92 | -1 | 14, 7 | 2 | 17 **flag** | 144 |
 | light_2_SW_1 | `art/raw/ss01-kindled-ash/light_2/south-west 3` | 88 | 6.92 | -1 | 14, 7 | 0 | 17 **flag** | 119 |
-| light_2_SW_2 | `art/raw/ss01-kindled-ash/light_2/south-west 6` | 93 | 6.92 | -1 | 14, 7 | 1 | 18 **flag** | 151 |
+| light_2_SW_2 | `art/raw/ss01-kindled-ash/light_2/south-west 6` | 93 | 6.92 | -1 | 14, 7 | 1 | 18 **flag** | 150 |
 | light_3_S_0 | `art/raw/ss01-kindled-ash/light_3/south 2` | 44 | 6.45 | 0 | 14, 8 | 1 | 15 **flag** | 136 |
 | light_3_S_1 | `art/raw/ss01-kindled-ash/light_3/south 3` | 55 | 6.45 | 0 | 14, 8 | 1 | 15 **flag** | 131 |
 | light_3_S_2 | `art/raw/ss01-kindled-ash/light_3/south 6` | 20 | 6.45 | 0 | 14, 8 | 0 | 15 **flag** | 135 |
-| light_3_SE_0 | `art/raw/ss01-kindled-ash/light_3/south-east 2` | 64 | 6.92 | -1 | 14, 7 | 2 | 17 **flag** | 152 |
+| light_3_SE_0 | `art/raw/ss01-kindled-ash/light_3/south-east 2` | 62 | 6.92 | -1 | 14, 7 | 2 | 17 **flag** | 154 |
 | light_3_SE_1 | `art/raw/ss01-kindled-ash/light_3/south-east 3` | 64 | 6.92 | -1 | 14, 7 | 1 | 15 **flag** | 153 |
 | light_3_SE_2 | `art/raw/ss01-kindled-ash/light_3/south-east 6` | 44 | 6.55 | -1 | 14, 7 | 8 | 15 **flag** | 153 |
 | light_3_E_0 | `art/raw/ss01-kindled-ash/light_3/east 2` | 36 | 7.87 | -1 | 14, 7 | 1 | 15 **flag** | 83 |
@@ -322,7 +322,7 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 | light_3_W_2 | `art/raw/ss01-kindled-ash/light_3/west 6` | 21 | 6.52 | -1 | 14, 7 | 1 | 12 | 56 |
 | light_3_SW_0 | `art/raw/ss01-kindled-ash/light_3/south-west 2` | 42 | 6.92 | -1 | 14, 7 | 0 | 16 **flag** | 150 |
 | light_3_SW_1 | `art/raw/ss01-kindled-ash/light_3/south-west 4` | 62 | 6.92 | -1 | 14, 7 | 3 | 16 **flag** | 154 |
-| light_3_SW_2 | `art/raw/ss01-kindled-ash/light_3/south-west 6` | 50 | 6.92 | -1 | 14, 7 | 0 | 16 **flag** | 143 |
+| light_3_SW_2 | `art/raw/ss01-kindled-ash/light_3/south-west 6` | 50 | 6.92 | -1 | 14, 7 | 0 | 16 **flag** | 142 |
 | heavy_charge_S_0 | `art/raw/ss01-kindled-ash/heavy/south 2` | 29 | 6.22 | 0 | 14, 8 | 1 | 14 **flag** | 162 |
 | heavy_charge_S_1 | `art/raw/ss01-kindled-ash/heavy/south 3` | 48 | 7.46 | 0 | 14, 8 | 1 | 14 **flag** | 156 |
 | heavy_charge_S_2 | `art/raw/ss01-kindled-ash/heavy/south 4` | 28 | 6.8 | 0 | 14, 8 | 1 | 15 **flag** | 145 |
@@ -387,7 +387,7 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 | heavy_recover_W_1 | `art/raw/ss01-kindled-ash/heavy/west 1` | 46 | 7.66 | -1 | 14, 7 | 4 | 14 **flag** | 72 |
 | heavy_recover_SW_0 | `art/raw/ss01-kindled-ash/heavy/south-west 10` | 42 | 6.15 | -1 | 14, 7 | 1 | 16 **flag** | 135 |
 | heavy_recover_SW_1 | `art/raw/ss01-kindled-ash/heavy/south-west 1` | 93 | 6.92 | -1 | 14, 7 | 2 | 17 **flag** | 151 |
-| haul_throw_S_0 | `art/raw/ss01-kindled-ash/haul/south 2` | 48 | 6.06 | 0 | 14, 8 | 0 | 14 **flag** | 175 |
+| haul_throw_S_0 | `art/raw/ss01-kindled-ash/haul/south 2` | 48 | 6.06 | 0 | 14, 8 | 0 | 14 **flag** | 179 |
 | haul_throw_S_1 | `art/raw/ss01-kindled-ash/haul/south 3` | 43 | 7.06 | 0 | 14, 8 | 2 | 16 **flag** | 165 |
 | haul_throw_SE_0 | `art/raw/ss01-kindled-ash/haul/south-east 2` | 77 | 6.92 | -1 | 14, 7 | 3 | 15 **flag** | 136 |
 | haul_throw_SE_1 | `art/raw/ss01-kindled-ash/haul/south-east 4` | 37 | 6.92 | -1 | 14, 7 | 21 | 13 **flag** | 113 |
@@ -449,8 +449,8 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 | haul_slide_NW_1 | `art/raw/ss01-kindled-ash/haul_slide/north-west 3` | 30 | 5.61 | -1 | 14, 7 | 3 | 12 | 15 |
 | haul_slide_W_0 | `art/raw/ss01-kindled-ash/haul_slide/west 1` | 80 | 7.58 | -1 | 14, 7 | 4 | 20 **flag** | 64 |
 | haul_slide_W_1 | `art/raw/ss01-kindled-ash/haul_slide/west 4` | 45 | 6.1 | -1 | 14, 7 | 1 | 12 | 15 |
-| haul_slide_SW_0 | `art/raw/ss01-kindled-ash/haul_slide/south-west 1` | 82 | 6.92 | -1 | 14, 7 | 6 | 16 **flag** | 135 |
-| haul_slide_SW_1 | `art/raw/ss01-kindled-ash/haul_slide/south-west 4` | 42 | 6.92 | -1 | 14, 7 | 0 | 16 **flag** | 153 |
+| haul_slide_SW_0 | `art/raw/ss01-kindled-ash/haul_slide/south-west 1` | 82 | 6.92 | -1 | 14, 7 | 6 | 16 **flag** | 134 |
+| haul_slide_SW_1 | `art/raw/ss01-kindled-ash/haul_slide/south-west 4` | 42 | 6.92 | -1 | 14, 7 | 0 | 16 **flag** | 152 |
 | hit_S_0 | `art/raw/ss01-kindled-ash/hit/south 1` | 38 | 7.9 | -1 | 8, 1 | 24 | 14 **flag** | 132 |
 | hit_S_1 | `art/raw/ss01-kindled-ash/hit/south 2` | 52 | 7.9 | -1 | 8, 1 | 10 | 14 **flag** | 140 |
 | hit_E_0 | `art/raw/ss01-kindled-ash/hit/east 1` | 146 | 6.15 | -1 | 8, 1 | 29 | 10 | 88 |
