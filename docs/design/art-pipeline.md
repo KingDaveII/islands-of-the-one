@@ -24,7 +24,7 @@ sheet, review image or report fails CI. Change the recipe or the source files an
 
 | Recipe | Writes |
 |---|---|
-| every recipe, draft or not | `art/review/<sheet>/contact.png`, `report.md`, `report.json`, and `tones.png` for a Kindled sheet |
+| every recipe, draft or not | `art/review/<sheet>/contact.png`, `report.md`, `report.json`, `tones.png` for a Kindled sheet, and `points.png` when an animation carries points |
 | non-draft only | `packages/shared/assets/sprites/<sheet>.png` and `.json`, and `<sheet>.skin.png` for a Kindled sheet |
 
 - **`contact.png`**: one row per animation and facing, in sheet order, frames left to right at 2×, on the
@@ -34,7 +34,14 @@ sheet, review image or report fails CI. Change the recipe or the source files an
 - **`tones.png`** (Kindled): the same rows in the four clay tones (grey-ochre as drawn, pale, red,
   river-dark), swapped through the mask exactly as the engine does. Anything that changes with the skin
   but isn't skin (a grip, a belt, rope) shows up here.
-- **`report.md` / `report.json`**: the numbers below, per frame and per animation, and the flags. Two
+- **`points.png`** (Kindled sheets with `heavy_charge` or a `haul_*` animation): the contact rows of the
+  animations that carry points (`points` below), at 4× on the floor, each point marked by a 1 px cross in
+  telegraph pink #E0457B: four arms of one sheet pixel round the point's pixel, which stays visible. Review
+  images never ship, so the reserved colour is fine here. Check that each cross sits on the hook's tip or the
+  throwing hand.
+- **`report.md` / `report.json`**: the numbers below, per frame and per animation, and the flags. The points
+  per frame (in the cell and in source pixels, and the twin a mirrored one came from) and any required points
+  missing. Two
   lists for writing `remap` rules: what each rule took, per animation, and the top 20 off-palette source
   colours the snap moved, with where each went and that colour's ramp (see "Remap").
 - **The sheet**: frames packed row-major in the contract's order (animation as in the table, then facing
@@ -42,7 +49,8 @@ sheet, review image or report fails CI. Change the recipe or the source files an
   RGBA with no metadata, written by the pipeline's own encoder so it is the same bytes on every machine.
   The JSON is §5 v2: `meta.app` `"iot-art-pipeline"`, `version` `"2"`, `pixelScale` 1, and for the
   Kindled `palette.drawn`, `palette.mask` and `palette.swaps` from `palette.json`'s clay tones. Frame
-  rates, loops and holds come from the contract's table; the source's timing is ignored.
+  rates, loops and holds come from the contract's table; the source's timing is ignored. A frame with
+  points carries them in cell pixels (`sprites.md` §5).
 
 ## Writing a recipe
 
@@ -80,6 +88,10 @@ file fails the build with a message naming the field.
   "skin": {
     "add": { "walk_S_2": [[22, 40]] },
     "remove": { "light_1_E_0": [[[40, 38], [43, 41]]] }
+  },
+  "points": {
+    "tip": { "heavy_charge_S_0": [30, 40], "heavy_charge_S_1": [29, 41] },
+    "hand": { "haul_throw_E_0": [38, 37] }
   }
 }
 ```
@@ -103,6 +115,7 @@ file fails the build with a message naming the field.
 | `fixes` | Pixel fixes, per output frame name (`walk_S_1`, or `idle_3` without facings), in that frame's **source** pixels (after any downscale and any `flipX`): `[x, y, "#rrggbb"]` sets a whitelist colour (telegraph colours too in a `telegraph*` frame), `[x, y, null]` makes it transparent. |
 | `remap` | Colour rules applied before the snap (step 4), in order: generator greys to the right ramp. See "Remap". |
 | `skin.add`, `skin.remove` | Kindled only, per output frame name, in source pixels (after any downscale and any `flipX`): lists of pixels `[x, y]` or rectangles `[[x0, y0], [x1, y1]]` (corners included). See step 10. |
+| `points` | Kindled only: named points (`sprites.md` §5), keyed by point name, then by output frame name, `[x, y]` in that frame's **source** pixels (after any downscale and any `flipX`), like `fixes`. See "Points". |
 
 ## Mirrored sources
 
@@ -127,6 +140,35 @@ the W, SW and NW tumbles). A facing entry, or a facing-less animation's source, 
   For an even-width frame (64, 68) the cell is the exact mirror of the unmirrored one.
 - The report marks each such frame: "mirrored from `<src> <n>`" (`"mirrored": true` in `report.json`).
 - The engine does not change: sheets are stored per facing, so a mirrored frame is just another frame.
+
+## Points
+
+Where the engine attaches the Hookblade's effects: `tip` (the hook's tip, the charge spark) on every frame and
+facing of `heavy_charge`, `hand` (the hand the Haul chain leaves from) on every frame and facing of `haul_throw`,
+`haul_pull`, `haul_slide` and `haul_recover` (`KINDLED_POINTS`, `KINDLED_POINT_ANIMS` in
+`packages/shared/src/sprites.ts`). Nothing else may carry a point.
+
+```json
+"points": {
+  "tip": { "heavy_charge_S_0": [30, 40], "heavy_charge_S_1": [29, 41] },
+  "hand": { "haul_throw_E_0": [38, 37] }
+}
+```
+
+- Coordinates are the frame's source pixels, what `contact.png`'s tile of it shows before placing: after any
+  downscale and `flipX`, like `fixes` and `skin`.
+- The pipeline moves each point with its frame (step 8): the same horizontal centring and `ground` shift, and
+  the same `flipX`. The sheet stores the result in cell pixels.
+- **Mirrored facings inherit.** A facing built with `flipX` from another facing's files (the same `src`, read
+  unmirrored by another facing of the same animation that lists the same source frame) takes that facing's
+  point, mirrored (`x` becomes `width − 1 − x`), unless the recipe lists its own for that frame. So kindled-ash's
+  W haul, mirrored from E, needs no points of its own.
+- A finished build fails on a missing required point; a draft reports it (summary and "Points" in the report).
+- `points.png` shows every point; the report lists them per frame, in the cell and in source pixels, with
+  `<twin>, mirrored` for an inherited one.
+- kindled-ash's first points were measured once by `tools/measure-points.py` from the finished sheet (the
+  blade's husk-shell/watcher-stone run for `tip`, the skin mask for `hand`; see the script). From then on they
+  are recipe data: correct a point by editing the recipe and rebuilding.
 
 ## Kinds
 
@@ -201,6 +243,8 @@ the pipeline never does it. The same goes for a stubby blade or anything else th
    The report gives each frame's shift (rows moved against trusting the canvas, positive down; raw
    rotations and frames drift 0–4 rows) and where its (0, 0) landed. Nothing is cropped: an opaque pixel
    outside the cell, or on its outer 1 px ring (which the sheet test reads as clipping), fails.
+   The frame's `points` move with it (its own, or its twin's mirrored; see "Points"); a point that lands
+   outside the cell or on its ring fails too.
 9. **Despeckle** (only with `"despeckle": true`). A single pixel whose 8 neighbours are all one other
    opaque colour takes that colour. The report counts them.
 10. **The skin mask** (Kindled). After the snap and the outline: the 4-connected regions of the drawn
@@ -326,6 +370,11 @@ unless the message says otherwise; read failures give the file's own.
 | `remap[i].facings is only for kinds with facings (kindled, npc)` | Husks and props have no facings; scope by `anims` or `frames`. |
 | `remap[i].box must be [x0, y0, x1, y1] (…) or a non-empty list of them` / `remap[i].exclude must be "face", [x0, y0, x1, y1] (…), or a non-empty list of them` | Corners included, `x0 ≤ x1`, `y0 ≤ y1`. |
 | `skin is only for Kindled sheets …` / `skin must be an object with "add" and/or "remove"` / `skin.<add/remove> must map frame names …` / `skin.<w>.<f> must be a non-empty list of [x, y] pixels or [[x0, y0], [x1, y1]] rectangles` | Fix the `skin` block's shape. |
+| `points must map point names to frames: …` / `points.<p> must map output frame names to [x, y]` | Shape: `{ "tip": { "<frame>": [x, y] } }`. |
+| `points.<p> is not a point name (tip, hand)` | Use `tip` or `hand` (`sprites.md` §5). |
+| `points.<p>.<f> names "<f>", which is not a frame this recipe builds` | Use an output frame name (`heavy_charge_S_0`). |
+| `points.<p>.<f> is on <anim>, which carries no <p> point (<p> goes on …)` | `tip` goes on `heavy_charge`, `hand` on the four `haul_*` animations; only on Kindled sheets. |
+| `points.<p>.<f> must be [x, y], whole pixels in the frame's source` | Two whole numbers from 0. |
 
 ### Building
 
@@ -343,6 +392,9 @@ unless the message says otherwise; read failures give the file's own.
 | `… nearest to the reserved signal-telegraph …, which only telegraph frames may use` | The pink is for `telegraph*` frames only. Recolour it, or use the frames in a telegraph animation. |
 | `<frame>: the frame is empty` / `<key>: ground ref frame <i> is empty` | The frame has no opaque pixel; pick another frame or ref. |
 | `<frame>: placed at (dx, dy) in the <w>×<h> cell, source pixels (…) would fall outside it or on its outer 1 px ring; nothing is cropped` | Something reaches past the cell. Check `ground` (a `ref` that is far off this frame?), or trim the art into `art/clean/`. If the action genuinely needs more room, ask MAIN for a bigger cell. |
+| `art/sheets/<s>.json: points.<p>.<f> [x, y] is outside the <w>×<h> source frame` | Checked when the frames are read, in drafts too: points are in that frame's source pixels (after any downscale and `flipX`). |
+| `<frame>: points.<p> (mirrored from <twin>) at source (x, y) lands at (cx, cy), outside the <w>×<h> cell or on its outer 1 px ring` | The point is off the art: check its coordinates (or the twin's, for an inherited one) against the frame in `contact.png`. In drafts too. |
+| `<sheet>: <frame> has no <p> point (points.<p>.<frame>)` | A finished sheet carries every required point: add it, or keep `"draft": true` (a draft reports it). A mirrored facing inherits only from an unmirrored facing of the same animation reading the same files. |
 | `<frame>: skin.add marks (x, y), which is not unwritten-sail or unwritten-tar after the snap; only skin colours can be masked` | Point `skin.add` at a skin-coloured pixel of the region. |
 | `<frame>: a region of <n> px in the skin colours at [[x0, y0], [x1, y1]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not` | Step 10. Look at the box in the frame (and `tones.png`); `skin.add` with any pixel of it if it is skin, otherwise `fixes` to recolour the region. In a draft this is reported, not failed. |
 | `<sheet>: <key> is missing (a finished sheet carries every animation and facing)` / `<sheet>: <key> has <n> frames; the table says <m>` | A non-draft must be complete up to `REQUIRED_MILESTONE`. Add what's missing, or keep `"draft": true`. |
