@@ -33,10 +33,13 @@ import {
   spriteSheets,
   WORLD_PX_PER_UNIT,
   type SpriteSheet,
+  isTileSheetName,
+  type TileSheet,
 } from '../src/index.js';
 import fixtureSheet from './fixtures/kindled-fixture.json' with { type: 'json' };
 import { decodePng } from './png.js';
 import { pointProblems, tableProblems, v2Problems, type Rgba } from './sheetChecks.js';
+import { tileSheetProblems } from './tileChecks.js';
 
 /**
  * Every animated sheet in packages/shared/assets/sprites against its PNG
@@ -53,10 +56,13 @@ import { pointProblems, tableProblems, v2Problems, type Rgba } from './sheetChec
 const SPRITE_DIR = new URL('../assets/sprites/', import.meta.url);
 const ON_DISK = readdirSync(SPRITE_DIR).sort();
 /** Every sheet on disk, by its JSON (masks, `*.skin.png`, belong to a sheet and are checked with it). */
-const SHEETS: [string, SpriteSheet][] = ON_DISK.filter((f) => f.endsWith('.json')).map((f) => [
+const ALL_SHEETS: [string, unknown][] = ON_DISK.filter((f) => f.endsWith('.json')).map((f) => [
   f.slice(0, -'.json'.length),
-  JSON.parse(readFileSync(new URL(f, SPRITE_DIR), 'utf8')) as SpriteSheet,
+  JSON.parse(readFileSync(new URL(f, SPRITE_DIR), 'utf8')) as unknown,
 ]);
+/** The animated sheets; tile sheets (`tiles-<set>`) have pieces of several sizes and their own checks (tileChecks.ts). */
+const SHEETS = ALL_SHEETS.filter(([name]) => !isTileSheetName(name)) as [string, SpriteSheet][];
+const TILE_SHEETS = ALL_SHEETS.filter(([name]) => isTileSheetName(name)) as [string, TileSheet][];
 
 const assetUrl = (image: string): URL => new URL(image, SPRITE_DIR);
 
@@ -84,8 +90,8 @@ describe('the sheets on disk (packages/shared/assets/sprites)', () => {
     ).toEqual([]);
   });
 
-  it('name a known kind each (kindled-, husk-, npc-, prop-)', () => {
-    for (const [name] of SHEETS) expect(() => spriteSheetSpec(name), name).not.toThrow();
+  it('name a known kind each (kindled-, husk-, npc-, prop-, tiles-)', () => {
+    for (const [name] of ALL_SHEETS) expect(() => spriteSheetSpec(name), name).not.toThrow();
   });
 
   it("hold every sheet the client loads (SPRITE_SHEET_NAMES), as the client's import has it", () => {
@@ -105,6 +111,16 @@ const WHITE = paletteData.signals.hit.toLowerCase();
 describe.each(SHEETS)('the %s sprite sheet', (name, sheet) => {
   sheetSuite(name, sheet, assetUrl, true);
 });
+
+for (const [name, sheet] of TILE_SHEETS) {
+  describe(`the ${name} tile sheet`, () => {
+    it('follows the tile contract (sprites.md "Tiles", §6) and was built by the art pipeline', () => {
+      const png = decodePng(readFileSync(assetUrl(sheet.meta.image)));
+      expect(tileSheetProblems(name, sheet, png)).toEqual([]);
+      expect(sheet.meta.app).toBe('iot-art-pipeline');
+    });
+  });
+}
 
 describe('the v2 fixture sheet (test/fixtures/kindled-fixture)', () => {
   const sheet: SpriteSheet = fixtureSheet;

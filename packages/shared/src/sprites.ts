@@ -2,6 +2,7 @@ import palette from '../data/palette.json' with { type: 'json' };
 import huskNutshell from '../assets/sprites/husk-nutshell.json' with { type: 'json' };
 import huskPeeling from '../assets/sprites/husk-peeling.json' with { type: 'json' };
 import kindledAsh from '../assets/sprites/kindled-ash.json' with { type: 'json' };
+import { TILE_DOOR_ANIMS, TILE_WORLD_PX } from './tiles.js';
 
 /**
  * Animated character sheets (docs/design/sprites.md): a 1× PNG plus a Phaser
@@ -59,6 +60,17 @@ export const SPRITE_CELLS = {
   kindled: spriteCellSpec(96, 80, 64),
   other: spriteCellSpec(64, 64, 54),
 } as const;
+
+/**
+ * A tile sheet's cell (tiles.ts): one 32×32 world px tile, its origin at the
+ * top left, since a tile is placed by its cell, not its feet. Door pieces span
+ * two cells.
+ */
+export const TILE_CELL: SpriteCellSpec = {
+  cell: { w: TILE_WORLD_PX, h: TILE_WORLD_PX },
+  origin: { x: 0, y: 0 },
+  canvasAt: { x: 0, y: 0 },
+};
 
 /** The design-system colour tokens (name → "#rrggbb") and the clay tones of the Kindled. */
 export const paletteData = palette;
@@ -364,19 +376,20 @@ export function propIdleSpec(frames: number, fps: number = PROP_IDLE.defaultFps)
   };
 }
 
-/** The kinds of sheet, each named by its prefix: `kindled-`, `husk-`, `npc-`, `prop-`. */
-export const SPRITE_KINDS = ['kindled', 'husk', 'npc', 'prop'] as const;
+/** The kinds of sheet, each named by its prefix: `kindled-`, `husk-`, `npc-`, `prop-`, `tiles-` (room tiles, tiles.ts). */
+export const SPRITE_KINDS = ['kindled', 'husk', 'npc', 'prop', 'tiles'] as const;
 export type SpriteKind = (typeof SPRITE_KINDS)[number];
 
 /** What a sheet's name decides (sprites.md §2–§4). */
 export interface SpriteSheetSpec {
   kind: SpriteKind;
-  /** The v2 cell, origin and canvas position. */
+  /** The v2 cell, origin and canvas position; for tiles, one 32×32 tile with its origin at the top left. */
   cell: SpriteCellSpec;
   /**
    * The animations a finished sheet carries, or null when its count is the
    * recipe's (props: `idle` only, see `PROP_IDLE`) or when the contract has no
-   * table for it yet (a Husk that is not in `HUSK_TABLES`).
+   * table for it yet (a Husk that is not in `HUSK_TABLES`). For tiles, the
+   * door animations (`TILE_DOOR_ANIMS`); its static pieces are in tiles.ts.
    */
   anims: readonly SpriteAnimSpec[] | null;
   /** Whether frames and anims are named per facing and `meta.facings` is present (Kindled, NPCs). */
@@ -410,6 +423,8 @@ export function spriteSheetSpec(name: string): SpriteSheetSpec {
       return { kind, cell: SPRITE_CELLS.other, anims: NPC_ANIMS, facings: true, palette: false };
     case 'prop':
       return { kind, cell: SPRITE_CELLS.other, anims: null, facings: false, palette: false };
+    case 'tiles':
+      return { kind, cell: TILE_CELL, anims: TILE_DOOR_ANIMS, facings: false, palette: false };
     default:
       throw new Error(`sprite sheet "${name}" has no known kind: its name must start with ${SPRITE_KINDS.map((k) => `${k}-`).join(', ')}`);
   }
