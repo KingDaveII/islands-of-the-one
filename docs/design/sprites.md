@@ -70,9 +70,9 @@ Kindled's `carry_idle`, `carry_walk` and `sit` are M2 (the Milestone column belo
 table is M1. M2 Task 9, or whichever task first uses carry or sit, moves `REQUIRED_MILESTONE` to `"M2"`.
 
 **Awaiting art (G1.5c).** A row can be in the contract before ART has drawn it. `ANIMS_AWAITING_ART`
-(`packages/shared/src/sprites.ts`, `['run']` today) lists those rows. While a row is on it, the sheet test and
+(`packages/shared/src/sprites.ts`; empty since kindled-ash's `run` landed in #46) lists those rows. While a row is on it, the sheet test and
 the art pipeline treat it as optional, whatever its milestone, but complete when present (every facing, the
-right frame count), and the engine plays its stand-in: `run` falls back to `walk` (§8). When ART's sheet lands
+right frame count), and the engine plays its stand-in: `run` falls back to `walk` (§8), as it still does on a sheet without `run`. When ART's sheet lands
 with the row, MAIN removes it from the list in a one-line change, and from then on the row is required like
 any other at or before `REQUIRED_MILESTONE`.
 
@@ -88,7 +88,7 @@ Frame rates are per animation; `hold` means the last frame stays until the state
 |---|---|---|---|---|---|---|
 | `idle` | 2 | 2 | yes | 8 | M1 | a breath: one pixel of chest and hood |
 | `walk` | 6 | 10 | yes | 8 | M1 | the blade bobs with the hand; on a v2 sheet it plays by distance, one cycle per `anim.walkCyclePx` (64 world px, §8). In encounters the engine plays it only as `run`'s stand-in; walking for its own sake is M2's holding |
-| `run` | 8 | 16 | yes | 8 | M1 | the Kindled's movement in encounters, Combat and Calm alike (GAME DESIGN 2026-10-16); plays by distance, one cycle per `anim.runCyclePx` (96 world px, §8), so 12 world px a frame; the fps only matters where nothing drives it by distance. 8 frames because PixelLab's `running-8-frames` template draws 8, and dropping two would break the cycle's even timing. The recipe lists the frames starting at the first contact (a foot lands), so frame 0 is a contact. On `ANIMS_AWAITING_ART`: optional in a finished sheet until ART draws it, and the engine plays `walk` (at the run's cycle) in its place |
+| `run` | 8 | 16 | yes | 8 | M1 | the Kindled's movement in encounters, Combat and Calm alike (GAME DESIGN 2026-10-16); plays by distance, one cycle per `anim.runCyclePx` (96 world px, §8), so 12 world px a frame; the fps only matters where nothing drives it by distance. 8 frames because PixelLab's `running-8-frames` template draws 8, and dropping two would break the cycle's even timing. The recipe lists the frames starting at the first contact (a foot lands), so frame 0 is a contact. Required since #46 (off `ANIMS_AWAITING_ART`); on a sheet without it (v1) the engine plays `walk` at the run's cycle in its place |
 | `dodge` | 4 | 16 | no | 8 | M1 | 1 = crouch, 2–3 = the roll (body a 12×12 ball), 4 = recover; frame 2–3 are the perfect-dodge window art |
 | `light_1`, `light_2`, `light_3` | 3 each | 15 | no | 8 | M1 | wind-up, swing (the arc), recover; `light_3` ends lower |
 | `heavy_charge` | 3 | 12 | hold last | 8 | M1 | the drawn-back stance; the spark comes from `hookblade-fx` at the tip, not from the sheet |
@@ -242,7 +242,7 @@ What `apps/client` does with a sheet (MAIN, M1 task 5). Nothing here is in the s
 - **Animations.** One Phaser animation per entry of the JSON `anims` block, named `<key>/<anim>` (`kindled-ash/walk_S`, `husk-peeling/telegraph`), with its `frameRate` and `repeat`. They exist for tooling; in play the frame is chosen directly (below), so hitstop, slow-mo and the sim's windows stay exact.
 - **Palette swaps.** For a Kindled sheet the engine builds a tone's texture the first time that tone is used (`toneTextureKey`): the drawn sheet's pixels are copied with each `from → to` hex replaced (`toneSwap.ts`; under the skin mask for a v2 sheet, everywhere for a v1 sheet) and registered as the same atlas under `<key>@<tone>` (`kindled-ash@clay-red`) with its own `<key>@<tone>/<anim>` animations, cached game-wide; tones never used are never built. `window.__iot.setClayTone(tone)` switches the Kindled in a run.
 - **The state machine** (`apps/client/src/render/animState.ts`, pure and tested in node) maps sim state to a frame every render frame; the client never decides gameplay. The Kindled:
-  - `idle`, or `run` while the body moves faster than a quarter sim px a tick, facing the nearest of the 8 facings to the aim. In an encounter, Combat and Calm alike, the Kindled always runs (GAME DESIGN 2026-10-16); while `run` is on `ANIMS_AWAITING_ART` (§4), or missing from a sheet, `walk` plays in its place, at the run's cycle. `walk` at its own cycle (`gaitPose(sheet, 'walk', …)`) is kept for M2's holding, where walking happens;
+  - `idle`, or `run` while the body moves faster than a quarter sim px a tick, facing the nearest of the 8 facings to the aim. In an encounter, Combat and Calm alike, the Kindled always runs (GAME DESIGN 2026-10-16); where a sheet has no `run` (v1), or `run` is on `ANIMS_AWAITING_ART` (§4), `walk` plays in its place, at the run's cycle. `walk` at its own cycle (`gaitPose(sheet, 'walk', …)`) is kept for M2's holding, where walking happens;
   - `dodge` over the dodge window (crouch in the startup, the two roll frames over the active ticks, recover over the recovery);
   - `light_1..3` by combo step: wind-up / swing / recover over the strike's startup / active / recovery;
   - `heavy_charge` while charging, at the sheet's rate, holding the last frame → `heavy_thrust` over startup + active → `heavy_hold` from the tick the thrust pins a Husk until the pin ends (through the hitstop) → `heavy_recover` over the rest of the recovery;

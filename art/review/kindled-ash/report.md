@@ -16,7 +16,7 @@ Kind kindled, outline player, cell 96×80, origin (48, 64).
 - Skin regions to resolve: 0.
 - Remap rules: 8; stale (match no pixel in any frame they apply to): none.
 - Missing against the contract's table: carry_idle (all facings), carry_walk (all facings), sit (all facings).
-- Optional (after M1, or awaiting art: a finished sheet may leave them out, but carries every facing of any it has): run (awaiting art), carry_idle (M2), carry_walk (M2), sit (M2).
+- Optional (after M1, or awaiting art: a finished sheet may leave them out, but carries every facing of any it has): carry_idle (M2), carry_walk (M2), sit (M2).
 
 ## Review images
 

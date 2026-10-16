@@ -85,7 +85,7 @@ export interface Stride {
 /** The Kindled's two ways of moving. In an encounter it always runs (GAME DESIGN 2026-10-16); walking is M2's holding. */
 export type Gait = 'walk' | 'run';
 
-/** The animation that plays for a row on `ANIMS_AWAITING_ART` until ART draws it. */
+/** The animation that plays for a row on `ANIMS_AWAITING_ART`, or missing from a sheet (v1 has no run). */
 const STAND_IN: Readonly<Record<string, string>> = { run: 'walk' };
 
 const ticks = (ms: number): number => (ms * TICK_HZ) / 1000;
