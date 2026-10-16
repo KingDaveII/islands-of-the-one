@@ -10,5 +10,6 @@ ART DIRECTION's art jobs as they were run. Each one is a prompt David pastes int
 | [g13b-job3](g13b-job3.md) | Option B at true size: Kesh, Tally, the clerk | #27 |
 | [g13b-job4](g13b-job4.md) | The player at 45 px; Tally re-run | #29 |
 | [ss01-kindled-ash](ss01-kindled-ash.md) | SS-01: the player's M1 sheet at B, every M1 animation, as a draft recipe | #37 |
+| [kindled-ash-finish](kindled-ash-finish.md) | SS-01 part 2: the finished kindled-ash sheet (remaps, gaps, skin), no generations | (to run) |
 
 The current rules (heights, canvas sizes, colours) are in `art/anchors/style-sheet.md`, not in these prompts. New jobs start from the shared header in these prompts and the style sheet.
