@@ -1,6 +1,7 @@
 import {
   hexOf,
   isFloorWeights,
+  isMidWeights,
   paletteData,
   SPRITE_WHITELIST,
   TILE_DOOR_ANIMS,
@@ -20,7 +21,8 @@ const NEVER = new Set([paletteData.signals.hit, paletteData.tokens['spark-glow']
  * PNG the size of `meta.size`; every piece and door frame of tiles.ts there
  * at its size, inside the PNG, on no other frame, and nothing else; the door
  * animations with their frame counts and rates; the `tiles` block (tile size
- * 32, `floorWeights` four positive integers); only whitelist colours (no
+ * 32, `floorWeights` four positive integers, `faceMidWeights` and
+ * `topMidWeights` two each when present); only whitelist colours (no
  * telegraph colours, never #FFFFFF or #FFE7A3), no soft alpha, and floors,
  * faces, tops and door frames fully opaque. An empty list is a sheet that passes.
  */
@@ -39,6 +41,10 @@ export function tileSheetProblems(name: string, sheet: TileSheet, png: Rgba): st
     if (tiles.tileSize !== TILE_WORLD_PX) problems.push(`tiles.tileSize is ${String(tiles.tileSize)}, not ${TILE_WORLD_PX}`);
     if (!isFloorWeights(tiles.floorWeights))
       problems.push(`tiles.floorWeights is ${JSON.stringify(tiles.floorWeights)}, not four positive integers`);
+    for (const k of ['faceMidWeights', 'topMidWeights'] as const) {
+      if (tiles[k] !== undefined && !isMidWeights(tiles[k]))
+        problems.push(`tiles.${k} is ${JSON.stringify(tiles[k])}, not two positive integers`);
+    }
   }
 
   const expected = new Map(TILE_FRAMES.map((f) => [f.name, f]));

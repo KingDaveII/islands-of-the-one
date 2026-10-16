@@ -6,6 +6,8 @@ import {
   FACE_PIECES,
   FLOOR_PIECES,
   isFloorWeights,
+  isMidWeights,
+  MID_WEIGHTS_DEFAULT,
   pickWeighted,
   roomTemplates,
   roomTiles,
@@ -19,6 +21,7 @@ import {
   TOP_PIECES,
   type TileSheet,
   type TileTemplate,
+  type TileWeights,
 } from '../src/index.js';
 import fixtureJson from './fixtures/tiles-fixture.json' with { type: 'json' };
 import { decodePng } from './png.js';
@@ -31,7 +34,7 @@ import { tileSheetProblems } from './tileChecks.js';
  * and the sheet checks of §6 on the fixture and broken copies of it.
  */
 
-const W = [6, 3, 2, 1];
+const W: TileWeights = { floorWeights: [6, 3, 2, 1] };
 const room = (tiles: string[], name = 'test'): TileTemplate => ({ name, tiles });
 const at = (t: TileTemplate, c: number, r: number) => tileAt(t, c, r, W);
 const base = (t: TileTemplate, c: number, r: number) => at(t, c, r).base;
@@ -193,8 +196,33 @@ describe('tileAt', () => {
     [6, 3, 2, 1].forEach((w, i) => { expect(Math.abs((counts[i] ?? 0) - (3600 * w) / 12), `floor_${i}`).toBeLessThan((3600 * w) / 12 * 0.15); });
     // Weights 1:1:1:1 give all four; a weight's own share moves only its piece.
     const even = new Set<string>();
-    for (let c = 0; c < 60; c++) even.add(String(tileAt(big, c, 3, [1, 1, 1, 1]).base));
+    for (let c = 0; c < 60; c++) even.add(String(tileAt(big, c, 3, { floorWeights: [1, 1, 1, 1] }).base));
     expect([...even].sort()).toEqual([...FLOOR_PIECES]);
+  });
+
+  it('weights the plain faces and tops by faceMidWeights and topMidWeights, evenly without them', () => {
+    // A long north wall over floor: every cell a plain face; a thick south mass: plain tops.
+    const wall = room(['#'.repeat(80), ...Array.from({ length: 3 }, () => '#'.repeat(80)), '.'.repeat(80), '.'.repeat(80)], 'mids');
+    const faces = (w: TileWeights) => Array.from({ length: 80 }, (_, c) => String(tileAt(wall, c, 3, w).base));
+    const tops = (w: TileWeights) => Array.from({ length: 80 }, (_, c) => String(tileAt(wall, c, 1, w).base));
+    for (const f of faces(W)) expect(f).toMatch(/^face_mid_[01]$/);
+    for (const t of tops(W)) expect(t).toMatch(/^top_mid_[01]$/);
+    // Absent means [1, 1]: the pick the hash's lowest bit made before the weights (G1.5e), so no room moves.
+    expect(faces(W)).toEqual(faces({ ...W, faceMidWeights: [1, 1] }));
+    expect(tops(W)).toEqual(tops({ ...W, topMidWeights: [1, 1] }));
+    expect(faces(W)).toEqual(Array.from({ length: 80 }, (_, c) => `face_mid_${tileHash('mids', c, 3, 1) & 1}`));
+    expect(tops(W)).toEqual(Array.from({ length: 80 }, (_, c) => `top_mid_${tileHash('mids', c, 1, 2) & 1}`));
+    expect(MID_WEIGHTS_DEFAULT).toEqual([1, 1]);
+    // ART's 3:1: the spare variant about a quarter of the time, each pick through its own weights.
+    const rare = { ...W, faceMidWeights: [3, 1], topMidWeights: [3, 1] };
+    const count = (xs: string[]) => xs.filter((x) => x.endsWith('_1')).length;
+    expect(count(faces(rare))).toBeGreaterThan(8);
+    expect(count(faces(rare))).toBeLessThan(32);
+    expect(count(tops(rare))).toBeGreaterThan(8);
+    expect(count(tops(rare))).toBeLessThan(32);
+    expect(count(faces({ ...W, faceMidWeights: [1, 0] }))).toBe(0);
+    expect(count(tops({ ...W, faceMidWeights: [1, 0] }))).toBe(count(tops(W)));
+    expect(faces({ ...W, topMidWeights: [1, 0] })).toEqual(faces(W));
   });
 });
 
@@ -266,6 +294,13 @@ describe('the tile contract', () => {
     expect(isFloorWeights([6, 3, 2, 1])).toBe(true);
     for (const bad of [[6, 3, 2], [6, 3, 2, 1, 1], [6, 3, 0, 1], [6, 3, -2, 1], [6, 3, 2.5, 1], ['6', 3, 2, 1], null])
       expect(isFloorWeights(bad), JSON.stringify(bad)).toBe(false);
+  });
+
+  it('checks faceMidWeights and topMidWeights: two positive integers', () => {
+    expect(isMidWeights([3, 1])).toBe(true);
+    expect(isMidWeights([1, 1])).toBe(true);
+    for (const bad of [[3], [3, 1, 1], [3, 0], [-3, 1], [1.5, 1], ['3', 1], null, 3])
+      expect(isMidWeights(bad), JSON.stringify(bad)).toBe(false);
   });
 });
 
@@ -357,6 +392,23 @@ describe('the tile sheet checks (§6) on test/fixtures/tiles-fixture', () => {
     const s = clone();
     s.tiles.tileSize = 16;
     expect(tileSheetProblems('tiles-fixture', s, FIXTURE_PNG)).toEqual(['tiles.tileSize is 16, not 32']);
+  });
+
+  it('take faceMidWeights and topMidWeights when present, two positive integers each', () => {
+    const s = clone();
+    s.tiles.faceMidWeights = [3, 1];
+    s.tiles.topMidWeights = [1, 1];
+    expect(tileSheetProblems('tiles-fixture', s, FIXTURE_PNG)).toEqual([]);
+    expect(fixture.tiles.faceMidWeights).toBeUndefined();
+    for (const w of [[3], [3, 0], [3, 1, 1], [1.5, 1]]) {
+      const bad = clone();
+      bad.tiles.faceMidWeights = w;
+      bad.tiles.topMidWeights = w;
+      expect(tileSheetProblems('tiles-fixture', bad, FIXTURE_PNG)).toEqual([
+        `tiles.faceMidWeights is ${JSON.stringify(w)}, not two positive integers`,
+        `tiles.topMidWeights is ${JSON.stringify(w)}, not two positive integers`,
+      ]);
+    }
   });
 
   it('fail an unknown frame and overlapping frames', () => {

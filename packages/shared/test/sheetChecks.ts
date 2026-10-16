@@ -7,6 +7,7 @@ import {
   kindledFrameName,
   optionalReason,
   paletteData,
+  propFrameRangeProblem,
   REQUIRED_MILESTONE,
   SPRITE_FACINGS,
   SPRITE_WHITELIST,
@@ -105,11 +106,12 @@ export function v2Problems(name: string, sheet: SpriteSheet, png: Rgba, mask: Rg
 
 /**
  * What breaks a finished sheet's animation table (sprites.md §4): `table` is
- * its kind's (`spriteSheetSpec`, or a prop's own idle). Every row at or before
- * `REQUIRED_MILESTONE` is there in every facing, with its frames in order and
- * its rate, loop and hold. A later row is optional, but once any facing of it
- * is there it is complete like the others. Nothing outside the table. An
- * empty list is a sheet that passes.
+ * its kind's (`spriteSheetSpec`, or a prop's resolved by `propTableFor`).
+ * Every row at or before `REQUIRED_MILESTONE` is there in every facing, with
+ * its frames in order and its rate, loop and hold; a recipe-rated row
+ * (`fromRecipe`) has a frame count in its range. A later row is optional, but
+ * once any facing of it is there it is complete like the others. Nothing
+ * outside the table. An empty list is a sheet that passes.
  */
 export function tableProblems(name: string, sheet: SpriteSheet, table: readonly SpriteAnimSpec[]): string[] {
   const problems: string[] = [];
@@ -128,6 +130,11 @@ export function tableProblems(name: string, sheet: SpriteSheet, table: readonly 
             ? `${key} is missing`
             : `${key} is missing (${a.name} is ${optionalReason(a)}, but complete once present; required: ${REQUIRED_MILESTONE})`,
         );
+        continue;
+      }
+      const range = a.fromRecipe ? propFrameRangeProblem(a.fromRecipe, def.frames.length) : null;
+      if (range) {
+        problems.push(`${key} has ${def.frames.length} frames; ${range}`);
         continue;
       }
       const frames = Array.from({ length: a.frames }, (_, i) => (facing ? kindledFrameName(a.name, facing, i) : `${a.name}_${i}`));
