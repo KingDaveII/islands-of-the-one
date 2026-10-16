@@ -12,6 +12,7 @@ ART DIRECTION's art jobs as they were run. Each one is a prompt David pastes int
 | [ss01-kindled-ash](ss01-kindled-ash.md) | SS-01: the player's M1 sheet at B, every M1 animation, as a draft recipe | #37 |
 | [kindled-ash-finish](kindled-ash-finish.md) | SS-01 part 2: the finished kindled-ash sheet (remaps, gaps, skin), no generations | #39 |
 | [run-kindled-ash](run-kindled-ash.md) | The player's run (8 frames, 8 facings) into the finished kindled-ash recipe, and the measured stride of walk and run | #46 |
-| [husks-m1](husks-m1.md) | The Peeling and the Nutshell at B: bases, east-only animations, draft recipes | (to run) |
+| [husks-m1](husks-m1.md) | The Peeling and the Nutshell at B: bases, east-only animations, draft recipes | (running) |
+| [tiles-cave](tiles-cave.md) | Raw material for the cave tiles (floor texture, wall, north door) and the chest; ART composes the pieces after G1.5e | (to run) |
 
 The current rules (heights, canvas sizes, colours) are in `art/anchors/style-sheet.md`, not in these prompts. New jobs start from the shared header in these prompts and the style sheet.
