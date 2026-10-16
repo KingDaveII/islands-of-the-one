@@ -1,0 +1,158 @@
+{
+  "job": "run-kindled-ash",
+  "date": "2026-10-16",
+  "purpose": "The Kindled's run cycle (8 frames, 8 facings, M1, on ANIMS_AWAITING_ART) for the finished kindled-ash recipe, from SS-01's character.",
+  "character": {
+    "tool": "get_character (free)",
+    "character_id": "507ec529-642d-4b0e-999b-731be937ba15",
+    "name": "kindled-ash (ss01)",
+    "check": "status completed, 8 directions, 64x64, low top-down; running-8-frames in its template list",
+    "created_by": "SS-01 (art/raw/ss01-kindled-ash/manifest.json)"
+  },
+  "animations": {
+    "run": {
+      "tool": "animate_character",
+      "settings": {
+        "mode": "skeleton-v3",
+        "template_animation_id": "running-8-frames",
+        "animation_name": "run",
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      "seed": "animate_character takes no seed parameter",
+      "group": "51f51d9c-6cd9-4d55-aff8-8514fb494eea",
+      "calls": [
+        {
+          "cost": "24 generations (3/dir x 8)",
+          "job_ids": {
+            "south": "a0126311-a212-4ebf-8e33-f96242296e63",
+            "south-east": "ca99bff4-310b-414c-bb97-8c9eaa4cb77a",
+            "east": "38f0c75e-e641-4a8c-9f39-20039e68bf89",
+            "north-east": "f1ed7b52-81dc-4bb7-b65b-eef791966b0a",
+            "north": "3d192388-b57c-419d-830c-b846674f1ea7",
+            "north-west": "8294be70-6946-4bab-847b-ef03d38563cd",
+            "west": "e4f8e654-097e-4119-b1e6-5ef7f1d046bf",
+            "south-west": "37628142-a0df-4807-bbdf-2952b17fd89c"
+          }
+        }
+      ],
+      "animation_ids_from_get_character": {
+        "south": "f1168c17-bcda-4523-85d7-549b1e068374",
+        "south-east": "b2a4a47f-56d7-43f4-b05b-4c98e353de13",
+        "east": "649f9bc1-d1fc-429b-bb53-16524f249a91",
+        "north-east": "8651eade-5171-4797-acd3-17bc203c63c3",
+        "north": "8a9a3b34-640f-4688-8bd7-799c846f3f4e",
+        "north-west": "e38cb42c-c9cd-404c-b6f8-41460e76837e",
+        "west": "25a23eed-5f0b-444c-876c-8fb561982219",
+        "south-west": "63bcb913-6462-49d5-8653-454bb58c3f67"
+      },
+      "generations": 24,
+      "folder": "art/raw/run-kindled-ash/run/",
+      "frames": "8 per direction on an 80x80 canvas, frame 0..7 as the output numbers them; skeleton-v3 output has no rotation frame"
+    }
+  },
+  "retakes": [],
+  "retake_note": "none: every facing reads as a run, the figure keeps its hood, cloak and colours, every facing is the right one, and the blade is there in most frames (lost in W 4-6 and S 0, hidden in N and NW as the style sheet allows)",
+  "generations": {
+    "run": 24,
+    "total": 24,
+    "budget": "about 24, hard cap 40",
+    "max_single_call_quote": 24
+  },
+  "balance": [
+    {
+      "when": "before the first call",
+      "generations_remaining": 1421.9
+    },
+    {
+      "when": "at the end",
+      "generations_remaining": 1397.9,
+      "note": "1421.90 - 1397.90 = 24 = the run call"
+    }
+  ],
+  "downloads": [
+    {
+      "step": "frames",
+      "result": "all 64 frames fetched at once from the per-direction URLs get_character listed, as soon as the 8 jobs finished"
+    },
+    {
+      "step": "zip-check",
+      "result": "the character zip (api.pixellab.ai/mcp/characters/<id>/download) fetched right after: its 64 Idle/animations/run/<direction>/frame_00n.png entries are byte-identical to the files here; its metadata.json is saved as character-metadata.json"
+    }
+  ],
+  "files_sha256": {
+    "character-metadata.json": "fb508be2061c8ca24181317d841d3785252691454553990977cd9ee51cbc8c7d",
+    "run/east/frame-0.png": "bf120231d6324da9976a5cbb0add8c107375460280b45d5ed4522620b168813f",
+    "run/east/frame-1.png": "034df622e5cdd6e40091ad827856fc6ae99f06564a67a9878e02eea86aaba408",
+    "run/east/frame-2.png": "9771282ddd7730756f378ab94b5d820b5d5ce9b9fd66201b35f4c0e3e8599909",
+    "run/east/frame-3.png": "1322967f788c2d42e51a2ae828b9d97a71aaea1f3b5ff24722067c9fc3bde1a9",
+    "run/east/frame-4.png": "079be77154a742e4a03ff262b5d313f02c9789859959fb95052134c832a3400c",
+    "run/east/frame-5.png": "ec538121b32dacbef52a6ce6ef272cc422283907a72229c590118458000077a9",
+    "run/east/frame-6.png": "4dd3c291f9a171b6a8384e8b2efac2debe8e340130348fc1b6ce8acc3a8c341a",
+    "run/east/frame-7.png": "f108fc40553761d479f70ec90d620c4a4426c8eef5b11a964f8ac34e0fdb84e0",
+    "run/north-east/frame-0.png": "f683b978b717ed8594b441869bef15b3b20a0f08ff77f24c988d5c47eddd7d13",
+    "run/north-east/frame-1.png": "7f9ac8e651a7eb29cd87de3dc80ba86a3fda3306a15b9fc23c348cf1069b9d53",
+    "run/north-east/frame-2.png": "94633da68b2821e093c8066c3bafd578e2351059381e78c521b8adcc0ea43f42",
+    "run/north-east/frame-3.png": "d1286f02073530b62c75260eea65425bf39ff139845d89680c2a0361284e29ac",
+    "run/north-east/frame-4.png": "052d94a996206a659f93d4c01e937f0c0ba64a0d2b179c8c38b8459c5bd2cc04",
+    "run/north-east/frame-5.png": "80061415e57578280107aa6070f00a8dc6991f6697a3c2cf322755e9626dfdc1",
+    "run/north-east/frame-6.png": "1e172211ddd45b895490983d73058d1c0f0cfeb0198f9d02177c4343d1a6c04b",
+    "run/north-east/frame-7.png": "4de7c847e4cd75890ad504deae591e2708a4451f6a056669e65bbfe011832db0",
+    "run/north-west/frame-0.png": "3bda78a67b353ec682ff4d6a76a860fa7d7407a80d76ac2591f7eec2d6a92618",
+    "run/north-west/frame-1.png": "ae999d71d63faec8360262f1a56f167e42a931a510152d375d5fef5d66c9dcca",
+    "run/north-west/frame-2.png": "3add47b6886daaf56435912ad26fa5ee5126cd0c65005a72b7ec6d40e1dd0472",
+    "run/north-west/frame-3.png": "e0ee1c93a76bd2fc9ba67e94dea4a38588b2485249adce153e29f390354c02b0",
+    "run/north-west/frame-4.png": "407edddfe2ff4c60c61d502bf9c324d475c83adee3a0ce0c663b17ed90f467d5",
+    "run/north-west/frame-5.png": "eccc0bcbd51a9909c771cac22ef606ce7eaa06e4fa2aca3d5430bab982aa32a9",
+    "run/north-west/frame-6.png": "2e0d90d9e445532ed2a9f5904aff5083a36ba36e43542c4402a766d97c5a04d4",
+    "run/north-west/frame-7.png": "b87d5031cc1182f179f3656705cf266627df32905d2a8574a49e31a5e9e76d91",
+    "run/north/frame-0.png": "5782f6d305abea89e4c791c1b03ad284bc9fefa4159c5e82ef06874e4559e4a6",
+    "run/north/frame-1.png": "7b3e0399f82b2e926b8fff132db9ef4f0e60a3b1144d0e16b5682841d0c71c78",
+    "run/north/frame-2.png": "60c1c2ab38df97813a007243e907c0bea623ad1648943ce00474a4674dd31578",
+    "run/north/frame-3.png": "7f075b158e0397b51bb5b5fa299c9f1fbb0acd2641f84f34b3fded6bc3e21070",
+    "run/north/frame-4.png": "c70e7437d66519153e61b7c20241dd9c5ac4a4863ae7ea86960dbb61f9460a16",
+    "run/north/frame-5.png": "5bdcdbfb535a19eccaccde654ff9b3d2a119cd0b0bc7cc37590b18239fb505c8",
+    "run/north/frame-6.png": "ec374b40fcbf7f86c2912af366c189d4008b696df7bcf7992c22717bea1fb97b",
+    "run/north/frame-7.png": "d41f203995fc19f7801db4e179cb456024f3c869db302817a0ddfa3d114af27c",
+    "run/south-east/frame-0.png": "7f43e1a9505207febcafa638e8afd3ddef4f716c8e6d7d424452330b18dc086e",
+    "run/south-east/frame-1.png": "33b474e9927ea38c2efe20795f005295efcd1c313cf6c0b46338a178ce89f7b3",
+    "run/south-east/frame-2.png": "86cde4a41e37b4bebe07b4941fcaf534a6618fe8a2d14e83fbb7d1afd2bb561b",
+    "run/south-east/frame-3.png": "ca680b25534739a52c25f160381cf754b5e26d9f90bdd1b883fb14cf055bbb7c",
+    "run/south-east/frame-4.png": "2b0052a61a674a135671bf3afe25f515aad40b4aed28b65e13f220632e5fce95",
+    "run/south-east/frame-5.png": "1ecbef273b7710f0ffb00c4135dab6cd2bd0afe7fc4975f53f1b62d1e68f544c",
+    "run/south-east/frame-6.png": "8806842e32feee0f62569af7960c17d51b69ae0ce4a7ccb93bc1410668f33690",
+    "run/south-east/frame-7.png": "385fd5fe533d77665738e02f0a19de1453a2bc24ef58e3687c2b5c1a2d04de37",
+    "run/south-west/frame-0.png": "54b87315cb876cb758f642835be374b33368b797c39d85f218be77edabc4d142",
+    "run/south-west/frame-1.png": "cf88333fee0fd0b946373d41e4e6cfe904537dab35abce926128b0c180890dd5",
+    "run/south-west/frame-2.png": "80ce5577cb82a5ab2b20c7821c7f0a73deccadeb1149ce1a89b9322d497d969a",
+    "run/south-west/frame-3.png": "a4af76db2ea25dc8d3f3d6a00883ea1965e2576f8fa64d2fe3721e81387730f9",
+    "run/south-west/frame-4.png": "f30a3544f5bded6eea8c24fc5c890430f0a2b05bb16778dd85001fd41c27ca1b",
+    "run/south-west/frame-5.png": "8ebd54bffe13b4f9afd890a77889711cec616aa4a6d27ce5873b0874ced5d71f",
+    "run/south-west/frame-6.png": "3453242a57b2f1ce736dfacedc8add8d14db89066da7e10e2c73d552dbe4a359",
+    "run/south-west/frame-7.png": "56ceaad3b71b426ecd05d706696532a221a5ee8197e42bff595c5ed813e8dc40",
+    "run/south/frame-0.png": "b9f4d569b4e36e3daf426311c816458e35d8d384597f51b07017fd230787c2c5",
+    "run/south/frame-1.png": "3d20c2a69d4d0c2faecc8d9ce3e2d3376de4032bf12583b675af20cc34bafa10",
+    "run/south/frame-2.png": "8d393327cd7d305a5c04bcaa32789ee017fd6bb035e23ff9dad9b48d267839f3",
+    "run/south/frame-3.png": "cebd6419a5e074ddae3609bad88e7709758ea7bedb8cf005df14eaa47b22c57f",
+    "run/south/frame-4.png": "f335d4ad5bf7014f5fdf6fe0021c12ec31e87aa7c53977eb13bb2bfa6a0e8580",
+    "run/south/frame-5.png": "462a0f5fe14cfc95fb4040b6595820ebb8e4a9c20a971ddd26972cb064ccd6b5",
+    "run/south/frame-6.png": "a124cb2996c6a986eff7d9724588a04c03cb0497b2486c18435cae955941e915",
+    "run/south/frame-7.png": "44a4921998191c44741f81c2271e226274e6431f2129f12c2e862081e467fa87",
+    "run/west/frame-0.png": "1f37dd30be7d3828bbdc86cef790e8f2350ca054705aee48cd1b24b7db9bd01e",
+    "run/west/frame-1.png": "fe55866ed217523af7940c076f24b6849e2b3c349e55886c32002e984316e2f0",
+    "run/west/frame-2.png": "6a1215c8fa8c10d27e76c1b9e434b9beb3e6eab8bea2a94aec369eeaa28d2773",
+    "run/west/frame-3.png": "4b938c47bc9239968f41d0c6448756f97cd1a2366450df35470aed5db7c925a6",
+    "run/west/frame-4.png": "5bdd1caa1470cbea5d0186565cb0a03e8ec73e6390684da88975e1080f0954ec",
+    "run/west/frame-5.png": "4da03edf580d09c30297ece0f65125e3e8ca4f2b598ec91ed113291f727ea0a8",
+    "run/west/frame-6.png": "05a3ef8d0dde2a362e0c5cfd1fd0b5292f6b5f0c540517271404c128e4cd5422",
+    "run/west/frame-7.png": "6942f595131a87300ecb910d1dfb3a1d4765031232f9a40bc80dde5938219d96"
+  }
+}
