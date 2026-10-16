@@ -13,6 +13,8 @@ reference). OVERRIDES fixes the few frames the rules misread. Colours outside th
 recipe's remap and snap handle them as before.
 
     python3 art/clean/kindled-ash/_scripts/blade_ew.py art/raw/ss01-kindled-ash art/clean/kindled-ash
+    python3 art/clean/kindled-ash/_scripts/blade_ew.py art/raw/run-kindled-ash art/clean/kindled-ash run
+(the folders to do can follow the two paths; without them, FOLDERS).
 """
 import math, os, sys
 from PIL import Image
@@ -308,8 +310,8 @@ def reshape(im, ov):
     return out, (root, tip, "x" if xmajor else "y", len(g), len(cut))
 
 
-def main(raw, clean):
-    for f in FOLDERS:
+def main(raw, clean, folders=FOLDERS):
+    for f in folders:
         for d in DIRS:
             src, dst = os.path.join(raw, f, d), os.path.join(clean, f, d)
             os.makedirs(dst, exist_ok=True)
@@ -325,4 +327,4 @@ def main(raw, clean):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1], sys.argv[2], sys.argv[3:] or FOLDERS)
