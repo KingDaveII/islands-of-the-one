@@ -84,6 +84,12 @@ export interface AtlasFrame {
   sourceSize: { w: number; h: number };
   /** The origin as a fraction of the cell (Phaser's setOrigin). */
   anchor: { x: number; y: number };
+  /**
+   * v2 Kindled frames that need them (`spritePointsFor`): named pixel positions
+   * in the frame's cell, `[x, y]` from the cell's top left, written by ART's
+   * recipe and placed by the art pipeline with the frame (sprites.md §5).
+   */
+  points?: Readonly<Record<string, readonly number[]>>;
 }
 
 /** One entry of the `anims` block: frame names in order, fps, -1 loops / 0 once, `hold` keeps the last frame. */
@@ -252,6 +258,49 @@ export const KINDLED_ANIMS: readonly SpriteAnimSpec[] = [
   spec('carry_walk', 6, 10, true, false, SPRITE_FACINGS_4, 'M2'),
   spec('sit', 1, 0, false, true, SPRITE_FACINGS_2, 'M2'),
 ];
+
+/**
+ * Named points in a Kindled frame (sprites.md §5): `tip`, the hook's tip, and
+ * `hand`, the hand the Haul chain leaves from. The engine draws the charge
+ * spark at `tip` and starts the chain at `hand`.
+ */
+export const KINDLED_POINTS = ['tip', 'hand'] as const;
+export type KindledPoint = (typeof KINDLED_POINTS)[number];
+
+/**
+ * Where each point is required: on every frame and facing of these
+ * animations, and allowed nowhere else (for now). The sheet test and the art
+ * pipeline both read this.
+ */
+export const KINDLED_POINT_ANIMS: Readonly<Record<KindledPoint, readonly string[]>> = {
+  tip: ['heavy_charge'],
+  hand: ['haul_throw', 'haul_pull', 'haul_slide', 'haul_recover'],
+};
+
+/**
+ * The points every frame of an animation carries on a sheet: from
+ * `KINDLED_POINT_ANIMS` for a Kindled sheet, none for any other kind.
+ */
+export function spritePointsFor(sheetName: string, anim: string): readonly KindledPoint[] {
+  if (!isKindledSheet(sheetName)) return [];
+  return KINDLED_POINTS.filter((p) => KINDLED_POINT_ANIMS[p].includes(anim));
+}
+
+/** Whether a name is one of `KINDLED_POINTS`. */
+export function isKindledPoint(name: string): name is KindledPoint {
+  return (KINDLED_POINTS as readonly string[]).includes(name);
+}
+
+/**
+ * A frame's point as `{ x, y }` in its cell, or null when the frame has none
+ * (a v1 sheet, a frame that carries no points, a malformed entry).
+ */
+export function framePoint(sheet: SpriteSheet, frame: string, point: KindledPoint): { x: number; y: number } | null {
+  const p = sheet.frames[frame]?.points?.[point];
+  if (!p || p.length !== 2) return null;
+  const [x, y] = p;
+  return typeof x === 'number' && typeof y === 'number' ? { x, y } : null;
+}
 
 /**
  * The Husk tables (sprites.md §4), one per Husk, with no facings: the engine

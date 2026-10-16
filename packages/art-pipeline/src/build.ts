@@ -1,4 +1,10 @@
-import { isRequiredAnim, optionalReason, paletteData, skinMaskName } from '@iot/shared';
+import {
+  isRequiredAnim,
+  KINDLED_POINTS,
+  optionalReason,
+  paletteData,
+  skinMaskName,
+} from '@iot/shared';
 import {
   animKey,
   animNames,
@@ -17,9 +23,16 @@ import { SKIN, SKIN_SHADE } from './colour.js';
 import { PipelineError } from './errors.js';
 import { blank, blit, hexAt, opaqueAt, opaqueRows, type Img } from './image.js';
 import { encodePng } from './png.js';
+import { missingPoints, placePoints, type FramePoints } from './points.js';
 import { animSources, recipeTable, type Recipe } from './recipe.js';
 import { applyRemap, appliesTo, staleRules, staleRuleText, type RemapCounts } from './remap.js';
-import { renderContact, renderTones, writeReport, type SheetReport } from './review.js';
+import {
+  renderContact,
+  renderPoints,
+  renderTones,
+  writeReport,
+  type SheetReport,
+} from './review.js';
 import { SourceReader } from './source.js';
 import {
   applyFixes,
@@ -55,6 +68,8 @@ export interface BuiltFrame {
   interiorDreamNight: number | null;
   despeckled: number | null;
   masked: number | null;
+  /** Its named points, placed in the cell (the recipe's `points`). */
+  points: FramePoints;
 }
 
 /** One animation × facing: an `anims` entry of the sheet and a row of the contact sheet. */
@@ -148,6 +163,18 @@ export function buildFrames(
         const outlined = outline(snapped.img, recipe.outline);
         // 8. place in the cell.
         const placed = place(outlined.img, spec, ground, refRow, name, SPRITE_CANVAS);
+        const points = placePoints(recipe, {
+          name,
+          anim,
+          facing,
+          n,
+          index,
+          source,
+          w: img.w,
+          h: img.h,
+          dx: placed.dx,
+          dy: placed.dy,
+        });
         // 9. despeckle, where the animation asks.
         let cell = placed.img;
         let despeckled: number | null = null;
@@ -191,6 +218,7 @@ export function buildFrames(
           interiorDreamNight: recipe.outline === 'other' ? outlined.interiorDreamNight : null,
           despeckled,
           masked,
+          points,
         });
       });
       anims.push({ key, anim, facing, frames });
@@ -280,7 +308,7 @@ export function sheetJson(
   const frames: Record<string, unknown> = {};
   for (const f of anims.flatMap((a) => a.frames)) {
     const r = rects.get(f.name) ?? { x: 0, y: 0 };
-    frames[f.name] = {
+    const entry: Record<string, unknown> = {
       frame: { x: r.x, y: r.y, w: cell.w, h: cell.h },
       rotated: false,
       trimmed: false,
@@ -288,6 +316,12 @@ export function sheetJson(
       sourceSize: { w: cell.w, h: cell.h },
       anchor,
     };
+    const points = KINDLED_POINTS.flatMap((p) => {
+      const at = f.points[p];
+      return at ? [[p, [at.x, at.y]] as const] : [];
+    });
+    if (points.length) entry.points = Object.fromEntries(points);
+    frames[f.name] = entry;
   }
   const meta: Record<string, unknown> = {
     image: `${recipe.sheet}.png`,
@@ -355,6 +389,12 @@ export function buildRecipe(recipe: Recipe, root: string): BuildResult {
       ...staleRules(remapCounts).map((i) => staleRuleText(recipe.sheet, i, recipe.remap[i])),
     );
     problems.push(...skinProblems.map(skinProblemText));
+    problems.push(
+      ...missingPoints(
+        recipe,
+        anims.flatMap((a) => a.frames),
+      ),
+    );
     if (problems.length) throw new PipelineError(problems);
   }
   const packed = pack(recipe, anims);
@@ -380,6 +420,8 @@ export function buildRecipe(recipe: Recipe, root: string): BuildResult {
   outputs.set(`${review}/contact.png`, encodePng(renderContact(recipe, anims)));
   if (recipe.kind === 'kindled')
     outputs.set(`${review}/tones.png`, encodePng(renderTones(recipe, anims)));
+  const pointsImg = renderPoints(recipe, anims);
+  if (pointsImg) outputs.set(`${review}/points.png`, encodePng(pointsImg));
   const report = writeReport(recipe, anims, skinProblems, remapCounts, [
     ...outputs.keys(),
     `${review}/report.md`,

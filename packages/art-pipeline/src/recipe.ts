@@ -1,6 +1,13 @@
 import { existsSync, statSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import type { SpriteAnimSpec } from '@iot/shared';
+import {
+  isKindledPoint,
+  KINDLED_POINT_ANIMS,
+  KINDLED_POINTS,
+  spritePointsFor,
+  type KindledPoint,
+  type SpriteAnimSpec,
+} from '@iot/shared';
 import {
   animKey,
   animNames,
@@ -67,6 +74,12 @@ export interface Recipe {
   skin: { add: Record<string, Area[]>; remove: Record<string, Area[]> };
   /** Colour rules applied before the snap (step 4), in order. */
   remap: RemapRule[];
+  /**
+   * Named points (sprites.md §5), by point name, then by output frame name: `[x, y]` in that
+   * frame's source pixels (after any downscale and `flipX`), like `fixes`. The pipeline places
+   * each with its frame; a `flipX` facing inherits its unmirrored twin's points, mirrored.
+   */
+  points: Partial<Record<KindledPoint, Record<string, [number, number]>>>;
 }
 
 type Json = unknown;
@@ -127,6 +140,7 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
     'fixes',
     'remap',
     'skin',
+    'points',
   ]);
 
   const sheet = json.sheet;
@@ -237,6 +251,7 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
     fixes: [],
     skin: { add: {}, remove: {} },
     remap: [],
+    points: {},
   };
   if (typeof json.notes === 'string') partial.notes = json.notes;
   const frames = recipeFrameNames(partial);
@@ -331,6 +346,45 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
           }
           partial.skin[which][name] = areas;
         }
+      }
+    }
+  }
+
+  if (json.points !== undefined) {
+    const animOf = new Map(recipeFrames(partial).map((f) => [f.name, f.anim]));
+    if (!isObj(json.points))
+      bad('points', 'must map point names to frames: { "tip": { "<frame>": [x, y] } }');
+    else {
+      for (const [point, block] of Object.entries(json.points)) {
+        const path = `points.${point}`;
+        if (!isKindledPoint(point)) {
+          bad(path, `is not a point name (${KINDLED_POINTS.join(', ')})`);
+          continue;
+        }
+        if (!isObj(block)) {
+          bad(path, 'must map output frame names to [x, y]');
+          continue;
+        }
+        const out: Record<string, [number, number]> = {};
+        for (const [name, at] of Object.entries(block)) {
+          const pp = `${path}.${name}`;
+          if (unknownFrame(pp, name)) continue;
+          const anim = animOf.get(name) ?? '';
+          if (!spritePointsFor(partial.sheet, anim).includes(point)) {
+            bad(
+              pp,
+              `is on ${anim}, which carries no ${point} point (${point} goes on ${KINDLED_POINT_ANIMS[point].join(', ')}` +
+                `${partial.kind === 'kindled' ? '' : ', Kindled sheets only'})`,
+            );
+            continue;
+          }
+          if (!isPoint(at)) {
+            bad(pp, "must be [x, y], whole pixels in the frame's source");
+            continue;
+          }
+          out[name] = [at[0], at[1]];
+        }
+        partial.points[point] = out;
       }
     }
   }

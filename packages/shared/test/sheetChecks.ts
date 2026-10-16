@@ -1,12 +1,16 @@
 import {
   hexOf,
+  isKindledPoint,
   isRequiredAnim,
+  isV2Sheet,
   kindledAnimKey,
   kindledFrameName,
   optionalReason,
   paletteData,
   REQUIRED_MILESTONE,
+  SPRITE_FACINGS,
   SPRITE_WHITELIST,
+  spritePointsFor,
   spriteSheetSpec,
   type SpriteAnimSpec,
   type SpriteSheet,
@@ -136,5 +140,64 @@ export function tableProblems(name: string, sheet: SpriteSheet, table: readonly 
   }
   const outside = Object.keys(sheet.anims).filter((k) => !keys.includes(k));
   if (outside.length) problems.push(`animations outside the table: ${outside.sort().join(', ')}`);
+  return problems;
+}
+
+/** The animation each frame belongs to, from the `anims` block (`walk_S` → `walk` on a sheet with facings). */
+function animOfFrames(name: string, sheet: SpriteSheet): Map<string, string> {
+  const facings = spriteSheetSpec(name).facings;
+  const out = new Map<string, string>();
+  for (const [key, def] of Object.entries(sheet.anims)) {
+    const facing = facings ? SPRITE_FACINGS.find((f) => key.endsWith(`_${f}`)) : undefined;
+    const anim = facing ? key.slice(0, -facing.length - 1) : key;
+    for (const frame of def.frames) out.set(frame, anim);
+  }
+  return out;
+}
+
+/**
+ * What breaks the points rules (sprites.md §5, §6): a v1 sheet has none; on a
+ * v2 sheet every point is a known name (`KINDLED_POINTS`), on a frame whose
+ * animation carries it (`spritePointsFor`), a whole pixel inside the cell and
+ * off its outer 1 px ring; and a `finished` sheet has every required point on
+ * every frame of the animations that carry one. An empty list is a sheet that
+ * passes.
+ */
+export function pointProblems(name: string, sheet: SpriteSheet, finished = true): string[] {
+  const problems: string[] = [];
+  const withPoints = Object.entries(sheet.frames).filter(([, f]) => f.points !== undefined);
+  if (!isV2Sheet(sheet)) {
+    if (withPoints.length) problems.push(`points on a v1 sheet: ${withPoints.map(([n]) => n).join(', ')}`);
+    return problems;
+  }
+  const animOf = animOfFrames(name, sheet);
+  const { w, h } = sheet.meta.cell;
+  for (const [frame, f] of withPoints) {
+    const allowed = spritePointsFor(name, animOf.get(frame) ?? '');
+    for (const [point, at] of Object.entries(f.points ?? {})) {
+      if (!isKindledPoint(point)) {
+        problems.push(`${frame}: unknown point "${point}"`);
+        continue;
+      }
+      if (!allowed.includes(point)) {
+        problems.push(`${frame}: a ${point} point, but its animation carries ${allowed.length ? allowed.join(', ') : 'no points'}`);
+        continue;
+      }
+      const [x, y] = at;
+      if (at.length !== 2 || !Number.isInteger(x) || !Number.isInteger(y)) {
+        problems.push(`${frame}: ${point} is ${JSON.stringify(at)}, not [x, y] in whole pixels`);
+        continue;
+      }
+      if (x === undefined || y === undefined || x <= 0 || y <= 0 || x >= w - 1 || y >= h - 1)
+        problems.push(`${frame}: ${point} at (${String(x)}, ${String(y)}) is outside the ${w}×${h} cell or on its outer 1 px ring`);
+    }
+  }
+  if (finished) {
+    for (const frame of Object.keys(sheet.frames)) {
+      for (const point of spritePointsFor(name, animOf.get(frame) ?? '')) {
+        if (sheet.frames[frame]?.points?.[point] === undefined) problems.push(`${frame} has no ${point} point`);
+      }
+    }
+  }
   return problems;
 }

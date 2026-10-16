@@ -324,3 +324,103 @@ describe('the recipe guard', () => {
     expect(problems([])).toEqual(['art/sheets/kindled-test.json: a recipe is a JSON object']);
   });
 });
+
+describe('the recipe guard on points', () => {
+  /** A draft with heavy_charge S (3 frames), haul_throw E and idle S, and the given points. */
+  const withPoints = (points: unknown, extra: Record<string, unknown> = {}) => ({
+    sheet: 'kindled-test',
+    kind: 'kindled',
+    outline: 'player',
+    draft: true,
+    anims: {
+      idle: { facings: { S: { src: 'art/clean/fig.png', frames: [0] } } },
+      heavy_charge: { facings: { S: { src: 'art/clean/fig.png', frames: [0, 0, 0] } } },
+      haul_throw: { facings: { E: { src: 'art/clean/fig.png', frames: [0, 0] } } },
+    },
+    points,
+    ...extra,
+  });
+
+  it('accepts points keyed by point name, then output frame, in source pixels', () => {
+    const r = parseRecipe(
+      withPoints({
+        tip: { heavy_charge_S_0: [30, 40], heavy_charge_S_2: [29, 41] },
+        hand: { haul_throw_E_1: [38, 37] },
+      }),
+      'art/sheets/kindled-test.json',
+      root,
+    );
+    expect(r.points).toEqual({
+      tip: { heavy_charge_S_0: [30, 40], heavy_charge_S_2: [29, 41] },
+      hand: { haul_throw_E_1: [38, 37] },
+    });
+    expect(parseRecipe(withPoints(undefined), 'art/sheets/kindled-test.json', root).points).toEqual(
+      {},
+    );
+  });
+
+  it.each([
+    [
+      'points that are not an object',
+      [],
+      'points must map point names to frames: { "tip": { "<frame>": [x, y] } }',
+    ],
+    [
+      'an unknown point name',
+      { hilt: { heavy_charge_S_0: [1, 1] } },
+      'points.hilt is not a point name (tip, hand)',
+    ],
+    [
+      'a point name that maps to a list',
+      { tip: [[1, 1]] },
+      'points.tip must map output frame names to [x, y]',
+    ],
+    [
+      'an unknown frame',
+      { tip: { heavy_charge_S_3: [1, 1] } },
+      'points.tip.heavy_charge_S_3 names "heavy_charge_S_3", which is not a frame this recipe builds',
+    ],
+    [
+      'a tip on an animation that carries none',
+      { tip: { haul_throw_E_0: [1, 1] } },
+      'points.tip.haul_throw_E_0 is on haul_throw, which carries no tip point (tip goes on heavy_charge)',
+    ],
+    [
+      'a hand on idle',
+      { hand: { idle_S_0: [1, 1] } },
+      'points.hand.idle_S_0 is on idle, which carries no hand point (hand goes on haul_throw, haul_pull, haul_slide, haul_recover)',
+    ],
+    [
+      'a point that is not [x, y]',
+      { tip: { heavy_charge_S_0: [1, 2, 3] } },
+      "points.tip.heavy_charge_S_0 must be [x, y], whole pixels in the frame's source",
+    ],
+    [
+      'a negative coordinate',
+      { tip: { heavy_charge_S_0: [-1, 2] } },
+      "points.tip.heavy_charge_S_0 must be [x, y], whole pixels in the frame's source",
+    ],
+    [
+      'a fractional coordinate',
+      { tip: { heavy_charge_S_0: [1.5, 2] } },
+      "points.tip.heavy_charge_S_0 must be [x, y], whole pixels in the frame's source",
+    ],
+  ])('fails on %s, naming the field', (_, points, message) => {
+    expect(problems(withPoints(points))).toEqual([`art/sheets/kindled-test.json: ${message}`]);
+  });
+
+  it('allows no point on a sheet that is not Kindled', () => {
+    const npc = {
+      sheet: 'npc-test',
+      kind: 'npc',
+      outline: 'other',
+      draft: true,
+      anims: { idle: { facings: { S: { src: 'art/clean/fig.png', frames: [0] } } } },
+      points: { hand: { idle_S_0: [1, 1] } },
+    };
+    expect(problems(npc, 'art/sheets/npc-test.json')).toEqual([
+      'art/sheets/npc-test.json: points.hand.idle_S_0 is on idle, which carries no hand point ' +
+        '(hand goes on haul_throw, haul_pull, haul_slide, haul_recover, Kindled sheets only)',
+    ]);
+  });
+});
