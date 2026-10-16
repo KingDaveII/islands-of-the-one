@@ -163,7 +163,7 @@ export function buildTileFrames(
 }
 
 /** The pieces and door frames a recipe lacks against the contract, for a draft's report (by piece). */
-export function missingTiles(recipe: Recipe, tiles: readonly BuiltTile[]): string[] {
+export function missingTiles(tiles: readonly BuiltTile[]): string[] {
   const built = new Map<string, number>();
   for (const t of tiles) built.set(t.piece, (built.get(t.piece) ?? 0) + 1);
   return TILE_RECIPE_PIECES.flatMap((p) => {
@@ -457,7 +457,7 @@ function tileReport(
       maxDeltaE: Math.max(0, ...frames.map((f) => f.maxDeltaE)),
       outlineGaps: frames.reduce((s, f) => s + f.outlineGaps, 0),
     },
-    missing: missingTiles(recipe, tiles),
+    missing: missingTiles(tiles),
     opacity: opacityProblems(recipe, tiles),
     rooms,
     remap: recipe.remap.map((rule, i) => {

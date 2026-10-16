@@ -183,7 +183,12 @@ describe('tileAt', () => {
     expect(pickWeighted(12, [6, 3, 2, 1])).toBe(0);
     const big = room(Array.from({ length: 60 }, () => '.'.repeat(60)), 'weights');
     const counts = [0, 0, 0, 0];
-    for (let r = 0; r < 60; r++) for (let c = 0; c < 60; c++) counts[Number(base(big, c, r)?.slice(-1))]++;
+    for (let r = 0; r < 60; r++) {
+      for (let c = 0; c < 60; c++) {
+        const i = Number(base(big, c, r)?.slice(-1));
+        counts[i] = (counts[i] ?? 0) + 1;
+      }
+    }
     // 3600 cells at 6:3:2:1: within 15 % of each share.
     [6, 3, 2, 1].forEach((w, i) => { expect(Math.abs((counts[i] ?? 0) - (3600 * w) / 12), `floor_${i}`).toBeLessThan((3600 * w) / 12 * 0.15); });
     // Weights 1:1:1:1 give all four; a weight's own share moves only its piece.
