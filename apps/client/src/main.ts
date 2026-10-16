@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import type { ClayTone, TileSheet } from '@iot/shared';
+import { CHEST_SHEET, type ClayTone, type SpriteSheet, type TileSheet } from '@iot/shared';
 import {
   replayRun,
   hashRunState,
@@ -13,6 +13,7 @@ import { connectedPad, padSnapshot } from './game/gamepad.js';
 import { eventKeyFor, keyboardBinding } from './game/keyboard.js';
 import { Palette } from './palette.js';
 import { deviceNow, fitCanvasToWindow } from './render/cameras.js';
+import { setChestSheet } from './render/chestSprites.js';
 import { setTileSheet } from './render/roomTiles.js';
 import { GameScene, type GameData } from './scenes/GameScene.js';
 import { AccountScene } from './scenes/AccountScene.js';
@@ -147,6 +148,17 @@ function startGame(): void {
     /** The tile room's door frames this render frame (empty with the procedural room). */
     doorFrames(): string[] {
       return activeGame()?.world.tiles?.doorFrames() ?? [];
+    },
+    /**
+     * Draw chests from this `prop-chest` sheet from the next run on, while ART's is not on disk
+     * (playtests: the test fixture); `url` is its PNG, a data URL will do. null goes back.
+     */
+    useChestSheet(sheet: SpriteSheet | null, url = '', key = CHEST_SHEET): void {
+      setChestSheet(sheet ? { key, sheet, url } : null);
+    },
+    /** The chests' frames this render frame, in sim order (empty with the procedural chest). */
+    chestFrames(): string[] {
+      return activeGame()?.world.chests?.frames() ?? [];
     },
     setAutopilot(opts: AutopilotOptions | null): void {
       const s = activeGame();
