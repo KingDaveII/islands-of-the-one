@@ -4,7 +4,7 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 112,
+        "w": 96,
         "h": 80
       },
       "rotated": false,
@@ -12,11 +12,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 112,
+        "w": 96,
         "h": 80
       },
       "sourceSize": {
-        "w": 112,
+        "w": 96,
         "h": 80
       },
       "anchor": {
@@ -26,9 +26,9 @@
     },
     "idle_S_1": {
       "frame": {
-        "x": 112,
+        "x": 96,
         "y": 0,
-        "w": 112,
+        "w": 96,
         "h": 80
       },
       "rotated": false,
@@ -36,11 +36,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 112,
+        "w": 96,
         "h": 80
       },
       "sourceSize": {
-        "w": 112,
+        "w": 96,
         "h": 80
       },
       "anchor": {
@@ -52,7 +52,7 @@
   "meta": {
     "image": "kindled-fixture.png",
     "size": {
-      "w": 224,
+      "w": 192,
       "h": 80
     },
     "scale": "1",
@@ -60,11 +60,11 @@
     "app": "fixture",
     "version": "2",
     "cell": {
-      "w": 112,
+      "w": 96,
       "h": 80
     },
     "origin": {
-      "x": 56,
+      "x": 48,
       "y": 64
     },
     "facings": [

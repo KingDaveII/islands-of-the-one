@@ -11,7 +11,7 @@ import { cloneImg, hexAt, opaqueAt, setPixel, type Img } from './image.js';
  * the fixes; a pixel takes the first rule that matches it.
  */
 
-/** A rectangle `[x0, y0, x1, y1]`, corners included, in the source frame's pixels (after any downscale). */
+/** A rectangle `[x0, y0, x1, y1]`, corners included, in the source frame's pixels (after any downscale and flipX). */
 export type Rect = readonly [number, number, number, number];
 
 export interface RemapRule {

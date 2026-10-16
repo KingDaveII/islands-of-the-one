@@ -2,14 +2,15 @@ import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { GifReader } from 'omggif';
 import { PipelineError } from './errors.js';
-import { blank, type Img } from './image.js';
+import { blank, flipX, type Img } from './image.js';
 import { decodePng } from './png.js';
 
 /**
  * Step 1, read: a source (a folder of frame-<n>.png, one PNG or a GIF) to
  * frames. Alpha must be 0 or 255; a ×k delivery is reduced only when every
  * k×k block is one colour; a GIF is split, a frame held n times the shortest
- * delay becoming n frames. Nothing is ever scaled otherwise.
+ * delay becoming n frames. Nothing is ever scaled otherwise. A `flipX` source
+ * is mirrored last, so every later step sees the mirrored frame.
  */
 
 /** Fails on any alpha other than 0 or 255, naming the frame and the first such pixel; clears transparent pixels' RGB. */
@@ -92,9 +93,10 @@ export function splitGif(bytes: Uint8Array, label: string): Img[] {
 }
 
 /**
- * Reads source frames on demand, each once per build. `index` is the source
- * frame index (frame-<index>.png, the GIF's split frames, or 0 for one PNG);
- * `who` names the output frame for messages.
+ * Reads source frames on demand, each once per build (a mirrored read is its
+ * own entry). `index` is the source frame index (frame-<index>.png, the GIF's
+ * split frames, or 0 for one PNG); `who` names the output frame for messages,
+ * whose coordinates are the file's (before the mirror).
  */
 export class SourceReader {
   private readonly cache = new Map<string, Img>();
@@ -102,10 +104,15 @@ export class SourceReader {
 
   constructor(private readonly root: string) {}
 
-  read(src: string, index: number, scale: number | undefined, who: string): Img {
-    const key = `${src}#${index}#${scale ?? 1}`;
+  read(src: string, index: number, scale: number | undefined, who: string, mirror = false): Img {
+    const key = `${src}#${index}#${scale ?? 1}#${mirror ? 'flipX' : ''}`;
     const hit = this.cache.get(key);
     if (hit) return hit;
+    if (mirror) {
+      const img = flipX(this.read(src, index, scale, who));
+      this.cache.set(key, img);
+      return img;
+    }
     const label = `${who} (${src} frame ${index})`;
     const abs = join(this.root, src);
     let img: Img;

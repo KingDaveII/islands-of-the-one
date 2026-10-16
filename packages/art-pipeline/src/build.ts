@@ -40,6 +40,8 @@ export interface BuiltFrame {
   facing: Facing | null;
   n: number;
   source: string;
+  /** The source was mirrored left to right (`flipX`). */
+  mirrored: boolean;
   cell: Img;
   mask: Img | null;
   offPalette: number;
@@ -115,14 +117,20 @@ export function buildFrames(
       const key = animKey(anim, facing);
       let refRow: number | null = null;
       if (typeof ground === 'object') {
-        const ref = reader.read(source.src, ground.ref, source.downscale, `${key} ground ref`);
+        const ref = reader.read(
+          source.src,
+          ground.ref,
+          source.downscale,
+          `${key} ground ref`,
+          source.flipX,
+        );
         refRow = opaqueRows(ref)?.bottom ?? null;
       }
       const frames: BuiltFrame[] = [];
       source.frames.forEach((index, n) => {
         const name = frameName(anim, facing, n);
-        // 1. read (alpha, downscale, GIF split) and 2. select: the recipe's index.
-        let img = reader.read(source.src, index, source.downscale, name);
+        // 1. read (alpha, downscale, GIF split, mirror) and 2. select: the recipe's index.
+        let img = reader.read(source.src, index, source.downscale, name, source.flipX);
         // 3. fixes.
         img = applyFixes(img, fixes.get(name) ?? [], name);
         // 4. remap.
@@ -170,6 +178,7 @@ export function buildFrames(
           facing,
           n,
           source: `${source.src} ${index}`,
+          mirrored: source.flipX === true,
           cell,
           mask,
           offPalette: snapped.offPalette,

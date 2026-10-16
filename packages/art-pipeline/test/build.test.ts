@@ -16,7 +16,7 @@ import {
 import { tableProblems, v2Problems } from '../../shared/test/sheetChecks.js';
 import { APP_ID, buildRecipe, pack, type BuiltAnim } from '../src/build.js';
 import { PipelineError } from '../src/errors.js';
-import { blank, hexAt, opaqueAt } from '../src/image.js';
+import { blank, blit, flipX, hexAt, opaqueAt, sameImg } from '../src/image.js';
 import { animChecks, BOB_FLAG } from '../src/review.js';
 import { decodePng } from '../src/png.js';
 import { parseRecipe, type Recipe } from '../src/recipe.js';
@@ -108,13 +108,13 @@ describe('a finished Kindled sheet', () => {
       ),
     );
     expect(names).toEqual(expected);
-    expect(sheet.meta.size).toEqual({ w: 18 * 112, h: Math.ceil(expected.length / 18) * 80 });
+    expect(sheet.meta.size).toEqual({ w: 21 * 96, h: Math.ceil(expected.length / 21) * 80 });
     expect([png.w, png.h]).toEqual([sheet.meta.size.w, sheet.meta.size.h]);
     names.forEach((name, i) => {
       expect(sheet.frames[name]?.frame, name).toEqual({
-        x: (i % 18) * 112,
-        y: Math.floor(i / 18) * 80,
-        w: 112,
+        x: (i % 21) * 96,
+        y: Math.floor(i / 21) * 80,
+        w: 96,
         h: 80,
       });
     });
@@ -128,8 +128,8 @@ describe('a finished Kindled sheet', () => {
       format: 'RGBA8888',
       app: APP_ID,
       version: '2',
-      cell: { w: 112, h: 80 },
-      origin: { x: 56, y: 64 },
+      cell: { w: 96, h: 80 },
+      origin: { x: 48, y: 64 },
       facings: [...SPRITE_FACINGS],
       pixelScale: 1,
     });
@@ -156,10 +156,10 @@ describe('a finished Kindled sheet', () => {
     for (const f of Object.values(sheet.frames)) expect(f.anchor).toEqual({ x: 0.5, y: 0.8 });
   });
 
-  it('puts the canvas at (24, 10): the soles on cell row 63', () => {
+  it('puts the canvas at (16, 10): the soles on cell row 63', () => {
     const f = sheet.frames.idle_S_0?.frame ?? { x: 0, y: 0 };
-    expect(opaqueAt(png, f.x + 24 + 27, f.y + 10 + 53)).toBe(true);
-    expect(opaqueAt(png, f.x + 24 + 27, f.y + 10 + 54)).toBe(false);
+    expect(opaqueAt(png, f.x + 16 + 27, f.y + 10 + 53)).toBe(true);
+    expect(opaqueAt(png, f.x + 16 + 27, f.y + 10 + 54)).toBe(false);
   });
 
   it('is the same bytes on a second build', () => {
@@ -308,7 +308,7 @@ describe('the mask rule on a hand-made figure', () => {
     const mask = decodePng(
       r.outputs.get('packages/shared/assets/sprites/kindled-test.skin.png') ?? Buffer.alloc(0),
     );
-    expect(opaqueAt(mask, 24 + 30, 10 + 33)).toBe(true);
+    expect(opaqueAt(mask, 16 + 30, 10 + 33)).toBe(true);
   });
 
   it('a fixes recolour resolves it too', () => {
@@ -323,7 +323,7 @@ describe('the mask rule on a hand-made figure', () => {
     };
     const r = build(root, json);
     expect(r.skinProblems).toEqual([]);
-    expect(hexAt(r.anims[0]?.frames[0]?.cell ?? blank(1, 1), 24 + 30, 10 + 33)).toBe(
+    expect(hexAt(r.anims[0]?.frames[0]?.cell ?? blank(1, 1), 16 + 30, 10 + 33)).toBe(
       C['watcher-iron'],
     );
   });
@@ -353,7 +353,7 @@ describe('remap in a build', () => {
     );
     const r = build(root, fullKindled('art/clean/grey-belt.png', { remap: rescue }));
     expect(r.skinProblems).toEqual([]);
-    expect(hexAt(r.anims[0]?.frames[0]?.cell ?? blank(1, 1), 24 + 30, 10 + 33)).toBe(
+    expect(hexAt(r.anims[0]?.frames[0]?.cell ?? blank(1, 1), 16 + 30, 10 + 33)).toBe(
       C['watcher-iron'],
     );
   });
@@ -429,6 +429,114 @@ describe('remap in a build', () => {
   });
 });
 
+describe('mirrored sources (flipX)', () => {
+  const root = tempRoot();
+  // An asymmetric 68×68 frame (v3's action canvas): the figure, a blade to its right.
+  const tumble = blank(68, 68);
+  blit(tumble, figure(C['watcher-iron']).img, 2, 2);
+  rect(tumble, 46, 32, 14, 2, C['watcher-stone']);
+  writeImg(root, 'art/raw/tumble/west.png', tumble);
+  writeImg(root, 'art/clean/fig.png', figure(C['watcher-iron']).img);
+  const draft = (anims: Record<string, unknown>, extra: Record<string, unknown> = {}) => ({
+    ...fullKindled('art/clean/fig.png'),
+    draft: true,
+    anims,
+    ...extra,
+  });
+  const src = 'art/raw/tumble/west.png';
+  const r = build(
+    root,
+    draft({
+      dodge: {
+        facings: { W: { src, frames: [0] }, E: { src, frames: [0], flipX: true } },
+      },
+    }),
+  );
+  const frame = (name: string) => {
+    const f = r.anims.flatMap((a) => a.frames).find((x) => x.name === name);
+    if (!f) throw new Error(`no ${name}`);
+    return f;
+  };
+
+  it('builds the mirror image, pixel for pixel, still centred on the canvas', () => {
+    const e = frame('dodge_E_0');
+    // Column floor(68 / 2) = 34 goes on the origin's column 48, so dx is 14 and x lands on 14 + x.
+    expect([e.dx, e.dy]).toEqual([14, 8]);
+    for (let y = 0; y < tumble.h; y++) {
+      for (let x = 0; x < tumble.w; x++) {
+        const cx = 14 + (67 - x);
+        expect(opaqueAt(e.cell, cx, 8 + y), `${x}, ${y}`).toBe(opaqueAt(tumble, x, y));
+        if (opaqueAt(tumble, x, y)) expect(hexAt(e.cell, cx, 8 + y)).toBe(hexAt(tumble, x, y));
+      }
+    }
+    // The canvas centre stays on the origin, so the whole cell (and its mask) is the mirror of the unmirrored one.
+    const w = frame('dodge_W_0');
+    expect(sameImg(e.cell, flipX(w.cell))).toBe(true);
+    expect(sameImg(e.mask ?? blank(1, 1), flipX(w.mask ?? blank(1, 1)))).toBe(true);
+  });
+
+  it('reads the same files unmirrored for another facing', () => {
+    const w = frame('dodge_W_0');
+    expect([w.dx, w.dy]).toEqual([14, 8]);
+    expect(hexAt(w.cell, 14 + 50, 8 + 32)).toBe(C['watcher-stone']); // the blade, to the right
+    expect(opaqueAt(w.cell, 14 + 17, 8 + 32)).toBe(false);
+    expect(hexAt(frame('dodge_E_0').cell, 14 + 17, 8 + 32)).toBe(C['watcher-stone']); // and to the left
+    expect(w.mirrored).toBe(false);
+  });
+
+  it('marks mirrored frames in the report', () => {
+    const json = r.report.frames.map((f) => [f.name, f.source, f.mirrored]);
+    expect(json).toEqual([
+      ['dodge_E_0', `${src} 0`, true],
+      ['dodge_W_0', `${src} 0`, undefined],
+    ]);
+    const md = r.outputs.get('art/review/kindled-test/report.md')?.toString() ?? '';
+    expect(md).toContain(`| dodge_E_0 | mirrored from \`${src} 0\` |`);
+    expect(md).toContain(`| dodge_W_0 | \`${src} 0\` |`);
+  });
+
+  it("applies fixes, remap boxes and skin areas in the mirrored frame's coordinates", () => {
+    // Mirrored, the figure's stone arm is at x 39–41 and its sail hand at (39–41, 32–33).
+    const m = build(
+      root,
+      draft(
+        { idle: { facings: { E: { src: 'art/clean/fig.png', frames: [0], flipX: true } } } },
+        {
+          fixes: [{ frame: 'idle_E_0', pixels: [[40, 25, C['wheel-brass']]] }],
+          remap: [
+            {
+              from: [C['watcher-stone']],
+              to: 'husk-shell',
+              frames: ['idle_E_0'],
+              box: [39, 22, 41, 31],
+            },
+          ],
+          skin: {
+            remove: {
+              idle_E_0: [
+                [
+                  [39, 32],
+                  [41, 33],
+                ],
+              ],
+            },
+          },
+        },
+      ),
+    );
+    const f = m.anims[0]?.frames[0];
+    if (!f) throw new Error('no idle_E_0');
+    expect([f.dx, f.dy]).toEqual([16, 10]);
+    expect(hexAt(f.cell, 16 + 40, 10 + 25)).toBe(C['wheel-brass']);
+    expect(hexAt(f.cell, 16 + 39, 10 + 22)).toBe(C['husk-shell']);
+    expect(hexAt(f.cell, 16 + 23, 10 + 25)).toBe(C['watcher-iron']); // the other arm, outside the box
+    expect(m.remapCounts[0]?.get('idle')).toBe(29); // the arm's 30 pixels but the fixed one
+    const mask = f.mask ?? blank(1, 1);
+    expect(opaqueAt(mask, 16 + 40, 10 + 32)).toBe(false); // the removed hand
+    expect(opaqueAt(mask, 16 + 23, 10 + 32)).toBe(true); // the other hand
+  });
+});
+
 describe('the body bob flag', () => {
   /** A walk whose top row sits `tops` rows above the soles, frame by frame. */
   const walk = (tops: number[]): BuiltAnim => ({
@@ -436,8 +544,8 @@ describe('the body bob flag', () => {
     anim: 'walk',
     facing: 'S',
     frames: tops.map((t, n) => {
-      const cell = blank(112, 80);
-      rect(cell, 50, 63 - t, 4, t + 1, C['watcher-iron']);
+      const cell = blank(96, 80);
+      rect(cell, 42, 63 - t, 4, t + 1, C['watcher-iron']);
       return { name: `walk_S_${n}`, cell } as BuiltAnim['frames'][number];
     }),
   });
@@ -459,8 +567,8 @@ describe('the body bob flag', () => {
 
 describe('packing', () => {
   it('fails when the frames do not fit in 2048×2048', () => {
-    const cell = blank(112, 80);
-    const frames = Array.from({ length: 18 * 26 }, (_, n) => ({
+    const cell = blank(96, 80);
+    const frames = Array.from({ length: 21 * 26 }, (_, n) => ({
       name: `walk_S_${n}`,
       cell,
       mask: null,
@@ -468,7 +576,7 @@ describe('packing', () => {
     const anims: BuiltAnim[] = [{ key: 'walk_S', anim: 'walk', facing: 'S', frames }];
     const recipe = { sheet: 'kindled-big', kind: 'kindled' } as Recipe;
     expect(problemsOf(() => pack(recipe, anims))).toEqual([
-      'kindled-big: 468 frames of 112×80 need a 2016×2080 sheet; the most is 2048×2048',
+      'kindled-big: 546 frames of 96×80 need a 2016×2080 sheet; the most is 2048×2048',
     ]);
   });
 });

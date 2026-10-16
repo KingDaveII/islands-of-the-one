@@ -97,11 +97,36 @@ file fails the build with a message naming the field.
 | `src` | Repo-relative, under `art/`: a folder of `frame-<n>.png`, one PNG (its only frame is 0), or a GIF. Raw files (`art/raw/…`) or files you cleaned (`art/clean/…`). |
 | `frames` | Source frame indices, in play order. Repeats are allowed. In v3 animations frame 0 is the rotation: skip it. Skip smear frames. The light attack keeps 3 of v3's 6. |
 | `downscale` | Optional, on a source: a whole number k ≥ 2 for a ×k delivery (Retro Diffusion's ×4). Every k×k block must be one colour. |
+| `flipX` | Optional `true`, on a source (a facing entry, or a facing-less animation): mirror its frames left to right as they are read (step 1), before everything else. Every coordinate for that frame then refers to the mirrored frame, what the review shows (see "Mirrored sources"). The same files may be used unmirrored for another facing. |
 | `ground` | How each frame is placed vertically (step 8). Default `"frame"` for `idle`, `walk`, `carry_idle`, `carry_walk`, `{ "ref": 0 }` for everything else. |
 | `despeckle` | Optional `true`: run step 9 on this animation. |
-| `fixes` | Pixel fixes, per output frame name (`walk_S_1`, or `idle_3` without facings), in that frame's **source** pixels (after any downscale): `[x, y, "#rrggbb"]` sets a whitelist colour (telegraph colours too in a `telegraph*` frame), `[x, y, null]` makes it transparent. |
+| `fixes` | Pixel fixes, per output frame name (`walk_S_1`, or `idle_3` without facings), in that frame's **source** pixels (after any downscale and any `flipX`): `[x, y, "#rrggbb"]` sets a whitelist colour (telegraph colours too in a `telegraph*` frame), `[x, y, null]` makes it transparent. |
 | `remap` | Colour rules applied before the snap (step 4), in order: generator greys to the right ramp. See "Remap". |
-| `skin.add`, `skin.remove` | Kindled only, per output frame name, in source pixels: lists of pixels `[x, y]` or rectangles `[[x0, y0], [x1, y1]]` (corners included). See step 10. |
+| `skin.add`, `skin.remove` | Kindled only, per output frame name, in source pixels (after any downscale and any `flipX`): lists of pixels `[x, y]` or rectangles `[[x0, y0], [x1, y1]]` (corners included). See step 10. |
+
+## Mirrored sources
+
+ART finishes some facings from the opposite facing's frames, mirrored (the dodge's E, SE and NE rolls from
+the W, SW and NW tumbles). A facing entry, or a facing-less animation's source, sets `"flipX": true`:
+
+```json
+"dodge": {
+  "facings": {
+    "W": { "src": "art/raw/ss01-kindled-ash/dodge/west", "frames": [1, 2, 3, 4] },
+    "E": { "src": "art/raw/ss01-kindled-ash/dodge/west", "frames": [1, 2, 3, 4], "flipX": true }
+  }
+}
+```
+
+- The frames are mirrored when they are read (step 1, after any downscale), before everything else. From
+  then on the mirrored frame is the source frame: `fixes`, `skin` and `remap` coordinates (`box`,
+  `exclude` rectangles), the `ground` ref frame and the face box all refer to it, which is what
+  `contact.png` shows. Column x of the file is column `width − 1 − x` of the mirrored frame.
+- Read failures (alpha, a downscale block) still give the file's own coordinates, before the mirror.
+- Placement is unchanged: the canvas centre goes on the origin, so a mirrored 68 px frame stays centred.
+  For an even-width frame (64, 68) the cell is the exact mirror of the unmirrored one.
+- The report marks each such frame: "mirrored from `<src> <n>`" (`"mirrored": true` in `report.json`).
+- The engine does not change: sheets are stored per facing, so a mirrored frame is just another frame.
 
 ## Kinds
 
@@ -120,7 +145,7 @@ draft's report lists the optional rows under its summary.
 
 | Prefix | Kind | Cell | Facings | Table | Palette and mask |
 |---|---|---|---|---|---|
-| `kindled-` | `kindled` | 112×80 | per animation (8, 4 or 2) | `KINDLED_ANIMS` | yes |
+| `kindled-` | `kindled` | 96×80 | per animation (8, 4 or 2) | `KINDLED_ANIMS` | yes |
 | `husk-` | `husk` | 64×64 | none | the Husk's own in `HUSK_TABLES` (`peeling`, `nutshell`); a Husk without one builds only as a draft | no |
 | `npc-` | `npc` | 64×64 | all 8 | `NPC_ANIMS`: `idle` 2 frames at 2 fps, `walk` 6 at 10, both looping | no |
 | `prop-` | `prop` | 64×64 | none | `idle` only, 1–8 frames, at the recipe's `fps` (default 8), looping with more than one frame | no |
@@ -137,7 +162,8 @@ the pipeline never does it. The same goes for a stubby blade or anything else th
 
 1. **Read.** Loads the frame. Any alpha other than 0 or 255 fails. With `downscale`, every k×k block must
    be one colour, then it is reduced; otherwise nothing is scaled. A GIF is split into frames, and a frame
-   whose delay is n times the shortest becomes n frames (an export merges identical frames).
+   whose delay is n times the shortest becomes n frames (an export merges identical frames). With `flipX`,
+   the frame is then mirrored left to right; every later step sees the mirrored frame.
 2. **Select.** The recipe's `frames`, in order. Nothing else is guessed.
 3. **Fixes.** The recipe's pixel fixes. Nothing else edits the art by the pixel.
 4. **Remap.** The recipe's `remap` rules, in order, on the source frame (after any downscale and the
@@ -156,7 +182,7 @@ the pipeline never does it. The same goes for a stubby blade or anything else th
    dream-night pixels.
 8. **Place in the cell.** Horizontally by the frame's canvas centre: the frame's column
    `floor(width / 2)` goes on the origin's column, whatever the bounding box (a blade on one side never
-   shifts the body). Vertically by `ground`:
+   shifts the body). A mirrored frame is placed the same way. Vertically by `ground`:
    - `"frame"`: the frame's lowest opaque row goes on the soles row (cell row 63 for the Kindled, 53 for
      the rest);
    - `{ "ref": i }`: source frame `i`'s lowest opaque row sets one shift for every frame of that
@@ -206,7 +232,7 @@ recolour still works for a single pixel; a `remap` rule covers a colour across e
 | `anims` | Only these animations (names this recipe builds). |
 | `facings` | Only these facings (Kindled and NPC sheets). |
 | `frames` | Only these output frames (`walk_S_2`). |
-| `box` | Only inside these rectangles: one `[x0, y0, x1, y1]` or a list of them, corners included, in the source frame's pixels after any `downscale` (the coordinates of `fixes` and `skin`). |
+| `box` | Only inside these rectangles: one `[x0, y0, x1, y1]` or a list of them, corners included, in the source frame's pixels after any `downscale` and `flipX` (the coordinates of `fixes` and `skin`). |
 | `exclude` | Skip pixels: `"face"`, a rectangle, or a list of both (`["face", [12, 30, 16, 34]]`). |
 
 - **Order.** A pixel takes the first rule that matches it, so put narrow rules (a hand, one frame) before the
@@ -247,8 +273,8 @@ off-palette source colours (see "Remap").
 ## Failure messages
 
 Every failure names the recipe or the frame, and the pixel where there is one. Several problems in one
-recipe are listed together. Coordinates are in the source frame's pixels unless the message says
-otherwise.
+recipe are listed together. Coordinates are in the source frame's pixels (mirrored, for a `flipX` source)
+unless the message says otherwise; read failures give the file's own.
 
 ### Recipes
 
@@ -275,6 +301,7 @@ otherwise.
 | `<path> is not a folder of frame-<n>.png, a .png or a .gif` | Convert the source to one of these. |
 | `….frames must be a non-empty list of source frame indices` | Whole numbers from 0. |
 | `….downscale must be a whole number, 2 or more` | Leave it out for a 1× delivery. |
+| `….flipX must be true or false` | Leave it out for an unmirrored source. |
 | `….ground must be "frame", "canvas" or { "ref": <source frame index> }` | See step 8. |
 | `….despeckle must be true or false` | |
 | `fixes must be a list` / `fixes[i] must be an object` / `fixes[i].pixels must be a non-empty list` | Shape: `[{ "frame": …, "pixels": [[x, y, colour], …] }]`. |
@@ -303,7 +330,7 @@ otherwise.
 | `<gif>: GIF frame <i> lasts <d> cs, not a whole multiple of the shortest (<s> cs)` | Re-export the GIF with even timing, or export frames as PNGs. |
 | `<frame> (…): the GIF has <n> frames after splitting, so there is no frame <i>` | Fix the index. |
 | `<frame>: the fix at (x, y) is outside the <w>×<h> source frame` | Fix coordinates are in source pixels (after any downscale). |
-| `art/sheets/<s>.json: remap[i].box [x0, y0, x1, y1] reaches outside the <w>×<h> source frame of <frame>` (also `remap[i].exclude`) | Checked when the frames are read, in drafts too: rectangles are in that frame's source pixels (after any downscale). Fix the rectangle, or scope the rule with `frames` to the frames it fits. |
+| `art/sheets/<s>.json: remap[i].box [x0, y0, x1, y1] reaches outside the <w>×<h> source frame of <frame>` (also `remap[i].exclude`) | Checked when the frames are read, in drafts too: rectangles are in that frame's source pixels (after any downscale and `flipX`). Fix the rectangle, or scope the rule with `frames` to the frames it fits. |
 | `<sheet>: remap[i] (<rule>) matches no pixel in any frame it applies to; remove it, or fix its colours or scope` | A stale rule: the colours are gone (a new source, an earlier rule takes them) or the scope misses. Remove or fix it. In a draft this is reported, not failed. |
 | `<frame>: pixel (x, y) is <hex>, nearest to the reserved signal-hit #ffffff` (or `spark-glow #ffe7a3`) | Pure white or the dodge glow can't be in a sheet. Recolour the pixel with `fixes` (or clean the file). |
 | `… nearest to the reserved signal-telegraph …, which only telegraph frames may use` | The pink is for `telegraph*` frames only. Recolour it, or use the frames in a telegraph animation. |

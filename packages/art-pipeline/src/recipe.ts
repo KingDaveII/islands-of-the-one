@@ -34,6 +34,12 @@ export interface FrameSource {
   frames: number[];
   /** Reduce a ×k delivery by k (every k×k block must be one colour). */
   downscale?: number;
+  /**
+   * Mirror every frame left to right as it is read (step 1), before everything
+   * else: fixes, remap and skin coordinates, ground refs and the face box all
+   * refer to the mirrored frame.
+   */
+  flipX?: boolean;
 }
 
 export interface RecipeAnim {
@@ -211,9 +217,10 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
           'src',
           'frames',
           'downscale',
+          'flipX',
           ...(k === 'prop' ? ['fps'] : []),
         ]);
-        const own = { src: a.src, frames: a.frames, downscale: a.downscale };
+        const own = { src: a.src, frames: a.frames, downscale: a.downscale, flipX: a.flipX };
         const src = parseSource(own, path, root, ground, bad, () => undefined);
         if (src) out.source = src;
       }
@@ -356,8 +363,8 @@ function parseSource(
     bad(path, 'must be an object with "src" and "frames"');
     return null;
   }
-  unknownKeys(path, v, ['src', 'frames', 'downscale']);
-  const { src, frames, downscale } = v;
+  unknownKeys(path, v, ['src', 'frames', 'downscale', 'flipX']);
+  const { src, frames, downscale, flipX } = v;
   let ok = true;
   if (typeof src !== 'string' || !src.startsWith('art/') || src.split('/').includes('..')) {
     bad(`${path}.src`, 'must be a repo-relative path under art/');
@@ -371,9 +378,14 @@ function parseSource(
     bad(`${path}.downscale`, 'must be a whole number, 2 or more');
     ok = false;
   }
+  if (flipX !== undefined && typeof flipX !== 'boolean') {
+    bad(`${path}.flipX`, 'must be true or false');
+    ok = false;
+  }
   if (!ok) return null;
   const s: FrameSource = { src: src as string, frames: frames as number[] };
   if (downscale !== undefined) s.downscale = downscale as number;
+  if (flipX === true) s.flipX = true;
   const abs = join(root, s.src);
   if (!existsSync(abs)) {
     bad(`${path}.src`, `${s.src} does not exist`);
