@@ -592,11 +592,11 @@ describe('optional animations (milestones)', () => {
     ]);
   });
 
-  it('has run in the Kindled table (6 frames, 8 facings, looping, M1), optional while it awaits art', () => {
+  it('has run in the Kindled table (8 frames, 8 facings, looping, M1), optional while it awaits art', () => {
     expect(KINDLED_ANIMS.find((a) => a.name === 'run')).toEqual({
       name: 'run',
-      frames: 6,
-      fps: 10,
+      frames: 8,
+      fps: 16,
       loop: true,
       hold: false,
       facings: SPRITE_FACINGS,

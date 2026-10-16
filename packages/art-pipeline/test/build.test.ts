@@ -223,7 +223,7 @@ describe('a finished Kindled sheet', () => {
     const json = JSON.parse(
       r.outputs.get('packages/shared/assets/sprites/kindled-test.json')?.toString() ?? '{}',
     ) as SpriteSheet;
-    expect(json.anims.run_NW?.frames).toHaveLength(6);
+    expect(json.anims.run_NW?.frames).toHaveLength(8);
     expect(tableProblems('kindled-test', json, KINDLED_ANIMS)).toEqual([]);
     const partial = fullKindled('art/clean/fig.png', {}, rows);
     delete (partial.anims as Record<string, { facings: Record<string, unknown> }>).run?.facings.SW;

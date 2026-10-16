@@ -233,7 +233,7 @@ const NO_FACINGS: readonly SpriteFacing[] = [];
 export const KINDLED_ANIMS: readonly SpriteAnimSpec[] = [
   spec('idle', 2, 2, true, false),
   spec('walk', 6, 10, true, false),
-  spec('run', 6, 10, true, false),
+  spec('run', 8, 16, true, false),
   spec('dodge', 4, 16, false, false),
   spec('light_1', 3, 15, false, false),
   spec('light_2', 3, 15, false, false),
