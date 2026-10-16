@@ -17,7 +17,10 @@ import { PipelineError } from './errors.js';
 import { blank, cloneImg, hexAt, opaqueAt, opaqueRows, setPixel, type Img } from './image.js';
 import type { Area, Ground } from './recipe.js';
 
-/** Steps 3–9 of docs/design/art-pipeline.md, one pure function each, in build order. */
+/**
+ * Steps 3 and 5–10 of docs/design/art-pipeline.md, one pure function each, in
+ * build order. Step 4, the recipe's remap, is in remap.ts.
+ */
 
 /** Step 3: the recipe's pixel fixes, in the source frame's pixels; a colour or null (transparent). */
 export function applyFixes(
@@ -45,7 +48,7 @@ export function isTelegraphFrame(frame: string): boolean {
 }
 
 /**
- * Step 4: fails on the first opaque pixel whose nearest token (of all 32, in
+ * Step 5: fails on the first opaque pixel whose nearest token (of all 32, in
  * OKLab) is #FFFFFF or #FFE7A3, or a telegraph colour outside a telegraph frame.
  */
 export function checkReserved(img: Img, frame: string): void {
@@ -74,14 +77,17 @@ export interface SnapResult {
   offPalette: number;
   /** The largest ΔE (OKLab × 100) a pixel moved. */
   maxDeltaE: number;
+  /** Each off-palette source colour: where it went, how far, and how many pixels. */
+  moved: Map<string, { to: string; dE: number; pixels: number }>;
 }
 
-/** Step 5: every opaque pixel to the nearest whitelist colour (plus the telegraph pair in telegraph frames). */
+/** Step 6: every opaque pixel to the nearest whitelist colour (plus the telegraph pair in telegraph frames). */
 export function snap(img: Img, frame: string): SnapResult {
   const pick = isTelegraphFrame(frame) ? snapTelegraph : snapPlain;
   const out = cloneImg(img);
   let offPalette = 0;
   let maxDeltaE = 0;
+  const moved = new Map<string, { to: string; dE: number; pixels: number }>();
   for (let y = 0; y < img.h; y++) {
     for (let x = 0; x < img.w; x++) {
       if (!opaqueAt(img, x, y)) continue;
@@ -91,9 +97,12 @@ export function snap(img: Img, frame: string): SnapResult {
       offPalette++;
       maxDeltaE = Math.max(maxDeltaE, near.dE);
       setPixel(out, x, y, near.hex);
+      const m = moved.get(hex);
+      if (m) m.pixels++;
+      else moved.set(hex, { to: near.hex, dE: near.dE, pixels: 1 });
     }
   }
-  return { img: out, offPalette, maxDeltaE };
+  return { img: out, offPalette, maxDeltaE, moved };
 }
 
 export interface OutlineResult {
@@ -116,7 +125,7 @@ export function isEdge(img: Img, x: number, y: number): boolean {
 }
 
 /**
- * Step 6: edge pixels in an outline colour become the role's outline:
+ * Step 7: edge pixels in an outline colour become the role's outline:
  * dream-night for the player, hollow-deep for everyone else. Interior pixels
  * stay; gaps (edge pixels in other colours) are counted, not filled.
  */
@@ -160,7 +169,7 @@ export function canvasSolesRow(h: number, canvasH: number, canvasSoles: number):
 }
 
 /**
- * Step 7: the frame into its cell. Horizontally by the frame's canvas centre
+ * Step 8: the frame into its cell. Horizontally by the frame's canvas centre
  * (never the bounding box); vertically by `ground`: the frame's own lowest
  * opaque row (`frame`), the lowest opaque row of source frame `ref` (`refRow`),
  * or the canvas's row 53 (`canvas`). Fails, never crops, if anything opaque
@@ -213,7 +222,7 @@ export function place(
   return { img: out, dx, dy, shift: canvasRow - sourceSoles };
 }
 
-/** Step 8: a single pixel whose 8 neighbours are all one other opaque colour takes that colour. */
+/** Step 9: a single pixel whose 8 neighbours are all one other opaque colour takes that colour. */
 export function despeckle(img: Img): { img: Img; changed: number } {
   const out = cloneImg(img);
   let changed = 0;
@@ -267,7 +276,7 @@ export function areaPixels(areas: readonly Area[]): [number, number][] {
 }
 
 /**
- * Step 9: the skin mask of one placed frame. Regions are 4-connected runs of
+ * Step 10: the skin mask of one placed frame. Regions are 4-connected runs of
  * unwritten-sail and unwritten-tar; `remove` takes pixels out first and `add`
  * marks regions as skin. A region is skin if `add` marks it, or it holds an
  * unwritten-sail pixel, or it touches a freckle. Every other region is a

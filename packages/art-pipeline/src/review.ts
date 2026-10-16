@@ -1,6 +1,6 @@
-import { paletteData } from '@iot/shared';
+import { isRequiredAnim, paletteData, REQUIRED_MILESTONE } from '@iot/shared';
 import type { BuiltAnim, BuiltFrame } from './build.js';
-import { FLOOR, HOLLOW_DEEP, SKIN, SKIN_SHADE, WALL } from './colour.js';
+import { describeHex, FLOOR, HOLLOW_DEEP, SKIN, SKIN_SHADE, WALL } from './colour.js';
 import { animKey, cellFor, hasFacings, solesRow } from './contract.js';
 import {
   blank,
@@ -15,7 +15,9 @@ import {
   setPixel,
   type Img,
 } from './image.js';
+import { materialsOf } from './materials.js';
 import { recipeTable, type Recipe } from './recipe.js';
+import { ruleMaps, ruleScope, staleRules, staleRuleText, type RemapCounts } from './remap.js';
 import { skinProblemText, type SkinProblem } from './steps.js';
 
 /**
@@ -147,8 +149,11 @@ export function renderTones(recipe: Recipe, anims: readonly BuiltAnim[]): Img {
 }
 
 export const SEAM_FLAG = 1.5;
-export const BOB_FLAG = 1;
+/** The style sheet allows a walk or idle to bob 2 px at B: the flag is for a range above it. */
+export const BOB_FLAG = 2;
 export const COLOUR_FLAG = 12;
+/** How many off-palette source colours the report lists. */
+export const SNAPPED_TOP = 20;
 
 const round2 = (v: number): number => Math.round(v * 100) / 100;
 
@@ -182,6 +187,27 @@ export interface AnimReport {
   held: string[];
 }
 
+export interface RemapReport {
+  rule: number;
+  maps: string;
+  scope: string;
+  /** Pixels the rule took, per animation it applies to. */
+  pixels: Record<string, number>;
+  total: number;
+  stale: boolean;
+}
+
+/** One off-palette source colour as it reached the snap: where it went and the target's ramp. */
+export interface SnappedColour {
+  colour: string;
+  pixels: number;
+  to: string;
+  deltaE: number;
+  /** The target's materials in the style sheet (short names). */
+  materials: string[];
+  frames: string[];
+}
+
 export interface SheetReport {
   sheet: string;
   kind: string;
@@ -199,7 +225,15 @@ export interface SheetReport {
   };
   flags: { seam: string[]; bob: string[]; held: string[]; colours: string[] };
   missing: string[];
+  /** Table rows after `REQUIRED_MILESTONE`: a finished sheet may leave them out. */
+  optional: string[];
   skinProblems: string[];
+  remap: RemapReport[];
+  staleRemap: string[];
+  /** How many distinct off-palette source colours reached the snap. */
+  snappedColours: number;
+  /** The top `SNAPPED_TOP` of them by pixel count. */
+  snapped: SnappedColour[];
   anims: AnimReport[];
   frames: FrameReport[];
   outputs: string[];
@@ -257,11 +291,67 @@ function missingAgainstTable(recipe: Recipe, anims: readonly BuiltAnim[]): strin
   return out;
 }
 
+/** Every off-palette source colour the snap moved, most pixels first (ties: further moved, then by hex). */
+function snappedColours(anims: readonly BuiltAnim[]): SnappedColour[] {
+  const all = new Map<string, SnappedColour>();
+  for (const f of anims.flatMap((a) => a.frames)) {
+    for (const [colour, m] of f.moved) {
+      const key = `${colour} ${m.to}`;
+      const hit = all.get(key);
+      if (hit) {
+        hit.pixels += m.pixels;
+        hit.frames.push(f.name);
+      } else {
+        all.set(key, {
+          colour,
+          pixels: m.pixels,
+          to: m.to,
+          deltaE: round2(m.dE),
+          materials: [...materialsOf(m.to)],
+          frames: [f.name],
+        });
+      }
+    }
+  }
+  return [...all.values()].sort(
+    (a, b) =>
+      b.pixels - a.pixels ||
+      b.deltaE - a.deltaE ||
+      (a.colour < b.colour ? -1 : a.colour > b.colour ? 1 : a.to < b.to ? -1 : 1),
+  );
+}
+
+/** Frame names grouped by animation key, runs of three or more as a range: `walk_S 0–5; idle_S 0`. */
+export function compactFrames(names: readonly string[]): string {
+  const groups = new Map<string, number[]>();
+  for (const name of names) {
+    const cut = name.lastIndexOf('_');
+    const key = name.slice(0, cut);
+    groups.set(key, [...(groups.get(key) ?? []), Number(name.slice(cut + 1))]);
+  }
+  return [...groups]
+    .map(([key, ns]) => {
+      const sorted = [...new Set(ns)].sort((a, b) => a - b);
+      const parts: string[] = [];
+      for (let i = 0; i < sorted.length;) {
+        let j = i;
+        while (j + 1 < sorted.length && sorted[j + 1] === (sorted[j] ?? 0) + 1) j++;
+        const [lo, hi] = [sorted[i] ?? 0, sorted[j] ?? 0];
+        if (j - i >= 2) parts.push(`${lo}–${hi}`);
+        else for (let k = i; k <= j; k++) parts.push(String(sorted[k]));
+        i = j + 1;
+      }
+      return `${key} ${parts.join(' ')}`;
+    })
+    .join('; ');
+}
+
 /** report.json and report.md for a built recipe. */
 export function writeReport(
   recipe: Recipe,
   anims: readonly BuiltAnim[],
   skinProblems: readonly SkinProblem[],
+  remapCounts: RemapCounts,
   outputs: string[],
 ): { json: SheetReport; markdown: string } {
   const spec = cellFor(recipe.kind);
@@ -297,6 +387,7 @@ export function writeReport(
     outlineGaps: frames.reduce((s, f) => s + f.outlineGaps, 0),
   };
   if (recipe.kind === 'kindled') totals.masked = frames.reduce((s, f) => s + (f.masked ?? 0), 0);
+  const snapped = snappedColours(anims);
   const json: SheetReport = {
     sheet: recipe.sheet,
     kind: recipe.kind,
@@ -313,7 +404,25 @@ export function writeReport(
       colours: frames.filter((f) => f.colours > COLOUR_FLAG).map((f) => f.name),
     },
     missing: missingAgainstTable(recipe, anims),
+    optional: (table ?? [])
+      .filter((r) => !isRequiredAnim(r))
+      .map((r) => `${r.name} (${r.milestone})`),
     skinProblems: skinProblems.map(skinProblemText),
+    remap: recipe.remap.map((rule, i) => {
+      const counts = remapCounts[i] ?? new Map<string, number>();
+      const total = [...counts.values()].reduce((s, n) => s + n, 0);
+      return {
+        rule: i,
+        maps: ruleMaps(rule),
+        scope: ruleScope(rule),
+        pixels: Object.fromEntries(counts),
+        total,
+        stale: total === 0,
+      };
+    }),
+    staleRemap: staleRules(remapCounts).map((i) => staleRuleText(recipe.sheet, i, recipe.remap[i])),
+    snappedColours: snapped.length,
+    snapped: snapped.slice(0, SNAPPED_TOP),
     anims: animReports,
     frames,
     outputs: [...outputs].sort(),
@@ -350,7 +459,20 @@ function markdown(r: SheetReport): string {
       `- Skin regions to resolve: ${r.skinProblems.length}${r.skinProblems.length && r.draft ? ' (reported because this is a draft; a finished sheet fails on them)' : ''}.`,
     );
   }
-  lines.push(`- Missing against the contract's table: ${list(r.missing)}.`, '');
+  if (r.remap.length) {
+    const stale = r.remap.filter((x) => x.stale).map((x) => `remap[${x.rule}]`);
+    lines.push(
+      `- Remap rules: ${r.remap.length}; stale (match no pixel in any frame they apply to): ${list(stale)}` +
+        `${stale.length && r.draft ? ' (reported because this is a draft; a finished sheet fails on them)' : ''}.`,
+    );
+  }
+  lines.push(`- Missing against the contract's table: ${list(r.missing)}.`);
+  if (r.optional.length) {
+    lines.push(
+      `- Optional (after ${REQUIRED_MILESTONE}: a finished sheet may leave them out, but carries every facing of any it has): ${r.optional.join(', ')}.`,
+    );
+  }
+  lines.push('');
   lines.push('## Review images', '');
   lines.push(
     `\`contact.png\` has one row per animation and facing, frames in order at 2×, on the floor (left) and the wall face (right); the amber tick marks the soles row.` +
@@ -407,9 +529,48 @@ function markdown(r: SheetReport): string {
     if (kindled) cells.push(f.masked ?? '');
     lines.push(`| ${cells.join(' | ')} |`);
   }
+  if (r.remap.length) {
+    lines.push('', '## Remap', '');
+    lines.push(
+      "Each rule of the recipe's `remap`, in order, and the pixels it took per animation it applies to (a pixel takes the first rule that matches it).",
+      '',
+      '| Rule | Maps | Scope | Pixels per animation | Total |',
+      '|---|---|---|---|---|',
+    );
+    for (const x of r.remap) {
+      const per = Object.entries(x.pixels)
+        .map(([anim, n]) => `${anim} ${n}`)
+        .join(', ');
+      lines.push(
+        `| ${x.rule} | ${x.maps} | ${x.scope} | ${per} | ${x.total}${x.stale ? ' **stale**' : ''} |`,
+      );
+    }
+  }
+  lines.push('', '## Off-palette colours the snap moved', '');
+  lines.push(
+    `${r.snappedColours} source colours reached the snap off the whitelist${r.remap.length ? ' (after `remap`)' : ''}. ` +
+      `The ${Math.min(SNAPPED_TOP, r.snappedColours)} with the most pixels, with the colour the snap sent each to and that colour's ramp ` +
+      '(the material rows of `art/anchors/style-sheet.md`). A colour that lands in the wrong material needs a `remap` rule.',
+    '',
+  );
+  if (r.snapped.length) {
+    lines.push(
+      '| Colour | Pixels | Snapped to | ΔE | Ramp | Frames |',
+      '|---|---|---|---|---|---|',
+    );
+    for (const c of r.snapped) {
+      lines.push(
+        `| ${c.colour} | ${c.pixels} | ${describeHex(c.to)} | ${c.deltaE} | ${c.materials.join(', ')} | ${compactFrames(c.frames)} |`,
+      );
+    }
+  }
   if (r.skinProblems.length) {
     lines.push('', '## Skin regions to resolve', '');
     for (const p of r.skinProblems) lines.push(`- ${p}`);
+  }
+  if (r.staleRemap.length) {
+    lines.push('', '## Stale remap rules', '');
+    for (const p of r.staleRemap) lines.push(`- ${p}`);
   }
   lines.push('');
   return lines.join('\n');
