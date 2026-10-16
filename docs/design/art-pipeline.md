@@ -144,11 +144,11 @@ first uses carry or sit, moves `REQUIRED_MILESTONE` to `"M2"`; from then on thos
 draft's report lists the optional rows under its summary.
 
 **Awaiting art.** A row on `ANIMS_AWAITING_ART` (`packages/shared/src/sprites.ts`) is optional in the same way,
-whatever its milestone, until MAIN takes it off the list (`sprites.md` §4). Today that is the Kindled's `run`
-(8 frames, 8 facings, looping, M1): a Kindled recipe may now carry `run` like any other animation, with all
-eight facings and eight frames (listed from the first contact, so frame 0 is a foot landing), or leave it out. Once ART's `run` lands, MAIN empties the list and every
-finished Kindled sheet needs it. Its report lists it as `run (awaiting art)`. `run` grounds like `walk`
-(`"frame"` by default; set `ground` to `{ "ref": 0 }` to keep a flight phase off the floor).
+whatever its milestone, until MAIN takes it off the list (`sprites.md` §4); its report lists it as
+`<name> (awaiting art)`. The list is empty: the Kindled's `run` (8 frames, 8 facings, looping, M1) came off it
+when kindled-ash's run landed (#46), so every finished Kindled sheet carries it, its frames listed from the first
+contact (frame 0 is a foot landing). `run` grounds like `walk` (`"frame"` by default; set `ground` to
+`{ "ref": i }` to keep a flight phase off the floor, as kindled-ash does).
 
 | Prefix | Kind | Cell | Facings | Table | Palette and mask |
 |---|---|---|---|---|---|

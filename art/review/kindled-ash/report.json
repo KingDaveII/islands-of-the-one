@@ -382,7 +382,6 @@
     "sit (all facings)"
   ],
   "optional": [
-    "run (awaiting art)",
     "carry_idle (M2)",
     "carry_walk (M2)",
     "sit (M2)"

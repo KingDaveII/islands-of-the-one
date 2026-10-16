@@ -171,8 +171,9 @@ export const REQUIRED_MILESTONE: SpriteMilestone = 'M1';
  * an animation is here, the sheet test and the art pipeline treat it as
  * optional (complete when present) and the engine plays its stand-in
  * (`run` → `walk`). When ART's sheet lands with it, MAIN removes it here.
+ * Empty since kindled-ash's run landed (#46).
  */
-export const ANIMS_AWAITING_ART: readonly string[] = ['run'];
+export const ANIMS_AWAITING_ART: readonly string[] = [];
 
 /** Whether a table row is still waiting for ART (`ANIMS_AWAITING_ART`). */
 export function isAwaitingArt(row: Pick<SpriteAnimSpec, 'name'>): boolean {
@@ -227,8 +228,7 @@ const NO_FACINGS: readonly SpriteFacing[] = [];
  * The Kindled animations of every `kindled-<remembrance>` sheet, per facing.
  * Carry and sit are M2's (nothing uses them before), so a finished sheet may
  * leave them out until `REQUIRED_MILESTONE` reaches M2. `run` is M1's (the
- * Kindled always runs in encounters) but is on `ANIMS_AWAITING_ART` until ART
- * draws it; the engine plays `walk` in its place.
+ * Kindled always runs in encounters) and required like the rest.
  */
 export const KINDLED_ANIMS: readonly SpriteAnimSpec[] = [
   spec('idle', 2, 2, true, false),
