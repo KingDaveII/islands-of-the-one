@@ -1,0 +1,1027 @@
+{
+  "sheet": "kindled-ash",
+  "kind": "kindled",
+  "outline": "player",
+  "draft": true,
+  "cell": {
+    "w": 112,
+    "h": 80
+  },
+  "origin": {
+    "x": 56,
+    "y": 64
+  },
+  "rows": [
+    "idle_S",
+    "idle_SE",
+    "idle_E",
+    "idle_NE",
+    "idle_N",
+    "idle_NW",
+    "idle_W",
+    "idle_SW",
+    "walk_S",
+    "walk_SE",
+    "walk_E",
+    "walk_NE",
+    "walk_N",
+    "light_1_S",
+    "light_1_E"
+  ],
+  "totals": {
+    "frames": 44,
+    "offPalette": 1227,
+    "maxDeltaE": 7.6,
+    "outlineGaps": 177,
+    "masked": 4126
+  },
+  "flags": {
+    "seam": [],
+    "bob": [
+      "walk_S",
+      "walk_E",
+      "walk_NE",
+      "walk_N"
+    ],
+    "held": [],
+    "colours": [
+      "idle_SE_0",
+      "idle_E_0",
+      "idle_W_0",
+      "idle_SW_0",
+      "walk_SE_0",
+      "walk_SE_1",
+      "walk_SE_2",
+      "walk_SE_3",
+      "walk_SE_4",
+      "walk_SE_5",
+      "walk_E_0",
+      "walk_E_1",
+      "walk_E_2",
+      "walk_E_3",
+      "walk_E_4",
+      "walk_E_5",
+      "light_1_S_0",
+      "light_1_S_1",
+      "light_1_S_2",
+      "light_1_E_0",
+      "light_1_E_1",
+      "light_1_E_2"
+    ]
+  },
+  "missing": [
+    "idle_S: 1 of 2 frames",
+    "idle_SE: 1 of 2 frames",
+    "idle_E: 1 of 2 frames",
+    "idle_NE: 1 of 2 frames",
+    "idle_N: 1 of 2 frames",
+    "idle_NW: 1 of 2 frames",
+    "idle_W: 1 of 2 frames",
+    "idle_SW: 1 of 2 frames",
+    "walk NW W SW",
+    "dodge (all facings)",
+    "light_1 SE NE N NW W SW",
+    "light_2 (all facings)",
+    "light_3 (all facings)",
+    "heavy_charge (all facings)",
+    "heavy_thrust (all facings)",
+    "heavy_hold (all facings)",
+    "heavy_recover (all facings)",
+    "haul_throw (all facings)",
+    "haul_recover (all facings)",
+    "haul_pull (all facings)",
+    "haul_slide (all facings)",
+    "hit (all facings)",
+    "death (all facings)",
+    "carry_idle (all facings)",
+    "carry_walk (all facings)",
+    "sit (all facings)"
+  ],
+  "skinProblems": [
+    "idle_S_0: a region of 4 px in the skin colours at [[27, 39], [30, 39]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_S_0: a region of 4 px in the skin colours at [[34, 39], [37, 39]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_S_0: a region of 3 px in the skin colours at [[19, 44], [19, 46]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_S_0: a region of 1 px in the skin colours at [[44, 46], [44, 46]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_S_0: a region of 20 px in the skin colours at [[25, 48], [29, 52]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_S_0: a region of 21 px in the skin colours at [[33, 48], [37, 52]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_S_0: a region of 1 px in the skin colours at [[18, 49], [18, 49]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SE_0: a region of 2 px in the skin colours at [[41, 18], [41, 19]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SE_0: a region of 1 px in the skin colours at [[38, 39], [38, 39]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SE_0: a region of 6 px in the skin colours at [[29, 40], [34, 40]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SE_0: a region of 1 px in the skin colours at [[37, 41], [37, 41]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SE_0: a region of 12 px in the skin colours at [[35, 48], [38, 52]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SE_0: a region of 1 px in the skin colours at [[20, 49], [20, 49]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SE_0: a region of 1 px in the skin colours at [[27, 54], [27, 54]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SE_0: a region of 1 px in the skin colours at [[28, 55], [28, 55]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_E_0: a region of 4 px in the skin colours at [[35, 40], [37, 41]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_E_0: a region of 2 px in the skin colours at [[33, 42], [34, 42]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_E_0: a region of 25 px in the skin colours at [[30, 50], [35, 55]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_E_0: a region of 7 px in the skin colours at [[35, 50], [37, 53]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_NW_0: a region of 4 px in the skin colours at [[24, 41], [24, 44]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_NW_0: a region of 5 px in the skin colours at [[26, 53], [28, 54]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_W_0: a region of 5 px in the skin colours at [[25, 40], [28, 41]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_W_0: a region of 2 px in the skin colours at [[29, 42], [30, 42]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_W_0: a region of 2 px in the skin colours at [[40, 49], [41, 49]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_W_0: a region of 7 px in the skin colours at [[26, 50], [28, 53]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_W_0: a region of 25 px in the skin colours at [[28, 50], [33, 55]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SW_0: a region of 2 px in the skin colours at [[37, 29], [38, 29]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SW_0: a region of 1 px in the skin colours at [[41, 32], [41, 32]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SW_0: a region of 1 px in the skin colours at [[42, 33], [42, 33]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SW_0: a region of 1 px in the skin colours at [[43, 36], [43, 36]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SW_0: a region of 2 px in the skin colours at [[25, 39], [26, 39]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SW_0: a region of 6 px in the skin colours at [[30, 40], [35, 40]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SW_0: a region of 17 px in the skin colours at [[25, 47], [28, 52]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "idle_SW_0: a region of 24 px in the skin colours at [[33, 49], [37, 54]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_0: a region of 4 px in the skin colours at [[35, 47], [38, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_0: a region of 4 px in the skin colours at [[42, 47], [45, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_0: a region of 2 px in the skin colours at [[33, 53], [33, 54]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_0: a region of 1 px in the skin colours at [[28, 54], [28, 54]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_0: a region of 21 px in the skin colours at [[34, 56], [38, 60]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_0: a region of 20 px in the skin colours at [[42, 56], [46, 60]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_0: a region of 1 px in the skin colours at [[27, 57], [27, 57]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_1: a region of 4 px in the skin colours at [[35, 47], [38, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_1: a region of 4 px in the skin colours at [[42, 47], [45, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_1: a region of 3 px in the skin colours at [[28, 54], [28, 56]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_1: a region of 10 px in the skin colours at [[34, 57], [37, 59]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_2: a region of 4 px in the skin colours at [[35, 47], [38, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_2: a region of 4 px in the skin colours at [[42, 47], [45, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_2: a region of 1 px in the skin colours at [[27, 54], [27, 54]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_2: a region of 26 px in the skin colours at [[41, 56], [45, 61]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_2: a region of 10 px in the skin colours at [[34, 57], [37, 59]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_3: a region of 4 px in the skin colours at [[35, 47], [38, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_3: a region of 4 px in the skin colours at [[42, 47], [45, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_3: a region of 3 px in the skin colours at [[27, 52], [27, 54]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_3: a region of 1 px in the skin colours at [[52, 54], [52, 54]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_3: a region of 20 px in the skin colours at [[33, 56], [37, 60]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_3: a region of 20 px in the skin colours at [[41, 56], [45, 60]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_3: a region of 1 px in the skin colours at [[26, 57], [26, 57]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_4: a region of 4 px in the skin colours at [[36, 47], [39, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_4: a region of 4 px in the skin colours at [[43, 47], [46, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_4: a region of 2 px in the skin colours at [[29, 48], [29, 49]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_4: a region of 1 px in the skin colours at [[30, 54], [30, 54]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_4: a region of 1 px in the skin colours at [[53, 54], [53, 54]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_4: a region of 29 px in the skin colours at [[34, 56], [38, 62]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_4: a region of 11 px in the skin colours at [[42, 56], [45, 59]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_5: a region of 4 px in the skin colours at [[36, 47], [39, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_5: a region of 4 px in the skin colours at [[43, 47], [46, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_5: a region of 1 px in the skin colours at [[53, 54], [53, 54]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_5: a region of 1 px in the skin colours at [[30, 55], [30, 55]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_5: a region of 24 px in the skin colours at [[34, 56], [38, 61]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_S_5: a region of 13 px in the skin colours at [[42, 56], [45, 59]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_0: a region of 1 px in the skin colours at [[46, 47], [46, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_0: a region of 4 px in the skin colours at [[39, 48], [42, 48]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_0: a region of 1 px in the skin colours at [[34, 56], [34, 56]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_0: a region of 1 px in the skin colours at [[47, 56], [47, 56]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_0: a region of 1 px in the skin colours at [[28, 57], [28, 57]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_0: a region of 9 px in the skin colours at [[44, 57], [46, 60]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_0: a region of 10 px in the skin colours at [[36, 60], [40, 63]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_1: a region of 1 px in the skin colours at [[46, 47], [46, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_1: a region of 4 px in the skin colours at [[39, 48], [42, 48]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_1: a region of 3 px in the skin colours at [[39, 56], [40, 57]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_1: a region of 1 px in the skin colours at [[28, 57], [28, 57]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_1: a region of 14 px in the skin colours at [[33, 59], [36, 62]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_1: a region of 10 px in the skin colours at [[47, 59], [50, 61]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_2: a region of 1 px in the skin colours at [[46, 47], [46, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_2: a region of 5 px in the skin colours at [[38, 48], [42, 48]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_2: a region of 1 px in the skin colours at [[28, 57], [28, 57]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_2: a region of 1 px in the skin colours at [[40, 57], [40, 57]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_2: a region of 13 px in the skin colours at [[33, 59], [36, 62]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_2: a region of 10 px in the skin colours at [[45, 59], [49, 61]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_3: a region of 1 px in the skin colours at [[46, 47], [46, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_3: a region of 6 px in the skin colours at [[37, 48], [42, 48]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_3: a region of 12 px in the skin colours at [[43, 56], [46, 60]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_3: a region of 1 px in the skin colours at [[28, 57], [28, 57]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_3: a region of 1 px in the skin colours at [[35, 62], [35, 62]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_3: a region of 1 px in the skin colours at [[36, 63], [36, 63]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_4: a region of 1 px in the skin colours at [[46, 47], [46, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_4: a region of 7 px in the skin colours at [[36, 48], [42, 48]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_4: a region of 1 px in the skin colours at [[30, 58], [30, 58]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_4: a region of 20 px in the skin colours at [[40, 58], [45, 63]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_5: a region of 1 px in the skin colours at [[46, 47], [46, 47]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_5: a region of 6 px in the skin colours at [[37, 48], [42, 48]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_5: a region of 3 px in the skin colours at [[32, 55], [32, 57]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_5: a region of 1 px in the skin colours at [[45, 56], [45, 56]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_5: a region of 9 px in the skin colours at [[43, 58], [45, 61]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_SE_5: a region of 12 px in the skin colours at [[39, 59], [42, 63]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_0: a region of 2 px in the skin colours at [[46, 48], [46, 49]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_0: a region of 2 px in the skin colours at [[35, 55], [36, 55]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_0: a region of 1 px in the skin colours at [[30, 56], [30, 56]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_0: a region of 1 px in the skin colours at [[34, 56], [34, 56]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_0: a region of 26 px in the skin colours at [[38, 58], [43, 63]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_0: a region of 6 px in the skin colours at [[43, 58], [46, 60]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_1: a region of 1 px in the skin colours at [[26, 51], [26, 51]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_1: a region of 2 px in the skin colours at [[34, 54], [35, 54]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_1: a region of 18 px in the skin colours at [[44, 56], [50, 59]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_1: a region of 1 px in the skin colours at [[29, 57], [29, 57]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_1: a region of 24 px in the skin colours at [[35, 58], [39, 63]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_2: a region of 1 px in the skin colours at [[46, 48], [46, 48]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_2: a region of 2 px in the skin colours at [[29, 54], [29, 55]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_2: a region of 5 px in the skin colours at [[34, 55], [36, 56]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_2: a region of 14 px in the skin colours at [[44, 56], [48, 59]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_2: a region of 1 px in the skin colours at [[34, 58], [34, 58]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_2: a region of 22 px in the skin colours at [[34, 58], [39, 63]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_3: a region of 4 px in the skin colours at [[43, 48], [45, 49]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_3: a region of 2 px in the skin colours at [[41, 50], [42, 50]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_3: a region of 1 px in the skin colours at [[29, 56], [29, 56]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_3: a region of 25 px in the skin colours at [[38, 58], [43, 63]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_3: a region of 7 px in the skin colours at [[43, 58], [45, 61]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_4: a region of 4 px in the skin colours at [[49, 42], [50, 44]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_4: a region of 2 px in the skin colours at [[51, 44], [51, 45]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_4: a region of 5 px in the skin colours at [[44, 48], [47, 49]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_4: a region of 4 px in the skin colours at [[40, 50], [43, 50]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_4: a region of 1 px in the skin colours at [[28, 54], [28, 54]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_4: a region of 1 px in the skin colours at [[30, 56], [30, 56]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_4: a region of 1 px in the skin colours at [[35, 56], [35, 56]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_4: a region of 19 px in the skin colours at [[35, 56], [39, 60]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_4: a region of 1 px in the skin colours at [[40, 61], [40, 61]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_5: a region of 5 px in the skin colours at [[43, 48], [46, 49]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_5: a region of 2 px in the skin colours at [[41, 50], [42, 50]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_5: a region of 1 px in the skin colours at [[29, 55], [29, 55]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_5: a region of 1 px in the skin colours at [[36, 56], [36, 56]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_5: a region of 1 px in the skin colours at [[34, 57], [34, 57]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_E_5: a region of 27 px in the skin colours at [[37, 57], [44, 63]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_NE_0: a region of 4 px in the skin colours at [[43, 60], [45, 61]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_NE_1: a region of 6 px in the skin colours at [[40, 61], [42, 63]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_NE_2: a region of 3 px in the skin colours at [[41, 61], [42, 62]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_NE_2: a region of 1 px in the skin colours at [[43, 61], [43, 61]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_NE_4: a region of 3 px in the skin colours at [[35, 60], [36, 61]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_NE_5: a region of 1 px in the skin colours at [[45, 60], [45, 60]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "walk_NE_5: a region of 1 px in the skin colours at [[44, 61], [44, 61]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_S_0: a region of 1 px in the skin colours at [[40, 35], [40, 35]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_S_0: a region of 4 px in the skin colours at [[33, 45], [36, 45]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_S_0: a region of 3 px in the skin colours at [[40, 45], [42, 45]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_S_0: a region of 20 px in the skin colours at [[31, 54], [35, 58]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_S_0: a region of 20 px in the skin colours at [[39, 54], [43, 58]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_S_1: a region of 1 px in the skin colours at [[46, 38], [46, 38]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_S_1: a region of 3 px in the skin colours at [[40, 46], [42, 46]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_S_1: a region of 22 px in the skin colours at [[31, 54], [35, 58]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_S_1: a region of 18 px in the skin colours at [[39, 54], [43, 58]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_S_2: a region of 1 px in the skin colours at [[35, 38], [35, 38]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_S_2: a region of 1 px in the skin colours at [[48, 51], [48, 51]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_S_2: a region of 22 px in the skin colours at [[31, 54], [35, 58]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_S_2: a region of 23 px in the skin colours at [[39, 54], [43, 58]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_E_0: a region of 4 px in the skin colours at [[39, 44], [41, 45]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_E_0: a region of 2 px in the skin colours at [[37, 46], [38, 46]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_E_0: a region of 25 px in the skin colours at [[34, 54], [39, 59]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_E_0: a region of 7 px in the skin colours at [[39, 54], [41, 57]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_E_1: a region of 26 px in the skin colours at [[34, 54], [39, 59]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_E_1: a region of 7 px in the skin colours at [[39, 54], [41, 57]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_E_2: a region of 1 px in the skin colours at [[29, 45], [29, 45]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_E_2: a region of 25 px in the skin colours at [[34, 54], [39, 59]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
+    "light_1_E_2: a region of 7 px in the skin colours at [[39, 54], [41, 57]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not"
+  ],
+  "anims": [
+    {
+      "key": "idle_S",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          47
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_SE",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          49
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_E",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          48
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_NE",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          48
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_N",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          47
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_NW",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          48
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_W",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          48
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_SW",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          49
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "walk_S",
+      "frames": 6,
+      "held": [],
+      "seam": {
+        "lastToFirst": 599,
+        "meanInCycle": 634.8,
+        "flag": false
+      },
+      "bob": {
+        "tops": [
+          47,
+          49,
+          48,
+          47,
+          49,
+          48
+        ],
+        "range": 2,
+        "flag": true
+      }
+    },
+    {
+      "key": "walk_SE",
+      "frames": 6,
+      "held": [],
+      "seam": {
+        "lastToFirst": 368,
+        "meanInCycle": 429.6,
+        "flag": false
+      },
+      "bob": {
+        "tops": [
+          49,
+          48,
+          48,
+          49,
+          49,
+          49
+        ],
+        "range": 1,
+        "flag": false
+      }
+    },
+    {
+      "key": "walk_E",
+      "frames": 6,
+      "held": [],
+      "seam": {
+        "lastToFirst": 492,
+        "meanInCycle": 475,
+        "flag": false
+      },
+      "bob": {
+        "tops": [
+          48,
+          48,
+          48,
+          48,
+          46,
+          48
+        ],
+        "range": 2,
+        "flag": true
+      }
+    },
+    {
+      "key": "walk_NE",
+      "frames": 6,
+      "held": [],
+      "seam": {
+        "lastToFirst": 273,
+        "meanInCycle": 393.2,
+        "flag": false
+      },
+      "bob": {
+        "tops": [
+          48,
+          50,
+          49,
+          48,
+          49,
+          49
+        ],
+        "range": 2,
+        "flag": true
+      }
+    },
+    {
+      "key": "walk_N",
+      "frames": 6,
+      "held": [],
+      "seam": {
+        "lastToFirst": 169,
+        "meanInCycle": 319.4,
+        "flag": false
+      },
+      "bob": {
+        "tops": [
+          48,
+          49,
+          48,
+          47,
+          49,
+          48
+        ],
+        "range": 2,
+        "flag": true
+      }
+    },
+    {
+      "key": "light_1_S",
+      "frames": 3,
+      "held": []
+    },
+    {
+      "key": "light_1_E",
+      "frames": 3,
+      "held": []
+    }
+  ],
+  "frames": [
+    {
+      "name": "idle_S_0",
+      "source": "art/raw/g13b-job4/player/south.png 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 24,
+      "dy": 10,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 11,
+      "masked": 170
+    },
+    {
+      "name": "idle_SE_0",
+      "source": "art/raw/g13b-job4/player/south-east.png 0",
+      "offPalette": 53,
+      "maxDeltaE": 7.11,
+      "dx": 24,
+      "dy": 7,
+      "shift": -3,
+      "outlineGaps": 0,
+      "colours": 16,
+      "masked": 138
+    },
+    {
+      "name": "idle_E_0",
+      "source": "art/raw/g13b-job4/player/east.png 0",
+      "offPalette": 11,
+      "maxDeltaE": 7.44,
+      "dx": 24,
+      "dy": 7,
+      "shift": -3,
+      "outlineGaps": 0,
+      "colours": 13,
+      "masked": 110
+    },
+    {
+      "name": "idle_NE_0",
+      "source": "art/raw/g13b-job4/player/north-east.png 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 24,
+      "dy": 9,
+      "shift": -1,
+      "outlineGaps": 0,
+      "colours": 11,
+      "masked": 16
+    },
+    {
+      "name": "idle_N_0",
+      "source": "art/raw/g13b-job4/player/north.png 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 24,
+      "dy": 10,
+      "shift": 0,
+      "outlineGaps": 2,
+      "colours": 8,
+      "masked": 2
+    },
+    {
+      "name": "idle_NW_0",
+      "source": "art/raw/g13b-job4/player/north-west.png 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 24,
+      "dy": 8,
+      "shift": -2,
+      "outlineGaps": 0,
+      "colours": 9,
+      "masked": 2
+    },
+    {
+      "name": "idle_W_0",
+      "source": "art/raw/g13b-job4/player/west.png 0",
+      "offPalette": 20,
+      "maxDeltaE": 7.44,
+      "dx": 24,
+      "dy": 7,
+      "shift": -3,
+      "outlineGaps": 0,
+      "colours": 17,
+      "masked": 108
+    },
+    {
+      "name": "idle_SW_0",
+      "source": "art/raw/g13b-job4/player/south-west.png 0",
+      "offPalette": 50,
+      "maxDeltaE": 6.77,
+      "dx": 24,
+      "dy": 8,
+      "shift": -2,
+      "outlineGaps": 0,
+      "colours": 15,
+      "masked": 153
+    },
+    {
+      "name": "walk_S_0",
+      "source": "art/raw/g13b-job4/player/walk-skel/south 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 2,
+      "shift": 0,
+      "outlineGaps": 3,
+      "colours": 11,
+      "masked": 170
+    },
+    {
+      "name": "walk_S_1",
+      "source": "art/raw/g13b-job4/player/walk-skel/south 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 0,
+      "shift": -2,
+      "outlineGaps": 5,
+      "colours": 11,
+      "masked": 197
+    },
+    {
+      "name": "walk_S_2",
+      "source": "art/raw/g13b-job4/player/walk-skel/south 2",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 1,
+      "shift": -1,
+      "outlineGaps": 1,
+      "colours": 11,
+      "masked": 169
+    },
+    {
+      "name": "walk_S_3",
+      "source": "art/raw/g13b-job4/player/walk-skel/south 3",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 2,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 11,
+      "masked": 166
+    },
+    {
+      "name": "walk_S_4",
+      "source": "art/raw/g13b-job4/player/walk-skel/south 4",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 0,
+      "shift": -2,
+      "outlineGaps": 2,
+      "colours": 11,
+      "masked": 158
+    },
+    {
+      "name": "walk_S_5",
+      "source": "art/raw/g13b-job4/player/walk-skel/south 5",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 1,
+      "shift": -1,
+      "outlineGaps": 9,
+      "colours": 11,
+      "masked": 167
+    },
+    {
+      "name": "walk_SE_0",
+      "source": "art/raw/g13b-job4/player/walk-skel/south-east 0",
+      "offPalette": 99,
+      "maxDeltaE": 7.11,
+      "dx": 16,
+      "dy": -1,
+      "shift": -3,
+      "outlineGaps": 3,
+      "colours": 16,
+      "masked": 144
+    },
+    {
+      "name": "walk_SE_1",
+      "source": "art/raw/g13b-job4/player/walk-skel/south-east 1",
+      "offPalette": 85,
+      "maxDeltaE": 7.11,
+      "dx": 16,
+      "dy": 0,
+      "shift": -2,
+      "outlineGaps": 2,
+      "colours": 16,
+      "masked": 130
+    },
+    {
+      "name": "walk_SE_2",
+      "source": "art/raw/g13b-job4/player/walk-skel/south-east 2",
+      "offPalette": 77,
+      "maxDeltaE": 7.11,
+      "dx": 16,
+      "dy": 0,
+      "shift": -2,
+      "outlineGaps": 4,
+      "colours": 16,
+      "masked": 130
+    },
+    {
+      "name": "walk_SE_3",
+      "source": "art/raw/g13b-job4/player/walk-skel/south-east 3",
+      "offPalette": 44,
+      "maxDeltaE": 7.11,
+      "dx": 16,
+      "dy": -1,
+      "shift": -3,
+      "outlineGaps": 0,
+      "colours": 16,
+      "masked": 140
+    },
+    {
+      "name": "walk_SE_4",
+      "source": "art/raw/g13b-job4/player/walk-skel/south-east 4",
+      "offPalette": 80,
+      "maxDeltaE": 7.11,
+      "dx": 16,
+      "dy": -1,
+      "shift": -3,
+      "outlineGaps": 6,
+      "colours": 16,
+      "masked": 142
+    },
+    {
+      "name": "walk_SE_5",
+      "source": "art/raw/g13b-job4/player/walk-skel/south-east 5",
+      "offPalette": 125,
+      "maxDeltaE": 7.11,
+      "dx": 16,
+      "dy": -1,
+      "shift": -3,
+      "outlineGaps": 16,
+      "colours": 16,
+      "masked": 148
+    },
+    {
+      "name": "walk_E_0",
+      "source": "art/raw/g13b-job4/player/walk-skel/east 0",
+      "offPalette": 61,
+      "maxDeltaE": 7.44,
+      "dx": 16,
+      "dy": -1,
+      "shift": -3,
+      "outlineGaps": 22,
+      "colours": 13,
+      "masked": 108
+    },
+    {
+      "name": "walk_E_1",
+      "source": "art/raw/g13b-job4/player/walk-skel/east 1",
+      "offPalette": 71,
+      "maxDeltaE": 7.44,
+      "dx": 16,
+      "dy": -1,
+      "shift": -3,
+      "outlineGaps": 16,
+      "colours": 15,
+      "masked": 108
+    },
+    {
+      "name": "walk_E_2",
+      "source": "art/raw/g13b-job4/player/walk-skel/east 2",
+      "offPalette": 55,
+      "maxDeltaE": 7.44,
+      "dx": 16,
+      "dy": -1,
+      "shift": -3,
+      "outlineGaps": 8,
+      "colours": 13,
+      "masked": 107
+    },
+    {
+      "name": "walk_E_3",
+      "source": "art/raw/g13b-job4/player/walk-skel/east 3",
+      "offPalette": 8,
+      "maxDeltaE": 7.44,
+      "dx": 16,
+      "dy": -1,
+      "shift": -3,
+      "outlineGaps": 0,
+      "colours": 13,
+      "masked": 109
+    },
+    {
+      "name": "walk_E_4",
+      "source": "art/raw/g13b-job4/player/walk-skel/east 4",
+      "offPalette": 38,
+      "maxDeltaE": 7.44,
+      "dx": 16,
+      "dy": 1,
+      "shift": -1,
+      "outlineGaps": 7,
+      "colours": 13,
+      "masked": 109
+    },
+    {
+      "name": "walk_E_5",
+      "source": "art/raw/g13b-job4/player/walk-skel/east 5",
+      "offPalette": 59,
+      "maxDeltaE": 7.44,
+      "dx": 16,
+      "dy": -1,
+      "shift": -3,
+      "outlineGaps": 22,
+      "colours": 13,
+      "masked": 109
+    },
+    {
+      "name": "walk_NE_0",
+      "source": "art/raw/g13b-job4/player/walk-skel/north-east 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 1,
+      "shift": -1,
+      "outlineGaps": 5,
+      "colours": 10,
+      "masked": 12
+    },
+    {
+      "name": "walk_NE_1",
+      "source": "art/raw/g13b-job4/player/walk-skel/north-east 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": -1,
+      "shift": -3,
+      "outlineGaps": 9,
+      "colours": 11,
+      "masked": 7
+    },
+    {
+      "name": "walk_NE_2",
+      "source": "art/raw/g13b-job4/player/walk-skel/north-east 2",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 0,
+      "shift": -2,
+      "outlineGaps": 1,
+      "colours": 11,
+      "masked": 13
+    },
+    {
+      "name": "walk_NE_3",
+      "source": "art/raw/g13b-job4/player/walk-skel/north-east 3",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 1,
+      "shift": -1,
+      "outlineGaps": 0,
+      "colours": 11,
+      "masked": 15
+    },
+    {
+      "name": "walk_NE_4",
+      "source": "art/raw/g13b-job4/player/walk-skel/north-east 4",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 1,
+      "shift": -1,
+      "outlineGaps": 2,
+      "colours": 11,
+      "masked": 11
+    },
+    {
+      "name": "walk_NE_5",
+      "source": "art/raw/g13b-job4/player/walk-skel/north-east 5",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 1,
+      "shift": -1,
+      "outlineGaps": 10,
+      "colours": 11,
+      "masked": 14
+    },
+    {
+      "name": "walk_N_0",
+      "source": "art/raw/g13b-job4/player/walk-skel/north 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 2,
+      "shift": 0,
+      "outlineGaps": 3,
+      "colours": 7,
+      "masked": 0
+    },
+    {
+      "name": "walk_N_1",
+      "source": "art/raw/g13b-job4/player/walk-skel/north 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 0,
+      "shift": -2,
+      "outlineGaps": 2,
+      "colours": 7,
+      "masked": 0
+    },
+    {
+      "name": "walk_N_2",
+      "source": "art/raw/g13b-job4/player/walk-skel/north 2",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 1,
+      "shift": -1,
+      "outlineGaps": 1,
+      "colours": 7,
+      "masked": 0
+    },
+    {
+      "name": "walk_N_3",
+      "source": "art/raw/g13b-job4/player/walk-skel/north 3",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 2,
+      "shift": 0,
+      "outlineGaps": 2,
+      "colours": 7,
+      "masked": 0
+    },
+    {
+      "name": "walk_N_4",
+      "source": "art/raw/g13b-job4/player/walk-skel/north 4",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 0,
+      "shift": -2,
+      "outlineGaps": 6,
+      "colours": 7,
+      "masked": 0
+    },
+    {
+      "name": "walk_N_5",
+      "source": "art/raw/g13b-job4/player/walk-skel/north 5",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 16,
+      "dy": 1,
+      "shift": -1,
+      "outlineGaps": 2,
+      "colours": 7,
+      "masked": 0
+    },
+    {
+      "name": "light_1_S_0",
+      "source": "art/raw/g13b-job4/player/attack-v3/south 1",
+      "offPalette": 59,
+      "maxDeltaE": 7.47,
+      "dx": 18,
+      "dy": 4,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 16,
+      "masked": 161
+    },
+    {
+      "name": "light_1_S_1",
+      "source": "art/raw/g13b-job4/player/attack-v3/south 3",
+      "offPalette": 77,
+      "maxDeltaE": 7.6,
+      "dx": 18,
+      "dy": 4,
+      "shift": 0,
+      "outlineGaps": 2,
+      "colours": 18,
+      "masked": 167
+    },
+    {
+      "name": "light_1_S_2",
+      "source": "art/raw/g13b-job4/player/attack-v3/south 5",
+      "offPalette": 66,
+      "maxDeltaE": 7.6,
+      "dx": 18,
+      "dy": 4,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 19,
+      "masked": 169
+    },
+    {
+      "name": "light_1_E_0",
+      "source": "art/raw/g13b-job4/player/attack-v3/east 1",
+      "offPalette": 12,
+      "maxDeltaE": 7.44,
+      "dx": 20,
+      "dy": 3,
+      "shift": -3,
+      "outlineGaps": 0,
+      "colours": 13,
+      "masked": 110
+    },
+    {
+      "name": "light_1_E_1",
+      "source": "art/raw/g13b-job4/player/attack-v3/east 3",
+      "offPalette": 37,
+      "maxDeltaE": 7.44,
+      "dx": 20,
+      "dy": 3,
+      "shift": -3,
+      "outlineGaps": 3,
+      "colours": 18,
+      "masked": 115
+    },
+    {
+      "name": "light_1_E_2",
+      "source": "art/raw/g13b-job4/player/attack-v3/east 5",
+      "offPalette": 40,
+      "maxDeltaE": 7.44,
+      "dx": 20,
+      "dy": 3,
+      "shift": -3,
+      "outlineGaps": 1,
+      "colours": 16,
+      "masked": 122
+    }
+  ],
+  "outputs": [
+    "art/review/kindled-ash/contact.png",
+    "art/review/kindled-ash/report.json",
+    "art/review/kindled-ash/report.md",
+    "art/review/kindled-ash/tones.png"
+  ]
+}

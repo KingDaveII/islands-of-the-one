@@ -1,0 +1,241 @@
+{
+  "sheet": "npc-tally",
+  "kind": "npc",
+  "outline": "other",
+  "draft": true,
+  "cell": {
+    "w": 64,
+    "h": 64
+  },
+  "origin": {
+    "x": 32,
+    "y": 54
+  },
+  "rows": [
+    "idle_S",
+    "idle_SE",
+    "idle_E",
+    "idle_NE",
+    "idle_N",
+    "idle_NW",
+    "idle_W",
+    "idle_SW"
+  ],
+  "totals": {
+    "frames": 8,
+    "offPalette": 275,
+    "maxDeltaE": 7.97,
+    "outlineGaps": 6
+  },
+  "flags": {
+    "seam": [],
+    "bob": [],
+    "held": [],
+    "colours": []
+  },
+  "missing": [
+    "no animation table for npc sheets in the contract"
+  ],
+  "skinProblems": [],
+  "anims": [
+    {
+      "key": "idle_S",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          46
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_SE",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          46
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_E",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          46
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_NE",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          45
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_N",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          45
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_NW",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          46
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_W",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          48
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_SW",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          48
+        ],
+        "range": 0,
+        "flag": false
+      }
+    }
+  ],
+  "frames": [
+    {
+      "name": "idle_S_0",
+      "source": "art/raw/g13b-job4/npc-tally/south.png 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 8,
+      "interiorDreamNight": 98
+    },
+    {
+      "name": "idle_SE_0",
+      "source": "art/raw/g13b-job4/npc-tally/south-east.png 0",
+      "offPalette": 42,
+      "maxDeltaE": 7.97,
+      "dx": 0,
+      "dy": -1,
+      "shift": -1,
+      "outlineGaps": 0,
+      "colours": 11,
+      "interiorDreamNight": 87
+    },
+    {
+      "name": "idle_E_0",
+      "source": "art/raw/g13b-job4/npc-tally/east.png 0",
+      "offPalette": 27,
+      "maxDeltaE": 7.74,
+      "dx": 0,
+      "dy": -3,
+      "shift": -3,
+      "outlineGaps": 1,
+      "colours": 12,
+      "interiorDreamNight": 77
+    },
+    {
+      "name": "idle_NE_0",
+      "source": "art/raw/g13b-job4/npc-tally/north-east.png 0",
+      "offPalette": 48,
+      "maxDeltaE": 7.97,
+      "dx": 0,
+      "dy": -1,
+      "shift": -1,
+      "outlineGaps": 2,
+      "colours": 12,
+      "interiorDreamNight": 84
+    },
+    {
+      "name": "idle_N_0",
+      "source": "art/raw/g13b-job4/npc-tally/north.png 0",
+      "offPalette": 50,
+      "maxDeltaE": 6.82,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 12,
+      "interiorDreamNight": 82
+    },
+    {
+      "name": "idle_NW_0",
+      "source": "art/raw/g13b-job4/npc-tally/north-west.png 0",
+      "offPalette": 38,
+      "maxDeltaE": 6.33,
+      "dx": 0,
+      "dy": -2,
+      "shift": -2,
+      "outlineGaps": 1,
+      "colours": 12,
+      "interiorDreamNight": 94
+    },
+    {
+      "name": "idle_W_0",
+      "source": "art/raw/g13b-job4/npc-tally/west.png 0",
+      "offPalette": 20,
+      "maxDeltaE": 6.82,
+      "dx": 0,
+      "dy": -3,
+      "shift": -3,
+      "outlineGaps": 0,
+      "colours": 11,
+      "interiorDreamNight": 84
+    },
+    {
+      "name": "idle_SW_0",
+      "source": "art/raw/g13b-job4/npc-tally/south-west.png 0",
+      "offPalette": 50,
+      "maxDeltaE": 6.93,
+      "dx": 0,
+      "dy": -1,
+      "shift": -1,
+      "outlineGaps": 2,
+      "colours": 12,
+      "interiorDreamNight": 91
+    }
+  ],
+  "outputs": [
+    "art/review/npc-tally/contact.png",
+    "art/review/npc-tally/report.json",
+    "art/review/npc-tally/report.md"
+  ]
+}

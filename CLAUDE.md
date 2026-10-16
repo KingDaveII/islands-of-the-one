@@ -11,9 +11,11 @@ Browser multiplayer game (idle / co-op / action MMORPG). pnpm monorepo, TypeScri
 | `packages/shared`      | Wire protocol (types/guards) and game data. No runtime deps.                   |
 | `packages/shared/data` | `tuning.json` (every balance/feel number), `rooms.json` (room templates).      |
 | `packages/sim`         | Deterministic combat sim: 60 Hz integer ticks, seeded RNG, replayable runs.    |
+| `packages/art-pipeline` | Raw generated frames + an ART recipe (`art/sheets/`) → v2 sheets and reviews. |
 | `docs/design`          | Design rules: `combat.md`, `readability.md` (how it's drawn), `glossary.md`,   |
 |                        | `accounts.md` (the `/api` routes, session cookie, account and name rules).     |
 |                        | `inventory.md` (items, `inventory.apply`, the ledger, the `inv:grant` CLI).    |
+|                        | `art-pipeline.md` (recipes, the build steps, every failure message).           |
 
 Workspace packages are consumed from source via the custom `source` export condition
 (tsconfig `customConditions`, Vite `resolve.conditions`, `tsx --conditions=source`), so
@@ -26,6 +28,8 @@ dev/test/typecheck never need a prior build. Production builds compile each pack
 - `pnpm dev` — server on :2567, client on :5173.
 - `pnpm --filter @iot/server db:generate` — generate a migration after editing `src/db/schema.ts`.
 - `pnpm --filter @iot/server db:migrate` — apply migrations to `DATABASE_URL` (or PGlite).
+- `pnpm art:build <sheet>` / `pnpm art:build --all` — build sprite sheets and `art/review/` from recipes.
+- `pnpm art:check` — rebuild every recipe in memory; fails if a committed output differs (also run by `pnpm check`).
 
 ## Design references
 

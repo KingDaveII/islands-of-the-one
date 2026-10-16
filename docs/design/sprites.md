@@ -15,7 +15,7 @@ How every animated character reaches the engine: a 1× PNG plus a JSON contract,
 Two versions of the contract (G1.5). **v2** is option B's art (PixelLab, G1.3b): every sprite on a
 64×64 canvas with the soles on row 53, drawn at 1 world px per sheet px in the 2× world. **v1** is
 M1's art (the table further down), drawn at 2 world px per sheet px until its v2 version replaces
-it through the G1.2 pipeline. Heights, proportions and drawing rules belong to ART:
+it through the G1.2 pipeline ([`art-pipeline.md`](art-pipeline.md): recipes, `pnpm art:build`, `pnpm art:check`). Heights, proportions and drawing rules belong to ART:
 [`art/anchors/style-sheet.md`](../../art/anchors/style-sheet.md) (not repeated here).
 
 ### v2 cells

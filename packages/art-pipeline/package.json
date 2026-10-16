@@ -1,0 +1,17 @@
+{
+  "name": "@iot/art-pipeline",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@iot/shared": "workspace:*",
+    "@types/omggif": "^1.0.5",
+    "@types/pngjs": "^6.0.5",
+    "omggif": "^1.0.10",
+    "pngjs": "^7.0.0",
+    "tsx": "^4.23.15"
+  }
+}
