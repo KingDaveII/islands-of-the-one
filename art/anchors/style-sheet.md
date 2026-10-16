@@ -39,6 +39,8 @@ The visual rules every generated asset is judged against. Exemplars in this fold
 | Stone, floor, wall | hollow-lavender #D9D2E9, hollow-dusk #A99FC4, hollow-below #5B5478, hollow-deep #2A2540 |
 | Water, patina, rain | wheel-patina #2F7F7A, watcher-rain #3E5C7A, sleeper-night #24305A |
 | Paper, eye-white, night | choir-paper #FBF8F0, wheel-eye #E9E4D4, dream-night #1C2147 |
+| Steel (the Hookblade, metal edges) | husk-shell #E8E2D6, watcher-stone #7D8794, watcher-iron #4A4E57 |
+| Dark hair (everyone but the player) | hollow-below #5B5478, hollow-deep #2A2540; blue-black hair sleeper-night #24305A |
 | Flame (Choirs, fire) | choir-flame #F07A3A, choir-flame-deep #B5402E |
 
 Whitelist (28): #F4EFE6 #D9D2E9 #A99FC4 #5B5478 #2A2540 #F2B65A #C9733A #4A4E57 #7D8794 #3E5C7A #A8743A #C79A3E #8A6420 #E9E4D4 #2F7F7A #C98F78 #9C5B4A #E3C29E #24305A #E8E2D6 #FFF4C7 #8C7F6E #5E5448 #FBF8F0 #D8B24A #F07A3A #B5402E #1C2147
@@ -53,4 +55,7 @@ Whitelist (28): #F4EFE6 #D9D2E9 #A99FC4 #5B5478 #2A2540 #F2B65A #C9733A #4A4E57 
 - Kindled are clay folk: two eyes of at most 2×2 px (a dark pupil, at most one eye-white pixel), 3 amber freckles, a mouth at most 2 px of shade, skin in the clay ramp. The Hookblade (a short blade with a hook at the tip) sits in the right hand.
 - Husks are hollow shells: pale shell ramp, one bright core with its ring, no face, eyes or legs.
 - Silhouette first: everything must read as a flat shape at 1×.
+- Dream-night #1C2147 appears only on player sheets, as the outline and inside the figure. On everyone else its job goes to hollow-deep or sleeper-night.
+- Motion: a walk or idle may bob the body by up to 2 px at B (1 px was M1's limit at 16×24).
+- Neutral greys from generators have no exact match in the whitelist and snap to the wrong material (tan, lavender, skin). A recipe maps them to the right ramp (steel, cloth, leather) before the snap, never by luck.
 - Icons: 16×16, 1 px dream-night outline, the same ramps, one clear shape filling about 12–14 px. Generated at 32 px, they are reduced to 16 and snapped.
