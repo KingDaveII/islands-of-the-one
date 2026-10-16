@@ -51,9 +51,19 @@ The engine, the §6 test and the G1.2 pipeline read these numbers from `packages
 
 - Kindled: **8 facings**, in this order and spelling: `S, SE, E, NE, N, NW, W, SW`. All eight are stored (the west facings are drawn, not flipped: the Hookblade stays in the right hand, which is the far hand when facing west). Idle and walk have all eight; attacks, dodge and Haul have all eight; hit, death and carry have four (`S, E, N, W`) and the engine maps diagonals to the nearest.
 - Husks: **no facings**. Peelings and Nutshells are radial; the engine rotates nothing, it flips horizontally when the lunge or roll direction has a west component (`"flipX": true` is allowed for Husks only).
+- NPCs (`npc-<name>`): **8 facings** in the Kindled order, for every animation; the sheet carries `meta.facings`.
+- Props (`prop-<name>`): **no facings**.
 - Facing names are part of the frame name: `walk_SE_3`.
 
-## 4. Animations, M1
+## 4. Animations
+
+**The tables live in code** (`packages/shared/src/sprites.ts`, G1.2b): `KINDLED_ANIMS`, `HUSK_TABLES` (one per Husk),
+`NPC_ANIMS` and `PROP_IDLE`, each row a frame count, fps, loop, hold and facings. The tables below describe them;
+if the two ever disagree, the code is the contract the sheet test and the art pipeline hold sheets to.
+
+**Which kind a sheet is comes from its name's prefix:** `kindled-`, `husk-`, `npc-`, `prop-`. One function,
+`spriteSheetSpec(name)`, maps a name to its kind, its cell (§2) and its table; an unknown prefix fails. A later enemy
+adds its own table to `HUSK_TABLES` the same way; until then only a draft of it can be built.
 
 Frame rates are per animation; `hold` means the last frame stays until the state ends. Durations in the design tables stay the authority for timing (the engine stretches or cuts frames to fit the combat windows; the art gives the count).
 
@@ -109,9 +119,27 @@ M2 adds the station animations (`chop`, `hoe`, `fish`, `knead`: 4 frames, 8 fps,
 | `death` | 4 | 10 | no | |
 | `drop` | 1 | — | hold | |
 
+### NPCs (`npc-<name>`, G1.2b)
+
+| Name | Frames | fps | Loop | Facings |
+|---|---|---|---|---|
+| `idle` | 2 | 2 | yes | 8 |
+| `walk` | 6 | 10 | yes | 8 |
+
+- No palette block and no mask: each NPC is generated in its own clay tone, so nothing is swapped.
+- More NPC animations come later, per NPC, as data.
+
+### Props (`prop-<name>`, G1.2b)
+
+| Name | Frames | fps | Loop | Facings |
+|---|---|---|---|---|
+| `idle` | 1–8, from the recipe | from the recipe, default 8 | yes with more than one frame; one frame holds | none |
+
+For flames and the like. No palette block and no mask.
+
 ## 5. The JSON contract
 
-Phaser 3 **JSON Hash atlas** (`this.load.atlas(key, png, json)`) with two extra top-level blocks the engine reads itself: `anims` and `palette`. Frame names: `<anim>_<FACING>_<n>` for the Kindled, `<anim>_<n>` for Husks; `n` counts from 0.
+Phaser 3 **JSON Hash atlas** (`this.load.atlas(key, png, json)`) with two extra top-level blocks the engine reads itself: `anims` and `palette`. Frame names: `<anim>_<FACING>_<n>` for the Kindled and NPCs, `<anim>_<n>` for Husks and props; `n` counts from 0.
 
 ```json
 {
@@ -157,15 +185,22 @@ What changes from v1; the facings, the animation table, frame names, frame rates
 
 ## 6. Test (the pattern from PR #8)
 
-For every sheet in `packages/shared/assets/`:
+For every sheet on disk in `packages/shared/assets/sprites/` (the test lists the folder: every `<name>.json`
+with its `<name>.png`; a JSON with no PNG, a PNG with no JSON, or a mask no sheet names fails). `SPRITE_SHEET_NAMES`
+is the client's load list: every name in it must be on disk, but a sheet on disk need not be in it yet (the M2
+tasks register NPC sheets as they use them). Every name must have a known kind (§4).
 
 1. `meta.image` exists; the PNG's size equals `meta.size`; width and height are multiples of the cell.
 2. Every `frames[*].frame` lies inside the PNG and on the cell grid; `w`/`h` equal the cell.
 3. Every name in every `anims[*].frames` exists in `frames`; every frame belongs to at least one anim.
-4. For Kindled sheets: every anim in the table above exists for every facing it lists; `anchor` matches `meta.origin / cell`.
+4. Every sheet carries its kind's table (§4), and nothing else: every animation, for every facing it lists (Kindled
+   and NPCs, which also carry `meta.facings`; Husks and props have none), with the table's frame count, rate, loop and
+   hold; a prop's `idle` has 1–8 frames. Husk `telegraph` frames are pre-tinted. Only Kindled sheets have a palette
+   block. `anchor` matches `meta.origin / cell`.
 5. Every opaque pixel's colour is in the 32-colour palette (tokens.json), the telegraph colours only in `telegraph_*` frames, #FFFFFF nowhere.
 6. Every `palette.swaps` key is one of the four clay tones and every swapped hex occurs in the PNG.
-7. A v1 sheet is version "1" with no `pixelScale` and no mask. A v2 sheet (`packages/shared/test/sheetChecks.ts`):
+7. A v1 sheet is version "1" with no `pixelScale` and no mask, has its M1 cell (§2) and `meta.app` `"placeholder"`.
+   A v2 sheet has `meta.app` `"iot-art-pipeline"` (so `kindled-ash` turning v2 needs no test change) and (`packages/shared/test/sheetChecks.ts`):
    - the cell and origin match its kind (§2), and `meta.pixelScale` is 1;
    - no opaque pixel lies on a cell's outer 1 px ring, so nothing was clipped;
    - colours follow §5: the whitelist, the telegraph colours only in `telegraph*` frames, #FFFFFF and #FFE7A3 nowhere;

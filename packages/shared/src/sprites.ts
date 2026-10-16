@@ -129,6 +129,11 @@ export interface SpriteSheet {
   palette?: SpritePalette;
 }
 
+/**
+ * The sheets the client loads. The sheet test runs on every sheet on disk and
+ * checks that each name here is one of them; a sheet on disk (an NPC's, say)
+ * joins this list when the client starts using it.
+ */
 export const SPRITE_SHEET_NAMES = ['kindled-ash', 'husk-peeling', 'husk-nutshell'] as const;
 export type SpriteSheetName = (typeof SPRITE_SHEET_NAMES)[number];
 
@@ -147,16 +152,20 @@ export const SPRITE_FACINGS_4: readonly SpriteFacing[] = ['S', 'E', 'N', 'W'];
 /** The facings of `sit`. */
 export const SPRITE_FACINGS_2: readonly SpriteFacing[] = ['S', 'E'];
 
-/** One row of the M1 Kindled animation table (sprites.md §4). */
-export interface KindledAnimSpec {
+/** One row of an animation table (sprites.md §4): frame count, rate, loop and hold, and its facings. */
+export interface SpriteAnimSpec {
   name: string;
   frames: number;
-  /** 0 for a single held frame. */
+  /** 0 for a single held frame (or one stretched by the engine). */
   fps: number;
   loop: boolean;
   hold: boolean;
+  /** The facings it is drawn in; empty for kinds without facings (Husks, props). */
   facings: readonly SpriteFacing[];
 }
+
+/** One row of the Kindled table (the name it had before every kind had a table). */
+export type KindledAnimSpec = SpriteAnimSpec;
 
 const spec = (
   name: string,
@@ -165,10 +174,12 @@ const spec = (
   loop: boolean,
   hold: boolean,
   facings: readonly SpriteFacing[] = SPRITE_FACINGS,
-): KindledAnimSpec => ({ name, frames, fps, loop, hold, facings });
+): SpriteAnimSpec => ({ name, frames, fps, loop, hold, facings });
+
+const NO_FACINGS: readonly SpriteFacing[] = [];
 
 /** The M1 Kindled animations every `kindled-<remembrance>` sheet must carry, per facing. */
-export const KINDLED_ANIMS: readonly KindledAnimSpec[] = [
+export const KINDLED_ANIMS: readonly SpriteAnimSpec[] = [
   spec('idle', 2, 2, true, false),
   spec('walk', 6, 10, true, false),
   spec('dodge', 4, 16, false, false),
@@ -190,11 +201,117 @@ export const KINDLED_ANIMS: readonly KindledAnimSpec[] = [
   spec('sit', 1, 0, false, true, SPRITE_FACINGS_2),
 ];
 
-/** The Husk animations (no facings) per kind, as the sheets must carry them. */
-export const HUSK_ANIMS: Readonly<Record<'peeling' | 'nutshell', readonly string[]>> = {
-  peeling: ['spawn', 'idle', 'telegraph', 'lunge', 'hit', 'chipped', 'death', 'drop'],
-  nutshell: ['spawn', 'idle', 'walk', 'telegraph', 'slam', 'hit', 'chipped_outer', 'chipped_inner', 'regrow', 'death', 'drop'],
+/**
+ * The Husk tables (sprites.md §4), one per Husk, with no facings: the engine
+ * flips a Husk instead. `telegraph` frames carry the pre-tinted telegraph
+ * colours. A later enemy adds its own table here, keyed by its sheet name
+ * without `husk-`.
+ */
+export const HUSK_TABLES: Readonly<Record<'peeling' | 'nutshell', readonly SpriteAnimSpec[]>> = {
+  peeling: [
+    spec('spawn', 4, 0, false, false, NO_FACINGS),
+    spec('idle', 2, 3, true, false, NO_FACINGS),
+    spec('telegraph', 2, 8, false, true, NO_FACINGS),
+    spec('lunge', 3, 15, false, false, NO_FACINGS),
+    spec('hit', 1, 0, false, true, NO_FACINGS),
+    spec('chipped', 1, 0, false, true, NO_FACINGS),
+    spec('death', 4, 10, false, true, NO_FACINGS),
+    spec('drop', 1, 0, false, true, NO_FACINGS),
+  ],
+  nutshell: [
+    spec('spawn', 4, 0, false, false, NO_FACINGS),
+    spec('idle', 2, 2, true, false, NO_FACINGS),
+    spec('walk', 4, 6, true, false, NO_FACINGS),
+    spec('telegraph', 2, 8, false, true, NO_FACINGS),
+    spec('slam', 2, 0, false, true, NO_FACINGS),
+    spec('hit', 1, 0, false, true, NO_FACINGS),
+    spec('chipped_outer', 1, 0, false, true, NO_FACINGS),
+    spec('chipped_inner', 1, 0, false, true, NO_FACINGS),
+    spec('regrow', 3, 6, false, true, NO_FACINGS),
+    spec('death', 4, 10, false, true, NO_FACINGS),
+    spec('drop', 1, 0, false, true, NO_FACINGS),
+  ],
 };
+
+/** The Husk animation names per Husk, in table order. */
+export const HUSK_ANIMS: Readonly<Record<'peeling' | 'nutshell', readonly string[]>> = {
+  peeling: HUSK_TABLES.peeling.map((a) => a.name),
+  nutshell: HUSK_TABLES.nutshell.map((a) => a.name),
+};
+
+/**
+ * The NPC table (`npc-<name>`): idle and walk in all 8 facings, in the
+ * Kindled order. NPC sheets carry `meta.facings` and no palette block or mask
+ * (each NPC is generated in its own clay tone). More animations come later,
+ * per NPC, as data.
+ */
+export const NPC_ANIMS: readonly SpriteAnimSpec[] = [spec('idle', 2, 2, true, false), spec('walk', 6, 10, true, false)];
+
+/** A prop (`prop-<name>`) has only `idle`, no facings, 1 to 8 frames at a rate its recipe gives. */
+export const PROP_IDLE = { name: 'idle', minFrames: 1, maxFrames: 8, defaultFps: 8 } as const;
+
+/** The table row of a prop's `idle` with `frames` frames: looping when there is more than one, else held. */
+export function propIdleSpec(frames: number, fps: number = PROP_IDLE.defaultFps): SpriteAnimSpec {
+  return {
+    name: PROP_IDLE.name,
+    frames,
+    fps,
+    loop: frames > 1,
+    hold: frames === 1,
+    facings: NO_FACINGS,
+  };
+}
+
+/** The kinds of sheet, each named by its prefix: `kindled-`, `husk-`, `npc-`, `prop-`. */
+export const SPRITE_KINDS = ['kindled', 'husk', 'npc', 'prop'] as const;
+export type SpriteKind = (typeof SPRITE_KINDS)[number];
+
+/** What a sheet's name decides (sprites.md §2–§4). */
+export interface SpriteSheetSpec {
+  kind: SpriteKind;
+  /** The v2 cell, origin and canvas position. */
+  cell: SpriteCellSpec;
+  /**
+   * The animations a finished sheet carries, or null when its count is the
+   * recipe's (props: `idle` only, see `PROP_IDLE`) or when the contract has no
+   * table for it yet (a Husk that is not in `HUSK_TABLES`).
+   */
+  anims: readonly SpriteAnimSpec[] | null;
+  /** Whether frames and anims are named per facing and `meta.facings` is present (Kindled, NPCs). */
+  facings: boolean;
+  /** Whether the sheet has a palette block and a skin mask (Kindled only). */
+  palette: boolean;
+}
+
+/**
+ * The kind, cell and animation table of a sheet, from its name's prefix. The
+ * client, the sheet test and the art pipeline all use this one function; an
+ * unknown prefix throws.
+ */
+export function spriteSheetSpec(name: string): SpriteSheetSpec {
+  const kind = SPRITE_KINDS.find((k) => name.startsWith(`${k}-`) && name.length > k.length + 1);
+  switch (kind) {
+    case 'kindled':
+      return {
+        kind,
+        cell: SPRITE_CELLS.kindled,
+        anims: KINDLED_ANIMS,
+        facings: true,
+        palette: true,
+      };
+    case 'husk': {
+      const husk = name.slice('husk-'.length);
+      const anims = husk === 'peeling' || husk === 'nutshell' ? HUSK_TABLES[husk] : null;
+      return { kind, cell: SPRITE_CELLS.other, anims, facings: false, palette: false };
+    }
+    case 'npc':
+      return { kind, cell: SPRITE_CELLS.other, anims: NPC_ANIMS, facings: true, palette: false };
+    case 'prop':
+      return { kind, cell: SPRITE_CELLS.other, anims: null, facings: false, palette: false };
+    default:
+      throw new Error(`sprite sheet "${name}" has no known kind: its name must start with ${SPRITE_KINDS.map((k) => `${k}-`).join(', ')}`);
+  }
+}
 
 /** True for a Kindled sheet (`kindled-<remembrance>`), which has facings and a palette block. */
 export function isKindledSheet(name: string): boolean {
@@ -206,9 +323,9 @@ export function isV2Sheet(sheet: SpriteSheet): boolean {
   return sheet.meta.version === '2';
 }
 
-/** The v2 cell spec of a sheet by its name: the Kindled's, or every other kind's. */
+/** The v2 cell spec of a sheet by its name: the Kindled's, or every other kind's (`spriteSheetSpec`). */
 export function spriteCellSpecFor(name: string): SpriteCellSpec {
-  return isKindledSheet(name) ? SPRITE_CELLS.kindled : SPRITE_CELLS.other;
+  return spriteSheetSpec(name).cell;
 }
 
 /** World px per sheet px: a v2 sheet's `meta.pixelScale` (1), a v1 sheet's legacy 2. */

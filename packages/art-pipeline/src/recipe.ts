@@ -1,12 +1,16 @@
 import { existsSync, statSync } from 'node:fs';
 import { basename, join } from 'node:path';
+import type { SpriteAnimSpec } from '@iot/shared';
 import {
   animKey,
   animNames,
+  sheetTable,
+  type PropIdle,
   facingsFor,
   frameName,
   hasFacings,
   KINDS,
+  kindOfName,
   type Facing,
   type Kind,
 } from './contract.js';
@@ -36,8 +40,10 @@ export interface RecipeAnim {
   despeckle?: boolean;
   /** Kinds with facings (kindled, npc). */
   facings?: Partial<Record<Facing, FrameSource>>;
-  /** Kinds without facings (enemy, prop): the source sits on the animation itself. */
+  /** Kinds without facings (husk, prop): the source sits on the animation itself. */
   source?: FrameSource;
+  /** Props only: the frame rate of `idle` (default 8). */
+  fps?: number;
 }
 
 /** A pixel `[x, y]` or a rectangle `[[x0, y0], [x1, y1]]` (both corners included), in the source frame's pixels. */
@@ -106,13 +112,19 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
   else if (sheet !== expected) bad('sheet', `is "${sheet}" but the file is ${expected}.json`);
 
   const kind = json.kind;
-  const kindOk = typeof kind === 'string' && (KINDS as readonly string[]).includes(kind);
+  const named = typeof sheet === 'string' ? kindOfName(sheet) : null;
+  if (typeof sheet === 'string' && !named) {
+    bad(
+      'sheet',
+      `"${sheet}" has no known kind: a sheet name starts with ${KINDS.map((k) => `${k}-`).join(', ')}`,
+    );
+  }
+  let kindOk = typeof kind === 'string' && (KINDS as readonly string[]).includes(kind);
   if (!kindOk) bad('kind', `must be one of ${KINDS.join(', ')}`);
-  if (kindOk && typeof sheet === 'string') {
-    if (kind === 'kindled' && !sheet.startsWith('kindled-'))
-      bad('kind', 'is kindled but the sheet name does not start with "kindled-"');
-    if (kind !== 'kindled' && sheet.startsWith('kindled-'))
-      bad('kind', `is ${kind} but "kindled-" names are Kindled sheets`);
+  else if (!named) kindOk = false;
+  else if (kind !== named) {
+    bad('kind', `is ${String(kind)} but the name "${String(sheet)}" makes it ${named}`);
+    kindOk = false;
   }
 
   const outline = json.outline;
@@ -128,7 +140,7 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
     bad('anims', 'must be an object with at least one animation');
   else if (kindOk && typeof sheet === 'string') {
     const k = kind as Kind;
-    const names = animNames(k, sheet);
+    const names = animNames(sheet);
     for (const [name, a] of Object.entries(json.anims)) {
       const path = `anims.${name}`;
       if (!/^[a-z][a-z0-9]*(_[a-z0-9]+)*$/.test(name)) {
@@ -150,12 +162,19 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
         if (typeof a.despeckle !== 'boolean') bad(`${path}.despeckle`, 'must be true or false');
         else out.despeckle = a.despeckle;
       }
+      if (a.fps !== undefined) {
+        if (k !== 'prop')
+          bad(`${path}.fps`, 'is only for props (every other kind takes its rate from the table)');
+        else if (typeof a.fps !== 'number' || !Number.isInteger(a.fps) || a.fps < 0)
+          bad(`${path}.fps`, 'must be a whole number, 0 or more');
+        else out.fps = a.fps;
+      }
       if (hasFacings(k)) {
         unknownKeys(path, a, ['ground', 'despeckle', 'facings']);
         if (!isObj(a.facings) || Object.keys(a.facings).length === 0) {
           bad(`${path}.facings`, 'must be an object with at least one facing');
         } else {
-          const allowed = facingsFor(k, name);
+          const allowed = facingsFor(sheet, name);
           const facings: Partial<Record<Facing, FrameSource>> = {};
           for (const [f, s] of Object.entries(a.facings)) {
             if (!(allowed as readonly string[]).includes(f)) {
@@ -168,7 +187,14 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
           out.facings = facings;
         }
       } else {
-        unknownKeys(path, a, ['ground', 'despeckle', 'src', 'frames', 'downscale']);
+        unknownKeys(path, a, [
+          'ground',
+          'despeckle',
+          'src',
+          'frames',
+          'downscale',
+          ...(k === 'prop' ? ['fps'] : []),
+        ]);
         const own = { src: a.src, frames: a.frames, downscale: a.downscale };
         const src = parseSource(own, path, root, ground, bad, () => undefined);
         if (src) out.source = src;
@@ -179,7 +205,7 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
 
   const partial: Recipe = {
     sheet: typeof sheet === 'string' ? sheet : expected,
-    kind: (kindOk ? kind : 'prop') as Kind,
+    kind: (kindOk ? kind : (named ?? 'prop')) as Kind,
     outline: outline === 'player' ? 'player' : 'other',
     draft: json.draft === true,
     anims,
@@ -351,4 +377,18 @@ export function recipeAnimKeys(recipe: Recipe): string[] {
   return Object.entries(recipe.anims).flatMap(([anim, a]) =>
     animSources(recipe.kind, a).map(([f]) => animKey(anim, f)),
   );
+}
+
+/** A prop recipe's `idle`: its frame count and rate (null for other kinds). */
+export function propIdleOf(recipe: Recipe): PropIdle | null {
+  if (recipe.kind !== 'prop') return null;
+  const idle = recipe.anims.idle;
+  const out: PropIdle = { frames: idle?.source?.frames.length ?? 0 };
+  if (idle?.fps !== undefined) out.fps = idle.fps;
+  return out;
+}
+
+/** The animation table a recipe's finished sheet carries (see `sheetTable`), or null when the contract has none. */
+export function recipeTable(recipe: Recipe): readonly SpriteAnimSpec[] | null {
+  return sheetTable(recipe.sheet, propIdleOf(recipe));
 }

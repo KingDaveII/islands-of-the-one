@@ -2,14 +2,13 @@ import { paletteData, skinMaskName } from '@iot/shared';
 import {
   animKey,
   animNames,
-  animSpec,
-  animTable,
   cellFor,
   defaultGround,
   facingsFor,
   frameName,
   hasFacings,
   MAX_SHEET,
+  PROP_IDLE,
   SPRITE_CANVAS,
   SPRITE_FACINGS,
   type Facing,
@@ -18,7 +17,7 @@ import { SKIN, SKIN_SHADE } from './colour.js';
 import { PipelineError } from './errors.js';
 import { blank, blit, hexAt, opaqueAt, opaqueRows, type Img } from './image.js';
 import { encodePng } from './png.js';
-import { animSources, type Recipe } from './recipe.js';
+import { animSources, recipeTable, type Recipe } from './recipe.js';
 import { renderContact, renderTones, writeReport, type SheetReport } from './review.js';
 import { SourceReader } from './source.js';
 import {
@@ -77,7 +76,7 @@ export const APP_ID = 'iot-art-pipeline';
 /** The order the contract lists a recipe's animations in: the table's, else the recipe's own. */
 function orderedAnims(recipe: Recipe): string[] {
   const names = Object.keys(recipe.anims);
-  const table = animNames(recipe.kind, recipe.sheet);
+  const table = animNames(recipe.sheet);
   return table ? table.filter((a) => names.includes(a)) : names;
 }
 
@@ -85,7 +84,7 @@ function orderedFacings(recipe: Recipe, anim: string): (Facing | null)[] {
   const a = recipe.anims[anim];
   if (!a) return [];
   if (!hasFacings(recipe.kind)) return a.source ? [null] : [];
-  const order = facingsFor(recipe.kind, anim);
+  const order = facingsFor(recipe.sheet, anim);
   return SPRITE_FACINGS.filter((f) => order.includes(f) && a.facings?.[f]);
 }
 
@@ -177,17 +176,17 @@ export function buildFrames(
 
 /** What a non-draft sheet is missing against its kind's animation table, as messages. */
 export function completenessProblems(recipe: Recipe, anims: readonly BuiltAnim[]): string[] {
-  const table = animTable(recipe.kind);
+  const table = recipeTable(recipe);
   if (!table) {
     return [
-      `${recipe.sheet}: the sprite contract has no animation table (frame counts and rates) for ${recipe.kind} sheets yet, ` +
+      `${recipe.sheet}: the sprite contract has no animation table (frame counts and rates) for this ${recipe.kind} yet, ` +
         'so only a draft can be built',
     ];
   }
   const problems: string[] = [];
   const built = new Map(anims.map((a) => [a.key, a.frames.length]));
   for (const row of table) {
-    for (const facing of row.facings) {
+    for (const facing of hasFacings(recipe.kind) ? row.facings : [null]) {
       const key = animKey(row.name, facing);
       const n = built.get(key);
       if (n === undefined)
@@ -196,6 +195,14 @@ export function completenessProblems(recipe: Recipe, anims: readonly BuiltAnim[]
         );
       else if (n !== row.frames)
         problems.push(`${recipe.sheet}: ${key} has ${n} frames; the table says ${row.frames}`);
+    }
+  }
+  if (recipe.kind === 'prop') {
+    const n = built.get(PROP_IDLE.name) ?? 0;
+    if (n < PROP_IDLE.minFrames || n > PROP_IDLE.maxFrames) {
+      problems.push(
+        `${recipe.sheet}: a prop's idle has ${PROP_IDLE.minFrames} to ${PROP_IDLE.maxFrames} frames, not ${n}`,
+      );
     }
   }
   return problems;
@@ -259,11 +266,12 @@ export function sheetJson(
     cell,
     origin,
   };
-  if (recipe.kind === 'kindled') meta.facings = [...SPRITE_FACINGS];
+  if (hasFacings(recipe.kind)) meta.facings = [...SPRITE_FACINGS];
   meta.pixelScale = 1;
   const animsBlock: Record<string, unknown> = {};
+  const table = recipeTable(recipe);
   for (const a of anims) {
-    const row = animSpec(a.anim);
+    const row = table?.find((r) => r.name === a.anim);
     const entry: Record<string, unknown> = {
       frames: a.frames.map((f) => f.name),
       frameRate: row?.fps ?? 0,

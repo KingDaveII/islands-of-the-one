@@ -69,12 +69,13 @@ describe('the recipe guard', () => {
         kind: 'prop',
         outline: 'other',
         draft: true,
-        anims: { idle: { src: 'art/clean/fig.png', frames: [0] } },
+        anims: { idle: { src: 'art/clean/fig.png', frames: [0], fps: 6 } },
       },
       'art/sheets/prop-jar.json',
       root,
     );
     expect(r.anims.idle?.source).toEqual({ src: 'art/clean/fig.png', frames: [0] });
+    expect(r.anims.idle?.fps).toBe(6);
   });
 
   it.each([
@@ -104,13 +105,48 @@ describe('the recipe guard', () => {
       { ...good(), sheet: 'kindled-other' },
       'sheet is "kindled-other" but the file is kindled-test.json',
     ],
-    ['a bad kind', { ...good(), kind: 'boss' }, 'kind must be one of kindled, npc, enemy, prop'],
+    ['a bad kind', { ...good(), kind: 'boss' }, 'kind must be one of kindled, husk, npc, prop'],
     [
       'a Kindled name on another kind',
       { ...good(), kind: 'npc', outline: 'other', skin: undefined },
-      'kind is npc but "kindled-" names are Kindled sheets',
+      'kind is npc but the name "kindled-test" makes it kindled',
     ],
     ['a missing draft flag', { ...good(), draft: undefined }, 'draft must be true or false'],
+    [
+      'a name with no known kind',
+      { ...good(), sheet: 'enemy-test', kind: 'husk', outline: 'other', skin: undefined },
+      'sheet "enemy-test" has no known kind: a sheet name starts with kindled-, husk-, npc-, prop-',
+    ],
+    [
+      'a frame rate on a kind that is not a prop',
+      {
+        ...good(),
+        anims: { idle: { fps: 4, facings: { S: { src: 'art/clean/fig.png', frames: [0] } } } },
+      },
+      'anims.idle.fps is only for props',
+    ],
+    [
+      'an NPC animation outside the NPC table',
+      {
+        sheet: 'npc-test',
+        kind: 'npc',
+        outline: 'other',
+        draft: true,
+        anims: { wave: { facings: { S: { src: 'art/clean/fig.png', frames: [0] } } } },
+      },
+      'anims.wave is not in the npc animation table (idle, walk)',
+    ],
+    [
+      'a prop animation other than idle',
+      {
+        sheet: 'prop-test',
+        kind: 'prop',
+        outline: 'other',
+        draft: true,
+        anims: { burn: { src: 'art/clean/fig.png', frames: [0] } },
+      },
+      'anims.burn is not in the prop animation table (idle)',
+    ],
     [
       'an animation outside the table',
       {
@@ -208,10 +244,12 @@ describe('the recipe guard', () => {
       'outline is "player" but only Kindled sheets use the player outline',
     ],
   ])('fails on %s', (_, json, message) => {
-    const file =
-      typeof json.sheet === 'string' && json.sheet.startsWith('npc-')
-        ? 'art/sheets/npc-test.json'
-        : 'art/sheets/kindled-test.json';
+    // Kindled cases live in kindled-test.json (one of them names another sheet); the rest in their own file.
+    const sheet =
+      typeof json.sheet === 'string' && !json.sheet.startsWith('kindled-')
+        ? json.sheet
+        : 'kindled-test';
+    const file = `art/sheets/${sheet}.json`;
     const p = problems(JSON.parse(JSON.stringify(json)) as unknown, file);
     expect(
       p.some((x) => x.includes(message)),

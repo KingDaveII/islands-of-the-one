@@ -1,16 +1,18 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
   CLAY_TONES,
-  HUSK_ANIMS,
   hexOf,
-  isKindledSheet,
   isV2Sheet,
-  KINDLED_ANIMS,
   kindledAnimKey,
   kindledFrameName,
   LEGACY_PIXEL_SCALE,
+  HUSK_TABLES,
+  KINDLED_ANIMS,
+  NPC_ANIMS,
   paletteData,
+  propIdleSpec,
+  PROP_IDLE,
   sheetPixelScale,
   skinMaskName,
   SPRITE_CANVAS,
@@ -19,6 +21,8 @@ import {
   SPRITE_SHEET_NAMES,
   SPRITE_WHITELIST,
   spriteCellSpecFor,
+  spriteSheetSpec,
+  type SpriteAnimSpec,
   spriteSheets,
   WORLD_PX_PER_UNIT,
   type SpriteSheet,
@@ -38,9 +42,52 @@ import { v2Problems, type Rgba } from './sheetChecks.js';
  * pixelScale 1, nothing clipped at a cell's edge, the colour whitelist, and
  * its skin mask. The v2 fixture in test/fixtures runs through the same checks.
  */
-const SHEETS: [string, SpriteSheet][] = SPRITE_SHEET_NAMES.map((name) => [name, spriteSheets[name]]);
+const SPRITE_DIR = new URL('../assets/sprites/', import.meta.url);
+const ON_DISK = readdirSync(SPRITE_DIR).sort();
+/** Every sheet on disk, by its JSON (masks, `*.skin.png`, belong to a sheet and are checked with it). */
+const SHEETS: [string, SpriteSheet][] = ON_DISK.filter((f) => f.endsWith('.json')).map((f) => [
+  f.slice(0, -'.json'.length),
+  JSON.parse(readFileSync(new URL(f, SPRITE_DIR), 'utf8')) as SpriteSheet,
+]);
 
-const assetUrl = (image: string): URL => new URL(`../assets/sprites/${image}`, import.meta.url);
+const assetUrl = (image: string): URL => new URL(image, SPRITE_DIR);
+
+describe('the sheets on disk (packages/shared/assets/sprites)', () => {
+  it('pair every JSON with a PNG and every PNG with a JSON; each mask is named by its sheet', () => {
+    const json = new Set(ON_DISK.filter((f) => f.endsWith('.json')).map((f) => f.slice(0, -5)));
+    const masks = ON_DISK.filter((f) => f.endsWith('.skin.png'));
+    const png = new Set(ON_DISK.filter((f) => f.endsWith('.png') && !f.endsWith('.skin.png')).map((f) => f.slice(0, -4)));
+    expect(
+      [...json].filter((n) => !png.has(n)),
+      'JSON with no PNG',
+    ).toEqual([]);
+    expect(
+      [...png].filter((n) => !json.has(n)),
+      'PNG with no JSON',
+    ).toEqual([]);
+    const named = new Set(SHEETS.map(([, s]) => s.palette?.mask).filter((m): m is string => m !== undefined));
+    expect(
+      masks.filter((m) => !named.has(m)),
+      'masks no sheet names',
+    ).toEqual([]);
+    expect(
+      ON_DISK.filter((f) => !f.endsWith('.json') && !f.endsWith('.png')),
+      'other files',
+    ).toEqual([]);
+  });
+
+  it('name a known kind each (kindled-, husk-, npc-, prop-)', () => {
+    for (const [name] of SHEETS) expect(() => spriteSheetSpec(name), name).not.toThrow();
+  });
+
+  it("hold every sheet the client loads (SPRITE_SHEET_NAMES), as the client's import has it", () => {
+    const disk = new Map(SHEETS);
+    for (const name of SPRITE_SHEET_NAMES) {
+      expect(disk.has(name), `${name} is not on disk`).toBe(true);
+      expect(spriteSheets[name], name).toEqual(disk.get(name));
+    }
+  });
+});
 const fixtureUrl = (image: string): URL => new URL(`./fixtures/${image}`, import.meta.url);
 
 const PALETTE = new Set(Object.values(paletteData.tokens).map((h) => h.toLowerCase()));
@@ -169,25 +216,34 @@ function sheetSuite(name: string, sheet: SpriteSheet, url: (image: string) => UR
     }
   });
 
-  if (isKindledSheet(name) && shipped) {
-    it('lists the 8 facings in sheet order and carries every M1 animation for every facing it lists', () => {
-      expect(sheet.meta.facings).toEqual([...SPRITE_FACINGS]);
-      for (const a of KINDLED_ANIMS) {
-        for (const facing of a.facings) {
-          const key = kindledAnimKey(a.name, facing);
+  const kind = spriteSheetSpec(name);
+
+  if (shipped) {
+    it(`carries its ${kind.kind} table: every animation, facing and frame, with its rate, loop and hold`, () => {
+      expect(sheet.meta.facings).toEqual(kind.facings ? [...SPRITE_FACINGS] : undefined);
+      const table = kind.anims ?? (kind.kind === 'prop' ? propTable(sheet) : null);
+      expect(table, `no animation table for ${name} in the contract`).not.toBeNull();
+      if (!table) return;
+      const keys: string[] = [];
+      for (const a of table) {
+        for (const facing of kind.facings ? a.facings : [null]) {
+          const key = facing ? kindledAnimKey(a.name, facing) : a.name;
+          keys.push(key);
           const def = sheet.anims[key];
           expect(def, key).toBeDefined();
           if (!def) continue;
-          expect(def.frames, key).toEqual(Array.from({ length: a.frames }, (_, i) => kindledFrameName(a.name, facing, i)));
+          const frame = (i: number): string => (facing ? kindledFrameName(a.name, facing, i) : `${a.name}_${i}`);
+          expect(def.frames, key).toEqual(Array.from({ length: a.frames }, (_, i) => frame(i)));
           expect(def.repeat, key).toBe(a.loop ? -1 : 0);
           expect(def.hold ?? false, key).toBe(a.hold);
           if (a.fps > 0) expect(def.frameRate, key).toBe(a.fps);
         }
       }
+      expect(Object.keys(sheet.anims).sort(), 'animations outside the table').toEqual(keys.sort());
     });
   }
 
-  if (isKindledSheet(name)) {
+  if (kind.palette) {
     it('is drawn in one clay tone and swaps to the other tones with hex values that occur in the PNG', () => {
       const palette = sheet.palette;
       expect(palette).toBeDefined();
@@ -209,12 +265,14 @@ function sheetSuite(name: string, sheet: SpriteSheet, url: (image: string) => UR
         }
       }
     });
-  } else if (!isKindledSheet(name)) {
-    it('is a Husk sheet: no facings, no palette block, pre-tinted telegraph frames', () => {
-      expect(sheet.meta.facings).toBeUndefined();
+  } else {
+    it(`is a ${kind.kind} sheet: no palette block and no mask`, () => {
       expect(sheet.palette).toBeUndefined();
-      const kind = name.replace('husk-', '') as keyof typeof HUSK_ANIMS;
-      expect(Object.keys(sheet.anims)).toEqual([...HUSK_ANIMS[kind]]);
+    });
+  }
+
+  if (kind.kind === 'husk' && sheet.anims.telegraph) {
+    it('has pre-tinted telegraph frames', () => {
       const telegraph = sheet.anims.telegraph;
       expect(telegraph?.hold).toBe(true);
       let tinted = 0;
@@ -258,10 +316,7 @@ describe('the palette', () => {
     expect(new Set(hexes).size).toBe(32);
     for (const [name, hex] of entries) expect(hex, name).toMatch(/^#[0-9a-f]{6}$/);
     expect(paletteData.signals.hit).toBe(paletteData.tokens['signal-hit']);
-    expect(paletteData.signals.telegraph).toEqual([
-      paletteData.tokens['signal-telegraph'],
-      paletteData.tokens['signal-telegraph-dark'],
-    ]);
+    expect(paletteData.signals.telegraph).toEqual([paletteData.tokens['signal-telegraph'], paletteData.tokens['signal-telegraph-dark']]);
     const tones: Record<string, { skin: string; shade: string }> = paletteData.clay.tones;
     for (const [tone, t] of Object.entries(tones)) {
       expect(PALETTE.has(t.skin), `${tone} skin`).toBe(true);
@@ -279,8 +334,16 @@ describe('the v2 contract (sprites.md §2, §5)', () => {
 
   it('puts the 64×64 canvas in each cell with the soles on the row above the origin', () => {
     expect(SPRITE_CANVAS).toEqual({ w: 64, h: 64, soleRow: 53 });
-    expect(SPRITE_CELLS.kindled).toEqual({ cell: { w: 112, h: 80 }, origin: { x: 56, y: 64 }, canvasAt: { x: 24, y: 10 } });
-    expect(SPRITE_CELLS.other).toEqual({ cell: { w: 64, h: 64 }, origin: { x: 32, y: 54 }, canvasAt: { x: 0, y: 0 } });
+    expect(SPRITE_CELLS.kindled).toEqual({
+      cell: { w: 112, h: 80 },
+      origin: { x: 56, y: 64 },
+      canvasAt: { x: 24, y: 10 },
+    });
+    expect(SPRITE_CELLS.other).toEqual({
+      cell: { w: 64, h: 64 },
+      origin: { x: 32, y: 54 },
+      canvasAt: { x: 0, y: 0 },
+    });
     for (const spec of Object.values(SPRITE_CELLS)) {
       // Canvas row 53 is the cell row just above the origin; the canvas is centred horizontally.
       expect(spec.canvasAt.y + SPRITE_CANVAS.soleRow).toBe(spec.origin.y - 1);
@@ -321,7 +384,8 @@ describe('the v2 contract (sprites.md §2, §5)', () => {
     const find = (hex: string): [number, number] => {
       for (let i = 0; i < png.width * png.height; i++) {
         if ((png.rgba[i * 4 + 3] ?? 0) === 0) continue;
-        if (hexOf(png.rgba[i * 4] ?? 0, png.rgba[i * 4 + 1] ?? 0, png.rgba[i * 4 + 2] ?? 0) === hex) return [i % png.width, Math.floor(i / png.width)];
+        if (hexOf(png.rgba[i * 4] ?? 0, png.rgba[i * 4 + 1] ?? 0, png.rgba[i * 4 + 2] ?? 0) === hex)
+          return [i % png.width, Math.floor(i / png.width)];
       }
       throw new Error(`no ${hex}`);
     };
@@ -336,6 +400,10 @@ describe('the v2 contract (sprites.md §2, §5)', () => {
       expect(husk.some((p) => p.startsWith('origin (56, 64)'))).toBe(true);
       const scaled = { ...sheet, meta: { ...sheet.meta, pixelScale: 2 } };
       expect(v2Problems('kindled-fixture', scaled, png, mask)).toEqual(['meta.pixelScale is 2, not 1']);
+    });
+
+    it('a palette block on a sheet that is not Kindled', () => {
+      expect(v2Problems('npc-fixture', sheet, png, mask)).toContain('a palette block on a npc sheet (only Kindled sheets have one)');
     });
 
     it('a pixel on a cell edge', () => {
@@ -390,17 +458,130 @@ describe('the v2 contract (sprites.md §2, §5)', () => {
   });
 });
 
-describe('the sprite sheet table', () => {
-  it('names the cell grid and origin of each M1 sheet (sprites.md §2)', () => {
-    expect(spriteSheets['kindled-ash'].meta.cell).toEqual({ w: 48, h: 40 });
-    expect(spriteSheets['kindled-ash'].meta.origin).toEqual({ x: 24, y: 36 });
-    expect(spriteSheets['husk-peeling'].meta.cell).toEqual({ w: 24, h: 24 });
-    expect(spriteSheets['husk-peeling'].meta.origin).toEqual({ x: 12, y: 18 });
-    expect(spriteSheets['husk-nutshell'].meta.cell).toEqual({ w: 40, h: 40 });
-    expect(spriteSheets['husk-nutshell'].meta.origin).toEqual({ x: 20, y: 34 });
+describe('which kind a sheet is (spriteSheetSpec)', () => {
+  it('maps each prefix to its kind, cell and table', () => {
+    expect(spriteSheetSpec('kindled-ash')).toEqual({
+      kind: 'kindled',
+      cell: SPRITE_CELLS.kindled,
+      anims: KINDLED_ANIMS,
+      facings: true,
+      palette: true,
+    });
+    expect(spriteSheetSpec('husk-peeling')).toEqual({
+      kind: 'husk',
+      cell: SPRITE_CELLS.other,
+      anims: HUSK_TABLES.peeling,
+      facings: false,
+      palette: false,
+    });
+    expect(spriteSheetSpec('husk-nutshell').anims).toBe(HUSK_TABLES.nutshell);
+    expect(spriteSheetSpec('npc-tally')).toEqual({
+      kind: 'npc',
+      cell: SPRITE_CELLS.other,
+      anims: NPC_ANIMS,
+      facings: true,
+      palette: false,
+    });
+    expect(spriteSheetSpec('prop-clay-jar')).toEqual({
+      kind: 'prop',
+      cell: SPRITE_CELLS.other,
+      anims: null,
+      facings: false,
+      palette: false,
+    });
+    // A Husk the contract has no table for yet.
+    expect(spriteSheetSpec('husk-rind-eel').anims).toBeNull();
   });
 
-  it('marks the generated sheets as placeholders', () => {
-    for (const name of SPRITE_SHEET_NAMES) expect(spriteSheets[name].meta.app).toBe('placeholder');
+  it('fails on an unknown prefix', () => {
+    for (const name of ['peeling', 'enemy-peeling', 'kindled-', 'Kindled-ash', 'npctally']) {
+      expect(() => spriteSheetSpec(name), name).toThrow(/has no known kind/);
+    }
+  });
+
+  it('holds the Husk tables of sprites.md §4, without facings', () => {
+    const rows = (t: readonly SpriteAnimSpec[]): [string, number, number, boolean, boolean][] =>
+      t.map((a) => [a.name, a.frames, a.fps, a.loop, a.hold]);
+    expect(rows(HUSK_TABLES.peeling)).toEqual([
+      ['spawn', 4, 0, false, false],
+      ['idle', 2, 3, true, false],
+      ['telegraph', 2, 8, false, true],
+      ['lunge', 3, 15, false, false],
+      ['hit', 1, 0, false, true],
+      ['chipped', 1, 0, false, true],
+      ['death', 4, 10, false, true],
+      ['drop', 1, 0, false, true],
+    ]);
+    expect(rows(HUSK_TABLES.nutshell)).toEqual([
+      ['spawn', 4, 0, false, false],
+      ['idle', 2, 2, true, false],
+      ['walk', 4, 6, true, false],
+      ['telegraph', 2, 8, false, true],
+      ['slam', 2, 0, false, true],
+      ['hit', 1, 0, false, true],
+      ['chipped_outer', 1, 0, false, true],
+      ['chipped_inner', 1, 0, false, true],
+      ['regrow', 3, 6, false, true],
+      ['death', 4, 10, false, true],
+      ['drop', 1, 0, false, true],
+    ]);
+    for (const a of [...HUSK_TABLES.peeling, ...HUSK_TABLES.nutshell]) expect(a.facings).toEqual([]);
+  });
+
+  it('gives NPCs idle and walk in 8 facings, and props an idle of 1 to 8 frames', () => {
+    expect(NPC_ANIMS.map((a) => [a.name, a.frames, a.fps, a.loop, a.hold, a.facings])).toEqual([
+      ['idle', 2, 2, true, false, SPRITE_FACINGS],
+      ['walk', 6, 10, true, false, SPRITE_FACINGS],
+    ]);
+    expect(PROP_IDLE).toEqual({ name: 'idle', minFrames: 1, maxFrames: 8, defaultFps: 8 });
+    expect(propIdleSpec(4)).toEqual({
+      name: 'idle',
+      frames: 4,
+      fps: 8,
+      loop: true,
+      hold: false,
+      facings: [],
+    });
+    expect(propIdleSpec(1, 0)).toEqual({
+      name: 'idle',
+      frames: 1,
+      fps: 0,
+      loop: false,
+      hold: true,
+      facings: [],
+    });
   });
 });
+
+describe('the sprite sheet table', () => {
+  // M1's v1 cells (sprites.md §2); a sheet that has turned v2 is checked by v2Problems instead.
+  const M1_CELLS: Record<string, { cell: { w: number; h: number }; origin: { x: number; y: number } }> = {
+    'kindled-ash': { cell: { w: 48, h: 40 }, origin: { x: 24, y: 36 } },
+    'husk-peeling': { cell: { w: 24, h: 24 }, origin: { x: 12, y: 18 } },
+    'husk-nutshell': { cell: { w: 40, h: 40 }, origin: { x: 20, y: 34 } },
+  };
+
+  it('names the cell grid and origin of each M1 sheet still on v1 (sprites.md §2)', () => {
+    for (const [name, sheet] of SHEETS) {
+      if (isV2Sheet(sheet)) continue;
+      const m1 = M1_CELLS[name];
+      expect(m1, `${name} is a v1 sheet that M1 never had`).toBeDefined();
+      expect({ cell: sheet.meta.cell, origin: sheet.meta.origin }, name).toEqual(m1);
+    }
+  });
+
+  it('marks v1 sheets as placeholders and v2 sheets as built by the art pipeline', () => {
+    for (const [name, sheet] of SHEETS) {
+      expect(sheet.meta.app, name).toBe(isV2Sheet(sheet) ? 'iot-art-pipeline' : 'placeholder');
+    }
+  });
+});
+
+/** A prop's table from its own `idle`: 1 to 8 frames at the sheet's rate (sprites.md §4). */
+function propTable(sheet: SpriteSheet): SpriteAnimSpec[] | null {
+  const idle = sheet.anims[PROP_IDLE.name];
+  if (!idle) return null;
+  const n = idle.frames.length;
+  if (n < PROP_IDLE.minFrames || n > PROP_IDLE.maxFrames) return null;
+  return [propIdleSpec(n, idle.frameRate)];
+}

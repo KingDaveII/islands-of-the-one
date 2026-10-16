@@ -1,7 +1,7 @@
 import { paletteData } from '@iot/shared';
 import type { BuiltAnim, BuiltFrame } from './build.js';
 import { FLOOR, HOLLOW_DEEP, SKIN, SKIN_SHADE, WALL } from './colour.js';
-import { animTable, cellFor, isLooping, solesRow } from './contract.js';
+import { animKey, cellFor, hasFacings, solesRow } from './contract.js';
 import {
   blank,
   blit,
@@ -15,7 +15,7 @@ import {
   setPixel,
   type Img,
 } from './image.js';
-import type { Recipe } from './recipe.js';
+import { recipeTable, type Recipe } from './recipe.js';
 import { skinProblemText, type SkinProblem } from './steps.js';
 
 /**
@@ -206,14 +206,14 @@ export interface SheetReport {
 }
 
 /** The numbers of one animation: its loop seam, body bob and held frames. */
-export function animChecks(a: BuiltAnim, soles: number): AnimReport {
+export function animChecks(a: BuiltAnim, soles: number, loop: boolean): AnimReport {
   const out: AnimReport = { key: a.key, frames: a.frames.length, held: [] };
   const cells = a.frames.map((f) => f.cell);
   for (let i = 0; i + 1 < cells.length; i++) {
     const [p, q] = [cells[i], cells[i + 1]];
     if (p && q && sameImg(p, q)) out.held.push(`${a.frames[i]?.name} = ${a.frames[i + 1]?.name}`);
   }
-  if (isLooping(a.anim) && cells.length >= 2) {
+  if (loop && cells.length >= 2) {
     const steps: number[] = [];
     for (let i = 0; i + 1 < cells.length; i++) {
       const [p, q] = [cells[i], cells[i + 1]];
@@ -236,20 +236,22 @@ export function animChecks(a: BuiltAnim, soles: number): AnimReport {
   return out;
 }
 
-/** What a draft lacks against its kind's table (informational; a non-draft fails on it instead). */
+/** What a draft lacks against its sheet's table (informational; a non-draft fails on it instead). */
 function missingAgainstTable(recipe: Recipe, anims: readonly BuiltAnim[]): string[] {
-  const table = animTable(recipe.kind);
-  if (!table) return [`no animation table for ${recipe.kind} sheets in the contract`];
+  const table = recipeTable(recipe);
+  if (!table) return [`no animation table for ${recipe.sheet} in the contract`];
   const built = new Map(anims.map((a) => [a.key, a.frames.length]));
   const out: string[] = [];
+  const facings = hasFacings(recipe.kind);
   for (const row of table) {
-    const absent = row.facings.filter((f) => !built.has(`${row.name}_${f}`));
-    if (absent.length === row.facings.length) out.push(`${row.name} (all facings)`);
-    else if (absent.length) out.push(`${row.name} ${absent.join(' ')}`);
-    for (const f of row.facings) {
-      const n = built.get(`${row.name}_${f}`);
-      if (n !== undefined && n !== row.frames)
-        out.push(`${row.name}_${f}: ${n} of ${row.frames} frames`);
+    const keys = (facings ? row.facings : [null]).map((f) => animKey(row.name, f));
+    const absent = keys.filter((k) => !built.has(k));
+    if (absent.length === keys.length) out.push(facings ? `${row.name} (all facings)` : row.name);
+    else if (absent.length)
+      out.push(`${row.name} ${absent.map((k) => k.slice(row.name.length + 1)).join(' ')}`);
+    for (const k of keys) {
+      const n = built.get(k);
+      if (n !== undefined && n !== row.frames) out.push(`${k}: ${n} of ${row.frames} frames`);
     }
   }
   return out;
@@ -283,7 +285,11 @@ export function writeReport(
       return r;
     }),
   );
-  const animReports = anims.map((a) => animChecks(a, soles));
+  const table = recipeTable(recipe);
+  // Loops come from the sheet's table; a draft with no table yet checks idle and walk.
+  const loops = (anim: string): boolean =>
+    table?.find((r) => r.name === anim)?.loop ?? ['idle', 'walk'].includes(anim);
+  const animReports = anims.map((a) => animChecks(a, soles, loops(a.anim)));
   const totals: SheetReport['totals'] = {
     frames: frames.length,
     offPalette: frames.reduce((s, f) => s + f.offPalette, 0),

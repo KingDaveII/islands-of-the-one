@@ -4,8 +4,11 @@ import { describe, expect, it } from 'vitest';
 import {
   KINDLED_ANIMS,
   kindledAnimKey,
+  HUSK_TABLES,
   kindledFrameName,
+  propIdleSpec,
   SPRITE_FACINGS,
+  spriteSheetSpec,
   type SpriteSheet,
 } from '@iot/shared';
 import { v2Problems } from '../../shared/test/sheetChecks.js';
@@ -15,7 +18,7 @@ import { blank, hexAt, opaqueAt } from '../src/image.js';
 import { decodePng } from '../src/png.js';
 import { parseRecipe, type Recipe } from '../src/recipe.js';
 import { buildAndWrite, checkAll } from '../src/sheets.js';
-import { C, figure, tempRoot, writeImg, writeRecipe } from './helpers.js';
+import { C, figure, rect, tempRoot, writeImg, writeRecipe } from './helpers.js';
 
 /** A full Kindled recipe: every animation, facing and frame in the table, all from one figure. */
 function fullKindled(src: string, extra: Record<string, unknown> = {}): Record<string, unknown> {
@@ -172,16 +175,17 @@ describe('a finished Kindled sheet', () => {
     ]);
   });
 
-  it('fails a non-draft sheet of a kind the contract has no table for', () => {
+  it('fails a non-draft sheet the contract has no table for (a Husk not in HUSK_TABLES)', () => {
+    writeImg(root, 'art/clean/shell.png', figure(C['watcher-iron']).img);
     const json = {
-      sheet: 'npc-test',
-      kind: 'npc',
+      sheet: 'husk-rind-eel',
+      kind: 'husk',
       outline: 'other',
       draft: false,
-      anims: { idle: { facings: { S: { src: 'art/clean/fig.png', frames: [0] } } } },
+      anims: { idle: { src: 'art/clean/shell.png', frames: [0] } },
     };
     expect(problemsOf(() => build(root, json))).toEqual([
-      'npc-test: the sprite contract has no animation table (frame counts and rates) for npc sheets yet, so only a draft can be built',
+      'husk-rind-eel: the sprite contract has no animation table (frame counts and rates) for this husk yet, so only a draft can be built',
     ]);
   });
 });
@@ -319,6 +323,170 @@ describe('writing and checking', () => {
     writeRecipe(root, { sheet: 'npc-test', kind: 'npc', outline: 'other', draft: true, anims: {} });
     expect(checkAll(root)).toEqual([
       'npc-test: art/sheets/npc-test.json: anims must be an object with at least one animation',
+    ]);
+  });
+});
+
+/**
+ * A finished sheet of every other kind, checked the way packages/shared's
+ * sheet test checks a sheet on disk: the v2 contract (v2Problems) and the
+ * sheet's table from spriteSheetSpec.
+ */
+describe('a finished Husk, NPC and prop sheet', () => {
+  const root = tempRoot();
+  const plain = figure(C['watcher-iron']).img;
+  const tinted = figure(C['watcher-iron']).img;
+  rect(tinted, 25, 21, 14, 12, C['signal-telegraph']);
+  writeImg(root, 'art/clean/plain.png', plain);
+  writeImg(root, 'art/clean/tinted.png', tinted);
+
+  /** The sheet, PNG and mask a finished build wrote, and the problems the shared checks find in them. */
+  function finished(json: Record<string, unknown>): {
+    sheet: SpriteSheet;
+    problems: string[];
+    outputs: string[];
+  } {
+    const name = String(json.sheet);
+    const r = build(root, json);
+    const out = (p: string): Buffer | undefined =>
+      r.outputs.get(`packages/shared/assets/sprites/${p}`);
+    const sheet = JSON.parse(out(`${name}.json`)?.toString() ?? '{}') as SpriteSheet;
+    const png = decodePng(out(`${name}.png`) ?? Buffer.alloc(0));
+    const problems = v2Problems(name, sheet, { width: png.w, height: png.h, rgba: png.data }, null);
+    const spec = spriteSheetSpec(name);
+    const table =
+      spec.kind === 'prop'
+        ? [propIdleSpec(sheet.anims.idle?.frames.length ?? 0, sheet.anims.idle?.frameRate)]
+        : (spec.anims ?? []);
+    const keys: string[] = [];
+    for (const a of table) {
+      for (const f of spec.facings ? a.facings : [null]) {
+        const key = f ? kindledAnimKey(a.name, f) : a.name;
+        keys.push(key);
+        const def = sheet.anims[key];
+        const names = Array.from({ length: a.frames }, (_, n) =>
+          f ? kindledFrameName(a.name, f, n) : `${a.name}_${n}`,
+        );
+        if (JSON.stringify(def?.frames) !== JSON.stringify(names))
+          problems.push(`${key}: frames ${JSON.stringify(def?.frames)}`);
+        if (
+          def?.frameRate !== a.fps ||
+          def.repeat !== (a.loop ? -1 : 0) ||
+          (def.hold ?? false) !== a.hold
+        )
+          problems.push(`${key}: timing`);
+      }
+    }
+    if (JSON.stringify(Object.keys(sheet.anims).sort()) !== JSON.stringify(keys.sort()))
+      problems.push('anims outside the table');
+    if (
+      JSON.stringify(sheet.meta.facings) !==
+      JSON.stringify(spec.facings ? [...SPRITE_FACINGS] : undefined)
+    )
+      problems.push('meta.facings');
+    if (sheet.palette !== undefined) problems.push('a palette block');
+    return { sheet, problems, outputs: [...r.outputs.keys()].sort() };
+  }
+
+  it('a Husk: its table, no facings, telegraph frames pre-tinted', () => {
+    const anims: Record<string, unknown> = {};
+    for (const a of HUSK_TABLES.peeling) {
+      anims[a.name] = {
+        src: a.name === 'telegraph' ? 'art/clean/tinted.png' : 'art/clean/plain.png',
+        frames: Array.from({ length: a.frames }, () => 0),
+      };
+    }
+    const r = finished({
+      sheet: 'husk-peeling',
+      kind: 'husk',
+      outline: 'other',
+      draft: false,
+      anims,
+    });
+    expect(r.problems).toEqual([]);
+    expect(r.sheet.frames.telegraph_0).toBeDefined();
+    expect(r.outputs).not.toContain('packages/shared/assets/sprites/husk-peeling.skin.png');
+  });
+
+  it('an NPC: idle and walk in 8 facings, meta.facings, no palette or mask', () => {
+    const facings = (n: number): Record<string, unknown> =>
+      Object.fromEntries(
+        SPRITE_FACINGS.map((f) => [
+          f,
+          { src: 'art/clean/plain.png', frames: Array.from({ length: n }, () => 0) },
+        ]),
+      );
+    const r = finished({
+      sheet: 'npc-test',
+      kind: 'npc',
+      outline: 'other',
+      draft: false,
+      anims: { idle: { facings: facings(2) }, walk: { facings: facings(6) } },
+    });
+    expect(r.problems).toEqual([]);
+    expect(r.sheet.meta.facings).toEqual([...SPRITE_FACINGS]);
+    expect(r.outputs).toEqual([
+      'art/review/npc-test/contact.png',
+      'art/review/npc-test/report.json',
+      'art/review/npc-test/report.md',
+      'packages/shared/assets/sprites/npc-test.json',
+      'packages/shared/assets/sprites/npc-test.png',
+    ]);
+  });
+
+  it('a finished NPC still needs both animations in all 8 facings', () => {
+    const json = {
+      sheet: 'npc-test',
+      kind: 'npc',
+      outline: 'other',
+      draft: false,
+      anims: { idle: { facings: { S: { src: 'art/clean/plain.png', frames: [0, 0] } } } },
+    };
+    const p = problemsOf(() => build(root, json));
+    expect(p).toContain(
+      'npc-test: idle_SE is missing (a finished sheet carries every animation and facing)',
+    );
+    expect(p).toContain(
+      'npc-test: walk_S is missing (a finished sheet carries every animation and facing)',
+    );
+    expect(p).toHaveLength(15);
+  });
+
+  it('a prop: idle only, its frame rate from the recipe (default 8), looping with more than one frame', () => {
+    const flame = finished({
+      sheet: 'prop-flame',
+      kind: 'prop',
+      outline: 'other',
+      draft: false,
+      anims: { idle: { src: 'art/clean/plain.png', frames: [0, 0, 0, 0], fps: 12 } },
+    });
+    expect(flame.problems).toEqual([]);
+    expect(flame.sheet.anims).toEqual({
+      idle: { frames: ['idle_0', 'idle_1', 'idle_2', 'idle_3'], frameRate: 12, repeat: -1 },
+    });
+    const jar = finished({
+      sheet: 'prop-jar',
+      kind: 'prop',
+      outline: 'other',
+      draft: false,
+      anims: { idle: { src: 'art/clean/plain.png', frames: [0] } },
+    });
+    expect(jar.problems).toEqual([]);
+    expect(jar.sheet.anims).toEqual({
+      idle: { frames: ['idle_0'], frameRate: 8, repeat: 0, hold: true },
+    });
+  });
+
+  it('a prop with more than 8 frames fails', () => {
+    const json = {
+      sheet: 'prop-jar',
+      kind: 'prop',
+      outline: 'other',
+      draft: false,
+      anims: { idle: { src: 'art/clean/plain.png', frames: Array.from({ length: 9 }, () => 0) } },
+    };
+    expect(problemsOf(() => build(root, json))).toEqual([
+      "prop-jar: a prop's idle has 1 to 8 frames, not 9",
     ]);
   });
 });
