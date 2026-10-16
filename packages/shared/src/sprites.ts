@@ -152,7 +152,25 @@ export const SPRITE_FACINGS_4: readonly SpriteFacing[] = ['S', 'E', 'N', 'W'];
 /** The facings of `sit`. */
 export const SPRITE_FACINGS_2: readonly SpriteFacing[] = ['S', 'E'];
 
-/** One row of an animation table (sprites.md §4): frame count, rate, loop and hold, and its facings. */
+/** The milestones an animation table row can belong to, in order. */
+export const SPRITE_MILESTONES = ['M1', 'M2'] as const;
+export type SpriteMilestone = (typeof SPRITE_MILESTONES)[number];
+
+/**
+ * The milestone a finished sheet is complete for: it must carry every table
+ * row at or before it; later rows are optional, but complete when present
+ * (every facing, the right frame count). The sheet test and the art pipeline
+ * both read this. M2 Task 9, or whichever task first uses carry or sit, moves
+ * it to "M2".
+ */
+export const REQUIRED_MILESTONE: SpriteMilestone = 'M1';
+
+/** Whether a table row must be in a finished sheet (its milestone is at or before `REQUIRED_MILESTONE`). */
+export function isRequiredAnim(row: Pick<SpriteAnimSpec, 'milestone'>): boolean {
+  return SPRITE_MILESTONES.indexOf(row.milestone) <= SPRITE_MILESTONES.indexOf(REQUIRED_MILESTONE);
+}
+
+/** One row of an animation table (sprites.md §4): frame count, rate, loop and hold, its facings and its milestone. */
 export interface SpriteAnimSpec {
   name: string;
   frames: number;
@@ -162,6 +180,8 @@ export interface SpriteAnimSpec {
   hold: boolean;
   /** The facings it is drawn in; empty for kinds without facings (Husks, props). */
   facings: readonly SpriteFacing[];
+  /** The milestone that first uses it; a finished sheet may leave out rows after `REQUIRED_MILESTONE`. */
+  milestone: SpriteMilestone;
 }
 
 /** One row of the Kindled table (the name it had before every kind had a table). */
@@ -174,11 +194,16 @@ const spec = (
   loop: boolean,
   hold: boolean,
   facings: readonly SpriteFacing[] = SPRITE_FACINGS,
-): SpriteAnimSpec => ({ name, frames, fps, loop, hold, facings });
+  milestone: SpriteMilestone = 'M1',
+): SpriteAnimSpec => ({ name, frames, fps, loop, hold, facings, milestone });
 
 const NO_FACINGS: readonly SpriteFacing[] = [];
 
-/** The M1 Kindled animations every `kindled-<remembrance>` sheet must carry, per facing. */
+/**
+ * The Kindled animations of every `kindled-<remembrance>` sheet, per facing.
+ * Carry and sit are M2's (nothing uses them before), so a finished sheet may
+ * leave them out until `REQUIRED_MILESTONE` reaches M2.
+ */
 export const KINDLED_ANIMS: readonly SpriteAnimSpec[] = [
   spec('idle', 2, 2, true, false),
   spec('walk', 6, 10, true, false),
@@ -196,9 +221,9 @@ export const KINDLED_ANIMS: readonly SpriteAnimSpec[] = [
   spec('haul_slide', 2, 12, true, false),
   spec('hit', 2, 0, false, true, SPRITE_FACINGS_4),
   spec('death', 6, 8, false, true, SPRITE_FACINGS_4),
-  spec('carry_idle', 2, 2, true, false, SPRITE_FACINGS_4),
-  spec('carry_walk', 6, 10, true, false, SPRITE_FACINGS_4),
-  spec('sit', 1, 0, false, true, SPRITE_FACINGS_2),
+  spec('carry_idle', 2, 2, true, false, SPRITE_FACINGS_4, 'M2'),
+  spec('carry_walk', 6, 10, true, false, SPRITE_FACINGS_4, 'M2'),
+  spec('sit', 1, 0, false, true, SPRITE_FACINGS_2, 'M2'),
 ];
 
 /**
@@ -259,6 +284,7 @@ export function propIdleSpec(frames: number, fps: number = PROP_IDLE.defaultFps)
     loop: frames > 1,
     hold: frames === 1,
     facings: NO_FACINGS,
+    milestone: 'M1',
   };
 }
 

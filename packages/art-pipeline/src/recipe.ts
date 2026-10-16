@@ -16,6 +16,7 @@ import {
 } from './contract.js';
 import { TELEGRAPH, WHITELIST } from './colour.js';
 import { PipelineError } from './errors.js';
+import { parseRemap, type FrameRef, type RemapRule } from './remap.js';
 
 /**
  * A recipe (art/sheets/<sheet>.json), written by ART: which raw frames make
@@ -58,6 +59,8 @@ export interface Recipe {
   anims: Record<string, RecipeAnim>;
   fixes: { frame: string; pixels: [number, number, string | null][] }[];
   skin: { add: Record<string, Area[]>; remove: Record<string, Area[]> };
+  /** Colour rules applied before the snap (step 4), in order. */
+  remap: RemapRule[];
 }
 
 type Json = unknown;
@@ -70,15 +73,20 @@ const isPoint = (v: Json): v is [number, number] =>
 const isArea = (v: Json): v is Area =>
   isPoint(v) || (Array.isArray(v) && v.length === 2 && v.every((p) => isPoint(p)));
 
-/** The frame names a recipe produces, in no particular order. */
-export function recipeFrameNames(recipe: Recipe): Set<string> {
-  const names = new Set<string>();
+/** Every frame a recipe produces, with its animation and facing, in no particular order. */
+export function recipeFrames(recipe: Pick<Recipe, 'kind' | 'anims'>): FrameRef[] {
+  const out: FrameRef[] = [];
   for (const [anim, a] of Object.entries(recipe.anims)) {
     for (const [facing, s] of animSources(recipe.kind, a)) {
-      s.frames.forEach((_, n) => names.add(frameName(anim, facing, n)));
+      s.frames.forEach((_, n) => out.push({ name: frameName(anim, facing, n), anim, facing }));
     }
   }
-  return names;
+  return out;
+}
+
+/** The frame names a recipe produces, in no particular order. */
+export function recipeFrameNames(recipe: Pick<Recipe, 'kind' | 'anims'>): Set<string> {
+  return new Set(recipeFrames(recipe).map((f) => f.name));
 }
 
 /** An animation's sources as [facing, source] pairs (facing null for kinds without facings). */
@@ -103,7 +111,17 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
   };
 
   if (!isObj(json)) throw new PipelineError(`${file}: a recipe is a JSON object`);
-  unknownKeys('', json, ['sheet', 'kind', 'outline', 'draft', 'notes', 'anims', 'fixes', 'skin']);
+  unknownKeys('', json, [
+    'sheet',
+    'kind',
+    'outline',
+    'draft',
+    'notes',
+    'anims',
+    'fixes',
+    'remap',
+    'skin',
+  ]);
 
   const sheet = json.sheet;
   const expected = basename(file, '.json');
@@ -211,6 +229,7 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
     anims,
     fixes: [],
     skin: { add: {}, remove: {} },
+    remap: [],
   };
   if (typeof json.notes === 'string') partial.notes = json.notes;
   const frames = recipeFrameNames(partial);
@@ -274,6 +293,10 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
         partial.fixes.push({ frame: fix.frame as string, pixels });
       });
     }
+  }
+
+  if (json.remap !== undefined) {
+    partial.remap = parseRemap(json.remap, recipeFrames(partial), hasFacings(partial.kind), bad);
   }
 
   if (json.skin !== undefined) {

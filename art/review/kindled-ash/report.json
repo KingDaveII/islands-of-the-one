@@ -37,12 +37,7 @@
   },
   "flags": {
     "seam": [],
-    "bob": [
-      "walk_S",
-      "walk_E",
-      "walk_NE",
-      "walk_N"
-    ],
+    "bob": [],
     "held": [],
     "colours": [
       "idle_SE_0",
@@ -96,6 +91,11 @@
     "carry_idle (all facings)",
     "carry_walk (all facings)",
     "sit (all facings)"
+  ],
+  "optional": [
+    "carry_idle (M2)",
+    "carry_walk (M2)",
+    "sit (M2)"
   ],
   "skinProblems": [
     "idle_S_0: a region of 4 px in the skin colours at [[27, 39], [30, 39]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
@@ -270,6 +270,431 @@
     "light_1_E_2: a region of 25 px in the skin colours at [[34, 54], [39, 59]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not",
     "light_1_E_2: a region of 7 px in the skin colours at [[39, 54], [41, 57]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not"
   ],
+  "remap": [],
+  "staleRemap": [],
+  "snappedColours": 86,
+  "snapped": [
+    {
+      "colour": "#32314f",
+      "pixels": 284,
+      "to": "#24305a",
+      "deltaE": 2.98,
+      "materials": [
+        "water",
+        "hair"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_E_0",
+        "walk_SE_0",
+        "walk_SE_1",
+        "walk_SE_2",
+        "walk_SE_3",
+        "walk_SE_4",
+        "walk_SE_5",
+        "walk_E_0",
+        "walk_E_1",
+        "walk_E_2",
+        "walk_E_3",
+        "walk_E_4",
+        "walk_E_5",
+        "light_1_E_0",
+        "light_1_E_1",
+        "light_1_E_2"
+      ]
+    },
+    {
+      "colour": "#6e7186",
+      "pixels": 111,
+      "to": "#7d8794",
+      "deltaE": 6.77,
+      "materials": [
+        "cloth",
+        "steel"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_E_0",
+        "idle_W_0",
+        "idle_SW_0",
+        "walk_SE_0",
+        "walk_SE_1",
+        "walk_SE_2",
+        "walk_SE_3",
+        "walk_SE_4",
+        "walk_SE_5",
+        "walk_E_0",
+        "walk_E_1",
+        "walk_E_2",
+        "walk_E_3",
+        "walk_E_4",
+        "walk_E_5",
+        "light_1_E_0",
+        "light_1_E_1",
+        "light_1_E_2"
+      ]
+    },
+    {
+      "colour": "#3d4152",
+      "pixels": 80,
+      "to": "#4a4e57",
+      "deltaE": 4.72,
+      "materials": [
+        "cloth",
+        "steel"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_E_0",
+        "idle_W_0",
+        "walk_SE_0",
+        "walk_SE_1",
+        "walk_SE_2",
+        "walk_SE_3",
+        "walk_SE_5",
+        "walk_E_0",
+        "walk_E_1",
+        "walk_E_2",
+        "walk_E_3",
+        "walk_E_4",
+        "walk_E_5",
+        "light_1_E_0",
+        "light_1_E_1"
+      ]
+    },
+    {
+      "colour": "#6e6357",
+      "pixels": 73,
+      "to": "#5e5448",
+      "deltaE": 5.45,
+      "materials": [
+        "skin"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_E_0",
+        "idle_W_0",
+        "idle_SW_0",
+        "walk_SE_0",
+        "walk_SE_1",
+        "walk_SE_2",
+        "walk_SE_3",
+        "walk_SE_4",
+        "walk_SE_5",
+        "walk_E_0",
+        "walk_E_1",
+        "walk_E_2",
+        "walk_E_3",
+        "walk_E_4",
+        "walk_E_5",
+        "light_1_E_0",
+        "light_1_E_1",
+        "light_1_E_2"
+      ]
+    },
+    {
+      "colour": "#383446",
+      "pixels": 60,
+      "to": "#24305a",
+      "deltaE": 5.18,
+      "materials": [
+        "water",
+        "hair"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_E_0",
+        "idle_W_0",
+        "idle_SW_0",
+        "walk_SE_0",
+        "walk_SE_1",
+        "walk_SE_2",
+        "walk_SE_3",
+        "walk_SE_4",
+        "walk_SE_5",
+        "light_1_E_0",
+        "light_1_E_1",
+        "light_1_E_2"
+      ]
+    },
+    {
+      "colour": "#40383e",
+      "pixels": 53,
+      "to": "#4a4e57",
+      "deltaE": 7.44,
+      "materials": [
+        "cloth",
+        "steel"
+      ],
+      "frames": [
+        "idle_E_0",
+        "idle_W_0",
+        "walk_E_0",
+        "walk_E_1",
+        "walk_E_2",
+        "walk_E_3",
+        "walk_E_4",
+        "walk_E_5",
+        "light_1_E_0",
+        "light_1_E_1",
+        "light_1_E_2"
+      ]
+    },
+    {
+      "colour": "#7c7166",
+      "pixels": 43,
+      "to": "#8c7f6e",
+      "deltaE": 4.87,
+      "materials": [
+        "skin"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_W_0",
+        "idle_SW_0",
+        "walk_SE_0",
+        "walk_SE_1",
+        "walk_SE_2",
+        "walk_SE_3",
+        "walk_SE_4",
+        "walk_SE_5"
+      ]
+    },
+    {
+      "colour": "#9c896e",
+      "pixels": 42,
+      "to": "#8c7f6e",
+      "deltaE": 3.97,
+      "materials": [
+        "skin"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_E_0",
+        "idle_SW_0",
+        "walk_SE_0",
+        "walk_SE_1",
+        "walk_SE_2",
+        "walk_SE_3",
+        "walk_SE_4",
+        "walk_SE_5",
+        "walk_E_5",
+        "light_1_E_0",
+        "light_1_E_1",
+        "light_1_E_2"
+      ]
+    },
+    {
+      "colour": "#959ca7",
+      "pixels": 32,
+      "to": "#a99fc4",
+      "deltaE": 5.28,
+      "materials": [
+        "shell",
+        "stone"
+      ],
+      "frames": [
+        "idle_E_0",
+        "idle_W_0",
+        "idle_SW_0",
+        "walk_E_0",
+        "walk_E_1",
+        "walk_E_2",
+        "walk_E_3",
+        "walk_E_4",
+        "walk_E_5",
+        "light_1_E_0",
+        "light_1_E_1"
+      ]
+    },
+    {
+      "colour": "#70778a",
+      "pixels": 29,
+      "to": "#7d8794",
+      "deltaE": 5.05,
+      "materials": [
+        "cloth",
+        "steel"
+      ],
+      "frames": [
+        "light_1_S_0",
+        "light_1_S_1",
+        "light_1_S_2"
+      ]
+    },
+    {
+      "colour": "#8c92a0",
+      "pixels": 29,
+      "to": "#7d8794",
+      "deltaE": 4.04,
+      "materials": [
+        "cloth",
+        "steel"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_W_0",
+        "idle_SW_0",
+        "walk_SE_0",
+        "walk_SE_1",
+        "walk_SE_2",
+        "walk_SE_4",
+        "walk_SE_5"
+      ]
+    },
+    {
+      "colour": "#4a4367",
+      "pixels": 24,
+      "to": "#4a4e57",
+      "deltaE": 4.97,
+      "materials": [
+        "cloth",
+        "steel"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_W_0",
+        "idle_SW_0",
+        "walk_SE_0",
+        "walk_SE_1",
+        "walk_SE_2",
+        "walk_SE_4",
+        "walk_SE_5"
+      ]
+    },
+    {
+      "colour": "#1a1c31",
+      "pixels": 22,
+      "to": "#1c2147",
+      "deltaE": 4.27,
+      "materials": [
+        "player outline",
+        "paper"
+      ],
+      "frames": [
+        "light_1_S_0",
+        "light_1_S_1",
+        "light_1_S_2"
+      ]
+    },
+    {
+      "colour": "#bebfc2",
+      "pixels": 19,
+      "to": "#e3c29e",
+      "deltaE": 7.11,
+      "materials": [
+        "red clay"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_W_0",
+        "walk_SE_0",
+        "walk_SE_1",
+        "walk_SE_2",
+        "walk_SE_3",
+        "walk_SE_4",
+        "walk_SE_5"
+      ]
+    },
+    {
+      "colour": "#d7d2cc",
+      "pixels": 18,
+      "to": "#d9d2e9",
+      "deltaE": 4.09,
+      "materials": [
+        "stone"
+      ],
+      "frames": [
+        "light_1_S_0",
+        "light_1_S_1",
+        "light_1_S_2"
+      ]
+    },
+    {
+      "colour": "#5f565d",
+      "pixels": 18,
+      "to": "#5e5448",
+      "deltaE": 3.24,
+      "materials": [
+        "skin"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_W_0",
+        "idle_SW_0",
+        "walk_SE_0",
+        "walk_SE_5"
+      ]
+    },
+    {
+      "colour": "#7c6e5f",
+      "pixels": 17,
+      "to": "#8c7f6e",
+      "deltaE": 5.65,
+      "materials": [
+        "skin"
+      ],
+      "frames": [
+        "light_1_S_0",
+        "light_1_S_1",
+        "light_1_S_2"
+      ]
+    },
+    {
+      "colour": "#d8ccbe",
+      "pixels": 17,
+      "to": "#e3c29e",
+      "deltaE": 4.17,
+      "materials": [
+        "red clay"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "walk_SE_0",
+        "walk_SE_1",
+        "walk_SE_2",
+        "walk_SE_3",
+        "walk_SE_4",
+        "walk_SE_5"
+      ]
+    },
+    {
+      "colour": "#6a3e46",
+      "pixels": 16,
+      "to": "#5e5448",
+      "deltaE": 6.51,
+      "materials": [
+        "skin"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "walk_SE_0",
+        "walk_SE_1",
+        "walk_SE_2",
+        "walk_SE_3",
+        "walk_SE_4",
+        "walk_SE_5"
+      ]
+    },
+    {
+      "colour": "#ab926d",
+      "pixels": 14,
+      "to": "#c98f78",
+      "deltaE": 5.28,
+      "materials": [
+        "red clay"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "walk_SE_0",
+        "walk_SE_1",
+        "walk_SE_2",
+        "walk_SE_3",
+        "walk_SE_4",
+        "walk_SE_5"
+      ]
+    }
+  ],
   "anims": [
     {
       "key": "idle_S",
@@ -386,7 +811,7 @@
           48
         ],
         "range": 2,
-        "flag": true
+        "flag": false
       }
     },
     {
@@ -430,7 +855,7 @@
           48
         ],
         "range": 2,
-        "flag": true
+        "flag": false
       }
     },
     {
@@ -452,7 +877,7 @@
           49
         ],
         "range": 2,
-        "flag": true
+        "flag": false
       }
     },
     {
@@ -474,7 +899,7 @@
           48
         ],
         "range": 2,
-        "flag": true
+        "flag": false
       }
     },
     {

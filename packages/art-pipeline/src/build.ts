@@ -1,4 +1,4 @@
-import { paletteData, skinMaskName } from '@iot/shared';
+import { isRequiredAnim, paletteData, skinMaskName } from '@iot/shared';
 import {
   animKey,
   animNames,
@@ -18,6 +18,7 @@ import { PipelineError } from './errors.js';
 import { blank, blit, hexAt, opaqueAt, opaqueRows, type Img } from './image.js';
 import { encodePng } from './png.js';
 import { animSources, recipeTable, type Recipe } from './recipe.js';
+import { applyRemap, appliesTo, staleRules, staleRuleText, type RemapCounts } from './remap.js';
 import { renderContact, renderTones, writeReport, type SheetReport } from './review.js';
 import { SourceReader } from './source.js';
 import {
@@ -43,6 +44,8 @@ export interface BuiltFrame {
   mask: Img | null;
   offPalette: number;
   maxDeltaE: number;
+  /** The off-palette colours the snap moved: source hex → target, ΔE, pixels. */
+  moved: Map<string, { to: string; dE: number; pixels: number }>;
   dx: number;
   dy: number;
   shift: number;
@@ -64,6 +67,7 @@ export interface BuildResult {
   recipe: Recipe;
   anims: BuiltAnim[];
   skinProblems: SkinProblem[];
+  remapCounts: RemapCounts;
   report: SheetReport;
   /** Repo-relative path → file bytes, everything this recipe writes. */
   outputs: Map<string, Buffer>;
@@ -88,12 +92,14 @@ function orderedFacings(recipe: Recipe, anim: string): (Facing | null)[] {
   return SPRITE_FACINGS.filter((f) => order.includes(f) && a.facings?.[f]);
 }
 
-/** Builds every frame of a recipe in memory: steps 1–9 per frame, in order. */
+/** Builds every frame of a recipe in memory: steps 1–10 per frame, in order. */
 export function buildFrames(
   recipe: Recipe,
   root: string,
-): { anims: BuiltAnim[]; skinProblems: SkinProblem[] } {
+): { anims: BuiltAnim[]; skinProblems: SkinProblem[]; remapCounts: RemapCounts } {
   const reader = new SourceReader(root);
+  const file = `art/sheets/${recipe.sheet}.json`;
+  const remapCounts: RemapCounts = recipe.remap.map(() => new Map<string, number>());
   const spec = cellFor(recipe.kind);
   const fixes = new Map<string, [number, number, string | null][]>();
   for (const f of recipe.fixes) fixes.set(f.frame, [...(fixes.get(f.frame) ?? []), ...f.pixels]);
@@ -119,13 +125,22 @@ export function buildFrames(
         let img = reader.read(source.src, index, source.downscale, name);
         // 3. fixes.
         img = applyFixes(img, fixes.get(name) ?? [], name);
-        // 4. reserved colours, 5. snap, 6. outline by role.
+        // 4. remap.
+        const ref = { name, anim, facing };
+        const remapped = applyRemap(img, recipe.remap, ref, file);
+        img = remapped.img;
+        recipe.remap.forEach((rule, i) => {
+          const counts = remapCounts[i];
+          if (counts && appliesTo(rule, ref))
+            counts.set(anim, (counts.get(anim) ?? 0) + (remapped.taken[i] ?? 0));
+        });
+        // 5. reserved colours, 6. snap, 7. outline by role.
         checkReserved(img, name);
         const snapped = snap(img, name);
         const outlined = outline(snapped.img, recipe.outline);
-        // 7. place in the cell.
+        // 8. place in the cell.
         const placed = place(outlined.img, spec, ground, refRow, name, SPRITE_CANVAS);
-        // 8. despeckle, where the animation asks.
+        // 9. despeckle, where the animation asks.
         let cell = placed.img;
         let despeckled: number | null = null;
         if (a.despeckle) {
@@ -133,7 +148,7 @@ export function buildFrames(
           cell = d.img;
           despeckled = d.changed;
         }
-        // 9. the skin mask (Kindled).
+        // 10. the skin mask (Kindled).
         let mask: Img | null = null;
         let masked: number | null = null;
         if (recipe.kind === 'kindled') {
@@ -159,6 +174,7 @@ export function buildFrames(
           mask,
           offPalette: snapped.offPalette,
           maxDeltaE: snapped.maxDeltaE,
+          moved: snapped.moved,
           dx: placed.dx,
           dy: placed.dy,
           shift: placed.shift,
@@ -171,10 +187,14 @@ export function buildFrames(
       anims.push({ key, anim, facing, frames });
     }
   }
-  return { anims, skinProblems };
+  return { anims, skinProblems, remapCounts };
 }
 
-/** What a non-draft sheet is missing against its kind's animation table, as messages. */
+/**
+ * What a non-draft sheet is missing against its kind's animation table, as
+ * messages. Rows after `REQUIRED_MILESTONE` are optional, but complete when
+ * any facing of them is there.
+ */
 export function completenessProblems(recipe: Recipe, anims: readonly BuiltAnim[]): string[] {
   const table = recipeTable(recipe);
   if (!table) {
@@ -186,12 +206,16 @@ export function completenessProblems(recipe: Recipe, anims: readonly BuiltAnim[]
   const problems: string[] = [];
   const built = new Map(anims.map((a) => [a.key, a.frames.length]));
   for (const row of table) {
-    for (const facing of hasFacings(recipe.kind) ? row.facings : [null]) {
-      const key = animKey(row.name, facing);
+    const keys = (hasFacings(recipe.kind) ? row.facings : [null]).map((f) => animKey(row.name, f));
+    const required = isRequiredAnim(row);
+    if (!required && keys.every((k) => !built.has(k))) continue;
+    for (const key of keys) {
       const n = built.get(key);
       if (n === undefined)
         problems.push(
-          `${recipe.sheet}: ${key} is missing (a finished sheet carries every animation and facing)`,
+          required
+            ? `${recipe.sheet}: ${key} is missing (a finished sheet carries every animation and facing)`
+            : `${recipe.sheet}: ${key} is missing (${row.name} is optional until ${row.milestone}, but a finished sheet that has it carries every facing)`,
         );
       else if (n !== row.frames)
         problems.push(`${recipe.sheet}: ${key} has ${n} frames; the table says ${row.frames}`);
@@ -314,10 +338,13 @@ function uncoveredSwapKeys(sheet: Img, mask: Img): string[] {
  * review folder (contact.png, tones.png for the Kindled, report.md/.json).
  */
 export function buildRecipe(recipe: Recipe, root: string): BuildResult {
-  const { anims, skinProblems } = buildFrames(recipe, root);
+  const { anims, skinProblems, remapCounts } = buildFrames(recipe, root);
   const outputs = new Map<string, Buffer>();
   if (!recipe.draft) {
     const problems = completenessProblems(recipe, anims);
+    problems.push(
+      ...staleRules(remapCounts).map((i) => staleRuleText(recipe.sheet, i, recipe.remap[i])),
+    );
     problems.push(...skinProblems.map(skinProblemText));
     if (problems.length) throw new PipelineError(problems);
   }
@@ -344,12 +371,12 @@ export function buildRecipe(recipe: Recipe, root: string): BuildResult {
   outputs.set(`${review}/contact.png`, encodePng(renderContact(recipe, anims)));
   if (recipe.kind === 'kindled')
     outputs.set(`${review}/tones.png`, encodePng(renderTones(recipe, anims)));
-  const report = writeReport(recipe, anims, skinProblems, [
+  const report = writeReport(recipe, anims, skinProblems, remapCounts, [
     ...outputs.keys(),
     `${review}/report.md`,
     `${review}/report.json`,
   ]);
   outputs.set(`${review}/report.md`, Buffer.from(report.markdown));
   outputs.set(`${review}/report.json`, Buffer.from(`${JSON.stringify(report.json, null, 2)}\n`));
-  return { recipe, anims, skinProblems, report: report.json, outputs };
+  return { recipe, anims, skinProblems, remapCounts, report: report.json, outputs };
 }

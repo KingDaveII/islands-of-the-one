@@ -1,4 +1,11 @@
-import { defaultTuning, KINDLED_ANIMS, roomTemplates, spriteSheets } from '@iot/shared';
+import {
+  defaultTuning,
+  isRequiredAnim,
+  KINDLED_ANIMS,
+  roomTemplates,
+  spriteSheets,
+  type SpriteSheet,
+} from '@iot/shared';
 import { autopilot, createRun, stepRun, TURN, type HuskState, type Run } from '@iot/sim';
 import { describe, expect, it } from 'vitest';
 import {
@@ -19,29 +26,40 @@ const NUTSHELL = spriteSheets['husk-nutshell'];
 const NO_CLOCKS: Clocks = { hitMs: -1 };
 const deg = (d: number): number => Math.round((d * TURN) / 360) & (TURN - 1);
 
-/** Animations a run can show in M1 (carry and sit have no sim state yet). */
-const M1_PLAYABLE = KINDLED_ANIMS.map((a) => a.name).filter(
-  (n) => !n.startsWith('carry_') && n !== 'sit',
-);
+/** Animations a run can show in M1: the required rows (carry and sit are M2's and have no sim state yet). */
+const M1_PLAYABLE = KINDLED_ANIMS.filter(isRequiredAnim).map((a) => a.name);
+
+/** The Kindled sheet as a finished M1 sheet may ship: without the optional (M2) animations. */
+const KINDLED_M1: SpriteSheet = {
+  ...KINDLED,
+  anims: Object.fromEntries(
+    Object.entries(KINDLED.anims).filter(([key]) => M1_PLAYABLE.some((n) => key.startsWith(`${n}_`))),
+  ),
+};
 
 function newRun(seed: number): Run {
   return createRun({ seed, tuning: defaultTuning, rooms: roomTemplates, weapon: 'hookblade' });
 }
 
 /** Drive a run with the autopilot through the state machine, collecting the animations it showed. */
-function playthrough(run: Run, maxTicks: number, hits: Set<string> = new Set()): Set<string> {
+function playthrough(
+  run: Run,
+  maxTicks: number,
+  hits: Set<string> = new Set(),
+  sheet: SpriteSheet = KINDLED,
+): Set<string> {
   let hitAt = -1000;
   for (let i = 0; i < maxTicks && run.state.status === 'playing'; i++) {
     // Patient: the autopilot lets moves play out (it would otherwise cancel every recovery and pin into the next move).
     const events = stepRun(run, autopilot(run.state, run.params, { patient: true }));
     if (events.some((e) => e.type === 'playerHurt')) hitAt = run.state.tick;
     const sinceHit = ((run.state.tick - hitAt) * 1000) / 60;
-    const pose = kindledPose(run.state, run.params, KINDLED, {
+    const pose = kindledPose(run.state, run.params, sheet, {
       hitMs: hitAt < 0 ? -1 : sinceHit,
       deathMs: 0,
     });
-    expect(KINDLED.anims[pose.anim], pose.anim).toBeDefined();
-    expect(pose.frame).toBeLessThan(KINDLED.anims[pose.anim]?.frames.length ?? 0);
+    expect(sheet.anims[pose.anim], pose.anim).toBeDefined();
+    expect(pose.frame).toBeLessThan(sheet.anims[pose.anim]?.frames.length ?? 0);
     hits.add(pose.name);
   }
   return hits;
@@ -93,8 +111,12 @@ describe('frame timing helpers', () => {
     expect(sheetFacing(KINDLED, 'walk', deg(45))).toBe('SE');
     expect(sheetFacing(KINDLED, 'hit', deg(45))).toBe('S');
     expect(sheetFacing(KINDLED, 'death', deg(300))).toBe('N');
-    expect(sheetFacing(KINDLED, 'sit', deg(180))).toBe('E');
-    expect(sheetFacing(KINDLED, 'sit', deg(270))).toBe('S');
+    // sit is drawn in S and E only (an M2 animation, so a sheet of its own here).
+    const idle = KINDLED.anims.idle_S;
+    if (!idle) throw new Error('no idle_S');
+    const sitting: SpriteSheet = { ...KINDLED, anims: { sit_S: idle, sit_E: idle } };
+    expect(sheetFacing(sitting, 'sit', deg(180))).toBe('E');
+    expect(sheetFacing(sitting, 'sit', deg(270))).toBe('S');
   });
 });
 
@@ -395,5 +417,12 @@ describe('headless playtest (autopilot through the state machine)', () => {
     // Logged for the PR's playtest record (vitest shows stdout with --silent=false).
     console.log(`Kindled animations played: ${[...shown].sort().join(', ')}`);
     expect(missing).toEqual([]);
+  });
+
+  it('plays on a finished M1 sheet without carry or sit: nothing asks for them', () => {
+    expect(Object.keys(KINDLED_M1.anims).some((k) => /^(carry_|sit_)/.test(k))).toBe(false);
+    const shown = playthrough(newRun(1234), 60 * 60, new Set(), KINDLED_M1);
+    playthrough(newRun(5), 60 * 20, shown, KINDLED_M1);
+    expect([...shown].filter((n) => !M1_PLAYABLE.includes(n))).toEqual([]);
   });
 });

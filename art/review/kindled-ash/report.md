@@ -10,11 +10,12 @@ Kind kindled, outline player, cell 112×80, origin (56, 64). A draft writes this
 - Outline gaps (edge pixels not in an outline colour): 177.
 - Masked skin pixels: 4126.
 - Loop seam flags (last → first above 1.5× the mean change): none.
-- Body bob flags (top row moves more than 1 px): walk_S, walk_E, walk_NE, walk_N.
+- Body bob flags (top row moves more than 2 px): none.
 - Held frames (identical neighbours): none.
 - Frames with more than 12 colours: idle_SE_0, idle_E_0, idle_W_0, idle_SW_0, walk_SE_0, walk_SE_1, walk_SE_2, walk_SE_3, walk_SE_4, walk_SE_5, walk_E_0, walk_E_1, walk_E_2, walk_E_3, walk_E_4, walk_E_5, light_1_S_0, light_1_S_1, light_1_S_2, light_1_E_0, light_1_E_1, light_1_E_2.
 - Skin regions to resolve: 171 (reported because this is a draft; a finished sheet fails on them).
 - Missing against the contract's table: idle_S: 1 of 2 frames, idle_SE: 1 of 2 frames, idle_E: 1 of 2 frames, idle_NE: 1 of 2 frames, idle_N: 1 of 2 frames, idle_NW: 1 of 2 frames, idle_W: 1 of 2 frames, idle_SW: 1 of 2 frames, walk NW W SW, dodge (all facings), light_1 SE NE N NW W SW, light_2 (all facings), light_3 (all facings), heavy_charge (all facings), heavy_thrust (all facings), heavy_hold (all facings), heavy_recover (all facings), haul_throw (all facings), haul_recover (all facings), haul_pull (all facings), haul_slide (all facings), hit (all facings), death (all facings), carry_idle (all facings), carry_walk (all facings), sit (all facings).
+- Optional (after M1: a finished sheet may leave them out, but carries every facing of any it has): carry_idle (M2), carry_walk (M2), sit (M2).
 
 ## Review images
 
@@ -34,11 +35,11 @@ Rows, top to bottom: idle_S, idle_SE, idle_E, idle_NE, idle_N, idle_NW, idle_W, 
 | idle_NW | 1 |  | 48 (range 0) |  |
 | idle_W | 1 |  | 48 (range 0) |  |
 | idle_SW | 1 |  | 49 (range 0) |  |
-| walk_S | 6 | 599 / 634.8 | 47 49 48 47 49 48 (range 2) **flag** |  |
+| walk_S | 6 | 599 / 634.8 | 47 49 48 47 49 48 (range 2) |  |
 | walk_SE | 6 | 368 / 429.6 | 49 48 48 49 49 49 (range 1) |  |
-| walk_E | 6 | 492 / 475 | 48 48 48 48 46 48 (range 2) **flag** |  |
-| walk_NE | 6 | 273 / 393.2 | 48 50 49 48 49 49 (range 2) **flag** |  |
-| walk_N | 6 | 169 / 319.4 | 48 49 48 47 49 48 (range 2) **flag** |  |
+| walk_E | 6 | 492 / 475 | 48 48 48 48 46 48 (range 2) |  |
+| walk_NE | 6 | 273 / 393.2 | 48 50 49 48 49 49 (range 2) |  |
+| walk_N | 6 | 169 / 319.4 | 48 49 48 47 49 48 (range 2) |  |
 | light_1_S | 3 |  |  |  |
 | light_1_E | 3 |  |  |  |
 
@@ -92,6 +93,33 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 | light_1_E_0 | `art/raw/g13b-job4/player/attack-v3/east 1` | 12 | 7.44 | -3 | 20, 3 | 0 | 13 **flag** | 110 |
 | light_1_E_1 | `art/raw/g13b-job4/player/attack-v3/east 3` | 37 | 7.44 | -3 | 20, 3 | 3 | 18 **flag** | 115 |
 | light_1_E_2 | `art/raw/g13b-job4/player/attack-v3/east 5` | 40 | 7.44 | -3 | 20, 3 | 1 | 16 **flag** | 122 |
+
+## Off-palette colours the snap moved
+
+86 source colours reached the snap off the whitelist. The 20 with the most pixels, with the colour the snap sent each to and that colour's ramp (the material rows of `art/anchors/style-sheet.md`). A colour that lands in the wrong material needs a `remap` rule.
+
+| Colour | Pixels | Snapped to | ΔE | Ramp | Frames |
+|---|---|---|---|---|---|
+| #32314f | 284 | sleeper-night #24305a | 2.98 | water, hair | idle_SE 0; idle_E 0; walk_SE 0–5; walk_E 0–5; light_1_E 0–2 |
+| #6e7186 | 111 | watcher-stone #7d8794 | 6.77 | cloth, steel | idle_SE 0; idle_E 0; idle_W 0; idle_SW 0; walk_SE 0–5; walk_E 0–5; light_1_E 0–2 |
+| #3d4152 | 80 | watcher-iron #4a4e57 | 4.72 | cloth, steel | idle_SE 0; idle_E 0; idle_W 0; walk_SE 0–3 5; walk_E 0–5; light_1_E 0 1 |
+| #6e6357 | 73 | unwritten-tar #5e5448 | 5.45 | skin | idle_SE 0; idle_E 0; idle_W 0; idle_SW 0; walk_SE 0–5; walk_E 0–5; light_1_E 0–2 |
+| #383446 | 60 | sleeper-night #24305a | 5.18 | water, hair | idle_SE 0; idle_E 0; idle_W 0; idle_SW 0; walk_SE 0–5; light_1_E 0–2 |
+| #40383e | 53 | watcher-iron #4a4e57 | 7.44 | cloth, steel | idle_E 0; idle_W 0; walk_E 0–5; light_1_E 0–2 |
+| #7c7166 | 43 | unwritten-sail #8c7f6e | 4.87 | skin | idle_SE 0; idle_W 0; idle_SW 0; walk_SE 0–5 |
+| #9c896e | 42 | unwritten-sail #8c7f6e | 3.97 | skin | idle_SE 0; idle_E 0; idle_SW 0; walk_SE 0–5; walk_E 5; light_1_E 0–2 |
+| #959ca7 | 32 | hollow-dusk #a99fc4 | 5.28 | shell, stone | idle_E 0; idle_W 0; idle_SW 0; walk_E 0–5; light_1_E 0 1 |
+| #70778a | 29 | watcher-stone #7d8794 | 5.05 | cloth, steel | light_1_S 0–2 |
+| #8c92a0 | 29 | watcher-stone #7d8794 | 4.04 | cloth, steel | idle_SE 0; idle_W 0; idle_SW 0; walk_SE 0–2 4 5 |
+| #4a4367 | 24 | watcher-iron #4a4e57 | 4.97 | cloth, steel | idle_SE 0; idle_W 0; idle_SW 0; walk_SE 0–2 4 5 |
+| #1a1c31 | 22 | dream-night #1c2147 | 4.27 | player outline, paper | light_1_S 0–2 |
+| #bebfc2 | 19 | sleeper-soil #e3c29e | 7.11 | red clay | idle_SE 0; idle_W 0; walk_SE 0–5 |
+| #d7d2cc | 18 | hollow-lavender #d9d2e9 | 4.09 | stone | light_1_S 0–2 |
+| #5f565d | 18 | unwritten-tar #5e5448 | 3.24 | skin | idle_SE 0; idle_W 0; idle_SW 0; walk_SE 0 5 |
+| #7c6e5f | 17 | unwritten-sail #8c7f6e | 5.65 | skin | light_1_S 0–2 |
+| #d8ccbe | 17 | sleeper-soil #e3c29e | 4.17 | red clay | idle_SE 0; walk_SE 0–5 |
+| #6a3e46 | 16 | unwritten-tar #5e5448 | 6.51 | skin | idle_SE 0; walk_SE 0–5 |
+| #ab926d | 14 | sleeper-flesh #c98f78 | 5.28 | red clay | idle_SE 0; walk_SE 0–5 |
 
 ## Skin regions to resolve
 

@@ -58,8 +58,14 @@ The engine, the §6 test and the G1.2 pipeline read these numbers from `packages
 ## 4. Animations
 
 **The tables live in code** (`packages/shared/src/sprites.ts`, G1.2b): `KINDLED_ANIMS`, `HUSK_TABLES` (one per Husk),
-`NPC_ANIMS` and `PROP_IDLE`, each row a frame count, fps, loop, hold and facings. The tables below describe them;
+`NPC_ANIMS` and `PROP_IDLE`, each row a frame count, fps, loop, hold, facings and milestone. The tables below describe them;
 if the two ever disagree, the code is the contract the sheet test and the art pipeline hold sheets to.
+
+**Milestones (G1.2c).** Each row's `milestone` is the milestone that first uses it, and `REQUIRED_MILESTONE`
+(`"M1"`) is the one a finished sheet is complete for: it carries every row at or before it, and later rows are
+optional. An optional animation that is there is still complete (every facing, the right frame count). Only the
+Kindled's `carry_idle`, `carry_walk` and `sit` are M2 (the Milestone column below); every other row of every
+table is M1. M2 Task 9, or whichever task first uses carry or sit, moves `REQUIRED_MILESTONE` to `"M2"`.
 
 **Which kind a sheet is comes from its name's prefix:** `kindled-`, `husk-`, `npc-`, `prop-`. One function,
 `spriteSheetSpec(name)`, maps a name to its kind, its cell (§2) and its table; an unknown prefix fails. A later enemy
@@ -69,24 +75,24 @@ Frame rates are per animation; `hold` means the last frame stays until the state
 
 ### Kindled (per Remembrance sheet)
 
-| Name | Frames | fps | Loop | Facings | Notes |
-|---|---|---|---|---|---|
-| `idle` | 2 | 2 | yes | 8 | a breath: one pixel of chest and hood |
-| `walk` | 6 | 10 | yes | 8 | 8 px per cycle; the blade bobs with the hand |
-| `dodge` | 4 | 16 | no | 8 | 1 = crouch, 2–3 = the roll (body a 12×12 ball), 4 = recover; frame 2–3 are the perfect-dodge window art |
-| `light_1`, `light_2`, `light_3` | 3 each | 15 | no | 8 | wind-up, swing (the arc), recover; `light_3` ends lower |
-| `heavy_charge` | 3 | 12 | hold last | 8 | the drawn-back stance; the spark comes from `hookblade-fx` at the tip, not from the sheet |
-| `heavy_thrust` | 2 | 20 | no | 8 | the line: hand forward, blade full length |
-| `heavy_hold` | 1 | — | hold | 8 | the pin: 150 ms, the enemy on the hook |
-| `heavy_recover` | 2 | 12 | no | 8 | |
-| `haul_throw` | 2 | 15 | hold last | 8 | arm out; chain and hook from `hookblade-fx`; the last frame holds while the hook flies |
-| `haul_recover` | 2 | 12 | no | 8 | the arm comes back as the chain reels in, over the Haul's recovery (1:1), so the move ends at rest like the light and heavy |
-| `haul_pull` | 2 | 12 | yes | 8 | the brace: feet planted, both hands on the chain |
-| `haul_slide` | 2 | 12 | yes | 8 | the heavy branch: the player dragged, cloak streaming back |
-| `hit` | 2 | — | hold last | 4 | 0 = the flinch (the first 100 ms of the stun, alone on an armored hit), 1 = the stagger held to the end of the hurt stun; the engine flashes it #FFFFFF (the only pure white) |
-| `death` | 6 | 8 | no | 4 | the fall, then the freckles go out one by one on the last three frames |
-| `carry_idle`, `carry_walk` | 2, 6 | 2, 10 | yes | 4 | both arms round the Glowing Shell (hour two) |
-| `sit` | 1 | — | hold | 2 (S, E) | the ebb, by the post |
+| Name | Frames | fps | Loop | Facings | Milestone | Notes |
+|---|---|---|---|---|---|---|
+| `idle` | 2 | 2 | yes | 8 | M1 | a breath: one pixel of chest and hood |
+| `walk` | 6 | 10 | yes | 8 | M1 | 8 px per cycle; the blade bobs with the hand |
+| `dodge` | 4 | 16 | no | 8 | M1 | 1 = crouch, 2–3 = the roll (body a 12×12 ball), 4 = recover; frame 2–3 are the perfect-dodge window art |
+| `light_1`, `light_2`, `light_3` | 3 each | 15 | no | 8 | M1 | wind-up, swing (the arc), recover; `light_3` ends lower |
+| `heavy_charge` | 3 | 12 | hold last | 8 | M1 | the drawn-back stance; the spark comes from `hookblade-fx` at the tip, not from the sheet |
+| `heavy_thrust` | 2 | 20 | no | 8 | M1 | the line: hand forward, blade full length |
+| `heavy_hold` | 1 | — | hold | 8 | M1 | the pin: 150 ms, the enemy on the hook |
+| `heavy_recover` | 2 | 12 | no | 8 | M1 | |
+| `haul_throw` | 2 | 15 | hold last | 8 | M1 | arm out; chain and hook from `hookblade-fx`; the last frame holds while the hook flies |
+| `haul_recover` | 2 | 12 | no | 8 | M1 | the arm comes back as the chain reels in, over the Haul's recovery (1:1), so the move ends at rest like the light and heavy |
+| `haul_pull` | 2 | 12 | yes | 8 | M1 | the brace: feet planted, both hands on the chain |
+| `haul_slide` | 2 | 12 | yes | 8 | M1 | the heavy branch: the player dragged, cloak streaming back |
+| `hit` | 2 | — | hold last | 4 | M1 | 0 = the flinch (the first 100 ms of the stun, alone on an armored hit), 1 = the stagger held to the end of the hurt stun; the engine flashes it #FFFFFF (the only pure white) |
+| `death` | 6 | 8 | no | 4 | M1 | the fall, then the freckles go out one by one on the last three frames |
+| `carry_idle`, `carry_walk` | 2, 6 | 2, 10 | yes | 4 | M2 | both arms round the Glowing Shell (hour two) |
+| `sit` | 1 | — | hold | 2 (S, E) | M2 | the ebb, by the post |
 
 M2 adds the station animations (`chop`, `hoe`, `fish`, `knead`: 4 frames, 8 fps, 2 facings) on the same sheet.
 
@@ -193,9 +199,10 @@ tasks register NPC sheets as they use them). Every name must have a known kind (
 1. `meta.image` exists; the PNG's size equals `meta.size`; width and height are multiples of the cell.
 2. Every `frames[*].frame` lies inside the PNG and on the cell grid; `w`/`h` equal the cell.
 3. Every name in every `anims[*].frames` exists in `frames`; every frame belongs to at least one anim.
-4. Every sheet carries its kind's table (§4), and nothing else: every animation, for every facing it lists (Kindled
-   and NPCs, which also carry `meta.facings`; Husks and props have none), with the table's frame count, rate, loop and
-   hold; a prop's `idle` has 1–8 frames. Husk `telegraph` frames are pre-tinted. Only Kindled sheets have a palette
+4. Every sheet carries its kind's table (§4), and nothing else: every animation up to `REQUIRED_MILESTONE`, for every
+   facing it lists (Kindled and NPCs, which also carry `meta.facings`; Husks and props have none), with the table's
+   frame count, rate, loop and hold; a later (optional) animation is either absent or complete the same way; a prop's
+   `idle` has 1–8 frames. Husk `telegraph` frames are pre-tinted. Only Kindled sheets have a palette
    block. `anchor` matches `meta.origin / cell`.
 5. Every opaque pixel's colour is in the 32-colour palette (tokens.json), the telegraph colours only in `telegraph_*` frames, #FFFFFF nowhere.
 6. Every `palette.swaps` key is one of the four clay tones and every swapped hex occurs in the PNG.
@@ -232,7 +239,7 @@ What `apps/client` does with a sheet (MAIN, M1 task 5). Nothing here is in the s
   - `haul_throw` (the arm out over the startup, the last frame only while the hook flies), `haul_pull` while the chain pulls a Husk, `haul_slide` while it pulls the player, then `haul_recover` over the recovery (its first frame while the active ticks run out after a miss);
   - `hit` through the hurt stun (180 ms): frame 0, the flinch, for the first 100 ms, frame 1, the stagger, held to the end of the stun; frame 0 alone for 100 ms after an armored hit that does not stun; `death` at the sheet's rate once the sim has stopped (a client clock, the only one besides the armored hit frame and the Nutshell regrow);
   - an animation with fewer facings than 8 takes the nearest it has: diagonals go to the nearest of the 4 (ties clockwise: SE→S, NE→E, NW→N, SW→W), `sit` to S or E. Attacks, the dodge and the Haul face the direction the sim locked at their start; idle, charge and the hit face the aim.
-  - `carry_*` and `sit` have no sim state yet (hour two, M2).
+  - `carry_*` and `sit` have no sim state yet (hour two, M2), so the engine never asks for them and a finished M1 sheet may leave them out (§4, milestones; `animState.test.ts` plays a run on a sheet without them).
 - **Timing.** The sim's move windows are the authority: an animation with a window is stretched or cut to its ticks. Its frames are split between the phases by fixed shares (lights 1:1:1, dodge 1:2:1, thrust 1:1 over startup and active) and spread evenly inside each phase, so a sheet may change a frame count without touching the engine. Loops and one-shots count sim ticks at the sheet's `frameRate`, so they freeze in hitstop and slow with slow-mo.
 - **Husks.** `spawn` stretched over the spawn-in (`spawnMs`), the engine's ring under it, the Husk not awake until it ends; `idle`; the Nutshell's `walk` by velocity while it chases whole (a chipped Nutshell keeps its chipped frame); `telegraph` through the wind-up, blinking with the resting frame while the attack still tracks the player and solid once it has locked (the sheet's pre-tinted frames are the telegraph colour); `lunge` stretch and hit over the Peeling's active ticks, settle through its recovery; the Nutshell's `slam`, frame 0 over the first half of its active ticks and frame 1 over the second, held through the recovery; `hit` for 100 ms after a hit; `chipped` / `chipped_outer` / `chipped_inner` once shell layers are gone; `regrow` as a one-shot on the regrow event; `death` then `drop` (250 ms) on a transient kept after the sim removes the Husk, where the engine's Sparkglass pickups fly out. `flipX` when a Husk moves or lunges west.
 - **Effects stay in the engine:** the grounding shadow (20×6 world px under a Kindled, a Husk's scaled by its radius against the player's), the white hit flash (a fill tint for `juice.hitFlashFrames`), chips and the core flare as particles, the slash arc and thrust line (hitbox flashes), poise bars, the perfect-dodge trail (the sprite's frame as spark-glow afterimages over a 1 px hollow-deep rim) and the Hookblade FX at the hook tip (chain, hook, charge spark).

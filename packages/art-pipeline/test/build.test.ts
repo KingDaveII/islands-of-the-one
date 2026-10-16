@@ -7,23 +7,30 @@ import {
   HUSK_TABLES,
   kindledFrameName,
   propIdleSpec,
+  isRequiredAnim,
   SPRITE_FACINGS,
   spriteSheetSpec,
+  type SpriteAnimSpec,
   type SpriteSheet,
 } from '@iot/shared';
-import { v2Problems } from '../../shared/test/sheetChecks.js';
+import { tableProblems, v2Problems } from '../../shared/test/sheetChecks.js';
 import { APP_ID, buildRecipe, pack, type BuiltAnim } from '../src/build.js';
 import { PipelineError } from '../src/errors.js';
 import { blank, hexAt, opaqueAt } from '../src/image.js';
+import { animChecks, BOB_FLAG } from '../src/review.js';
 import { decodePng } from '../src/png.js';
 import { parseRecipe, type Recipe } from '../src/recipe.js';
 import { buildAndWrite, checkAll } from '../src/sheets.js';
 import { C, figure, rect, tempRoot, writeImg, writeRecipe } from './helpers.js';
 
-/** A full Kindled recipe: every animation, facing and frame in the table, all from one figure. */
-function fullKindled(src: string, extra: Record<string, unknown> = {}): Record<string, unknown> {
+/** A full Kindled recipe: every animation (of `rows`), facing and frame in the table, all from one figure. */
+function fullKindled(
+  src: string,
+  extra: Record<string, unknown> = {},
+  rows: readonly SpriteAnimSpec[] = KINDLED_ANIMS,
+): Record<string, unknown> {
   const anims: Record<string, unknown> = {};
-  for (const a of KINDLED_ANIMS) {
+  for (const a of rows) {
     anims[a.name] = {
       facings: Object.fromEntries(
         a.facings.map((f) => [f, { src, frames: Array.from({ length: a.frames }, () => 0) }]),
@@ -164,14 +171,60 @@ describe('a finished Kindled sheet', () => {
   it('fails when an animation, facing or frame is missing', () => {
     const json = fullKindled('art/clean/fig.png');
     const anims = json.anims as Record<string, { facings: Record<string, { frames: number[] }> }>;
-    delete anims.sit;
+    delete anims.dodge;
     delete anims.walk?.facings.SW;
     anims.idle?.facings.S?.frames.pop();
     expect(problemsOf(() => build(root, json))).toEqual([
       'kindled-test: idle_S has 1 frames; the table says 2',
       'kindled-test: walk_SW is missing (a finished sheet carries every animation and facing)',
-      'kindled-test: sit_S is missing (a finished sheet carries every animation and facing)',
-      'kindled-test: sit_E is missing (a finished sheet carries every animation and facing)',
+      ...SPRITE_FACINGS.map(
+        (f) =>
+          `kindled-test: dodge_${f} is missing (a finished sheet carries every animation and facing)`,
+      ),
+    ]);
+  });
+
+  it('passes without the M2 animations (carry_idle, carry_walk, sit), on the shared sheet checks too', () => {
+    const m1 = KINDLED_ANIMS.filter(isRequiredAnim);
+    expect(KINDLED_ANIMS.filter((a) => !isRequiredAnim(a)).map((a) => a.name)).toEqual([
+      'carry_idle',
+      'carry_walk',
+      'sit',
+    ]);
+    const r = build(root, fullKindled('art/clean/fig.png', {}, m1));
+    const json = JSON.parse(
+      r.outputs.get('packages/shared/assets/sprites/kindled-test.json')?.toString() ?? '{}',
+    ) as SpriteSheet;
+    const sheetPng = decodePng(
+      r.outputs.get('packages/shared/assets/sprites/kindled-test.png') ?? Buffer.alloc(0),
+    );
+    const sheetMask = decodePng(
+      r.outputs.get('packages/shared/assets/sprites/kindled-test.skin.png') ?? Buffer.alloc(0),
+    );
+    expect(
+      Object.keys(json.anims).some((k) => k.startsWith('carry_') || k.startsWith('sit_')),
+    ).toBe(false);
+    expect(tableProblems('kindled-test', json, KINDLED_ANIMS)).toEqual([]);
+    expect(
+      v2Problems(
+        'kindled-test',
+        json,
+        { width: sheetPng.w, height: sheetPng.h, rgba: sheetPng.data },
+        { width: sheetMask.w, height: sheetMask.h, rgba: sheetMask.data },
+      ),
+    ).toEqual([]);
+    expect(r.report.optional).toEqual(['carry_idle (M2)', 'carry_walk (M2)', 'sit (M2)']);
+  });
+
+  it('fails an optional animation that is there but incomplete', () => {
+    const json = fullKindled('art/clean/fig.png');
+    const anims = json.anims as Record<string, { facings: Record<string, { frames: number[] }> }>;
+    delete anims.sit?.facings.E;
+    delete anims.carry_idle;
+    anims.carry_walk?.facings.N?.frames.pop();
+    expect(problemsOf(() => build(root, json))).toEqual([
+      'kindled-test: carry_walk_N has 5 frames; the table says 6',
+      'kindled-test: sit_E is missing (sit is optional until M2, but a finished sheet that has it carries every facing)',
     ]);
   });
 
@@ -276,6 +329,134 @@ describe('the mask rule on a hand-made figure', () => {
   });
 });
 
+describe('remap in a build', () => {
+  const root = tempRoot();
+  // A cloth belt in a generator grey that snaps to unwritten-tar, into the skin ramp.
+  const GREY = '#6e6357';
+  writeImg(root, 'art/clean/grey-belt.png', figure(GREY).img);
+  const rescue = [{ from: [GREY], to: 'watcher-iron' }];
+  const draft = (extra: Record<string, unknown>) => ({
+    ...fullKindled('art/clean/grey-belt.png'),
+    draft: true,
+    anims: {
+      idle: { facings: { S: { src: 'art/clean/grey-belt.png', frames: [0] } } },
+      walk: { facings: { S: { src: 'art/clean/grey-belt.png', frames: [0, 0] } } },
+    },
+    ...extra,
+  });
+
+  it('rescues a grey that would snap into the skin ramp, so the skin-region check passes', () => {
+    const without = problemsOf(() => build(root, fullKindled('art/clean/grey-belt.png')));
+    expect(without).toContain(
+      'idle_S_0: a region of 24 px in the skin colours at [[26, 33], [37, 34]] (source pixels) has no unwritten-sail pixel and touches no freckle; ' +
+        'add it with skin.add if it is skin, or recolour it with fixes if not',
+    );
+    const r = build(root, fullKindled('art/clean/grey-belt.png', { remap: rescue }));
+    expect(r.skinProblems).toEqual([]);
+    expect(hexAt(r.anims[0]?.frames[0]?.cell ?? blank(1, 1), 24 + 30, 10 + 33)).toBe(
+      C['watcher-iron'],
+    );
+  });
+
+  it('reports the pixels each rule took per animation, and the top off-palette colours with their ramp', () => {
+    const before = build(root, draft({}));
+    expect(before.report.remap).toEqual([]);
+    expect(before.report.snappedColours).toBe(1);
+    expect(before.report.snapped).toEqual([
+      {
+        colour: GREY,
+        pixels: 72,
+        to: C['unwritten-tar'],
+        deltaE: 5.45,
+        materials: ['skin'],
+        frames: ['idle_S_0', 'walk_S_0', 'walk_S_1'],
+      },
+    ]);
+    const md = before.outputs.get('art/review/kindled-test/report.md')?.toString() ?? '';
+    expect(md).toContain('## Off-palette colours the snap moved');
+    expect(md).toContain(
+      `| ${GREY} | 72 | unwritten-tar #5e5448 | 5.45 | skin | idle_S 0; walk_S 0 1 |`,
+    );
+
+    const after = build(
+      root,
+      draft({ remap: [...rescue, { from: [GREY], to: 'watcher-bronze', anims: ['walk'] }] }),
+    );
+    expect(after.report.snapped).toEqual([]);
+    expect(after.report.remap).toEqual([
+      {
+        rule: 0,
+        maps: `from ${GREY} → watcher-iron`,
+        scope: 'everywhere',
+        pixels: { idle: 24, walk: 48 },
+        total: 72,
+        stale: false,
+      },
+      {
+        rule: 1,
+        maps: `from ${GREY} → watcher-bronze`,
+        scope: 'anims walk',
+        pixels: { walk: 0 },
+        total: 0,
+        stale: true,
+      },
+    ]);
+  });
+
+  it('a stale rule (one that matches no pixel where it applies) fails a finished sheet and is reported in a draft', () => {
+    const stale = { near: '#123456', within: 3, to: 'watcher-iron', facings: ['S'] };
+    const message =
+      'kindled-test: remap[1] (near #123456 within 3 → watcher-iron) matches no pixel in any frame it applies to; remove it, or fix its colours or scope';
+    expect(
+      problemsOf(() =>
+        build(root, fullKindled('art/clean/grey-belt.png', { remap: [...rescue, stale] })),
+      ),
+    ).toEqual([message]);
+    const r = build(root, draft({ remap: [...rescue, stale] }));
+    expect(r.report.staleRemap).toEqual([message]);
+    const md = r.outputs.get('art/review/kindled-test/report.md')?.toString() ?? '';
+    expect(md).toContain(
+      '- Remap rules: 2; stale (match no pixel in any frame they apply to): remap[1] (reported because this is a draft; a finished sheet fails on them).',
+    );
+    expect(md).toContain(`- ${message}`);
+  });
+
+  it('fails a rectangle outside the source frame, in a draft too', () => {
+    const json = draft({ remap: [{ from: [GREY], to: 'watcher-iron', box: [60, 60, 64, 63] }] });
+    expect(problemsOf(() => build(root, json))).toEqual([
+      'art/sheets/kindled-test.json: remap[0].box [60, 60, 64, 63] reaches outside the 64×64 source frame of idle_S_0',
+    ]);
+  });
+});
+
+describe('the body bob flag', () => {
+  /** A walk whose top row sits `tops` rows above the soles, frame by frame. */
+  const walk = (tops: number[]): BuiltAnim => ({
+    key: 'walk_S',
+    anim: 'walk',
+    facing: 'S',
+    frames: tops.map((t, n) => {
+      const cell = blank(112, 80);
+      rect(cell, 50, 63 - t, 4, t + 1, C['watcher-iron']);
+      return { name: `walk_S_${n}`, cell } as BuiltAnim['frames'][number];
+    }),
+  });
+
+  it('allows 2 px at B and flags 3', () => {
+    expect(BOB_FLAG).toBe(2);
+    expect(animChecks(walk([45, 47, 46, 45, 47, 46]), 63, true).bob).toEqual({
+      tops: [45, 47, 46, 45, 47, 46],
+      range: 2,
+      flag: false,
+    });
+    expect(animChecks(walk([45, 48, 46, 45, 47, 46]), 63, true).bob).toEqual({
+      tops: [45, 48, 46, 45, 47, 46],
+      range: 3,
+      flag: true,
+    });
+  });
+});
+
 describe('packing', () => {
   it('fails when the frames do not fit in 2048×2048', () => {
     const cell = blank(112, 80);
@@ -358,27 +539,7 @@ describe('a finished Husk, NPC and prop sheet', () => {
       spec.kind === 'prop'
         ? [propIdleSpec(sheet.anims.idle?.frames.length ?? 0, sheet.anims.idle?.frameRate)]
         : (spec.anims ?? []);
-    const keys: string[] = [];
-    for (const a of table) {
-      for (const f of spec.facings ? a.facings : [null]) {
-        const key = f ? kindledAnimKey(a.name, f) : a.name;
-        keys.push(key);
-        const def = sheet.anims[key];
-        const names = Array.from({ length: a.frames }, (_, n) =>
-          f ? kindledFrameName(a.name, f, n) : `${a.name}_${n}`,
-        );
-        if (JSON.stringify(def?.frames) !== JSON.stringify(names))
-          problems.push(`${key}: frames ${JSON.stringify(def?.frames)}`);
-        if (
-          def?.frameRate !== a.fps ||
-          def.repeat !== (a.loop ? -1 : 0) ||
-          (def.hold ?? false) !== a.hold
-        )
-          problems.push(`${key}: timing`);
-      }
-    }
-    if (JSON.stringify(Object.keys(sheet.anims).sort()) !== JSON.stringify(keys.sort()))
-      problems.push('anims outside the table');
+    problems.push(...tableProblems(name, sheet, table));
     if (
       JSON.stringify(sheet.meta.facings) !==
       JSON.stringify(spec.facings ? [...SPRITE_FACINGS] : undefined)

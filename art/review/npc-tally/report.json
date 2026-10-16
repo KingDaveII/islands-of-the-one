@@ -44,7 +44,330 @@
     "idle_SW: 1 of 2 frames",
     "walk (all facings)"
   ],
+  "optional": [],
   "skinProblems": [],
+  "remap": [],
+  "staleRemap": [],
+  "snappedColours": 28,
+  "snapped": [
+    {
+      "colour": "#8c4a44",
+      "pixels": 78,
+      "to": "#9c5b4a",
+      "deltaE": 5.52,
+      "materials": [
+        "ember",
+        "red clay"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_E_0",
+        "idle_NE_0",
+        "idle_N_0",
+        "idle_NW_0",
+        "idle_SW_0"
+      ]
+    },
+    {
+      "colour": "#e9d3b6",
+      "pixels": 35,
+      "to": "#e8e2d6",
+      "deltaE": 4.67,
+      "materials": [
+        "shell",
+        "steel"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_E_0",
+        "idle_NE_0",
+        "idle_NW_0",
+        "idle_W_0",
+        "idle_SW_0"
+      ]
+    },
+    {
+      "colour": "#3c3049",
+      "pixels": 18,
+      "to": "#24305a",
+      "deltaE": 4.93,
+      "materials": [
+        "water",
+        "hair"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_E_0",
+        "idle_NE_0",
+        "idle_N_0",
+        "idle_NW_0",
+        "idle_SW_0"
+      ]
+    },
+    {
+      "colour": "#e8d9c4",
+      "pixels": 18,
+      "to": "#e8e2d6",
+      "deltaE": 2.73,
+      "materials": [
+        "shell",
+        "steel"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_NE_0",
+        "idle_N_0",
+        "idle_NW_0",
+        "idle_W_0",
+        "idle_SW_0"
+      ]
+    },
+    {
+      "colour": "#d7a889",
+      "pixels": 16,
+      "to": "#c98f78",
+      "deltaE": 6.82,
+      "materials": [
+        "red clay"
+      ],
+      "frames": [
+        "idle_E_0",
+        "idle_NE_0",
+        "idle_N_0",
+        "idle_W_0",
+        "idle_SW_0"
+      ]
+    },
+    {
+      "colour": "#4e4669",
+      "pixels": 15,
+      "to": "#4a4e57",
+      "deltaE": 4.52,
+      "materials": [
+        "cloth",
+        "steel"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_E_0",
+        "idle_NE_0",
+        "idle_N_0",
+        "idle_NW_0",
+        "idle_W_0",
+        "idle_SW_0"
+      ]
+    },
+    {
+      "colour": "#dbb28f",
+      "pixels": 14,
+      "to": "#e3c29e",
+      "deltaE": 4.31,
+      "materials": [
+        "red clay"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_E_0",
+        "idle_NE_0",
+        "idle_NW_0",
+        "idle_W_0",
+        "idle_SW_0"
+      ]
+    },
+    {
+      "colour": "#574151",
+      "pixels": 9,
+      "to": "#4a4e57",
+      "deltaE": 4.14,
+      "materials": [
+        "cloth",
+        "steel"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_NE_0",
+        "idle_N_0",
+        "idle_NW_0",
+        "idle_SW_0"
+      ]
+    },
+    {
+      "colour": "#865549",
+      "pixels": 8,
+      "to": "#9c5b4a",
+      "deltaE": 4.56,
+      "materials": [
+        "ember",
+        "red clay"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_NW_0",
+        "idle_SW_0"
+      ]
+    },
+    {
+      "colour": "#76584e",
+      "pixels": 7,
+      "to": "#5e5448",
+      "deltaE": 4.55,
+      "materials": [
+        "skin"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_NW_0",
+        "idle_W_0",
+        "idle_SW_0"
+      ]
+    },
+    {
+      "colour": "#ba7e68",
+      "pixels": 6,
+      "to": "#c9733a",
+      "deltaE": 5.23,
+      "materials": [
+        "ember"
+      ],
+      "frames": [
+        "idle_E_0",
+        "idle_N_0",
+        "idle_NW_0"
+      ]
+    },
+    {
+      "colour": "#4e4245",
+      "pixels": 6,
+      "to": "#4a4e57",
+      "deltaE": 3.94,
+      "materials": [
+        "cloth",
+        "steel"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_E_0",
+        "idle_W_0",
+        "idle_SW_0"
+      ]
+    },
+    {
+      "colour": "#e1b488",
+      "pixels": 5,
+      "to": "#e3c29e",
+      "deltaE": 3.8,
+      "materials": [
+        "red clay"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_SW_0"
+      ]
+    },
+    {
+      "colour": "#3c3954",
+      "pixels": 4,
+      "to": "#24305a",
+      "deltaE": 5.23,
+      "materials": [
+        "water",
+        "hair"
+      ],
+      "frames": [
+        "idle_NE_0",
+        "idle_NW_0",
+        "idle_W_0"
+      ]
+    },
+    {
+      "colour": "#a26d5e",
+      "pixels": 4,
+      "to": "#9c5b4a",
+      "deltaE": 4.87,
+      "materials": [
+        "ember",
+        "red clay"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_N_0",
+        "idle_W_0"
+      ]
+    },
+    {
+      "colour": "#825e53",
+      "pixels": 4,
+      "to": "#9c5b4a",
+      "deltaE": 4.67,
+      "materials": [
+        "ember",
+        "red clay"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_E_0",
+        "idle_W_0"
+      ]
+    },
+    {
+      "colour": "#c68366",
+      "pixels": 4,
+      "to": "#c98f78",
+      "deltaE": 3.28,
+      "materials": [
+        "red clay"
+      ],
+      "frames": [
+        "idle_NE_0",
+        "idle_N_0",
+        "idle_SW_0"
+      ]
+    },
+    {
+      "colour": "#5c3340",
+      "pixels": 3,
+      "to": "#4a4e57",
+      "deltaE": 7.97,
+      "materials": [
+        "cloth",
+        "steel"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_NE_0"
+      ]
+    },
+    {
+      "colour": "#453a44",
+      "pixels": 3,
+      "to": "#4a4e57",
+      "deltaE": 6.33,
+      "materials": [
+        "cloth",
+        "steel"
+      ],
+      "frames": [
+        "idle_E_0",
+        "idle_NE_0",
+        "idle_NW_0"
+      ]
+    },
+    {
+      "colour": "#403a5e",
+      "pixels": 3,
+      "to": "#24305a",
+      "deltaE": 5.75,
+      "materials": [
+        "water",
+        "hair"
+      ],
+      "frames": [
+        "idle_E_0",
+        "idle_NE_0",
+        "idle_W_0"
+      ]
+    }
+  ],
   "anims": [
     {
       "key": "idle_S",

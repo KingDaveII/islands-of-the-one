@@ -1,4 +1,15 @@
-import { hexOf, paletteData, SPRITE_WHITELIST, spriteSheetSpec, type SpriteSheet } from '../src/index.js';
+import {
+  hexOf,
+  isRequiredAnim,
+  kindledAnimKey,
+  kindledFrameName,
+  paletteData,
+  REQUIRED_MILESTONE,
+  SPRITE_WHITELIST,
+  spriteSheetSpec,
+  type SpriteAnimSpec,
+  type SpriteSheet,
+} from '../src/index.js';
 
 /** A decoded RGBA image (png.ts). */
 export interface Rgba {
@@ -84,5 +95,45 @@ export function v2Problems(name: string, sheet: SpriteSheet, png: Rgba, mask: Rg
   if (stray) problems.push(`${stray} masked pixels are not a swap-key colour`);
   const missing = [...keys].filter((k) => !covered.has(k));
   if (missing.length) problems.push(`swap keys with no masked pixel: ${missing.join(', ')}`);
+  return problems;
+}
+
+/**
+ * What breaks a finished sheet's animation table (sprites.md §4): `table` is
+ * its kind's (`spriteSheetSpec`, or a prop's own idle). Every row at or before
+ * `REQUIRED_MILESTONE` is there in every facing, with its frames in order and
+ * its rate, loop and hold. A later row is optional, but once any facing of it
+ * is there it is complete like the others. Nothing outside the table. An
+ * empty list is a sheet that passes.
+ */
+export function tableProblems(name: string, sheet: SpriteSheet, table: readonly SpriteAnimSpec[]): string[] {
+  const problems: string[] = [];
+  const facings = spriteSheetSpec(name).facings;
+  const keys: string[] = [];
+  for (const a of table) {
+    const rowKeys = (facings ? a.facings : [null]).map((f) => [f, f ? kindledAnimKey(a.name, f) : a.name] as const);
+    const required = isRequiredAnim(a);
+    if (!required && rowKeys.every(([, key]) => !sheet.anims[key])) continue;
+    for (const [facing, key] of rowKeys) {
+      keys.push(key);
+      const def = sheet.anims[key];
+      if (!def) {
+        problems.push(
+          required
+            ? `${key} is missing`
+            : `${key} is missing (${a.name} is optional until ${a.milestone}, but complete once present; required: ${REQUIRED_MILESTONE})`,
+        );
+        continue;
+      }
+      const frames = Array.from({ length: a.frames }, (_, i) => (facing ? kindledFrameName(a.name, facing, i) : `${a.name}_${i}`));
+      if (JSON.stringify(def.frames) !== JSON.stringify(frames))
+        problems.push(`${key} has frames ${def.frames.join(', ')}; the table says ${frames.join(', ')}`);
+      if (def.repeat !== (a.loop ? -1 : 0)) problems.push(`${key} has repeat ${def.repeat}; the table says ${a.loop ? -1 : 0}`);
+      if ((def.hold ?? false) !== a.hold) problems.push(`${key} has hold ${String(def.hold ?? false)}; the table says ${String(a.hold)}`);
+      if (a.fps > 0 && def.frameRate !== a.fps) problems.push(`${key} runs at ${def.frameRate} fps; the table says ${a.fps}`);
+    }
+  }
+  const outside = Object.keys(sheet.anims).filter((k) => !keys.includes(k));
+  if (outside.length) problems.push(`animations outside the table: ${outside.sort().join(', ')}`);
   return problems;
 }
