@@ -6,13 +6,13 @@ Kind kindled, outline player, cell 96×80, origin (48, 64).
 ## Summary
 
 - Frames: 392.
-- Off-palette pixels snapped: 20081 (largest ΔE 8.89).
-- Outline gaps (edge pixels not in an outline colour): 2351.
-- Masked skin pixels: 29023.
+- Off-palette pixels snapped: 19994 (largest ΔE 8.89).
+- Outline gaps (edge pixels not in an outline colour): 2291.
+- Masked skin pixels: 29014.
 - Loop seam flags (last → first above 1.5× the mean change): walk_S.
 - Body bob flags (top row moves more than 2 px): none.
 - Held frames (identical neighbours): none.
-- Frames with more than 12 colours: idle_S_1, idle_SE_0, idle_SE_1, idle_E_0, idle_E_1, idle_SW_0, idle_SW_1, walk_S_2, walk_SE_0, walk_SE_1, walk_SE_2, walk_SE_3, walk_SE_4, walk_SE_5, walk_E_0, walk_E_1, walk_E_2, walk_E_3, walk_E_4, walk_E_5, walk_SW_0, walk_SW_1, walk_SW_2, walk_SW_3, walk_SW_4, walk_SW_5, run_S_3, run_S_4, run_SE_0, run_SE_1, run_SE_2, run_SE_3, run_SE_4, run_SE_5, run_SE_6, run_SE_7, run_E_1, run_E_2, run_E_3, run_E_4, run_E_5, run_E_6, run_E_7, run_NE_3, run_SW_0, run_SW_1, run_SW_2, run_SW_3, run_SW_4, run_SW_5, run_SW_6, run_SW_7, dodge_S_0, dodge_S_1, dodge_S_2, dodge_S_3, dodge_SE_0, dodge_SE_1, dodge_SE_2, dodge_SE_3, dodge_E_1, dodge_E_2, dodge_NE_0, dodge_NE_1, dodge_NE_2, dodge_NE_3, dodge_N_1, dodge_N_2, dodge_NW_0, dodge_NW_1, dodge_NW_2, dodge_NW_3, dodge_W_1, dodge_W_2, dodge_SW_0, dodge_SW_1, dodge_SW_2, dodge_SW_3, light_1_S_0, light_1_S_1, light_1_S_2, light_1_SE_0, light_1_SE_1, light_1_SE_2, light_1_E_0, light_1_E_1, light_1_E_2, light_1_NE_0, light_1_NW_0, light_1_W_0, light_1_W_1, light_1_W_2, light_1_SW_0, light_1_SW_1, light_1_SW_2, light_2_S_0, light_2_S_1, light_2_S_2, light_2_SE_0, light_2_SE_1, light_2_SE_2, light_2_E_0, light_2_E_1, light_2_E_2, light_2_NW_0, light_2_NW_1, light_2_NW_2, light_2_W_0, light_2_W_1, light_2_W_2, light_2_SW_0, light_2_SW_1, light_2_SW_2, light_3_S_0, light_3_S_1, light_3_S_2, light_3_SE_0, light_3_SE_1, light_3_SE_2, light_3_E_0, light_3_E_1, light_3_E_2, light_3_NE_0, light_3_NW_0, light_3_W_0, light_3_SW_0, light_3_SW_1, light_3_SW_2, heavy_charge_S_0, heavy_charge_S_1, heavy_charge_S_2, heavy_charge_SE_0, heavy_charge_SE_1, heavy_charge_SE_2, heavy_charge_E_0, heavy_charge_E_1, heavy_charge_E_2, heavy_charge_NE_1, heavy_charge_NW_1, heavy_charge_W_0, heavy_charge_W_1, heavy_charge_SW_0, heavy_charge_SW_1, heavy_charge_SW_2, heavy_thrust_S_0, heavy_thrust_S_1, heavy_thrust_SE_0, heavy_thrust_SE_1, heavy_thrust_E_0, heavy_thrust_E_1, heavy_thrust_NE_1, heavy_thrust_NW_1, heavy_thrust_SW_0, heavy_thrust_SW_1, heavy_hold_S_0, heavy_hold_SE_0, heavy_hold_E_0, heavy_hold_NE_0, heavy_hold_NW_0, heavy_hold_SW_0, heavy_recover_S_0, heavy_recover_S_1, heavy_recover_SE_0, heavy_recover_SE_1, heavy_recover_E_0, heavy_recover_E_1, heavy_recover_NE_0, heavy_recover_NW_0, heavy_recover_W_0, heavy_recover_W_1, heavy_recover_SW_0, heavy_recover_SW_1, haul_throw_S_0, haul_throw_S_1, haul_throw_SE_0, haul_throw_SE_1, haul_throw_E_0, haul_throw_E_1, haul_throw_NE_1, haul_throw_W_0, haul_throw_W_1, haul_throw_SW_0, haul_throw_SW_1, haul_recover_S_1, haul_recover_SE_0, haul_recover_SE_1, haul_recover_E_0, haul_recover_E_1, haul_recover_W_0, haul_recover_W_1, haul_recover_SW_0, haul_recover_SW_1, haul_pull_S_0, haul_pull_S_1, haul_pull_SE_0, haul_pull_SE_1, haul_pull_E_0, haul_pull_E_1, haul_pull_NE_1, haul_pull_NW_1, haul_pull_SW_0, haul_pull_SW_1, haul_slide_S_0, haul_slide_S_1, haul_slide_SE_0, haul_slide_SE_1, haul_slide_E_0, haul_slide_E_1, haul_slide_NE_0, haul_slide_NE_1, haul_slide_W_0, haul_slide_SW_0, haul_slide_SW_1, hit_S_0, hit_S_1, hit_E_1, hit_W_1, death_E_0, death_E_2.
+- Frames with more than 12 colours: idle_S_1, idle_SE_0, idle_SE_1, idle_E_0, idle_E_1, idle_SW_0, idle_SW_1, walk_S_2, walk_SE_0, walk_SE_1, walk_SE_2, walk_SE_3, walk_SE_4, walk_SE_5, walk_E_0, walk_E_1, walk_E_2, walk_E_3, walk_E_4, walk_E_5, walk_SW_0, walk_SW_1, walk_SW_2, walk_SW_3, walk_SW_4, walk_SW_5, run_S_3, run_S_4, run_SE_0, run_SE_1, run_SE_2, run_SE_3, run_SE_4, run_SE_5, run_SE_6, run_SE_7, run_E_1, run_E_2, run_E_3, run_E_4, run_E_5, run_E_6, run_E_7, run_NE_3, run_SW_0, run_SW_1, run_SW_2, run_SW_3, run_SW_4, run_SW_5, run_SW_6, run_SW_7, dodge_S_0, dodge_S_1, dodge_S_2, dodge_S_3, dodge_SE_0, dodge_SE_1, dodge_SE_2, dodge_SE_3, dodge_E_1, dodge_E_2, dodge_NE_0, dodge_NE_1, dodge_NE_2, dodge_NE_3, dodge_N_1, dodge_N_2, dodge_NW_0, dodge_NW_1, dodge_NW_2, dodge_NW_3, dodge_W_1, dodge_W_2, dodge_SW_0, dodge_SW_1, dodge_SW_2, dodge_SW_3, light_1_S_0, light_1_S_1, light_1_S_2, light_1_SE_0, light_1_SE_1, light_1_SE_2, light_1_E_0, light_1_E_1, light_1_E_2, light_1_NE_0, light_1_NW_0, light_1_W_0, light_1_W_1, light_1_W_2, light_1_SW_0, light_1_SW_1, light_1_SW_2, light_2_S_0, light_2_S_1, light_2_S_2, light_2_SE_0, light_2_SE_1, light_2_SE_2, light_2_E_0, light_2_E_1, light_2_E_2, light_2_NW_0, light_2_NW_1, light_2_NW_2, light_2_W_0, light_2_W_1, light_2_W_2, light_2_SW_0, light_2_SW_1, light_2_SW_2, light_3_S_0, light_3_S_1, light_3_S_2, light_3_SE_0, light_3_SE_1, light_3_SE_2, light_3_E_0, light_3_E_1, light_3_E_2, light_3_NE_0, light_3_NW_0, light_3_W_0, light_3_SW_0, light_3_SW_1, light_3_SW_2, heavy_charge_S_0, heavy_charge_S_1, heavy_charge_S_2, heavy_charge_SE_0, heavy_charge_SE_1, heavy_charge_SE_2, heavy_charge_E_0, heavy_charge_E_1, heavy_charge_E_2, heavy_charge_NE_1, heavy_charge_NW_1, heavy_charge_W_0, heavy_charge_W_1, heavy_charge_SW_0, heavy_charge_SW_1, heavy_charge_SW_2, heavy_thrust_S_0, heavy_thrust_S_1, heavy_thrust_SE_0, heavy_thrust_SE_1, heavy_thrust_E_0, heavy_thrust_E_1, heavy_thrust_NE_1, heavy_thrust_NW_1, heavy_thrust_SW_0, heavy_thrust_SW_1, heavy_hold_S_0, heavy_hold_SE_0, heavy_hold_E_0, heavy_hold_NE_0, heavy_hold_NW_0, heavy_hold_SW_0, heavy_recover_S_0, heavy_recover_S_1, heavy_recover_SE_0, heavy_recover_SE_1, heavy_recover_E_0, heavy_recover_E_1, heavy_recover_NE_0, heavy_recover_NW_0, heavy_recover_W_0, heavy_recover_W_1, heavy_recover_SW_0, heavy_recover_SW_1, haul_throw_S_0, haul_throw_S_1, haul_throw_SE_0, haul_throw_SE_1, haul_throw_E_0, haul_throw_E_1, haul_throw_NE_1, haul_throw_W_0, haul_throw_W_1, haul_throw_SW_0, haul_throw_SW_1, haul_recover_S_1, haul_recover_SE_0, haul_recover_SE_1, haul_recover_E_0, haul_recover_E_1, haul_recover_W_0, haul_recover_W_1, haul_recover_SW_0, haul_recover_SW_1, haul_pull_S_0, haul_pull_S_1, haul_pull_SE_0, haul_pull_SE_1, haul_pull_E_0, haul_pull_E_1, haul_pull_NW_1, haul_pull_SW_0, haul_pull_SW_1, haul_slide_S_0, haul_slide_S_1, haul_slide_SE_0, haul_slide_SE_1, haul_slide_E_0, haul_slide_E_1, haul_slide_NE_1, haul_slide_W_0, haul_slide_SW_0, haul_slide_SW_1, hit_S_0, hit_S_1, hit_E_1, hit_W_1, death_E_0, death_E_2.
 - Skin regions to resolve: 0.
 - Points: 88 placed (11 mirrored from their twin); missing: 0.
 - Remap rules: 8; stale (match no pixel in any frame they apply to): none.
@@ -135,22 +135,22 @@ Rows, top to bottom: idle_S, idle_SE, idle_E, idle_NE, idle_N, idle_NW, idle_W, 
 | haul_recover_NW | 2 |  |  |  |
 | haul_recover_W | 2 |  |  |  |
 | haul_recover_SW | 2 |  |  |  |
-| haul_pull_S | 2 | 712 / 712 |  |  |
-| haul_pull_SE | 2 | 1086 / 1086 |  |  |
-| haul_pull_E | 2 | 901 / 901 |  |  |
-| haul_pull_NE | 2 | 871 / 871 |  |  |
+| haul_pull_S | 2 | 711 / 711 |  |  |
+| haul_pull_SE | 2 | 1047 / 1047 |  |  |
+| haul_pull_E | 2 | 817 / 817 |  |  |
+| haul_pull_NE | 2 | 823 / 823 |  |  |
 | haul_pull_N | 2 | 571 / 571 |  |  |
 | haul_pull_NW | 2 | 950 / 950 |  |  |
-| haul_pull_W | 2 | 1041 / 1041 |  |  |
-| haul_pull_SW | 2 | 807 / 807 |  |  |
-| haul_slide_S | 2 | 836 / 836 |  |  |
-| haul_slide_SE | 2 | 931 / 931 |  |  |
-| haul_slide_E | 2 | 683 / 683 |  |  |
-| haul_slide_NE | 2 | 569 / 569 |  |  |
+| haul_pull_W | 2 | 941 / 941 |  |  |
+| haul_pull_SW | 2 | 733 / 733 |  |  |
+| haul_slide_S | 2 | 826 / 826 |  |  |
+| haul_slide_SE | 2 | 932 / 932 |  |  |
+| haul_slide_E | 2 | 649 / 649 |  |  |
+| haul_slide_NE | 2 | 521 / 521 |  |  |
 | haul_slide_N | 2 | 599 / 599 |  |  |
 | haul_slide_NW | 2 | 800 / 800 |  |  |
-| haul_slide_W | 2 | 1152 / 1152 |  |  |
-| haul_slide_SW | 2 | 875 / 875 |  |  |
+| haul_slide_W | 2 | 1072 / 1072 |  |  |
+| haul_slide_SW | 2 | 782 / 782 |  |  |
 | hit_S | 2 |  |  |  |
 | hit_E | 2 |  |  |  |
 | hit_N | 2 |  |  |  |
@@ -462,70 +462,70 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 | heavy_recover_W_1 | `art/clean/kindled-ash/heavy/west 1` | 40 | 7.66 | -1 | 14, 7 | 4 | 14 **flag** | 72 |
 | heavy_recover_SW_0 | mirrored from `art/raw/ss01-kindled-ash/heavy/south-east 10` | 34 | 7.44 | -1 | 14, 7 | 1 | 17 **flag** | 130 |
 | heavy_recover_SW_1 | mirrored from `art/raw/ss01-kindled-ash/heavy/south-east 1` | 72 | 6.92 | -1 | 14, 7 | 0 | 16 **flag** | 141 |
-| haul_throw_S_0 | `art/clean/kindled-ash/haul/south 7` | 52 | 6.45 | 0 | 14, 8 | 2 | 14 **flag** | 142 |
-| haul_throw_S_1 | `art/clean/kindled-ash/haul/south 8` | 19 | 6.45 | 0 | 14, 8 | 4 | 14 **flag** | 149 |
-| haul_throw_SE_0 | `art/raw/ss01-kindled-ash/haul/south-east 2` | 77 | 6.92 | -1 | 14, 7 | 3 | 15 **flag** | 136 |
-| haul_throw_SE_1 | `art/raw/ss01-kindled-ash/haul/south-east 4` | 37 | 6.92 | -1 | 14, 7 | 21 | 13 **flag** | 113 |
-| haul_throw_E_0 | `art/clean/kindled-ash/haul/east 2` | 36 | 6.15 | -1 | 14, 7 | 2 | 16 **flag** | 75 |
-| haul_throw_E_1 | `art/clean/kindled-ash/haul/east 3` | 41 | 6.4 | -1 | 14, 7 | 3 | 15 **flag** | 75 |
-| haul_throw_NE_0 | `art/raw/ss01-kindled-ash/haul/north-east 2` | 29 | 7.25 | -1 | 14, 7 | 1 | 12 | 17 |
-| haul_throw_NE_1 | `art/raw/ss01-kindled-ash/haul/north-east 3` | 52 | 6.25 | -1 | 14, 7 | 0 | 15 **flag** | 10 |
-| haul_throw_N_0 | `art/raw/ss01-kindled-ash/haul/north 2` | 10 | 4.2 | -1 | 14, 7 | 1 | 6 | 0 |
-| haul_throw_N_1 | `art/raw/ss01-kindled-ash/haul/north 3` | 14 | 5.57 | -1 | 14, 7 | 2 | 10 | 0 |
-| haul_throw_NW_0 | `art/raw/ss01-kindled-ash/haul/north-west 1` | 17 | 7.42 | -1 | 14, 7 | 1 | 9 | 16 |
-| haul_throw_NW_1 | `art/raw/ss01-kindled-ash/haul/north-west 2` | 12 | 7.42 | -1 | 14, 7 | 1 | 10 | 16 |
-| haul_throw_W_0 | mirrored from `art/clean/kindled-ash/haul/east 2` | 36 | 6.15 | -1 | 14, 7 | 2 | 16 **flag** | 75 |
-| haul_throw_W_1 | mirrored from `art/clean/kindled-ash/haul/east 3` | 41 | 6.4 | -1 | 14, 7 | 3 | 15 **flag** | 75 |
-| haul_throw_SW_0 | mirrored from `art/raw/ss01-kindled-ash/haul/south-east 2` | 77 | 6.92 | -1 | 14, 7 | 3 | 15 **flag** | 136 |
-| haul_throw_SW_1 | mirrored from `art/raw/ss01-kindled-ash/haul/south-east 4` | 37 | 6.92 | -1 | 14, 7 | 21 | 13 **flag** | 113 |
-| haul_recover_S_0 | `art/clean/kindled-ash/haul/south 0` | 0 | 0 | 0 | 14, 8 | 1 | 12 | 170 |
-| haul_recover_S_1 | `art/clean/kindled-ash/haul/south 1` | 67 | 7.06 | 0 | 14, 8 | 4 | 15 **flag** | 156 |
-| haul_recover_SE_0 | `art/raw/ss01-kindled-ash/haul/south-east 5` | 41 | 6.92 | -1 | 14, 7 | 0 | 16 **flag** | 118 |
-| haul_recover_SE_1 | `art/raw/ss01-kindled-ash/haul/south-east 6` | 32 | 6.55 | -1 | 14, 7 | 0 | 14 **flag** | 125 |
-| haul_recover_E_0 | `art/clean/kindled-ash/haul/east 5` | 48 | 6.92 | -1 | 14, 7 | 2 | 14 **flag** | 77 |
-| haul_recover_E_1 | `art/clean/kindled-ash/haul/east 6` | 30 | 6.92 | -1 | 14, 7 | 2 | 15 **flag** | 76 |
-| haul_recover_NE_0 | `art/raw/ss01-kindled-ash/haul/north-east 5` | 53 | 7.91 | -1 | 14, 7 | 1 | 12 | 20 |
-| haul_recover_NE_1 | `art/raw/ss01-kindled-ash/haul/north-east 6` | 26 | 7.25 | -1 | 14, 7 | 0 | 11 | 15 |
-| haul_recover_N_0 | `art/raw/ss01-kindled-ash/haul/north 5` | 14 | 5.83 | -1 | 14, 7 | 0 | 7 | 0 |
-| haul_recover_N_1 | `art/raw/ss01-kindled-ash/haul/north 6` | 4 | 5.57 | -1 | 14, 7 | 0 | 5 | 0 |
-| haul_recover_NW_0 | `art/raw/ss01-kindled-ash/haul/north-west 5` | 11 | 4.7 | -1 | 14, 7 | 0 | 9 | 22 |
-| haul_recover_NW_1 | `art/raw/ss01-kindled-ash/haul/north-west 6` | 9 | 4.7 | -1 | 14, 7 | 1 | 8 | 6 |
-| haul_recover_W_0 | mirrored from `art/clean/kindled-ash/haul/east 5` | 48 | 6.92 | -1 | 14, 7 | 2 | 14 **flag** | 77 |
-| haul_recover_W_1 | mirrored from `art/clean/kindled-ash/haul/east 6` | 30 | 6.92 | -1 | 14, 7 | 2 | 15 **flag** | 76 |
-| haul_recover_SW_0 | mirrored from `art/raw/ss01-kindled-ash/haul/south-east 5` | 41 | 6.92 | -1 | 14, 7 | 0 | 16 **flag** | 118 |
-| haul_recover_SW_1 | mirrored from `art/raw/ss01-kindled-ash/haul/south-east 6` | 32 | 6.55 | -1 | 14, 7 | 0 | 14 **flag** | 125 |
-| haul_pull_S_0 | `art/raw/ss01-kindled-ash/haul_pull/south 1` | 112 | 6.27 | 0 | 14, 8 | 0 | 16 **flag** | 144 |
-| haul_pull_S_1 | `art/raw/ss01-kindled-ash/haul_pull/south 3` | 109 | 7.49 | 0 | 14, 8 | 0 | 17 **flag** | 136 |
-| haul_pull_SE_0 | `art/raw/ss01-kindled-ash/haul_pull/south-east 1` | 111 | 6.92 | -1 | 14, 7 | 4 | 15 **flag** | 141 |
-| haul_pull_SE_1 | `art/raw/ss01-kindled-ash/haul_pull/south-east 4` | 73 | 6.92 | -1 | 14, 7 | 2 | 15 **flag** | 118 |
-| haul_pull_E_0 | `art/clean/kindled-ash/haul_pull/east 1` | 158 | 8.89 | -1 | 14, 7 | 3 | 17 **flag** | 95 |
-| haul_pull_E_1 | `art/clean/kindled-ash/haul_pull/east 2` | 76 | 7.42 | -1 | 14, 7 | 4 | 14 **flag** | 111 |
-| haul_pull_NE_0 | `art/raw/ss01-kindled-ash/haul_pull/north-east 2` | 45 | 6.15 | -1 | 14, 7 | 4 | 12 | 9 |
-| haul_pull_NE_1 | `art/raw/ss01-kindled-ash/haul_pull/north-east 4` | 36 | 6.15 | -1 | 14, 7 | 0 | 13 **flag** | 12 |
-| haul_pull_N_0 | `art/raw/ss01-kindled-ash/haul_pull/north 1` | 1 | 2.21 | -1 | 14, 7 | 0 | 5 | 0 |
-| haul_pull_N_1 | `art/raw/ss01-kindled-ash/haul_pull/north 3` | 4 | 5.31 | -1 | 14, 7 | 2 | 6 | 0 |
-| haul_pull_NW_0 | `art/raw/ss01-kindled-ash/haul_pull/north-west 1` | 37 | 7.72 | -1 | 14, 7 | 1 | 12 | 19 |
-| haul_pull_NW_1 | `art/raw/ss01-kindled-ash/haul_pull/north-west 3` | 71 | 7.72 | -1 | 14, 7 | 4 | 15 **flag** | 34 |
-| haul_pull_W_0 | `art/clean/kindled-ash/haul_pull/west 1` | 43 | 6.52 | -1 | 14, 7 | 4 | 12 | 61 |
-| haul_pull_W_1 | `art/clean/kindled-ash/haul_pull/west 4` | 17 | 5.53 | -1 | 14, 7 | 1 | 12 | 65 |
-| haul_pull_SW_0 | `art/raw/ss01-kindled-ash/haul_pull/south-west 2` | 50 | 6.92 | -1 | 14, 7 | 1 | 17 **flag** | 138 |
-| haul_pull_SW_1 | `art/raw/ss01-kindled-ash/haul_pull/south-west 4` | 52 | 6.92 | -1 | 14, 7 | 1 | 14 **flag** | 146 |
-| haul_slide_S_0 | `art/raw/ss01-kindled-ash/haul_slide/south 1` | 59 | 8.24 | 0 | 14, 8 | 5 | 15 **flag** | 167 |
-| haul_slide_S_1 | `art/raw/ss01-kindled-ash/haul_slide/south 3` | 43 | 7.07 | 0 | 14, 8 | 12 | 15 **flag** | 142 |
-| haul_slide_SE_0 | `art/raw/ss01-kindled-ash/haul_slide/south-east 1` | 82 | 7.81 | -1 | 14, 7 | 7 | 18 **flag** | 149 |
-| haul_slide_SE_1 | `art/raw/ss01-kindled-ash/haul_slide/south-east 4` | 62 | 6.92 | -1 | 14, 7 | 7 | 15 **flag** | 153 |
-| haul_slide_E_0 | `art/clean/kindled-ash/haul_slide/east 1` | 61 | 8.11 | -1 | 14, 7 | 1 | 15 **flag** | 76 |
-| haul_slide_E_1 | `art/clean/kindled-ash/haul_slide/east 3` | 47 | 7.62 | -1 | 14, 7 | 3 | 16 **flag** | 91 |
-| haul_slide_NE_0 | `art/raw/ss01-kindled-ash/haul_slide/north-east 1` | 42 | 6.15 | -1 | 14, 7 | 1 | 14 **flag** | 6 |
-| haul_slide_NE_1 | `art/raw/ss01-kindled-ash/haul_slide/north-east 3` | 48 | 6.72 | -1 | 14, 7 | 5 | 15 **flag** | 20 |
-| haul_slide_N_0 | `art/raw/ss01-kindled-ash/haul_slide/north 2` | 0 | 0 | -1 | 14, 7 | 0 | 4 | 0 |
-| haul_slide_N_1 | `art/raw/ss01-kindled-ash/haul_slide/north 4` | 6 | 4.63 | -1 | 14, 7 | 0 | 6 | 0 |
-| haul_slide_NW_0 | `art/raw/ss01-kindled-ash/haul_slide/north-west 1` | 18 | 5.53 | -1 | 14, 7 | 1 | 11 | 12 |
-| haul_slide_NW_1 | `art/raw/ss01-kindled-ash/haul_slide/north-west 3` | 30 | 5.61 | -1 | 14, 7 | 3 | 12 | 15 |
-| haul_slide_W_0 | `art/clean/kindled-ash/haul_slide/west 1` | 68 | 7.58 | -1 | 14, 7 | 2 | 18 **flag** | 64 |
-| haul_slide_W_1 | `art/clean/kindled-ash/haul_slide/west 4` | 39 | 6.1 | -1 | 14, 7 | 1 | 12 | 15 |
-| haul_slide_SW_0 | `art/raw/ss01-kindled-ash/haul_slide/south-west 1` | 82 | 6.92 | -1 | 14, 7 | 6 | 16 **flag** | 134 |
-| haul_slide_SW_1 | `art/raw/ss01-kindled-ash/haul_slide/south-west 4` | 42 | 6.92 | -1 | 14, 7 | 0 | 16 **flag** | 152 |
+| haul_throw_S_0 | `art/clean/kindled-ash/haul_hand/haul_throw/south 7` | 52 | 6.45 | 0 | 14, 8 | 2 | 14 **flag** | 142 |
+| haul_throw_S_1 | `art/clean/kindled-ash/haul_hand/haul_throw/south 8` | 19 | 6.45 | 0 | 14, 8 | 9 | 14 **flag** | 149 |
+| haul_throw_SE_0 | `art/clean/kindled-ash/haul_hand/haul_throw/south-east 2` | 77 | 6.92 | -1 | 14, 7 | 3 | 15 **flag** | 136 |
+| haul_throw_SE_1 | `art/clean/kindled-ash/haul_hand/haul_throw/south-east 4` | 35 | 6.92 | -1 | 14, 7 | 1 | 13 **flag** | 113 |
+| haul_throw_E_0 | `art/clean/kindled-ash/haul_hand/haul_throw/east 2` | 36 | 6.15 | -1 | 14, 7 | 2 | 16 **flag** | 75 |
+| haul_throw_E_1 | `art/clean/kindled-ash/haul_hand/haul_throw/east 3` | 41 | 6.4 | -1 | 14, 7 | 3 | 15 **flag** | 75 |
+| haul_throw_NE_0 | `art/clean/kindled-ash/haul_hand/haul_throw/north-east 2` | 29 | 7.25 | -1 | 14, 7 | 1 | 12 | 17 |
+| haul_throw_NE_1 | `art/clean/kindled-ash/haul_hand/haul_throw/north-east 3` | 40 | 6.25 | -1 | 14, 7 | 0 | 13 **flag** | 10 |
+| haul_throw_N_0 | `art/clean/kindled-ash/haul_hand/haul_throw/north 2` | 10 | 4.2 | -1 | 14, 7 | 1 | 6 | 0 |
+| haul_throw_N_1 | `art/clean/kindled-ash/haul_hand/haul_throw/north 3` | 14 | 5.57 | -1 | 14, 7 | 2 | 10 | 0 |
+| haul_throw_NW_0 | `art/clean/kindled-ash/haul_hand/haul_throw/north-west 1` | 17 | 7.42 | -1 | 14, 7 | 1 | 9 | 16 |
+| haul_throw_NW_1 | `art/clean/kindled-ash/haul_hand/haul_throw/north-west 2` | 12 | 7.42 | -1 | 14, 7 | 1 | 10 | 16 |
+| haul_throw_W_0 | mirrored from `art/clean/kindled-ash/haul_hand/haul_throw/east 2` | 36 | 6.15 | -1 | 14, 7 | 2 | 16 **flag** | 75 |
+| haul_throw_W_1 | mirrored from `art/clean/kindled-ash/haul_hand/haul_throw/east 3` | 41 | 6.4 | -1 | 14, 7 | 3 | 15 **flag** | 75 |
+| haul_throw_SW_0 | mirrored from `art/clean/kindled-ash/haul_hand/haul_throw/south-east 2` | 77 | 6.92 | -1 | 14, 7 | 3 | 15 **flag** | 136 |
+| haul_throw_SW_1 | mirrored from `art/clean/kindled-ash/haul_hand/haul_throw/south-east 4` | 35 | 6.92 | -1 | 14, 7 | 1 | 13 **flag** | 113 |
+| haul_recover_S_0 | `art/clean/kindled-ash/haul_hand/haul_recover/south 0` | 0 | 0 | 0 | 14, 8 | 0 | 12 | 170 |
+| haul_recover_S_1 | `art/clean/kindled-ash/haul_hand/haul_recover/south 1` | 67 | 7.06 | 0 | 14, 8 | 4 | 15 **flag** | 156 |
+| haul_recover_SE_0 | `art/clean/kindled-ash/haul_hand/haul_recover/south-east 5` | 41 | 6.92 | -1 | 14, 7 | 0 | 16 **flag** | 118 |
+| haul_recover_SE_1 | `art/clean/kindled-ash/haul_hand/haul_recover/south-east 6` | 32 | 6.55 | -1 | 14, 7 | 0 | 14 **flag** | 125 |
+| haul_recover_E_0 | `art/clean/kindled-ash/haul_hand/haul_recover/east 5` | 48 | 6.92 | -1 | 14, 7 | 1 | 14 **flag** | 77 |
+| haul_recover_E_1 | `art/clean/kindled-ash/haul_hand/haul_recover/east 6` | 30 | 6.92 | -1 | 14, 7 | 2 | 15 **flag** | 76 |
+| haul_recover_NE_0 | `art/clean/kindled-ash/haul_hand/haul_recover/north-east 5` | 44 | 6.25 | -1 | 14, 7 | 1 | 11 | 20 |
+| haul_recover_NE_1 | `art/clean/kindled-ash/haul_hand/haul_recover/north-east 6` | 26 | 7.25 | -1 | 14, 7 | 0 | 11 | 15 |
+| haul_recover_N_0 | `art/clean/kindled-ash/haul_hand/haul_recover/north 5` | 14 | 5.83 | -1 | 14, 7 | 0 | 7 | 0 |
+| haul_recover_N_1 | `art/clean/kindled-ash/haul_hand/haul_recover/north 6` | 4 | 5.57 | -1 | 14, 7 | 0 | 5 | 0 |
+| haul_recover_NW_0 | `art/clean/kindled-ash/haul_hand/haul_recover/north-west 5` | 11 | 4.7 | -1 | 14, 7 | 0 | 9 | 22 |
+| haul_recover_NW_1 | `art/clean/kindled-ash/haul_hand/haul_recover/north-west 6` | 9 | 4.7 | -1 | 14, 7 | 1 | 8 | 6 |
+| haul_recover_W_0 | mirrored from `art/clean/kindled-ash/haul_hand/haul_recover/east 5` | 48 | 6.92 | -1 | 14, 7 | 1 | 14 **flag** | 77 |
+| haul_recover_W_1 | mirrored from `art/clean/kindled-ash/haul_hand/haul_recover/east 6` | 30 | 6.92 | -1 | 14, 7 | 2 | 15 **flag** | 76 |
+| haul_recover_SW_0 | mirrored from `art/clean/kindled-ash/haul_hand/haul_recover/south-east 5` | 41 | 6.92 | -1 | 14, 7 | 0 | 16 **flag** | 118 |
+| haul_recover_SW_1 | mirrored from `art/clean/kindled-ash/haul_hand/haul_recover/south-east 6` | 32 | 6.55 | -1 | 14, 7 | 0 | 14 **flag** | 125 |
+| haul_pull_S_0 | `art/clean/kindled-ash/haul_hand/haul_pull/south 1` | 126 | 6.27 | 0 | 14, 8 | 0 | 16 **flag** | 144 |
+| haul_pull_S_1 | `art/clean/kindled-ash/haul_hand/haul_pull/south 3` | 109 | 7.49 | 0 | 14, 8 | 0 | 17 **flag** | 136 |
+| haul_pull_SE_0 | `art/clean/kindled-ash/haul_hand/haul_pull/south-east 1` | 101 | 6.92 | -1 | 14, 7 | 3 | 15 **flag** | 140 |
+| haul_pull_SE_1 | `art/clean/kindled-ash/haul_hand/haul_pull/south-east 4` | 67 | 6.92 | -1 | 14, 7 | 1 | 15 **flag** | 116 |
+| haul_pull_E_0 | `art/clean/kindled-ash/haul_hand/haul_pull/east 1` | 158 | 8.89 | -1 | 14, 7 | 3 | 16 **flag** | 95 |
+| haul_pull_E_1 | `art/clean/kindled-ash/haul_hand/haul_pull/east 2` | 76 | 7.42 | -1 | 14, 7 | 4 | 14 **flag** | 111 |
+| haul_pull_NE_0 | `art/clean/kindled-ash/haul_hand/haul_pull/north-east 2` | 24 | 5.35 | -1 | 14, 7 | 2 | 10 | 5 |
+| haul_pull_NE_1 | `art/clean/kindled-ash/haul_hand/haul_pull/north-east 4` | 22 | 6.15 | -1 | 14, 7 | 0 | 11 | 12 |
+| haul_pull_N_0 | `art/clean/kindled-ash/haul_hand/haul_pull/north 1` | 1 | 2.21 | -1 | 14, 7 | 0 | 5 | 0 |
+| haul_pull_N_1 | `art/clean/kindled-ash/haul_hand/haul_pull/north 3` | 4 | 5.31 | -1 | 14, 7 | 2 | 6 | 0 |
+| haul_pull_NW_0 | `art/clean/kindled-ash/haul_hand/haul_pull/north-west 1` | 37 | 7.72 | -1 | 14, 7 | 1 | 12 | 19 |
+| haul_pull_NW_1 | `art/clean/kindled-ash/haul_hand/haul_pull/north-west 3` | 71 | 7.72 | -1 | 14, 7 | 4 | 15 **flag** | 34 |
+| haul_pull_W_0 | `art/clean/kindled-ash/haul_hand/haul_pull/west 1` | 43 | 6.52 | -1 | 14, 7 | 4 | 12 | 61 |
+| haul_pull_W_1 | `art/clean/kindled-ash/haul_hand/haul_pull/west 4` | 17 | 5.53 | -1 | 14, 7 | 1 | 12 | 65 |
+| haul_pull_SW_0 | `art/clean/kindled-ash/haul_hand/haul_pull/south-west 2` | 46 | 6.52 | -1 | 14, 7 | 0 | 16 **flag** | 138 |
+| haul_pull_SW_1 | `art/clean/kindled-ash/haul_hand/haul_pull/south-west 4` | 49 | 6.92 | -1 | 14, 7 | 0 | 14 **flag** | 146 |
+| haul_slide_S_0 | `art/clean/kindled-ash/haul_hand/haul_slide/south 1` | 57 | 8.24 | 0 | 14, 8 | 6 | 15 **flag** | 169 |
+| haul_slide_S_1 | `art/clean/kindled-ash/haul_hand/haul_slide/south 3` | 55 | 7.07 | 0 | 14, 8 | 12 | 15 **flag** | 142 |
+| haul_slide_SE_0 | `art/clean/kindled-ash/haul_hand/haul_slide/south-east 1` | 77 | 7.81 | -1 | 14, 7 | 2 | 16 **flag** | 147 |
+| haul_slide_SE_1 | `art/clean/kindled-ash/haul_hand/haul_slide/south-east 4` | 60 | 6.92 | -1 | 14, 7 | 0 | 14 **flag** | 153 |
+| haul_slide_E_0 | `art/clean/kindled-ash/haul_hand/haul_slide/east 1` | 61 | 8.11 | -1 | 14, 7 | 1 | 15 **flag** | 76 |
+| haul_slide_E_1 | `art/clean/kindled-ash/haul_hand/haul_slide/east 3` | 47 | 7.62 | -1 | 14, 7 | 3 | 15 **flag** | 91 |
+| haul_slide_NE_0 | `art/clean/kindled-ash/haul_hand/haul_slide/north-east 1` | 39 | 6.15 | -1 | 14, 7 | 1 | 12 | 6 |
+| haul_slide_NE_1 | `art/clean/kindled-ash/haul_hand/haul_slide/north-east 3` | 44 | 6.72 | -1 | 14, 7 | 5 | 13 **flag** | 20 |
+| haul_slide_N_0 | `art/clean/kindled-ash/haul_hand/haul_slide/north 2` | 0 | 0 | -1 | 14, 7 | 0 | 4 | 0 |
+| haul_slide_N_1 | `art/clean/kindled-ash/haul_hand/haul_slide/north 4` | 6 | 4.63 | -1 | 14, 7 | 0 | 6 | 0 |
+| haul_slide_NW_0 | `art/clean/kindled-ash/haul_hand/haul_slide/north-west 1` | 18 | 5.53 | -1 | 14, 7 | 1 | 11 | 12 |
+| haul_slide_NW_1 | `art/clean/kindled-ash/haul_hand/haul_slide/north-west 3` | 30 | 5.61 | -1 | 14, 7 | 3 | 12 | 15 |
+| haul_slide_W_0 | `art/clean/kindled-ash/haul_hand/haul_slide/west 1` | 68 | 7.58 | -1 | 14, 7 | 2 | 18 **flag** | 64 |
+| haul_slide_W_1 | `art/clean/kindled-ash/haul_hand/haul_slide/west 4` | 39 | 6.1 | -1 | 14, 7 | 1 | 11 | 15 |
+| haul_slide_SW_0 | `art/clean/kindled-ash/haul_hand/haul_slide/south-west 1` | 73 | 6.92 | -1 | 14, 7 | 1 | 16 **flag** | 134 |
+| haul_slide_SW_1 | `art/clean/kindled-ash/haul_hand/haul_slide/south-west 4` | 37 | 6.92 | -1 | 14, 7 | 0 | 15 **flag** | 150 |
 | hit_S_0 | `art/raw/ss01-kindled-ash/hit/south 1` | 38 | 7.9 | -1 | 8, 1 | 24 | 14 **flag** | 132 |
 | hit_S_1 | `art/raw/ss01-kindled-ash/hit/south 2` | 52 | 7.9 | -1 | 8, 1 | 10 | 14 **flag** | 140 |
 | hit_E_0 | `art/clean/kindled-ash/hit/east 1` | 154 | 6.15 | -1 | 8, 1 | 30 | 10 | 95 |
@@ -569,34 +569,34 @@ Each rule of the recipe's `remap`, in order, and the pixels it took per animatio
 | 1 | from #f6fbe6 #f8e9c5 #f9feb0 #f9feb5 #fbf9dd #fcf5cc #fcfdbe #fcfee1 #fef3bf → husk-shell | everywhere | idle 0, walk 0, run 0, dodge 11, light_1 15, light_2 30, light_3 165, heavy_charge 0, heavy_thrust 0, heavy_hold 0, heavy_recover 0, haul_throw 0, haul_recover 0, haul_pull 0, haul_slide 0, hit 0, death 0 | 221 |
 | 2 | from #624541 #634341 #644448 #6a3e40 #6a4043 #6a4244 #6a4345 #6b3c3f #6b484a #6c4041 #6c4144 #6c4247 #6c4549 #6d3f46 #6f4748 #6f4b4e #704243 #704848 #723c44 #724f4a #743c3e #744340 #744645 #744a48 #774f4a #78403d #794c48 #7a4a49 #7b4a45 #7d404f #7e4136 #7e524c #7f403d #834943 → sleeper-ochre | everywhere | idle 0, walk 2, run 0, dodge 15, light_1 13, light_2 6, light_3 2, heavy_charge 6, heavy_thrust 0, heavy_hold 0, heavy_recover 2, haul_throw 6, haul_recover 0, haul_pull 10, haul_slide 3, hit 1, death 0 | 66 |
 | 3 | near #f2b65a within 4 → choir-flame | facings N | idle 91, walk 261, run 413, dodge 87, light_1 152, light_2 152, light_3 133, heavy_charge 147, heavy_thrust 98, heavy_hold 49, heavy_recover 98, haul_throw 101, haul_recover 106, haul_pull 91, haul_slide 92, hit 12, death 13 | 2096 |
-| 4 | from #b0babf #b2bba7 #b5b5b2 #b5b6b2 #b5b6b9 #b6b6b6 #b6b8bb #b6bab6 #b7b8bc #b7b9b7 #b8bbbd #b9b7ae #b9bbbf #babcad #babcbe #bbb8b6 #bcb7b3 #bcb8ae #bdbcb5 #bebcc9 #bebdb8 #bebeba #bebebe #bfbcb7 #c0c0c1 #c0c2be #c1c2c5 #c2b7ad #c2c0bb #c2c1c2 #c2c1c6 #c2c4b8 #c4beb8 #c4c8c7 #c5c1bd #c5c8c7 #c6c2ba #c6c4be #c6c6b4 #c6c6bd #c6c8c4 #c7bba4 #c7c6c6 #c8b69f #c8b8a8 #c8beb6 #c8c5b3 #c9b9b7 #c9c6c1 #c9cccd #cac5ba #cac9c9 #cbc4b2 #cbc6c2 #cbc8c0 #cbc9bf #cbc9c4 #cbcac6 #ccbab8 #ccc8bf #cccbca #cdc9c4 #cdc9c6 #cec8ba #cecac2 #cecec8 #cfcec8 #d0cac3 #d0cec9 #d0d0c9 #d1c4ac #d1cccd #d1cec9 #d2cbbd #d2ccc8 #d3d1c7 #d6d0cb #d6d2ca #d6d4cc #d6d8d5 #d7d0c6 #d7d3d0 #d7d4d0 #d8d2c8 #d8d7d4 #d9d3d0 #dac4ae #dacdc0 #dbd4bb #decdb8 #e0d3b8 → husk-shell | exclude face | idle 7, walk 25, run 53, dodge 48, light_1 16, light_2 22, light_3 75, heavy_charge 41, heavy_thrust 18, heavy_hold 11, heavy_recover 20, haul_throw 7, haul_recover 2, haul_pull 8, haul_slide 11, hit 11, death 10 | 385 |
-| 5 | from #6f7476 #707275 #76787a #77787a #7a7c7d #7a7d7e #7b7878 #7b7b7a #808080 #828280 #82857e #86757f #8d9182 #918f81 #939aa4 #949da4 #9599a0 #959ea7 #9698a5 #989da5 #99a0a9 #99a0aa #9a9c9c #9a9faf #9aa0ae #9b9cb3 #9ba4a9 #9ca0a8 #9ea4ae #a0a2a7 #a0a6ac #a1a9b2 #a2a29f #a2a5b1 #a2a6aa #a3a6a7 #a3a8aa #a4a8ae #a4aeb8 #a5a29e #a6aab2 #a7a2a4 #a7a7a4 #a8a5b3 #a8ad9f #a9afb6 #aaabad #aaafb2 #ababab #acadaf #acafac #adaba2 #adafb4 #adb2a0 #aeacb0 #afb0b4 #b0aead #b0b0b4 #b0b0b5 #b2b4b3 #b2b4b4 #b3b3b6 #b4b2b2 #b9b2b2 → watcher-stone | exclude face | idle 2, walk 28, run 30, dodge 57, light_1 25, light_2 49, light_3 15, heavy_charge 19, heavy_thrust 13, heavy_hold 4, heavy_recover 10, haul_throw 10, haul_recover 3, haul_pull 7, haul_slide 6, hit 14, death 8 | 300 |
+| 4 | from #b0babf #b2bba7 #b5b5b2 #b5b6b2 #b5b6b9 #b6b6b6 #b6b8bb #b6bab6 #b7b8bc #b7b9b7 #b8bbbd #b9b7ae #b9bbbf #babcad #babcbe #bbb8b6 #bcb7b3 #bcb8ae #bdbcb5 #bebcc9 #bebdb8 #bebeba #bebebe #bfbcb7 #c0c0c1 #c0c2be #c1c2c5 #c2b7ad #c2c0bb #c2c1c2 #c2c1c6 #c2c4b8 #c4beb8 #c4c8c7 #c5c1bd #c5c8c7 #c6c2ba #c6c4be #c6c6b4 #c6c6bd #c6c8c4 #c7bba4 #c7c6c6 #c8b69f #c8b8a8 #c8beb6 #c8c5b3 #c9b9b7 #c9c6c1 #c9cccd #cac5ba #cac9c9 #cbc4b2 #cbc6c2 #cbc8c0 #cbc9bf #cbc9c4 #cbcac6 #ccbab8 #ccc8bf #cccbca #cdc9c4 #cdc9c6 #cec8ba #cecac2 #cecec8 #cfcec8 #d0cac3 #d0cec9 #d0d0c9 #d1c4ac #d1cccd #d1cec9 #d2cbbd #d2ccc8 #d3d1c7 #d6d0cb #d6d2ca #d6d4cc #d6d8d5 #d7d0c6 #d7d3d0 #d7d4d0 #d8d2c8 #d8d7d4 #d9d3d0 #dac4ae #dacdc0 #dbd4bb #decdb8 #e0d3b8 → husk-shell | exclude face | idle 7, walk 25, run 53, dodge 48, light_1 16, light_2 22, light_3 75, heavy_charge 41, heavy_thrust 18, heavy_hold 11, heavy_recover 20, haul_throw 7, haul_recover 1, haul_pull 3, haul_slide 0, hit 11, death 10 | 368 |
+| 5 | from #6f7476 #707275 #76787a #77787a #7a7c7d #7a7d7e #7b7878 #7b7b7a #808080 #828280 #82857e #86757f #8d9182 #918f81 #939aa4 #949da4 #9599a0 #959ea7 #9698a5 #989da5 #99a0a9 #99a0aa #9a9c9c #9a9faf #9aa0ae #9b9cb3 #9ba4a9 #9ca0a8 #9ea4ae #a0a2a7 #a0a6ac #a1a9b2 #a2a29f #a2a5b1 #a2a6aa #a3a6a7 #a3a8aa #a4a8ae #a4aeb8 #a5a29e #a6aab2 #a7a2a4 #a7a7a4 #a8a5b3 #a8ad9f #a9afb6 #aaabad #aaafb2 #ababab #acadaf #acafac #adaba2 #adafb4 #adb2a0 #aeacb0 #afb0b4 #b0aead #b0b0b4 #b0b0b5 #b2b4b3 #b2b4b4 #b3b3b6 #b4b2b2 #b9b2b2 → watcher-stone | exclude face | idle 2, walk 28, run 30, dodge 57, light_1 25, light_2 49, light_3 15, heavy_charge 19, heavy_thrust 13, heavy_hold 4, heavy_recover 10, haul_throw 10, haul_recover 3, haul_pull 1, haul_slide 1, hit 14, death 8 | 289 |
 | 6 | from #495140 #575b62 #595a60 #5c5756 #5c5960 #5d545d #5d5a5f #5d5b5d #5e5a61 #5f585f #5f5c64 #605f67 #636067 #645e5a #655962 #655e5e #666268 #67615f #686a6d #6a5e61 #6c6a6c → watcher-iron | exclude face | idle 41, walk 78, run 182, dodge 104, light_1 24, light_2 29, light_3 32, heavy_charge 55, heavy_thrust 22, heavy_hold 11, heavy_recover 32, haul_throw 53, haul_recover 43, haul_pull 52, haul_slide 52, hit 6, death 0 | 816 |
 | 7 | from #554621 #6c5626 #6e5038 #6e5639 #725837 #74573e #745c3f #7d5035 → wheel-brass-dark | exclude face | idle 15, walk 8, run 10, dodge 0, light_1 7, light_2 4, light_3 11, heavy_charge 1, heavy_thrust 0, heavy_hold 0, heavy_recover 1, haul_throw 4, haul_recover 2, haul_pull 3, haul_slide 1, hit 5, death 12 | 84 |
 
 ## Off-palette colours the snap moved
 
-962 source colours reached the snap off the whitelist (after `remap`). The 20 with the most pixels, with the colour the snap sent each to and that colour's ramp (the material rows of `art/anchors/style-sheet.md`). A colour that lands in the wrong material needs a `remap` rule.
+954 source colours reached the snap off the whitelist (after `remap`). The 20 with the most pixels, with the colour the snap sent each to and that colour's ramp (the material rows of `art/anchors/style-sheet.md`). A colour that lands in the wrong material needs a `remap` rule.
 
 | Colour | Pixels | Snapped to | ΔE | Ramp | Frames |
 |---|---|---|---|---|---|
-| #363347 | 3565 | sleeper-night #24305a | 4.7 | water, hair | idle_SE 0 1; idle_NW 0 1; idle_W 0 1; idle_SW 0 1; walk_SE 0–5; walk_NW 0–5; walk_W 1–5; walk_SW 0–5; run_SE 0–7; run_NW 0–7; run_W 0–7; run_SW 0–7; dodge_S 1 2; dodge_SE 0–3; dodge_E 0–3; dodge_NE 0–2; dodge_N 2; dodge_NW 0–2; dodge_W 0–3; dodge_SW 0–3; light_1_SE 1 2; light_1_W 0–2; light_1_SW 0–2; light_2_SE 0–2; light_2_NW 1 2; light_2_W 0 1; light_2_SW 0–2; light_3_SE 0–2; light_3_NE 0–2; light_3_NW 0–2; light_3_W 0 1; light_3_SW 0–2; heavy_charge_SE 0–2; heavy_charge_W 0–2; heavy_charge_SW 0–2; heavy_thrust_SE 0 1; heavy_thrust_W 0 1; heavy_thrust_SW 0 1; heavy_hold_SE 0; heavy_hold_W 0; heavy_hold_SW 0; heavy_recover_SE 0 1; heavy_recover_W 0 1; heavy_recover_SW 0 1; haul_throw_SE 0 1; haul_throw_NW 0 1; haul_throw_SW 0 1; haul_recover_SE 0 1; haul_recover_NW 0 1; haul_recover_SW 0 1; haul_pull_SE 0 1; haul_pull_NW 0 1; haul_pull_SW 0 1; haul_slide_SE 0 1; haul_slide_NW 0 1; haul_slide_W 0 1; haul_slide_SW 0 1; hit_W 0 1; death_W 0–5 |
-| #3d3c4c | 3320 | watcher-iron #4a4e57 | 6.15 | cloth, steel | idle_SE 0 1; idle_E 0 1; idle_NE 0 1; idle_SW 0 1; walk_SE 0–5; walk_E 0–5; walk_NE 0–5; walk_SW 0–5; run_SE 0–7; run_E 0–7; run_NE 0–7; run_SW 0–7; dodge_S 1 2; dodge_SE 0–3; dodge_SW 0–3; light_1_SE 0–2; light_1_E 0–2; light_1_NE 0 1; light_1_NW 0 1; light_1_SW 0–2; light_2_SE 0–2; light_2_E 0–2; light_2_NE 2; light_2_SW 0–2; light_3_SE 1 2; light_3_E 0–2; light_3_SW 0 2; heavy_charge_SE 0–2; heavy_charge_E 0–2; heavy_charge_NE 2; heavy_charge_NW 2; heavy_charge_SW 0–2; heavy_thrust_SE 0 1; heavy_thrust_E 0 1; heavy_thrust_NE 0 1; heavy_thrust_NW 0 1; heavy_thrust_SW 0 1; heavy_hold_SE 0; heavy_hold_E 0; heavy_hold_NE 0; heavy_hold_NW 0; heavy_hold_SW 0; heavy_recover_SE 0 1; heavy_recover_E 0 1; heavy_recover_NE 0 1; heavy_recover_NW 0 1; heavy_recover_SW 0 1; haul_throw_SE 0 1; haul_throw_E 0 1; haul_throw_NE 0 1; haul_throw_W 0 1; haul_throw_SW 0 1; haul_recover_SE 0 1; haul_recover_E 0 1; haul_recover_NE 0 1; haul_recover_W 0 1; haul_recover_SW 0 1; haul_pull_SE 0 1; haul_pull_E 0 1; haul_pull_NE 0 1; haul_pull_SW 0 1; haul_slide_SE 0 1; haul_slide_E 0 1; haul_slide_NE 0 1; haul_slide_SW 0; hit_E 0 1; death_E 0–5 |
-| #7e7063 | 1566 | unwritten-sail #8c7f6e | 4.93 | skin | idle_SE 0 1; idle_E 0 1; idle_NE 0 1; idle_W 0 1; idle_SW 0 1; walk_SE 0–5; walk_E 0–5; walk_NE 0–2 4 5; walk_W 0–5; walk_SW 0–5; run_SE 0–7; run_E 0–7; run_NE 0–7; run_W 0–7; run_SW 0–7; dodge_S 1 2; dodge_SE 0–3; dodge_E 0–3; dodge_W 0–3; dodge_SW 0–3; light_1_SE 0–2; light_1_E 0–2; light_1_NE 0–2; light_1_NW 0–2; light_1_W 0–2; light_1_SW 0–2; light_2_SE 0–2; light_2_E 1 2; light_2_NE 0–2; light_2_W 0–2; light_2_SW 0–2; light_3_SE 0–2; light_3_E 0 2; light_3_W 0–2; light_3_SW 0–2; heavy_charge_SE 0–2; heavy_charge_E 0–2; heavy_charge_SW 0–2; heavy_thrust_SE 0 1; heavy_thrust_NE 1; heavy_thrust_NW 1; heavy_thrust_W 0 1; heavy_thrust_SW 0 1; heavy_hold_SE 0; heavy_hold_NE 0; heavy_hold_NW 0; heavy_hold_W 0; heavy_hold_SW 0; heavy_recover_SE 0 1; heavy_recover_E 1; heavy_recover_NE 0; heavy_recover_NW 0; heavy_recover_W 1; heavy_recover_SW 0 1; haul_throw_SE 0 1; haul_throw_E 0 1; haul_throw_NE 0 1; haul_throw_W 0 1; haul_throw_SW 0 1; haul_recover_SE 0 1; haul_recover_E 0 1; haul_recover_NE 0 1; haul_recover_W 0 1; haul_recover_SW 0 1; haul_pull_SE 0 1; haul_pull_E 0 1; haul_pull_NE 0 1; haul_pull_W 0 1; haul_pull_SW 0 1; haul_slide_SE 0 1; haul_slide_E 0 1; haul_slide_NE 1; haul_slide_W 0 1; haul_slide_SW 0 1; hit_E 0 1; hit_W 0 1; death_E 0–5; death_W 0–5 |
+| #363347 | 3563 | sleeper-night #24305a | 4.7 | water, hair | idle_SE 0 1; idle_NW 0 1; idle_W 0 1; idle_SW 0 1; walk_SE 0–5; walk_NW 0–5; walk_W 1–5; walk_SW 0–5; run_SE 0–7; run_NW 0–7; run_W 0–7; run_SW 0–7; dodge_S 1 2; dodge_SE 0–3; dodge_E 0–3; dodge_NE 0–2; dodge_N 2; dodge_NW 0–2; dodge_W 0–3; dodge_SW 0–3; light_1_SE 1 2; light_1_W 0–2; light_1_SW 0–2; light_2_SE 0–2; light_2_NW 1 2; light_2_W 0 1; light_2_SW 0–2; light_3_SE 0–2; light_3_NE 0–2; light_3_NW 0–2; light_3_W 0 1; light_3_SW 0–2; heavy_charge_SE 0–2; heavy_charge_W 0–2; heavy_charge_SW 0–2; heavy_thrust_SE 0 1; heavy_thrust_W 0 1; heavy_thrust_SW 0 1; heavy_hold_SE 0; heavy_hold_W 0; heavy_hold_SW 0; heavy_recover_SE 0 1; heavy_recover_W 0 1; heavy_recover_SW 0 1; haul_throw_SE 0 1; haul_throw_NW 0 1; haul_throw_SW 0 1; haul_recover_SE 0 1; haul_recover_NW 0 1; haul_recover_SW 0 1; haul_pull_SE 0 1; haul_pull_NW 0 1; haul_pull_SW 0 1; haul_slide_SE 0 1; haul_slide_NW 0 1; haul_slide_W 0 1; haul_slide_SW 0 1; hit_W 0 1; death_W 0–5 |
+| #3d3c4c | 3319 | watcher-iron #4a4e57 | 6.15 | cloth, steel | idle_SE 0 1; idle_E 0 1; idle_NE 0 1; idle_SW 0 1; walk_SE 0–5; walk_E 0–5; walk_NE 0–5; walk_SW 0–5; run_SE 0–7; run_E 0–7; run_NE 0–7; run_SW 0–7; dodge_S 1 2; dodge_SE 0–3; dodge_SW 0–3; light_1_SE 0–2; light_1_E 0–2; light_1_NE 0 1; light_1_NW 0 1; light_1_SW 0–2; light_2_SE 0–2; light_2_E 0–2; light_2_NE 2; light_2_SW 0–2; light_3_SE 1 2; light_3_E 0–2; light_3_SW 0 2; heavy_charge_SE 0–2; heavy_charge_E 0–2; heavy_charge_NE 2; heavy_charge_NW 2; heavy_charge_SW 0–2; heavy_thrust_SE 0 1; heavy_thrust_E 0 1; heavy_thrust_NE 0 1; heavy_thrust_NW 0 1; heavy_thrust_SW 0 1; heavy_hold_SE 0; heavy_hold_E 0; heavy_hold_NE 0; heavy_hold_NW 0; heavy_hold_SW 0; heavy_recover_SE 0 1; heavy_recover_E 0 1; heavy_recover_NE 0 1; heavy_recover_NW 0 1; heavy_recover_SW 0 1; haul_throw_SE 0 1; haul_throw_E 0 1; haul_throw_NE 0 1; haul_throw_W 0 1; haul_throw_SW 0 1; haul_recover_SE 0 1; haul_recover_E 0 1; haul_recover_NE 0 1; haul_recover_W 0 1; haul_recover_SW 0 1; haul_pull_SE 0 1; haul_pull_E 0 1; haul_pull_NE 1; haul_pull_SW 0 1; haul_slide_SE 0 1; haul_slide_E 0 1; haul_slide_NE 0 1; haul_slide_SW 0; hit_E 0 1; death_E 0–5 |
+| #7e7063 | 1567 | unwritten-sail #8c7f6e | 4.93 | skin | idle_SE 0 1; idle_E 0 1; idle_NE 0 1; idle_W 0 1; idle_SW 0 1; walk_SE 0–5; walk_E 0–5; walk_NE 0–2 4 5; walk_W 0–5; walk_SW 0–5; run_SE 0–7; run_E 0–7; run_NE 0–7; run_W 0–7; run_SW 0–7; dodge_S 1 2; dodge_SE 0–3; dodge_E 0–3; dodge_W 0–3; dodge_SW 0–3; light_1_SE 0–2; light_1_E 0–2; light_1_NE 0–2; light_1_NW 0–2; light_1_W 0–2; light_1_SW 0–2; light_2_SE 0–2; light_2_E 1 2; light_2_NE 0–2; light_2_W 0–2; light_2_SW 0–2; light_3_SE 0–2; light_3_E 0 2; light_3_W 0–2; light_3_SW 0–2; heavy_charge_SE 0–2; heavy_charge_E 0–2; heavy_charge_SW 0–2; heavy_thrust_SE 0 1; heavy_thrust_NE 1; heavy_thrust_NW 1; heavy_thrust_W 0 1; heavy_thrust_SW 0 1; heavy_hold_SE 0; heavy_hold_NE 0; heavy_hold_NW 0; heavy_hold_W 0; heavy_hold_SW 0; heavy_recover_SE 0 1; heavy_recover_E 1; heavy_recover_NE 0; heavy_recover_NW 0; heavy_recover_W 1; heavy_recover_SW 0 1; haul_throw_SE 0 1; haul_throw_E 0 1; haul_throw_NE 0 1; haul_throw_W 0 1; haul_throw_SW 0 1; haul_recover_SE 0 1; haul_recover_E 0 1; haul_recover_NE 0 1; haul_recover_W 0 1; haul_recover_SW 0 1; haul_pull_SE 0 1; haul_pull_E 0 1; haul_pull_NE 0 1; haul_pull_W 0 1; haul_pull_SW 0 1; haul_slide_SE 0 1; haul_slide_E 0 1; haul_slide_NE 1; haul_slide_W 0 1; haul_slide_SW 0 1; hit_E 0 1; hit_W 0 1; death_E 0–5; death_W 0–5 |
 | #6f6356 | 1183 | unwritten-tar #5e5448 | 5.53 | skin | idle_SE 0 1; idle_E 0 1; idle_NW 0 1; idle_W 0 1; idle_SW 0 1; walk_SE 0–2; walk_E 0–5; walk_NW 0–5; walk_W 0–5; walk_SW 0–5; run_SE 0–6; run_E 0–7; run_NW 0 1 3–5 7; run_W 0–7; run_SW 0–7; dodge_S 1 2; dodge_SE 0–3; dodge_E 0–3; dodge_NE 3; dodge_NW 3; dodge_W 0–3; dodge_SW 0–3; light_1_SE 0–2; light_1_E 0–2; light_1_W 0–2; light_1_SW 0–2; light_2_SE 0–2; light_2_E 0–2; light_2_NW 1; light_2_W 0–2; light_2_SW 0–2; light_3_SE 0–2; light_3_E 0–2; light_3_NE 0–2; light_3_NW 0–2; light_3_W 0–2; light_3_SW 0–2; heavy_charge_SE 0–2; heavy_charge_E 0 1; heavy_charge_W 1; heavy_charge_SW 0–2; heavy_thrust_SE 0 1; heavy_thrust_E 1; heavy_thrust_W 0; heavy_thrust_SW 0 1; heavy_hold_SE 0; heavy_hold_SW 0; heavy_recover_SE 0 1; heavy_recover_E 1; heavy_recover_W 1; heavy_recover_SW 0 1; haul_throw_SE 0 1; haul_throw_E 0 1; haul_throw_W 0 1; haul_throw_SW 0 1; haul_recover_E 0 1; haul_recover_W 0 1; haul_pull_SE 0 1; haul_pull_E 0 1; haul_pull_NW 0 1; haul_pull_W 0 1; haul_pull_SW 0 1; haul_slide_SE 0 1; haul_slide_E 0 1; haul_slide_NW 0 1; haul_slide_W 0 1; haul_slide_SW 0 1; hit_E 0 1; hit_W 0 1; death_E 0–5; death_W 0–5 |
 | #626383 | 850 | hollow-below #5b5478 | 4.57 | stone, hair | idle_SE 0 1; idle_NW 0 1; idle_W 0 1; idle_SW 0 1; walk_SE 0–5; walk_NW 3 4; walk_W 1–5; walk_SW 0–5; run_SE 0–7; run_NW 1–7; run_W 0–7; run_SW 0 1 3–7; dodge_S 1 2; dodge_SE 0–3; dodge_E 0–3; dodge_NE 1; dodge_N 1; dodge_NW 1; dodge_W 0–3; dodge_SW 0–3; light_1_SE 0–2; light_1_W 0 1; light_1_SW 0–2; light_2_SE 0–2; light_2_NW 0; light_2_W 0–2; light_2_SW 1 2; light_3_SE 0; light_3_NE 0–2; light_3_NW 0–2; light_3_W 1 2; light_3_SW 0–2; heavy_charge_SE 0–2; heavy_charge_W 0–2; heavy_charge_SW 0–2; heavy_thrust_SE 0 1; heavy_thrust_W 0 1; heavy_thrust_SW 0 1; heavy_hold_SE 0; heavy_hold_W 0; heavy_hold_SW 0; heavy_recover_SE 0 1; heavy_recover_W 0 1; heavy_recover_SW 0 1; haul_throw_SE 0 1; haul_throw_NW 1; haul_throw_SW 0 1; haul_recover_SE 0 1; haul_recover_SW 0 1; haul_pull_SE 0 1; haul_pull_NW 0 1; haul_pull_W 0 1; haul_pull_SW 0 1; haul_slide_SE 0 1; haul_slide_NW 1; haul_slide_W 0 1; haul_slide_SW 0 1; hit_W 0 1; death_W 0–5 |
-| #685c56 | 789 | unwritten-tar #5e5448 | 3.39 | skin | idle_SE 0 1; idle_NW 0 1; walk_SE 0–2 4 5; walk_NE 3; walk_NW 0–5; run_SE 0–7; run_NE 3 4; run_NW 0–7; run_SW 0 4 6 7; dodge_S 2; dodge_SE 0 2 3; dodge_NE 0–3; dodge_N 1 2; dodge_NW 0–3; dodge_SW 0 2 3; light_1_SE 0–2; light_1_NE 0–2; light_1_NW 0–2; light_1_SW 0–2; light_2_SE 0–2; light_2_NE 0–2; light_2_NW 1 2; light_2_SW 0–2; light_3_SE 0–2; light_3_NE 1 2; light_3_NW 1 2; light_3_SW 0–2; heavy_charge_SE 0–2; heavy_charge_NE 0–2; heavy_charge_NW 0–2; heavy_charge_SW 0–2; heavy_thrust_SE 0 1; heavy_thrust_NE 0 1; heavy_thrust_NW 0 1; heavy_thrust_SW 0 1; heavy_hold_SE 0; heavy_hold_NE 0; heavy_hold_NW 0; heavy_hold_SW 0; heavy_recover_SE 0 1; heavy_recover_NE 0 1; heavy_recover_NW 0 1; heavy_recover_SW 0 1; haul_throw_SE 0 1; haul_throw_NW 0 1; haul_throw_SW 0 1; haul_recover_SE 0 1; haul_recover_NE 0; haul_recover_NW 0 1; haul_recover_SW 0 1; haul_pull_SE 0 1; haul_pull_NE 0 1; haul_pull_NW 0 1; haul_pull_SW 0 1; haul_slide_SE 0 1; haul_slide_NE 0 1; haul_slide_NW 0 1; haul_slide_SW 0 1 |
-| #707084 | 658 | watcher-stone #7d8794 | 6.92 | cloth, steel | idle_SE 0 1; idle_SW 0 1; walk_SE 0–5; walk_SW 0–5; run_SE 0–7; run_SW 0–7; dodge_S 1 2; dodge_SE 1–3; dodge_SW 1–3; light_1_SE 0–2; light_1_SW 0–2; light_2_SE 0 1; light_2_SW 0–2; light_3_SE 0 1; light_3_SW 0–2; heavy_charge_SE 0–2; heavy_charge_SW 0–2; heavy_thrust_SE 0 1; heavy_thrust_SW 0 1; heavy_hold_SE 0; heavy_hold_SW 0; heavy_recover_SE 0 1; heavy_recover_SW 0 1; haul_throw_SE 0 1; haul_throw_SW 0 1; haul_recover_SE 0; haul_recover_SW 0; haul_pull_SE 0 1; haul_pull_SW 0 1; haul_slide_SE 0 1; haul_slide_SW 0 1 |
+| #685c56 | 778 | unwritten-tar #5e5448 | 3.39 | skin | idle_SE 0 1; idle_NW 0 1; walk_SE 0–2 4 5; walk_NE 3; walk_NW 0–5; run_SE 0–7; run_NE 3 4; run_NW 0–7; run_SW 0 4 6 7; dodge_S 2; dodge_SE 0 2 3; dodge_NE 0–3; dodge_N 1 2; dodge_NW 0–3; dodge_SW 0 2 3; light_1_SE 0–2; light_1_NE 0–2; light_1_NW 0–2; light_1_SW 0–2; light_2_SE 0–2; light_2_NE 0–2; light_2_NW 1 2; light_2_SW 0–2; light_3_SE 0–2; light_3_NE 1 2; light_3_NW 1 2; light_3_SW 0–2; heavy_charge_SE 0–2; heavy_charge_NE 0–2; heavy_charge_NW 0–2; heavy_charge_SW 0–2; heavy_thrust_SE 0 1; heavy_thrust_NE 0 1; heavy_thrust_NW 0 1; heavy_thrust_SW 0 1; heavy_hold_SE 0; heavy_hold_NE 0; heavy_hold_NW 0; heavy_hold_SW 0; heavy_recover_SE 0 1; heavy_recover_NE 0 1; heavy_recover_NW 0 1; heavy_recover_SW 0 1; haul_throw_SE 0 1; haul_throw_NW 0 1; haul_throw_SW 0 1; haul_recover_SE 0 1; haul_recover_NE 0; haul_recover_NW 0 1; haul_recover_SW 0 1; haul_pull_SE 0 1; haul_pull_NE 0 1; haul_pull_NW 0 1; haul_pull_SW 0 1; haul_slide_SE 0 1; haul_slide_NE 0 1; haul_slide_NW 0 1; haul_slide_SW 0 1 |
+| #707084 | 645 | watcher-stone #7d8794 | 6.92 | cloth, steel | idle_SE 0 1; idle_SW 0 1; walk_SE 0–5; walk_SW 0–5; run_SE 0–7; run_SW 0–7; dodge_S 1 2; dodge_SE 1–3; dodge_SW 1–3; light_1_SE 0–2; light_1_SW 0–2; light_2_SE 0 1; light_2_SW 0–2; light_3_SE 0 1; light_3_SW 0–2; heavy_charge_SE 0–2; heavy_charge_SW 0–2; heavy_thrust_SE 0 1; heavy_thrust_SW 0 1; heavy_hold_SE 0; heavy_hold_SW 0; heavy_recover_SE 0 1; heavy_recover_SW 0 1; haul_throw_SE 0 1; haul_throw_SW 0 1; haul_recover_SE 0; haul_recover_SW 0; haul_pull_SE 0 1; haul_pull_SW 1; haul_slide_SE 0 1; haul_slide_SW 0 1 |
 | #454069 | 417 | watcher-iron #4a4e57 | 6.1 | cloth, steel | idle_SE 0 1; idle_W 0 1; walk_SE 0 3–5; walk_W 0–5; run_SE 0–7; run_W 0–7; dodge_E 0–3; dodge_W 0–3; light_1_SE 0 1; light_1_W 0 2; light_2_SE 1 2; light_2_W 0–2; light_3_SE 0 1; light_3_W 0 1; heavy_charge_SE 0 1; heavy_charge_W 0–2; heavy_thrust_SE 1; heavy_thrust_W 0 1; heavy_thrust_SW 1; heavy_hold_SE 0; heavy_hold_W 0; heavy_hold_SW 0; heavy_recover_SE 1; heavy_recover_W 1; heavy_recover_SW 1; haul_throw_SE 0; haul_throw_SW 0; haul_pull_SE 0; haul_pull_W 0; haul_slide_SE 1; haul_slide_W 0 1; hit_W 0 1; death_W 0–5 |
 | #d67345 | 403 | spark-ember #c9733a | 2.67 | ember | idle_SE 0 1; idle_E 0 1; idle_NE 0 1; idle_SW 0 1; walk_SE 0–2 4 5; walk_E 0 1 5; walk_NE 0–5; run_SE 0–7; run_E 1–3; run_NE 0–7; run_SW 0–7; dodge_S 1 2; dodge_SE 0–3; dodge_SW 0–3; light_1_SE 1 2; light_1_E 0–2; light_1_SW 0–2; light_2_SE 0 1; light_2_SW 0 1; light_3_SE 0 2; light_3_SW 0–2; heavy_charge_SE 0 1; heavy_charge_E 0; heavy_charge_NE 0–2; heavy_charge_NW 0–2; heavy_charge_SW 0 1; heavy_thrust_SE 0 1; heavy_thrust_NE 0 1; heavy_thrust_NW 0 1; heavy_thrust_SW 0 1; heavy_hold_SE 0; heavy_hold_NE 0; heavy_hold_NW 0; heavy_hold_SW 0; heavy_recover_SE 0; heavy_recover_E 1; heavy_recover_NE 0; heavy_recover_NW 0; heavy_recover_SW 0; haul_throw_SE 0 1; haul_throw_E 1; haul_throw_W 1; haul_throw_SW 0 1; haul_recover_SE 1; haul_recover_E 1; haul_recover_W 1; haul_recover_SW 1; haul_pull_SE 0 1; haul_pull_NE 0 1; haul_pull_SW 0 1; haul_slide_SE 0 1; haul_slide_SW 0 1; hit_E 1; death_E 0–4 |
-| #8e969f | 337 | watcher-stone #7d8794 | 5.04 | cloth, steel | idle_SE 0 1; idle_NE 0 1; idle_SW 0 1; walk_SE 0–5; walk_NE 1 3–5; walk_SW 1 2 5; run_SE 0–7; run_NE 0 4 7; run_SW 0 2 3 5–7; dodge_SE 3; dodge_E 0–3; dodge_W 0–3; dodge_SW 3; light_1_SE 0 2; light_1_NE 0–2; light_1_NW 0–2; light_1_SW 0–2; light_2_SE 0 2; light_2_NE 0 2; light_2_SW 0–2; light_3_SE 1 2; light_3_SW 1 2; heavy_charge_SE 0–2; heavy_charge_NE 1; heavy_charge_NW 1; heavy_charge_W 2; heavy_charge_SW 0 1; heavy_thrust_SE 1; heavy_thrust_SW 1; heavy_hold_SE 0; heavy_hold_NE 0; heavy_hold_NW 0; heavy_hold_SW 0; heavy_recover_SE 1; heavy_recover_NE 0; heavy_recover_NW 0; heavy_recover_W 1; heavy_recover_SW 1; haul_throw_SE 0 1; haul_throw_NE 0 1; haul_throw_SW 0 1; haul_recover_NE 0; haul_pull_SE 0 1; haul_pull_NE 0 1; haul_pull_SW 0; haul_slide_SE 0; haul_slide_NE 0; haul_slide_W 1; haul_slide_SW 0 1 |
 | #3b3c5d | 331 | sleeper-night #24305a | 5.45 | water, hair | idle_SE 0 1; idle_SW 0 1; walk_SE 0–5; walk_SW 0 2 4 5; run_SE 0–7; run_SW 0–7; dodge_S 1; dodge_SE 0 1 3; dodge_SW 0 1 3; light_1_SE 0–2; light_1_SW 1; light_2_SE 1 2; light_2_SW 1 2; light_3_SE 1; light_3_SW 1 2; heavy_charge_SE 0–2; heavy_charge_SW 0; heavy_thrust_SE 0 1; heavy_thrust_SW 0 1; heavy_hold_SE 0; heavy_hold_SW 0; heavy_recover_SE 0 1; heavy_recover_SW 0 1; haul_throw_SE 0; haul_throw_SW 0; haul_recover_SE 1; haul_recover_SW 1; haul_pull_SE 0 1; haul_pull_SW 0; haul_slide_SE 0; haul_slide_SW 0 |
+| #8e969f | 296 | watcher-stone #7d8794 | 5.04 | cloth, steel | idle_SE 0 1; idle_NE 0 1; idle_SW 0 1; walk_SE 0–5; walk_NE 1 3–5; walk_SW 1 2 5; run_SE 0–7; run_NE 0 4 7; run_SW 0 2 3 5–7; dodge_SE 3; dodge_E 0–3; dodge_W 0–3; dodge_SW 3; light_1_SE 0 2; light_1_NE 0–2; light_1_NW 0–2; light_1_SW 0–2; light_2_SE 0 2; light_2_NE 0 2; light_2_SW 0–2; light_3_SE 1 2; light_3_SW 1 2; heavy_charge_SE 0–2; heavy_charge_NE 1; heavy_charge_NW 1; heavy_charge_W 2; heavy_charge_SW 0 1; heavy_thrust_SE 1; heavy_thrust_SW 1; heavy_hold_SE 0; heavy_hold_NE 0; heavy_hold_NW 0; heavy_hold_SW 0; heavy_recover_SE 1; heavy_recover_NE 0; heavy_recover_NW 0; heavy_recover_W 1; heavy_recover_SW 1; haul_throw_SE 0; haul_throw_NE 0; haul_throw_SW 0; haul_slide_SE 0; haul_slide_W 1; haul_slide_SW 0 1 |
 | #ad644c | 264 | sleeper-ochre #9c5b4a | 4.1 | ember, red clay | idle_SE 0; idle_W 0; walk_SE 0 2–5; walk_W 0 2 3; run_SE 0 3 4 7; run_W 0–3 5–7; dodge_E 0; dodge_W 0; light_1_SE 0–2; light_1_W 1; light_2_SE 0–2; light_2_W 0; light_3_SE 0–2; light_3_W 0; heavy_charge_SE 0–2; heavy_charge_W 0–2; heavy_thrust_SE 0 1; heavy_thrust_W 0 1; heavy_thrust_SW 0 1; heavy_hold_SE 0; heavy_hold_W 0; heavy_hold_SW 0; heavy_recover_SE 1; heavy_recover_W 0 1; heavy_recover_SW 1; haul_throw_SE 0 1; haul_throw_SW 0 1; haul_recover_SE 0 1; haul_recover_SW 0 1; haul_pull_SE 1; haul_pull_W 0; haul_slide_SE 0 1; haul_slide_W 1; hit_W 0 1; death_W 0–5 |
 | #4e3844 | 166 | watcher-iron #4a4e57 | 6.52 | cloth, steel | idle_W 0 1; idle_SW 0 1; walk_W 0 4; walk_SW 0–5; run_W 0–4 6; run_SW 0 2 4 7; dodge_S 1; dodge_SE 0 1 3; dodge_E 0–2; dodge_W 0–2; dodge_SW 0 1 3; light_1_W 1; light_1_SW 1; light_2_W 0 1; light_2_SW 0–2; light_3_W 0 2; heavy_charge_W 1; heavy_charge_SW 0–2; heavy_thrust_W 0; haul_pull_W 0; haul_pull_SW 0 1; haul_slide_W 0; haul_slide_SW 0; hit_W 0 1; death_W 0 1 3–5 |
-| #7c664f | 151 | wheel-brass-dark #8a6420 | 5.3 | brass, leather | idle_E 0 1; idle_SW 0 1; walk_SW 0–5; run_E 0 2–6; run_SW 0–7; dodge_S 1; dodge_SE 0 1 3; dodge_SW 0 1 3; light_1_SW 0–2; light_2_E 0–2; light_2_SW 0–2; light_3_E 0; light_3_SW 1 2; heavy_charge_E 0; heavy_charge_SW 0; haul_throw_E 0 1; haul_throw_W 0 1; haul_recover_E 0 1; haul_recover_W 0 1; haul_pull_E 0 1; haul_pull_SW 0 1; haul_slide_E 0 1; haul_slide_SW 0 1; hit_E 1; death_E 1 |
 | #bc6a4c | 151 | spark-ember #c9733a | 4.15 | ember | idle_SE 0 1; walk_SE 0–5; walk_E 0–5; run_E 1–7; light_1_SE 0–2; light_1_E 0–2; light_2_E 0 2; light_3_SE 0 2; heavy_charge_SE 0 2; heavy_charge_E 0; heavy_recover_E 1; haul_throw_SE 0 1; haul_throw_E 0 1; haul_throw_W 0 1; haul_throw_SW 0 1; haul_recover_SE 0 1; haul_recover_E 0 1; haul_recover_W 0 1; haul_recover_SW 0 1; haul_pull_SE 0; haul_slide_SE 0 1; haul_slide_E 0; hit_E 1; death_E 1 3 4 |
+| #7c664f | 148 | wheel-brass-dark #8a6420 | 5.3 | brass, leather | idle_E 0 1; idle_SW 0 1; walk_SW 0–5; run_E 0 2–6; run_SW 0–7; dodge_S 1; dodge_SE 0 1 3; dodge_SW 0 1 3; light_1_SW 0–2; light_2_E 0–2; light_2_SW 0–2; light_3_E 0; light_3_SW 1 2; heavy_charge_E 0; heavy_charge_SW 0; haul_throw_E 0 1; haul_throw_W 0 1; haul_recover_E 0 1; haul_recover_W 0 1; haul_pull_E 0 1; haul_slide_E 0 1; haul_slide_SW 0 1; hit_E 1; death_E 1 |
 | #413a45 | 143 | watcher-iron #4a4e57 | 6.55 | cloth, steel | idle_SE 1; walk_SE 0–2 4 5; run_SE 0–7; light_1_SE 0; light_2_SE 2; light_3_SE 0–2; heavy_charge_SE 0; heavy_thrust_SE 0; heavy_thrust_SW 0; heavy_recover_SE 0; heavy_recover_SW 0; haul_throw_SE 0 1; haul_throw_SW 0 1; haul_recover_SE 1; haul_recover_SW 1; haul_pull_SE 0 1; haul_slide_SE 0 1 |
-| #383360 | 128 | sleeper-night #24305a | 3.58 | water, hair | idle_SW 0; walk_SW 0–2 4 5; run_SW 0–7; dodge_SE 0 3; dodge_SW 0 3; light_1_SW 0–2; light_2_SW 2; light_3_SW 0–2; heavy_charge_SW 0 1; haul_slide_SW 0 |
+| #383360 | 126 | sleeper-night #24305a | 3.58 | water, hair | idle_SW 0; walk_SW 0–2 4 5; run_SW 0–7; dodge_SE 0 3; dodge_SW 0 3; light_1_SW 0–2; light_2_SW 2; light_3_SW 0–2; heavy_charge_SW 0 1 |
 | #9e7642 | 95 | watcher-bronze #a8743a | 1.74 | leather | idle_E 0 1; walk_E 0–5; run_E 2 3 5–7; light_1_E 0–2; light_2_E 0–2; light_3_E 0–2; heavy_charge_E 1; heavy_thrust_E 1; heavy_hold_E 0; heavy_recover_E 0; haul_throw_E 0 1; haul_throw_W 0 1; haul_recover_E 1; haul_recover_W 1; haul_pull_E 0 1; haul_slide_E 0 1; death_E 0 2 |
 | #ac814a | 92 | watcher-bronze #a8743a | 3.48 | leather | idle_E 0 1; walk_E 3–5; light_1_E 0–2; light_3_E 0–2; heavy_charge_E 0 1; heavy_thrust_E 0 1; heavy_hold_E 0; heavy_recover_E 0 1; haul_throw_E 0 1; haul_throw_W 0 1; haul_recover_E 0 1; haul_recover_W 0 1; haul_pull_E 1; hit_E 1; death_E 0 |
 | #222959 | 90 | sleeper-night #24305a | 2.17 | water, hair | dodge_NE 1–3; dodge_N 1 2; dodge_NW 1–3 |
@@ -631,67 +631,67 @@ Each point in the cell (where the sheet stores it) and in the frame's source pix
 | heavy_charge_SW_0 | tip | 24, 55 | 10, 48 | recipe |
 | heavy_charge_SW_1 | tip | 24, 55 | 10, 48 | recipe |
 | heavy_charge_SW_2 | tip | 23, 44 | 9, 37 | recipe |
-| haul_throw_S_0 | hand | 54, 51 | 40, 43 | recipe |
-| haul_throw_S_1 | hand | 54, 51 | 40, 43 | recipe |
-| haul_throw_SE_0 | hand | 59, 50 | 45, 43 | recipe |
-| haul_throw_SE_1 | hand | 60, 42 | 46, 35 | recipe |
+| haul_throw_S_0 | hand | 32, 44 | 18, 36 | recipe |
+| haul_throw_S_1 | hand | 43, 50 | 29, 42 | recipe |
+| haul_throw_SE_0 | hand | 30, 44 | 16, 37 | recipe |
+| haul_throw_SE_1 | hand | 60, 41 | 46, 34 | recipe |
 | haul_throw_E_0 | hand | 48, 52 | 34, 45 | recipe |
-| haul_throw_E_1 | hand | 58, 44 | 44, 37 | recipe |
-| haul_throw_NE_0 | hand | 57, 50 | 43, 43 | recipe |
-| haul_throw_NE_1 | hand | 62, 39 | 48, 32 | recipe |
-| haul_throw_N_0 | hand | 48, 50 | 34, 43 | recipe |
-| haul_throw_N_1 | hand | 48, 50 | 34, 43 | recipe |
+| haul_throw_E_1 | hand | 58, 45 | 44, 38 | recipe |
+| haul_throw_NE_0 | hand | 56, 52 | 42, 45 | recipe |
+| haul_throw_NE_1 | hand | 60, 39 | 46, 32 | recipe |
+| haul_throw_N_0 | hand | 29, 48 | 15, 41 | recipe |
+| haul_throw_N_1 | hand | 27, 47 | 13, 40 | recipe |
 | haul_throw_NW_0 | hand | 33, 47 | 19, 40 | recipe |
 | haul_throw_NW_1 | hand | 25, 44 | 11, 37 | recipe |
 | haul_throw_W_0 | hand | 47, 52 | 33, 45 | haul_throw_E_0, mirrored |
-| haul_throw_W_1 | hand | 37, 44 | 23, 37 | haul_throw_E_1, mirrored |
-| haul_throw_SW_0 | hand | 36, 50 | 22, 43 | haul_throw_SE_0, mirrored |
-| haul_throw_SW_1 | hand | 35, 42 | 21, 35 | haul_throw_SE_1, mirrored |
-| haul_recover_S_0 | hand | 37, 55 | 23, 47 | recipe |
+| haul_throw_W_1 | hand | 37, 45 | 23, 38 | haul_throw_E_1, mirrored |
+| haul_throw_SW_0 | hand | 65, 44 | 51, 37 | haul_throw_SE_0, mirrored |
+| haul_throw_SW_1 | hand | 35, 41 | 21, 34 | haul_throw_SE_1, mirrored |
+| haul_recover_S_0 | hand | 37, 54 | 23, 46 | recipe |
 | haul_recover_S_1 | hand | 35, 55 | 21, 47 | recipe |
 | haul_recover_SE_0 | hand | 60, 44 | 46, 37 | recipe |
 | haul_recover_SE_1 | hand | 53, 51 | 39, 44 | recipe |
 | haul_recover_E_0 | hand | 55, 48 | 41, 41 | recipe |
-| haul_recover_E_1 | hand | 50, 51 | 36, 44 | recipe |
-| haul_recover_NE_0 | hand | 60, 44 | 46, 37 | recipe |
-| haul_recover_NE_1 | hand | 60, 46 | 46, 39 | recipe |
-| haul_recover_N_0 | hand | 48, 50 | 34, 43 | recipe |
+| haul_recover_E_1 | hand | 50, 52 | 36, 45 | recipe |
+| haul_recover_NE_0 | hand | 61, 45 | 47, 38 | recipe |
+| haul_recover_NE_1 | hand | 61, 48 | 47, 41 | recipe |
+| haul_recover_N_0 | hand | 32, 50 | 18, 43 | recipe |
 | haul_recover_N_1 | hand | 48, 50 | 34, 43 | recipe |
 | haul_recover_NW_0 | hand | 35, 49 | 21, 42 | recipe |
 | haul_recover_NW_1 | hand | 48, 50 | 34, 43 | recipe |
 | haul_recover_W_0 | hand | 40, 48 | 26, 41 | haul_recover_E_0, mirrored |
-| haul_recover_W_1 | hand | 45, 51 | 31, 44 | haul_recover_E_1, mirrored |
+| haul_recover_W_1 | hand | 45, 52 | 31, 45 | haul_recover_E_1, mirrored |
 | haul_recover_SW_0 | hand | 35, 44 | 21, 37 | haul_recover_SE_0, mirrored |
 | haul_recover_SW_1 | hand | 42, 51 | 28, 44 | haul_recover_SE_1, mirrored |
-| haul_pull_S_0 | hand | 53, 55 | 39, 47 | recipe |
+| haul_pull_S_0 | hand | 52, 54 | 38, 46 | recipe |
 | haul_pull_S_1 | hand | 44, 52 | 30, 44 | recipe |
-| haul_pull_SE_0 | hand | 56, 57 | 42, 50 | recipe |
+| haul_pull_SE_0 | hand | 46, 52 | 32, 45 | recipe |
 | haul_pull_SE_1 | hand | 70, 51 | 56, 44 | recipe |
-| haul_pull_E_0 | hand | 52, 48 | 38, 41 | recipe |
-| haul_pull_E_1 | hand | 56, 42 | 42, 35 | recipe |
-| haul_pull_NE_0 | hand | 53, 45 | 39, 38 | recipe |
-| haul_pull_NE_1 | hand | 58, 44 | 44, 37 | recipe |
+| haul_pull_E_0 | hand | 52, 49 | 38, 42 | recipe |
+| haul_pull_E_1 | hand | 56, 43 | 42, 36 | recipe |
+| haul_pull_NE_0 | hand | 53, 47 | 39, 40 | recipe |
+| haul_pull_NE_1 | hand | 59, 47 | 45, 40 | recipe |
 | haul_pull_N_0 | hand | 48, 50 | 34, 43 | recipe |
 | haul_pull_N_1 | hand | 48, 50 | 34, 43 | recipe |
 | haul_pull_NW_0 | hand | 31, 51 | 17, 44 | recipe |
 | haul_pull_NW_1 | hand | 38, 39 | 24, 32 | recipe |
-| haul_pull_W_0 | hand | 36, 49 | 22, 42 | recipe |
-| haul_pull_W_1 | hand | 40, 44 | 26, 37 | recipe |
-| haul_pull_SW_0 | hand | 41, 52 | 27, 45 | recipe |
-| haul_pull_SW_1 | hand | 38, 51 | 24, 44 | recipe |
-| haul_slide_S_0 | hand | 39, 55 | 25, 47 | recipe |
+| haul_pull_W_0 | hand | 36, 50 | 22, 43 | recipe |
+| haul_pull_W_1 | hand | 40, 46 | 26, 39 | recipe |
+| haul_pull_SW_0 | hand | 41, 49 | 27, 42 | recipe |
+| haul_pull_SW_1 | hand | 38, 50 | 24, 43 | recipe |
+| haul_slide_S_0 | hand | 39, 54 | 25, 46 | recipe |
 | haul_slide_S_1 | hand | 54, 57 | 40, 49 | recipe |
-| haul_slide_SE_0 | hand | 57, 52 | 43, 45 | recipe |
-| haul_slide_SE_1 | hand | 61, 56 | 47, 49 | recipe |
-| haul_slide_E_0 | hand | 48, 51 | 34, 44 | recipe |
-| haul_slide_E_1 | hand | 45, 51 | 31, 44 | recipe |
-| haul_slide_NE_0 | hand | 56, 51 | 42, 44 | recipe |
-| haul_slide_NE_1 | hand | 56, 51 | 42, 44 | recipe |
+| haul_slide_SE_0 | hand | 41, 53 | 27, 46 | recipe |
+| haul_slide_SE_1 | hand | 44, 58 | 30, 51 | recipe |
+| haul_slide_E_0 | hand | 48, 52 | 34, 45 | recipe |
+| haul_slide_E_1 | hand | 45, 53 | 31, 46 | recipe |
+| haul_slide_NE_0 | hand | 55, 53 | 41, 46 | recipe |
+| haul_slide_NE_1 | hand | 53, 55 | 39, 48 | recipe |
 | haul_slide_N_0 | hand | 48, 50 | 34, 43 | recipe |
 | haul_slide_N_1 | hand | 48, 50 | 34, 43 | recipe |
 | haul_slide_NW_0 | hand | 35, 50 | 21, 43 | recipe |
 | haul_slide_NW_1 | hand | 34, 59 | 20, 52 | recipe |
-| haul_slide_W_0 | hand | 40, 45 | 26, 38 | recipe |
+| haul_slide_W_0 | hand | 44, 53 | 30, 46 | recipe |
 | haul_slide_W_1 | hand | 37, 52 | 23, 45 | recipe |
 | haul_slide_SW_0 | hand | 38, 52 | 24, 45 | recipe |
-| haul_slide_SW_1 | hand | 39, 52 | 25, 45 | recipe |
+| haul_slide_SW_1 | hand | 39, 49 | 25, 42 | recipe |

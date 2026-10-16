@@ -1,58 +1,59 @@
 {
  "image": "hookblade-fx.png",
  "meta": {
-  "version": "1",
-  "pixelScale": 2
+  "version": "2",
+  "pixelScale": 1,
+  "tinted": false
  },
  "cells": [
   {
    "name": "chain_link",
    "x": 0,
    "y": 0,
-   "w": 3,
-   "h": 3
+   "w": 7,
+   "h": 5
   },
   {
    "name": "chain_link_taut",
-   "x": 4,
+   "x": 8,
    "y": 0,
-   "w": 3,
-   "h": 3
+   "w": 7,
+   "h": 5
   },
   {
    "name": "hook",
-   "x": 8,
+   "x": 16,
    "y": 0,
-   "w": 4,
-   "h": 4
+   "w": 12,
+   "h": 6
   },
   {
    "name": "hook_set",
-   "x": 13,
+   "x": 29,
    "y": 0,
-   "w": 4,
-   "h": 4
+   "w": 12,
+   "h": 6
   },
   {
    "name": "spark_0",
-   "x": 18,
+   "x": 42,
    "y": 0,
-   "w": 5,
-   "h": 5
+   "w": 7,
+   "h": 7
   },
   {
    "name": "spark_1",
-   "x": 24,
+   "x": 50,
    "y": 0,
-   "w": 5,
-   "h": 5
+   "w": 9,
+   "h": 9
   },
   {
    "name": "spark_2",
-   "x": 30,
+   "x": 60,
    "y": 0,
-   "w": 5,
-   "h": 5
+   "w": 11,
+   "h": 11
   }
  ],
  "anims": {
@@ -64,22 +65,22 @@
    ],
    "fps": 12,
    "loop": false,
-   "note": "spark_0 at the start of the charge, spark_2 held at full charge (armored); draw at the hook tip, tint spark-amber, spark_2 husk-core"
+   "note": "spark_0 at the start of the charge, spark_2 held at full charge (armored); drawn at the frame's tip point, in its own colours (spark-amber, the full charge in husk-core inside its ring)"
   }
  },
  "chain": {
   "link": "chain_link",
-  "spacing": 16,
+  "spacing": 14,
   "taut": "chain_link_taut",
-  "note": "one link per 16 sheet px (spacing × meta.pixelScale world px) from the hand to the hook; on a hit every link swaps to taut for the pull"
+  "note": "one link per 14 sheet px from the hand to the hook (the Haul's 224 world px in 16 links); on a hit every link swaps to taut for the pull"
  },
  "hook": {
   "flight": "hook",
   "set": "hook_set",
   "origin": [
    0,
-   1
+   4
   ],
-  "note": "drawn pointing right, rotate to the throw angle; origin is the shank end where the chain attaches, in sheet px"
+  "note": "the Hookblade's head pointing right, rotate to the throw angle; origin is the shank end where the chain ties on, in sheet px"
  }
 }
