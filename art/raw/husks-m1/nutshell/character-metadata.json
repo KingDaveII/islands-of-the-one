@@ -1,0 +1,82 @@
+{
+  "group_id": "81557d1e-a4e0-4064-a557-aab5bdce5088",
+  "states": [
+    {
+      "character": {
+        "id": "5f12ed20-0957-4bf1-b13e-c6c47a2197d7",
+        "name": "Idle",
+        "prompt": "A Nutshell Husk: a big squat hollow nut-shaped double shell, about 40 px wide and 34 px tall, resting heavily on the ground. The thick ridged outer shell is pale and translucent (white to lavender), cracked along the front; through the crack the smoother inner shell shows, and inside it one small bright pale-yellow core with a dark ring. No face, eyes, mouth or legs. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 4,
+        "view": "low top-down",
+        "created_at": "2026-10-16T22:33:16.075275+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "west": "Idle/rotations/west.png",
+          "east": "Idle/rotations/east.png",
+          "north": "Idle/rotations/north.png"
+        },
+        "animations": {
+          "slam": {
+            "east": [
+              "Idle/animations/slam/east/frame_000.png",
+              "Idle/animations/slam/east/frame_001.png",
+              "Idle/animations/slam/east/frame_002.png",
+              "Idle/animations/slam/east/frame_003.png",
+              "Idle/animations/slam/east/frame_004.png",
+              "Idle/animations/slam/east/frame_005.png",
+              "Idle/animations/slam/east/frame_006.png"
+            ]
+          },
+          "regrow": {
+            "east": [
+              "Idle/animations/regrow/east/frame_000.png",
+              "Idle/animations/regrow/east/frame_001.png",
+              "Idle/animations/regrow/east/frame_002.png",
+              "Idle/animations/regrow/east/frame_003.png",
+              "Idle/animations/regrow/east/frame_004.png"
+            ]
+          },
+          "death": {
+            "east": [
+              "Idle/animations/death/east/frame_000.png",
+              "Idle/animations/death/east/frame_001.png",
+              "Idle/animations/death/east/frame_002.png",
+              "Idle/animations/death/east/frame_003.png",
+              "Idle/animations/death/east/frame_004.png",
+              "Idle/animations/death/east/frame_005.png",
+              "Idle/animations/death/east/frame_006.png"
+            ]
+          },
+          "idle": {
+            "east": [
+              "Idle/animations/idle/east/frame_000.png",
+              "Idle/animations/idle/east/frame_001.png",
+              "Idle/animations/idle/east/frame_002.png",
+              "Idle/animations/idle/east/frame_003.png",
+              "Idle/animations/idle/east/frame_004.png"
+            ]
+          },
+          "walk": {
+            "east": [
+              "Idle/animations/walk/east/frame_000.png",
+              "Idle/animations/walk/east/frame_001.png",
+              "Idle/animations/walk/east/frame_002.png",
+              "Idle/animations/walk/east/frame_003.png",
+              "Idle/animations/walk/east/frame_004.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-16T23:08:31.807319"
+}

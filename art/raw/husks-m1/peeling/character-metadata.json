@@ -1,0 +1,64 @@
+{
+  "group_id": "cc861488-5f4e-4d80-b4ac-064e50755709",
+  "states": [
+    {
+      "character": {
+        "id": "a9c1b052-3b9c-4509-91be-1af2acf09442",
+        "name": "Idle",
+        "prompt": "A Peeling Husk: a small curled peel of pale translucent shell, about 22 px wide, spiralling round one small bright pale-yellow core with a dark ring; no face, eyes, mouth or legs; it floats low over the ground. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 4,
+        "view": "low top-down",
+        "created_at": "2026-10-16T22:29:45.184764+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "west": "Idle/rotations/west.png",
+          "east": "Idle/rotations/east.png",
+          "north": "Idle/rotations/north.png"
+        },
+        "animations": {
+          "death": {
+            "east": [
+              "Idle/animations/death/east/frame_000.png",
+              "Idle/animations/death/east/frame_001.png",
+              "Idle/animations/death/east/frame_002.png",
+              "Idle/animations/death/east/frame_003.png",
+              "Idle/animations/death/east/frame_004.png",
+              "Idle/animations/death/east/frame_005.png",
+              "Idle/animations/death/east/frame_006.png"
+            ]
+          },
+          "lunge": {
+            "east": [
+              "Idle/animations/lunge/east/frame_000.png",
+              "Idle/animations/lunge/east/frame_001.png",
+              "Idle/animations/lunge/east/frame_002.png",
+              "Idle/animations/lunge/east/frame_003.png",
+              "Idle/animations/lunge/east/frame_004.png",
+              "Idle/animations/lunge/east/frame_005.png",
+              "Idle/animations/lunge/east/frame_006.png"
+            ]
+          },
+          "idle": {
+            "east": [
+              "Idle/animations/idle/east/frame_000.png",
+              "Idle/animations/idle/east/frame_001.png",
+              "Idle/animations/idle/east/frame_002.png",
+              "Idle/animations/idle/east/frame_003.png",
+              "Idle/animations/idle/east/frame_004.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-16T23:08:30.324677"
+}
