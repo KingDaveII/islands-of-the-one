@@ -143,10 +143,10 @@
   ],
   "totals": {
     "frames": 392,
-    "offPalette": 20081,
+    "offPalette": 19994,
     "maxDeltaE": 8.89,
-    "outlineGaps": 2351,
-    "masked": 29023
+    "outlineGaps": 2291,
+    "masked": 29014
   },
   "flags": {
     "seam": [
@@ -353,7 +353,6 @@
       "haul_pull_SE_1",
       "haul_pull_E_0",
       "haul_pull_E_1",
-      "haul_pull_NE_1",
       "haul_pull_NW_1",
       "haul_pull_SW_0",
       "haul_pull_SW_1",
@@ -363,7 +362,6 @@
       "haul_slide_SE_1",
       "haul_slide_E_0",
       "haul_slide_E_1",
-      "haul_slide_NE_0",
       "haul_slide_NE_1",
       "haul_slide_W_0",
       "haul_slide_SW_0",
@@ -494,13 +492,13 @@
         "heavy_hold": 11,
         "heavy_recover": 20,
         "haul_throw": 7,
-        "haul_recover": 2,
-        "haul_pull": 8,
-        "haul_slide": 11,
+        "haul_recover": 1,
+        "haul_pull": 3,
+        "haul_slide": 0,
         "hit": 11,
         "death": 10
       },
-      "total": 385,
+      "total": 368,
       "stale": false
     },
     {
@@ -521,12 +519,12 @@
         "heavy_recover": 10,
         "haul_throw": 10,
         "haul_recover": 3,
-        "haul_pull": 7,
-        "haul_slide": 6,
+        "haul_pull": 1,
+        "haul_slide": 1,
         "hit": 14,
         "death": 8
       },
-      "total": 300,
+      "total": 289,
       "stale": false
     },
     {
@@ -583,11 +581,11 @@
     }
   ],
   "staleRemap": [],
-  "snappedColours": 962,
+  "snappedColours": 954,
   "snapped": [
     {
       "colour": "#363347",
-      "pixels": 3565,
+      "pixels": 3563,
       "to": "#24305a",
       "deltaE": 4.7,
       "materials": [
@@ -777,7 +775,7 @@
     },
     {
       "colour": "#3d3c4c",
-      "pixels": 3320,
+      "pixels": 3319,
       "to": "#4a4e57",
       "deltaE": 6.15,
       "materials": [
@@ -949,7 +947,6 @@
         "haul_pull_SE_1",
         "haul_pull_E_0",
         "haul_pull_E_1",
-        "haul_pull_NE_0",
         "haul_pull_NE_1",
         "haul_pull_SW_0",
         "haul_pull_SW_1",
@@ -972,7 +969,7 @@
     },
     {
       "colour": "#7e7063",
-      "pixels": 1566,
+      "pixels": 1567,
       "to": "#8c7f6e",
       "deltaE": 4.93,
       "materials": [
@@ -1602,7 +1599,7 @@
     },
     {
       "colour": "#685c56",
-      "pixels": 789,
+      "pixels": 778,
       "to": "#5e5448",
       "deltaE": 3.39,
       "materials": [
@@ -1762,7 +1759,7 @@
     },
     {
       "colour": "#707084",
-      "pixels": 658,
+      "pixels": 645,
       "to": "#7d8794",
       "deltaE": 6.92,
       "materials": [
@@ -1850,7 +1847,6 @@
         "haul_recover_SW_0",
         "haul_pull_SE_0",
         "haul_pull_SE_1",
-        "haul_pull_SW_0",
         "haul_pull_SW_1",
         "haul_slide_SE_0",
         "haul_slide_SE_1",
@@ -2093,8 +2089,91 @@
       ]
     },
     {
+      "colour": "#3b3c5d",
+      "pixels": 331,
+      "to": "#24305a",
+      "deltaE": 5.45,
+      "materials": [
+        "water",
+        "hair"
+      ],
+      "frames": [
+        "idle_SE_0",
+        "idle_SE_1",
+        "idle_SW_0",
+        "idle_SW_1",
+        "walk_SE_0",
+        "walk_SE_1",
+        "walk_SE_2",
+        "walk_SE_3",
+        "walk_SE_4",
+        "walk_SE_5",
+        "walk_SW_0",
+        "walk_SW_2",
+        "walk_SW_4",
+        "walk_SW_5",
+        "run_SE_0",
+        "run_SE_1",
+        "run_SE_2",
+        "run_SE_3",
+        "run_SE_4",
+        "run_SE_5",
+        "run_SE_6",
+        "run_SE_7",
+        "run_SW_0",
+        "run_SW_1",
+        "run_SW_2",
+        "run_SW_3",
+        "run_SW_4",
+        "run_SW_5",
+        "run_SW_6",
+        "run_SW_7",
+        "dodge_S_1",
+        "dodge_SE_0",
+        "dodge_SE_1",
+        "dodge_SE_3",
+        "dodge_SW_0",
+        "dodge_SW_1",
+        "dodge_SW_3",
+        "light_1_SE_0",
+        "light_1_SE_1",
+        "light_1_SE_2",
+        "light_1_SW_1",
+        "light_2_SE_1",
+        "light_2_SE_2",
+        "light_2_SW_1",
+        "light_2_SW_2",
+        "light_3_SE_1",
+        "light_3_SW_1",
+        "light_3_SW_2",
+        "heavy_charge_SE_0",
+        "heavy_charge_SE_1",
+        "heavy_charge_SE_2",
+        "heavy_charge_SW_0",
+        "heavy_thrust_SE_0",
+        "heavy_thrust_SE_1",
+        "heavy_thrust_SW_0",
+        "heavy_thrust_SW_1",
+        "heavy_hold_SE_0",
+        "heavy_hold_SW_0",
+        "heavy_recover_SE_0",
+        "heavy_recover_SE_1",
+        "heavy_recover_SW_0",
+        "heavy_recover_SW_1",
+        "haul_throw_SE_0",
+        "haul_throw_SW_0",
+        "haul_recover_SE_1",
+        "haul_recover_SW_1",
+        "haul_pull_SE_0",
+        "haul_pull_SE_1",
+        "haul_pull_SW_0",
+        "haul_slide_SE_0",
+        "haul_slide_SW_0"
+      ]
+    },
+    {
       "colour": "#8e969f",
-      "pixels": 337,
+      "pixels": 296,
       "to": "#7d8794",
       "deltaE": 5.04,
       "materials": [
@@ -2190,105 +2269,12 @@
         "heavy_recover_W_1",
         "heavy_recover_SW_1",
         "haul_throw_SE_0",
-        "haul_throw_SE_1",
         "haul_throw_NE_0",
-        "haul_throw_NE_1",
         "haul_throw_SW_0",
-        "haul_throw_SW_1",
-        "haul_recover_NE_0",
-        "haul_pull_SE_0",
-        "haul_pull_SE_1",
-        "haul_pull_NE_0",
-        "haul_pull_NE_1",
-        "haul_pull_SW_0",
         "haul_slide_SE_0",
-        "haul_slide_NE_0",
         "haul_slide_W_1",
         "haul_slide_SW_0",
         "haul_slide_SW_1"
-      ]
-    },
-    {
-      "colour": "#3b3c5d",
-      "pixels": 331,
-      "to": "#24305a",
-      "deltaE": 5.45,
-      "materials": [
-        "water",
-        "hair"
-      ],
-      "frames": [
-        "idle_SE_0",
-        "idle_SE_1",
-        "idle_SW_0",
-        "idle_SW_1",
-        "walk_SE_0",
-        "walk_SE_1",
-        "walk_SE_2",
-        "walk_SE_3",
-        "walk_SE_4",
-        "walk_SE_5",
-        "walk_SW_0",
-        "walk_SW_2",
-        "walk_SW_4",
-        "walk_SW_5",
-        "run_SE_0",
-        "run_SE_1",
-        "run_SE_2",
-        "run_SE_3",
-        "run_SE_4",
-        "run_SE_5",
-        "run_SE_6",
-        "run_SE_7",
-        "run_SW_0",
-        "run_SW_1",
-        "run_SW_2",
-        "run_SW_3",
-        "run_SW_4",
-        "run_SW_5",
-        "run_SW_6",
-        "run_SW_7",
-        "dodge_S_1",
-        "dodge_SE_0",
-        "dodge_SE_1",
-        "dodge_SE_3",
-        "dodge_SW_0",
-        "dodge_SW_1",
-        "dodge_SW_3",
-        "light_1_SE_0",
-        "light_1_SE_1",
-        "light_1_SE_2",
-        "light_1_SW_1",
-        "light_2_SE_1",
-        "light_2_SE_2",
-        "light_2_SW_1",
-        "light_2_SW_2",
-        "light_3_SE_1",
-        "light_3_SW_1",
-        "light_3_SW_2",
-        "heavy_charge_SE_0",
-        "heavy_charge_SE_1",
-        "heavy_charge_SE_2",
-        "heavy_charge_SW_0",
-        "heavy_thrust_SE_0",
-        "heavy_thrust_SE_1",
-        "heavy_thrust_SW_0",
-        "heavy_thrust_SW_1",
-        "heavy_hold_SE_0",
-        "heavy_hold_SW_0",
-        "heavy_recover_SE_0",
-        "heavy_recover_SE_1",
-        "heavy_recover_SW_0",
-        "heavy_recover_SW_1",
-        "haul_throw_SE_0",
-        "haul_throw_SW_0",
-        "haul_recover_SE_1",
-        "haul_recover_SW_1",
-        "haul_pull_SE_0",
-        "haul_pull_SE_1",
-        "haul_pull_SW_0",
-        "haul_slide_SE_0",
-        "haul_slide_SW_0"
       ]
     },
     {
@@ -2452,81 +2438,6 @@
       ]
     },
     {
-      "colour": "#7c664f",
-      "pixels": 151,
-      "to": "#8a6420",
-      "deltaE": 5.3,
-      "materials": [
-        "brass",
-        "leather"
-      ],
-      "frames": [
-        "idle_E_0",
-        "idle_E_1",
-        "idle_SW_0",
-        "idle_SW_1",
-        "walk_SW_0",
-        "walk_SW_1",
-        "walk_SW_2",
-        "walk_SW_3",
-        "walk_SW_4",
-        "walk_SW_5",
-        "run_E_0",
-        "run_E_2",
-        "run_E_3",
-        "run_E_4",
-        "run_E_5",
-        "run_E_6",
-        "run_SW_0",
-        "run_SW_1",
-        "run_SW_2",
-        "run_SW_3",
-        "run_SW_4",
-        "run_SW_5",
-        "run_SW_6",
-        "run_SW_7",
-        "dodge_S_1",
-        "dodge_SE_0",
-        "dodge_SE_1",
-        "dodge_SE_3",
-        "dodge_SW_0",
-        "dodge_SW_1",
-        "dodge_SW_3",
-        "light_1_SW_0",
-        "light_1_SW_1",
-        "light_1_SW_2",
-        "light_2_E_0",
-        "light_2_E_1",
-        "light_2_E_2",
-        "light_2_SW_0",
-        "light_2_SW_1",
-        "light_2_SW_2",
-        "light_3_E_0",
-        "light_3_SW_1",
-        "light_3_SW_2",
-        "heavy_charge_E_0",
-        "heavy_charge_SW_0",
-        "haul_throw_E_0",
-        "haul_throw_E_1",
-        "haul_throw_W_0",
-        "haul_throw_W_1",
-        "haul_recover_E_0",
-        "haul_recover_E_1",
-        "haul_recover_W_0",
-        "haul_recover_W_1",
-        "haul_pull_E_0",
-        "haul_pull_E_1",
-        "haul_pull_SW_0",
-        "haul_pull_SW_1",
-        "haul_slide_E_0",
-        "haul_slide_E_1",
-        "haul_slide_SW_0",
-        "haul_slide_SW_1",
-        "hit_E_1",
-        "death_E_1"
-      ]
-    },
-    {
       "colour": "#bc6a4c",
       "pixels": 151,
       "to": "#c9733a",
@@ -2597,6 +2508,79 @@
       ]
     },
     {
+      "colour": "#7c664f",
+      "pixels": 148,
+      "to": "#8a6420",
+      "deltaE": 5.3,
+      "materials": [
+        "brass",
+        "leather"
+      ],
+      "frames": [
+        "idle_E_0",
+        "idle_E_1",
+        "idle_SW_0",
+        "idle_SW_1",
+        "walk_SW_0",
+        "walk_SW_1",
+        "walk_SW_2",
+        "walk_SW_3",
+        "walk_SW_4",
+        "walk_SW_5",
+        "run_E_0",
+        "run_E_2",
+        "run_E_3",
+        "run_E_4",
+        "run_E_5",
+        "run_E_6",
+        "run_SW_0",
+        "run_SW_1",
+        "run_SW_2",
+        "run_SW_3",
+        "run_SW_4",
+        "run_SW_5",
+        "run_SW_6",
+        "run_SW_7",
+        "dodge_S_1",
+        "dodge_SE_0",
+        "dodge_SE_1",
+        "dodge_SE_3",
+        "dodge_SW_0",
+        "dodge_SW_1",
+        "dodge_SW_3",
+        "light_1_SW_0",
+        "light_1_SW_1",
+        "light_1_SW_2",
+        "light_2_E_0",
+        "light_2_E_1",
+        "light_2_E_2",
+        "light_2_SW_0",
+        "light_2_SW_1",
+        "light_2_SW_2",
+        "light_3_E_0",
+        "light_3_SW_1",
+        "light_3_SW_2",
+        "heavy_charge_E_0",
+        "heavy_charge_SW_0",
+        "haul_throw_E_0",
+        "haul_throw_E_1",
+        "haul_throw_W_0",
+        "haul_throw_W_1",
+        "haul_recover_E_0",
+        "haul_recover_E_1",
+        "haul_recover_W_0",
+        "haul_recover_W_1",
+        "haul_pull_E_0",
+        "haul_pull_E_1",
+        "haul_slide_E_0",
+        "haul_slide_E_1",
+        "haul_slide_SW_0",
+        "haul_slide_SW_1",
+        "hit_E_1",
+        "death_E_1"
+      ]
+    },
+    {
       "colour": "#413a45",
       "pixels": 143,
       "to": "#4a4e57",
@@ -2644,7 +2628,7 @@
     },
     {
       "colour": "#383360",
-      "pixels": 128,
+      "pixels": 126,
       "to": "#24305a",
       "deltaE": 3.58,
       "materials": [
@@ -2678,8 +2662,7 @@
         "light_3_SW_1",
         "light_3_SW_2",
         "heavy_charge_SW_0",
-        "heavy_charge_SW_1",
-        "haul_slide_SW_0"
+        "heavy_charge_SW_1"
       ]
     },
     {
@@ -3598,8 +3581,8 @@
       "frames": 2,
       "held": [],
       "seam": {
-        "lastToFirst": 712,
-        "meanInCycle": 712,
+        "lastToFirst": 711,
+        "meanInCycle": 711,
         "flag": false
       }
     },
@@ -3608,8 +3591,8 @@
       "frames": 2,
       "held": [],
       "seam": {
-        "lastToFirst": 1086,
-        "meanInCycle": 1086,
+        "lastToFirst": 1047,
+        "meanInCycle": 1047,
         "flag": false
       }
     },
@@ -3618,8 +3601,8 @@
       "frames": 2,
       "held": [],
       "seam": {
-        "lastToFirst": 901,
-        "meanInCycle": 901,
+        "lastToFirst": 817,
+        "meanInCycle": 817,
         "flag": false
       }
     },
@@ -3628,8 +3611,8 @@
       "frames": 2,
       "held": [],
       "seam": {
-        "lastToFirst": 871,
-        "meanInCycle": 871,
+        "lastToFirst": 823,
+        "meanInCycle": 823,
         "flag": false
       }
     },
@@ -3658,8 +3641,8 @@
       "frames": 2,
       "held": [],
       "seam": {
-        "lastToFirst": 1041,
-        "meanInCycle": 1041,
+        "lastToFirst": 941,
+        "meanInCycle": 941,
         "flag": false
       }
     },
@@ -3668,8 +3651,8 @@
       "frames": 2,
       "held": [],
       "seam": {
-        "lastToFirst": 807,
-        "meanInCycle": 807,
+        "lastToFirst": 733,
+        "meanInCycle": 733,
         "flag": false
       }
     },
@@ -3678,8 +3661,8 @@
       "frames": 2,
       "held": [],
       "seam": {
-        "lastToFirst": 836,
-        "meanInCycle": 836,
+        "lastToFirst": 826,
+        "meanInCycle": 826,
         "flag": false
       }
     },
@@ -3688,8 +3671,8 @@
       "frames": 2,
       "held": [],
       "seam": {
-        "lastToFirst": 931,
-        "meanInCycle": 931,
+        "lastToFirst": 932,
+        "meanInCycle": 932,
         "flag": false
       }
     },
@@ -3698,8 +3681,8 @@
       "frames": 2,
       "held": [],
       "seam": {
-        "lastToFirst": 683,
-        "meanInCycle": 683,
+        "lastToFirst": 649,
+        "meanInCycle": 649,
         "flag": false
       }
     },
@@ -3708,8 +3691,8 @@
       "frames": 2,
       "held": [],
       "seam": {
-        "lastToFirst": 569,
-        "meanInCycle": 569,
+        "lastToFirst": 521,
+        "meanInCycle": 521,
         "flag": false
       }
     },
@@ -3738,8 +3721,8 @@
       "frames": 2,
       "held": [],
       "seam": {
-        "lastToFirst": 1152,
-        "meanInCycle": 1152,
+        "lastToFirst": 1072,
+        "meanInCycle": 1072,
         "flag": false
       }
     },
@@ -3748,8 +3731,8 @@
       "frames": 2,
       "held": [],
       "seam": {
-        "lastToFirst": 875,
-        "meanInCycle": 875,
+        "lastToFirst": 782,
+        "meanInCycle": 782,
         "flag": false
       }
     },
@@ -7671,7 +7654,7 @@
     },
     {
       "name": "haul_throw_S_0",
-      "source": "art/clean/kindled-ash/haul/south 7",
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/south 7",
       "offPalette": 52,
       "maxDeltaE": 6.45,
       "dx": 14,
@@ -7683,43 +7666,43 @@
       "points": {
         "hand": {
           "at": [
-            54,
-            51
+            32,
+            44
           ],
           "source": [
-            40,
-            43
+            18,
+            36
           ]
         }
       }
     },
     {
       "name": "haul_throw_S_1",
-      "source": "art/clean/kindled-ash/haul/south 8",
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/south 8",
       "offPalette": 19,
       "maxDeltaE": 6.45,
       "dx": 14,
       "dy": 8,
       "shift": 0,
-      "outlineGaps": 4,
+      "outlineGaps": 9,
       "colours": 14,
       "masked": 149,
       "points": {
         "hand": {
           "at": [
-            54,
-            51
+            43,
+            50
           ],
           "source": [
-            40,
-            43
+            29,
+            42
           ]
         }
       }
     },
     {
       "name": "haul_throw_SE_0",
-      "source": "art/raw/ss01-kindled-ash/haul/south-east 2",
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/south-east 2",
       "offPalette": 77,
       "maxDeltaE": 6.92,
       "dx": 14,
@@ -7731,43 +7714,43 @@
       "points": {
         "hand": {
           "at": [
-            59,
-            50
+            30,
+            44
           ],
           "source": [
-            45,
-            43
+            16,
+            37
           ]
         }
       }
     },
     {
       "name": "haul_throw_SE_1",
-      "source": "art/raw/ss01-kindled-ash/haul/south-east 4",
-      "offPalette": 37,
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/south-east 4",
+      "offPalette": 35,
       "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 21,
+      "outlineGaps": 1,
       "colours": 13,
       "masked": 113,
       "points": {
         "hand": {
           "at": [
             60,
-            42
+            41
           ],
           "source": [
             46,
-            35
+            34
           ]
         }
       }
     },
     {
       "name": "haul_throw_E_0",
-      "source": "art/clean/kindled-ash/haul/east 2",
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/east 2",
       "offPalette": 36,
       "maxDeltaE": 6.15,
       "dx": 14,
@@ -7791,7 +7774,7 @@
     },
     {
       "name": "haul_throw_E_1",
-      "source": "art/clean/kindled-ash/haul/east 3",
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/east 3",
       "offPalette": 41,
       "maxDeltaE": 6.4,
       "dx": 14,
@@ -7804,18 +7787,18 @@
         "hand": {
           "at": [
             58,
-            44
+            45
           ],
           "source": [
             44,
-            37
+            38
           ]
         }
       }
     },
     {
       "name": "haul_throw_NE_0",
-      "source": "art/raw/ss01-kindled-ash/haul/north-east 2",
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/north-east 2",
       "offPalette": 29,
       "maxDeltaE": 7.25,
       "dx": 14,
@@ -7827,35 +7810,35 @@
       "points": {
         "hand": {
           "at": [
-            57,
-            50
+            56,
+            52
           ],
           "source": [
-            43,
-            43
+            42,
+            45
           ]
         }
       }
     },
     {
       "name": "haul_throw_NE_1",
-      "source": "art/raw/ss01-kindled-ash/haul/north-east 3",
-      "offPalette": 52,
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/north-east 3",
+      "offPalette": 40,
       "maxDeltaE": 6.25,
       "dx": 14,
       "dy": 7,
       "shift": -1,
       "outlineGaps": 0,
-      "colours": 15,
+      "colours": 13,
       "masked": 10,
       "points": {
         "hand": {
           "at": [
-            62,
+            60,
             39
           ],
           "source": [
-            48,
+            46,
             32
           ]
         }
@@ -7863,7 +7846,7 @@
     },
     {
       "name": "haul_throw_N_0",
-      "source": "art/raw/ss01-kindled-ash/haul/north 2",
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/north 2",
       "offPalette": 10,
       "maxDeltaE": 4.2,
       "dx": 14,
@@ -7875,19 +7858,19 @@
       "points": {
         "hand": {
           "at": [
-            48,
-            50
+            29,
+            48
           ],
           "source": [
-            34,
-            43
+            15,
+            41
           ]
         }
       }
     },
     {
       "name": "haul_throw_N_1",
-      "source": "art/raw/ss01-kindled-ash/haul/north 3",
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/north 3",
       "offPalette": 14,
       "maxDeltaE": 5.57,
       "dx": 14,
@@ -7899,19 +7882,19 @@
       "points": {
         "hand": {
           "at": [
-            48,
-            50
+            27,
+            47
           ],
           "source": [
-            34,
-            43
+            13,
+            40
           ]
         }
       }
     },
     {
       "name": "haul_throw_NW_0",
-      "source": "art/raw/ss01-kindled-ash/haul/north-west 1",
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/north-west 1",
       "offPalette": 17,
       "maxDeltaE": 7.42,
       "dx": 14,
@@ -7935,7 +7918,7 @@
     },
     {
       "name": "haul_throw_NW_1",
-      "source": "art/raw/ss01-kindled-ash/haul/north-west 2",
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/north-west 2",
       "offPalette": 12,
       "maxDeltaE": 7.42,
       "dx": 14,
@@ -7959,7 +7942,7 @@
     },
     {
       "name": "haul_throw_W_0",
-      "source": "art/clean/kindled-ash/haul/east 2",
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/east 2",
       "offPalette": 36,
       "maxDeltaE": 6.15,
       "dx": 14,
@@ -7985,7 +7968,7 @@
     },
     {
       "name": "haul_throw_W_1",
-      "source": "art/clean/kindled-ash/haul/east 3",
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/east 3",
       "offPalette": 41,
       "maxDeltaE": 6.4,
       "dx": 14,
@@ -7999,11 +7982,11 @@
         "hand": {
           "at": [
             37,
-            44
+            45
           ],
           "source": [
             23,
-            37
+            38
           ],
           "mirroredFrom": "haul_throw_E_1"
         }
@@ -8011,7 +7994,7 @@
     },
     {
       "name": "haul_throw_SW_0",
-      "source": "art/raw/ss01-kindled-ash/haul/south-east 2",
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/south-east 2",
       "offPalette": 77,
       "maxDeltaE": 6.92,
       "dx": 14,
@@ -8024,12 +8007,12 @@
       "points": {
         "hand": {
           "at": [
-            36,
-            50
+            65,
+            44
           ],
           "source": [
-            22,
-            43
+            51,
+            37
           ],
           "mirroredFrom": "haul_throw_SE_0"
         }
@@ -8037,13 +8020,13 @@
     },
     {
       "name": "haul_throw_SW_1",
-      "source": "art/raw/ss01-kindled-ash/haul/south-east 4",
-      "offPalette": 37,
+      "source": "art/clean/kindled-ash/haul_hand/haul_throw/south-east 4",
+      "offPalette": 35,
       "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 21,
+      "outlineGaps": 1,
       "colours": 13,
       "mirrored": true,
       "masked": 113,
@@ -8051,11 +8034,11 @@
         "hand": {
           "at": [
             35,
-            42
+            41
           ],
           "source": [
             21,
-            35
+            34
           ],
           "mirroredFrom": "haul_throw_SE_1"
         }
@@ -8063,31 +8046,31 @@
     },
     {
       "name": "haul_recover_S_0",
-      "source": "art/clean/kindled-ash/haul/south 0",
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/south 0",
       "offPalette": 0,
       "maxDeltaE": 0,
       "dx": 14,
       "dy": 8,
       "shift": 0,
-      "outlineGaps": 1,
+      "outlineGaps": 0,
       "colours": 12,
       "masked": 170,
       "points": {
         "hand": {
           "at": [
             37,
-            55
+            54
           ],
           "source": [
             23,
-            47
+            46
           ]
         }
       }
     },
     {
       "name": "haul_recover_S_1",
-      "source": "art/clean/kindled-ash/haul/south 1",
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/south 1",
       "offPalette": 67,
       "maxDeltaE": 7.06,
       "dx": 14,
@@ -8111,7 +8094,7 @@
     },
     {
       "name": "haul_recover_SE_0",
-      "source": "art/raw/ss01-kindled-ash/haul/south-east 5",
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/south-east 5",
       "offPalette": 41,
       "maxDeltaE": 6.92,
       "dx": 14,
@@ -8135,7 +8118,7 @@
     },
     {
       "name": "haul_recover_SE_1",
-      "source": "art/raw/ss01-kindled-ash/haul/south-east 6",
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/south-east 6",
       "offPalette": 32,
       "maxDeltaE": 6.55,
       "dx": 14,
@@ -8159,13 +8142,13 @@
     },
     {
       "name": "haul_recover_E_0",
-      "source": "art/clean/kindled-ash/haul/east 5",
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/east 5",
       "offPalette": 48,
       "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 2,
+      "outlineGaps": 1,
       "colours": 14,
       "masked": 77,
       "points": {
@@ -8183,7 +8166,7 @@
     },
     {
       "name": "haul_recover_E_1",
-      "source": "art/clean/kindled-ash/haul/east 6",
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/east 6",
       "offPalette": 30,
       "maxDeltaE": 6.92,
       "dx": 14,
@@ -8196,42 +8179,42 @@
         "hand": {
           "at": [
             50,
-            51
+            52
           ],
           "source": [
             36,
-            44
+            45
           ]
         }
       }
     },
     {
       "name": "haul_recover_NE_0",
-      "source": "art/raw/ss01-kindled-ash/haul/north-east 5",
-      "offPalette": 53,
-      "maxDeltaE": 7.91,
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/north-east 5",
+      "offPalette": 44,
+      "maxDeltaE": 6.25,
       "dx": 14,
       "dy": 7,
       "shift": -1,
       "outlineGaps": 1,
-      "colours": 12,
+      "colours": 11,
       "masked": 20,
       "points": {
         "hand": {
           "at": [
-            60,
-            44
+            61,
+            45
           ],
           "source": [
-            46,
-            37
+            47,
+            38
           ]
         }
       }
     },
     {
       "name": "haul_recover_NE_1",
-      "source": "art/raw/ss01-kindled-ash/haul/north-east 6",
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/north-east 6",
       "offPalette": 26,
       "maxDeltaE": 7.25,
       "dx": 14,
@@ -8243,19 +8226,19 @@
       "points": {
         "hand": {
           "at": [
-            60,
-            46
+            61,
+            48
           ],
           "source": [
-            46,
-            39
+            47,
+            41
           ]
         }
       }
     },
     {
       "name": "haul_recover_N_0",
-      "source": "art/raw/ss01-kindled-ash/haul/north 5",
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/north 5",
       "offPalette": 14,
       "maxDeltaE": 5.83,
       "dx": 14,
@@ -8267,11 +8250,11 @@
       "points": {
         "hand": {
           "at": [
-            48,
+            32,
             50
           ],
           "source": [
-            34,
+            18,
             43
           ]
         }
@@ -8279,7 +8262,7 @@
     },
     {
       "name": "haul_recover_N_1",
-      "source": "art/raw/ss01-kindled-ash/haul/north 6",
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/north 6",
       "offPalette": 4,
       "maxDeltaE": 5.57,
       "dx": 14,
@@ -8303,7 +8286,7 @@
     },
     {
       "name": "haul_recover_NW_0",
-      "source": "art/raw/ss01-kindled-ash/haul/north-west 5",
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/north-west 5",
       "offPalette": 11,
       "maxDeltaE": 4.7,
       "dx": 14,
@@ -8327,7 +8310,7 @@
     },
     {
       "name": "haul_recover_NW_1",
-      "source": "art/raw/ss01-kindled-ash/haul/north-west 6",
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/north-west 6",
       "offPalette": 9,
       "maxDeltaE": 4.7,
       "dx": 14,
@@ -8351,13 +8334,13 @@
     },
     {
       "name": "haul_recover_W_0",
-      "source": "art/clean/kindled-ash/haul/east 5",
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/east 5",
       "offPalette": 48,
       "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 2,
+      "outlineGaps": 1,
       "colours": 14,
       "mirrored": true,
       "masked": 77,
@@ -8377,7 +8360,7 @@
     },
     {
       "name": "haul_recover_W_1",
-      "source": "art/clean/kindled-ash/haul/east 6",
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/east 6",
       "offPalette": 30,
       "maxDeltaE": 6.92,
       "dx": 14,
@@ -8391,11 +8374,11 @@
         "hand": {
           "at": [
             45,
-            51
+            52
           ],
           "source": [
             31,
-            44
+            45
           ],
           "mirroredFrom": "haul_recover_E_1"
         }
@@ -8403,7 +8386,7 @@
     },
     {
       "name": "haul_recover_SW_0",
-      "source": "art/raw/ss01-kindled-ash/haul/south-east 5",
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/south-east 5",
       "offPalette": 41,
       "maxDeltaE": 6.92,
       "dx": 14,
@@ -8429,7 +8412,7 @@
     },
     {
       "name": "haul_recover_SW_1",
-      "source": "art/raw/ss01-kindled-ash/haul/south-east 6",
+      "source": "art/clean/kindled-ash/haul_hand/haul_recover/south-east 6",
       "offPalette": 32,
       "maxDeltaE": 6.55,
       "dx": 14,
@@ -8455,8 +8438,8 @@
     },
     {
       "name": "haul_pull_S_0",
-      "source": "art/raw/ss01-kindled-ash/haul_pull/south 1",
-      "offPalette": 112,
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/south 1",
+      "offPalette": 126,
       "maxDeltaE": 6.27,
       "dx": 14,
       "dy": 8,
@@ -8467,19 +8450,19 @@
       "points": {
         "hand": {
           "at": [
-            53,
-            55
+            52,
+            54
           ],
           "source": [
-            39,
-            47
+            38,
+            46
           ]
         }
       }
     },
     {
       "name": "haul_pull_S_1",
-      "source": "art/raw/ss01-kindled-ash/haul_pull/south 3",
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/south 3",
       "offPalette": 109,
       "maxDeltaE": 7.49,
       "dx": 14,
@@ -8503,39 +8486,39 @@
     },
     {
       "name": "haul_pull_SE_0",
-      "source": "art/raw/ss01-kindled-ash/haul_pull/south-east 1",
-      "offPalette": 111,
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/south-east 1",
+      "offPalette": 101,
       "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 4,
+      "outlineGaps": 3,
       "colours": 15,
-      "masked": 141,
+      "masked": 140,
       "points": {
         "hand": {
           "at": [
-            56,
-            57
+            46,
+            52
           ],
           "source": [
-            42,
-            50
+            32,
+            45
           ]
         }
       }
     },
     {
       "name": "haul_pull_SE_1",
-      "source": "art/raw/ss01-kindled-ash/haul_pull/south-east 4",
-      "offPalette": 73,
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/south-east 4",
+      "offPalette": 67,
       "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 2,
+      "outlineGaps": 1,
       "colours": 15,
-      "masked": 118,
+      "masked": 116,
       "points": {
         "hand": {
           "at": [
@@ -8551,31 +8534,31 @@
     },
     {
       "name": "haul_pull_E_0",
-      "source": "art/clean/kindled-ash/haul_pull/east 1",
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/east 1",
       "offPalette": 158,
       "maxDeltaE": 8.89,
       "dx": 14,
       "dy": 7,
       "shift": -1,
       "outlineGaps": 3,
-      "colours": 17,
+      "colours": 16,
       "masked": 95,
       "points": {
         "hand": {
           "at": [
             52,
-            48
+            49
           ],
           "source": [
             38,
-            41
+            42
           ]
         }
       }
     },
     {
       "name": "haul_pull_E_1",
-      "source": "art/clean/kindled-ash/haul_pull/east 2",
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/east 2",
       "offPalette": 76,
       "maxDeltaE": 7.42,
       "dx": 14,
@@ -8588,66 +8571,66 @@
         "hand": {
           "at": [
             56,
-            42
+            43
           ],
           "source": [
             42,
-            35
+            36
           ]
         }
       }
     },
     {
       "name": "haul_pull_NE_0",
-      "source": "art/raw/ss01-kindled-ash/haul_pull/north-east 2",
-      "offPalette": 45,
-      "maxDeltaE": 6.15,
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/north-east 2",
+      "offPalette": 24,
+      "maxDeltaE": 5.35,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 4,
-      "colours": 12,
-      "masked": 9,
+      "outlineGaps": 2,
+      "colours": 10,
+      "masked": 5,
       "points": {
         "hand": {
           "at": [
             53,
-            45
+            47
           ],
           "source": [
             39,
-            38
+            40
           ]
         }
       }
     },
     {
       "name": "haul_pull_NE_1",
-      "source": "art/raw/ss01-kindled-ash/haul_pull/north-east 4",
-      "offPalette": 36,
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/north-east 4",
+      "offPalette": 22,
       "maxDeltaE": 6.15,
       "dx": 14,
       "dy": 7,
       "shift": -1,
       "outlineGaps": 0,
-      "colours": 13,
+      "colours": 11,
       "masked": 12,
       "points": {
         "hand": {
           "at": [
-            58,
-            44
+            59,
+            47
           ],
           "source": [
-            44,
-            37
+            45,
+            40
           ]
         }
       }
     },
     {
       "name": "haul_pull_N_0",
-      "source": "art/raw/ss01-kindled-ash/haul_pull/north 1",
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/north 1",
       "offPalette": 1,
       "maxDeltaE": 2.21,
       "dx": 14,
@@ -8671,7 +8654,7 @@
     },
     {
       "name": "haul_pull_N_1",
-      "source": "art/raw/ss01-kindled-ash/haul_pull/north 3",
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/north 3",
       "offPalette": 4,
       "maxDeltaE": 5.31,
       "dx": 14,
@@ -8695,7 +8678,7 @@
     },
     {
       "name": "haul_pull_NW_0",
-      "source": "art/raw/ss01-kindled-ash/haul_pull/north-west 1",
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/north-west 1",
       "offPalette": 37,
       "maxDeltaE": 7.72,
       "dx": 14,
@@ -8719,7 +8702,7 @@
     },
     {
       "name": "haul_pull_NW_1",
-      "source": "art/raw/ss01-kindled-ash/haul_pull/north-west 3",
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/north-west 3",
       "offPalette": 71,
       "maxDeltaE": 7.72,
       "dx": 14,
@@ -8743,7 +8726,7 @@
     },
     {
       "name": "haul_pull_W_0",
-      "source": "art/clean/kindled-ash/haul_pull/west 1",
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/west 1",
       "offPalette": 43,
       "maxDeltaE": 6.52,
       "dx": 14,
@@ -8756,18 +8739,18 @@
         "hand": {
           "at": [
             36,
-            49
+            50
           ],
           "source": [
             22,
-            42
+            43
           ]
         }
       }
     },
     {
       "name": "haul_pull_W_1",
-      "source": "art/clean/kindled-ash/haul_pull/west 4",
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/west 4",
       "offPalette": 17,
       "maxDeltaE": 5.53,
       "dx": 14,
@@ -8780,91 +8763,91 @@
         "hand": {
           "at": [
             40,
-            44
+            46
           ],
           "source": [
             26,
-            37
+            39
           ]
         }
       }
     },
     {
       "name": "haul_pull_SW_0",
-      "source": "art/raw/ss01-kindled-ash/haul_pull/south-west 2",
-      "offPalette": 50,
-      "maxDeltaE": 6.92,
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/south-west 2",
+      "offPalette": 46,
+      "maxDeltaE": 6.52,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 1,
-      "colours": 17,
+      "outlineGaps": 0,
+      "colours": 16,
       "masked": 138,
       "points": {
         "hand": {
           "at": [
             41,
-            52
+            49
           ],
           "source": [
             27,
-            45
+            42
           ]
         }
       }
     },
     {
       "name": "haul_pull_SW_1",
-      "source": "art/raw/ss01-kindled-ash/haul_pull/south-west 4",
-      "offPalette": 52,
+      "source": "art/clean/kindled-ash/haul_hand/haul_pull/south-west 4",
+      "offPalette": 49,
       "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 1,
+      "outlineGaps": 0,
       "colours": 14,
       "masked": 146,
       "points": {
         "hand": {
           "at": [
             38,
-            51
+            50
           ],
           "source": [
             24,
-            44
+            43
           ]
         }
       }
     },
     {
       "name": "haul_slide_S_0",
-      "source": "art/raw/ss01-kindled-ash/haul_slide/south 1",
-      "offPalette": 59,
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/south 1",
+      "offPalette": 57,
       "maxDeltaE": 8.24,
       "dx": 14,
       "dy": 8,
       "shift": 0,
-      "outlineGaps": 5,
+      "outlineGaps": 6,
       "colours": 15,
-      "masked": 167,
+      "masked": 169,
       "points": {
         "hand": {
           "at": [
             39,
-            55
+            54
           ],
           "source": [
             25,
-            47
+            46
           ]
         }
       }
     },
     {
       "name": "haul_slide_S_1",
-      "source": "art/raw/ss01-kindled-ash/haul_slide/south 3",
-      "offPalette": 43,
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/south 3",
+      "offPalette": 55,
       "maxDeltaE": 7.07,
       "dx": 14,
       "dy": 8,
@@ -8887,55 +8870,55 @@
     },
     {
       "name": "haul_slide_SE_0",
-      "source": "art/raw/ss01-kindled-ash/haul_slide/south-east 1",
-      "offPalette": 82,
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/south-east 1",
+      "offPalette": 77,
       "maxDeltaE": 7.81,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 7,
-      "colours": 18,
-      "masked": 149,
+      "outlineGaps": 2,
+      "colours": 16,
+      "masked": 147,
       "points": {
         "hand": {
           "at": [
-            57,
-            52
+            41,
+            53
           ],
           "source": [
-            43,
-            45
+            27,
+            46
           ]
         }
       }
     },
     {
       "name": "haul_slide_SE_1",
-      "source": "art/raw/ss01-kindled-ash/haul_slide/south-east 4",
-      "offPalette": 62,
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/south-east 4",
+      "offPalette": 60,
       "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 7,
-      "colours": 15,
+      "outlineGaps": 0,
+      "colours": 14,
       "masked": 153,
       "points": {
         "hand": {
           "at": [
-            61,
-            56
+            44,
+            58
           ],
           "source": [
-            47,
-            49
+            30,
+            51
           ]
         }
       }
     },
     {
       "name": "haul_slide_E_0",
-      "source": "art/clean/kindled-ash/haul_slide/east 1",
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/east 1",
       "offPalette": 61,
       "maxDeltaE": 8.11,
       "dx": 14,
@@ -8948,90 +8931,90 @@
         "hand": {
           "at": [
             48,
-            51
+            52
           ],
           "source": [
             34,
-            44
+            45
           ]
         }
       }
     },
     {
       "name": "haul_slide_E_1",
-      "source": "art/clean/kindled-ash/haul_slide/east 3",
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/east 3",
       "offPalette": 47,
       "maxDeltaE": 7.62,
       "dx": 14,
       "dy": 7,
       "shift": -1,
       "outlineGaps": 3,
-      "colours": 16,
+      "colours": 15,
       "masked": 91,
       "points": {
         "hand": {
           "at": [
             45,
-            51
+            53
           ],
           "source": [
             31,
-            44
+            46
           ]
         }
       }
     },
     {
       "name": "haul_slide_NE_0",
-      "source": "art/raw/ss01-kindled-ash/haul_slide/north-east 1",
-      "offPalette": 42,
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/north-east 1",
+      "offPalette": 39,
       "maxDeltaE": 6.15,
       "dx": 14,
       "dy": 7,
       "shift": -1,
       "outlineGaps": 1,
-      "colours": 14,
+      "colours": 12,
       "masked": 6,
       "points": {
         "hand": {
           "at": [
-            56,
-            51
+            55,
+            53
           ],
           "source": [
-            42,
-            44
+            41,
+            46
           ]
         }
       }
     },
     {
       "name": "haul_slide_NE_1",
-      "source": "art/raw/ss01-kindled-ash/haul_slide/north-east 3",
-      "offPalette": 48,
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/north-east 3",
+      "offPalette": 44,
       "maxDeltaE": 6.72,
       "dx": 14,
       "dy": 7,
       "shift": -1,
       "outlineGaps": 5,
-      "colours": 15,
+      "colours": 13,
       "masked": 20,
       "points": {
         "hand": {
           "at": [
-            56,
-            51
+            53,
+            55
           ],
           "source": [
-            42,
-            44
+            39,
+            48
           ]
         }
       }
     },
     {
       "name": "haul_slide_N_0",
-      "source": "art/raw/ss01-kindled-ash/haul_slide/north 2",
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/north 2",
       "offPalette": 0,
       "maxDeltaE": 0,
       "dx": 14,
@@ -9055,7 +9038,7 @@
     },
     {
       "name": "haul_slide_N_1",
-      "source": "art/raw/ss01-kindled-ash/haul_slide/north 4",
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/north 4",
       "offPalette": 6,
       "maxDeltaE": 4.63,
       "dx": 14,
@@ -9079,7 +9062,7 @@
     },
     {
       "name": "haul_slide_NW_0",
-      "source": "art/raw/ss01-kindled-ash/haul_slide/north-west 1",
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/north-west 1",
       "offPalette": 18,
       "maxDeltaE": 5.53,
       "dx": 14,
@@ -9103,7 +9086,7 @@
     },
     {
       "name": "haul_slide_NW_1",
-      "source": "art/raw/ss01-kindled-ash/haul_slide/north-west 3",
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/north-west 3",
       "offPalette": 30,
       "maxDeltaE": 5.61,
       "dx": 14,
@@ -9127,7 +9110,7 @@
     },
     {
       "name": "haul_slide_W_0",
-      "source": "art/clean/kindled-ash/haul_slide/west 1",
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/west 1",
       "offPalette": 68,
       "maxDeltaE": 7.58,
       "dx": 14,
@@ -9139,26 +9122,26 @@
       "points": {
         "hand": {
           "at": [
-            40,
-            45
+            44,
+            53
           ],
           "source": [
-            26,
-            38
+            30,
+            46
           ]
         }
       }
     },
     {
       "name": "haul_slide_W_1",
-      "source": "art/clean/kindled-ash/haul_slide/west 4",
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/west 4",
       "offPalette": 39,
       "maxDeltaE": 6.1,
       "dx": 14,
       "dy": 7,
       "shift": -1,
       "outlineGaps": 1,
-      "colours": 12,
+      "colours": 11,
       "masked": 15,
       "points": {
         "hand": {
@@ -9175,13 +9158,13 @@
     },
     {
       "name": "haul_slide_SW_0",
-      "source": "art/raw/ss01-kindled-ash/haul_slide/south-west 1",
-      "offPalette": 82,
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/south-west 1",
+      "offPalette": 73,
       "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
-      "outlineGaps": 6,
+      "outlineGaps": 1,
       "colours": 16,
       "masked": 134,
       "points": {
@@ -9199,24 +9182,24 @@
     },
     {
       "name": "haul_slide_SW_1",
-      "source": "art/raw/ss01-kindled-ash/haul_slide/south-west 4",
-      "offPalette": 42,
+      "source": "art/clean/kindled-ash/haul_hand/haul_slide/south-west 4",
+      "offPalette": 37,
       "maxDeltaE": 6.92,
       "dx": 14,
       "dy": 7,
       "shift": -1,
       "outlineGaps": 0,
-      "colours": 16,
-      "masked": 152,
+      "colours": 15,
+      "masked": 150,
       "points": {
         "hand": {
           "at": [
             39,
-            52
+            49
           ],
           "source": [
             25,
-            45
+            42
           ]
         }
       }
