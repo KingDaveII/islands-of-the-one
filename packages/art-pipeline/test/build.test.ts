@@ -16,7 +16,7 @@ import {
 import { tableProblems, v2Problems } from '../../shared/test/sheetChecks.js';
 import { APP_ID, buildRecipe, pack, type BuiltAnim } from '../src/build.js';
 import { PipelineError } from '../src/errors.js';
-import { blank, hexAt, opaqueAt } from '../src/image.js';
+import { blank, blit, flipX, hexAt, opaqueAt, sameImg } from '../src/image.js';
 import { animChecks, BOB_FLAG } from '../src/review.js';
 import { decodePng } from '../src/png.js';
 import { parseRecipe, type Recipe } from '../src/recipe.js';
@@ -426,6 +426,114 @@ describe('remap in a build', () => {
     expect(problemsOf(() => build(root, json))).toEqual([
       'art/sheets/kindled-test.json: remap[0].box [60, 60, 64, 63] reaches outside the 64×64 source frame of idle_S_0',
     ]);
+  });
+});
+
+describe('mirrored sources (flipX)', () => {
+  const root = tempRoot();
+  // An asymmetric 68×68 frame (v3's action canvas): the figure, a blade to its right.
+  const tumble = blank(68, 68);
+  blit(tumble, figure(C['watcher-iron']).img, 2, 2);
+  rect(tumble, 46, 32, 14, 2, C['watcher-stone']);
+  writeImg(root, 'art/raw/tumble/west.png', tumble);
+  writeImg(root, 'art/clean/fig.png', figure(C['watcher-iron']).img);
+  const draft = (anims: Record<string, unknown>, extra: Record<string, unknown> = {}) => ({
+    ...fullKindled('art/clean/fig.png'),
+    draft: true,
+    anims,
+    ...extra,
+  });
+  const src = 'art/raw/tumble/west.png';
+  const r = build(
+    root,
+    draft({
+      dodge: {
+        facings: { W: { src, frames: [0] }, E: { src, frames: [0], flipX: true } },
+      },
+    }),
+  );
+  const frame = (name: string) => {
+    const f = r.anims.flatMap((a) => a.frames).find((x) => x.name === name);
+    if (!f) throw new Error(`no ${name}`);
+    return f;
+  };
+
+  it('builds the mirror image, pixel for pixel, still centred on the canvas', () => {
+    const e = frame('dodge_E_0');
+    // Column floor(68 / 2) = 34 goes on the origin's column 48, so dx is 14 and x lands on 14 + x.
+    expect([e.dx, e.dy]).toEqual([14, 8]);
+    for (let y = 0; y < tumble.h; y++) {
+      for (let x = 0; x < tumble.w; x++) {
+        const cx = 14 + (67 - x);
+        expect(opaqueAt(e.cell, cx, 8 + y), `${x}, ${y}`).toBe(opaqueAt(tumble, x, y));
+        if (opaqueAt(tumble, x, y)) expect(hexAt(e.cell, cx, 8 + y)).toBe(hexAt(tumble, x, y));
+      }
+    }
+    // The canvas centre stays on the origin, so the whole cell (and its mask) is the mirror of the unmirrored one.
+    const w = frame('dodge_W_0');
+    expect(sameImg(e.cell, flipX(w.cell))).toBe(true);
+    expect(sameImg(e.mask ?? blank(1, 1), flipX(w.mask ?? blank(1, 1)))).toBe(true);
+  });
+
+  it('reads the same files unmirrored for another facing', () => {
+    const w = frame('dodge_W_0');
+    expect([w.dx, w.dy]).toEqual([14, 8]);
+    expect(hexAt(w.cell, 14 + 50, 8 + 32)).toBe(C['watcher-stone']); // the blade, to the right
+    expect(opaqueAt(w.cell, 14 + 17, 8 + 32)).toBe(false);
+    expect(hexAt(frame('dodge_E_0').cell, 14 + 17, 8 + 32)).toBe(C['watcher-stone']); // and to the left
+    expect(w.mirrored).toBe(false);
+  });
+
+  it('marks mirrored frames in the report', () => {
+    const json = r.report.frames.map((f) => [f.name, f.source, f.mirrored]);
+    expect(json).toEqual([
+      ['dodge_E_0', `${src} 0`, true],
+      ['dodge_W_0', `${src} 0`, undefined],
+    ]);
+    const md = r.outputs.get('art/review/kindled-test/report.md')?.toString() ?? '';
+    expect(md).toContain(`| dodge_E_0 | mirrored from \`${src} 0\` |`);
+    expect(md).toContain(`| dodge_W_0 | \`${src} 0\` |`);
+  });
+
+  it("applies fixes, remap boxes and skin areas in the mirrored frame's coordinates", () => {
+    // Mirrored, the figure's stone arm is at x 39–41 and its sail hand at (39–41, 32–33).
+    const m = build(
+      root,
+      draft(
+        { idle: { facings: { E: { src: 'art/clean/fig.png', frames: [0], flipX: true } } } },
+        {
+          fixes: [{ frame: 'idle_E_0', pixels: [[40, 25, C['wheel-brass']]] }],
+          remap: [
+            {
+              from: [C['watcher-stone']],
+              to: 'husk-shell',
+              frames: ['idle_E_0'],
+              box: [39, 22, 41, 31],
+            },
+          ],
+          skin: {
+            remove: {
+              idle_E_0: [
+                [
+                  [39, 32],
+                  [41, 33],
+                ],
+              ],
+            },
+          },
+        },
+      ),
+    );
+    const f = m.anims[0]?.frames[0];
+    if (!f) throw new Error('no idle_E_0');
+    expect([f.dx, f.dy]).toEqual([16, 10]);
+    expect(hexAt(f.cell, 16 + 40, 10 + 25)).toBe(C['wheel-brass']);
+    expect(hexAt(f.cell, 16 + 39, 10 + 22)).toBe(C['husk-shell']);
+    expect(hexAt(f.cell, 16 + 23, 10 + 25)).toBe(C['watcher-iron']); // the other arm, outside the box
+    expect(m.remapCounts[0]?.get('idle')).toBe(29); // the arm's 30 pixels but the fixed one
+    const mask = f.mask ?? blank(1, 1);
+    expect(opaqueAt(mask, 16 + 40, 10 + 32)).toBe(false); // the removed hand
+    expect(opaqueAt(mask, 16 + 23, 10 + 32)).toBe(true); // the other hand
   });
 });
 

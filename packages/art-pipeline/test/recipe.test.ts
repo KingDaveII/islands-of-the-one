@@ -78,7 +78,70 @@ describe('the recipe guard', () => {
     expect(r.anims.idle?.fps).toBe(6);
   });
 
+  it('accepts flipX on a facing and on a facing-less source, and keeps only true', () => {
+    const r = parseRecipe(
+      {
+        ...good(),
+        anims: {
+          dodge: {
+            facings: {
+              W: { src: 'art/clean/fig.png', frames: [0] },
+              E: { src: 'art/clean/fig.png', frames: [0], flipX: true },
+              SE: { src: 'art/clean/fig.png', frames: [0], flipX: false },
+            },
+          },
+        },
+        fixes: [],
+        skin: undefined,
+      },
+      'art/sheets/kindled-test.json',
+      root,
+    );
+    expect(r.anims.dodge?.facings?.E).toEqual({
+      src: 'art/clean/fig.png',
+      frames: [0],
+      flipX: true,
+    });
+    expect(r.anims.dodge?.facings?.W).toEqual({ src: 'art/clean/fig.png', frames: [0] });
+    expect(r.anims.dodge?.facings?.SE).toEqual({ src: 'art/clean/fig.png', frames: [0] });
+    const prop = parseRecipe(
+      {
+        sheet: 'prop-jar',
+        kind: 'prop',
+        outline: 'other',
+        draft: true,
+        anims: { idle: { src: 'art/clean/fig.png', frames: [0], flipX: true } },
+      },
+      'art/sheets/prop-jar.json',
+      root,
+    );
+    expect(prop.anims.idle?.source).toEqual({ src: 'art/clean/fig.png', frames: [0], flipX: true });
+  });
+
   it.each([
+    [
+      'a flipX that is not a boolean',
+      {
+        ...good(),
+        anims: {
+          idle: { facings: { S: { src: 'art/clean/fig.png', frames: [0], flipX: 'yes' } } },
+        },
+        fixes: [],
+        skin: undefined,
+      },
+      'anims.idle.facings.S.flipX must be true or false',
+    ],
+    [
+      'a flipX of 1 on a facing-less source',
+      {
+        sheet: 'prop-jar',
+        kind: 'prop',
+        outline: 'other',
+        draft: true,
+        anims: { idle: { src: 'art/clean/fig.png', frames: [0], flipX: 1 } },
+      },
+      'anims.idle.flipX must be true or false',
+    ],
     [
       'an unknown key',
       { ...good(), colour: 'red' },

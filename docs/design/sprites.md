@@ -51,7 +51,7 @@ The engine, the §6 test and the G1.2 pipeline read these numbers from `packages
 
 ## 3. Facings
 
-- Kindled: **8 facings**, in this order and spelling: `S, SE, E, NE, N, NW, W, SW`. All eight are stored (the west facings are drawn, not flipped: the Hookblade stays in the right hand, which is the far hand when facing west). Idle and walk have all eight; attacks, dodge and Haul have all eight; hit, death and carry have four (`S, E, N, W`) and the engine maps diagonals to the nearest.
+- Kindled: **8 facings**, in this order and spelling: `S, SE, E, NE, N, NW, W, SW`. All eight are stored (the west facings are drawn, not flipped: the Hookblade stays in the right hand, which is the far hand when facing west). A recipe may still build a facing from another facing's frames mirrored, where ART decides the action allows it (`flipX` in [`art-pipeline.md`](art-pipeline.md)); the sheet stores the result as that facing's own frames, so the engine never flips a Kindled. Idle and walk have all eight; attacks, dodge and Haul have all eight; hit, death and carry have four (`S, E, N, W`) and the engine maps diagonals to the nearest.
 - Husks: **no facings**. Peelings and Nutshells are radial; the engine rotates nothing, it flips horizontally when the lunge or roll direction has a west component (`"flipX": true` is allowed for Husks only).
 - NPCs (`npc-<name>`): **8 facings** in the Kindled order, for every animation; the sheet carries `meta.facings`.
 - Props (`prop-<name>`): **no facings**.

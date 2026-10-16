@@ -41,6 +41,18 @@ export function setPixel(img: Img, x: number, y: number, hex: string | null): vo
   img.data[i + 3] = 255;
 }
 
+/** A new image, mirrored left to right: column x becomes column w − 1 − x. */
+export function flipX(img: Img): Img {
+  const out = blank(img.w, img.h);
+  for (let y = 0; y < img.h; y++) {
+    for (let x = 0; x < img.w; x++) {
+      const si = (y * img.w + x) * 4;
+      out.data.set(img.data.subarray(si, si + 4), (y * img.w + (img.w - 1 - x)) * 4);
+    }
+  }
+  return out;
+}
+
 /** Copies every opaque pixel of `src` onto `dst` at (dx, dy), scaled by a whole factor. */
 export function blit(dst: Img, src: Img, dx: number, dy: number, scale = 1): void {
   for (let y = 0; y < src.h; y++) {

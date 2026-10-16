@@ -167,6 +167,8 @@ function colourCount(img: Img): number {
 export interface FrameReport {
   name: string;
   source: string;
+  /** Set when the source was mirrored (`flipX`). */
+  mirrored?: true;
   offPalette: number;
   maxDeltaE: number;
   dx: number;
@@ -369,6 +371,7 @@ export function writeReport(
         outlineGaps: f.outlineGaps,
         colours: colourCount(f.cell),
       };
+      if (f.mirrored) r.mirrored = true;
       if (f.interiorDreamNight !== null) r.interiorDreamNight = f.interiorDreamNight;
       if (f.despeckled !== null) r.despeckled = f.despeckled;
       if (f.masked !== null) r.masked = f.masked;
@@ -516,7 +519,7 @@ function markdown(r: SheetReport): string {
   for (const f of r.frames) {
     const cells = [
       f.name,
-      `\`${f.source}\``,
+      f.mirrored ? `mirrored from \`${f.source}\`` : `\`${f.source}\``,
       f.offPalette,
       f.maxDeltaE,
       f.shift,
