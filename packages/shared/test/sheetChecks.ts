@@ -201,3 +201,33 @@ export function pointProblems(name: string, sheet: SpriteSheet, finished = true)
   }
   return problems;
 }
+
+/**
+ * What breaks an untinted engine sheet's colours (sprites.md "Engine sheets"):
+ * it is checked like a v2 sprite, so only the 28-colour whitelist, no
+ * telegraph colours (it has no telegraph frames), #FFFFFF and #FFE7A3 nowhere,
+ * and no soft alpha. An empty list is a sheet that passes.
+ */
+export function engineColourProblems(png: Rgba): string[] {
+  const offList = new Set<string>();
+  const never = new Set<string>();
+  const telegraph = new Set<string>();
+  let soft = 0;
+  for (let y = 0; y < png.height; y++) {
+    for (let x = 0; x < png.width; x++) {
+      const a = alphaAt(png, x, y);
+      if (a === 0) continue;
+      if (a !== 255) soft++;
+      const hex = hexAt(png, x, y);
+      if (NEVER.has(hex)) never.add(hex);
+      else if (TELEGRAPH.has(hex)) telegraph.add(hex);
+      else if (!WHITELIST.has(hex)) offList.add(hex);
+    }
+  }
+  const problems: string[] = [];
+  if (offList.size) problems.push(`colours outside the whitelist: ${[...offList].join(', ')}`);
+  if (never.size) problems.push(`colours never allowed in a sheet: ${[...never].join(', ')}`);
+  if (telegraph.size) problems.push(`telegraph colours (only Husk telegraph frames may use them): ${[...telegraph].join(', ')}`);
+  if (soft) problems.push(`${soft} pixels with an alpha other than 0 or 255`);
+  return problems;
+}

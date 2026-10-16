@@ -1,0 +1,83 @@
+{
+ "image": "hookblade-fixture.png",
+ "meta": {
+  "version": "2",
+  "pixelScale": 1,
+  "tinted": false
+ },
+ "cells": [
+  {
+   "name": "chain_link",
+   "x": 0,
+   "y": 0,
+   "w": 6,
+   "h": 6
+  },
+  {
+   "name": "chain_link_taut",
+   "x": 7,
+   "y": 0,
+   "w": 6,
+   "h": 6
+  },
+  {
+   "name": "hook",
+   "x": 14,
+   "y": 0,
+   "w": 8,
+   "h": 8
+  },
+  {
+   "name": "hook_set",
+   "x": 23,
+   "y": 0,
+   "w": 8,
+   "h": 8
+  },
+  {
+   "name": "spark_0",
+   "x": 32,
+   "y": 0,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "spark_1",
+   "x": 43,
+   "y": 0,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "spark_2",
+   "x": 54,
+   "y": 0,
+   "w": 10,
+   "h": 10
+  }
+ ],
+ "anims": {
+  "charge_spark": {
+   "frames": [
+    "spark_0",
+    "spark_1",
+    "spark_2"
+   ],
+   "fps": 12,
+   "loop": false
+  }
+ },
+ "chain": {
+  "link": "chain_link",
+  "spacing": 32,
+  "taut": "chain_link_taut"
+ },
+ "hook": {
+  "flight": "hook",
+  "set": "hook_set",
+  "origin": [
+   0,
+   3
+  ]
+ }
+}
