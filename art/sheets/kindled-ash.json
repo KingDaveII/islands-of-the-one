@@ -3,77 +3,971 @@
   "kind": "kindled",
   "outline": "player",
   "draft": true,
-  "notes": "G1.2 acceptance draft from g13b-job4's raw player (the 48 px pick, not ART's 45 px exemplar). Proves the pipeline; not production art. light_1 uses v3 frames 1, 3 and 5 as stand-ins until ART picks.",
+  "notes": "SS-01 draft from art job ss01-kindled-ash (art/raw/ss01-kindled-ash/): the 45 px exemplar rotated by PixelLab v3 and every M1 animation, picked by the job's rules. dodge uses the retake (take 1 in dodge-take1/); heavy N uses heavy-retake/north. No fixes, remaps or skin overrides yet: those are ART's.",
   "anims": {
     "idle": {
       "facings": {
         "S": {
-          "src": "art/raw/g13b-job4/player/south.png",
-          "frames": [0]
+          "src": "art/raw/ss01-kindled-ash/idle/south",
+          "frames": [
+            0,
+            2
+          ]
         },
         "SE": {
-          "src": "art/raw/g13b-job4/player/south-east.png",
-          "frames": [0]
+          "src": "art/raw/ss01-kindled-ash/idle/south-east",
+          "frames": [
+            0,
+            2
+          ]
         },
         "E": {
-          "src": "art/raw/g13b-job4/player/east.png",
-          "frames": [0]
+          "src": "art/raw/ss01-kindled-ash/idle/east",
+          "frames": [
+            0,
+            2
+          ]
         },
         "NE": {
-          "src": "art/raw/g13b-job4/player/north-east.png",
-          "frames": [0]
+          "src": "art/raw/ss01-kindled-ash/idle/north-east",
+          "frames": [
+            0,
+            2
+          ]
         },
         "N": {
-          "src": "art/raw/g13b-job4/player/north.png",
-          "frames": [0]
+          "src": "art/raw/ss01-kindled-ash/idle/north",
+          "frames": [
+            0,
+            2
+          ]
         },
         "NW": {
-          "src": "art/raw/g13b-job4/player/north-west.png",
-          "frames": [0]
+          "src": "art/raw/ss01-kindled-ash/idle/north-west",
+          "frames": [
+            0,
+            2
+          ]
         },
         "W": {
-          "src": "art/raw/g13b-job4/player/west.png",
-          "frames": [0]
+          "src": "art/raw/ss01-kindled-ash/idle/west",
+          "frames": [
+            0,
+            2
+          ]
         },
         "SW": {
-          "src": "art/raw/g13b-job4/player/south-west.png",
-          "frames": [0]
+          "src": "art/raw/ss01-kindled-ash/idle/south-west",
+          "frames": [
+            0,
+            2
+          ]
         }
       }
     },
     "walk": {
       "facings": {
         "S": {
-          "src": "art/raw/g13b-job4/player/walk-skel/south",
-          "frames": [0, 1, 2, 3, 4, 5]
+          "src": "art/raw/ss01-kindled-ash/walk/south",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
         },
         "SE": {
-          "src": "art/raw/g13b-job4/player/walk-skel/south-east",
-          "frames": [0, 1, 2, 3, 4, 5]
+          "src": "art/raw/ss01-kindled-ash/walk/south-east",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
         },
         "E": {
-          "src": "art/raw/g13b-job4/player/walk-skel/east",
-          "frames": [0, 1, 2, 3, 4, 5]
+          "src": "art/raw/ss01-kindled-ash/walk/east",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
         },
         "NE": {
-          "src": "art/raw/g13b-job4/player/walk-skel/north-east",
-          "frames": [0, 1, 2, 3, 4, 5]
+          "src": "art/raw/ss01-kindled-ash/walk/north-east",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
         },
         "N": {
-          "src": "art/raw/g13b-job4/player/walk-skel/north",
-          "frames": [0, 1, 2, 3, 4, 5]
+          "src": "art/raw/ss01-kindled-ash/walk/north",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        "NW": {
+          "src": "art/raw/ss01-kindled-ash/walk/north-west",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        "W": {
+          "src": "art/raw/ss01-kindled-ash/walk/west",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        "SW": {
+          "src": "art/raw/ss01-kindled-ash/walk/south-west",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    },
+    "dodge": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/raw/ss01-kindled-ash/dodge/south",
+          "frames": [
+            3,
+            4,
+            6,
+            7
+          ]
+        },
+        "SE": {
+          "src": "art/raw/ss01-kindled-ash/dodge/south-east",
+          "frames": [
+            2,
+            3,
+            6,
+            7
+          ]
+        },
+        "E": {
+          "src": "art/raw/ss01-kindled-ash/dodge/east",
+          "frames": [
+            3,
+            4,
+            5,
+            7
+          ]
+        },
+        "NE": {
+          "src": "art/raw/ss01-kindled-ash/dodge-take1/north-east",
+          "frames": [
+            3,
+            4,
+            6,
+            7
+          ]
+        },
+        "N": {
+          "src": "art/raw/ss01-kindled-ash/dodge-take1/north",
+          "frames": [
+            1,
+            4,
+            6
+          ]
+        },
+        "NW": {
+          "src": "art/raw/ss01-kindled-ash/dodge/north-west",
+          "frames": [
+            2,
+            4,
+            6,
+            8
+          ]
+        },
+        "W": {
+          "src": "art/raw/ss01-kindled-ash/dodge/west",
+          "frames": [
+            4,
+            6,
+            7,
+            8
+          ]
+        },
+        "SW": {
+          "src": "art/raw/ss01-kindled-ash/dodge/south-west",
+          "frames": [
+            4,
+            5,
+            6,
+            7
+          ]
         }
       }
     },
     "light_1": {
+      "ground": {
+        "ref": 0
+      },
       "facings": {
         "S": {
-          "src": "art/raw/g13b-job4/player/attack-v3/south",
-          "frames": [1, 3, 5]
+          "src": "art/raw/ss01-kindled-ash/light_1/south",
+          "frames": [
+            1,
+            3,
+            6
+          ]
+        },
+        "SE": {
+          "src": "art/raw/ss01-kindled-ash/light_1/south-east",
+          "frames": [
+            2,
+            4,
+            6
+          ]
         },
         "E": {
-          "src": "art/raw/g13b-job4/player/attack-v3/east",
-          "frames": [1, 3, 5]
+          "src": "art/raw/ss01-kindled-ash/light_1/east",
+          "frames": [
+            2,
+            3,
+            6
+          ]
+        },
+        "NE": {
+          "src": "art/raw/ss01-kindled-ash/light_1/north-east",
+          "frames": [
+            1,
+            4,
+            6
+          ]
+        },
+        "N": {
+          "src": "art/raw/ss01-kindled-ash/light_1/north",
+          "frames": [
+            5,
+            6
+          ]
+        },
+        "NW": {
+          "src": "art/raw/ss01-kindled-ash/light_1/north-west",
+          "frames": [
+            2,
+            4,
+            6
+          ]
+        },
+        "W": {
+          "src": "art/raw/ss01-kindled-ash/light_1/west",
+          "frames": [
+            4,
+            5,
+            6
+          ]
+        },
+        "SW": {
+          "src": "art/raw/ss01-kindled-ash/light_1/south-west",
+          "frames": [
+            2,
+            3,
+            6
+          ]
+        }
+      }
+    },
+    "light_2": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/raw/ss01-kindled-ash/light_2/south",
+          "frames": [
+            2,
+            4,
+            6
+          ]
+        },
+        "SE": {
+          "src": "art/raw/ss01-kindled-ash/light_2/south-east",
+          "frames": [
+            4,
+            5,
+            6
+          ]
+        },
+        "E": {
+          "src": "art/raw/ss01-kindled-ash/light_2/east",
+          "frames": [
+            4,
+            5,
+            6
+          ]
+        },
+        "NE": {
+          "src": "art/raw/ss01-kindled-ash/light_2/north-east",
+          "frames": [
+            2,
+            5,
+            6
+          ]
+        },
+        "NW": {
+          "src": "art/raw/ss01-kindled-ash/light_2/north-west",
+          "frames": [
+            2,
+            5,
+            6
+          ]
+        },
+        "W": {
+          "src": "art/raw/ss01-kindled-ash/light_2/west",
+          "frames": [
+            2,
+            5,
+            6
+          ]
+        },
+        "SW": {
+          "src": "art/raw/ss01-kindled-ash/light_2/south-west",
+          "frames": [
+            2,
+            3
+          ]
+        }
+      }
+    },
+    "light_3": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/raw/ss01-kindled-ash/light_3/south",
+          "frames": [
+            2,
+            3,
+            6
+          ]
+        },
+        "SE": {
+          "src": "art/raw/ss01-kindled-ash/light_3/south-east",
+          "frames": [
+            2,
+            3,
+            6
+          ]
+        },
+        "E": {
+          "src": "art/raw/ss01-kindled-ash/light_3/east",
+          "frames": [
+            2,
+            4,
+            6
+          ]
+        },
+        "N": {
+          "src": "art/raw/ss01-kindled-ash/light_3/north",
+          "frames": [
+            2,
+            4,
+            5
+          ]
+        },
+        "NW": {
+          "src": "art/raw/ss01-kindled-ash/light_3/north-west",
+          "frames": [
+            4,
+            6
+          ]
+        },
+        "W": {
+          "src": "art/raw/ss01-kindled-ash/light_3/west",
+          "frames": [
+            2,
+            4,
+            6
+          ]
+        },
+        "SW": {
+          "src": "art/raw/ss01-kindled-ash/light_3/south-west",
+          "frames": [
+            2,
+            4,
+            6
+          ]
+        }
+      }
+    },
+    "heavy_charge": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/raw/ss01-kindled-ash/heavy/south",
+          "frames": [
+            2,
+            3,
+            4
+          ]
+        },
+        "SE": {
+          "src": "art/raw/ss01-kindled-ash/heavy/south-east",
+          "frames": [
+            2,
+            3,
+            4
+          ]
+        },
+        "E": {
+          "src": "art/raw/ss01-kindled-ash/heavy/east",
+          "frames": [
+            2,
+            3,
+            4
+          ]
+        },
+        "NE": {
+          "src": "art/raw/ss01-kindled-ash/heavy/north-east",
+          "frames": [
+            2,
+            3,
+            5
+          ]
+        },
+        "N": {
+          "src": "art/raw/ss01-kindled-ash/heavy/north",
+          "frames": [
+            2,
+            3,
+            4
+          ]
+        },
+        "W": {
+          "src": "art/raw/ss01-kindled-ash/heavy/west",
+          "frames": [
+            2,
+            3,
+            4
+          ]
+        },
+        "SW": {
+          "src": "art/raw/ss01-kindled-ash/heavy/south-west",
+          "frames": [
+            1,
+            2,
+            4
+          ]
+        }
+      }
+    },
+    "heavy_thrust": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/raw/ss01-kindled-ash/heavy/south",
+          "frames": [
+            7,
+            8
+          ]
+        },
+        "SE": {
+          "src": "art/raw/ss01-kindled-ash/heavy/south-east",
+          "frames": [
+            7,
+            8
+          ]
+        },
+        "E": {
+          "src": "art/raw/ss01-kindled-ash/heavy/east",
+          "frames": [
+            6,
+            7
+          ]
+        },
+        "NE": {
+          "src": "art/raw/ss01-kindled-ash/heavy/north-east",
+          "frames": [
+            6,
+            7
+          ]
+        },
+        "W": {
+          "src": "art/raw/ss01-kindled-ash/heavy/west",
+          "frames": [
+            7,
+            8
+          ]
+        },
+        "SW": {
+          "src": "art/raw/ss01-kindled-ash/heavy/south-west",
+          "frames": [
+            7,
+            8
+          ]
+        }
+      }
+    },
+    "heavy_hold": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/raw/ss01-kindled-ash/heavy/south",
+          "frames": [
+            8
+          ]
+        },
+        "SE": {
+          "src": "art/raw/ss01-kindled-ash/heavy/south-east",
+          "frames": [
+            8
+          ]
+        },
+        "E": {
+          "src": "art/raw/ss01-kindled-ash/heavy/east",
+          "frames": [
+            8
+          ]
+        },
+        "NE": {
+          "src": "art/raw/ss01-kindled-ash/heavy/north-east",
+          "frames": [
+            8
+          ]
+        },
+        "W": {
+          "src": "art/raw/ss01-kindled-ash/heavy/west",
+          "frames": [
+            8
+          ]
+        },
+        "SW": {
+          "src": "art/raw/ss01-kindled-ash/heavy/south-west",
+          "frames": [
+            8
+          ]
+        }
+      }
+    },
+    "heavy_recover": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/raw/ss01-kindled-ash/heavy/south",
+          "frames": [
+            10,
+            1
+          ]
+        },
+        "SE": {
+          "src": "art/raw/ss01-kindled-ash/heavy/south-east",
+          "frames": [
+            10,
+            1
+          ]
+        },
+        "E": {
+          "src": "art/raw/ss01-kindled-ash/heavy/east",
+          "frames": [
+            10,
+            1
+          ]
+        },
+        "NE": {
+          "src": "art/raw/ss01-kindled-ash/heavy/north-east",
+          "frames": [
+            10,
+            1
+          ]
+        },
+        "W": {
+          "src": "art/raw/ss01-kindled-ash/heavy/west",
+          "frames": [
+            10,
+            1
+          ]
+        },
+        "SW": {
+          "src": "art/raw/ss01-kindled-ash/heavy/south-west",
+          "frames": [
+            10,
+            1
+          ]
+        }
+      }
+    },
+    "haul_throw": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/raw/ss01-kindled-ash/haul/south",
+          "frames": [
+            2,
+            3
+          ]
+        },
+        "SE": {
+          "src": "art/raw/ss01-kindled-ash/haul/south-east",
+          "frames": [
+            2,
+            4
+          ]
+        },
+        "E": {
+          "src": "art/raw/ss01-kindled-ash/haul/east",
+          "frames": [
+            2,
+            3
+          ]
+        },
+        "NE": {
+          "src": "art/raw/ss01-kindled-ash/haul/north-east",
+          "frames": [
+            2,
+            3
+          ]
+        },
+        "N": {
+          "src": "art/raw/ss01-kindled-ash/haul/north",
+          "frames": [
+            2,
+            3
+          ]
+        },
+        "NW": {
+          "src": "art/raw/ss01-kindled-ash/haul/north-west",
+          "frames": [
+            1,
+            2
+          ]
+        },
+        "W": {
+          "src": "art/raw/ss01-kindled-ash/haul/west",
+          "frames": [
+            2,
+            3
+          ]
+        },
+        "SW": {
+          "src": "art/raw/ss01-kindled-ash/haul/south-west",
+          "frames": [
+            2,
+            4
+          ]
+        }
+      }
+    },
+    "haul_recover": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/raw/ss01-kindled-ash/haul/south",
+          "frames": [
+            6,
+            1
+          ]
+        },
+        "SE": {
+          "src": "art/raw/ss01-kindled-ash/haul/south-east",
+          "frames": [
+            5,
+            6
+          ]
+        },
+        "E": {
+          "src": "art/raw/ss01-kindled-ash/haul/east",
+          "frames": [
+            5,
+            6
+          ]
+        },
+        "NE": {
+          "src": "art/raw/ss01-kindled-ash/haul/north-east",
+          "frames": [
+            5,
+            6
+          ]
+        },
+        "N": {
+          "src": "art/raw/ss01-kindled-ash/haul/north",
+          "frames": [
+            5,
+            6
+          ]
+        },
+        "NW": {
+          "src": "art/raw/ss01-kindled-ash/haul/north-west",
+          "frames": [
+            5,
+            6
+          ]
+        },
+        "W": {
+          "src": "art/raw/ss01-kindled-ash/haul/west",
+          "frames": [
+            5,
+            6
+          ]
+        },
+        "SW": {
+          "src": "art/raw/ss01-kindled-ash/haul/south-west",
+          "frames": [
+            5,
+            6
+          ]
+        }
+      }
+    },
+    "haul_pull": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/raw/ss01-kindled-ash/haul_pull/south",
+          "frames": [
+            1,
+            3
+          ]
+        },
+        "SE": {
+          "src": "art/raw/ss01-kindled-ash/haul_pull/south-east",
+          "frames": [
+            1,
+            4
+          ]
+        },
+        "E": {
+          "src": "art/raw/ss01-kindled-ash/haul_pull/east",
+          "frames": [
+            1,
+            2
+          ]
+        },
+        "NE": {
+          "src": "art/raw/ss01-kindled-ash/haul_pull/north-east",
+          "frames": [
+            2,
+            4
+          ]
+        },
+        "N": {
+          "src": "art/raw/ss01-kindled-ash/haul_pull/north",
+          "frames": [
+            1,
+            3
+          ]
+        },
+        "NW": {
+          "src": "art/raw/ss01-kindled-ash/haul_pull/north-west",
+          "frames": [
+            1,
+            3
+          ]
+        },
+        "W": {
+          "src": "art/raw/ss01-kindled-ash/haul_pull/west",
+          "frames": [
+            1,
+            4
+          ]
+        },
+        "SW": {
+          "src": "art/raw/ss01-kindled-ash/haul_pull/south-west",
+          "frames": [
+            2,
+            4
+          ]
+        }
+      }
+    },
+    "haul_slide": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/raw/ss01-kindled-ash/haul_slide/south",
+          "frames": [
+            1,
+            3
+          ]
+        },
+        "SE": {
+          "src": "art/raw/ss01-kindled-ash/haul_slide/south-east",
+          "frames": [
+            1,
+            4
+          ]
+        },
+        "E": {
+          "src": "art/raw/ss01-kindled-ash/haul_slide/east",
+          "frames": [
+            1,
+            3
+          ]
+        },
+        "NE": {
+          "src": "art/raw/ss01-kindled-ash/haul_slide/north-east",
+          "frames": [
+            1,
+            3
+          ]
+        },
+        "N": {
+          "src": "art/raw/ss01-kindled-ash/haul_slide/north",
+          "frames": [
+            2,
+            4
+          ]
+        },
+        "NW": {
+          "src": "art/raw/ss01-kindled-ash/haul_slide/north-west",
+          "frames": [
+            1,
+            3
+          ]
+        },
+        "W": {
+          "src": "art/raw/ss01-kindled-ash/haul_slide/west",
+          "frames": [
+            1,
+            4
+          ]
+        },
+        "SW": {
+          "src": "art/raw/ss01-kindled-ash/haul_slide/south-west",
+          "frames": [
+            1,
+            4
+          ]
+        }
+      }
+    },
+    "hit": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/raw/ss01-kindled-ash/hit/south",
+          "frames": [
+            1,
+            2
+          ]
+        },
+        "E": {
+          "src": "art/raw/ss01-kindled-ash/hit/east",
+          "frames": [
+            1,
+            3
+          ]
+        },
+        "N": {
+          "src": "art/raw/ss01-kindled-ash/hit/north",
+          "frames": [
+            1,
+            3
+          ]
+        },
+        "W": {
+          "src": "art/raw/ss01-kindled-ash/hit/west",
+          "frames": [
+            1,
+            2
+          ]
+        }
+      }
+    },
+    "death": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/raw/ss01-kindled-ash/death/south",
+          "frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        "E": {
+          "src": "art/raw/ss01-kindled-ash/death/east",
+          "frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        "N": {
+          "src": "art/raw/ss01-kindled-ash/death/north",
+          "frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        "W": {
+          "src": "art/raw/ss01-kindled-ash/death/west",
+          "frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
         }
       }
     }
