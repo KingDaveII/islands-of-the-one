@@ -11,7 +11,7 @@ You are running an art job for ART DIRECTION, the art director of Islands of the
 The job generates the run, puts it into the finished `kindled-ash` recipe and measures its stride. It makes no code changes.
 
 ## Why
-In encounters the Kindled always runs (Game design, 2026-10-16). G1.5c (#43) put `run` in the animation table: 6 frames, loop, 8 facings, M1. It plays by distance, one cycle per `anim.runCyclePx` (96 world px). The row is on `ANIMS_AWAITING_ART`, and until this sheet has it the engine plays `walk` in its place. MAIN takes `run` off that list in the next engine task. MAIN needs the measured stride per cycle to confirm the 96.
+In encounters the Kindled always runs (Game design, 2026-10-16). G1.5c (#43) and #44 put `run` in the animation table: 8 frames, loop, 8 facings, M1. It plays by distance, one cycle per `anim.runCyclePx` (96 world px). The row is on `ANIMS_AWAITING_ART`, and until this sheet has it the engine plays `walk` in its place. MAIN takes `run` off that list in the next engine task. MAIN needs the measured stride per cycle to confirm the 96.
 
 ## Branch and PR
 - Branch `art/run-kindled-ash` from the latest `main`; never push to main.
@@ -33,10 +33,10 @@ In encounters the Kindled always runs (Game design, 2026-10-16). G1.5c (#43) put
 - Use `wait_for_jobs` to wait. Run at most 8 jobs at once.
 
 ## Step 1: generate
-1. Call `get_character` (free) on SS-01's character `507ec529-642d-4b0e-999b-731be937ba15`. Check that it still exists and that `running-6-frames` is in its template list. If either fails, stop and ask David.
+1. Call `get_character` (free) on SS-01's character `507ec529-642d-4b0e-999b-731be937ba15`. Check that it still exists and that `running-8-frames` is in its template list. If either fails, stop and ask David.
 2. Call `animate_character` on it:
    - mode skeleton-v3;
-   - `template_animation_id: "running-6-frames"`;
+   - `template_animation_id: "running-8-frames"`;
    - `animation_name: "run"`;
    - all 8 directions: S, SE, E, NE, N, NW, W, SW. Always pass `directions`.
 3. Save every frame as `art/raw/run-kindled-ash/run/<direction>/frame-<n>.png`, with full direction names (`south-east`) and the frames as the output numbers them. Skeleton-v3 output has no rotation frame: frame 0 is the cycle's first frame.
@@ -52,10 +52,8 @@ This writes `art/clean/kindled-ash/run/east/` and `/west/`. Look at every frame 
 Add `run` to `art/sheets/kindled-ash.json`:
 - S, SE, NE, N, NW, SW: `src` `art/raw/run-kindled-ash/run/<direction>`;
 - E and W: `src` `art/clean/kindled-ash/run/<east|west>`;
-- `frames: [0, 1, 2, 3, 4, 5]` in each facing, in cycle order;
+- all 8 frames in each facing, in cycle order, **starting at the first contact**: the first frame where a foot lands (its sole reaches the figure's lowest row after being off the ground). If that is frame 3, list `[3, 4, 5, 6, 7, 0, 1, 2]`. Then frame 0 of every facing is a contact, and the engine needs no offset (MAIN, 2026-10-16). Find the contact per facing; it may differ between facings;
 - no `ground` key (`run` grounds per frame, like `walk`).
-
-If a facing's cycle starts mid-stride, keep the order the generator gave. Report which frame is the first contact (a foot lands), so MAIN can line the engine up with it.
 
 Then loop `pnpm art:build kindled-ash` until the finished build (`"draft": false`) passes. Never edit an output by hand. On a failure, read its message in `art-pipeline.md`:
 - **Reserved colours or off-palette greys the existing rules don't reach:** widen a rule's scope (`anims` or `facings`) to take in `run`. Add a new rule only for a colour no existing rule maps. A rule must never take real skin: check `tones.png`.
@@ -68,7 +66,7 @@ Look at `contact.png` and `tones.png` yourself before you push.
 ## Step 4: the stride
 Measure E and W, the side views, from the built sheet (`packages/shared/assets/sprites/kindled-ash.png` + `.json`), for both cycles:
 - `walk_E_*` and `walk_W_*`, 6 frames;
-- `run_E_*` and `run_W_*`, 6 frames.
+- `run_E_*` and `run_W_*`, 8 frames.
 
 1 sheet px is 1 world px (a v2 sheet draws at `pixelScale` 1).
 
@@ -95,7 +93,7 @@ The PR description holds:
   - which hand holds the blade (right hand; the W facings may show it in the near hand, as walk W does);
   - the height in px (sole to hood top, against 45);
   - the bob (highest minus lowest hood-top row over the cycle);
-  - the first-contact frame;
+  - the generator's frame the list starts at (the first contact);
 - the remap scope changes, the new `skin.add` and `fixes` counts, and the E/W frames set aside for ART;
 - the character id, the generations per call, and the balance before and after;
 - "Requests for MAIN": take `run` off `ANIMS_AWAITING_ART`, plus anything the stride numbers suggest for `runCyclePx`;
