@@ -5,6 +5,8 @@
  */
 export const DEPTH = {
   room: 0,
+  /** The tile room's doors (roomTiles.ts), over its texture and under the floor decals. */
+  roomDoors: 0.5,
   floor: 1,
   /** Chain links go under the bodies. */
   chain: 2,

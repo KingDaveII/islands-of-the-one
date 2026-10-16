@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { roomTemplates } from '@iot/shared';
 import { huskParams, SUB, TILE_PX, type RunResults, type SimEvent, type Tuning } from '@iot/sim';
 import { Controls } from '../game/controls.js';
 import { promptTarget } from '../game/interact.js';
@@ -13,6 +14,7 @@ import { clampScroll } from '../render/camera.js';
 import { DEPTH } from '../render/depth.js';
 import { simPx, worldPx } from '../render/scale.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
+import { preloadTileSheet } from '../render/roomTiles.js';
 import { preloadSpriteSheets, registerSpriteSheets } from '../render/spriteSheets.js';
 import { blinkOut, place, preloadFonts, registerFonts, worldWord, type Text } from '../render/text.js';
 import { drawReticle, rad, WorldRenderer } from '../render/world.js';
@@ -33,6 +35,8 @@ export interface GameData {
   seed: number;
   /** One weapon per run, picked on the start screen. */
   weapon: string;
+  /** Playtests and screenshots only: run in these templates of rooms.json, by name (default: all of them). */
+  rooms?: string[];
 }
 
 export class GameScene extends Phaser.Scene {
@@ -63,6 +67,7 @@ export class GameScene extends Phaser.Scene {
   private prompt!: HintRow;
   private seed = 0;
   private weapon = 'hookblade';
+  private rooms: string[] | undefined;
   private endAt = -1;
   private camX = 0;
   private camY = 0;
@@ -76,6 +81,7 @@ export class GameScene extends Phaser.Scene {
   init(data: GameData): void {
     this.seed = data.seed;
     this.weapon = data.weapon;
+    this.rooms = data.rooms;
     this.endAt = -1;
     this.lastRoom = -1;
   }
@@ -83,6 +89,7 @@ export class GameScene extends Phaser.Scene {
   preload(): void {
     preloadSheets(this);
     preloadSpriteSheets(this);
+    preloadTileSheet(this);
     preloadFonts(this);
   }
 
@@ -99,7 +106,9 @@ export class GameScene extends Phaser.Scene {
       const w = this.cameras.main.getWorldPoint(p.x, p.y);
       return { x: simPx(w.x), y: simPx(w.y) };
     });
-    this.session = new Session(this.seed, this.weapon, this.controls);
+    const rooms = this.rooms;
+    const templates = rooms ? roomTemplates.filter((t) => rooms.includes(t.name)) : roomTemplates;
+    this.session = new Session(this.seed, this.weapon, this.controls, templates.length ? templates : roomTemplates);
     this.world = new WorldRenderer(this, this.worldLayer, juice, () => tuningStore.get().anim);
     this.fx = new Fx(this, this.worldLayer, this.hudLayer, juice, (x, y) => this.toUi(x, y));
     // Words over the world are UI px, placed at their projected world position (readability.md §4).

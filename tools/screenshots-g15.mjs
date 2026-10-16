@@ -18,6 +18,15 @@
  * `run-<facing>-strip.png`. The cycle plays by distance, so frame k shows
  * after k × 16 world px (`anim.runCyclePx` 96 over 6 frames).
  *
+ * `--rooms` (G1.5e, no account needed) hands the client the tile fixture
+ * (packages/shared/test/fixtures/tiles-fixture.*, `__iot.useTileSheet`), so
+ * rooms draw from it until ART's tiles-cave lands, and shoots each of the five M1 rooms at 1920 × 912 as it
+ * loads (doors closed), plus the room texture itself at 1× (the static pieces,
+ * the whole room) as `room-<name>-texture.png`. For the Shell Gallery and the
+ * Narrow Hollow it then lets the autopilot clear the room and shoots the door
+ * open; and the Shell Gallery once more without the fixture, the procedural
+ * fallback. Default folder `docs/screenshots/g15e`.
+ *
  * `--poses` (G1.5b, no account needed) poses the Kindled at 1920 × 912 in
  * each of the 8 facings and shoots the page plus a 4× crop around the
  * player: the `heavy_charge` last frame at full charge (the charge spark),
@@ -30,9 +39,10 @@
  *   node tools/screenshots-g15.mjs [outDir] [baseUrl]
  *   node tools/screenshots-g15.mjs --poses [outDir] [baseUrl]
  *   node tools/screenshots-g15.mjs --run [outDir] [baseUrl]
+ *   node tools/screenshots-g15.mjs --rooms [outDir] [baseUrl]
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
@@ -62,7 +72,12 @@ const runStrip = (() => {
   if (i >= 0) args.splice(i, 1);
   return i >= 0;
 })();
-const OUT = resolve(args[0] ?? join(ROOT, 'docs/screenshots/g15'));
+const roomsMode = (() => {
+  const i = args.indexOf('--rooms');
+  if (i >= 0) args.splice(i, 1);
+  return i >= 0;
+})();
+const OUT = resolve(args[0] ?? join(ROOT, roomsMode ? 'docs/screenshots/g15e' : 'docs/screenshots/g15'));
 const BASE = args[1] ?? 'http://localhost:5173';
 
 /** The window sizes of the brief: CSS size at a device pixel ratio. */
@@ -480,7 +495,126 @@ async function runShots() {
   await context.close();
 }
 
-if (runStrip) {
+/** The five M1 rooms, by their names in rooms.json. */
+const ROOMS = ['Shell Gallery', 'Crossing', 'Narrow Hollow', 'Core Ring', 'Spill'];
+const slug = (name) => name.toLowerCase().replaceAll(' ', '-');
+
+/** Starts a run in one room and freezes the sim once the room is drawn. */
+async function openRoom(page, name, seed = 5) {
+  await page.evaluate(({ seed, name }) => window.__iot.startRun(seed, 'hookblade', [name]), { seed, name });
+  await waitScene(page, 'game');
+  await page.waitForFunction(() => Boolean(window.__iot.scene()?.session), null, { timeout: 10000 });
+  await page.evaluate(() => window.__iot.setSpeed(0));
+}
+
+/** G1.5e: the five rooms drawn from the tile fixture, doors closed, and two with the door open. */
+async function roomShots() {
+  const context = await browser.newContext({ viewport: { width: 1920, height: 912 } });
+  const page = await context.newPage();
+  page.on('pageerror', (e) => console.error('page error:', e.message));
+  await page.goto(BASE);
+  for (let i = 0; i < 100 && !(await page.evaluate(() => Boolean(window.__iot))); i++) await sleep(100);
+  const fixtures = join(ROOT, 'packages/shared/test/fixtures');
+  await page.evaluate(
+    ({ sheet, png }) => window.__iot.useTileSheet(sheet, `data:image/png;base64,${png}`),
+    {
+      sheet: JSON.parse(readFileSync(join(fixtures, 'tiles-fixture.json'), 'utf8')),
+      png: readFileSync(join(fixtures, 'tiles-fixture.png')).toString('base64'),
+    },
+  );
+  for (const name of ROOMS) {
+    if (only && only !== slug(name)) continue;
+    await openRoom(page, name);
+    await sleep(600);
+    await shot(page, `room-${slug(name)}`);
+    const url = await page.evaluate(() => window.__iot.roomImage());
+    if (!url) throw new Error(`${name}: no tile room (did useTileSheet take the fixture?)`);
+    writeFileSync(join(OUT, `room-${slug(name)}-texture.png`), Buffer.from(url.split(',')[1], 'base64'));
+    console.log(`  room-${slug(name)}-texture.png`);
+  }
+  for (const name of ['Shell Gallery', 'Narrow Hollow']) {
+    if (only && only !== slug(name)) continue;
+    // Cleared by the autopilot; the sim freezes the tick the door opens, the client clock plays it open.
+    await openRoom(page, name);
+    await page.evaluate(() => {
+      window.__iot.setAutopilot({});
+      window.__iot.setSpeed(4);
+    });
+    // Each door frame the client shows while it opens, its first sighting, as a whole-room image.
+    const seen = await page.evaluate(async () => {
+      const frames = new Map();
+      await new Promise((resolve) => {
+        const tick = () => {
+          const s = window.__iot.scene();
+          if (s?.session.state.room.doorOpen) {
+            window.__iot.setSpeed(0);
+            resolve();
+          } else requestAnimationFrame(tick);
+        };
+        tick();
+      });
+      const until = performance.now() + 900;
+      while (performance.now() < until) {
+        const [frame] = window.__iot.doorFrames();
+        if (frame && !frames.has(frame)) frames.set(frame, await window.__iot.roomImage());
+        await new Promise((r) => requestAnimationFrame(r));
+      }
+      return [...frames];
+    });
+    console.log(`  ${name} door frames seen: ${seen.map(([f]) => f).join(', ')}`);
+    await shot(page, `room-${slug(name)}-open`);
+    const last = seen[seen.length - 1];
+    if (last) writeFileSync(join(OUT, `room-${slug(name)}-open-texture.png`), Buffer.from(last[1].split(',')[1], 'base64'));
+    // A strip of the door's frames at 4×, cropped from those images.
+    const box = await page.evaluate(() => {
+      const t = window.__iot.scene().session.state.room.tiles;
+      const cells = [];
+      t.forEach((row, r) => [...row].forEach((ch, c) => ch === 'D' && cells.push([c, r])));
+      const xs = cells.map(([c]) => c);
+      const ys = cells.map(([, r]) => r);
+      return { x: Math.min(...xs) * 32, y: Math.min(...ys) * 32, w: (Math.max(...xs) - Math.min(...xs) + 1) * 32, h: (Math.max(...ys) - Math.min(...ys) + 1) * 32 };
+    });
+    const strip = await page.evaluate(
+      async ({ urls, box }) => {
+        const imgs = await Promise.all(
+          urls.map(async (u) => {
+            const img = new Image();
+            img.src = u;
+            await img.decode();
+            return img;
+          }),
+        );
+        const k = 4;
+        const gap = 8;
+        const canvas = document.createElement('canvas');
+        canvas.width = imgs.length * (box.w * k + gap) - gap;
+        canvas.height = box.h * k;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        imgs.forEach((img, i) => ctx.drawImage(img, box.x, box.y, box.w, box.h, i * (box.w * k + gap), 0, box.w * k, box.h * k));
+        return canvas.toDataURL('image/png').split(',')[1];
+      },
+      { urls: seen.map(([, u]) => u), box },
+    );
+    writeFileSync(join(OUT, `door-${slug(name)}-strip.png`), Buffer.from(strip, 'base64'));
+    console.log(`  door-${slug(name)}-strip.png`);
+  }
+  await context.close();
+  if (only && only !== 'shell-gallery') return;
+  // The procedural room, the fallback without a tile sheet, for comparison.
+  const plain = await browser.newContext({ viewport: { width: 1920, height: 912 } });
+  const p2 = await plain.newPage();
+  await p2.goto(BASE);
+  for (let i = 0; i < 100 && !(await p2.evaluate(() => Boolean(window.__iot))); i++) await sleep(100);
+  await openRoom(p2, 'Shell Gallery');
+  await sleep(600);
+  await shot(p2, 'room-shell-gallery-procedural');
+  await plain.close();
+}
+
+if (roomsMode) {
+  await roomShots();
+} else if (runStrip) {
   await runShots();
 } else if (poses) {
   await poseShots();
