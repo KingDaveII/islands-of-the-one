@@ -1,25 +1,38 @@
 import {
-  HUSK_ANIMS,
-  KINDLED_ANIMS,
+  propIdleSpec,
+  PROP_IDLE,
   SPRITE_CANVAS,
   SPRITE_CELLS,
   SPRITE_FACINGS,
-  type KindledAnimSpec,
+  SPRITE_KINDS,
+  spriteSheetSpec,
+  type SpriteAnimSpec,
   type SpriteCellSpec,
   type SpriteFacing,
+  type SpriteKind,
 } from '@iot/shared';
 
 /**
- * What a recipe's `kind` decides, read from the sprite contract in
- * `@iot/shared` (docs/design/sprites.md §2–§4): the cell, the facings and the
- * animation table a finished sheet must carry.
+ * What a sheet's kind decides, read from the sprite contract in `@iot/shared`
+ * (docs/design/sprites.md §2–§4, `spriteSheetSpec`): the cell, the facings and
+ * the animation table a finished sheet must carry. The kind comes from the
+ * sheet's name (`kindled-`, `husk-`, `npc-`, `prop-`); a recipe states it too.
  */
 
-export const KINDS = ['kindled', 'npc', 'enemy', 'prop'] as const;
-export type Kind = (typeof KINDS)[number];
+export const KINDS = SPRITE_KINDS;
+export type Kind = SpriteKind;
 
-export { SPRITE_CANVAS, SPRITE_FACINGS };
+export { PROP_IDLE, SPRITE_CANVAS, SPRITE_FACINGS };
 export type Facing = SpriteFacing;
+
+/** The kind a sheet name makes, or null for an unknown prefix. */
+export function kindOfName(sheet: string): Kind | null {
+  try {
+    return spriteSheetSpec(sheet).kind;
+  } catch {
+    return null;
+  }
+}
 
 export function cellFor(kind: Kind): SpriteCellSpec {
   return kind === 'kindled' ? SPRITE_CELLS.kindled : SPRITE_CELLS.other;
@@ -35,45 +48,45 @@ export function hasFacings(kind: Kind): boolean {
   return kind === 'kindled' || kind === 'npc';
 }
 
-/**
- * The animation table a non-draft sheet of this kind must carry, or null when
- * the contract has none yet. Only the Kindled's table has frame counts and
- * frame rates in `@iot/shared` today; Husks have names only (`HUSK_ANIMS`) and
- * NPCs and props have nothing (see the PR's "Requests for MAIN").
- */
-export function animTable(kind: Kind): readonly KindledAnimSpec[] | null {
-  return kind === 'kindled' ? KINDLED_ANIMS : null;
+/** A recipe's own numbers for a prop's `idle`: how many frames, at what rate. */
+export interface PropIdle {
+  frames: number;
+  fps?: number;
 }
 
 /**
- * The animation names a recipe of this kind may use, in the contract's order,
- * or null when any name is allowed (a draft of a kind with no table).
+ * The animation table a finished sheet carries, in the contract's order: the
+ * Kindled's, a Husk's, the NPCs', or a prop's `idle` from its recipe. Null when
+ * the contract has no table for the sheet yet (a Husk not in `HUSK_TABLES`).
  */
-export function animNames(kind: Kind, sheet: string): readonly string[] | null {
-  if (kind === 'kindled') return KINDLED_ANIMS.map((a) => a.name);
-  if (kind === 'enemy') {
-    const husk = sheet.replace(/^husk-/, '');
-    if (husk === 'peeling' || husk === 'nutshell') return HUSK_ANIMS[husk];
-  }
-  return null;
+export function sheetTable(
+  sheet: string,
+  prop: PropIdle | null = null,
+): readonly SpriteAnimSpec[] | null {
+  const spec = spriteSheetSpec(sheet);
+  if (spec.kind === 'prop') return prop ? [propIdleSpec(prop.frames, prop.fps)] : [propIdleSpec(1)];
+  return spec.anims;
 }
 
-/** The facings an animation may have: its row of the table for the Kindled, all 8 for NPCs, none otherwise. */
-export function facingsFor(kind: Kind, anim: string): readonly Facing[] {
-  if (kind === 'kindled')
-    return KINDLED_ANIMS.find((a) => a.name === anim)?.facings ?? SPRITE_FACINGS;
-  if (kind === 'npc') return SPRITE_FACINGS;
-  return [];
+/** The animation names a recipe for this sheet may use, in the contract's order, or null when any name is allowed. */
+export function animNames(sheet: string): readonly string[] | null {
+  return sheetTable(sheet)?.map((a) => a.name) ?? null;
 }
 
-/** The table row of an animation by name (the Kindled's table is the only one with numbers). */
-export function animSpec(anim: string): KindledAnimSpec | undefined {
-  return KINDLED_ANIMS.find((a) => a.name === anim);
+/** The facings an animation may have: its table row's (Kindled, NPCs), none for Husks and props. */
+export function facingsFor(sheet: string, anim: string): readonly Facing[] {
+  const spec = spriteSheetSpec(sheet);
+  if (!spec.facings) return [];
+  return spec.anims?.find((a) => a.name === anim)?.facings ?? SPRITE_FACINGS;
 }
 
-/** Loops are checked for their seam; the table says which animations loop, by name. */
-export function isLooping(anim: string): boolean {
-  return animSpec(anim)?.loop ?? false;
+/** The table row of one animation of a sheet, if the contract has it. */
+export function animRow(
+  sheet: string,
+  anim: string,
+  prop: PropIdle | null = null,
+): SpriteAnimSpec | undefined {
+  return sheetTable(sheet, prop)?.find((a) => a.name === anim);
 }
 
 /** idle, walk and carry stand on their own feet per frame; everything else keeps one shift per facing. */

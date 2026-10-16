@@ -1,11 +1,4 @@
-import {
-  hexOf,
-  isKindledSheet,
-  paletteData,
-  SPRITE_WHITELIST,
-  spriteCellSpecFor,
-  type SpriteSheet,
-} from '../src/index.js';
+import { hexOf, paletteData, SPRITE_WHITELIST, spriteSheetSpec, type SpriteSheet } from '../src/index.js';
 
 /** A decoded RGBA image (png.ts). */
 export interface Rgba {
@@ -35,7 +28,8 @@ const hexAt = (img: Rgba, x: number, y: number): string => {
  */
 export function v2Problems(name: string, sheet: SpriteSheet, png: Rgba, mask: Rgba | null): string[] {
   const problems: string[] = [];
-  const spec = spriteCellSpecFor(name);
+  const kind = spriteSheetSpec(name);
+  const spec = kind.cell;
   const { cell, origin } = sheet.meta;
   if (sheet.meta.version !== '2') problems.push(`meta.version is ${sheet.meta.version}, not "2"`);
   if (cell.w !== spec.cell.w || cell.h !== spec.cell.h)
@@ -68,7 +62,8 @@ export function v2Problems(name: string, sheet: SpriteSheet, png: Rgba, mask: Rg
   if (telegraphOutside.size) problems.push(`telegraph colours outside telegraph frames: ${[...telegraphOutside].join(', ')}`);
 
   const palette = sheet.palette;
-  if (isKindledSheet(name) && !palette) problems.push('a Kindled sheet without a palette block');
+  if (kind.palette && !palette) problems.push('a Kindled sheet without a palette block');
+  if (!kind.palette && palette) problems.push(`a palette block on a ${kind.kind} sheet (only Kindled sheets have one)`);
   if (!palette) return problems;
   if (palette.mask !== `${name}.skin.png`) problems.push(`palette.mask is ${String(palette.mask)}, not ${name}.skin.png`);
   if (!mask) return [...problems, 'no skin mask'];

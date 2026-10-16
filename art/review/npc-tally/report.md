@@ -12,7 +12,7 @@ Kind npc, outline other, cell 64×64, origin (32, 54). A draft writes this revie
 - Body bob flags (top row moves more than 1 px): none.
 - Held frames (identical neighbours): none.
 - Frames with more than 12 colours: none.
-- Missing against the contract's table: no animation table for npc sheets in the contract.
+- Missing against the contract's table: idle_S: 1 of 2 frames, idle_SE: 1 of 2 frames, idle_E: 1 of 2 frames, idle_NE: 1 of 2 frames, idle_N: 1 of 2 frames, idle_NW: 1 of 2 frames, idle_W: 1 of 2 frames, idle_SW: 1 of 2 frames, walk (all facings).
 
 ## Review images
 

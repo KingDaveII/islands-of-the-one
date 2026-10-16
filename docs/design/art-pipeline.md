@@ -79,13 +79,14 @@ file fails the build with a message naming the field.
 
 | Field | Meaning |
 |---|---|
-| `sheet` | The sheet's name, the same as the file name. Kindled sheets are `kindled-<remembrance>`, and only they. |
-| `kind` | `kindled`, `npc`, `enemy` or `prop`. Decides the cell (Kindled 112×80, everyone else 64×64), the facings (Kindled: the table's per animation; NPC: all 8; enemy and prop: none) and the animation table. |
+| `sheet` | The sheet's name, the same as the file name. Its prefix is its kind: `kindled-`, `husk-`, `npc-` or `prop-` (see "Kinds"). |
+| `kind` | `kindled`, `husk`, `npc` or `prop`, and the one the name's prefix says. |
 | `outline` | `"player"` (dream-night, Kindled sheets only) or `"other"` (hollow-deep). |
 | `draft` | `true` builds the review folder only, from any subset of animations, facings and frames. `false` must be complete (every animation, facing and frame count in the table) and also writes the sheet. |
 | `notes` | Optional text; the pipeline ignores it. |
-| `anims.<name>` | An animation. For the Kindled the name must be in the table (`idle`, `walk`, `dodge`, `light_1`…); Husk sheets (`husk-peeling`, `husk-nutshell`) use their names in `HUSK_ANIMS`; other kinds may use any `lower_snake` name in a draft. |
-| `anims.<name>.facings.<F>` | Kindled and NPCs: one source per facing. Enemies and props have no facings: put `src`, `frames` (and `downscale`) on the animation itself. |
+| `anims.<name>` | An animation, named in the sheet's table (see "Kinds"). Only a Husk with no table yet may use any `lower_snake` name, in a draft. |
+| `anims.<name>.facings.<F>` | Kindled and NPCs: one source per facing. Husks and props have no facings: put `src`, `frames` (and `downscale`) on the animation itself. |
+| `anims.idle.fps` | Props only: the frame rate of `idle` (default 8). |
 | `src` | Repo-relative, under `art/`: a folder of `frame-<n>.png`, one PNG (its only frame is 0), or a GIF. Raw files (`art/raw/…`) or files you cleaned (`art/clean/…`). |
 | `frames` | Source frame indices, in play order. Repeats are allowed. In v3 animations frame 0 is the rotation: skip it. Skip smear frames. The light attack keeps 3 of v3's 6. |
 | `downscale` | Optional, on a source: a whole number k ≥ 2 for a ×k delivery (Retro Diffusion's ×4). Every k×k block must be one colour. |
@@ -93,6 +94,21 @@ file fails the build with a message naming the field.
 | `despeckle` | Optional `true`: run step 8 on this animation. |
 | `fixes` | Pixel fixes, per output frame name (`walk_S_1`, or `idle_3` without facings), in that frame's **source** pixels (after any downscale): `[x, y, "#rrggbb"]` sets a whitelist colour (telegraph colours too in a `telegraph*` frame), `[x, y, null]` makes it transparent. |
 | `skin.add`, `skin.remove` | Kindled only, per output frame name, in source pixels: lists of pixels `[x, y]` or rectangles `[[x0, y0], [x1, y1]]` (corners included). See step 9. |
+
+## Kinds
+
+The sheet's name decides its kind, and the kind its cell, facings and animation table (`spriteSheetSpec` in
+`packages/shared/src/sprites.ts`; the tables are in `sprites.md` §4). A finished (non-draft) sheet carries exactly
+its table: every animation, every facing it lists, every frame.
+
+| Prefix | Kind | Cell | Facings | Table | Palette and mask |
+|---|---|---|---|---|---|
+| `kindled-` | `kindled` | 112×80 | per animation (8, 4 or 2) | `KINDLED_ANIMS` | yes |
+| `husk-` | `husk` | 64×64 | none | the Husk's own in `HUSK_TABLES` (`peeling`, `nutshell`); a Husk without one builds only as a draft | no |
+| `npc-` | `npc` | 64×64 | all 8 | `NPC_ANIMS`: `idle` 2 frames at 2 fps, `walk` 6 at 10, both looping | no |
+| `prop-` | `prop` | 64×64 | none | `idle` only, 1–8 frames, at the recipe's `fps` (default 8), looping with more than one frame | no |
+
+Husk `telegraph*` frames may carry the two telegraph colours (they are pre-tinted); every other frame may not.
 
 Frame names are `<anim>_<FACING>_<n>` with facings and `<anim>_<n>` without; `n` counts the recipe's
 `frames` list from 0, whatever the source indices are.
@@ -169,8 +185,10 @@ otherwise.
 | `<file>: a recipe is a JSON object` | The file must hold one `{ … }`. |
 | `<file>: <path> is not a recipe field` | A misspelt or unsupported key. Remove or rename it (fields above). |
 | `sheet must be a lowercase name like "kindled-ash"` / `sheet is "<x>" but the file is <y>.json` | Make `sheet` match the file name. |
-| `kind must be one of kindled, npc, enemy, prop` | Pick one. |
-| `kind is kindled but the sheet name does not start with "kindled-"` / `kind is <k> but "kindled-" names are Kindled sheets` | The name decides how the engine and the sheet test treat a sheet; rename the sheet or fix the kind. |
+| `kind must be one of kindled, husk, npc, prop` | Pick one. |
+| `sheet "<s>" has no known kind: a sheet name starts with kindled-, husk-, npc-, prop-` | Rename the sheet (and the file) with its kind's prefix. |
+| `kind is <k> but the name "<s>" makes it <k2>` | The name decides how the engine and the sheet test treat a sheet; rename the sheet or fix the kind. |
+| `anims.<a>.fps is only for props …` / `must be a whole number, 0 or more` | Other kinds take their rates from the table. |
 | `outline must be "player" or "other"` / `outline is "player" but only Kindled sheets use the player outline` | Use `"other"` for everyone but the player. |
 | `draft must be true or false` | Say which it is. |
 | `anims must be an object with at least one animation` | Add an animation. |
@@ -209,7 +227,8 @@ otherwise.
 | `<frame>: skin.add marks (x, y), which is not unwritten-sail or unwritten-tar after the snap; only skin colours can be masked` | Point `skin.add` at a skin-coloured pixel of the region. |
 | `<frame>: a region of <n> px in the skin colours at [[x0, y0], [x1, y1]] (source pixels) has no unwritten-sail pixel and touches no freckle; add it with skin.add if it is skin, or recolour it with fixes if not` | Step 9. Look at the box in the frame (and `tones.png`); `skin.add` with any pixel of it if it is skin, otherwise `fixes` to recolour the region. In a draft this is reported, not failed. |
 | `<sheet>: <key> is missing (a finished sheet carries every animation and facing)` / `<sheet>: <key> has <n> frames; the table says <m>` | A non-draft must be complete. Add what's missing, or keep `"draft": true`. |
-| `<sheet>: the sprite contract has no animation table (frame counts and rates) for <kind> sheets yet, so only a draft can be built` | NPC, prop and enemy tables are not in the contract yet; build a draft and ask MAIN. |
+| `<sheet>: the sprite contract has no animation table (frame counts and rates) for this husk yet, so only a draft can be built` | A new enemy needs its table in `HUSK_TABLES` first; build a draft and ask MAIN. |
+| `<sheet>: a prop's idle has 1 to 8 frames, not <n>` | Pick at most 8 frames. |
 | `<sheet>: no masked pixel is <hex>; every swap key needs some skin in it` | The sheet test needs both skin colours under the mask somewhere. Check the skin is still in the clay ramp after the snap. |
 | `<sheet>: <n> frames of <w>×<h> need a <W>×<H> sheet; the most is 2048×2048` | Too many frames for one sheet; ask MAIN to split it. |
 

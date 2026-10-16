@@ -34,7 +34,15 @@
     "colours": []
   },
   "missing": [
-    "no animation table for npc sheets in the contract"
+    "idle_S: 1 of 2 frames",
+    "idle_SE: 1 of 2 frames",
+    "idle_E: 1 of 2 frames",
+    "idle_NE: 1 of 2 frames",
+    "idle_N: 1 of 2 frames",
+    "idle_NW: 1 of 2 frames",
+    "idle_W: 1 of 2 frames",
+    "idle_SW: 1 of 2 frames",
+    "walk (all facings)"
   ],
   "skinProblems": [],
   "anims": [
