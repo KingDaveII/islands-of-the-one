@@ -446,36 +446,36 @@
       },
       "facings": {
         "S": {
-          "src": "art/clean/kindled-ash/haul/south",
+          "src": "art/clean/kindled-ash/haul_hand/haul_throw/south",
           "frames": [7, 8]
         },
         "SE": {
-          "src": "art/raw/ss01-kindled-ash/haul/south-east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_throw/south-east",
           "frames": [2, 4]
         },
         "E": {
-          "src": "art/clean/kindled-ash/haul/east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_throw/east",
           "frames": [2, 3]
         },
         "NE": {
-          "src": "art/raw/ss01-kindled-ash/haul/north-east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_throw/north-east",
           "frames": [2, 3]
         },
         "N": {
-          "src": "art/raw/ss01-kindled-ash/haul/north",
+          "src": "art/clean/kindled-ash/haul_hand/haul_throw/north",
           "frames": [2, 3]
         },
         "NW": {
-          "src": "art/raw/ss01-kindled-ash/haul/north-west",
+          "src": "art/clean/kindled-ash/haul_hand/haul_throw/north-west",
           "frames": [1, 2]
         },
         "W": {
-          "src": "art/clean/kindled-ash/haul/east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_throw/east",
           "frames": [2, 3],
           "flipX": true
         },
         "SW": {
-          "src": "art/raw/ss01-kindled-ash/haul/south-east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_throw/south-east",
           "frames": [2, 4],
           "flipX": true
         }
@@ -487,36 +487,36 @@
       },
       "facings": {
         "S": {
-          "src": "art/clean/kindled-ash/haul/south",
+          "src": "art/clean/kindled-ash/haul_hand/haul_recover/south",
           "frames": [0, 1]
         },
         "SE": {
-          "src": "art/raw/ss01-kindled-ash/haul/south-east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_recover/south-east",
           "frames": [5, 6]
         },
         "E": {
-          "src": "art/clean/kindled-ash/haul/east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_recover/east",
           "frames": [5, 6]
         },
         "NE": {
-          "src": "art/raw/ss01-kindled-ash/haul/north-east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_recover/north-east",
           "frames": [5, 6]
         },
         "N": {
-          "src": "art/raw/ss01-kindled-ash/haul/north",
+          "src": "art/clean/kindled-ash/haul_hand/haul_recover/north",
           "frames": [5, 6]
         },
         "NW": {
-          "src": "art/raw/ss01-kindled-ash/haul/north-west",
+          "src": "art/clean/kindled-ash/haul_hand/haul_recover/north-west",
           "frames": [5, 6]
         },
         "W": {
-          "src": "art/clean/kindled-ash/haul/east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_recover/east",
           "frames": [5, 6],
           "flipX": true
         },
         "SW": {
-          "src": "art/raw/ss01-kindled-ash/haul/south-east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_recover/south-east",
           "frames": [5, 6],
           "flipX": true
         }
@@ -528,35 +528,35 @@
       },
       "facings": {
         "S": {
-          "src": "art/raw/ss01-kindled-ash/haul_pull/south",
+          "src": "art/clean/kindled-ash/haul_hand/haul_pull/south",
           "frames": [1, 3]
         },
         "SE": {
-          "src": "art/raw/ss01-kindled-ash/haul_pull/south-east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_pull/south-east",
           "frames": [1, 4]
         },
         "E": {
-          "src": "art/clean/kindled-ash/haul_pull/east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_pull/east",
           "frames": [1, 2]
         },
         "NE": {
-          "src": "art/raw/ss01-kindled-ash/haul_pull/north-east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_pull/north-east",
           "frames": [2, 4]
         },
         "N": {
-          "src": "art/raw/ss01-kindled-ash/haul_pull/north",
+          "src": "art/clean/kindled-ash/haul_hand/haul_pull/north",
           "frames": [1, 3]
         },
         "NW": {
-          "src": "art/raw/ss01-kindled-ash/haul_pull/north-west",
+          "src": "art/clean/kindled-ash/haul_hand/haul_pull/north-west",
           "frames": [1, 3]
         },
         "W": {
-          "src": "art/clean/kindled-ash/haul_pull/west",
+          "src": "art/clean/kindled-ash/haul_hand/haul_pull/west",
           "frames": [1, 4]
         },
         "SW": {
-          "src": "art/raw/ss01-kindled-ash/haul_pull/south-west",
+          "src": "art/clean/kindled-ash/haul_hand/haul_pull/south-west",
           "frames": [2, 4]
         }
       }
@@ -567,35 +567,35 @@
       },
       "facings": {
         "S": {
-          "src": "art/raw/ss01-kindled-ash/haul_slide/south",
+          "src": "art/clean/kindled-ash/haul_hand/haul_slide/south",
           "frames": [1, 3]
         },
         "SE": {
-          "src": "art/raw/ss01-kindled-ash/haul_slide/south-east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_slide/south-east",
           "frames": [1, 4]
         },
         "E": {
-          "src": "art/clean/kindled-ash/haul_slide/east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_slide/east",
           "frames": [1, 3]
         },
         "NE": {
-          "src": "art/raw/ss01-kindled-ash/haul_slide/north-east",
+          "src": "art/clean/kindled-ash/haul_hand/haul_slide/north-east",
           "frames": [1, 3]
         },
         "N": {
-          "src": "art/raw/ss01-kindled-ash/haul_slide/north",
+          "src": "art/clean/kindled-ash/haul_hand/haul_slide/north",
           "frames": [2, 4]
         },
         "NW": {
-          "src": "art/raw/ss01-kindled-ash/haul_slide/north-west",
+          "src": "art/clean/kindled-ash/haul_hand/haul_slide/north-west",
           "frames": [1, 3]
         },
         "W": {
-          "src": "art/clean/kindled-ash/haul_slide/west",
+          "src": "art/clean/kindled-ash/haul_hand/haul_slide/west",
           "frames": [1, 4]
         },
         "SW": {
-          "src": "art/raw/ss01-kindled-ash/haul_slide/south-west",
+          "src": "art/clean/kindled-ash/haul_hand/haul_slide/south-west",
           "frames": [1, 4]
         }
       }
@@ -1510,9 +1510,7 @@
       "frame": "haul_throw_SE_1",
       "pixels": [
         [37, 32, "#4a4e57"],
-        [38, 32, "#4a4e57"],
-        [48, 40, null],
-        [49, 40, null]
+        [38, 32, "#4a4e57"]
       ]
     },
     {
@@ -2785,6 +2783,33 @@
         [58, 50, "#9c5b4a"],
         [33, 52, "#9c5b4a"]
       ]
+    },
+    {
+      "frame": "heavy_charge_W_1",
+      "pixels": [
+        [53, 48, "#1c2147"],
+        [52, 49, "#1c2147"],
+        [53, 49, "#1c2147"],
+        [49, 50, "#1c2147"],
+        [50, 50, "#1c2147"],
+        [51, 50, "#1c2147"],
+        [52, 50, "#7d8794"],
+        [53, 50, "#1c2147"],
+        [49, 51, "#e8e2d6"],
+        [50, 51, "#e8e2d6"],
+        [51, 51, "#7d8794"],
+        [52, 51, "#7d8794"],
+        [53, 51, "#1c2147"],
+        [49, 52, "#1c2147"],
+        [50, 52, "#7d8794"],
+        [51, 52, "#7d8794"],
+        [52, 52, "#1c2147"],
+        [49, 53, "#1c2147"],
+        [50, 53, "#7d8794"],
+        [51, 53, "#1c2147"],
+        [49, 54, "#1c2147"],
+        [50, 54, "#1c2147"]
+      ]
     }
   ],
   "skin": {
@@ -2977,7 +3002,8 @@
       "haul_slide_E_1": [[36, 34]],
       "haul_slide_SW_1": [
         [24, 41],
-        [33, 20]
+        [33, 20],
+        [25, 45]
       ],
       "hit_E_0": [
         [27, 48],
@@ -3084,7 +3110,9 @@
       ],
       "run_SW_4": [[34, 46]],
       "run_SW_5": [[32, 44]],
-      "run_SE_1": [[51, 43]]
+      "run_SE_1": [[51, 43]],
+      "haul_pull_SE_1": [[55, 44]],
+      "haul_pull_NE_0": [[39, 40]]
     }
   },
   "points": {
@@ -3112,59 +3140,59 @@
       "heavy_charge_SW_2": [9, 37]
     },
     "hand": {
-      "haul_throw_S_0": [40, 43],
-      "haul_throw_S_1": [40, 43],
-      "haul_throw_SE_0": [45, 43],
-      "haul_throw_SE_1": [46, 35],
+      "haul_throw_S_0": [18, 36],
+      "haul_throw_S_1": [29, 42],
+      "haul_throw_SE_0": [16, 37],
+      "haul_throw_SE_1": [46, 34],
       "haul_throw_E_0": [34, 45],
-      "haul_throw_E_1": [44, 37],
-      "haul_throw_NE_0": [43, 43],
-      "haul_throw_NE_1": [48, 32],
-      "haul_throw_N_0": [34, 43],
-      "haul_throw_N_1": [34, 43],
+      "haul_throw_E_1": [44, 38],
+      "haul_throw_NE_0": [42, 45],
+      "haul_throw_NE_1": [46, 32],
+      "haul_throw_N_0": [15, 41],
+      "haul_throw_N_1": [13, 40],
       "haul_throw_NW_0": [19, 40],
       "haul_throw_NW_1": [11, 37],
-      "haul_pull_S_0": [39, 47],
+      "haul_pull_S_0": [38, 46],
       "haul_pull_S_1": [30, 44],
-      "haul_pull_SE_0": [42, 50],
+      "haul_pull_SE_0": [32, 45],
       "haul_pull_SE_1": [56, 44],
-      "haul_pull_E_0": [38, 41],
-      "haul_pull_E_1": [42, 35],
-      "haul_pull_NE_0": [39, 38],
-      "haul_pull_NE_1": [44, 37],
+      "haul_pull_E_0": [38, 42],
+      "haul_pull_E_1": [42, 36],
+      "haul_pull_NE_0": [39, 40],
+      "haul_pull_NE_1": [45, 40],
       "haul_pull_N_0": [34, 43],
       "haul_pull_N_1": [34, 43],
       "haul_pull_NW_0": [17, 44],
       "haul_pull_NW_1": [24, 32],
-      "haul_pull_W_0": [22, 42],
-      "haul_pull_W_1": [26, 37],
-      "haul_pull_SW_0": [27, 45],
-      "haul_pull_SW_1": [24, 44],
-      "haul_slide_S_0": [25, 47],
+      "haul_pull_W_0": [22, 43],
+      "haul_pull_W_1": [26, 39],
+      "haul_pull_SW_0": [27, 42],
+      "haul_pull_SW_1": [24, 43],
+      "haul_slide_S_0": [25, 46],
       "haul_slide_S_1": [40, 49],
-      "haul_slide_SE_0": [43, 45],
-      "haul_slide_SE_1": [47, 49],
-      "haul_slide_E_0": [34, 44],
-      "haul_slide_E_1": [31, 44],
-      "haul_slide_NE_0": [42, 44],
-      "haul_slide_NE_1": [42, 44],
+      "haul_slide_SE_0": [27, 46],
+      "haul_slide_SE_1": [30, 51],
+      "haul_slide_E_0": [34, 45],
+      "haul_slide_E_1": [31, 46],
+      "haul_slide_NE_0": [41, 46],
+      "haul_slide_NE_1": [39, 48],
       "haul_slide_N_0": [34, 43],
       "haul_slide_N_1": [34, 43],
       "haul_slide_NW_0": [21, 43],
       "haul_slide_NW_1": [20, 52],
-      "haul_slide_W_0": [26, 38],
+      "haul_slide_W_0": [30, 46],
       "haul_slide_W_1": [23, 45],
       "haul_slide_SW_0": [24, 45],
-      "haul_slide_SW_1": [25, 45],
-      "haul_recover_S_0": [23, 47],
+      "haul_slide_SW_1": [25, 42],
+      "haul_recover_S_0": [23, 46],
       "haul_recover_S_1": [21, 47],
       "haul_recover_SE_0": [46, 37],
       "haul_recover_SE_1": [39, 44],
       "haul_recover_E_0": [41, 41],
-      "haul_recover_E_1": [36, 44],
-      "haul_recover_NE_0": [46, 37],
-      "haul_recover_NE_1": [46, 39],
-      "haul_recover_N_0": [34, 43],
+      "haul_recover_E_1": [36, 45],
+      "haul_recover_NE_0": [47, 38],
+      "haul_recover_NE_1": [47, 41],
+      "haul_recover_N_0": [18, 43],
       "haul_recover_N_1": [34, 43],
       "haul_recover_NW_0": [21, 42],
       "haul_recover_NW_1": [34, 43]
