@@ -13,7 +13,9 @@
     "test": "vitest run",
     "build": "pnpm -r build",
     "dev": "pnpm -r --parallel dev",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "art:build": "pnpm --filter @iot/art-pipeline exec tsx --conditions=source src/cli.ts build",
+    "art:check": "pnpm --filter @iot/art-pipeline exec tsx --conditions=source src/cli.ts check"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
