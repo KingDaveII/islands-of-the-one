@@ -28,7 +28,7 @@ function main(argv: string[]): number {
         console.log(
           `${sheet}${r.recipe.draft ? ' (draft)' : ''}: ${t.frames} frames, ${t.offPalette} off-palette px snapped, ` +
             `${t.outlineGaps} outline gaps${t.masked !== undefined ? `, ${t.masked} masked px` : ''}, ` +
-            `${r.skinProblems.length} skin regions to resolve → ${[...r.outputs.keys()].join(', ')}`,
+            `${'skinProblems' in r && r.recipe.kind === 'kindled' ? `${r.skinProblems.length} skin regions to resolve ` : ''}→ ${[...r.outputs.keys()].join(', ')}`,
         );
       } catch (e) {
         if (!(e instanceof PipelineError)) throw e;
