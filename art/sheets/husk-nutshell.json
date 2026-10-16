@@ -1,0 +1,39 @@
+{
+  "sheet": "husk-nutshell",
+  "kind": "husk",
+  "outline": "other",
+  "draft": true,
+  "notes": "Draft from art job husks-m1 (art/jobs/husks-m1.md; raw files and manifest in art/raw/husks-m1/). Base: create_image_pro candidate 0, grounded on row 53 (art/raw/husks-m1/nutshell/base.png). Animated east from the south rotation (= the base) passed as the start frame, because the east rotation turned the crack and core to the edge (David, 2026-10-16). walk is take 2, which tips the shell backwards and over (frames 2-4 are a roll); no frame of either take tilts forward or stands level, so walk alternates frame 1 (15 degrees back) with frame 0 (the base, level). hit repeats idle's first pick. Picks avoid frames with pixels nearest the reserved spark-glow (the core's brightest yellow), which a build refuses and only ART may recolour: idle 1 (so idle starts at 2, the highest clean frame) and death 1-3 (the crack and the core's ring flare), so death keeps 3 frames, 4-6. spawn, telegraph, chipped_outer, chipped_inner and drop are ART's to draw.",
+  "anims": {
+    "idle": {
+      "src": "art/raw/husks-m1/nutshell/idle",
+      "frames": [2, 4],
+      "ground": { "ref": 0 }
+    },
+    "walk": {
+      "src": "art/raw/husks-m1/nutshell/walk",
+      "frames": [1, 0, 1, 0],
+      "ground": { "ref": 0 }
+    },
+    "slam": {
+      "src": "art/raw/husks-m1/nutshell/slam",
+      "frames": [1, 4],
+      "ground": { "ref": 0 }
+    },
+    "hit": {
+      "src": "art/raw/husks-m1/nutshell/idle",
+      "frames": [2],
+      "ground": { "ref": 0 }
+    },
+    "regrow": {
+      "src": "art/raw/husks-m1/nutshell/regrow",
+      "frames": [1, 2, 4],
+      "ground": { "ref": 0 }
+    },
+    "death": {
+      "src": "art/raw/husks-m1/nutshell/death",
+      "frames": [4, 5, 6],
+      "ground": { "ref": 0 }
+    }
+  }
+}

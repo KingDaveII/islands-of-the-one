@@ -1,0 +1,589 @@
+{
+  "sheet": "husk-nutshell",
+  "kind": "husk",
+  "outline": "other",
+  "draft": true,
+  "cell": {
+    "w": 64,
+    "h": 64
+  },
+  "origin": {
+    "x": 32,
+    "y": 54
+  },
+  "rows": [
+    "idle",
+    "walk",
+    "slam",
+    "hit",
+    "regrow",
+    "death"
+  ],
+  "totals": {
+    "frames": 15,
+    "offPalette": 1275,
+    "maxDeltaE": 7.59,
+    "outlineGaps": 471
+  },
+  "flags": {
+    "seam": [],
+    "bob": [
+      "idle"
+    ],
+    "held": [],
+    "colours": [
+      "idle_0",
+      "idle_1",
+      "walk_0",
+      "walk_1",
+      "walk_2",
+      "walk_3",
+      "slam_0",
+      "hit_0",
+      "regrow_0"
+    ]
+  },
+  "missing": [
+    "spawn",
+    "telegraph",
+    "chipped_outer",
+    "chipped_inner",
+    "death: 3 of 4 frames",
+    "drop"
+  ],
+  "optional": [],
+  "skinProblems": [],
+  "missingPoints": [],
+  "remap": [],
+  "staleRemap": [],
+  "snappedColours": 88,
+  "snapped": [
+    {
+      "colour": "#998fb9",
+      "pixels": 207,
+      "to": "#a99fc4",
+      "deltaE": 5.06,
+      "materials": [
+        "shell",
+        "stone"
+      ],
+      "frames": [
+        "idle_0",
+        "idle_1",
+        "hit_0"
+      ]
+    },
+    {
+      "colour": "#d8d2cb",
+      "pixels": 129,
+      "to": "#d9d2e9",
+      "deltaE": 4.21,
+      "materials": [
+        "stone"
+      ],
+      "frames": [
+        "idle_0",
+        "idle_1",
+        "hit_0"
+      ]
+    },
+    {
+      "colour": "#9d94ba",
+      "pixels": 124,
+      "to": "#a99fc4",
+      "deltaE": 3.61,
+      "materials": [
+        "shell",
+        "stone"
+      ],
+      "frames": [
+        "regrow_0",
+        "regrow_1",
+        "regrow_2"
+      ]
+    },
+    {
+      "colour": "#9e94ba",
+      "pixels": 70,
+      "to": "#a99fc4",
+      "deltaE": 3.53,
+      "materials": [
+        "shell",
+        "stone"
+      ],
+      "frames": [
+        "walk_0",
+        "walk_2"
+      ]
+    },
+    {
+      "colour": "#cbc3dd",
+      "pixels": 46,
+      "to": "#d9d2e9",
+      "deltaE": 4.48,
+      "materials": [
+        "stone"
+      ],
+      "frames": [
+        "walk_0",
+        "walk_2"
+      ]
+    },
+    {
+      "colour": "#8c83b0",
+      "pixels": 42,
+      "to": "#7d8794",
+      "deltaE": 5.36,
+      "materials": [
+        "cloth",
+        "steel"
+      ],
+      "frames": [
+        "idle_0",
+        "idle_1",
+        "hit_0"
+      ]
+    },
+    {
+      "colour": "#988fb6",
+      "pixels": 41,
+      "to": "#a99fc4",
+      "deltaE": 5.22,
+      "materials": [
+        "shell",
+        "stone"
+      ],
+      "frames": [
+        "slam_0",
+        "slam_1"
+      ]
+    },
+    {
+      "colour": "#e6e2f2",
+      "pixels": 34,
+      "to": "#e8e2d6",
+      "deltaE": 3.82,
+      "materials": [
+        "shell",
+        "steel"
+      ],
+      "frames": [
+        "walk_0",
+        "walk_2"
+      ]
+    },
+    {
+      "colour": "#cdc6e1",
+      "pixels": 34,
+      "to": "#d9d2e9",
+      "deltaE": 3.62,
+      "materials": [
+        "stone"
+      ],
+      "frames": [
+        "regrow_0",
+        "regrow_1",
+        "regrow_2"
+      ]
+    },
+    {
+      "colour": "#50476a",
+      "pixels": 30,
+      "to": "#4a4e57",
+      "deltaE": 4.5,
+      "materials": [
+        "cloth",
+        "steel"
+      ],
+      "frames": [
+        "regrow_0",
+        "regrow_1",
+        "regrow_2"
+      ]
+    },
+    {
+      "colour": "#b8adcf",
+      "pixels": 28,
+      "to": "#a99fc4",
+      "deltaE": 4.47,
+      "materials": [
+        "shell",
+        "stone"
+      ],
+      "frames": [
+        "walk_0",
+        "walk_2"
+      ]
+    },
+    {
+      "colour": "#151839",
+      "pixels": 25,
+      "to": "#1c2147",
+      "deltaE": 3.95,
+      "materials": [
+        "player outline",
+        "paper"
+      ],
+      "frames": [
+        "idle_0",
+        "idle_1",
+        "hit_0"
+      ]
+    },
+    {
+      "colour": "#dad3c9",
+      "pixels": 24,
+      "to": "#e8e2d6",
+      "deltaE": 4.46,
+      "materials": [
+        "shell",
+        "steel"
+      ],
+      "frames": [
+        "walk_0",
+        "walk_2"
+      ]
+    },
+    {
+      "colour": "#151934",
+      "pixels": 23,
+      "to": "#1c2147",
+      "deltaE": 4.41,
+      "materials": [
+        "player outline",
+        "paper"
+      ],
+      "frames": [
+        "slam_0"
+      ]
+    },
+    {
+      "colour": "#d0c9d9",
+      "pixels": 22,
+      "to": "#d9d2e9",
+      "deltaE": 3.14,
+      "materials": [
+        "stone"
+      ],
+      "frames": [
+        "walk_0",
+        "walk_2"
+      ]
+    },
+    {
+      "colour": "#5f6e83",
+      "pixels": 18,
+      "to": "#2f7f7a",
+      "deltaE": 7.3,
+      "materials": [
+        "water"
+      ],
+      "frames": [
+        "idle_1"
+      ]
+    },
+    {
+      "colour": "#cbc4e1",
+      "pixels": 18,
+      "to": "#d9d2e9",
+      "deltaE": 4.22,
+      "materials": [
+        "stone"
+      ],
+      "frames": [
+        "slam_0",
+        "slam_1"
+      ]
+    },
+    {
+      "colour": "#6b768d",
+      "pixels": 17,
+      "to": "#7d8794",
+      "deltaE": 5.68,
+      "materials": [
+        "cloth",
+        "steel"
+      ],
+      "frames": [
+        "idle_0",
+        "idle_1",
+        "hit_0"
+      ]
+    },
+    {
+      "colour": "#dad4d2",
+      "pixels": 17,
+      "to": "#d9d2e9",
+      "deltaE": 3.42,
+      "materials": [
+        "stone"
+      ],
+      "frames": [
+        "regrow_0",
+        "regrow_1",
+        "regrow_2"
+      ]
+    },
+    {
+      "colour": "#b8883a",
+      "pixels": 16,
+      "to": "#c79a3e",
+      "deltaE": 5.46,
+      "materials": [
+        "brass"
+      ],
+      "frames": [
+        "idle_0",
+        "idle_1",
+        "hit_0"
+      ]
+    }
+  ],
+  "anims": [
+    {
+      "key": "idle",
+      "frames": 2,
+      "held": [],
+      "seam": {
+        "lastToFirst": 937,
+        "meanInCycle": 937,
+        "flag": false
+      },
+      "bob": {
+        "tops": [
+          43,
+          39
+        ],
+        "range": 4,
+        "flag": true
+      }
+    },
+    {
+      "key": "walk",
+      "frames": 4,
+      "held": [],
+      "seam": {
+        "lastToFirst": 903,
+        "meanInCycle": 903,
+        "flag": false
+      },
+      "bob": {
+        "tops": [
+          46,
+          46,
+          46,
+          46
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "slam",
+      "frames": 2,
+      "held": []
+    },
+    {
+      "key": "hit",
+      "frames": 1,
+      "held": []
+    },
+    {
+      "key": "regrow",
+      "frames": 3,
+      "held": []
+    },
+    {
+      "key": "death",
+      "frames": 3,
+      "held": []
+    }
+  ],
+  "frames": [
+    {
+      "name": "idle_0",
+      "source": "art/raw/husks-m1/nutshell/idle 2",
+      "offPalette": 118,
+      "maxDeltaE": 5.68,
+      "dx": 0,
+      "dy": -4,
+      "shift": 0,
+      "outlineGaps": 2,
+      "colours": 16,
+      "interiorDreamNight": 59
+    },
+    {
+      "name": "idle_1",
+      "source": "art/raw/husks-m1/nutshell/idle 4",
+      "offPalette": 318,
+      "maxDeltaE": 7.3,
+      "dx": 0,
+      "dy": -4,
+      "shift": 0,
+      "outlineGaps": 1,
+      "colours": 13,
+      "interiorDreamNight": 42
+    },
+    {
+      "name": "walk_0",
+      "source": "art/raw/husks-m1/nutshell/walk 1",
+      "offPalette": 146,
+      "maxDeltaE": 7.37,
+      "dx": -2,
+      "dy": -4,
+      "shift": 0,
+      "outlineGaps": 4,
+      "colours": 15,
+      "interiorDreamNight": 58
+    },
+    {
+      "name": "walk_1",
+      "source": "art/raw/husks-m1/nutshell/walk 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": -2,
+      "dy": -4,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 15,
+      "interiorDreamNight": 93
+    },
+    {
+      "name": "walk_2",
+      "source": "art/raw/husks-m1/nutshell/walk 1",
+      "offPalette": 146,
+      "maxDeltaE": 7.37,
+      "dx": -2,
+      "dy": -4,
+      "shift": 0,
+      "outlineGaps": 4,
+      "colours": 15,
+      "interiorDreamNight": 58
+    },
+    {
+      "name": "walk_3",
+      "source": "art/raw/husks-m1/nutshell/walk 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": -2,
+      "dy": -4,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 15,
+      "interiorDreamNight": 93
+    },
+    {
+      "name": "slam_0",
+      "source": "art/raw/husks-m1/nutshell/slam 1",
+      "offPalette": 110,
+      "maxDeltaE": 7.59,
+      "dx": -2,
+      "dy": -4,
+      "shift": 0,
+      "outlineGaps": 1,
+      "colours": 16,
+      "interiorDreamNight": 100
+    },
+    {
+      "name": "slam_1",
+      "source": "art/raw/husks-m1/nutshell/slam 4",
+      "offPalette": 25,
+      "maxDeltaE": 7.01,
+      "dx": -2,
+      "dy": -4,
+      "shift": 0,
+      "outlineGaps": 1,
+      "colours": 10,
+      "interiorDreamNight": 16
+    },
+    {
+      "name": "hit_0",
+      "source": "art/raw/husks-m1/nutshell/idle 2",
+      "offPalette": 118,
+      "maxDeltaE": 5.68,
+      "dx": 0,
+      "dy": -4,
+      "shift": 0,
+      "outlineGaps": 2,
+      "colours": 16,
+      "interiorDreamNight": 59
+    },
+    {
+      "name": "regrow_0",
+      "source": "art/raw/husks-m1/nutshell/regrow 1",
+      "offPalette": 137,
+      "maxDeltaE": 7.58,
+      "dx": 0,
+      "dy": -4,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 18,
+      "interiorDreamNight": 91
+    },
+    {
+      "name": "regrow_1",
+      "source": "art/raw/husks-m1/nutshell/regrow 2",
+      "offPalette": 79,
+      "maxDeltaE": 7.29,
+      "dx": 0,
+      "dy": -4,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 12,
+      "interiorDreamNight": 55
+    },
+    {
+      "name": "regrow_2",
+      "source": "art/raw/husks-m1/nutshell/regrow 4",
+      "offPalette": 76,
+      "maxDeltaE": 7.29,
+      "dx": 0,
+      "dy": -4,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 11,
+      "interiorDreamNight": 21
+    },
+    {
+      "name": "death_0",
+      "source": "art/raw/husks-m1/nutshell/death 4",
+      "offPalette": 1,
+      "maxDeltaE": 4.62,
+      "dx": -2,
+      "dy": -4,
+      "shift": 0,
+      "outlineGaps": 270,
+      "colours": 8,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "death_1",
+      "source": "art/raw/husks-m1/nutshell/death 5",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": -2,
+      "dy": -4,
+      "shift": 0,
+      "outlineGaps": 169,
+      "colours": 5,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "death_2",
+      "source": "art/raw/husks-m1/nutshell/death 6",
+      "offPalette": 1,
+      "maxDeltaE": 4.85,
+      "dx": -2,
+      "dy": -4,
+      "shift": 0,
+      "outlineGaps": 17,
+      "colours": 6,
+      "interiorDreamNight": 36
+    }
+  ],
+  "outputs": [
+    "art/review/husk-nutshell/contact.png",
+    "art/review/husk-nutshell/report.json",
+    "art/review/husk-nutshell/report.md"
+  ]
+}

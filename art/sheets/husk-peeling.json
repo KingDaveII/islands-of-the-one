@@ -1,0 +1,29 @@
+{
+  "sheet": "husk-peeling",
+  "kind": "husk",
+  "outline": "other",
+  "draft": true,
+  "notes": "Draft from art job husks-m1 (art/jobs/husks-m1.md; raw files and manifest in art/raw/husks-m1/). Animated east from the south rotation (= ART's exemplar art/anchors/husk-peeling-64.png) passed as the start frame, because the east rotation lost the core (David, 2026-10-16). idle is take 2 (both takes redesigned the curl; ART redraws it); hit repeats idle's first pick. lunge 3 is a smear and is skipped. spawn, telegraph, chipped and drop are ART's to draw.",
+  "anims": {
+    "idle": {
+      "src": "art/raw/husks-m1/peeling/idle",
+      "frames": [1, 3],
+      "ground": { "ref": 0 }
+    },
+    "lunge": {
+      "src": "art/raw/husks-m1/peeling/lunge",
+      "frames": [1, 2, 6],
+      "ground": { "ref": 0 }
+    },
+    "hit": {
+      "src": "art/raw/husks-m1/peeling/idle",
+      "frames": [1],
+      "ground": { "ref": 0 }
+    },
+    "death": {
+      "src": "art/raw/husks-m1/peeling/death",
+      "frames": [1, 2, 3, 4],
+      "ground": { "ref": 0 }
+    }
+  }
+}

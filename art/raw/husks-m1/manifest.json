@@ -1,0 +1,1916 @@
+{
+ "job": "husks-m1",
+ "date": "2026-10-16",
+ "purpose": "The Peeling and the Nutshell at B (draft sheets): both Husks and their moving parts, as draft recipes art/sheets/husk-peeling.json and art/sheets/husk-nutshell.json. ART draws spawn, telegraph, chipped, chipped_outer, chipped_inner and drop and finishes both.",
+ "images_passed_as": "upload:<id> references from get_upload_url (curl -F to the upload URL); no inline base64 anywhere",
+ "uploads": {
+  "art/anchors/husk-peeling-64.png": {
+   "upload": "upload:9ac18a54-f540-4492-afb9-f4fac13ee05d",
+   "sha256": "8d6497ac2d06ad326d25fa41e07613b7cf329af50cb4d75a1610919cdd1f2d82"
+  },
+  "art/anchors/kindled-ash-s-64.png": {
+   "upload": "upload:14053d82-3319-49af-9469-71d0bee0ae1f",
+   "sha256": "a1225ab6ec082b93e2ff177796b9827d69ec21e21a434d63f6e29b54f7f89b58"
+  },
+  "art/raw/husks-m1/nutshell/base.png": {
+   "upload": "upload:e7173595-d916-465b-b479-9faf9fa926ae",
+   "sha256": "8cc07330331c999f0bdf047451a9332b7326ffb86b41fada7cee0601257d3022"
+  }
+ },
+ "upload_check": "the upload API returns no hash; each character's south rotation equals its uploaded reference on every opaque pixel (0 differing), and every animation's frame 0 equals its start frame padded onto the larger canvas (0 differing)",
+ "seed": "create_image_pro took seed 1234 (no retake, so 1235 was not used); create_character and animate_character take no seed",
+ "balance": {
+  "before": 1397.9,
+  "after_nutshell_base_and_peeling_character": 1386.9,
+  "after_nutshell": 1377.9,
+  "end": 1375.9,
+  "spent": 22.0,
+  "note": "get_balance before the first call, after Step 1 + the Peeling character, after the Nutshell (character + 8 animations queued), and at the end. wait_for_jobs also listed two animation jobs this job did not start (cc264443-537d-4a42-997d-56a3eb3b5ff1, fb443290-d910-4976-9eb7-7e62b7f328c9), presumably another session on the account; the balance moved by exactly this job's 22, so they are not counted."
+ },
+ "generations": {
+  "create_image_pro (Nutshell base)": 10,
+  "create_character (Peeling)": 1,
+  "create_character (Nutshell)": 1,
+  "animate_character (8 animations)": 8,
+  "animate_character (2 retakes)": 2,
+  "total": 22,
+  "budget": "about 25, hard cap 60"
+ },
+ "deviation_start_frame": {
+  "what": "Every animation was made with directions [\"east\"] and the Husk's SOUTH rotation passed as custom_start_frame_url: for the Peeling that is ART's exemplar art/anchors/husk-peeling-64.png, for the Nutshell the Step 1 base. The descriptions are as written (\"toward the right\").",
+  "why": "Both east rotations lost the core. The Peeling's east rotation is redesigned into a 28x32 open hook with no core (target 22x18); the Nutshell's turned the crack and core to its right edge, leaving a 1-2 px speck. Every east animation starts from its rotation, so all of them would have started coreless.",
+  "decided_by": "David, 2026-10-16, after the job stopped and asked (Step 3 was not started before the answer). His rule for the rest: a frame that loses the core is not a retake on its own (ART paints the core back); retake only for the wrong action or the Husk redesigned.",
+  "kept": "peeling/rotation-east.png and nutshell/rotation-east.png (and rotation/<dir>.png for all four directions) are kept as delivered, unused."
+ },
+ "step1_nutshell_base": {
+  "tool": "create_image_pro",
+  "job_id": "594073ce-facb-4c90-a5f1-5b60c9660fbc",
+  "asset_id": "617525a8-7dc2-51cd-ac5e-57d35b61609e",
+  "arguments": {
+   "description": "A Nutshell Husk: a big squat hollow nut-shaped double shell, about 40 px wide and 34 px tall, resting heavily on the ground. The thick ridged outer shell is pale and translucent (white to lavender), cracked along the front; through the crack the smoother inner shell shows, and inside it one small bright pale-yellow core with a dark ring. No face, eyes, mouth or legs. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+   "width": 64,
+   "height": 64,
+   "no_background": true,
+   "seed": 1234,
+   "palette": [
+    "#F4EFE6",
+    "#D9D2E9",
+    "#A99FC4",
+    "#5B5478",
+    "#2A2540",
+    "#F2B65A",
+    "#C9733A",
+    "#4A4E57",
+    "#7D8794",
+    "#3E5C7A",
+    "#A8743A",
+    "#C79A3E",
+    "#8A6420",
+    "#E9E4D4",
+    "#2F7F7A",
+    "#C98F78",
+    "#9C5B4A",
+    "#E3C29E",
+    "#24305A",
+    "#E8E2D6",
+    "#FFF4C7",
+    "#8C7F6E",
+    "#5E5448",
+    "#FBF8F0",
+    "#D8B24A",
+    "#F07A3A",
+    "#B5402E",
+    "#1C2147"
+   ],
+   "palette_name": "Islands of the One",
+   "reference_images": [
+    {
+     "url": "upload:9ac18a54-f540-4492-afb9-f4fac13ee05d",
+     "usage": "enemy style: the same hollow pale shell, translucent lavender shade, core and ring, outline",
+     "source": "art/anchors/husk-peeling-64.png"
+    },
+    {
+     "url": "upload:14053d82-3319-49af-9469-71d0bee0ae1f",
+     "usage": "scale only: this is the player, 45 px tall; the Husk sits beside it",
+     "source": "art/anchors/kindled-ash-s-64.png"
+    }
+   ]
+  },
+  "max_colors": "not passed (the job names only the palette)",
+  "generations": 10,
+  "candidates": 16,
+  "retakes": 0,
+  "candidates_files": [
+   {
+    "index": 0,
+    "file": "nutshell/candidates/candidate-0.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     12,
+     6,
+     52,
+     53
+    ],
+    "width": 40,
+    "height": 47,
+    "lowest_opaque_row": 52
+   },
+   {
+    "index": 1,
+    "file": "nutshell/candidates/candidate-1.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     6,
+     11,
+     58,
+     52
+    ],
+    "width": 52,
+    "height": 41,
+    "lowest_opaque_row": 51
+   },
+   {
+    "index": 2,
+    "file": "nutshell/candidates/candidate-2.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     8,
+     7,
+     56,
+     53
+    ],
+    "width": 48,
+    "height": 46,
+    "lowest_opaque_row": 52
+   },
+   {
+    "index": 3,
+    "file": "nutshell/candidates/candidate-3.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     11,
+     5,
+     53,
+     53
+    ],
+    "width": 42,
+    "height": 48,
+    "lowest_opaque_row": 52
+   },
+   {
+    "index": 4,
+    "file": "nutshell/candidates/candidate-4.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     11,
+     5,
+     53,
+     54
+    ],
+    "width": 42,
+    "height": 49,
+    "lowest_opaque_row": 53
+   },
+   {
+    "index": 5,
+    "file": "nutshell/candidates/candidate-5.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     6,
+     11,
+     58,
+     52
+    ],
+    "width": 52,
+    "height": 41,
+    "lowest_opaque_row": 51
+   },
+   {
+    "index": 6,
+    "file": "nutshell/candidates/candidate-6.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     7,
+     8,
+     57,
+     52
+    ],
+    "width": 50,
+    "height": 44,
+    "lowest_opaque_row": 51
+   },
+   {
+    "index": 7,
+    "file": "nutshell/candidates/candidate-7.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     10,
+     5,
+     54,
+     54
+    ],
+    "width": 44,
+    "height": 49,
+    "lowest_opaque_row": 53
+   },
+   {
+    "index": 8,
+    "file": "nutshell/candidates/candidate-8.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     9,
+     4,
+     56,
+     56
+    ],
+    "width": 47,
+    "height": 52,
+    "lowest_opaque_row": 55
+   },
+   {
+    "index": 9,
+    "file": "nutshell/candidates/candidate-9.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     8,
+     8,
+     55,
+     53
+    ],
+    "width": 47,
+    "height": 45,
+    "lowest_opaque_row": 52
+   },
+   {
+    "index": 10,
+    "file": "nutshell/candidates/candidate-10.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     2,
+     9,
+     62,
+     52
+    ],
+    "width": 60,
+    "height": 43,
+    "lowest_opaque_row": 51
+   },
+   {
+    "index": 11,
+    "file": "nutshell/candidates/candidate-11.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     9,
+     5,
+     55,
+     55
+    ],
+    "width": 46,
+    "height": 50,
+    "lowest_opaque_row": 54
+   },
+   {
+    "index": 12,
+    "file": "nutshell/candidates/candidate-12.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     5,
+     6,
+     59,
+     56
+    ],
+    "width": 54,
+    "height": 50,
+    "lowest_opaque_row": 55
+   },
+   {
+    "index": 13,
+    "file": "nutshell/candidates/candidate-13.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     6,
+     13,
+     58,
+     52
+    ],
+    "width": 52,
+    "height": 39,
+    "lowest_opaque_row": 51
+   },
+   {
+    "index": 14,
+    "file": "nutshell/candidates/candidate-14.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     4,
+     11,
+     58,
+     55
+    ],
+    "width": 54,
+    "height": 44,
+    "lowest_opaque_row": 54
+   },
+   {
+    "index": 15,
+    "file": "nutshell/candidates/candidate-15.png",
+    "size": [
+     64,
+     64
+    ],
+    "bbox": [
+     8,
+     7,
+     56,
+     55
+    ],
+    "width": 48,
+    "height": 48,
+    "lowest_opaque_row": 54
+   }
+  ],
+  "core_visible": [
+   0,
+   4,
+   8,
+   15
+  ],
+  "pick_index": 0,
+  "pick_why": "Of the four candidates whose core shows (0, 4, 8, 15), 0 is closest to 40x34: exactly 40 wide, 47 tall (4: 42x49, 8: 47x52, 15: 48x48). Every one of the 16 is 39-52 px tall, so none reaches 34; no retake, because candidates with a visible core exist. The core sits in a dark vertical slit, which on all four reads somewhat like an eye.",
+  "placement": "candidate 0 moved down 1 row (lowest pixel 52 -> 53), columns unchanged (12-51, already centred); pixels identical, nothing scaled or recoloured",
+  "file": "nutshell/base.png",
+  "base": {
+   "size": [
+    64,
+    64
+   ],
+   "bbox": [
+    12,
+    7,
+    52,
+    54
+   ],
+   "width": 40,
+   "height": 47,
+   "lowest_opaque_row": 53
+  }
+ },
+ "characters": {
+  "peeling": {
+   "tool": "create_character",
+   "character_id": "a9c1b052-3b9c-4509-91be-1af2acf09442",
+   "job_id": "c1ad3096-6451-4b53-bf7d-2d64fcaf466e",
+   "group": "cc861488-5f4e-4d80-b4ac-064e50755709",
+   "arguments": {
+    "description": "A Peeling Husk: a small curled peel of pale translucent shell, about 22 px wide, spiralling round one small bright pale-yellow core with a dark ring; no face, eyes, mouth or legs; it floats low over the ground. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+    "mode": "v3",
+    "reference_image_url": "upload:9ac18a54-f540-4492-afb9-f4fac13ee05d",
+    "n_directions": 4,
+    "name": "husk-peeling (husks-m1)"
+   },
+   "quoted": "v3 reference (1 generations, 4 directions)",
+   "generations": 1,
+   "template_id (zip metadata)": "mannequin",
+   "rotations": {
+    "south": {
+     "file": "peeling/rotation/south.png",
+     "size": [
+      64,
+      64
+     ],
+     "bbox": [
+      20,
+      36,
+      42,
+      54
+     ],
+     "width": 22,
+     "height": 18,
+     "lowest_opaque_row": 53
+    },
+    "east": {
+     "file": "peeling/rotation/east.png",
+     "size": [
+      64,
+      64
+     ],
+     "bbox": [
+      21,
+      11,
+      49,
+      43
+     ],
+     "width": 28,
+     "height": 32,
+     "lowest_opaque_row": 42
+    },
+    "north": {
+     "file": "peeling/rotation/north.png",
+     "size": [
+      64,
+      64
+     ],
+     "bbox": [
+      19,
+      12,
+      43,
+      37
+     ],
+     "width": 24,
+     "height": 25,
+     "lowest_opaque_row": 36
+    },
+    "west": {
+     "file": "peeling/rotation/west.png",
+     "size": [
+      64,
+      64
+     ],
+     "bbox": [
+      15,
+      21,
+      42,
+      44
+     ],
+     "width": 27,
+     "height": 23,
+     "lowest_opaque_row": 43
+    }
+   },
+   "east_note": "rotation-east.png = rotation/east.png: redesigned into an open hook, 28x32, no core; not used (see deviation_start_frame)"
+  },
+  "nutshell": {
+   "tool": "create_character",
+   "character_id": "5f12ed20-0957-4bf1-b13e-c6c47a2197d7",
+   "job_id": "eb89f0dc-c85a-408c-aa4b-a1fd041e04b4",
+   "group": "81557d1e-a4e0-4064-a557-aab5bdce5088",
+   "arguments": {
+    "description": "A Nutshell Husk: a big squat hollow nut-shaped double shell, about 40 px wide and 34 px tall, resting heavily on the ground. The thick ridged outer shell is pale and translucent (white to lavender), cracked along the front; through the crack the smoother inner shell shows, and inside it one small bright pale-yellow core with a dark ring. No face, eyes, mouth or legs. Top-down RPG pixel art seen from a low three-quarter view, light from the top left, a 1 px dark violet outline, two or three shades per material, no dithering, transparent background, no text or letters.",
+    "mode": "v3",
+    "reference_image_url": "upload:e7173595-d916-465b-b479-9faf9fa926ae",
+    "n_directions": 4,
+    "name": "husk-nutshell (husks-m1)"
+   },
+   "quoted": "v3 reference (1 generations, 4 directions)",
+   "generations": 1,
+   "template_id (zip metadata)": "mannequin",
+   "rotations": {
+    "south": {
+     "file": "nutshell/rotation/south.png",
+     "size": [
+      64,
+      64
+     ],
+     "bbox": [
+      12,
+      7,
+      52,
+      54
+     ],
+     "width": 40,
+     "height": 47,
+     "lowest_opaque_row": 53
+    },
+    "east": {
+     "file": "nutshell/rotation/east.png",
+     "size": [
+      64,
+      64
+     ],
+     "bbox": [
+      11,
+      8,
+      49,
+      55
+     ],
+     "width": 38,
+     "height": 47,
+     "lowest_opaque_row": 54
+    },
+    "north": {
+     "file": "nutshell/rotation/north.png",
+     "size": [
+      64,
+      64
+     ],
+     "bbox": [
+      12,
+      7,
+      52,
+      54
+     ],
+     "width": 40,
+     "height": 47,
+     "lowest_opaque_row": 53
+    },
+    "west": {
+     "file": "nutshell/rotation/west.png",
+     "size": [
+      64,
+      64
+     ],
+     "bbox": [
+      15,
+      8,
+      53,
+      55
+     ],
+     "width": 38,
+     "height": 47,
+     "lowest_opaque_row": 54
+    }
+   },
+   "east_note": "rotation-east.png = rotation/east.png: the crack and core turned to the right edge (a 1-2 px speck of core); not used (see deviation_start_frame)"
+  }
+ },
+ "files_from_zip": "every rotation and frame was downloaded from its URL at once and compared byte for byte with the character's download zip (0 differences); <husk>/character-metadata.json is the zip's metadata.json",
+ "animations": {
+  "peeling": {
+   "idle (take 1)": {
+    "tool": "animate_character",
+    "mode": "v3",
+    "animation_name": "idle",
+    "directions": [
+     "east"
+    ],
+    "action_description": "the curled shell breathes: it opens a little and closes again, floating in place",
+    "frame_count": 4,
+    "keep_first_frame": true,
+    "custom_start_frame_url": "upload:9ac18a54-f540-4492-afb9-f4fac13ee05d",
+    "custom_start_frame_source": "art/anchors/husk-peeling-64.png",
+    "job_id": "609cdf4a-ce2c-40d5-aedc-bada6a498146",
+    "group": "bb721bd3-3706-44c0-9ef6-6683d17aaaf8",
+    "cost": "1 generation (1/dir x 1)",
+    "generations": 1,
+    "frames_stored": "5 (1 reference + 4 animated); frame 0 is the start frame padded onto the larger canvas, unchanged",
+    "folder": "art/raw/husks-m1/peeling/idle-take1/",
+    "frames": [
+     {
+      "file": "peeling/idle-take1/frame-0.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       20,
+       38,
+       42,
+       56
+      ],
+      "width": 22,
+      "height": 18,
+      "lowest_opaque_row": 55
+     },
+     {
+      "file": "peeling/idle-take1/frame-1.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       17,
+       10,
+       46,
+       46
+      ],
+      "width": 29,
+      "height": 36,
+      "lowest_opaque_row": 45
+     },
+     {
+      "file": "peeling/idle-take1/frame-2.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       17,
+       11,
+       46,
+       49
+      ],
+      "width": 29,
+      "height": 38,
+      "lowest_opaque_row": 48
+     },
+     {
+      "file": "peeling/idle-take1/frame-3.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       17,
+       14,
+       46,
+       51
+      ],
+      "width": 29,
+      "height": 37,
+      "lowest_opaque_row": 50
+     },
+     {
+      "file": "peeling/idle-take1/frame-4.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       16,
+       24,
+       47,
+       52
+      ],
+      "width": 31,
+      "height": 28,
+      "lowest_opaque_row": 51
+     }
+    ],
+    "verdict": "hard failure, the Husk redesigned: frames 1-4 are a scallop/clam shell about 29x37, floating ~20 rows up. Retaken. The PixelLab animation was deleted before the retake so the identical request would run again (SS-01: an identical request is matched to the existing clip); these files are the only copy."
+   },
+   "idle (take 2, retake)": {
+    "tool": "animate_character",
+    "mode": "v3",
+    "animation_name": "idle",
+    "directions": [
+     "east"
+    ],
+    "action_description": "the curled shell breathes: it opens a little and closes again, floating in place",
+    "frame_count": 4,
+    "keep_first_frame": true,
+    "custom_start_frame_url": "upload:9ac18a54-f540-4492-afb9-f4fac13ee05d",
+    "custom_start_frame_source": "art/anchors/husk-peeling-64.png",
+    "job_id": "8f4a2263-a277-476b-9d3b-d56a0723de70",
+    "group": "f4872b3c-ec8f-495c-a63a-bce25a918c69",
+    "cost": "1 generation (1/dir x 1)",
+    "generations": 1,
+    "frames_stored": "5 (1 reference + 4 animated); frame 0 is the start frame padded onto the larger canvas, unchanged",
+    "folder": "art/raw/husks-m1/peeling/idle/",
+    "frames": [
+     {
+      "file": "peeling/idle/frame-0.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       20,
+       38,
+       42,
+       56
+      ],
+      "width": 22,
+      "height": 18,
+      "lowest_opaque_row": 55
+     },
+     {
+      "file": "peeling/idle/frame-1.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       17,
+       10,
+       48,
+       35
+      ],
+      "width": 31,
+      "height": 25,
+      "lowest_opaque_row": 34
+     },
+     {
+      "file": "peeling/idle/frame-2.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       16,
+       11,
+       49,
+       34
+      ],
+      "width": 33,
+      "height": 23,
+      "lowest_opaque_row": 33
+     },
+     {
+      "file": "peeling/idle/frame-3.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       15,
+       14,
+       49,
+       35
+      ],
+      "width": 34,
+      "height": 21,
+      "lowest_opaque_row": 34
+     },
+     {
+      "file": "peeling/idle/frame-4.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       15,
+       15,
+       49,
+       37
+      ],
+      "width": 34,
+      "height": 22,
+      "lowest_opaque_row": 36
+     }
+    ],
+    "verdict": "hard failure again, the Husk redesigned: frames 1-4 are a cluster of pale-yellow bubbles with a small curl each side, about 33x23, floating ~20 rows up. Failed twice; no further retake. Used for the draft (it is the retake) so ART sees it; ART redraws idle."
+   },
+   "lunge": {
+    "tool": "animate_character",
+    "mode": "v3",
+    "animation_name": "lunge",
+    "directions": [
+     "east"
+    ],
+    "action_description": "stretches long and thin toward the right, darts forward to strike, then curls back to its resting shape",
+    "frame_count": 6,
+    "keep_first_frame": true,
+    "custom_start_frame_url": "upload:9ac18a54-f540-4492-afb9-f4fac13ee05d",
+    "custom_start_frame_source": "art/anchors/husk-peeling-64.png",
+    "job_id": "3e6ff36f-aa31-413c-9bb3-7fbe5775854f",
+    "group": "bb33685b-467a-43d5-b048-63f05ab317eb",
+    "cost": "1 generation (1/dir x 1)",
+    "generations": 1,
+    "frames_stored": "7 (1 reference + 6 animated); frame 0 is the start frame padded onto the larger canvas, unchanged",
+    "folder": "art/raw/husks-m1/peeling/lunge/",
+    "frames": [
+     {
+      "file": "peeling/lunge/frame-0.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       20,
+       38,
+       42,
+       56
+      ],
+      "width": 22,
+      "height": 18,
+      "lowest_opaque_row": 55
+     },
+     {
+      "file": "peeling/lunge/frame-1.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       26,
+       32,
+       46,
+       54
+      ],
+      "width": 20,
+      "height": 22,
+      "lowest_opaque_row": 53
+     },
+     {
+      "file": "peeling/lunge/frame-2.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       26,
+       12,
+       48,
+       40
+      ],
+      "width": 22,
+      "height": 28,
+      "lowest_opaque_row": 39
+     },
+     {
+      "file": "peeling/lunge/frame-3.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       30,
+       11,
+       42,
+       38
+      ],
+      "width": 12,
+      "height": 27,
+      "lowest_opaque_row": 37
+     },
+     {
+      "file": "peeling/lunge/frame-4.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       23,
+       23,
+       40,
+       48
+      ],
+      "width": 17,
+      "height": 25,
+      "lowest_opaque_row": 47
+     },
+     {
+      "file": "peeling/lunge/frame-5.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       25,
+       21,
+       40,
+       50
+      ],
+      "width": 15,
+      "height": 29,
+      "lowest_opaque_row": 49
+     },
+     {
+      "file": "peeling/lunge/frame-6.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       20,
+       38,
+       42,
+       56
+      ],
+      "width": 22,
+      "height": 18,
+      "lowest_opaque_row": 55
+     }
+    ],
+    "verdict": "kept: the peel uncurls into an arch, stretches up and to the right, then curls back; frame 3 is a pale-yellow smear (skipped); the core is lost in frames 1-5 (no retake for that, per David)"
+   },
+   "death": {
+    "tool": "animate_character",
+    "mode": "v3",
+    "animation_name": "death",
+    "directions": [
+     "east"
+    ],
+    "action_description": "the curled shell splits open and its pieces fall apart; the bright core flares into a thin ring of light and fades",
+    "frame_count": 6,
+    "keep_first_frame": true,
+    "custom_start_frame_url": "upload:9ac18a54-f540-4492-afb9-f4fac13ee05d",
+    "custom_start_frame_source": "art/anchors/husk-peeling-64.png",
+    "job_id": "39427bd6-9623-459c-ba49-03253b8a9720",
+    "group": "a174859f-2448-4355-aad4-5297e5702464",
+    "cost": "1 generation (1/dir x 1)",
+    "generations": 1,
+    "frames_stored": "7 (1 reference + 6 animated); frame 0 is the start frame padded onto the larger canvas, unchanged",
+    "folder": "art/raw/husks-m1/peeling/death/",
+    "frames": [
+     {
+      "file": "peeling/death/frame-0.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       20,
+       38,
+       42,
+       56
+      ],
+      "width": 22,
+      "height": 18,
+      "lowest_opaque_row": 55
+     },
+     {
+      "file": "peeling/death/frame-1.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       20,
+       41,
+       43,
+       56
+      ],
+      "width": 23,
+      "height": 15,
+      "lowest_opaque_row": 55
+     },
+     {
+      "file": "peeling/death/frame-2.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       20,
+       19,
+       43,
+       56
+      ],
+      "width": 23,
+      "height": 37,
+      "lowest_opaque_row": 55
+     },
+     {
+      "file": "peeling/death/frame-3.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       20,
+       17,
+       41,
+       52
+      ],
+      "width": 21,
+      "height": 35,
+      "lowest_opaque_row": 51
+     },
+     {
+      "file": "peeling/death/frame-4.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       20,
+       11,
+       43,
+       49
+      ],
+      "width": 23,
+      "height": 38,
+      "lowest_opaque_row": 48
+     },
+     {
+      "file": "peeling/death/frame-5.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       18,
+       12,
+       44,
+       54
+      ],
+      "width": 26,
+      "height": 42,
+      "lowest_opaque_row": 53
+     },
+     {
+      "file": "peeling/death/frame-6.png",
+      "size": [
+       64,
+       68
+      ],
+      "bbox": [
+       20,
+       51,
+       43,
+       56
+      ],
+      "width": 23,
+      "height": 5,
+      "lowest_opaque_row": 55
+     }
+    ],
+    "verdict": "kept: the curl splits in two, a thin ring of light rises over the falling pieces and fades; frame 6 is the pieces only"
+   }
+  },
+  "nutshell": {
+   "idle": {
+    "tool": "animate_character",
+    "mode": "v3",
+    "animation_name": "idle",
+    "directions": [
+     "east"
+    ],
+    "action_description": "the heavy shell settles and lifts very slightly, as if breathing",
+    "frame_count": 4,
+    "keep_first_frame": true,
+    "custom_start_frame_url": "upload:e7173595-d916-465b-b479-9faf9fa926ae",
+    "custom_start_frame_source": "art/raw/husks-m1/nutshell/base.png",
+    "job_id": "3050e7b6-36fb-4e73-a264-6d6a9b920bc3",
+    "group": "cf684895-35e4-4f26-a800-64aa90533715",
+    "cost": "1 generation (1/dir x 1)",
+    "generations": 1,
+    "frames_stored": "5 (1 reference + 4 animated); frame 0 is the start frame padded onto the larger canvas, unchanged",
+    "folder": "art/raw/husks-m1/nutshell/idle/",
+    "frames": [
+     {
+      "file": "nutshell/idle/frame-0.png",
+      "size": [
+       64,
+       72
+      ],
+      "bbox": [
+       12,
+       11,
+       52,
+       58
+      ],
+      "width": 40,
+      "height": 47,
+      "lowest_opaque_row": 57
+     },
+     {
+      "file": "nutshell/idle/frame-1.png",
+      "size": [
+       64,
+       72
+      ],
+      "bbox": [
+       12,
+       13,
+       52,
+       56
+      ],
+      "width": 40,
+      "height": 43,
+      "lowest_opaque_row": 55
+     },
+     {
+      "file": "nutshell/idle/frame-2.png",
+      "size": [
+       64,
+       72
+      ],
+      "bbox": [
+       11,
+       14,
+       53,
+       55
+      ],
+      "width": 42,
+      "height": 41,
+      "lowest_opaque_row": 54
+     },
+     {
+      "file": "nutshell/idle/frame-3.png",
+      "size": [
+       64,
+       72
+      ],
+      "bbox": [
+       10,
+       16,
+       54,
+       53
+      ],
+      "width": 44,
+      "height": 37,
+      "lowest_opaque_row": 52
+     },
+     {
+      "file": "nutshell/idle/frame-4.png",
+      "size": [
+       64,
+       72
+      ],
+      "bbox": [
+       10,
+       18,
+       54,
+       51
+      ],
+      "width": 44,
+      "height": 33,
+      "lowest_opaque_row": 50
+     }
+    ],
+    "verdict": "kept: the shell squashes down and wider over frames 1-4 (47 -> 33 tall) and rises off the floor (lowest row 57 -> 50); the core shrinks"
+   },
+   "walk (take 1)": {
+    "tool": "animate_character",
+    "mode": "v3",
+    "animation_name": "walk",
+    "directions": [
+     "east"
+    ],
+    "action_description": "the heavy shell rocks forward toward the right on hidden feet, tilting forward and back, in place",
+    "frame_count": 4,
+    "keep_first_frame": true,
+    "custom_start_frame_url": "upload:e7173595-d916-465b-b479-9faf9fa926ae",
+    "custom_start_frame_source": "art/raw/husks-m1/nutshell/base.png",
+    "job_id": "703ce227-cc36-43f9-a0db-93944b98f0e8",
+    "group": "e1c02465-d41d-4fea-a99d-b8da5bf68069",
+    "cost": "1 generation (1/dir x 1)",
+    "generations": 1,
+    "frames_stored": "5 (1 reference + 4 animated); frame 0 is the start frame padded onto the larger canvas, unchanged",
+    "folder": "art/raw/husks-m1/nutshell/walk-take1/",
+    "frames": [
+     {
+      "file": "nutshell/walk-take1/frame-0.png",
+      "size": [
+       64,
+       72
+      ],
+      "bbox": [
+       12,
+       11,
+       52,
+       58
+      ],
+      "width": 40,
+      "height": 47,
+      "lowest_opaque_row": 57
+     },
+     {
+      "file": "nutshell/walk-take1/frame-1.png",
+      "size": [
+       64,
+       72
+      ],
+      "bbox": [
+       12,
+       13,
+       52,
+       57
+      ],
+      "width": 40,
+      "height": 44,
+      "lowest_opaque_row": 56
+     },
+     {
+      "file": "nutshell/walk-take1/frame-2.png",
+      "size": [
+       64,
+       72
+      ],
+      "bbox": [
+       12,
+       14,
+       52,
+       56
+      ],
+      "width": 40,
+      "height": 42,
+      "lowest_opaque_row": 55
+     },
+     {
+      "file": "nutshell/walk-take1/frame-3.png",
+      "size": [
+       64,
+       72
+      ],
+      "bbox": [
+       12,
+       14,
+       52,
+       56
+      ],
+      "width": 40,
+      "height": 42,
+      "lowest_opaque_row": 55
+     },
+     {
+      "file": "nutshell/walk-take1/frame-4.png",
+      "size": [
+       64,
+       72
+      ],
+      "bbox": [
+       12,
+       13,
+       52,
+       57
+      ],
+      "width": 40,
+      "height": 44,
+      "lowest_opaque_row": 56
+     }
+    ],
+    "verdict": "hard failure, the wrong action: no rocking at all; the mean column of the top rows and the crack's axis are unchanged in every frame (0.00 px lean), it only breathes like the idle. Retaken (PixelLab animation deleted first, as for the Peeling idle)."
+   },
+   "walk (take 2, retake)": {
+    "tool": "animate_character",
+    "mode": "v3",
+    "animation_name": "walk",
+    "directions": [
+     "east"
+    ],
+    "action_description": "the heavy shell rocks forward toward the right on hidden feet, tilting forward and back, in place",
+    "frame_count": 4,
+    "keep_first_frame": true,
+    "custom_start_frame_url": "upload:e7173595-d916-465b-b479-9faf9fa926ae",
+    "custom_start_frame_source": "art/raw/husks-m1/nutshell/base.png",
+    "job_id": "62766e43-a020-4735-8352-de27bcf2ced5",
+    "group": "fc057259-3b22-403d-9566-95d6929f1d51",
+    "cost": "1 generation (1/dir x 1)",
+    "generations": 1,
+    "frames_stored": "5 (1 reference + 4 animated); frame 0 is the start frame padded onto the larger canvas, unchanged",
+    "folder": "art/raw/husks-m1/nutshell/walk/",
+    "frames": [
+     {
+      "file": "nutshell/walk/frame-0.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       14,
+       11,
+       54,
+       58
+      ],
+      "width": 40,
+      "height": 47,
+      "lowest_opaque_row": 57
+     },
+     {
+      "file": "nutshell/walk/frame-1.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       13,
+       11,
+       55,
+       56
+      ],
+      "width": 42,
+      "height": 45,
+      "lowest_opaque_row": 55
+     },
+     {
+      "file": "nutshell/walk/frame-2.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       13,
+       13,
+       56,
+       55
+      ],
+      "width": 43,
+      "height": 42,
+      "lowest_opaque_row": 54
+     },
+     {
+      "file": "nutshell/walk/frame-3.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       11,
+       16,
+       57,
+       53
+      ],
+      "width": 46,
+      "height": 37,
+      "lowest_opaque_row": 52
+     },
+     {
+      "file": "nutshell/walk/frame-4.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       11,
+       16,
+       57,
+       53
+      ],
+      "width": 46,
+      "height": 37,
+      "lowest_opaque_row": 52
+     }
+    ],
+    "verdict": "hard failure again, the wrong action: the shell tips BACKWARDS and over instead of rocking. Crack axis from vertical (+ = top toward the right): frame 0 -0.2, 1 -14.9, 2 -60.5, 3 -88.8, 4 ~+80 (lying on its side). sprites.md: the Nutshell never rolls. Failed twice; no further retake. Used for the draft: frame 1 (15 degrees back) alternating with frame 0 (level)."
+   },
+   "slam": {
+    "tool": "animate_character",
+    "mode": "v3",
+    "animation_name": "slam",
+    "directions": [
+     "east"
+    ],
+    "action_description": "rears up and slams its whole shell down onto the ground in front of it",
+    "frame_count": 6,
+    "keep_first_frame": true,
+    "custom_start_frame_url": "upload:e7173595-d916-465b-b479-9faf9fa926ae",
+    "custom_start_frame_source": "art/raw/husks-m1/nutshell/base.png",
+    "job_id": "44d0c798-c567-4a74-9f01-f2f25afc2a46",
+    "group": "1c9ce40d-550e-4e96-a4fd-b7122380d133",
+    "cost": "1 generation (1/dir x 1)",
+    "generations": 1,
+    "frames_stored": "7 (1 reference + 6 animated); frame 0 is the start frame padded onto the larger canvas, unchanged",
+    "folder": "art/raw/husks-m1/nutshell/slam/",
+    "frames": [
+     {
+      "file": "nutshell/slam/frame-0.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       14,
+       11,
+       54,
+       58
+      ],
+      "width": 40,
+      "height": 47,
+      "lowest_opaque_row": 57
+     },
+     {
+      "file": "nutshell/slam/frame-1.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       13,
+       14,
+       55,
+       58
+      ],
+      "width": 42,
+      "height": 44,
+      "lowest_opaque_row": 57
+     },
+     {
+      "file": "nutshell/slam/frame-2.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       13,
+       17,
+       55,
+       58
+      ],
+      "width": 42,
+      "height": 41,
+      "lowest_opaque_row": 57
+     },
+     {
+      "file": "nutshell/slam/frame-3.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       10,
+       24,
+       58,
+       57
+      ],
+      "width": 48,
+      "height": 33,
+      "lowest_opaque_row": 56
+     },
+     {
+      "file": "nutshell/slam/frame-4.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       10,
+       28,
+       58,
+       60
+      ],
+      "width": 48,
+      "height": 32,
+      "lowest_opaque_row": 59
+     },
+     {
+      "file": "nutshell/slam/frame-5.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       10,
+       26,
+       58,
+       60
+      ],
+      "width": 48,
+      "height": 34,
+      "lowest_opaque_row": 59
+     },
+     {
+      "file": "nutshell/slam/frame-6.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       10,
+       26,
+       58,
+       60
+      ],
+      "width": 48,
+      "height": 34,
+      "lowest_opaque_row": 59
+     }
+    ],
+    "verdict": "kept: no visible rear-up (the shell sinks a little in frames 1-2), then it flattens into a wide smooth lens (48x32) from frame 3 on; the crack and core are lost from frame 3 (no retake for that, per David)"
+   },
+   "regrow": {
+    "tool": "animate_character",
+    "mode": "v3",
+    "animation_name": "regrow",
+    "directions": [
+     "east"
+    ],
+    "action_description": "a cracked shell closing back up: pale shell grows back over the inner shell",
+    "frame_count": 4,
+    "keep_first_frame": true,
+    "custom_start_frame_url": "upload:e7173595-d916-465b-b479-9faf9fa926ae",
+    "custom_start_frame_source": "art/raw/husks-m1/nutshell/base.png",
+    "job_id": "67e5e0da-c524-4570-b40f-6d2d09e743d1",
+    "group": "7b1fecd5-8525-468d-af7e-99b95a6d0961",
+    "cost": "1 generation (1/dir x 1)",
+    "generations": 1,
+    "frames_stored": "5 (1 reference + 4 animated); frame 0 is the start frame padded onto the larger canvas, unchanged",
+    "folder": "art/raw/husks-m1/nutshell/regrow/",
+    "frames": [
+     {
+      "file": "nutshell/regrow/frame-0.png",
+      "size": [
+       64,
+       72
+      ],
+      "bbox": [
+       12,
+       11,
+       52,
+       58
+      ],
+      "width": 40,
+      "height": 47,
+      "lowest_opaque_row": 57
+     },
+     {
+      "file": "nutshell/regrow/frame-1.png",
+      "size": [
+       64,
+       72
+      ],
+      "bbox": [
+       13,
+       11,
+       51,
+       57
+      ],
+      "width": 38,
+      "height": 46,
+      "lowest_opaque_row": 56
+     },
+     {
+      "file": "nutshell/regrow/frame-2.png",
+      "size": [
+       64,
+       72
+      ],
+      "bbox": [
+       13,
+       12,
+       50,
+       57
+      ],
+      "width": 37,
+      "height": 45,
+      "lowest_opaque_row": 56
+     },
+     {
+      "file": "nutshell/regrow/frame-3.png",
+      "size": [
+       64,
+       72
+      ],
+      "bbox": [
+       14,
+       13,
+       50,
+       57
+      ],
+      "width": 36,
+      "height": 44,
+      "lowest_opaque_row": 56
+     },
+     {
+      "file": "nutshell/regrow/frame-4.png",
+      "size": [
+       64,
+       72
+      ],
+      "bbox": [
+       14,
+       13,
+       50,
+       57
+      ],
+      "width": 36,
+      "height": 44,
+      "lowest_opaque_row": 56
+     }
+    ],
+    "verdict": "kept: the crack narrows and closes over the core; frames 3-4 closed with a 1 px dark dot"
+   },
+   "death": {
+    "tool": "animate_character",
+    "mode": "v3",
+    "animation_name": "death",
+    "directions": [
+     "east"
+    ],
+    "action_description": "the shell cracks apart into large pieces that fall away; the bright core flares into a thin ring of light and fades",
+    "frame_count": 6,
+    "keep_first_frame": true,
+    "custom_start_frame_url": "upload:e7173595-d916-465b-b479-9faf9fa926ae",
+    "custom_start_frame_source": "art/raw/husks-m1/nutshell/base.png",
+    "job_id": "d4ed72dd-9015-4c58-afc9-a24fc3f5b303",
+    "group": "c2bdb9a4-d92d-409d-bb67-b845ea3d3ff6",
+    "cost": "1 generation (1/dir x 1)",
+    "generations": 1,
+    "frames_stored": "7 (1 reference + 6 animated); frame 0 is the start frame padded onto the larger canvas, unchanged",
+    "folder": "art/raw/husks-m1/nutshell/death/",
+    "frames": [
+     {
+      "file": "nutshell/death/frame-0.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       14,
+       11,
+       54,
+       58
+      ],
+      "width": 40,
+      "height": 47,
+      "lowest_opaque_row": 57
+     },
+     {
+      "file": "nutshell/death/frame-1.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       13,
+       11,
+       55,
+       58
+      ],
+      "width": 42,
+      "height": 47,
+      "lowest_opaque_row": 57
+     },
+     {
+      "file": "nutshell/death/frame-2.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       12,
+       11,
+       56,
+       59
+      ],
+      "width": 44,
+      "height": 48,
+      "lowest_opaque_row": 58
+     },
+     {
+      "file": "nutshell/death/frame-3.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       11,
+       12,
+       57,
+       59
+      ],
+      "width": 46,
+      "height": 47,
+      "lowest_opaque_row": 58
+     },
+     {
+      "file": "nutshell/death/frame-4.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       11,
+       12,
+       57,
+       59
+      ],
+      "width": 46,
+      "height": 47,
+      "lowest_opaque_row": 58
+     },
+     {
+      "file": "nutshell/death/frame-5.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       13,
+       11,
+       55,
+       59
+      ],
+      "width": 42,
+      "height": 48,
+      "lowest_opaque_row": 58
+     },
+     {
+      "file": "nutshell/death/frame-6.png",
+      "size": [
+       68,
+       72
+      ],
+      "bbox": [
+       19,
+       17,
+       48,
+       53
+      ],
+      "width": 29,
+      "height": 36,
+      "lowest_opaque_row": 52
+     }
+    ],
+    "verdict": "kept: the crack opens, the core flares into a large gold ring (frame 3), the shell splits into four pieces, then the inside becomes a flat lavender then grey disc (frames 4-6, a colour change ART will want to redo) with a small ring"
+   }
+  }
+ },
+ "retakes": {
+  "peeling idle": "1 (redesigned; failed again)",
+  "nutshell walk": "1 (wrong action; failed again)",
+  "others": 0
+ },
+ "failed_twice": [
+  "peeling idle (redesigned both times)",
+  "nutshell walk (no rock, then a backward roll)"
+ ],
+ "reserved_colour_frames": "A build fails on a pixel nearest the reserved spark-glow #ffe7a3. These raw frames carry such pixels (the core's brightest yellow): nutshell idle 1 (#feeea9 x1), nutshell death 1 (#ffe79d x4), 2 (#ffe79d, #fcda7f), 3 (#ffedb1 x55, #fcda7f x10, #ffe79d x4), nutshell walk-take1 1, 3, 4. The job forbids recolouring here, so the recipe picks around them (frame indices only); ART can bring death 1-3 back with a remap rule to husk-core.",
+ "picks": {
+  "husk-peeling": {
+   "idle": {
+    "src": "peeling/idle",
+    "frames": [
+     1,
+     3
+    ],
+    "why": "take 2: 1 is the most closed (31x25, narrowest), 3 the most open (34x21, widest)"
+   },
+   "lunge": {
+    "src": "peeling/lunge",
+    "frames": [
+     1,
+     2,
+     6
+    ],
+    "why": "stretch 1 (the arch, the only frame before the strike), hit 2 (furthest right, x up to 47, also the longest before the smear), settle 6 (last, back to the resting curl); 3 is a smear; 4-5 curl back"
+   },
+   "hit": {
+    "src": "peeling/idle",
+    "frames": [
+     1
+    ],
+    "why": "idle's first pick"
+   },
+   "death": {
+    "src": "peeling/death",
+    "frames": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "why": "the split (1), pieces fall as the ring of light rises (2, 3), and 4, the last frame with the core as a ring; 5 is a faint trace, 6 pieces only"
+   }
+  },
+  "husk-nutshell": {
+   "idle": {
+    "src": "nutshell/idle",
+    "frames": [
+     2,
+     4
+    ],
+    "why": "highest and lowest: 4 is the lowest (top row 18); 1 is the highest but carries a reserved spark-glow pixel, so 2 (top row 14), the highest clean frame"
+   },
+   "walk": {
+    "src": "nutshell/walk",
+    "frames": [
+     1,
+     0,
+     1,
+     0
+    ],
+    "why": "take 2. No frame of either take tilts forward, and no generated frame is level (take 2 tips back and rolls over from frame 2), so walk alternates frame 1 (tilted 15 degrees back) with frame 0 (the base, level). Using frame 0 departs from 'skip frame 0'."
+   },
+   "slam": {
+    "src": "nutshell/slam",
+    "frames": [
+     1,
+     4
+    ],
+    "why": "0 = frame 1, the highest generated frame before the drop (top row 14; there is no rear-up); 1 = frame 4, the impact: lowest (top row 28) and widest (48)"
+   },
+   "hit": {
+    "src": "nutshell/idle",
+    "frames": [
+     2
+    ],
+    "why": "idle's first pick"
+   },
+   "regrow": {
+    "src": "nutshell/regrow",
+    "frames": [
+     1,
+     2,
+     4
+    ],
+    "why": "most cracked 1, half 2 (the crack narrowed to a small diamond), closed 4 (the last; 3 is also closed)"
+   },
+   "death": {
+    "src": "nutshell/death",
+    "frames": [
+     4,
+     5,
+     6
+    ],
+    "why": "only 3 frames: 1-3 (the crack opening and the core's ring flare) carry reserved spark-glow pixels; 4 the pieces fall away, 5 they scatter, 6 the last, the core as a ring on the faded disc"
+   }
+  }
+ },
+ "files": {
+  "nutshell/base.png": "8cc07330331c999f0bdf047451a9332b7326ffb86b41fada7cee0601257d3022",
+  "nutshell/candidates/candidate-0.png": "776f11c1db36b9b42b9fceec68b89b6b30f79cc5e71dca13497e9d45dec0d6a4",
+  "nutshell/candidates/candidate-1.png": "e54038cdefeb3d3060ed1a8f17ea5140ac610aeb06819994143b979eb8798bd4",
+  "nutshell/candidates/candidate-10.png": "0a9aa484994ec49015c949dbcd184a0f4ae31327ece1f24356e4326da15cc7fa",
+  "nutshell/candidates/candidate-11.png": "68a70025a3fa4bb36a103cb547a290a692265d1eca1350cde7ee81455cb70ca3",
+  "nutshell/candidates/candidate-12.png": "a13ac3a9a17bb19bbaaa8aa5cd9c8e738d4cbdde50587794effba583864479f5",
+  "nutshell/candidates/candidate-13.png": "f932e8298d4fad97fe9063a0558cfc1996e95a867a27fe3c2c327bfc6b6f8ca0",
+  "nutshell/candidates/candidate-14.png": "7a13445bf6b6620de48690233ea53211359650d307325083b486480086e64b14",
+  "nutshell/candidates/candidate-15.png": "a973a134bfef2dc15ab063a9bf41c5323e43b146289f7643acea6ad58a9ca8c2",
+  "nutshell/candidates/candidate-2.png": "a93dea9df42cb94867effcec5af31163d3fa97f98a715e0e9bd6ecfc7191e589",
+  "nutshell/candidates/candidate-3.png": "9860c72fe7cc776af04bd7c4d17296070594aa125a3ab4ac65962077d0dcf2fc",
+  "nutshell/candidates/candidate-4.png": "e774c6857ab7bf81362b79015ff52ed4318d805bbd023c5e977c58db3b2e7edd",
+  "nutshell/candidates/candidate-5.png": "e7d5eb6e3c7f1831d7f27857a91e7e67cbddac2fe42aaf69d9a9d36e3c47cf78",
+  "nutshell/candidates/candidate-6.png": "07b4a8470c5bd6115d30129fe9b3406dcc1816e9ab7dea172f7ce9eeeb91794f",
+  "nutshell/candidates/candidate-7.png": "f62f5d76a3327108df6ed49dec51c620f79d8a0ebfad87091e229461c99bf96a",
+  "nutshell/candidates/candidate-8.png": "73b09ad8baa8a6b6a446ab05a5a812cb25cba98ed7ec8d2c21bfe2f3f4054671",
+  "nutshell/candidates/candidate-9.png": "68b52af666d01089005f425d114f8355488e0d23dc30cd4158113fd3129388ee",
+  "nutshell/character-metadata.json": "93c81231156cf8e093659e44314ec9dfdbd25d706c43bfe91d101549ed93f452",
+  "nutshell/death/frame-0.png": "7217d31a8405c4a39389feec479fc32c4f49f99db32d0133d49363de2aaefe7d",
+  "nutshell/death/frame-1.png": "b577e0dd146f3e4cb09200a0a46308c4c8d84d1cb2480a0fc02e7744208a7494",
+  "nutshell/death/frame-2.png": "fd839025f4a453ea0427bf4aea927261323aac5d3fcba801e129d88550631879",
+  "nutshell/death/frame-3.png": "db3fb3f669cbf897bcb5315b8a49be2737c6124f389821a9ba82d3a4150c71db",
+  "nutshell/death/frame-4.png": "4ce6340f181077304c66c77e82c9764c2d08616adc0d8ff7a24b49a6777b6a3f",
+  "nutshell/death/frame-5.png": "2a196e7eea8a2d7f3a43a2b53fc6924ec90af4c540783b21b7404f715d8dc463",
+  "nutshell/death/frame-6.png": "3d438d719169e0fb660437ed61abf8deadf672c3936937c8711eb5cd77ec39ca",
+  "nutshell/idle/frame-0.png": "a7deb3cf8f3bb24c065e2daa566b390dc0075c73bb8c0568cbbb23332598633d",
+  "nutshell/idle/frame-1.png": "7cece35baacd0322bcdf032b8de64cec7590fdc1d9a97483bb8a7f694201e35b",
+  "nutshell/idle/frame-2.png": "d0427c97389e49ecfba6ef9245a8e7a3360c012f34aef650f0f18607d6fea24d",
+  "nutshell/idle/frame-3.png": "e00b4e86b64d38899d7762907aca549c43bd988d4cdd2fa5c837ee84881d8a04",
+  "nutshell/idle/frame-4.png": "d86478012f687675eb15e5eac23f8f1877176d46d5598f0e9a2383deb11157ca",
+  "nutshell/regrow/frame-0.png": "a7deb3cf8f3bb24c065e2daa566b390dc0075c73bb8c0568cbbb23332598633d",
+  "nutshell/regrow/frame-1.png": "15d379de76521ca8520fb81a833446cf6f506022835d2f145369f61763814dcd",
+  "nutshell/regrow/frame-2.png": "8645104bdcc4cdb67fd533a1a10e08d3ac0faff481bdf89238c5730a723d802e",
+  "nutshell/regrow/frame-3.png": "9421df2332dacd7fd65081aefc9b9c5e03d4893d3546f7126bcd089c8792e54c",
+  "nutshell/regrow/frame-4.png": "539d508eeab68dc72e54cbf8cda7d03d5f5b1c8de85e2e53af290d2a4f6b8a59",
+  "nutshell/rotation-east.png": "99974c5a10a44b3562dc6c3fa5fb165b9932499be0e71fd68f3326d971246432",
+  "nutshell/rotation/east.png": "99974c5a10a44b3562dc6c3fa5fb165b9932499be0e71fd68f3326d971246432",
+  "nutshell/rotation/north.png": "fb613f45917394d890d5fe48d81f815c7bcc72e0954da8b3e0261a7fc6e689be",
+  "nutshell/rotation/south.png": "91dbb4f4340dfa5833ac973f6d7cfbb9be99f4971f1feb78cea9526d504c1408",
+  "nutshell/rotation/west.png": "2e6492339ffbaae11e917e24136e41b93f77be09af652a513d4f5c63c9be1f5c",
+  "nutshell/slam/frame-0.png": "7217d31a8405c4a39389feec479fc32c4f49f99db32d0133d49363de2aaefe7d",
+  "nutshell/slam/frame-1.png": "68f58404937c23a750425cef5415c536b648c34750381e01f615bd7f5bad64f6",
+  "nutshell/slam/frame-2.png": "5dcb40fdead7fe620a8b45d7a6e4adf480033e96a48b1ea3b7fc38932d4fce8c",
+  "nutshell/slam/frame-3.png": "18c5114a5a7bd00760e4327b092a83e5813ec727caf81861cfc0ac653d07eaad",
+  "nutshell/slam/frame-4.png": "f66e825a68a4d83a92e739c3c1ff5da02b6f13126f2b57adca3a1bba09d4801b",
+  "nutshell/slam/frame-5.png": "0603cfb8660d7c789817814cad76de083a59fece6b2a935441c8dbe8a9acb540",
+  "nutshell/slam/frame-6.png": "5579f96c273aa232c033560d77f603b3371c1447ae50189f31942623c8e3212e",
+  "nutshell/walk-take1/frame-0.png": "a7deb3cf8f3bb24c065e2daa566b390dc0075c73bb8c0568cbbb23332598633d",
+  "nutshell/walk-take1/frame-1.png": "958dab2c70a90b1684683552646e3c5d584a7d2b56ba614f2347bc54e333bfa3",
+  "nutshell/walk-take1/frame-2.png": "dc771bfc33d13bc463dba8d2a4c90225d54e93e2949df18c74318988aff1aa4f",
+  "nutshell/walk-take1/frame-3.png": "c98e3d93fa892c2dacb70f1f2487809d7563a5620d2c71d3022360910fcc0160",
+  "nutshell/walk-take1/frame-4.png": "a25a83e14ff306f36f18698f9b497f60c9cc88e6b83f68e5efc1265624571e31",
+  "nutshell/walk/frame-0.png": "7217d31a8405c4a39389feec479fc32c4f49f99db32d0133d49363de2aaefe7d",
+  "nutshell/walk/frame-1.png": "45c8f13b794e4b51e12f9dc2650b1baf06c86182500becd86d25dc2991a7b2e9",
+  "nutshell/walk/frame-2.png": "c8b3f37a34436f799f64806f95056009cc5f08116772fb236b82c5b73785ed6f",
+  "nutshell/walk/frame-3.png": "91bcab695e955fdbc36854086e97ea8ea23be141806e268b420d8f139bcb0a5b",
+  "nutshell/walk/frame-4.png": "e6b67456969828aedc8a4a512536772219dd7b4d1076345e4e957cc956a64f87",
+  "peeling/character-metadata.json": "8f578fd86a6e296f2c1bebd08b02e592a47f37736adf992b8cd9d1e4dd69747f",
+  "peeling/death/frame-0.png": "311223f50fc2d80bd946eb29bfbbfbbf72ef8b4f4fd849982a43a9f62f0fea80",
+  "peeling/death/frame-1.png": "4e8e653c5ae87835d3a0341cff396f3ca42843ab9e7951b8a05cf3ded20e2b6d",
+  "peeling/death/frame-2.png": "14b82aabfeccbc272fec295414046c45b25acdebe20819fb097cf33ea6a87967",
+  "peeling/death/frame-3.png": "ce186d904c5a9994eccd5ccb0ca3750bf66cefc8e198a9ab23e399add1f0e946",
+  "peeling/death/frame-4.png": "1fc197f65936e93e1fbfe426839ebf4cc5b3a25569b7c9034952fc38529ecf98",
+  "peeling/death/frame-5.png": "4463d386b55163b3cdae807e9d9f58b9c7cbcbd69110d79295dcd653553a4949",
+  "peeling/death/frame-6.png": "fd6659d402b8ed0dfdca2e044b8214d26aef731bb9ff92b6a1eac129f45d19e0",
+  "peeling/idle-take1/frame-0.png": "311223f50fc2d80bd946eb29bfbbfbbf72ef8b4f4fd849982a43a9f62f0fea80",
+  "peeling/idle-take1/frame-1.png": "1a5c80a7ffc07dffc5bcdaaf0561ecd1abf72ccd9fb3a1ff5bc9bb38ee6ea402",
+  "peeling/idle-take1/frame-2.png": "fab81e4965e53a33ef6db0990024bf5056026848d4e79cf8e1e5cd5ec5c06cfe",
+  "peeling/idle-take1/frame-3.png": "42bffc91ac2c71cfbe939bc1a7c202910967c00c11e8a98e3f8eb5979cf285a9",
+  "peeling/idle-take1/frame-4.png": "d52b63afe4f4e6fac9123a80a2f5deb4281dedf8a2986e40dac5907e8c21641b",
+  "peeling/idle/frame-0.png": "311223f50fc2d80bd946eb29bfbbfbbf72ef8b4f4fd849982a43a9f62f0fea80",
+  "peeling/idle/frame-1.png": "30b294943fc81d09e8d7ef6709090c30558815fcbf43b998b2784ae4e2a5e899",
+  "peeling/idle/frame-2.png": "d6cf689fa85097f03cf63c2eb4ad76ceadf7f6931558bb70bd986ba1c6914cdd",
+  "peeling/idle/frame-3.png": "3dc31a96cfc4c581c8f7720d1a44eb022a1b8c3482e96904ed2199fba4aea3bd",
+  "peeling/idle/frame-4.png": "c42b39d4236662840fed13c0418f3391ab4e2c229a3d298509509e88b747f188",
+  "peeling/lunge/frame-0.png": "311223f50fc2d80bd946eb29bfbbfbbf72ef8b4f4fd849982a43a9f62f0fea80",
+  "peeling/lunge/frame-1.png": "676070272ec31e4e05b7232882cf2b049d6a80ae42a851147b173829c2721e4d",
+  "peeling/lunge/frame-2.png": "257a283422b01335de0d7709cd2e9206a745979f6a6956e215e51b7ea4e825ee",
+  "peeling/lunge/frame-3.png": "45dcc8f76920cd77d3cb3fc45f8c6b28ee52be22709338ada746eea6f3f0e6c4",
+  "peeling/lunge/frame-4.png": "3fc9b433c92b11b863f93ea1a46d4ac30ccba6f073ad1b86571faf2db5799486",
+  "peeling/lunge/frame-5.png": "d5710798fb3b5f763ca00387f5ba88e25432774dfe3929d5e3cb3b71210f9e60",
+  "peeling/lunge/frame-6.png": "b0377ee65875c4d88627ea534e2186581db25ae25d484cbe8015cbc3e0332e04",
+  "peeling/rotation-east.png": "e439c396a76a80dfc92242c1eadc4fbc5237f1d25669507de7818cbb1b5c2bc4",
+  "peeling/rotation/east.png": "e439c396a76a80dfc92242c1eadc4fbc5237f1d25669507de7818cbb1b5c2bc4",
+  "peeling/rotation/north.png": "12cd187e44c754f3436bac4b812af7d3e8097e5127fc17966a181a8e67a2f23d",
+  "peeling/rotation/south.png": "e4a11acb86de534a710c7d8adef66abf5ce3abac73f23f8b8b49e47740527add",
+  "peeling/rotation/west.png": "a0e1d585d18e9cb6f5b9e6f4b4ca2f85b9418e272be3cab54209baadc18fad71"
+ }
+}
