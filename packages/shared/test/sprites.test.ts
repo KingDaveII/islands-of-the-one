@@ -13,6 +13,8 @@ import {
   paletteData,
   propIdleSpec,
   PROP_IDLE,
+  REQUIRED_MILESTONE,
+  isRequiredAnim,
   sheetPixelScale,
   skinMaskName,
   SPRITE_CANVAS,
@@ -29,13 +31,14 @@ import {
 } from '../src/index.js';
 import fixtureSheet from './fixtures/kindled-fixture.json' with { type: 'json' };
 import { decodePng } from './png.js';
-import { v2Problems, type Rgba } from './sheetChecks.js';
+import { tableProblems, v2Problems, type Rgba } from './sheetChecks.js';
 
 /**
  * Every animated sheet in packages/shared/assets/sprites against its PNG
  * (docs/design/sprites.md §6): the image matches `meta`, frames sit on the
  * cell grid, every anim frame exists and every frame is used, Kindled sheets
- * carry the whole animation × facing matrix, the anchor is the origin, every
+ * carry their table's animation × facing matrix up to REQUIRED_MILESTONE (later rows
+ * absent or complete), the anchor is the origin, every
  * opaque pixel is a palette token (telegraph colours only in telegraph
  * frames, pure white nowhere) and the palette swaps are valid. A v2 sheet
  * also follows the v2 contract (sheetChecks.ts): its kind's cell and origin,
@@ -107,7 +110,7 @@ describe('the v2 fixture sheet (test/fixtures/kindled-fixture)', () => {
   sheetSuite('kindled-fixture', sheet, fixtureUrl, false);
 });
 
-/** The checks of §6 for one sheet; `shipped` sheets also carry the whole M1 animation table. */
+/** The checks of §6 for one sheet; `shipped` sheets also carry their table up to REQUIRED_MILESTONE (tableProblems). */
 function sheetSuite(name: string, sheet: SpriteSheet, url: (image: string) => URL, shipped: boolean): void {
   const file = url(sheet.meta.image);
   const { cell, origin } = sheet.meta;
@@ -219,27 +222,12 @@ function sheetSuite(name: string, sheet: SpriteSheet, url: (image: string) => UR
   const kind = spriteSheetSpec(name);
 
   if (shipped) {
-    it(`carries its ${kind.kind} table: every animation, facing and frame, with its rate, loop and hold`, () => {
+    it(`carries its ${kind.kind} table up to ${REQUIRED_MILESTONE}: every animation, facing and frame, with its rate, loop and hold`, () => {
       expect(sheet.meta.facings).toEqual(kind.facings ? [...SPRITE_FACINGS] : undefined);
       const table = kind.anims ?? (kind.kind === 'prop' ? propTable(sheet) : null);
       expect(table, `no animation table for ${name} in the contract`).not.toBeNull();
       if (!table) return;
-      const keys: string[] = [];
-      for (const a of table) {
-        for (const facing of kind.facings ? a.facings : [null]) {
-          const key = facing ? kindledAnimKey(a.name, facing) : a.name;
-          keys.push(key);
-          const def = sheet.anims[key];
-          expect(def, key).toBeDefined();
-          if (!def) continue;
-          const frame = (i: number): string => (facing ? kindledFrameName(a.name, facing, i) : `${a.name}_${i}`);
-          expect(def.frames, key).toEqual(Array.from({ length: a.frames }, (_, i) => frame(i)));
-          expect(def.repeat, key).toBe(a.loop ? -1 : 0);
-          expect(def.hold ?? false, key).toBe(a.hold);
-          if (a.fps > 0) expect(def.frameRate, key).toBe(a.fps);
-        }
-      }
-      expect(Object.keys(sheet.anims).sort(), 'animations outside the table').toEqual(keys.sort());
+      expect(tableProblems(name, sheet, table)).toEqual([]);
     });
   }
 
@@ -541,6 +529,7 @@ describe('which kind a sheet is (spriteSheetSpec)', () => {
       loop: true,
       hold: false,
       facings: [],
+      milestone: 'M1',
     });
     expect(propIdleSpec(1, 0)).toEqual({
       name: 'idle',
@@ -549,7 +538,59 @@ describe('which kind a sheet is (spriteSheetSpec)', () => {
       loop: false,
       hold: true,
       facings: [],
+      milestone: 'M1',
     });
+  });
+});
+
+describe('optional animations (milestones)', () => {
+  /** A Kindled sheet's anims block carrying `rows` of the table, every facing and frame, as the pipeline writes it. */
+  const animsOf = (rows: readonly SpriteAnimSpec[]): SpriteSheet['anims'] =>
+    Object.fromEntries(
+      rows.flatMap((a) =>
+        a.facings.map((f) => [
+          kindledAnimKey(a.name, f),
+          {
+            frames: Array.from({ length: a.frames }, (_, n) => kindledFrameName(a.name, f, n)),
+            frameRate: a.fps,
+            repeat: a.loop ? -1 : 0,
+            ...(a.hold ? { hold: true } : {}),
+          },
+        ]),
+      ),
+    );
+  const sheetWith = (anims: SpriteSheet['anims']): SpriteSheet => ({ ...fixtureSheet, anims });
+  const m1 = KINDLED_ANIMS.filter(isRequiredAnim);
+
+  it('makes carry and sit M2 and everything else M1, and requires M1', () => {
+    expect(REQUIRED_MILESTONE).toBe('M1');
+    expect(KINDLED_ANIMS.filter((a) => a.milestone === 'M2').map((a) => a.name)).toEqual(['carry_idle', 'carry_walk', 'sit']);
+    expect(m1.map((a) => a.name)).toEqual(KINDLED_ANIMS.map((a) => a.name).filter((n) => !['carry_idle', 'carry_walk', 'sit'].includes(n)));
+    for (const a of [...HUSK_TABLES.peeling, ...HUSK_TABLES.nutshell, ...NPC_ANIMS]) expect(a.milestone, a.name).toBe('M1');
+  });
+
+  it('passes a finished Kindled sheet without carry and sit, and one with them', () => {
+    expect(tableProblems('kindled-test', sheetWith(animsOf(m1)), KINDLED_ANIMS)).toEqual([]);
+    expect(tableProblems('kindled-test', sheetWith(animsOf(KINDLED_ANIMS)), KINDLED_ANIMS)).toEqual([]);
+  });
+
+  it('fails an optional animation that is present but incomplete, and a missing required one', () => {
+    const anims = animsOf(KINDLED_ANIMS);
+    delete anims.sit_E;
+    const walk = anims.carry_walk_N;
+    if (walk) walk.frames = walk.frames.slice(0, 5);
+    delete anims.dodge_SW;
+    expect(tableProblems('kindled-test', sheetWith(anims), KINDLED_ANIMS)).toEqual([
+      'dodge_SW is missing',
+      'carry_walk_N has frames carry_walk_N_0, carry_walk_N_1, carry_walk_N_2, carry_walk_N_3, carry_walk_N_4; ' +
+        'the table says carry_walk_N_0, carry_walk_N_1, carry_walk_N_2, carry_walk_N_3, carry_walk_N_4, carry_walk_N_5',
+      'sit_E is missing (sit is optional until M2, but complete once present; required: M1)',
+    ]);
+  });
+
+  it('fails animations outside the table', () => {
+    const anims = { ...animsOf(m1), sit_W: { frames: ['idle_S_0'], frameRate: 0, repeat: 0 } };
+    expect(tableProblems('kindled-test', sheetWith(anims), KINDLED_ANIMS)).toEqual(['animations outside the table: sit_W']);
   });
 });
 
