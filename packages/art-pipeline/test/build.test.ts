@@ -108,13 +108,13 @@ describe('a finished Kindled sheet', () => {
       ),
     );
     expect(names).toEqual(expected);
-    expect(sheet.meta.size).toEqual({ w: 18 * 112, h: Math.ceil(expected.length / 18) * 80 });
+    expect(sheet.meta.size).toEqual({ w: 21 * 96, h: Math.ceil(expected.length / 21) * 80 });
     expect([png.w, png.h]).toEqual([sheet.meta.size.w, sheet.meta.size.h]);
     names.forEach((name, i) => {
       expect(sheet.frames[name]?.frame, name).toEqual({
-        x: (i % 18) * 112,
-        y: Math.floor(i / 18) * 80,
-        w: 112,
+        x: (i % 21) * 96,
+        y: Math.floor(i / 21) * 80,
+        w: 96,
         h: 80,
       });
     });
@@ -128,8 +128,8 @@ describe('a finished Kindled sheet', () => {
       format: 'RGBA8888',
       app: APP_ID,
       version: '2',
-      cell: { w: 112, h: 80 },
-      origin: { x: 56, y: 64 },
+      cell: { w: 96, h: 80 },
+      origin: { x: 48, y: 64 },
       facings: [...SPRITE_FACINGS],
       pixelScale: 1,
     });
@@ -156,10 +156,10 @@ describe('a finished Kindled sheet', () => {
     for (const f of Object.values(sheet.frames)) expect(f.anchor).toEqual({ x: 0.5, y: 0.8 });
   });
 
-  it('puts the canvas at (24, 10): the soles on cell row 63', () => {
+  it('puts the canvas at (16, 10): the soles on cell row 63', () => {
     const f = sheet.frames.idle_S_0?.frame ?? { x: 0, y: 0 };
-    expect(opaqueAt(png, f.x + 24 + 27, f.y + 10 + 53)).toBe(true);
-    expect(opaqueAt(png, f.x + 24 + 27, f.y + 10 + 54)).toBe(false);
+    expect(opaqueAt(png, f.x + 16 + 27, f.y + 10 + 53)).toBe(true);
+    expect(opaqueAt(png, f.x + 16 + 27, f.y + 10 + 54)).toBe(false);
   });
 
   it('is the same bytes on a second build', () => {
@@ -308,7 +308,7 @@ describe('the mask rule on a hand-made figure', () => {
     const mask = decodePng(
       r.outputs.get('packages/shared/assets/sprites/kindled-test.skin.png') ?? Buffer.alloc(0),
     );
-    expect(opaqueAt(mask, 24 + 30, 10 + 33)).toBe(true);
+    expect(opaqueAt(mask, 16 + 30, 10 + 33)).toBe(true);
   });
 
   it('a fixes recolour resolves it too', () => {
@@ -323,7 +323,7 @@ describe('the mask rule on a hand-made figure', () => {
     };
     const r = build(root, json);
     expect(r.skinProblems).toEqual([]);
-    expect(hexAt(r.anims[0]?.frames[0]?.cell ?? blank(1, 1), 24 + 30, 10 + 33)).toBe(
+    expect(hexAt(r.anims[0]?.frames[0]?.cell ?? blank(1, 1), 16 + 30, 10 + 33)).toBe(
       C['watcher-iron'],
     );
   });
@@ -353,7 +353,7 @@ describe('remap in a build', () => {
     );
     const r = build(root, fullKindled('art/clean/grey-belt.png', { remap: rescue }));
     expect(r.skinProblems).toEqual([]);
-    expect(hexAt(r.anims[0]?.frames[0]?.cell ?? blank(1, 1), 24 + 30, 10 + 33)).toBe(
+    expect(hexAt(r.anims[0]?.frames[0]?.cell ?? blank(1, 1), 16 + 30, 10 + 33)).toBe(
       C['watcher-iron'],
     );
   });
@@ -436,8 +436,8 @@ describe('the body bob flag', () => {
     anim: 'walk',
     facing: 'S',
     frames: tops.map((t, n) => {
-      const cell = blank(112, 80);
-      rect(cell, 50, 63 - t, 4, t + 1, C['watcher-iron']);
+      const cell = blank(96, 80);
+      rect(cell, 42, 63 - t, 4, t + 1, C['watcher-iron']);
       return { name: `walk_S_${n}`, cell } as BuiltAnim['frames'][number];
     }),
   });
@@ -459,8 +459,8 @@ describe('the body bob flag', () => {
 
 describe('packing', () => {
   it('fails when the frames do not fit in 2048×2048', () => {
-    const cell = blank(112, 80);
-    const frames = Array.from({ length: 18 * 26 }, (_, n) => ({
+    const cell = blank(96, 80);
+    const frames = Array.from({ length: 21 * 26 }, (_, n) => ({
       name: `walk_S_${n}`,
       cell,
       mask: null,
@@ -468,7 +468,7 @@ describe('packing', () => {
     const anims: BuiltAnim[] = [{ key: 'walk_S', anim: 'walk', facing: 'S', frames }];
     const recipe = { sheet: 'kindled-big', kind: 'kindled' } as Recipe;
     expect(problemsOf(() => pack(recipe, anims))).toEqual([
-      'kindled-big: 468 frames of 112×80 need a 2016×2080 sheet; the most is 2048×2048',
+      'kindled-big: 546 frames of 96×80 need a 2016×2080 sheet; the most is 2048×2048',
     ]);
   });
 });

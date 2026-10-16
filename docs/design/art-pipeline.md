@@ -120,7 +120,7 @@ draft's report lists the optional rows under its summary.
 
 | Prefix | Kind | Cell | Facings | Table | Palette and mask |
 |---|---|---|---|---|---|
-| `kindled-` | `kindled` | 112×80 | per animation (8, 4 or 2) | `KINDLED_ANIMS` | yes |
+| `kindled-` | `kindled` | 96×80 | per animation (8, 4 or 2) | `KINDLED_ANIMS` | yes |
 | `husk-` | `husk` | 64×64 | none | the Husk's own in `HUSK_TABLES` (`peeling`, `nutshell`); a Husk without one builds only as a draft | no |
 | `npc-` | `npc` | 64×64 | all 8 | `NPC_ANIMS`: `idle` 2 frames at 2 fps, `walk` 6 at 10, both looping | no |
 | `prop-` | `prop` | 64×64 | none | `idle` only, 1–8 frames, at the recipe's `fps` (default 8), looping with more than one frame | no |

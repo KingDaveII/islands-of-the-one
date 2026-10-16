@@ -153,10 +153,10 @@ describe('step 7, place in the cell', () => {
     rect(withBlade, 2, 40, 18, 2, C['watcher-stone']);
     const a = place(img, k, 'frame', null, 'idle_S_0', canvas);
     const b = place(withBlade, k, 'frame', null, 'idle_S_0', canvas);
-    expect([a.dx, a.dy]).toEqual([24, 10]);
-    expect([b.dx, b.dy]).toEqual([24, 10]);
-    // An 80 px frame is centred too: 56 - 40.
-    expect(place(blank(80, 80), k, 'canvas', null, 'w', canvas).dx).toBe(16);
+    expect([a.dx, a.dy]).toEqual([16, 10]);
+    expect([b.dx, b.dy]).toEqual([16, 10]);
+    // An 80 px frame is centred too: 48 - 40.
+    expect(place(blank(80, 80), k, 'canvas', null, 'w', canvas).dx).toBe(8);
   });
 
   it('"frame" puts each frame\'s lowest opaque row on the soles row and reports the drift', () => {

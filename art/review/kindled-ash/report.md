@@ -1,7 +1,7 @@
 # kindled-ash (draft)
 
 Built by `pnpm art:build kindled-ash` from `art/sheets/kindled-ash.json`; do not edit by hand (`pnpm art:check` rebuilds it).
-Kind kindled, outline player, cell 112×80, origin (56, 64). A draft writes this review only, never `packages/shared/assets`.
+Kind kindled, outline player, cell 96×80, origin (48, 64). A draft writes this review only, never `packages/shared/assets`.
 
 ## Summary
 
@@ -145,311 +145,311 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 
 | Frame | Source | Off-palette | Max ΔE | Shift | dx, dy | Outline gaps | Colours | Masked |
 |---|---|---|---|---|---|---|---|---|
-| idle_S_0 | `art/raw/ss01-kindled-ash/idle/south 0` | 0 | 0 | -2 | 16, 0 | 4 | 11 | 179 |
-| idle_S_1 | `art/raw/ss01-kindled-ash/idle/south 2` | 11 | 7.27 | -2 | 16, 0 | 5 | 15 **flag** | 181 |
-| idle_SE_0 | `art/raw/ss01-kindled-ash/idle/south-east 0` | 81 | 6.92 | -1 | 16, 1 | 5 | 15 **flag** | 148 |
-| idle_SE_1 | `art/raw/ss01-kindled-ash/idle/south-east 2` | 78 | 6.92 | -1 | 16, 1 | 2 | 15 **flag** | 149 |
-| idle_E_0 | `art/raw/ss01-kindled-ash/idle/east 0` | 82 | 6.15 | -1 | 16, 1 | 18 | 14 **flag** | 69 |
-| idle_E_1 | `art/raw/ss01-kindled-ash/idle/east 2` | 69 | 6.15 | -1 | 16, 1 | 10 | 14 **flag** | 77 |
-| idle_NE_0 | `art/raw/ss01-kindled-ash/idle/north-east 0` | 15 | 6.15 | -1 | 16, 1 | 3 | 11 | 13 |
-| idle_NE_1 | `art/raw/ss01-kindled-ash/idle/north-east 2` | 15 | 6.15 | -1 | 16, 1 | 1 | 11 | 13 |
-| idle_N_0 | `art/raw/ss01-kindled-ash/idle/north 0` | 0 | 0 | -1 | 16, 1 | 6 | 4 | 0 |
-| idle_N_1 | `art/raw/ss01-kindled-ash/idle/north 2` | 0 | 0 | -1 | 16, 1 | 3 | 4 | 0 |
-| idle_NW_0 | `art/raw/ss01-kindled-ash/idle/north-west 0` | 38 | 5.53 | -1 | 16, 1 | 0 | 8 | 13 |
-| idle_NW_1 | `art/raw/ss01-kindled-ash/idle/north-west 2` | 28 | 5.53 | -1 | 16, 1 | 0 | 9 | 13 |
-| idle_W_0 | `art/raw/ss01-kindled-ash/idle/west 0` | 82 | 6.89 | -1 | 16, 1 | 34 | 14 **flag** | 69 |
-| idle_W_1 | `art/raw/ss01-kindled-ash/idle/west 2` | 63 | 6.89 | -1 | 16, 1 | 11 | 14 **flag** | 69 |
-| idle_SW_0 | `art/raw/ss01-kindled-ash/idle/south-west 0` | 83 | 6.92 | -1 | 16, 1 | 4 | 17 **flag** | 149 |
-| idle_SW_1 | `art/raw/ss01-kindled-ash/idle/south-west 2` | 72 | 6.92 | -1 | 16, 1 | 5 | 16 **flag** | 142 |
-| walk_S_0 | `art/raw/ss01-kindled-ash/walk/south 0` | 0 | 0 | 0 | 16, 2 | 9 | 12 | 175 |
-| walk_S_1 | `art/raw/ss01-kindled-ash/walk/south 1` | 0 | 0 | -1 | 16, 1 | 4 | 12 | 175 |
-| walk_S_2 | `art/raw/ss01-kindled-ash/walk/south 2` | 13 | 6.81 | -1 | 16, 1 | 5 | 16 **flag** | 170 |
-| walk_S_3 | `art/raw/ss01-kindled-ash/walk/south 3` | 0 | 0 | 0 | 16, 2 | 1 | 12 | 172 |
-| walk_S_4 | `art/raw/ss01-kindled-ash/walk/south 4` | 0 | 0 | -1 | 16, 1 | 2 | 12 | 172 |
-| walk_S_5 | `art/raw/ss01-kindled-ash/walk/south 5` | 0 | 0 | -1 | 16, 1 | 7 | 11 | 177 |
-| walk_SE_0 | `art/raw/ss01-kindled-ash/walk/south-east 0` | 95 | 6.92 | -1 | 16, 1 | 2 | 16 **flag** | 151 |
-| walk_SE_1 | `art/raw/ss01-kindled-ash/walk/south-east 1` | 92 | 6.92 | -1 | 16, 1 | 1 | 15 **flag** | 140 |
-| walk_SE_2 | `art/raw/ss01-kindled-ash/walk/south-east 2` | 82 | 6.92 | -1 | 16, 1 | 1 | 15 **flag** | 143 |
-| walk_SE_3 | `art/raw/ss01-kindled-ash/walk/south-east 3` | 42 | 6.92 | -1 | 16, 1 | 1 | 15 **flag** | 151 |
-| walk_SE_4 | `art/raw/ss01-kindled-ash/walk/south-east 4` | 102 | 6.92 | -1 | 16, 1 | 0 | 14 **flag** | 154 |
-| walk_SE_5 | `art/raw/ss01-kindled-ash/walk/south-east 5` | 119 | 6.92 | -1 | 16, 1 | 10 | 14 **flag** | 155 |
-| walk_E_0 | `art/raw/ss01-kindled-ash/walk/east 0` | 27 | 6.15 | -1 | 16, 1 | 10 | 14 **flag** | 78 |
-| walk_E_1 | `art/raw/ss01-kindled-ash/walk/east 1` | 67 | 6.15 | -1 | 16, 1 | 18 | 13 **flag** | 86 |
-| walk_E_2 | `art/raw/ss01-kindled-ash/walk/east 2` | 56 | 6.15 | -1 | 16, 1 | 15 | 14 **flag** | 81 |
-| walk_E_3 | `art/raw/ss01-kindled-ash/walk/east 3` | 19 | 6.15 | -1 | 16, 1 | 0 | 14 **flag** | 79 |
-| walk_E_4 | `art/raw/ss01-kindled-ash/walk/east 4` | 39 | 6.15 | -1 | 16, 1 | 14 | 14 **flag** | 79 |
-| walk_E_5 | `art/raw/ss01-kindled-ash/walk/east 5` | 42 | 6.15 | -1 | 16, 1 | 24 | 13 **flag** | 78 |
-| walk_NE_0 | `art/raw/ss01-kindled-ash/walk/north-east 0` | 24 | 6.15 | -1 | 16, 1 | 8 | 12 | 11 |
-| walk_NE_1 | `art/raw/ss01-kindled-ash/walk/north-east 1` | 33 | 6.15 | -3 | 16, -1 | 9 | 12 | 12 |
-| walk_NE_2 | `art/raw/ss01-kindled-ash/walk/north-east 2` | 29 | 6.15 | -2 | 16, 0 | 5 | 12 | 10 |
-| walk_NE_3 | `art/raw/ss01-kindled-ash/walk/north-east 3` | 11 | 6.15 | -1 | 16, 1 | 0 | 11 | 12 |
-| walk_NE_4 | `art/raw/ss01-kindled-ash/walk/north-east 4` | 36 | 6.15 | -1 | 16, 1 | 1 | 12 | 11 |
-| walk_NE_5 | `art/raw/ss01-kindled-ash/walk/north-east 5` | 28 | 6.15 | -1 | 16, 1 | 6 | 12 | 11 |
-| walk_N_0 | `art/raw/ss01-kindled-ash/walk/north 0` | 0 | 0 | -1 | 16, 1 | 0 | 4 | 0 |
-| walk_N_1 | `art/raw/ss01-kindled-ash/walk/north 1` | 0 | 0 | -2 | 16, 0 | 0 | 4 | 0 |
-| walk_N_2 | `art/raw/ss01-kindled-ash/walk/north 2` | 0 | 0 | -2 | 16, 0 | 0 | 4 | 0 |
-| walk_N_3 | `art/raw/ss01-kindled-ash/walk/north 3` | 0 | 0 | -1 | 16, 1 | 0 | 4 | 0 |
-| walk_N_4 | `art/raw/ss01-kindled-ash/walk/north 4` | 0 | 0 | -2 | 16, 0 | 3 | 4 | 0 |
-| walk_N_5 | `art/raw/ss01-kindled-ash/walk/north 5` | 0 | 0 | -1 | 16, 1 | 2 | 4 | 0 |
-| walk_NW_0 | `art/raw/ss01-kindled-ash/walk/north-west 0` | 22 | 5.53 | -1 | 16, 1 | 0 | 9 | 8 |
-| walk_NW_1 | `art/raw/ss01-kindled-ash/walk/north-west 1` | 44 | 5.53 | -1 | 16, 1 | 3 | 9 | 4 |
-| walk_NW_2 | `art/raw/ss01-kindled-ash/walk/north-west 2` | 40 | 5.53 | -1 | 16, 1 | 3 | 9 | 6 |
-| walk_NW_3 | `art/raw/ss01-kindled-ash/walk/north-west 3` | 24 | 5.53 | -1 | 16, 1 | 0 | 9 | 12 |
-| walk_NW_4 | `art/raw/ss01-kindled-ash/walk/north-west 4` | 33 | 5.53 | -2 | 16, 0 | 0 | 9 | 8 |
-| walk_NW_5 | `art/raw/ss01-kindled-ash/walk/north-west 5` | 34 | 5.53 | -1 | 16, 1 | 1 | 9 | 9 |
-| walk_W_0 | `art/raw/ss01-kindled-ash/walk/west 0` | 22 | 6.89 | -1 | 16, 1 | 1 | 14 **flag** | 69 |
-| walk_W_1 | `art/raw/ss01-kindled-ash/walk/west 1` | 56 | 6.89 | 0 | 16, 2 | 6 | 13 **flag** | 68 |
-| walk_W_2 | `art/raw/ss01-kindled-ash/walk/west 2` | 70 | 6.89 | -1 | 16, 1 | 12 | 15 **flag** | 70 |
-| walk_W_3 | `art/raw/ss01-kindled-ash/walk/west 3` | 20 | 6.89 | -1 | 16, 1 | 1 | 15 **flag** | 69 |
-| walk_W_4 | `art/raw/ss01-kindled-ash/walk/west 4` | 59 | 6.89 | -1 | 16, 1 | 10 | 14 **flag** | 67 |
-| walk_W_5 | `art/raw/ss01-kindled-ash/walk/west 5` | 71 | 6.89 | -1 | 16, 1 | 9 | 14 **flag** | 68 |
-| walk_SW_0 | `art/raw/ss01-kindled-ash/walk/south-west 0` | 50 | 6.92 | -1 | 16, 1 | 3 | 17 **flag** | 143 |
-| walk_SW_1 | `art/raw/ss01-kindled-ash/walk/south-west 1` | 53 | 6.92 | -1 | 16, 1 | 4 | 17 **flag** | 139 |
-| walk_SW_2 | `art/raw/ss01-kindled-ash/walk/south-west 2` | 57 | 6.92 | -1 | 16, 1 | 10 | 17 **flag** | 142 |
-| walk_SW_3 | `art/raw/ss01-kindled-ash/walk/south-west 3` | 49 | 6.92 | -1 | 16, 1 | 1 | 17 **flag** | 145 |
-| walk_SW_4 | `art/raw/ss01-kindled-ash/walk/south-west 4` | 52 | 6.92 | -1 | 16, 1 | 3 | 14 **flag** | 129 |
-| walk_SW_5 | `art/raw/ss01-kindled-ash/walk/south-west 5` | 60 | 6.92 | -1 | 16, 1 | 3 | 16 **flag** | 140 |
-| dodge_S_0 | `art/raw/ss01-kindled-ash/dodge/south 3` | 116 | 7.82 | 0 | 22, 8 | 1 | 15 **flag** | 172 |
-| dodge_S_1 | `art/raw/ss01-kindled-ash/dodge/south 4` | 62 | 6.93 | 0 | 22, 8 | 1 | 17 **flag** | 97 |
-| dodge_S_2 | `art/raw/ss01-kindled-ash/dodge/south 6` | 92 | 6.93 | 0 | 22, 8 | 5 | 16 **flag** | 83 |
-| dodge_S_3 | `art/raw/ss01-kindled-ash/dodge/south 7` | 94 | 6.93 | 0 | 22, 8 | 2 | 16 **flag** | 124 |
-| dodge_SE_0 | `art/raw/ss01-kindled-ash/dodge/south-east 2` | 84 | 7.08 | -1 | 22, 7 | 14 | 17 **flag** | 135 |
-| dodge_SE_1 | `art/raw/ss01-kindled-ash/dodge/south-east 3` | 115 | 7.15 | -1 | 22, 7 | 6 | 17 **flag** | 90 |
-| dodge_SE_2 | `art/raw/ss01-kindled-ash/dodge/south-east 6` | 82 | 6.92 | -1 | 22, 7 | 2 | 18 **flag** | 100 |
-| dodge_SE_3 | `art/raw/ss01-kindled-ash/dodge/south-east 7` | 88 | 7.5 | -1 | 22, 7 | 7 | 17 **flag** | 131 |
-| dodge_E_0 | `art/raw/ss01-kindled-ash/dodge/east 3` | 121 | 9.84 | -1 | 22, 7 | 3 | 17 **flag** | 86 |
-| dodge_E_1 | `art/raw/ss01-kindled-ash/dodge/east 4` | 55 | 6.15 | -1 | 22, 7 | 0 | 14 **flag** | 98 |
-| dodge_E_2 | `art/raw/ss01-kindled-ash/dodge/east 5` | 82 | 7.74 | -1 | 22, 7 | 1 | 15 **flag** | 89 |
-| dodge_E_3 | `art/raw/ss01-kindled-ash/dodge/east 7` | 81 | 8.35 | -1 | 22, 7 | 0 | 15 **flag** | 74 |
-| dodge_NE_0 | `art/raw/ss01-kindled-ash/dodge-take1/north-east 3` | 36 | 6.15 | -1 | 22, 7 | 1 | 15 **flag** | 18 |
-| dodge_NE_1 | `art/raw/ss01-kindled-ash/dodge-take1/north-east 4` | 25 | 6.15 | -1 | 22, 7 | 1 | 12 | 17 |
-| dodge_NE_2 | `art/raw/ss01-kindled-ash/dodge-take1/north-east 6` | 17 | 6.15 | -1 | 22, 7 | 2 | 12 | 21 |
-| dodge_NE_3 | `art/raw/ss01-kindled-ash/dodge-take1/north-east 7` | 20 | 6.15 | -1 | 22, 7 | 1 | 12 | 5 |
-| dodge_N_0 | `art/raw/ss01-kindled-ash/dodge-take1/north 1` | 10 | 4.93 | -1 | 22, 7 | 0 | 6 | 0 |
-| dodge_N_1 | `art/raw/ss01-kindled-ash/dodge-take1/north 4` | 26 | 11.13 | -1 | 22, 7 | 13 | 9 | 1 |
-| dodge_N_2 | `art/raw/ss01-kindled-ash/dodge-take1/north 6` | 42 | 10.92 | -1 | 22, 7 | 14 | 14 **flag** | 1 |
-| dodge_NW_0 | `art/raw/ss01-kindled-ash/dodge/north-west 2` | 32 | 7.12 | -1 | 22, 7 | 0 | 13 **flag** | 15 |
-| dodge_NW_1 | `art/raw/ss01-kindled-ash/dodge/north-west 4` | 50 | 5.87 | -1 | 22, 7 | 1 | 13 **flag** | 17 |
-| dodge_NW_2 | `art/raw/ss01-kindled-ash/dodge/north-west 6` | 87 | 7.71 | -1 | 22, 7 | 1 | 13 **flag** | 21 |
-| dodge_NW_3 | `art/raw/ss01-kindled-ash/dodge/north-west 8` | 62 | 6.77 | -1 | 22, 7 | 1 | 13 **flag** | 14 |
-| dodge_W_0 | `art/raw/ss01-kindled-ash/dodge/west 4` | 42 | 6.52 | -1 | 22, 7 | 1 | 12 | 59 |
-| dodge_W_1 | `art/raw/ss01-kindled-ash/dodge/west 6` | 75 | 8.04 | -1 | 22, 7 | 3 | 16 **flag** | 55 |
-| dodge_W_2 | `art/raw/ss01-kindled-ash/dodge/west 7` | 94 | 8.04 | -1 | 22, 7 | 3 | 15 **flag** | 69 |
-| dodge_W_3 | `art/raw/ss01-kindled-ash/dodge/west 8` | 38 | 8.04 | -1 | 22, 7 | 1 | 15 **flag** | 64 |
-| dodge_SW_0 | `art/raw/ss01-kindled-ash/dodge/south-west 4` | 69 | 6.95 | -1 | 22, 7 | 3 | 18 **flag** | 118 |
-| dodge_SW_1 | `art/raw/ss01-kindled-ash/dodge/south-west 5` | 78 | 6.95 | -1 | 22, 7 | 3 | 18 **flag** | 84 |
-| dodge_SW_2 | `art/raw/ss01-kindled-ash/dodge/south-west 6` | 39 | 6.95 | -1 | 22, 7 | 1 | 14 **flag** | 77 |
-| dodge_SW_3 | `art/raw/ss01-kindled-ash/dodge/south-west 7` | 102 | 8.44 | -1 | 22, 7 | 0 | 18 **flag** | 106 |
-| light_1_S_0 | `art/raw/ss01-kindled-ash/light_1/south 1` | 50 | 7.37 | 0 | 22, 8 | 0 | 14 **flag** | 170 |
-| light_1_S_1 | `art/raw/ss01-kindled-ash/light_1/south 3` | 56 | 6.41 | 0 | 22, 8 | 0 | 14 **flag** | 165 |
-| light_1_S_2 | `art/raw/ss01-kindled-ash/light_1/south 6` | 52 | 6.41 | 0 | 22, 8 | 0 | 16 **flag** | 177 |
-| light_1_SE_0 | `art/raw/ss01-kindled-ash/light_1/south-east 2` | 65 | 6.92 | -1 | 22, 7 | 0 | 15 **flag** | 140 |
-| light_1_SE_1 | `art/raw/ss01-kindled-ash/light_1/south-east 4` | 94 | 8 | -1 | 22, 7 | 6 | 16 **flag** | 137 |
-| light_1_SE_2 | `art/raw/ss01-kindled-ash/light_1/south-east 6` | 63 | 7.18 | -1 | 22, 7 | 1 | 15 **flag** | 133 |
-| light_1_E_0 | `art/raw/ss01-kindled-ash/light_1/east 2` | 26 | 6.15 | -1 | 22, 7 | 1 | 17 **flag** | 76 |
-| light_1_E_1 | `art/raw/ss01-kindled-ash/light_1/east 3` | 77 | 6.85 | -1 | 22, 7 | 1 | 17 **flag** | 77 |
-| light_1_E_2 | `art/raw/ss01-kindled-ash/light_1/east 6` | 36 | 6.15 | -1 | 22, 7 | 3 | 17 **flag** | 79 |
-| light_1_NE_0 | `art/raw/ss01-kindled-ash/light_1/north-east 1` | 37 | 6.15 | -1 | 22, 7 | 1 | 16 **flag** | 15 |
-| light_1_NE_1 | `art/raw/ss01-kindled-ash/light_1/north-east 4` | 41 | 8.36 | -1 | 22, 7 | 1 | 11 | 7 |
-| light_1_NE_2 | `art/raw/ss01-kindled-ash/light_1/north-east 6` | 29 | 8.36 | -1 | 22, 7 | 1 | 12 | 15 |
-| light_1_N_0 | `art/raw/ss01-kindled-ash/light_1/north 5` | 15 | 6.48 | -1 | 22, 7 | 0 | 8 | 2 |
-| light_1_N_1 | `art/raw/ss01-kindled-ash/light_1/north 6` | 16 | 7.59 | -1 | 22, 7 | 3 | 8 | 0 |
-| light_1_NW_0 | `art/raw/ss01-kindled-ash/light_1/north-west 2` | 24 | 6.51 | -1 | 22, 7 | 1 | 9 | 8 |
-| light_1_NW_1 | `art/raw/ss01-kindled-ash/light_1/north-west 4` | 86 | 6.72 | -1 | 22, 7 | 1 | 10 | 25 |
-| light_1_NW_2 | `art/raw/ss01-kindled-ash/light_1/north-west 6` | 86 | 6.51 | -1 | 22, 7 | 0 | 12 | 22 |
-| light_1_W_0 | `art/raw/ss01-kindled-ash/light_1/west 4` | 92 | 8.64 | -1 | 22, 7 | 1 | 17 **flag** | 108 |
-| light_1_W_1 | `art/raw/ss01-kindled-ash/light_1/west 5` | 116 | 8.64 | -1 | 22, 7 | 7 | 17 **flag** | 95 |
-| light_1_W_2 | `art/raw/ss01-kindled-ash/light_1/west 6` | 45 | 8.64 | -1 | 22, 7 | 0 | 16 **flag** | 66 |
-| light_1_SW_0 | `art/raw/ss01-kindled-ash/light_1/south-west 2` | 71 | 6.92 | -1 | 22, 7 | 1 | 18 **flag** | 154 |
-| light_1_SW_1 | `art/raw/ss01-kindled-ash/light_1/south-west 3` | 131 | 7.62 | -1 | 22, 7 | 18 | 19 **flag** | 128 |
-| light_1_SW_2 | `art/raw/ss01-kindled-ash/light_1/south-west 6` | 81 | 7.72 | -1 | 22, 7 | 4 | 18 **flag** | 141 |
-| light_2_S_0 | `art/raw/ss01-kindled-ash/light_2/south 2` | 38 | 6.45 | 0 | 22, 8 | 3 | 14 **flag** | 146 |
-| light_2_S_1 | `art/raw/ss01-kindled-ash/light_2/south 4` | 31 | 6.45 | 0 | 22, 8 | 0 | 16 **flag** | 141 |
-| light_2_S_2 | `art/raw/ss01-kindled-ash/light_2/south 6` | 36 | 6.45 | 0 | 22, 8 | 0 | 15 **flag** | 144 |
-| light_2_SE_0 | `art/raw/ss01-kindled-ash/light_2/south-east 4` | 69 | 6.92 | -1 | 22, 7 | 0 | 16 **flag** | 165 |
-| light_2_SE_1 | `art/raw/ss01-kindled-ash/light_2/south-east 5` | 112 | 6.92 | -1 | 22, 7 | 0 | 21 **flag** | 148 |
-| light_2_SE_2 | `art/raw/ss01-kindled-ash/light_2/south-east 6` | 65 | 6.55 | -1 | 22, 7 | 3 | 17 **flag** | 140 |
-| light_2_E_0 | `art/raw/ss01-kindled-ash/light_2/east 4` | 49 | 7.92 | -1 | 22, 7 | 0 | 18 **flag** | 67 |
-| light_2_E_1 | `art/raw/ss01-kindled-ash/light_2/east 5` | 73 | 6.52 | -1 | 22, 7 | 4 | 18 **flag** | 67 |
-| light_2_E_2 | `art/raw/ss01-kindled-ash/light_2/east 6` | 46 | 7.92 | -1 | 22, 7 | 1 | 17 **flag** | 70 |
-| light_2_NE_0 | `art/raw/ss01-kindled-ash/light_2/north-east 2` | 13 | 6.71 | -1 | 22, 7 | 1 | 11 | 8 |
-| light_2_NE_1 | `art/raw/ss01-kindled-ash/light_2/north-east 5` | 18 | 8.05 | -1 | 22, 7 | 4 | 13 **flag** | 5 |
-| light_2_NE_2 | `art/raw/ss01-kindled-ash/light_2/north-east 6` | 19 | 6.71 | -1 | 22, 7 | 5 | 11 | 17 |
-| light_2_NW_0 | `art/raw/ss01-kindled-ash/light_2/north-west 2` | 51 | 5.67 | -1 | 22, 7 | 0 | 16 **flag** | 3 |
-| light_2_NW_1 | `art/raw/ss01-kindled-ash/light_2/north-west 5` | 75 | 6.32 | -1 | 22, 7 | 5 | 14 **flag** | 10 |
-| light_2_NW_2 | `art/raw/ss01-kindled-ash/light_2/north-west 6` | 52 | 5.76 | -1 | 22, 7 | 5 | 13 **flag** | 15 |
-| light_2_W_0 | `art/raw/ss01-kindled-ash/light_2/west 2` | 51 | 6.98 | -1 | 22, 7 | 2 | 15 **flag** | 75 |
-| light_2_W_1 | `art/raw/ss01-kindled-ash/light_2/west 5` | 46 | 7.27 | -1 | 22, 7 | 2 | 16 **flag** | 53 |
-| light_2_W_2 | `art/raw/ss01-kindled-ash/light_2/west 6` | 22 | 6.98 | -1 | 22, 7 | 0 | 14 **flag** | 60 |
-| light_2_SW_0 | `art/raw/ss01-kindled-ash/light_2/south-west 2` | 63 | 6.92 | -1 | 22, 7 | 2 | 20 **flag** | 144 |
-| light_2_SW_1 | `art/raw/ss01-kindled-ash/light_2/south-west 3` | 103 | 7.43 | -1 | 22, 7 | 0 | 19 **flag** | 123 |
-| light_3_S_0 | `art/raw/ss01-kindled-ash/light_3/south 2` | 47 | 6.45 | 0 | 22, 8 | 1 | 16 **flag** | 136 |
-| light_3_S_1 | `art/raw/ss01-kindled-ash/light_3/south 3` | 61 | 7.29 | 0 | 22, 8 | 1 | 17 **flag** | 133 |
-| light_3_S_2 | `art/raw/ss01-kindled-ash/light_3/south 6` | 23 | 6.45 | 0 | 22, 8 | 0 | 17 **flag** | 136 |
-| light_3_SE_0 | `art/raw/ss01-kindled-ash/light_3/south-east 2` | 70 | 6.92 | -1 | 22, 7 | 2 | 18 **flag** | 153 |
-| light_3_SE_1 | `art/raw/ss01-kindled-ash/light_3/south-east 3` | 73 | 7.83 | -1 | 22, 7 | 1 | 16 **flag** | 156 |
-| light_3_SE_2 | `art/raw/ss01-kindled-ash/light_3/south-east 6` | 57 | 7.83 | -1 | 22, 7 | 8 | 18 **flag** | 155 |
-| light_3_E_0 | `art/raw/ss01-kindled-ash/light_3/east 2` | 39 | 7.87 | -1 | 22, 7 | 1 | 16 **flag** | 81 |
-| light_3_E_1 | `art/raw/ss01-kindled-ash/light_3/east 4` | 42 | 7.87 | -1 | 22, 7 | 0 | 17 **flag** | 88 |
-| light_3_E_2 | `art/raw/ss01-kindled-ash/light_3/east 6` | 30 | 7.87 | -1 | 22, 7 | 0 | 17 **flag** | 83 |
-| light_3_N_0 | `art/raw/ss01-kindled-ash/light_3/north 2` | 44 | 7.48 | -1 | 22, 7 | 0 | 8 | 0 |
-| light_3_N_1 | `art/raw/ss01-kindled-ash/light_3/north 4` | 50 | 8.56 | -1 | 22, 7 | 2 | 9 | 0 |
-| light_3_N_2 | `art/raw/ss01-kindled-ash/light_3/north 5` | 44 | 8.56 | -1 | 22, 7 | 1 | 12 | 1 |
-| light_3_NW_0 | `art/raw/ss01-kindled-ash/light_3/north-west 4` | 26 | 5.53 | -1 | 22, 7 | 1 | 11 | 14 |
-| light_3_NW_1 | `art/raw/ss01-kindled-ash/light_3/north-west 6` | 27 | 5.53 | -1 | 22, 7 | 1 | 11 | 14 |
-| light_3_W_0 | `art/raw/ss01-kindled-ash/light_3/west 2` | 33 | 7.7 | -1 | 22, 7 | 1 | 16 **flag** | 68 |
-| light_3_W_1 | `art/raw/ss01-kindled-ash/light_3/west 4` | 23 | 6.89 | -1 | 22, 7 | 3 | 14 **flag** | 59 |
-| light_3_W_2 | `art/raw/ss01-kindled-ash/light_3/west 6` | 27 | 7.7 | -1 | 22, 7 | 1 | 13 **flag** | 57 |
-| light_3_SW_0 | `art/raw/ss01-kindled-ash/light_3/south-west 2` | 52 | 7.89 | -1 | 22, 7 | 0 | 18 **flag** | 153 |
-| light_3_SW_1 | `art/raw/ss01-kindled-ash/light_3/south-west 4` | 67 | 6.92 | -1 | 22, 7 | 3 | 18 **flag** | 156 |
-| light_3_SW_2 | `art/raw/ss01-kindled-ash/light_3/south-west 6` | 57 | 7.89 | -1 | 22, 7 | 0 | 18 **flag** | 144 |
-| heavy_charge_S_0 | `art/raw/ss01-kindled-ash/heavy/south 2` | 32 | 6.22 | 0 | 22, 8 | 1 | 16 **flag** | 163 |
-| heavy_charge_S_1 | `art/raw/ss01-kindled-ash/heavy/south 3` | 55 | 7.46 | 0 | 22, 8 | 1 | 16 **flag** | 156 |
-| heavy_charge_S_2 | `art/raw/ss01-kindled-ash/heavy/south 4` | 31 | 6.8 | 0 | 22, 8 | 1 | 15 **flag** | 146 |
-| heavy_charge_SE_0 | `art/raw/ss01-kindled-ash/heavy/south-east 2` | 51 | 6.92 | -1 | 22, 7 | 0 | 17 **flag** | 150 |
-| heavy_charge_SE_1 | `art/raw/ss01-kindled-ash/heavy/south-east 3` | 79 | 7.84 | -1 | 22, 7 | 3 | 19 **flag** | 141 |
-| heavy_charge_SE_2 | `art/raw/ss01-kindled-ash/heavy/south-east 4` | 49 | 7.26 | -1 | 22, 7 | 0 | 17 **flag** | 149 |
-| heavy_charge_E_0 | `art/raw/ss01-kindled-ash/heavy/east 2` | 38 | 7.79 | -1 | 22, 7 | 1 | 18 **flag** | 73 |
-| heavy_charge_E_1 | `art/raw/ss01-kindled-ash/heavy/east 3` | 45 | 7.71 | -1 | 22, 7 | 0 | 16 **flag** | 72 |
-| heavy_charge_E_2 | `art/raw/ss01-kindled-ash/heavy/east 4` | 30 | 7.88 | -1 | 22, 7 | 0 | 15 **flag** | 67 |
-| heavy_charge_NE_0 | `art/raw/ss01-kindled-ash/heavy/north-east 2` | 20 | 5.94 | -1 | 22, 7 | 1 | 13 **flag** | 0 |
-| heavy_charge_NE_1 | `art/raw/ss01-kindled-ash/heavy/north-east 3` | 26 | 7.72 | -1 | 22, 7 | 1 | 15 **flag** | 0 |
-| heavy_charge_NE_2 | `art/raw/ss01-kindled-ash/heavy/north-east 5` | 22 | 7.72 | -1 | 22, 7 | 0 | 15 **flag** | 1 |
-| heavy_charge_N_0 | `art/raw/ss01-kindled-ash/heavy/north 2` | 64 | 11.75 | -1 | 22, 7 | 1 | 9 | 0 |
-| heavy_charge_N_1 | `art/raw/ss01-kindled-ash/heavy/north 3` | 79 | 11.94 | -1 | 22, 7 | 1 | 11 | 2 |
-| heavy_charge_N_2 | `art/raw/ss01-kindled-ash/heavy/north 4` | 74 | 11.75 | -1 | 22, 7 | 1 | 8 | 0 |
-| heavy_charge_W_0 | `art/raw/ss01-kindled-ash/heavy/west 2` | 32 | 6.89 | -1 | 22, 7 | 2 | 16 **flag** | 72 |
-| heavy_charge_W_1 | `art/raw/ss01-kindled-ash/heavy/west 3` | 28 | 6.52 | -1 | 22, 7 | 0 | 13 **flag** | 66 |
-| heavy_charge_W_2 | `art/raw/ss01-kindled-ash/heavy/west 4` | 7 | 6.1 | -1 | 22, 7 | 0 | 12 | 71 |
-| heavy_charge_SW_0 | `art/raw/ss01-kindled-ash/heavy/south-west 1` | 104 | 6.92 | -1 | 22, 7 | 2 | 19 **flag** | 151 |
-| heavy_charge_SW_1 | `art/raw/ss01-kindled-ash/heavy/south-west 2` | 53 | 6.92 | -1 | 22, 7 | 0 | 17 **flag** | 144 |
-| heavy_charge_SW_2 | `art/raw/ss01-kindled-ash/heavy/south-west 4` | 23 | 6.92 | -1 | 22, 7 | 0 | 15 **flag** | 106 |
-| heavy_thrust_S_0 | `art/raw/ss01-kindled-ash/heavy/south 7` | 62 | 7.46 | 0 | 22, 8 | 0 | 13 **flag** | 147 |
-| heavy_thrust_S_1 | `art/raw/ss01-kindled-ash/heavy/south 8` | 40 | 7.57 | 0 | 22, 8 | 0 | 15 **flag** | 129 |
-| heavy_thrust_SE_0 | `art/raw/ss01-kindled-ash/heavy/south-east 7` | 65 | 7.69 | -1 | 22, 7 | 1 | 17 **flag** | 121 |
-| heavy_thrust_SE_1 | `art/raw/ss01-kindled-ash/heavy/south-east 8` | 40 | 6.92 | -1 | 22, 7 | 0 | 18 **flag** | 128 |
-| heavy_thrust_E_0 | `art/raw/ss01-kindled-ash/heavy/east 6` | 20 | 6.26 | -1 | 22, 7 | 0 | 12 | 73 |
-| heavy_thrust_E_1 | `art/raw/ss01-kindled-ash/heavy/east 7` | 34 | 7.22 | -1 | 22, 7 | 1 | 14 **flag** | 61 |
-| heavy_thrust_NE_0 | `art/raw/ss01-kindled-ash/heavy/north-east 6` | 18 | 7.72 | -1 | 22, 7 | 0 | 13 **flag** | 1 |
-| heavy_thrust_NE_1 | `art/raw/ss01-kindled-ash/heavy/north-east 7` | 73 | 6.15 | -1 | 22, 7 | 3 | 19 **flag** | 23 |
-| heavy_thrust_W_0 | `art/raw/ss01-kindled-ash/heavy/west 7` | 38 | 6.52 | -1 | 22, 7 | 1 | 12 | 66 |
-| heavy_thrust_W_1 | `art/raw/ss01-kindled-ash/heavy/west 8` | 41 | 6.89 | -1 | 22, 7 | 0 | 15 **flag** | 72 |
-| heavy_thrust_SW_0 | `art/raw/ss01-kindled-ash/heavy/south-west 7` | 103 | 6.92 | -1 | 22, 7 | 1 | 19 **flag** | 163 |
-| heavy_thrust_SW_1 | `art/raw/ss01-kindled-ash/heavy/south-west 8` | 66 | 6.92 | -1 | 22, 7 | 0 | 19 **flag** | 136 |
-| heavy_hold_S_0 | `art/raw/ss01-kindled-ash/heavy/south 8` | 40 | 7.57 | 0 | 22, 8 | 0 | 15 **flag** | 129 |
-| heavy_hold_SE_0 | `art/raw/ss01-kindled-ash/heavy/south-east 8` | 40 | 6.92 | -1 | 22, 7 | 0 | 18 **flag** | 128 |
-| heavy_hold_E_0 | `art/raw/ss01-kindled-ash/heavy/east 8` | 24 | 7.71 | -1 | 22, 7 | 1 | 16 **flag** | 58 |
-| heavy_hold_NE_0 | `art/raw/ss01-kindled-ash/heavy/north-east 8` | 65 | 6.15 | -1 | 22, 7 | 1 | 15 **flag** | 29 |
-| heavy_hold_W_0 | `art/raw/ss01-kindled-ash/heavy/west 8` | 41 | 6.89 | -1 | 22, 7 | 0 | 15 **flag** | 72 |
-| heavy_hold_SW_0 | `art/raw/ss01-kindled-ash/heavy/south-west 8` | 66 | 6.92 | -1 | 22, 7 | 0 | 19 **flag** | 136 |
-| heavy_recover_S_0 | `art/raw/ss01-kindled-ash/heavy/south 10` | 23 | 5.88 | 0 | 22, 8 | 1 | 13 **flag** | 129 |
-| heavy_recover_S_1 | `art/raw/ss01-kindled-ash/heavy/south 1` | 53 | 6.22 | 0 | 22, 8 | 0 | 15 **flag** | 161 |
-| heavy_recover_SE_0 | `art/raw/ss01-kindled-ash/heavy/south-east 10` | 40 | 7.84 | -1 | 22, 7 | 1 | 19 **flag** | 127 |
-| heavy_recover_SE_1 | `art/raw/ss01-kindled-ash/heavy/south-east 1` | 78 | 6.92 | -1 | 22, 7 | 0 | 17 **flag** | 142 |
-| heavy_recover_E_0 | `art/raw/ss01-kindled-ash/heavy/east 10` | 20 | 6.15 | -1 | 22, 7 | 2 | 13 **flag** | 59 |
-| heavy_recover_E_1 | `art/raw/ss01-kindled-ash/heavy/east 1` | 62 | 7.71 | -1 | 22, 7 | 2 | 17 **flag** | 75 |
-| heavy_recover_NE_0 | `art/raw/ss01-kindled-ash/heavy/north-east 10` | 62 | 7.72 | -1 | 22, 7 | 0 | 16 **flag** | 25 |
-| heavy_recover_NE_1 | `art/raw/ss01-kindled-ash/heavy/north-east 1` | 20 | 6.15 | -1 | 22, 7 | 0 | 11 | 1 |
-| heavy_recover_W_0 | `art/raw/ss01-kindled-ash/heavy/west 10` | 34 | 6.89 | -1 | 22, 7 | 3 | 16 **flag** | 71 |
-| heavy_recover_W_1 | `art/raw/ss01-kindled-ash/heavy/west 1` | 49 | 7.66 | -1 | 22, 7 | 4 | 15 **flag** | 72 |
-| heavy_recover_SW_0 | `art/raw/ss01-kindled-ash/heavy/south-west 10` | 45 | 6.15 | -1 | 22, 7 | 1 | 16 **flag** | 136 |
-| heavy_recover_SW_1 | `art/raw/ss01-kindled-ash/heavy/south-west 1` | 104 | 6.92 | -1 | 22, 7 | 2 | 19 **flag** | 151 |
-| haul_throw_S_0 | `art/raw/ss01-kindled-ash/haul/south 2` | 51 | 6.06 | 0 | 22, 8 | 0 | 15 **flag** | 176 |
-| haul_throw_S_1 | `art/raw/ss01-kindled-ash/haul/south 3` | 48 | 7.06 | 0 | 22, 8 | 2 | 17 **flag** | 165 |
-| haul_throw_SE_0 | `art/raw/ss01-kindled-ash/haul/south-east 2` | 87 | 6.92 | -1 | 22, 7 | 3 | 18 **flag** | 138 |
-| haul_throw_SE_1 | `art/raw/ss01-kindled-ash/haul/south-east 4` | 40 | 6.92 | -1 | 22, 7 | 21 | 13 **flag** | 113 |
-| haul_throw_E_0 | `art/raw/ss01-kindled-ash/haul/east 2` | 52 | 6.92 | -1 | 22, 7 | 2 | 18 **flag** | 78 |
-| haul_throw_E_1 | `art/raw/ss01-kindled-ash/haul/east 3` | 50 | 6.4 | -1 | 22, 7 | 2 | 17 **flag** | 75 |
-| haul_throw_NE_0 | `art/raw/ss01-kindled-ash/haul/north-east 2` | 58 | 7.56 | -1 | 22, 7 | 1 | 14 **flag** | 12 |
-| haul_throw_NE_1 | `art/raw/ss01-kindled-ash/haul/north-east 3` | 76 | 6.25 | -1 | 22, 7 | 0 | 15 **flag** | 10 |
-| haul_throw_N_0 | `art/raw/ss01-kindled-ash/haul/north 2` | 11 | 4.2 | -1 | 22, 7 | 1 | 6 | 0 |
-| haul_throw_N_1 | `art/raw/ss01-kindled-ash/haul/north 3` | 20 | 5.57 | -1 | 22, 7 | 2 | 11 | 1 |
-| haul_throw_NW_0 | `art/raw/ss01-kindled-ash/haul/north-west 1` | 28 | 7.42 | -1 | 22, 7 | 1 | 8 | 24 |
-| haul_throw_NW_1 | `art/raw/ss01-kindled-ash/haul/north-west 2` | 22 | 7.42 | -1 | 22, 7 | 1 | 9 | 16 |
-| haul_throw_W_0 | `art/raw/ss01-kindled-ash/haul/west 2` | 42 | 6.89 | -1 | 22, 7 | 0 | 12 | 51 |
-| haul_throw_W_1 | `art/raw/ss01-kindled-ash/haul/west 3` | 76 | 6.89 | -1 | 22, 7 | 4 | 15 **flag** | 61 |
-| haul_throw_SW_0 | `art/raw/ss01-kindled-ash/haul/south-west 2` | 60 | 6.92 | -1 | 22, 7 | 1 | 15 **flag** | 137 |
-| haul_throw_SW_1 | `art/raw/ss01-kindled-ash/haul/south-west 4` | 60 | 6.92 | -1 | 22, 7 | 1 | 14 **flag** | 113 |
-| haul_recover_S_0 | `art/raw/ss01-kindled-ash/haul/south 6` | 25 | 7.56 | 0 | 22, 8 | 0 | 16 **flag** | 166 |
-| haul_recover_S_1 | `art/raw/ss01-kindled-ash/haul/south 1` | 72 | 7.06 | 0 | 22, 8 | 4 | 17 **flag** | 158 |
-| haul_recover_SE_0 | `art/raw/ss01-kindled-ash/haul/south-east 5` | 43 | 6.92 | -1 | 22, 7 | 0 | 16 **flag** | 118 |
-| haul_recover_SE_1 | `art/raw/ss01-kindled-ash/haul/south-east 6` | 34 | 6.55 | -1 | 22, 7 | 0 | 14 **flag** | 125 |
-| haul_recover_E_0 | `art/raw/ss01-kindled-ash/haul/east 5` | 58 | 6.92 | -1 | 22, 7 | 1 | 15 **flag** | 82 |
-| haul_recover_E_1 | `art/raw/ss01-kindled-ash/haul/east 6` | 35 | 6.92 | -1 | 22, 7 | 1 | 15 **flag** | 77 |
-| haul_recover_NE_0 | `art/raw/ss01-kindled-ash/haul/north-east 5` | 60 | 7.91 | -1 | 22, 7 | 1 | 13 **flag** | 13 |
-| haul_recover_NE_1 | `art/raw/ss01-kindled-ash/haul/north-east 6` | 33 | 7.25 | -1 | 22, 7 | 0 | 11 | 13 |
-| haul_recover_N_0 | `art/raw/ss01-kindled-ash/haul/north 5` | 15 | 5.83 | -1 | 22, 7 | 0 | 7 | 1 |
-| haul_recover_N_1 | `art/raw/ss01-kindled-ash/haul/north 6` | 4 | 5.57 | -1 | 22, 7 | 0 | 5 | 0 |
-| haul_recover_NW_0 | `art/raw/ss01-kindled-ash/haul/north-west 5` | 20 | 4.7 | -1 | 22, 7 | 0 | 9 | 22 |
-| haul_recover_NW_1 | `art/raw/ss01-kindled-ash/haul/north-west 6` | 15 | 4.7 | -1 | 22, 7 | 1 | 8 | 5 |
-| haul_recover_W_0 | `art/raw/ss01-kindled-ash/haul/west 5` | 62 | 6.89 | -1 | 22, 7 | 1 | 15 **flag** | 66 |
-| haul_recover_W_1 | `art/raw/ss01-kindled-ash/haul/west 6` | 47 | 6.89 | -1 | 22, 7 | 1 | 14 **flag** | 63 |
-| haul_recover_SW_0 | `art/raw/ss01-kindled-ash/haul/south-west 5` | 63 | 6.92 | -1 | 22, 7 | 0 | 18 **flag** | 120 |
-| haul_recover_SW_1 | `art/raw/ss01-kindled-ash/haul/south-west 6` | 46 | 7.06 | -1 | 22, 7 | 0 | 17 **flag** | 140 |
-| haul_pull_S_0 | `art/raw/ss01-kindled-ash/haul_pull/south 1` | 116 | 6.64 | 0 | 22, 8 | 0 | 16 **flag** | 144 |
-| haul_pull_S_1 | `art/raw/ss01-kindled-ash/haul_pull/south 3` | 109 | 7.49 | 0 | 22, 8 | 0 | 17 **flag** | 136 |
-| haul_pull_SE_0 | `art/raw/ss01-kindled-ash/haul_pull/south-east 1` | 125 | 7.1 | -1 | 22, 7 | 4 | 16 **flag** | 147 |
-| haul_pull_SE_1 | `art/raw/ss01-kindled-ash/haul_pull/south-east 4` | 78 | 6.92 | -1 | 22, 7 | 2 | 15 **flag** | 119 |
-| haul_pull_E_0 | `art/raw/ss01-kindled-ash/haul_pull/east 1` | 184 | 8.89 | -1 | 22, 7 | 2 | 18 **flag** | 100 |
-| haul_pull_E_1 | `art/raw/ss01-kindled-ash/haul_pull/east 2` | 85 | 7.42 | -1 | 22, 7 | 0 | 13 **flag** | 111 |
-| haul_pull_NE_0 | `art/raw/ss01-kindled-ash/haul_pull/north-east 2` | 50 | 7.15 | -1 | 22, 7 | 4 | 13 **flag** | 9 |
-| haul_pull_NE_1 | `art/raw/ss01-kindled-ash/haul_pull/north-east 4` | 40 | 6.15 | -1 | 22, 7 | 0 | 15 **flag** | 12 |
-| haul_pull_N_0 | `art/raw/ss01-kindled-ash/haul_pull/north 1` | 2 | 5.83 | -1 | 22, 7 | 0 | 5 | 1 |
-| haul_pull_N_1 | `art/raw/ss01-kindled-ash/haul_pull/north 3` | 4 | 5.31 | -1 | 22, 7 | 2 | 6 | 0 |
-| haul_pull_NW_0 | `art/raw/ss01-kindled-ash/haul_pull/north-west 1` | 55 | 7.72 | -1 | 22, 7 | 1 | 12 | 22 |
-| haul_pull_NW_1 | `art/raw/ss01-kindled-ash/haul_pull/north-west 3` | 76 | 7.72 | -1 | 22, 7 | 4 | 15 **flag** | 32 |
-| haul_pull_W_0 | `art/raw/ss01-kindled-ash/haul_pull/west 1` | 58 | 7.39 | -1 | 22, 7 | 6 | 14 **flag** | 61 |
-| haul_pull_W_1 | `art/raw/ss01-kindled-ash/haul_pull/west 4` | 34 | 6.89 | -1 | 22, 7 | 2 | 15 **flag** | 65 |
-| haul_pull_SW_0 | `art/raw/ss01-kindled-ash/haul_pull/south-west 2` | 55 | 6.92 | -1 | 22, 7 | 1 | 18 **flag** | 141 |
-| haul_pull_SW_1 | `art/raw/ss01-kindled-ash/haul_pull/south-west 4` | 66 | 6.92 | -1 | 22, 7 | 1 | 16 **flag** | 149 |
-| haul_slide_S_0 | `art/raw/ss01-kindled-ash/haul_slide/south 1` | 62 | 8.24 | 0 | 22, 8 | 5 | 16 **flag** | 167 |
-| haul_slide_S_1 | `art/raw/ss01-kindled-ash/haul_slide/south 3` | 45 | 7.07 | 0 | 22, 8 | 12 | 15 **flag** | 142 |
-| haul_slide_SE_0 | `art/raw/ss01-kindled-ash/haul_slide/south-east 1` | 86 | 7.81 | -1 | 22, 7 | 7 | 19 **flag** | 141 |
-| haul_slide_SE_1 | `art/raw/ss01-kindled-ash/haul_slide/south-east 4` | 63 | 6.92 | -1 | 22, 7 | 7 | 16 **flag** | 153 |
-| haul_slide_E_0 | `art/raw/ss01-kindled-ash/haul_slide/east 1` | 84 | 8.11 | -1 | 22, 7 | 6 | 17 **flag** | 76 |
-| haul_slide_E_1 | `art/raw/ss01-kindled-ash/haul_slide/east 3` | 51 | 7.62 | -1 | 22, 7 | 3 | 18 **flag** | 90 |
-| haul_slide_NE_0 | `art/raw/ss01-kindled-ash/haul_slide/north-east 1` | 51 | 6.15 | -1 | 22, 7 | 1 | 15 **flag** | 7 |
-| haul_slide_NE_1 | `art/raw/ss01-kindled-ash/haul_slide/north-east 3` | 62 | 7.7 | -1 | 22, 7 | 5 | 18 **flag** | 21 |
-| haul_slide_N_0 | `art/raw/ss01-kindled-ash/haul_slide/north 2` | 0 | 0 | -1 | 22, 7 | 0 | 4 | 0 |
-| haul_slide_N_1 | `art/raw/ss01-kindled-ash/haul_slide/north 4` | 6 | 4.63 | -1 | 22, 7 | 0 | 6 | 0 |
-| haul_slide_NW_0 | `art/raw/ss01-kindled-ash/haul_slide/north-west 1` | 35 | 5.53 | -1 | 22, 7 | 1 | 11 | 15 |
-| haul_slide_NW_1 | `art/raw/ss01-kindled-ash/haul_slide/north-west 3` | 36 | 5.61 | -1 | 22, 7 | 3 | 11 | 16 |
-| haul_slide_W_0 | `art/raw/ss01-kindled-ash/haul_slide/west 1` | 91 | 7.58 | -1 | 22, 7 | 4 | 20 **flag** | 66 |
-| haul_slide_W_1 | `art/raw/ss01-kindled-ash/haul_slide/west 4` | 53 | 6.89 | -1 | 22, 7 | 1 | 15 **flag** | 16 |
-| haul_slide_SW_0 | `art/raw/ss01-kindled-ash/haul_slide/south-west 1` | 94 | 6.92 | -1 | 22, 7 | 6 | 19 **flag** | 136 |
-| haul_slide_SW_1 | `art/raw/ss01-kindled-ash/haul_slide/south-west 4` | 49 | 6.92 | -1 | 22, 7 | 0 | 16 **flag** | 145 |
-| hit_S_0 | `art/raw/ss01-kindled-ash/hit/south 1` | 59 | 7.9 | -1 | 16, 1 | 24 | 16 **flag** | 133 |
-| hit_S_1 | `art/raw/ss01-kindled-ash/hit/south 2` | 66 | 7.9 | -1 | 16, 1 | 10 | 17 **flag** | 144 |
-| hit_E_0 | `art/raw/ss01-kindled-ash/hit/east 1` | 158 | 6.79 | -1 | 16, 1 | 29 | 12 | 82 |
-| hit_E_1 | `art/raw/ss01-kindled-ash/hit/east 3` | 139 | 6.79 | -1 | 16, 1 | 21 | 15 **flag** | 99 |
-| hit_N_0 | `art/raw/ss01-kindled-ash/hit/north 1` | 28 | 6.78 | -1 | 16, 1 | 3 | 10 | 2 |
-| hit_N_1 | `art/raw/ss01-kindled-ash/hit/north 3` | 27 | 6.78 | -1 | 16, 1 | 3 | 12 | 1 |
-| hit_W_0 | `art/raw/ss01-kindled-ash/hit/west 1` | 64 | 6.52 | -1 | 16, 1 | 9 | 12 | 48 |
-| hit_W_1 | `art/raw/ss01-kindled-ash/hit/west 2` | 120 | 6.89 | -1 | 16, 1 | 20 | 12 | 57 |
-| death_S_0 | `art/raw/ss01-kindled-ash/death/south 1` | 0 | 0 | -1 | 16, 1 | 8 | 11 | 153 |
-| death_S_1 | `art/raw/ss01-kindled-ash/death/south 2` | 0 | 0 | -1 | 16, 1 | 5 | 11 | 142 |
-| death_S_2 | `art/raw/ss01-kindled-ash/death/south 3` | 0 | 0 | -1 | 16, 1 | 6 | 11 | 141 |
-| death_S_3 | `art/raw/ss01-kindled-ash/death/south 4` | 0 | 0 | -1 | 16, 1 | 10 | 10 | 126 |
-| death_S_4 | `art/raw/ss01-kindled-ash/death/south 5` | 0 | 0 | -1 | 16, 1 | 23 | 9 | 116 |
-| death_S_5 | `art/raw/ss01-kindled-ash/death/south 6` | 0 | 0 | -1 | 16, 1 | 20 | 10 | 80 |
-| death_E_0 | `art/raw/ss01-kindled-ash/death/east 1` | 130 | 6.15 | -1 | 16, 1 | 24 | 14 **flag** | 55 |
-| death_E_1 | `art/raw/ss01-kindled-ash/death/east 2` | 169 | 6.49 | -1 | 16, 1 | 78 | 12 | 92 |
-| death_E_2 | `art/raw/ss01-kindled-ash/death/east 3` | 163 | 6.15 | -1 | 16, 1 | 35 | 13 **flag** | 65 |
-| death_E_3 | `art/raw/ss01-kindled-ash/death/east 4` | 112 | 6.15 | -1 | 16, 1 | 27 | 12 | 67 |
-| death_E_4 | `art/raw/ss01-kindled-ash/death/east 5` | 266 | 6.59 | -1 | 16, 1 | 103 | 12 | 92 |
-| death_E_5 | `art/raw/ss01-kindled-ash/death/east 6` | 315 | 6.59 | -1 | 16, 1 | 93 | 10 | 199 |
-| death_N_0 | `art/raw/ss01-kindled-ash/death/north 1` | 40 | 7.55 | -3 | 16, -1 | 5 | 12 | 1 |
-| death_N_1 | `art/raw/ss01-kindled-ash/death/north 2` | 32 | 7.55 | -3 | 16, -1 | 7 | 9 | 1 |
-| death_N_2 | `art/raw/ss01-kindled-ash/death/north 3` | 0 | 0 | -3 | 16, -1 | 1 | 4 | 0 |
-| death_N_3 | `art/raw/ss01-kindled-ash/death/north 4` | 0 | 0 | -3 | 16, -1 | 1 | 4 | 0 |
-| death_N_4 | `art/raw/ss01-kindled-ash/death/north 5` | 0 | 0 | -3 | 16, -1 | 4 | 4 | 0 |
-| death_N_5 | `art/raw/ss01-kindled-ash/death/north 6` | 34 | 7.55 | -3 | 16, -1 | 5 | 11 | 2 |
-| death_W_0 | `art/raw/ss01-kindled-ash/death/west 1` | 108 | 6.52 | -1 | 16, 1 | 13 | 12 | 59 |
-| death_W_1 | `art/raw/ss01-kindled-ash/death/west 2` | 198 | 6.52 | -1 | 16, 1 | 47 | 10 | 133 |
-| death_W_2 | `art/raw/ss01-kindled-ash/death/west 3` | 208 | 6.89 | -1 | 16, 1 | 29 | 13 **flag** | 111 |
-| death_W_3 | `art/raw/ss01-kindled-ash/death/west 4` | 140 | 6.52 | -1 | 16, 1 | 8 | 10 | 112 |
-| death_W_4 | `art/raw/ss01-kindled-ash/death/west 5` | 239 | 6.52 | -1 | 16, 1 | 27 | 10 | 119 |
-| death_W_5 | `art/raw/ss01-kindled-ash/death/west 6` | 192 | 6.52 | -1 | 16, 1 | 23 | 10 | 118 |
+| idle_S_0 | `art/raw/ss01-kindled-ash/idle/south 0` | 0 | 0 | -2 | 8, 0 | 4 | 11 | 179 |
+| idle_S_1 | `art/raw/ss01-kindled-ash/idle/south 2` | 11 | 7.27 | -2 | 8, 0 | 5 | 15 **flag** | 181 |
+| idle_SE_0 | `art/raw/ss01-kindled-ash/idle/south-east 0` | 81 | 6.92 | -1 | 8, 1 | 5 | 15 **flag** | 148 |
+| idle_SE_1 | `art/raw/ss01-kindled-ash/idle/south-east 2` | 78 | 6.92 | -1 | 8, 1 | 2 | 15 **flag** | 149 |
+| idle_E_0 | `art/raw/ss01-kindled-ash/idle/east 0` | 82 | 6.15 | -1 | 8, 1 | 18 | 14 **flag** | 69 |
+| idle_E_1 | `art/raw/ss01-kindled-ash/idle/east 2` | 69 | 6.15 | -1 | 8, 1 | 10 | 14 **flag** | 77 |
+| idle_NE_0 | `art/raw/ss01-kindled-ash/idle/north-east 0` | 15 | 6.15 | -1 | 8, 1 | 3 | 11 | 13 |
+| idle_NE_1 | `art/raw/ss01-kindled-ash/idle/north-east 2` | 15 | 6.15 | -1 | 8, 1 | 1 | 11 | 13 |
+| idle_N_0 | `art/raw/ss01-kindled-ash/idle/north 0` | 0 | 0 | -1 | 8, 1 | 6 | 4 | 0 |
+| idle_N_1 | `art/raw/ss01-kindled-ash/idle/north 2` | 0 | 0 | -1 | 8, 1 | 3 | 4 | 0 |
+| idle_NW_0 | `art/raw/ss01-kindled-ash/idle/north-west 0` | 38 | 5.53 | -1 | 8, 1 | 0 | 8 | 13 |
+| idle_NW_1 | `art/raw/ss01-kindled-ash/idle/north-west 2` | 28 | 5.53 | -1 | 8, 1 | 0 | 9 | 13 |
+| idle_W_0 | `art/raw/ss01-kindled-ash/idle/west 0` | 82 | 6.89 | -1 | 8, 1 | 34 | 14 **flag** | 69 |
+| idle_W_1 | `art/raw/ss01-kindled-ash/idle/west 2` | 63 | 6.89 | -1 | 8, 1 | 11 | 14 **flag** | 69 |
+| idle_SW_0 | `art/raw/ss01-kindled-ash/idle/south-west 0` | 83 | 6.92 | -1 | 8, 1 | 4 | 17 **flag** | 149 |
+| idle_SW_1 | `art/raw/ss01-kindled-ash/idle/south-west 2` | 72 | 6.92 | -1 | 8, 1 | 5 | 16 **flag** | 142 |
+| walk_S_0 | `art/raw/ss01-kindled-ash/walk/south 0` | 0 | 0 | 0 | 8, 2 | 9 | 12 | 175 |
+| walk_S_1 | `art/raw/ss01-kindled-ash/walk/south 1` | 0 | 0 | -1 | 8, 1 | 4 | 12 | 175 |
+| walk_S_2 | `art/raw/ss01-kindled-ash/walk/south 2` | 13 | 6.81 | -1 | 8, 1 | 5 | 16 **flag** | 170 |
+| walk_S_3 | `art/raw/ss01-kindled-ash/walk/south 3` | 0 | 0 | 0 | 8, 2 | 1 | 12 | 172 |
+| walk_S_4 | `art/raw/ss01-kindled-ash/walk/south 4` | 0 | 0 | -1 | 8, 1 | 2 | 12 | 172 |
+| walk_S_5 | `art/raw/ss01-kindled-ash/walk/south 5` | 0 | 0 | -1 | 8, 1 | 7 | 11 | 177 |
+| walk_SE_0 | `art/raw/ss01-kindled-ash/walk/south-east 0` | 95 | 6.92 | -1 | 8, 1 | 2 | 16 **flag** | 151 |
+| walk_SE_1 | `art/raw/ss01-kindled-ash/walk/south-east 1` | 92 | 6.92 | -1 | 8, 1 | 1 | 15 **flag** | 140 |
+| walk_SE_2 | `art/raw/ss01-kindled-ash/walk/south-east 2` | 82 | 6.92 | -1 | 8, 1 | 1 | 15 **flag** | 143 |
+| walk_SE_3 | `art/raw/ss01-kindled-ash/walk/south-east 3` | 42 | 6.92 | -1 | 8, 1 | 1 | 15 **flag** | 151 |
+| walk_SE_4 | `art/raw/ss01-kindled-ash/walk/south-east 4` | 102 | 6.92 | -1 | 8, 1 | 0 | 14 **flag** | 154 |
+| walk_SE_5 | `art/raw/ss01-kindled-ash/walk/south-east 5` | 119 | 6.92 | -1 | 8, 1 | 10 | 14 **flag** | 155 |
+| walk_E_0 | `art/raw/ss01-kindled-ash/walk/east 0` | 27 | 6.15 | -1 | 8, 1 | 10 | 14 **flag** | 78 |
+| walk_E_1 | `art/raw/ss01-kindled-ash/walk/east 1` | 67 | 6.15 | -1 | 8, 1 | 18 | 13 **flag** | 86 |
+| walk_E_2 | `art/raw/ss01-kindled-ash/walk/east 2` | 56 | 6.15 | -1 | 8, 1 | 15 | 14 **flag** | 81 |
+| walk_E_3 | `art/raw/ss01-kindled-ash/walk/east 3` | 19 | 6.15 | -1 | 8, 1 | 0 | 14 **flag** | 79 |
+| walk_E_4 | `art/raw/ss01-kindled-ash/walk/east 4` | 39 | 6.15 | -1 | 8, 1 | 14 | 14 **flag** | 79 |
+| walk_E_5 | `art/raw/ss01-kindled-ash/walk/east 5` | 42 | 6.15 | -1 | 8, 1 | 24 | 13 **flag** | 78 |
+| walk_NE_0 | `art/raw/ss01-kindled-ash/walk/north-east 0` | 24 | 6.15 | -1 | 8, 1 | 8 | 12 | 11 |
+| walk_NE_1 | `art/raw/ss01-kindled-ash/walk/north-east 1` | 33 | 6.15 | -3 | 8, -1 | 9 | 12 | 12 |
+| walk_NE_2 | `art/raw/ss01-kindled-ash/walk/north-east 2` | 29 | 6.15 | -2 | 8, 0 | 5 | 12 | 10 |
+| walk_NE_3 | `art/raw/ss01-kindled-ash/walk/north-east 3` | 11 | 6.15 | -1 | 8, 1 | 0 | 11 | 12 |
+| walk_NE_4 | `art/raw/ss01-kindled-ash/walk/north-east 4` | 36 | 6.15 | -1 | 8, 1 | 1 | 12 | 11 |
+| walk_NE_5 | `art/raw/ss01-kindled-ash/walk/north-east 5` | 28 | 6.15 | -1 | 8, 1 | 6 | 12 | 11 |
+| walk_N_0 | `art/raw/ss01-kindled-ash/walk/north 0` | 0 | 0 | -1 | 8, 1 | 0 | 4 | 0 |
+| walk_N_1 | `art/raw/ss01-kindled-ash/walk/north 1` | 0 | 0 | -2 | 8, 0 | 0 | 4 | 0 |
+| walk_N_2 | `art/raw/ss01-kindled-ash/walk/north 2` | 0 | 0 | -2 | 8, 0 | 0 | 4 | 0 |
+| walk_N_3 | `art/raw/ss01-kindled-ash/walk/north 3` | 0 | 0 | -1 | 8, 1 | 0 | 4 | 0 |
+| walk_N_4 | `art/raw/ss01-kindled-ash/walk/north 4` | 0 | 0 | -2 | 8, 0 | 3 | 4 | 0 |
+| walk_N_5 | `art/raw/ss01-kindled-ash/walk/north 5` | 0 | 0 | -1 | 8, 1 | 2 | 4 | 0 |
+| walk_NW_0 | `art/raw/ss01-kindled-ash/walk/north-west 0` | 22 | 5.53 | -1 | 8, 1 | 0 | 9 | 8 |
+| walk_NW_1 | `art/raw/ss01-kindled-ash/walk/north-west 1` | 44 | 5.53 | -1 | 8, 1 | 3 | 9 | 4 |
+| walk_NW_2 | `art/raw/ss01-kindled-ash/walk/north-west 2` | 40 | 5.53 | -1 | 8, 1 | 3 | 9 | 6 |
+| walk_NW_3 | `art/raw/ss01-kindled-ash/walk/north-west 3` | 24 | 5.53 | -1 | 8, 1 | 0 | 9 | 12 |
+| walk_NW_4 | `art/raw/ss01-kindled-ash/walk/north-west 4` | 33 | 5.53 | -2 | 8, 0 | 0 | 9 | 8 |
+| walk_NW_5 | `art/raw/ss01-kindled-ash/walk/north-west 5` | 34 | 5.53 | -1 | 8, 1 | 1 | 9 | 9 |
+| walk_W_0 | `art/raw/ss01-kindled-ash/walk/west 0` | 22 | 6.89 | -1 | 8, 1 | 1 | 14 **flag** | 69 |
+| walk_W_1 | `art/raw/ss01-kindled-ash/walk/west 1` | 56 | 6.89 | 0 | 8, 2 | 6 | 13 **flag** | 68 |
+| walk_W_2 | `art/raw/ss01-kindled-ash/walk/west 2` | 70 | 6.89 | -1 | 8, 1 | 12 | 15 **flag** | 70 |
+| walk_W_3 | `art/raw/ss01-kindled-ash/walk/west 3` | 20 | 6.89 | -1 | 8, 1 | 1 | 15 **flag** | 69 |
+| walk_W_4 | `art/raw/ss01-kindled-ash/walk/west 4` | 59 | 6.89 | -1 | 8, 1 | 10 | 14 **flag** | 67 |
+| walk_W_5 | `art/raw/ss01-kindled-ash/walk/west 5` | 71 | 6.89 | -1 | 8, 1 | 9 | 14 **flag** | 68 |
+| walk_SW_0 | `art/raw/ss01-kindled-ash/walk/south-west 0` | 50 | 6.92 | -1 | 8, 1 | 3 | 17 **flag** | 143 |
+| walk_SW_1 | `art/raw/ss01-kindled-ash/walk/south-west 1` | 53 | 6.92 | -1 | 8, 1 | 4 | 17 **flag** | 139 |
+| walk_SW_2 | `art/raw/ss01-kindled-ash/walk/south-west 2` | 57 | 6.92 | -1 | 8, 1 | 10 | 17 **flag** | 142 |
+| walk_SW_3 | `art/raw/ss01-kindled-ash/walk/south-west 3` | 49 | 6.92 | -1 | 8, 1 | 1 | 17 **flag** | 145 |
+| walk_SW_4 | `art/raw/ss01-kindled-ash/walk/south-west 4` | 52 | 6.92 | -1 | 8, 1 | 3 | 14 **flag** | 129 |
+| walk_SW_5 | `art/raw/ss01-kindled-ash/walk/south-west 5` | 60 | 6.92 | -1 | 8, 1 | 3 | 16 **flag** | 140 |
+| dodge_S_0 | `art/raw/ss01-kindled-ash/dodge/south 3` | 116 | 7.82 | 0 | 14, 8 | 1 | 15 **flag** | 172 |
+| dodge_S_1 | `art/raw/ss01-kindled-ash/dodge/south 4` | 62 | 6.93 | 0 | 14, 8 | 1 | 17 **flag** | 97 |
+| dodge_S_2 | `art/raw/ss01-kindled-ash/dodge/south 6` | 92 | 6.93 | 0 | 14, 8 | 5 | 16 **flag** | 83 |
+| dodge_S_3 | `art/raw/ss01-kindled-ash/dodge/south 7` | 94 | 6.93 | 0 | 14, 8 | 2 | 16 **flag** | 124 |
+| dodge_SE_0 | `art/raw/ss01-kindled-ash/dodge/south-east 2` | 84 | 7.08 | -1 | 14, 7 | 14 | 17 **flag** | 135 |
+| dodge_SE_1 | `art/raw/ss01-kindled-ash/dodge/south-east 3` | 115 | 7.15 | -1 | 14, 7 | 6 | 17 **flag** | 90 |
+| dodge_SE_2 | `art/raw/ss01-kindled-ash/dodge/south-east 6` | 82 | 6.92 | -1 | 14, 7 | 2 | 18 **flag** | 100 |
+| dodge_SE_3 | `art/raw/ss01-kindled-ash/dodge/south-east 7` | 88 | 7.5 | -1 | 14, 7 | 7 | 17 **flag** | 131 |
+| dodge_E_0 | `art/raw/ss01-kindled-ash/dodge/east 3` | 121 | 9.84 | -1 | 14, 7 | 3 | 17 **flag** | 86 |
+| dodge_E_1 | `art/raw/ss01-kindled-ash/dodge/east 4` | 55 | 6.15 | -1 | 14, 7 | 0 | 14 **flag** | 98 |
+| dodge_E_2 | `art/raw/ss01-kindled-ash/dodge/east 5` | 82 | 7.74 | -1 | 14, 7 | 1 | 15 **flag** | 89 |
+| dodge_E_3 | `art/raw/ss01-kindled-ash/dodge/east 7` | 81 | 8.35 | -1 | 14, 7 | 0 | 15 **flag** | 74 |
+| dodge_NE_0 | `art/raw/ss01-kindled-ash/dodge-take1/north-east 3` | 36 | 6.15 | -1 | 14, 7 | 1 | 15 **flag** | 18 |
+| dodge_NE_1 | `art/raw/ss01-kindled-ash/dodge-take1/north-east 4` | 25 | 6.15 | -1 | 14, 7 | 1 | 12 | 17 |
+| dodge_NE_2 | `art/raw/ss01-kindled-ash/dodge-take1/north-east 6` | 17 | 6.15 | -1 | 14, 7 | 2 | 12 | 21 |
+| dodge_NE_3 | `art/raw/ss01-kindled-ash/dodge-take1/north-east 7` | 20 | 6.15 | -1 | 14, 7 | 1 | 12 | 5 |
+| dodge_N_0 | `art/raw/ss01-kindled-ash/dodge-take1/north 1` | 10 | 4.93 | -1 | 14, 7 | 0 | 6 | 0 |
+| dodge_N_1 | `art/raw/ss01-kindled-ash/dodge-take1/north 4` | 26 | 11.13 | -1 | 14, 7 | 13 | 9 | 1 |
+| dodge_N_2 | `art/raw/ss01-kindled-ash/dodge-take1/north 6` | 42 | 10.92 | -1 | 14, 7 | 14 | 14 **flag** | 1 |
+| dodge_NW_0 | `art/raw/ss01-kindled-ash/dodge/north-west 2` | 32 | 7.12 | -1 | 14, 7 | 0 | 13 **flag** | 15 |
+| dodge_NW_1 | `art/raw/ss01-kindled-ash/dodge/north-west 4` | 50 | 5.87 | -1 | 14, 7 | 1 | 13 **flag** | 17 |
+| dodge_NW_2 | `art/raw/ss01-kindled-ash/dodge/north-west 6` | 87 | 7.71 | -1 | 14, 7 | 1 | 13 **flag** | 21 |
+| dodge_NW_3 | `art/raw/ss01-kindled-ash/dodge/north-west 8` | 62 | 6.77 | -1 | 14, 7 | 1 | 13 **flag** | 14 |
+| dodge_W_0 | `art/raw/ss01-kindled-ash/dodge/west 4` | 42 | 6.52 | -1 | 14, 7 | 1 | 12 | 59 |
+| dodge_W_1 | `art/raw/ss01-kindled-ash/dodge/west 6` | 75 | 8.04 | -1 | 14, 7 | 3 | 16 **flag** | 55 |
+| dodge_W_2 | `art/raw/ss01-kindled-ash/dodge/west 7` | 94 | 8.04 | -1 | 14, 7 | 3 | 15 **flag** | 69 |
+| dodge_W_3 | `art/raw/ss01-kindled-ash/dodge/west 8` | 38 | 8.04 | -1 | 14, 7 | 1 | 15 **flag** | 64 |
+| dodge_SW_0 | `art/raw/ss01-kindled-ash/dodge/south-west 4` | 69 | 6.95 | -1 | 14, 7 | 3 | 18 **flag** | 118 |
+| dodge_SW_1 | `art/raw/ss01-kindled-ash/dodge/south-west 5` | 78 | 6.95 | -1 | 14, 7 | 3 | 18 **flag** | 84 |
+| dodge_SW_2 | `art/raw/ss01-kindled-ash/dodge/south-west 6` | 39 | 6.95 | -1 | 14, 7 | 1 | 14 **flag** | 77 |
+| dodge_SW_3 | `art/raw/ss01-kindled-ash/dodge/south-west 7` | 102 | 8.44 | -1 | 14, 7 | 0 | 18 **flag** | 106 |
+| light_1_S_0 | `art/raw/ss01-kindled-ash/light_1/south 1` | 50 | 7.37 | 0 | 14, 8 | 0 | 14 **flag** | 170 |
+| light_1_S_1 | `art/raw/ss01-kindled-ash/light_1/south 3` | 56 | 6.41 | 0 | 14, 8 | 0 | 14 **flag** | 165 |
+| light_1_S_2 | `art/raw/ss01-kindled-ash/light_1/south 6` | 52 | 6.41 | 0 | 14, 8 | 0 | 16 **flag** | 177 |
+| light_1_SE_0 | `art/raw/ss01-kindled-ash/light_1/south-east 2` | 65 | 6.92 | -1 | 14, 7 | 0 | 15 **flag** | 140 |
+| light_1_SE_1 | `art/raw/ss01-kindled-ash/light_1/south-east 4` | 94 | 8 | -1 | 14, 7 | 6 | 16 **flag** | 137 |
+| light_1_SE_2 | `art/raw/ss01-kindled-ash/light_1/south-east 6` | 63 | 7.18 | -1 | 14, 7 | 1 | 15 **flag** | 133 |
+| light_1_E_0 | `art/raw/ss01-kindled-ash/light_1/east 2` | 26 | 6.15 | -1 | 14, 7 | 1 | 17 **flag** | 76 |
+| light_1_E_1 | `art/raw/ss01-kindled-ash/light_1/east 3` | 77 | 6.85 | -1 | 14, 7 | 1 | 17 **flag** | 77 |
+| light_1_E_2 | `art/raw/ss01-kindled-ash/light_1/east 6` | 36 | 6.15 | -1 | 14, 7 | 3 | 17 **flag** | 79 |
+| light_1_NE_0 | `art/raw/ss01-kindled-ash/light_1/north-east 1` | 37 | 6.15 | -1 | 14, 7 | 1 | 16 **flag** | 15 |
+| light_1_NE_1 | `art/raw/ss01-kindled-ash/light_1/north-east 4` | 41 | 8.36 | -1 | 14, 7 | 1 | 11 | 7 |
+| light_1_NE_2 | `art/raw/ss01-kindled-ash/light_1/north-east 6` | 29 | 8.36 | -1 | 14, 7 | 1 | 12 | 15 |
+| light_1_N_0 | `art/raw/ss01-kindled-ash/light_1/north 5` | 15 | 6.48 | -1 | 14, 7 | 0 | 8 | 2 |
+| light_1_N_1 | `art/raw/ss01-kindled-ash/light_1/north 6` | 16 | 7.59 | -1 | 14, 7 | 3 | 8 | 0 |
+| light_1_NW_0 | `art/raw/ss01-kindled-ash/light_1/north-west 2` | 24 | 6.51 | -1 | 14, 7 | 1 | 9 | 8 |
+| light_1_NW_1 | `art/raw/ss01-kindled-ash/light_1/north-west 4` | 86 | 6.72 | -1 | 14, 7 | 1 | 10 | 25 |
+| light_1_NW_2 | `art/raw/ss01-kindled-ash/light_1/north-west 6` | 86 | 6.51 | -1 | 14, 7 | 0 | 12 | 22 |
+| light_1_W_0 | `art/raw/ss01-kindled-ash/light_1/west 4` | 92 | 8.64 | -1 | 14, 7 | 1 | 17 **flag** | 108 |
+| light_1_W_1 | `art/raw/ss01-kindled-ash/light_1/west 5` | 116 | 8.64 | -1 | 14, 7 | 7 | 17 **flag** | 95 |
+| light_1_W_2 | `art/raw/ss01-kindled-ash/light_1/west 6` | 45 | 8.64 | -1 | 14, 7 | 0 | 16 **flag** | 66 |
+| light_1_SW_0 | `art/raw/ss01-kindled-ash/light_1/south-west 2` | 71 | 6.92 | -1 | 14, 7 | 1 | 18 **flag** | 154 |
+| light_1_SW_1 | `art/raw/ss01-kindled-ash/light_1/south-west 3` | 131 | 7.62 | -1 | 14, 7 | 18 | 19 **flag** | 128 |
+| light_1_SW_2 | `art/raw/ss01-kindled-ash/light_1/south-west 6` | 81 | 7.72 | -1 | 14, 7 | 4 | 18 **flag** | 141 |
+| light_2_S_0 | `art/raw/ss01-kindled-ash/light_2/south 2` | 38 | 6.45 | 0 | 14, 8 | 3 | 14 **flag** | 146 |
+| light_2_S_1 | `art/raw/ss01-kindled-ash/light_2/south 4` | 31 | 6.45 | 0 | 14, 8 | 0 | 16 **flag** | 141 |
+| light_2_S_2 | `art/raw/ss01-kindled-ash/light_2/south 6` | 36 | 6.45 | 0 | 14, 8 | 0 | 15 **flag** | 144 |
+| light_2_SE_0 | `art/raw/ss01-kindled-ash/light_2/south-east 4` | 69 | 6.92 | -1 | 14, 7 | 0 | 16 **flag** | 165 |
+| light_2_SE_1 | `art/raw/ss01-kindled-ash/light_2/south-east 5` | 112 | 6.92 | -1 | 14, 7 | 0 | 21 **flag** | 148 |
+| light_2_SE_2 | `art/raw/ss01-kindled-ash/light_2/south-east 6` | 65 | 6.55 | -1 | 14, 7 | 3 | 17 **flag** | 140 |
+| light_2_E_0 | `art/raw/ss01-kindled-ash/light_2/east 4` | 49 | 7.92 | -1 | 14, 7 | 0 | 18 **flag** | 67 |
+| light_2_E_1 | `art/raw/ss01-kindled-ash/light_2/east 5` | 73 | 6.52 | -1 | 14, 7 | 4 | 18 **flag** | 67 |
+| light_2_E_2 | `art/raw/ss01-kindled-ash/light_2/east 6` | 46 | 7.92 | -1 | 14, 7 | 1 | 17 **flag** | 70 |
+| light_2_NE_0 | `art/raw/ss01-kindled-ash/light_2/north-east 2` | 13 | 6.71 | -1 | 14, 7 | 1 | 11 | 8 |
+| light_2_NE_1 | `art/raw/ss01-kindled-ash/light_2/north-east 5` | 18 | 8.05 | -1 | 14, 7 | 4 | 13 **flag** | 5 |
+| light_2_NE_2 | `art/raw/ss01-kindled-ash/light_2/north-east 6` | 19 | 6.71 | -1 | 14, 7 | 5 | 11 | 17 |
+| light_2_NW_0 | `art/raw/ss01-kindled-ash/light_2/north-west 2` | 51 | 5.67 | -1 | 14, 7 | 0 | 16 **flag** | 3 |
+| light_2_NW_1 | `art/raw/ss01-kindled-ash/light_2/north-west 5` | 75 | 6.32 | -1 | 14, 7 | 5 | 14 **flag** | 10 |
+| light_2_NW_2 | `art/raw/ss01-kindled-ash/light_2/north-west 6` | 52 | 5.76 | -1 | 14, 7 | 5 | 13 **flag** | 15 |
+| light_2_W_0 | `art/raw/ss01-kindled-ash/light_2/west 2` | 51 | 6.98 | -1 | 14, 7 | 2 | 15 **flag** | 75 |
+| light_2_W_1 | `art/raw/ss01-kindled-ash/light_2/west 5` | 46 | 7.27 | -1 | 14, 7 | 2 | 16 **flag** | 53 |
+| light_2_W_2 | `art/raw/ss01-kindled-ash/light_2/west 6` | 22 | 6.98 | -1 | 14, 7 | 0 | 14 **flag** | 60 |
+| light_2_SW_0 | `art/raw/ss01-kindled-ash/light_2/south-west 2` | 63 | 6.92 | -1 | 14, 7 | 2 | 20 **flag** | 144 |
+| light_2_SW_1 | `art/raw/ss01-kindled-ash/light_2/south-west 3` | 103 | 7.43 | -1 | 14, 7 | 0 | 19 **flag** | 123 |
+| light_3_S_0 | `art/raw/ss01-kindled-ash/light_3/south 2` | 47 | 6.45 | 0 | 14, 8 | 1 | 16 **flag** | 136 |
+| light_3_S_1 | `art/raw/ss01-kindled-ash/light_3/south 3` | 61 | 7.29 | 0 | 14, 8 | 1 | 17 **flag** | 133 |
+| light_3_S_2 | `art/raw/ss01-kindled-ash/light_3/south 6` | 23 | 6.45 | 0 | 14, 8 | 0 | 17 **flag** | 136 |
+| light_3_SE_0 | `art/raw/ss01-kindled-ash/light_3/south-east 2` | 70 | 6.92 | -1 | 14, 7 | 2 | 18 **flag** | 153 |
+| light_3_SE_1 | `art/raw/ss01-kindled-ash/light_3/south-east 3` | 73 | 7.83 | -1 | 14, 7 | 1 | 16 **flag** | 156 |
+| light_3_SE_2 | `art/raw/ss01-kindled-ash/light_3/south-east 6` | 57 | 7.83 | -1 | 14, 7 | 8 | 18 **flag** | 155 |
+| light_3_E_0 | `art/raw/ss01-kindled-ash/light_3/east 2` | 39 | 7.87 | -1 | 14, 7 | 1 | 16 **flag** | 81 |
+| light_3_E_1 | `art/raw/ss01-kindled-ash/light_3/east 4` | 42 | 7.87 | -1 | 14, 7 | 0 | 17 **flag** | 88 |
+| light_3_E_2 | `art/raw/ss01-kindled-ash/light_3/east 6` | 30 | 7.87 | -1 | 14, 7 | 0 | 17 **flag** | 83 |
+| light_3_N_0 | `art/raw/ss01-kindled-ash/light_3/north 2` | 44 | 7.48 | -1 | 14, 7 | 0 | 8 | 0 |
+| light_3_N_1 | `art/raw/ss01-kindled-ash/light_3/north 4` | 50 | 8.56 | -1 | 14, 7 | 2 | 9 | 0 |
+| light_3_N_2 | `art/raw/ss01-kindled-ash/light_3/north 5` | 44 | 8.56 | -1 | 14, 7 | 1 | 12 | 1 |
+| light_3_NW_0 | `art/raw/ss01-kindled-ash/light_3/north-west 4` | 26 | 5.53 | -1 | 14, 7 | 1 | 11 | 14 |
+| light_3_NW_1 | `art/raw/ss01-kindled-ash/light_3/north-west 6` | 27 | 5.53 | -1 | 14, 7 | 1 | 11 | 14 |
+| light_3_W_0 | `art/raw/ss01-kindled-ash/light_3/west 2` | 33 | 7.7 | -1 | 14, 7 | 1 | 16 **flag** | 68 |
+| light_3_W_1 | `art/raw/ss01-kindled-ash/light_3/west 4` | 23 | 6.89 | -1 | 14, 7 | 3 | 14 **flag** | 59 |
+| light_3_W_2 | `art/raw/ss01-kindled-ash/light_3/west 6` | 27 | 7.7 | -1 | 14, 7 | 1 | 13 **flag** | 57 |
+| light_3_SW_0 | `art/raw/ss01-kindled-ash/light_3/south-west 2` | 52 | 7.89 | -1 | 14, 7 | 0 | 18 **flag** | 153 |
+| light_3_SW_1 | `art/raw/ss01-kindled-ash/light_3/south-west 4` | 67 | 6.92 | -1 | 14, 7 | 3 | 18 **flag** | 156 |
+| light_3_SW_2 | `art/raw/ss01-kindled-ash/light_3/south-west 6` | 57 | 7.89 | -1 | 14, 7 | 0 | 18 **flag** | 144 |
+| heavy_charge_S_0 | `art/raw/ss01-kindled-ash/heavy/south 2` | 32 | 6.22 | 0 | 14, 8 | 1 | 16 **flag** | 163 |
+| heavy_charge_S_1 | `art/raw/ss01-kindled-ash/heavy/south 3` | 55 | 7.46 | 0 | 14, 8 | 1 | 16 **flag** | 156 |
+| heavy_charge_S_2 | `art/raw/ss01-kindled-ash/heavy/south 4` | 31 | 6.8 | 0 | 14, 8 | 1 | 15 **flag** | 146 |
+| heavy_charge_SE_0 | `art/raw/ss01-kindled-ash/heavy/south-east 2` | 51 | 6.92 | -1 | 14, 7 | 0 | 17 **flag** | 150 |
+| heavy_charge_SE_1 | `art/raw/ss01-kindled-ash/heavy/south-east 3` | 79 | 7.84 | -1 | 14, 7 | 3 | 19 **flag** | 141 |
+| heavy_charge_SE_2 | `art/raw/ss01-kindled-ash/heavy/south-east 4` | 49 | 7.26 | -1 | 14, 7 | 0 | 17 **flag** | 149 |
+| heavy_charge_E_0 | `art/raw/ss01-kindled-ash/heavy/east 2` | 38 | 7.79 | -1 | 14, 7 | 1 | 18 **flag** | 73 |
+| heavy_charge_E_1 | `art/raw/ss01-kindled-ash/heavy/east 3` | 45 | 7.71 | -1 | 14, 7 | 0 | 16 **flag** | 72 |
+| heavy_charge_E_2 | `art/raw/ss01-kindled-ash/heavy/east 4` | 30 | 7.88 | -1 | 14, 7 | 0 | 15 **flag** | 67 |
+| heavy_charge_NE_0 | `art/raw/ss01-kindled-ash/heavy/north-east 2` | 20 | 5.94 | -1 | 14, 7 | 1 | 13 **flag** | 0 |
+| heavy_charge_NE_1 | `art/raw/ss01-kindled-ash/heavy/north-east 3` | 26 | 7.72 | -1 | 14, 7 | 1 | 15 **flag** | 0 |
+| heavy_charge_NE_2 | `art/raw/ss01-kindled-ash/heavy/north-east 5` | 22 | 7.72 | -1 | 14, 7 | 0 | 15 **flag** | 1 |
+| heavy_charge_N_0 | `art/raw/ss01-kindled-ash/heavy/north 2` | 64 | 11.75 | -1 | 14, 7 | 1 | 9 | 0 |
+| heavy_charge_N_1 | `art/raw/ss01-kindled-ash/heavy/north 3` | 79 | 11.94 | -1 | 14, 7 | 1 | 11 | 2 |
+| heavy_charge_N_2 | `art/raw/ss01-kindled-ash/heavy/north 4` | 74 | 11.75 | -1 | 14, 7 | 1 | 8 | 0 |
+| heavy_charge_W_0 | `art/raw/ss01-kindled-ash/heavy/west 2` | 32 | 6.89 | -1 | 14, 7 | 2 | 16 **flag** | 72 |
+| heavy_charge_W_1 | `art/raw/ss01-kindled-ash/heavy/west 3` | 28 | 6.52 | -1 | 14, 7 | 0 | 13 **flag** | 66 |
+| heavy_charge_W_2 | `art/raw/ss01-kindled-ash/heavy/west 4` | 7 | 6.1 | -1 | 14, 7 | 0 | 12 | 71 |
+| heavy_charge_SW_0 | `art/raw/ss01-kindled-ash/heavy/south-west 1` | 104 | 6.92 | -1 | 14, 7 | 2 | 19 **flag** | 151 |
+| heavy_charge_SW_1 | `art/raw/ss01-kindled-ash/heavy/south-west 2` | 53 | 6.92 | -1 | 14, 7 | 0 | 17 **flag** | 144 |
+| heavy_charge_SW_2 | `art/raw/ss01-kindled-ash/heavy/south-west 4` | 23 | 6.92 | -1 | 14, 7 | 0 | 15 **flag** | 106 |
+| heavy_thrust_S_0 | `art/raw/ss01-kindled-ash/heavy/south 7` | 62 | 7.46 | 0 | 14, 8 | 0 | 13 **flag** | 147 |
+| heavy_thrust_S_1 | `art/raw/ss01-kindled-ash/heavy/south 8` | 40 | 7.57 | 0 | 14, 8 | 0 | 15 **flag** | 129 |
+| heavy_thrust_SE_0 | `art/raw/ss01-kindled-ash/heavy/south-east 7` | 65 | 7.69 | -1 | 14, 7 | 1 | 17 **flag** | 121 |
+| heavy_thrust_SE_1 | `art/raw/ss01-kindled-ash/heavy/south-east 8` | 40 | 6.92 | -1 | 14, 7 | 0 | 18 **flag** | 128 |
+| heavy_thrust_E_0 | `art/raw/ss01-kindled-ash/heavy/east 6` | 20 | 6.26 | -1 | 14, 7 | 0 | 12 | 73 |
+| heavy_thrust_E_1 | `art/raw/ss01-kindled-ash/heavy/east 7` | 34 | 7.22 | -1 | 14, 7 | 1 | 14 **flag** | 61 |
+| heavy_thrust_NE_0 | `art/raw/ss01-kindled-ash/heavy/north-east 6` | 18 | 7.72 | -1 | 14, 7 | 0 | 13 **flag** | 1 |
+| heavy_thrust_NE_1 | `art/raw/ss01-kindled-ash/heavy/north-east 7` | 73 | 6.15 | -1 | 14, 7 | 3 | 19 **flag** | 23 |
+| heavy_thrust_W_0 | `art/raw/ss01-kindled-ash/heavy/west 7` | 38 | 6.52 | -1 | 14, 7 | 1 | 12 | 66 |
+| heavy_thrust_W_1 | `art/raw/ss01-kindled-ash/heavy/west 8` | 41 | 6.89 | -1 | 14, 7 | 0 | 15 **flag** | 72 |
+| heavy_thrust_SW_0 | `art/raw/ss01-kindled-ash/heavy/south-west 7` | 103 | 6.92 | -1 | 14, 7 | 1 | 19 **flag** | 163 |
+| heavy_thrust_SW_1 | `art/raw/ss01-kindled-ash/heavy/south-west 8` | 66 | 6.92 | -1 | 14, 7 | 0 | 19 **flag** | 136 |
+| heavy_hold_S_0 | `art/raw/ss01-kindled-ash/heavy/south 8` | 40 | 7.57 | 0 | 14, 8 | 0 | 15 **flag** | 129 |
+| heavy_hold_SE_0 | `art/raw/ss01-kindled-ash/heavy/south-east 8` | 40 | 6.92 | -1 | 14, 7 | 0 | 18 **flag** | 128 |
+| heavy_hold_E_0 | `art/raw/ss01-kindled-ash/heavy/east 8` | 24 | 7.71 | -1 | 14, 7 | 1 | 16 **flag** | 58 |
+| heavy_hold_NE_0 | `art/raw/ss01-kindled-ash/heavy/north-east 8` | 65 | 6.15 | -1 | 14, 7 | 1 | 15 **flag** | 29 |
+| heavy_hold_W_0 | `art/raw/ss01-kindled-ash/heavy/west 8` | 41 | 6.89 | -1 | 14, 7 | 0 | 15 **flag** | 72 |
+| heavy_hold_SW_0 | `art/raw/ss01-kindled-ash/heavy/south-west 8` | 66 | 6.92 | -1 | 14, 7 | 0 | 19 **flag** | 136 |
+| heavy_recover_S_0 | `art/raw/ss01-kindled-ash/heavy/south 10` | 23 | 5.88 | 0 | 14, 8 | 1 | 13 **flag** | 129 |
+| heavy_recover_S_1 | `art/raw/ss01-kindled-ash/heavy/south 1` | 53 | 6.22 | 0 | 14, 8 | 0 | 15 **flag** | 161 |
+| heavy_recover_SE_0 | `art/raw/ss01-kindled-ash/heavy/south-east 10` | 40 | 7.84 | -1 | 14, 7 | 1 | 19 **flag** | 127 |
+| heavy_recover_SE_1 | `art/raw/ss01-kindled-ash/heavy/south-east 1` | 78 | 6.92 | -1 | 14, 7 | 0 | 17 **flag** | 142 |
+| heavy_recover_E_0 | `art/raw/ss01-kindled-ash/heavy/east 10` | 20 | 6.15 | -1 | 14, 7 | 2 | 13 **flag** | 59 |
+| heavy_recover_E_1 | `art/raw/ss01-kindled-ash/heavy/east 1` | 62 | 7.71 | -1 | 14, 7 | 2 | 17 **flag** | 75 |
+| heavy_recover_NE_0 | `art/raw/ss01-kindled-ash/heavy/north-east 10` | 62 | 7.72 | -1 | 14, 7 | 0 | 16 **flag** | 25 |
+| heavy_recover_NE_1 | `art/raw/ss01-kindled-ash/heavy/north-east 1` | 20 | 6.15 | -1 | 14, 7 | 0 | 11 | 1 |
+| heavy_recover_W_0 | `art/raw/ss01-kindled-ash/heavy/west 10` | 34 | 6.89 | -1 | 14, 7 | 3 | 16 **flag** | 71 |
+| heavy_recover_W_1 | `art/raw/ss01-kindled-ash/heavy/west 1` | 49 | 7.66 | -1 | 14, 7 | 4 | 15 **flag** | 72 |
+| heavy_recover_SW_0 | `art/raw/ss01-kindled-ash/heavy/south-west 10` | 45 | 6.15 | -1 | 14, 7 | 1 | 16 **flag** | 136 |
+| heavy_recover_SW_1 | `art/raw/ss01-kindled-ash/heavy/south-west 1` | 104 | 6.92 | -1 | 14, 7 | 2 | 19 **flag** | 151 |
+| haul_throw_S_0 | `art/raw/ss01-kindled-ash/haul/south 2` | 51 | 6.06 | 0 | 14, 8 | 0 | 15 **flag** | 176 |
+| haul_throw_S_1 | `art/raw/ss01-kindled-ash/haul/south 3` | 48 | 7.06 | 0 | 14, 8 | 2 | 17 **flag** | 165 |
+| haul_throw_SE_0 | `art/raw/ss01-kindled-ash/haul/south-east 2` | 87 | 6.92 | -1 | 14, 7 | 3 | 18 **flag** | 138 |
+| haul_throw_SE_1 | `art/raw/ss01-kindled-ash/haul/south-east 4` | 40 | 6.92 | -1 | 14, 7 | 21 | 13 **flag** | 113 |
+| haul_throw_E_0 | `art/raw/ss01-kindled-ash/haul/east 2` | 52 | 6.92 | -1 | 14, 7 | 2 | 18 **flag** | 78 |
+| haul_throw_E_1 | `art/raw/ss01-kindled-ash/haul/east 3` | 50 | 6.4 | -1 | 14, 7 | 2 | 17 **flag** | 75 |
+| haul_throw_NE_0 | `art/raw/ss01-kindled-ash/haul/north-east 2` | 58 | 7.56 | -1 | 14, 7 | 1 | 14 **flag** | 12 |
+| haul_throw_NE_1 | `art/raw/ss01-kindled-ash/haul/north-east 3` | 76 | 6.25 | -1 | 14, 7 | 0 | 15 **flag** | 10 |
+| haul_throw_N_0 | `art/raw/ss01-kindled-ash/haul/north 2` | 11 | 4.2 | -1 | 14, 7 | 1 | 6 | 0 |
+| haul_throw_N_1 | `art/raw/ss01-kindled-ash/haul/north 3` | 20 | 5.57 | -1 | 14, 7 | 2 | 11 | 1 |
+| haul_throw_NW_0 | `art/raw/ss01-kindled-ash/haul/north-west 1` | 28 | 7.42 | -1 | 14, 7 | 1 | 8 | 24 |
+| haul_throw_NW_1 | `art/raw/ss01-kindled-ash/haul/north-west 2` | 22 | 7.42 | -1 | 14, 7 | 1 | 9 | 16 |
+| haul_throw_W_0 | `art/raw/ss01-kindled-ash/haul/west 2` | 42 | 6.89 | -1 | 14, 7 | 0 | 12 | 51 |
+| haul_throw_W_1 | `art/raw/ss01-kindled-ash/haul/west 3` | 76 | 6.89 | -1 | 14, 7 | 4 | 15 **flag** | 61 |
+| haul_throw_SW_0 | `art/raw/ss01-kindled-ash/haul/south-west 2` | 60 | 6.92 | -1 | 14, 7 | 1 | 15 **flag** | 137 |
+| haul_throw_SW_1 | `art/raw/ss01-kindled-ash/haul/south-west 4` | 60 | 6.92 | -1 | 14, 7 | 1 | 14 **flag** | 113 |
+| haul_recover_S_0 | `art/raw/ss01-kindled-ash/haul/south 6` | 25 | 7.56 | 0 | 14, 8 | 0 | 16 **flag** | 166 |
+| haul_recover_S_1 | `art/raw/ss01-kindled-ash/haul/south 1` | 72 | 7.06 | 0 | 14, 8 | 4 | 17 **flag** | 158 |
+| haul_recover_SE_0 | `art/raw/ss01-kindled-ash/haul/south-east 5` | 43 | 6.92 | -1 | 14, 7 | 0 | 16 **flag** | 118 |
+| haul_recover_SE_1 | `art/raw/ss01-kindled-ash/haul/south-east 6` | 34 | 6.55 | -1 | 14, 7 | 0 | 14 **flag** | 125 |
+| haul_recover_E_0 | `art/raw/ss01-kindled-ash/haul/east 5` | 58 | 6.92 | -1 | 14, 7 | 1 | 15 **flag** | 82 |
+| haul_recover_E_1 | `art/raw/ss01-kindled-ash/haul/east 6` | 35 | 6.92 | -1 | 14, 7 | 1 | 15 **flag** | 77 |
+| haul_recover_NE_0 | `art/raw/ss01-kindled-ash/haul/north-east 5` | 60 | 7.91 | -1 | 14, 7 | 1 | 13 **flag** | 13 |
+| haul_recover_NE_1 | `art/raw/ss01-kindled-ash/haul/north-east 6` | 33 | 7.25 | -1 | 14, 7 | 0 | 11 | 13 |
+| haul_recover_N_0 | `art/raw/ss01-kindled-ash/haul/north 5` | 15 | 5.83 | -1 | 14, 7 | 0 | 7 | 1 |
+| haul_recover_N_1 | `art/raw/ss01-kindled-ash/haul/north 6` | 4 | 5.57 | -1 | 14, 7 | 0 | 5 | 0 |
+| haul_recover_NW_0 | `art/raw/ss01-kindled-ash/haul/north-west 5` | 20 | 4.7 | -1 | 14, 7 | 0 | 9 | 22 |
+| haul_recover_NW_1 | `art/raw/ss01-kindled-ash/haul/north-west 6` | 15 | 4.7 | -1 | 14, 7 | 1 | 8 | 5 |
+| haul_recover_W_0 | `art/raw/ss01-kindled-ash/haul/west 5` | 62 | 6.89 | -1 | 14, 7 | 1 | 15 **flag** | 66 |
+| haul_recover_W_1 | `art/raw/ss01-kindled-ash/haul/west 6` | 47 | 6.89 | -1 | 14, 7 | 1 | 14 **flag** | 63 |
+| haul_recover_SW_0 | `art/raw/ss01-kindled-ash/haul/south-west 5` | 63 | 6.92 | -1 | 14, 7 | 0 | 18 **flag** | 120 |
+| haul_recover_SW_1 | `art/raw/ss01-kindled-ash/haul/south-west 6` | 46 | 7.06 | -1 | 14, 7 | 0 | 17 **flag** | 140 |
+| haul_pull_S_0 | `art/raw/ss01-kindled-ash/haul_pull/south 1` | 116 | 6.64 | 0 | 14, 8 | 0 | 16 **flag** | 144 |
+| haul_pull_S_1 | `art/raw/ss01-kindled-ash/haul_pull/south 3` | 109 | 7.49 | 0 | 14, 8 | 0 | 17 **flag** | 136 |
+| haul_pull_SE_0 | `art/raw/ss01-kindled-ash/haul_pull/south-east 1` | 125 | 7.1 | -1 | 14, 7 | 4 | 16 **flag** | 147 |
+| haul_pull_SE_1 | `art/raw/ss01-kindled-ash/haul_pull/south-east 4` | 78 | 6.92 | -1 | 14, 7 | 2 | 15 **flag** | 119 |
+| haul_pull_E_0 | `art/raw/ss01-kindled-ash/haul_pull/east 1` | 184 | 8.89 | -1 | 14, 7 | 2 | 18 **flag** | 100 |
+| haul_pull_E_1 | `art/raw/ss01-kindled-ash/haul_pull/east 2` | 85 | 7.42 | -1 | 14, 7 | 0 | 13 **flag** | 111 |
+| haul_pull_NE_0 | `art/raw/ss01-kindled-ash/haul_pull/north-east 2` | 50 | 7.15 | -1 | 14, 7 | 4 | 13 **flag** | 9 |
+| haul_pull_NE_1 | `art/raw/ss01-kindled-ash/haul_pull/north-east 4` | 40 | 6.15 | -1 | 14, 7 | 0 | 15 **flag** | 12 |
+| haul_pull_N_0 | `art/raw/ss01-kindled-ash/haul_pull/north 1` | 2 | 5.83 | -1 | 14, 7 | 0 | 5 | 1 |
+| haul_pull_N_1 | `art/raw/ss01-kindled-ash/haul_pull/north 3` | 4 | 5.31 | -1 | 14, 7 | 2 | 6 | 0 |
+| haul_pull_NW_0 | `art/raw/ss01-kindled-ash/haul_pull/north-west 1` | 55 | 7.72 | -1 | 14, 7 | 1 | 12 | 22 |
+| haul_pull_NW_1 | `art/raw/ss01-kindled-ash/haul_pull/north-west 3` | 76 | 7.72 | -1 | 14, 7 | 4 | 15 **flag** | 32 |
+| haul_pull_W_0 | `art/raw/ss01-kindled-ash/haul_pull/west 1` | 58 | 7.39 | -1 | 14, 7 | 6 | 14 **flag** | 61 |
+| haul_pull_W_1 | `art/raw/ss01-kindled-ash/haul_pull/west 4` | 34 | 6.89 | -1 | 14, 7 | 2 | 15 **flag** | 65 |
+| haul_pull_SW_0 | `art/raw/ss01-kindled-ash/haul_pull/south-west 2` | 55 | 6.92 | -1 | 14, 7 | 1 | 18 **flag** | 141 |
+| haul_pull_SW_1 | `art/raw/ss01-kindled-ash/haul_pull/south-west 4` | 66 | 6.92 | -1 | 14, 7 | 1 | 16 **flag** | 149 |
+| haul_slide_S_0 | `art/raw/ss01-kindled-ash/haul_slide/south 1` | 62 | 8.24 | 0 | 14, 8 | 5 | 16 **flag** | 167 |
+| haul_slide_S_1 | `art/raw/ss01-kindled-ash/haul_slide/south 3` | 45 | 7.07 | 0 | 14, 8 | 12 | 15 **flag** | 142 |
+| haul_slide_SE_0 | `art/raw/ss01-kindled-ash/haul_slide/south-east 1` | 86 | 7.81 | -1 | 14, 7 | 7 | 19 **flag** | 141 |
+| haul_slide_SE_1 | `art/raw/ss01-kindled-ash/haul_slide/south-east 4` | 63 | 6.92 | -1 | 14, 7 | 7 | 16 **flag** | 153 |
+| haul_slide_E_0 | `art/raw/ss01-kindled-ash/haul_slide/east 1` | 84 | 8.11 | -1 | 14, 7 | 6 | 17 **flag** | 76 |
+| haul_slide_E_1 | `art/raw/ss01-kindled-ash/haul_slide/east 3` | 51 | 7.62 | -1 | 14, 7 | 3 | 18 **flag** | 90 |
+| haul_slide_NE_0 | `art/raw/ss01-kindled-ash/haul_slide/north-east 1` | 51 | 6.15 | -1 | 14, 7 | 1 | 15 **flag** | 7 |
+| haul_slide_NE_1 | `art/raw/ss01-kindled-ash/haul_slide/north-east 3` | 62 | 7.7 | -1 | 14, 7 | 5 | 18 **flag** | 21 |
+| haul_slide_N_0 | `art/raw/ss01-kindled-ash/haul_slide/north 2` | 0 | 0 | -1 | 14, 7 | 0 | 4 | 0 |
+| haul_slide_N_1 | `art/raw/ss01-kindled-ash/haul_slide/north 4` | 6 | 4.63 | -1 | 14, 7 | 0 | 6 | 0 |
+| haul_slide_NW_0 | `art/raw/ss01-kindled-ash/haul_slide/north-west 1` | 35 | 5.53 | -1 | 14, 7 | 1 | 11 | 15 |
+| haul_slide_NW_1 | `art/raw/ss01-kindled-ash/haul_slide/north-west 3` | 36 | 5.61 | -1 | 14, 7 | 3 | 11 | 16 |
+| haul_slide_W_0 | `art/raw/ss01-kindled-ash/haul_slide/west 1` | 91 | 7.58 | -1 | 14, 7 | 4 | 20 **flag** | 66 |
+| haul_slide_W_1 | `art/raw/ss01-kindled-ash/haul_slide/west 4` | 53 | 6.89 | -1 | 14, 7 | 1 | 15 **flag** | 16 |
+| haul_slide_SW_0 | `art/raw/ss01-kindled-ash/haul_slide/south-west 1` | 94 | 6.92 | -1 | 14, 7 | 6 | 19 **flag** | 136 |
+| haul_slide_SW_1 | `art/raw/ss01-kindled-ash/haul_slide/south-west 4` | 49 | 6.92 | -1 | 14, 7 | 0 | 16 **flag** | 145 |
+| hit_S_0 | `art/raw/ss01-kindled-ash/hit/south 1` | 59 | 7.9 | -1 | 8, 1 | 24 | 16 **flag** | 133 |
+| hit_S_1 | `art/raw/ss01-kindled-ash/hit/south 2` | 66 | 7.9 | -1 | 8, 1 | 10 | 17 **flag** | 144 |
+| hit_E_0 | `art/raw/ss01-kindled-ash/hit/east 1` | 158 | 6.79 | -1 | 8, 1 | 29 | 12 | 82 |
+| hit_E_1 | `art/raw/ss01-kindled-ash/hit/east 3` | 139 | 6.79 | -1 | 8, 1 | 21 | 15 **flag** | 99 |
+| hit_N_0 | `art/raw/ss01-kindled-ash/hit/north 1` | 28 | 6.78 | -1 | 8, 1 | 3 | 10 | 2 |
+| hit_N_1 | `art/raw/ss01-kindled-ash/hit/north 3` | 27 | 6.78 | -1 | 8, 1 | 3 | 12 | 1 |
+| hit_W_0 | `art/raw/ss01-kindled-ash/hit/west 1` | 64 | 6.52 | -1 | 8, 1 | 9 | 12 | 48 |
+| hit_W_1 | `art/raw/ss01-kindled-ash/hit/west 2` | 120 | 6.89 | -1 | 8, 1 | 20 | 12 | 57 |
+| death_S_0 | `art/raw/ss01-kindled-ash/death/south 1` | 0 | 0 | -1 | 8, 1 | 8 | 11 | 153 |
+| death_S_1 | `art/raw/ss01-kindled-ash/death/south 2` | 0 | 0 | -1 | 8, 1 | 5 | 11 | 142 |
+| death_S_2 | `art/raw/ss01-kindled-ash/death/south 3` | 0 | 0 | -1 | 8, 1 | 6 | 11 | 141 |
+| death_S_3 | `art/raw/ss01-kindled-ash/death/south 4` | 0 | 0 | -1 | 8, 1 | 10 | 10 | 126 |
+| death_S_4 | `art/raw/ss01-kindled-ash/death/south 5` | 0 | 0 | -1 | 8, 1 | 23 | 9 | 116 |
+| death_S_5 | `art/raw/ss01-kindled-ash/death/south 6` | 0 | 0 | -1 | 8, 1 | 20 | 10 | 80 |
+| death_E_0 | `art/raw/ss01-kindled-ash/death/east 1` | 130 | 6.15 | -1 | 8, 1 | 24 | 14 **flag** | 55 |
+| death_E_1 | `art/raw/ss01-kindled-ash/death/east 2` | 169 | 6.49 | -1 | 8, 1 | 78 | 12 | 92 |
+| death_E_2 | `art/raw/ss01-kindled-ash/death/east 3` | 163 | 6.15 | -1 | 8, 1 | 35 | 13 **flag** | 65 |
+| death_E_3 | `art/raw/ss01-kindled-ash/death/east 4` | 112 | 6.15 | -1 | 8, 1 | 27 | 12 | 67 |
+| death_E_4 | `art/raw/ss01-kindled-ash/death/east 5` | 266 | 6.59 | -1 | 8, 1 | 103 | 12 | 92 |
+| death_E_5 | `art/raw/ss01-kindled-ash/death/east 6` | 315 | 6.59 | -1 | 8, 1 | 93 | 10 | 199 |
+| death_N_0 | `art/raw/ss01-kindled-ash/death/north 1` | 40 | 7.55 | -3 | 8, -1 | 5 | 12 | 1 |
+| death_N_1 | `art/raw/ss01-kindled-ash/death/north 2` | 32 | 7.55 | -3 | 8, -1 | 7 | 9 | 1 |
+| death_N_2 | `art/raw/ss01-kindled-ash/death/north 3` | 0 | 0 | -3 | 8, -1 | 1 | 4 | 0 |
+| death_N_3 | `art/raw/ss01-kindled-ash/death/north 4` | 0 | 0 | -3 | 8, -1 | 1 | 4 | 0 |
+| death_N_4 | `art/raw/ss01-kindled-ash/death/north 5` | 0 | 0 | -3 | 8, -1 | 4 | 4 | 0 |
+| death_N_5 | `art/raw/ss01-kindled-ash/death/north 6` | 34 | 7.55 | -3 | 8, -1 | 5 | 11 | 2 |
+| death_W_0 | `art/raw/ss01-kindled-ash/death/west 1` | 108 | 6.52 | -1 | 8, 1 | 13 | 12 | 59 |
+| death_W_1 | `art/raw/ss01-kindled-ash/death/west 2` | 198 | 6.52 | -1 | 8, 1 | 47 | 10 | 133 |
+| death_W_2 | `art/raw/ss01-kindled-ash/death/west 3` | 208 | 6.89 | -1 | 8, 1 | 29 | 13 **flag** | 111 |
+| death_W_3 | `art/raw/ss01-kindled-ash/death/west 4` | 140 | 6.52 | -1 | 8, 1 | 8 | 10 | 112 |
+| death_W_4 | `art/raw/ss01-kindled-ash/death/west 5` | 239 | 6.52 | -1 | 8, 1 | 27 | 10 | 119 |
+| death_W_5 | `art/raw/ss01-kindled-ash/death/west 6` | 192 | 6.52 | -1 | 8, 1 | 23 | 10 | 118 |
 
 ## Off-palette colours the snap moved
 

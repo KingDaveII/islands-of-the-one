@@ -25,10 +25,12 @@ The engine, the §6 test and the G1.2 pipeline read these numbers from `packages
 
 | Kind | Cell | Origin (the line under the soles) | The 64×64 canvas sits at |
 |---|---|---|---|
-| Kindled player sheets (`kindled-<rem>`) | 112×80 | (56, 64) | (24, 10), so canvas row 53 is cell row 63 |
+| Kindled player sheets (`kindled-<rem>`) | 96×80 | (48, 64) | (16, 10), so canvas row 53 is cell row 63 |
 | Every other sheet (Husks and other enemies, NPCs) | 64×64 | (32, 54) | (0, 0) |
 
-- The Kindled's extra room is for actions: the heavy thrust (it reaches about 52 px from the feet), the Haul throw and the death fall.
+- The Kindled's extra room is for actions: the heavy thrust, the Haul throw and the death fall. SS-01 measured
+  the reach at most 34 px from the feet in any action (v3 draws actions on a 68×68 canvas, so ±34 is its
+  limit), so 96 px (48 either side of the origin) holds it with room for the outer 1 px ring.
 - A future kind that needs more room declares a bigger cell (`spriteCellSpec(w, h, originY)`), with
   the canvas centred horizontally and the soles on the row above the origin.
 - Where a sprite stands does not come from the cell: the feet are 5 sim px below the body centre for
@@ -185,7 +187,7 @@ What changes from v1; the facings, the animation table, frame names, frame rates
 - **Skin mask.** The grey-ochre skin ramp (unwritten-sail, unwritten-tar) is shared with wood, rope, belts, boots and the singe's shade; in the 45 px exemplar the belt and both boots are unwritten-tar, so a plain colour swap would recolour them with the skin. A v2 Kindled sheet ships `<name>.skin.png`, the same size as the sheet, an opaque pixel marking skin, and names it in `palette.mask`. The engine swaps `palette.swaps` only under the mask. v1 sheets keep the whole-sheet swap.
 
 ```json
-"meta": { "image": "kindled-ash.png", "version": "2", "pixelScale": 1, "cell": { "w": 112, "h": 80 }, "origin": { "x": 56, "y": 64 }, "...": "..." },
+"meta": { "image": "kindled-ash.png", "version": "2", "pixelScale": 1, "cell": { "w": 96, "h": 80 }, "origin": { "x": 48, "y": 64 }, "...": "..." },
 "palette": { "drawn": "clay-grey-ochre", "mask": "kindled-ash.skin.png", "swaps": { "clay-pale": { "#8c7f6e": "#e8e2d6", "#5e5448": "#8c7f6e" }, "...": {} } }
 ```
 

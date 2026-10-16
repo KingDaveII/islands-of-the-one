@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 The v2 test fixture (docs/design/sprites.md §6): a tiny Kindled sheet on the
-v2 contract, two `idle_S` frames on 112x80 cells with the 64x64 art canvas at
-(24, 10), soles on canvas row 53, and its skin mask. The belt and boots are
+v2 contract, two `idle_S` frames on 96x80 cells with the 64x64 art canvas at
+(16, 10), soles on canvas row 53, and its skin mask. The belt and boots are
 unwritten-tar, the clay ramp's shade, like the 45 px exemplar: the mask leaves
 them out, so a tone swap recolours the face and hands only. Never shipped; the
 sheet test and the client's masked-swap test read it.
@@ -18,8 +18,8 @@ HERE = Path(__file__).resolve().parent
 PALETTE = json.loads((HERE / "../../data/palette.json").read_text())
 T = {k: v.lower() for k, v in PALETTE["tokens"].items()}
 
-CELL_W, CELL_H = 112, 80
-CANVAS_X, CANVAS_Y = 24, 10
+CELL_W, CELL_H = 96, 80
+CANVAS_X, CANVAS_Y = 16, 10
 SOLE = 53
 
 OUTLINE = T["dream-night"]
@@ -93,7 +93,7 @@ def main():
             "trimmed": False,
             "spriteSourceSize": {"x": 0, "y": 0, "w": CELL_W, "h": CELL_H},
             "sourceSize": {"w": CELL_W, "h": CELL_H},
-            "anchor": {"x": 56 / CELL_W, "y": 64 / CELL_H},
+            "anchor": {"x": 48 / CELL_W, "y": 64 / CELL_H},
         }
     drawn = PALETTE["clay"]["drawn"]
     tones = PALETTE["clay"]["tones"]
@@ -113,7 +113,7 @@ def main():
             "app": "fixture",
             "version": "2",
             "cell": {"w": CELL_W, "h": CELL_H},
-            "origin": {"x": 56, "y": 64},
+            "origin": {"x": 48, "y": 64},
             "facings": ["S", "SE", "E", "NE", "N", "NW", "W", "SW"],
             "pixelScale": 1,
         },

@@ -48,14 +48,15 @@ export function spriteCellSpec(w: number, h: number, originY: number): SpriteCel
 }
 
 /**
- * The v2 cells (sprites.md §2): the Kindled's 112×80 has room for the heavy
- * thrust (about 52 px from the feet), the Haul throw and the death fall
- * (canvas at (24, 10), so canvas row 53 is cell row 63, origin (56, 64));
+ * The v2 cells (sprites.md §2): the Kindled's 96×80 has room for its actions,
+ * which reach at most 34 px from the feet (SS-01; v3 draws them on a 68×68
+ * canvas), the Haul throw and the death fall (canvas at (16, 10), so canvas
+ * row 53 is cell row 63, origin (48, 64));
  * every other sheet (Husks and other enemies, NPCs) is the 64×64 canvas
  * itself, origin (32, 54).
  */
 export const SPRITE_CELLS = {
-  kindled: spriteCellSpec(112, 80, 64),
+  kindled: spriteCellSpec(96, 80, 64),
   other: spriteCellSpec(64, 64, 54),
 } as const;
 

@@ -323,9 +323,9 @@ describe('the v2 contract (sprites.md §2, §5)', () => {
   it('puts the 64×64 canvas in each cell with the soles on the row above the origin', () => {
     expect(SPRITE_CANVAS).toEqual({ w: 64, h: 64, soleRow: 53 });
     expect(SPRITE_CELLS.kindled).toEqual({
-      cell: { w: 112, h: 80 },
-      origin: { x: 56, y: 64 },
-      canvasAt: { x: 24, y: 10 },
+      cell: { w: 96, h: 80 },
+      origin: { x: 48, y: 64 },
+      canvasAt: { x: 16, y: 10 },
     });
     expect(SPRITE_CELLS.other).toEqual({
       cell: { w: 64, h: 64 },
@@ -384,8 +384,8 @@ describe('the v2 contract (sprites.md §2, §5)', () => {
 
     it('a wrong cell, origin or pixel scale for the kind', () => {
       const husk = v2Problems('husk-fixture', sheet, png, mask);
-      expect(husk.some((p) => p.startsWith('cell 112×80'))).toBe(true);
-      expect(husk.some((p) => p.startsWith('origin (56, 64)'))).toBe(true);
+      expect(husk.some((p) => p.startsWith('cell 96×80'))).toBe(true);
+      expect(husk.some((p) => p.startsWith('origin (48, 64)'))).toBe(true);
       const scaled = { ...sheet, meta: { ...sheet.meta, pixelScale: 2 } };
       expect(v2Problems('kindled-fixture', scaled, png, mask)).toEqual(['meta.pixelScale is 2, not 1']);
     });
@@ -396,7 +396,7 @@ describe('the v2 contract (sprites.md §2, §5)', () => {
 
     it('a pixel on a cell edge', () => {
       const p = copy(png);
-      paint(p, 112 + 111, 40, paletteData.tokens['dream-night']);
+      paint(p, 96 + 95, 40, paletteData.tokens['dream-night']);
       expect(v2Problems('kindled-fixture', sheet, p, mask)).toEqual(['opaque pixels on the outer 1 px ring (clipped?): idle_S_1']);
     });
 
@@ -414,7 +414,7 @@ describe('the v2 contract (sprites.md §2, §5)', () => {
 
     it('a mask that is missing, the wrong size, over a non-key colour, or leaves a key uncovered', () => {
       expect(v2Problems('kindled-fixture', sheet, png, null)).toEqual(['no skin mask']);
-      expect(v2Problems('kindled-fixture', sheet, png, { width: 1, height: 1, rgba: new Uint8Array(4) })).toEqual(['mask 1×1, sheet 224×80']);
+      expect(v2Problems('kindled-fixture', sheet, png, { width: 1, height: 1, rgba: new Uint8Array(4) })).toEqual(['mask 1×1, sheet 192×80']);
       const over = copy(mask);
       const [ex, ey] = find(paletteData.tokens['dream-night']);
       paint(over, ex, ey, '#ffffff');
