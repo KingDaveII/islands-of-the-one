@@ -12,6 +12,12 @@
  * of one size; `--m1 <baseUrl> <name>` takes the 1920 × 912 fight shot from
  * another client (main before G1.5) as `<name>.png`.
  *
+ * `--run` (G1.5c, no account needed) runs the Kindled east and south at
+ * moveSpeed 100 and shoots a strip of one run cycle per facing (`walk`
+ * standing in for `run` until ART draws it), one 4× crop per frame, as
+ * `run-<facing>-strip.png`. The cycle plays by distance, so frame k shows
+ * after k × 16 world px (`anim.runCyclePx` 96 over 6 frames).
+ *
  * `--poses` (G1.5b, no account needed) poses the Kindled at 1920 × 912 in
  * each of the 8 facings and shoots the page plus a 4× crop around the
  * player: the `heavy_charge` last frame at full charge (the charge spark),
@@ -22,6 +28,7 @@
  *   pnpm dev   # in another shell
  *   node tools/screenshots-g15.mjs [outDir] [baseUrl]
  *   node tools/screenshots-g15.mjs --poses [outDir] [baseUrl]
+ *   node tools/screenshots-g15.mjs --run [outDir] [baseUrl]
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
@@ -46,6 +53,11 @@ const m1 = (() => {
 const only = flag('--only');
 const poses = (() => {
   const i = args.indexOf('--poses');
+  if (i >= 0) args.splice(i, 1);
+  return i >= 0;
+})();
+const runStrip = (() => {
+  const i = args.indexOf('--run');
   if (i >= 0) args.splice(i, 1);
   return i >= 0;
 })();
@@ -256,6 +268,12 @@ const packed = (aim, buttons) => ((aim & 0xfff) | (buttons << 23)) >>> 0;
 
 /** The page's pixels around the player (`w` × `h` world px), each device px drawn 4 × 4. */
 async function playerCrop(page, name, w = 72, h = 64) {
+  writeFileSync(join(OUT, `${name}.png`), await playerCropPng(page, w, h));
+  console.log(`  ${name}.png`);
+}
+
+/** `playerCrop`'s image as a PNG buffer. */
+async function playerCropPng(page, w = 72, h = 64) {
   const png = await page.screenshot();
   const box = await page.evaluate(
     ({ w, h }) => {
@@ -283,8 +301,7 @@ async function playerCrop(page, name, w = 72, h = 64) {
     },
     { b64: png.toString('base64'), box },
   );
-  writeFileSync(join(OUT, `${name}.png`), Buffer.from(data, 'base64'));
-  console.log(`  ${name}.png`);
+  return Buffer.from(data, 'base64');
 }
 
 /**
@@ -384,7 +401,82 @@ async function poseShots() {
   await context.close();
 }
 
-if (poses) {
+/**
+ * G1.5c: one run cycle per facing as a strip of 4× crops, each frame frozen
+ * the moment it shows. The player runs at full stick from the open tile at
+ * quarter speed, so every frame is on screen for several render frames.
+ */
+async function runShots() {
+  const context = await browser.newContext({ viewport: { width: 1920, height: 912 } });
+  const page = await context.newPage();
+  page.on('pageerror', (e) => console.error('page error:', e.message));
+  await page.goto(BASE);
+  for (let i = 0; i < 100 && !(await page.evaluate(() => Boolean(window.__iot))); i++) await sleep(100);
+  // Facing and move direction (1/256 turn: 0 east, 64 south), and the opposite way to start from.
+  for (const [facing, moveDir] of [
+    ['E', 0],
+    ['S', 64],
+  ]) {
+    if (only && only !== facing) continue;
+    const aim = aimOf(facing);
+    const run = (((aim & 0xfff) | (moveDir << 12) | (7 << 20)) >>> 0).toString();
+    // Up to speed first: the strip starts on the cycle's first frame after the body has been running.
+    await posed(page, 21, `() => ${run}`, `(s, pose) => pose?.anim === 'walk_${facing}' && pose.frame === 5`);
+    const crops = [];
+    for (let k = 0; k < 6; k++) {
+      await page.evaluate(() => window.__iot.setSpeed(0.25));
+      await page.waitForFunction(
+        ({ facing, k }) => {
+          const scene = window.__iot.scene();
+          scene.session.state.husks.length = 0;
+          const pose = window.__iot.pose();
+          const done = pose?.anim === `walk_${facing}` && pose.frame === k;
+          if (done) window.__iot.setSpeed(0);
+          return done;
+        },
+        { facing, k },
+        { polling: 'raf', timeout: 30000 },
+      );
+      await sleep(150);
+      const p = await page.evaluate(() => {
+        const s = window.__iot.scene().session.state.player;
+        return { x: s.x / 256, y: s.y / 256, vx: s.vx, vy: s.vy };
+      });
+      console.log(`  ${facing} frame ${k}: (${p.x.toFixed(1)}, ${p.y.toFixed(1)}) sim px, v (${p.vx}, ${p.vy})`);
+      crops.push((await playerCropPng(page, 56, 64)).toString('base64'));
+    }
+    const strip = await page.evaluate(async (crops) => {
+      const imgs = await Promise.all(
+        crops.map(async (b64) => {
+          const img = new Image();
+          img.src = `data:image/png;base64,${b64}`;
+          await img.decode();
+          return img;
+        }),
+      );
+      const gap = 8;
+      const canvas = document.createElement('canvas');
+      canvas.width = imgs.reduce((w, img) => w + img.width, 0) + gap * (imgs.length - 1);
+      canvas.height = imgs[0].height;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      let x = 0;
+      for (const img of imgs) {
+        ctx.drawImage(img, x, 0);
+        x += img.width + gap;
+      }
+      return canvas.toDataURL('image/png').split(',')[1];
+    }, crops);
+    writeFileSync(join(OUT, `run-${facing}-strip.png`), Buffer.from(strip, 'base64'));
+    console.log(`  run-${facing}-strip.png`);
+  }
+  await context.close();
+}
+
+if (runStrip) {
+  await runShots();
+} else if (poses) {
   await poseShots();
 } else if (m1) {
   // The same fight at 1920 × 912 on another client (main before G1.5), for comparison.
