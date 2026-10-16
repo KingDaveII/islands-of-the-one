@@ -16,7 +16,7 @@ import {
   type RunState,
 } from '@iot/sim';
 import type { JuiceTuning } from '@iot/shared';
-import { SPRITE_FACINGS } from '@iot/shared';
+import { SPRITE_FACINGS, spriteSheets } from '@iot/shared';
 import { Palette } from '../palette.js';
 import type { Reticle } from '../game/controls.js';
 import type { Session } from '../game/session.js';
@@ -30,6 +30,7 @@ import type { Fx } from './fx.js';
 import { HookbladeFx } from './hookblade.js';
 import { disc, ditherDisc, groundShadow, outlinedRect, pixelLine, ring, shadowEllipse } from './pixels.js';
 import { legacyGraphics, snapToArt, worldPx } from './scale.js';
+import { lightSlashMark } from './slash.js';
 import { spriteScale } from './spriteSheets.js';
 
 const RAD = (Math.PI * 2) / TURN;
@@ -797,7 +798,10 @@ export class WorldRenderer {
     drawKindled(g, x, y, facing, ink, step, !attacking);
   }
 
-  /** Slash arcs for light strikes (exact aim direction, not the 8-way facing; world px); the heavy is a line, see drawThrust. */
+  /**
+   * Slash arcs for light strikes (exact aim direction, not the 8-way facing; world px); the heavy is a line, see drawThrust.
+   * The wind-up stroke only over a v1 player sheet: a v2 sheet draws its own blade (`lightSlashMark`).
+   */
   private drawSlash(g: G, run: Run, x: number, y: number): void {
     const P = run.params;
     const p = run.state.player;
@@ -809,14 +813,15 @@ export class WorldRenderer {
     const dir = rad(p.dir);
     const activeEnd = st.startup + st.active;
     const cy = y - worldPx(3);
-    if (phase === 'startup') {
+    const mark = lightSlashMark(spriteSheets['kindled-ash'], phase, p.t - activeEnd);
+    if (mark === 'windup') {
       const back = dir + (p.comboStep % 2 === 0 ? -1 : 1) * half;
       const len = worldPx(9);
       pixelLine(g, x, cy, x + Math.cos(back) * len, cy + Math.sin(back) * len, Palette.playerOutline, 1, 3);
       pixelLine(g, x, cy, x + Math.cos(back) * len, cy + Math.sin(back) * len, Palette.blade);
       return;
     }
-    if (!(phase === 'active' || (phase === 'recovery' && p.t <= activeEnd + 3))) return;
+    if (mark !== 'arc') return;
     const thick = p.comboStep === P.weapon.light.length - 1 ? 4 : 3;
     const sweep = phase === 'active' ? Math.min(1, (p.t - st.startup) / Math.max(1, st.active)) : 1;
     const ccw = p.comboStep % 2 === 0;
