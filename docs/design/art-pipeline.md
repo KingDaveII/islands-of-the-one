@@ -98,7 +98,7 @@ file fails the build with a message naming the field.
 | `frames` | Source frame indices, in play order. Repeats are allowed. In v3 animations frame 0 is the rotation: skip it. Skip smear frames. The light attack keeps 3 of v3's 6. |
 | `downscale` | Optional, on a source: a whole number k ≥ 2 for a ×k delivery (Retro Diffusion's ×4). Every k×k block must be one colour. |
 | `flipX` | Optional `true`, on a source (a facing entry, or a facing-less animation): mirror its frames left to right as they are read (step 1), before everything else. Every coordinate for that frame then refers to the mirrored frame, what the review shows (see "Mirrored sources"). The same files may be used unmirrored for another facing. |
-| `ground` | How each frame is placed vertically (step 8). Default `"frame"` for `idle`, `walk`, `carry_idle`, `carry_walk`, `{ "ref": 0 }` for everything else. |
+| `ground` | How each frame is placed vertically (step 8). Default `"frame"` for `idle`, `walk`, `run`, `carry_idle`, `carry_walk`, `{ "ref": 0 }` for everything else. |
 | `despeckle` | Optional `true`: run step 9 on this animation. |
 | `fixes` | Pixel fixes, per output frame name (`walk_S_1`, or `idle_3` without facings), in that frame's **source** pixels (after any downscale and any `flipX`): `[x, y, "#rrggbb"]` sets a whitelist colour (telegraph colours too in a `telegraph*` frame), `[x, y, null]` makes it transparent. |
 | `remap` | Colour rules applied before the snap (step 4), in order: generator greys to the right ramp. See "Remap". |
@@ -142,6 +142,13 @@ be complete: every facing in its row and the row's frame count. The Kindled's `c
 other row is M1. The sheet test (`packages/shared/test`) reads the same rule. M2 Task 9, or whichever task
 first uses carry or sit, moves `REQUIRED_MILESTONE` to `"M2"`; from then on those rows are required. A
 draft's report lists the optional rows under its summary.
+
+**Awaiting art.** A row on `ANIMS_AWAITING_ART` (`packages/shared/src/sprites.ts`) is optional in the same way,
+whatever its milestone, until MAIN takes it off the list (`sprites.md` §4). Today that is the Kindled's `run`
+(6 frames, 8 facings, looping, M1): a Kindled recipe may now carry `run` like any other animation, with all
+eight facings and six frames, or leave it out. Once ART's `run` lands, MAIN empties the list and every
+finished Kindled sheet needs it. Its report lists it as `run (awaiting art)`. `run` grounds like `walk`
+(`"frame"` by default; set `ground` to `{ "ref": 0 }` to keep a flight phase off the floor).
 
 | Prefix | Kind | Cell | Facings | Table | Palette and mask |
 |---|---|---|---|---|---|

@@ -47,6 +47,10 @@ renders state; it never decides an outcome.
 - Free analog movement at any angle, with `player.acceleration` toward the target velocity and
   `player.friction` when there is no input. Turning through acceleration is the smoothing for
   keyboard play.
+- The Kindled moves at `player.moveSpeed`: 100 sim px/s, 200 world px/s (GAME DESIGN 2026-10-16,
+  down from 112). In an encounter, Combat and Calm alike, it always **runs** at that speed. Walking,
+  and the automatic walk-to-run, happen only outside encounters (M2's holding). The run and walk
+  cycles play by distance travelled ([`sprites.md`](sprites.md) §8).
 - Keyboard (WASD) gives 8 directions at full magnitude. The gamepad left stick is fully analog, with
   a deadzone and 7 magnitude steps.
 - Aim is independent of movement:

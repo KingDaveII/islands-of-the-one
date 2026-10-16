@@ -3,6 +3,7 @@ import {
   isRequiredAnim,
   kindledAnimKey,
   kindledFrameName,
+  optionalReason,
   paletteData,
   REQUIRED_MILESTONE,
   SPRITE_WHITELIST,
@@ -121,7 +122,7 @@ export function tableProblems(name: string, sheet: SpriteSheet, table: readonly 
         problems.push(
           required
             ? `${key} is missing`
-            : `${key} is missing (${a.name} is optional until ${a.milestone}, but complete once present; required: ${REQUIRED_MILESTONE})`,
+            : `${key} is missing (${a.name} is ${optionalReason(a)}, but complete once present; required: ${REQUIRED_MILESTONE})`,
         );
         continue;
       }

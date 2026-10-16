@@ -100,7 +100,7 @@ export class GameScene extends Phaser.Scene {
       return { x: simPx(w.x), y: simPx(w.y) };
     });
     this.session = new Session(this.seed, this.weapon, this.controls);
-    this.world = new WorldRenderer(this, this.worldLayer, juice);
+    this.world = new WorldRenderer(this, this.worldLayer, juice, () => tuningStore.get().anim);
     this.fx = new Fx(this, this.worldLayer, this.hudLayer, juice, (x, y) => this.toUi(x, y));
     // Words over the world are UI px, placed at their projected world position (readability.md §4).
     this.prompt = new HintRow(this, { backdrop: true }).setVisible(false);

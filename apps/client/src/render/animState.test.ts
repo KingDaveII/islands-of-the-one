@@ -10,6 +10,7 @@ import { autopilot, createRun, stepRun, TURN, type HuskState, type Run } from '@
 import { describe, expect, it } from 'vitest';
 import {
   facing4,
+  gaitPose,
   huskFlip,
   huskPose,
   kindledPose,
@@ -17,13 +18,19 @@ import {
   onceFrame,
   sheetFacing,
   spreadFrame,
+  strideFrame,
   type Clocks,
+  type Stride,
 } from './animState.js';
+import { StrideMeter } from './stride.js';
 
 const KINDLED = spriteSheets['kindled-ash'];
 const PEELING = spriteSheets['husk-peeling'];
 const NUTSHELL = spriteSheets['husk-nutshell'];
 const NO_CLOCKS: Clocks = { hitMs: -1 };
+const CYCLES = defaultTuning.anim;
+/** The Kindled sheet as a v1 (M1) sheet: same frames, the fixed frame rate. */
+const KINDLED_V1: SpriteSheet = { ...KINDLED, meta: { ...KINDLED.meta, version: '1' } };
 const deg = (d: number): number => Math.round((d * TURN) / 360) & (TURN - 1);
 
 /** Animations a run can show in M1: the required rows (carry and sit are M2's and have no sim state yet). */
@@ -120,8 +127,108 @@ describe('frame timing helpers', () => {
   });
 });
 
+describe('walk and run by distance (G1.5c)', () => {
+  const stride = (distancePx: number): Stride => ({ distancePx, cycles: CYCLES });
+
+  it('takes the cycles from the anim tuning: 64 world px a walk, 96 a run', () => {
+    expect(CYCLES).toEqual({ walkCyclePx: 64, runCyclePx: 96 });
+  });
+
+  it('picks the frame from distance: floor(distance / cyclePx × frames) mod frames', () => {
+    const walk = KINDLED.anims.walk_S;
+    if (!walk) throw new Error('no walk_S');
+    // 6 frames over 96 px: a frame every 16 px, wrapping each cycle.
+    expect([0, 15, 16, 47, 48, 95, 96, 100, 96 * 7 + 80].map((d) => strideFrame(walk, d, 96))).toEqual([
+      0, 0, 1, 2, 3, 5, 0, 0, 5,
+    ]);
+    // Over a 64 px walk cycle a frame lasts 64 / 6 px.
+    expect([0, 10, 11, 32, 63, 64].map((d) => strideFrame(walk, d, 64))).toEqual([0, 0, 1, 3, 5, 0]);
+  });
+
+  it('runs in an encounter, with walk standing in while run awaits art, at the run cycle', () => {
+    const run = newRun(1);
+    const s = run.state;
+    s.player.aim = deg(0);
+    s.player.vx = 300;
+    // run is on ANIMS_AWAITING_ART: walk plays, 16 px a frame (the run's 96 px cycle, not the walk's 64).
+    expect(kindledPose(s, run.params, KINDLED, NO_CLOCKS, stride(48))).toMatchObject({
+      name: 'walk',
+      anim: 'walk_E',
+      frame: 3,
+    });
+    // Even a sheet that already carries run plays walk until the list lets it go.
+    const walkE = KINDLED.anims.walk_E;
+    if (!walkE) throw new Error('no walk_E');
+    const withRun: SpriteSheet = { ...KINDLED, anims: { ...KINDLED.anims, run_E: walkE } };
+    expect(kindledPose(s, run.params, withRun, NO_CLOCKS, stride(48)).anim).toBe('walk_E');
+    // Walking for its own sake (M2's holding) keeps the walk's own 64 px cycle.
+    expect(gaitPose(KINDLED, 'walk', deg(0), 0, stride(48))).toMatchObject({ anim: 'walk_E', frame: 4 });
+    expect(gaitPose(KINDLED, 'run', deg(0), 0, stride(48))).toMatchObject({ anim: 'walk_E', frame: 3 });
+  });
+
+  it('advances with distance, not with time: standing still or against a wall, the frame stays', () => {
+    const run = newRun(1);
+    const s = run.state;
+    s.player.vx = 300;
+    const at = (tick: number, d: number): number => {
+      s.tick = tick;
+      return kindledPose(s, run.params, KINDLED, NO_CLOCKS, stride(d)).frame;
+    };
+    expect([at(0, 20), at(6, 20), at(60, 20), at(600, 20)]).toEqual([1, 1, 1, 1]);
+    expect([at(600, 36), at(600, 52)]).toEqual([2, 3]);
+  });
+
+  it('carries the cycle on through a stop: a restart does not pop to frame 0', () => {
+    const run = newRun(1);
+    const s = run.state;
+    s.player.aim = deg(0);
+    const meter = new StrideMeter();
+    const pose = () => kindledPose(s, run.params, KINDLED, NO_CLOCKS, stride(meter.distancePx));
+    meter.step(100, 100);
+    // Moving east 8 sim px (16 world px) a frame: one run frame per step.
+    s.player.vx = 300;
+    const frames: number[] = [];
+    for (const x of [108, 116, 124]) {
+      meter.step(x, 100);
+      frames.push(pose().frame);
+    }
+    expect(frames).toEqual([1, 2, 3]);
+    // Stop for a second: idle, and the distance holds.
+    s.player.vx = 0;
+    for (let i = 0; i < 60; i++) {
+      s.tick++;
+      meter.step(124, 100);
+      expect(pose().name).toBe('idle');
+    }
+    expect(meter.distancePx).toBe(48);
+    // Restart: the cycle picks up at frame 3, then 4.
+    s.player.vx = 300;
+    expect(pose().frame).toBe(3);
+    meter.step(132, 100);
+    expect(pose().frame).toBe(4);
+    // A diagonal step counts its length: 6, 8 sim px is 10 sim px, 20 world px.
+    meter.step(138, 108);
+    expect(meter.distancePx).toBe(84);
+  });
+
+  it('keeps a v1 sheet, and a pose without a stride, on the fixed frame rate', () => {
+    const run = newRun(1);
+    const s = run.state;
+    s.player.aim = deg(0);
+    s.player.vx = 300;
+    s.tick = 6;
+    // 10 fps on the 60 Hz tick: frame 1 at tick 6, whatever the distance.
+    expect(kindledPose(s, run.params, KINDLED_V1, NO_CLOCKS, stride(0))).toMatchObject({ anim: 'walk_E', frame: 1 });
+    expect(kindledPose(s, run.params, KINDLED_V1, NO_CLOCKS, stride(80)).frame).toBe(1);
+    s.tick = 18;
+    expect(kindledPose(s, run.params, KINDLED_V1, NO_CLOCKS, stride(80)).frame).toBe(3);
+    expect(kindledPose(s, run.params, KINDLED, NO_CLOCKS).frame).toBe(3);
+    // The Nutshell's walk stays time-based too (huskPose takes no stride).
+  });
+});
+
 describe('the Kindled state machine', () => {
-  it('idles facing the aim, walks when moving, and reads the hit and death clocks', () => {
+  it('idles facing the aim, moves with walk standing in for run, and reads the hit and death clocks', () => {
     const run = newRun(1);
     const s = run.state;
     s.player.aim = deg(180);
@@ -403,7 +510,8 @@ describe('the Husk state machine', () => {
 
 describe('headless playtest (autopilot through the state machine)', () => {
   it('shows every M1 Kindled animation at least once across a clear and a death', () => {
-    const shown = playthrough(newRun(1234), 60 * 60 * 5);
+    // Seed 1237: the patient bot lands a Haul on a Nutshell (haul_slide); at moveSpeed 100 seed 1234 no longer does.
+    const shown = playthrough(newRun(1237), 60 * 60 * 5);
     playthrough(newRun(11), 60 * 60 * 5, shown);
     const deathRun = newRun(5);
     playthrough(deathRun, 60 * 20, shown);

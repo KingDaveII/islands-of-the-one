@@ -1,4 +1,4 @@
-import { isRequiredAnim, paletteData, REQUIRED_MILESTONE } from '@iot/shared';
+import { isAwaitingArt, isRequiredAnim, paletteData, REQUIRED_MILESTONE } from '@iot/shared';
 import type { BuiltAnim, BuiltFrame } from './build.js';
 import { describeHex, FLOOR, HOLLOW_DEEP, SKIN, SKIN_SHADE, WALL } from './colour.js';
 import { animKey, cellFor, hasFacings, solesRow } from './contract.js';
@@ -227,7 +227,7 @@ export interface SheetReport {
   };
   flags: { seam: string[]; bob: string[]; held: string[]; colours: string[] };
   missing: string[];
-  /** Table rows after `REQUIRED_MILESTONE`: a finished sheet may leave them out. */
+  /** Table rows after `REQUIRED_MILESTONE` or awaiting art: a finished sheet may leave them out. */
   optional: string[];
   skinProblems: string[];
   remap: RemapReport[];
@@ -409,7 +409,7 @@ export function writeReport(
     missing: missingAgainstTable(recipe, anims),
     optional: (table ?? [])
       .filter((r) => !isRequiredAnim(r))
-      .map((r) => `${r.name} (${r.milestone})`),
+      .map((r) => `${r.name} (${isAwaitingArt(r) ? 'awaiting art' : r.milestone})`),
     skinProblems: skinProblems.map(skinProblemText),
     remap: recipe.remap.map((rule, i) => {
       const counts = remapCounts[i] ?? new Map<string, number>();
@@ -472,7 +472,7 @@ function markdown(r: SheetReport): string {
   lines.push(`- Missing against the contract's table: ${list(r.missing)}.`);
   if (r.optional.length) {
     lines.push(
-      `- Optional (after ${REQUIRED_MILESTONE}: a finished sheet may leave them out, but carries every facing of any it has): ${r.optional.join(', ')}.`,
+      `- Optional (after ${REQUIRED_MILESTONE}, or awaiting art: a finished sheet may leave them out, but carries every facing of any it has): ${r.optional.join(', ')}.`,
     );
   }
   lines.push('');

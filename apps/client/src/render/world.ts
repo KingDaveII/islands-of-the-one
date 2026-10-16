@@ -15,7 +15,7 @@ import {
   type Run,
   type RunState,
 } from '@iot/sim';
-import type { JuiceTuning } from '@iot/shared';
+import type { AnimTuning, JuiceTuning } from '@iot/shared';
 import { SPRITE_FACINGS, spriteSheets } from '@iot/shared';
 import { Palette } from '../palette.js';
 import type { Reticle } from '../game/controls.js';
@@ -126,6 +126,7 @@ export class WorldRenderer {
     scene: Phaser.Scene,
     layer: Phaser.GameObjects.Layer,
     private readonly juice: () => JuiceTuning,
+    anim: () => AnimTuning,
   ) {
     this.room = legacyGraphics(scene).setDepth(DEPTH.room);
     this.props = legacyGraphics(scene).setDepth(DEPTH.floor);
@@ -136,7 +137,7 @@ export class WorldRenderer {
     // Chain links go under the bodies, the hook head and charge spark over them.
     this.hookblade = new HookbladeFx(scene);
     this.hookblade.mount(layer);
-    this.characters = new CharacterSprites(scene, layer);
+    this.characters = new CharacterSprites(scene, layer, anim);
   }
 
   /** Room size in sim px. */

@@ -2,7 +2,7 @@
   "player": {
     "radiusPx": 6,
     "maxHp": 100,
-    "moveSpeed": 112,
+    "moveSpeed": 100,
     "acceleration": 1100,
     "friction": 1500,
     "mass": 1,
@@ -375,6 +375,10 @@
     "padReticleDistPx": 32,
     "telegraphBlinkHz": 12,
     "promptRangePx": 40
+  },
+  "anim": {
+    "walkCyclePx": 64,
+    "runCyclePx": 96
   },
   "view": {
     "widthPx": 960,

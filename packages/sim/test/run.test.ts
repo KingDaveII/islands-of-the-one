@@ -112,8 +112,9 @@ describe('headless playtest (autopilot)', () => {
     events.filter((e) => e.type === 'haulHit' && e.weightClass === weightClass);
 
   it('lands a Haul on a light and on a heavy Husk, and a fully charged thrust', () => {
-    // A seed on which the bot meets a Nutshell at Haul range (the light chain delay moved its timing off seed 1234).
-    const run = createRun({ seed: 1232, tuning, rooms: roomTemplates, weapon: WEAPON });
+    // A seed on which the bot meets a Nutshell at Haul range and fully charges a thrust (the light chain delay
+    // moved its timing off seed 1234, moveSpeed 112 → 100 off seed 1232).
+    const run = createRun({ seed: 1252, tuning, rooms: roomTemplates, weapon: WEAPON });
     const events = drive(run, 60 * 60 * 5);
     expect(run.state.status).toBe('cleared');
     expect(haulsBy(events, 'light').length).toBeGreaterThan(0);

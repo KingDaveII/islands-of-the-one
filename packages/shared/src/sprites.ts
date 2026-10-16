@@ -166,9 +166,32 @@ export type SpriteMilestone = (typeof SPRITE_MILESTONES)[number];
  */
 export const REQUIRED_MILESTONE: SpriteMilestone = 'M1';
 
-/** Whether a table row must be in a finished sheet (its milestone is at or before `REQUIRED_MILESTONE`). */
-export function isRequiredAnim(row: Pick<SpriteAnimSpec, 'milestone'>): boolean {
-  return SPRITE_MILESTONES.indexOf(row.milestone) <= SPRITE_MILESTONES.indexOf(REQUIRED_MILESTONE);
+/**
+ * Table rows the contract has but ART hasn't drawn yet (sprites.md §4). While
+ * an animation is here, the sheet test and the art pipeline treat it as
+ * optional (complete when present) and the engine plays its stand-in
+ * (`run` → `walk`). When ART's sheet lands with it, MAIN removes it here.
+ */
+export const ANIMS_AWAITING_ART: readonly string[] = ['run'];
+
+/** Whether a table row is still waiting for ART (`ANIMS_AWAITING_ART`). */
+export function isAwaitingArt(row: Pick<SpriteAnimSpec, 'name'>): boolean {
+  return ANIMS_AWAITING_ART.includes(row.name);
+}
+
+/**
+ * Whether a table row must be in a finished sheet: its milestone is at or
+ * before `REQUIRED_MILESTONE` and it isn't waiting for ART.
+ */
+export function isRequiredAnim(row: Pick<SpriteAnimSpec, 'milestone' | 'name'>): boolean {
+  return (
+    !isAwaitingArt(row) && SPRITE_MILESTONES.indexOf(row.milestone) <= SPRITE_MILESTONES.indexOf(REQUIRED_MILESTONE)
+  );
+}
+
+/** Why an optional row may be left out, for messages: `awaiting art` or `optional until M2`. */
+export function optionalReason(row: Pick<SpriteAnimSpec, 'milestone' | 'name'>): string {
+  return isAwaitingArt(row) ? 'awaiting art' : `optional until ${row.milestone}`;
 }
 
 /** One row of an animation table (sprites.md §4): frame count, rate, loop and hold, its facings and its milestone. */
@@ -203,11 +226,14 @@ const NO_FACINGS: readonly SpriteFacing[] = [];
 /**
  * The Kindled animations of every `kindled-<remembrance>` sheet, per facing.
  * Carry and sit are M2's (nothing uses them before), so a finished sheet may
- * leave them out until `REQUIRED_MILESTONE` reaches M2.
+ * leave them out until `REQUIRED_MILESTONE` reaches M2. `run` is M1's (the
+ * Kindled always runs in encounters) but is on `ANIMS_AWAITING_ART` until ART
+ * draws it; the engine plays `walk` in its place.
  */
 export const KINDLED_ANIMS: readonly SpriteAnimSpec[] = [
   spec('idle', 2, 2, true, false),
   spec('walk', 6, 10, true, false),
+  spec('run', 6, 10, true, false),
   spec('dodge', 4, 16, false, false),
   spec('light_1', 3, 15, false, false),
   spec('light_2', 3, 15, false, false),
