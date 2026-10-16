@@ -2,7 +2,7 @@
   "player": {
     "radiusPx": 6,
     "maxHp": 100,
-    "moveSpeed": 112,
+    "moveSpeed": 100,
     "acceleration": 1100,
     "friction": 1500,
     "mass": 1,

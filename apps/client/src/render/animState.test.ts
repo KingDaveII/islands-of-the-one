@@ -403,7 +403,8 @@ describe('the Husk state machine', () => {
 
 describe('headless playtest (autopilot through the state machine)', () => {
   it('shows every M1 Kindled animation at least once across a clear and a death', () => {
-    const shown = playthrough(newRun(1234), 60 * 60 * 5);
+    // Seed 1237: the patient bot lands a Haul on a Nutshell (haul_slide); at moveSpeed 100 seed 1234 no longer does.
+    const shown = playthrough(newRun(1237), 60 * 60 * 5);
     playthrough(newRun(11), 60 * 60 * 5, shown);
     const deathRun = newRun(5);
     playthrough(deathRun, 60 * 20, shown);
