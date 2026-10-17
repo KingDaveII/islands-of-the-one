@@ -157,6 +157,25 @@ jobs:
             ServerAliveInterval 15
           CFG
           chmod 600 ~/.ssh/config
+          # retry CMD...: run CMD, and run it again when ssh/scp reports a
+          # connection failure (exit 255), up to 3 retries 5, 10 and 20 s apart.
+          # Any other exit code (a remote command failing) is returned at once.
+          cat > "$RUNNER_TEMP/ssh-retry.sh" <<'SH'
+          retry() {
+            local attempt=1 rc
+            while true; do
+              rc=0
+              "$@" || rc=$?
+              if [ "$rc" -ne 255 ] || [ "$attempt" -gt 3 ]; then
+                return "$rc"
+              fi
+              local delay=$((5 * 2 ** (attempt - 1)))
+              echo "::warning::'$1' lost the SSH connection (exit 255); retry ${attempt} of 3 in ${delay}s"
+              sleep "$delay"
+              attempt=$((attempt + 1))
+            done
+          }
+          SH
 
       - name: Upload compose file, Caddyfile and deploy script
         run: |
@@ -167,19 +186,25 @@ jobs:
             echo "STAGING_DOMAIN=${STAGING_DOMAIN}"
           } > deploy.env
           # Never uploads .env: POSTGRES_PASSWORD stays host-managed.
-          scp docker/compose.staging.yml docker/Caddyfile docker/deploy.sh deploy.env "staging:${DEPLOY_DIR}/"
+          # shellcheck source=/dev/null
+          source "$RUNNER_TEMP/ssh-retry.sh"
+          retry scp docker/compose.staging.yml docker/Caddyfile docker/deploy.sh deploy.env "staging:${DEPLOY_DIR}/"
 
       - name: Pull and start
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ github.actor }}
         run: |
-          # Token goes over stdin, never on a command line; deploy.sh logs out
-          # again after pulling.
-          # shellcheck disable=SC2029 # expanding on the runner is intended
-          printf '%s' "$GHCR_TOKEN" | ssh staging "docker login ghcr.io -u '${GHCR_USER}' --password-stdin"
-          # shellcheck disable=SC2029
-          ssh staging "bash '${DEPLOY_DIR}/deploy.sh'"
+          # One SSH session per attempt: deploy.sh takes its lock, logs in with
+          # the token from stdin (never on a command line), pulls, logs out and
+          # starts. A retry after a dropped connection waits for the lock.
+          # shellcheck source=/dev/null
+          source "$RUNNER_TEMP/ssh-retry.sh"
+          deploy() {
+            # shellcheck disable=SC2029 # expanding on the runner is intended
+            printf '%s' "$GHCR_TOKEN" | ssh staging "bash '${DEPLOY_DIR}/deploy.sh' --login '${GHCR_USER}'"
+          }
+          retry deploy
 
       - name: Wait for https://${{ vars.STAGING_DOMAIN }}/health
         run: |
