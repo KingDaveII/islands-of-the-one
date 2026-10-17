@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --conditions=source src/db/migrate-cli.ts",
-    "inv:grant": "tsx --conditions=source src/inventory/grant-cli.ts"
+    "inv:grant": "tsx --conditions=source src/inventory/grant-cli.ts",
+    "holding:away": "tsx --conditions=source src/holding/away-cli.ts"
   },
   "dependencies": {
     "@colyseus/core": "^0.18.18",
