@@ -99,6 +99,12 @@ function createAnims(scene: Phaser.Scene, textureKey: string, sheet: SpriteSheet
   }
 }
 
+/** A loaded texture's RGBA pixels (null without a 2D context or an image, as in tests): the prop shadows read the sheets once. */
+export function texturePixels(scene: Phaser.Scene, key: string): ImageData | null {
+  if (!scene.textures.exists(key)) return null;
+  return pixelsOf(scene, key)?.image ?? null;
+}
+
 /** A texture's pixels, on a canvas of their own (null without a 2D context or an image). */
 function pixelsOf(scene: Phaser.Scene, key: string): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D; image: ImageData } | null {
   const source = scene.textures.get(key).getSourceImage();

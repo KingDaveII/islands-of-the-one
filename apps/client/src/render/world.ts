@@ -23,11 +23,13 @@ import { CharacterSprites } from './characters.js';
 import { ChestSprites } from './chestSprites.js';
 import { DEPTH } from './depth.js';
 import { PLAYER_FEET } from './feet.js';
+import { PROP_SHADOW_H } from './propShadow.js';
 import { facingIndex, facingStep } from './facing.js';
 import { HookbladeAnchors, type PlayerFrame } from './hookbladePoints.js';
 import type { Fx } from './fx.js';
 import { HookbladeFx } from './hookblade.js';
-import { disc, ditherDisc, outlinedRect, pixelLine, ring, shadowEllipse } from './pixels.js';
+import { arcPixels, checker, circlePixels, discPixels, dithered, outlinePixels } from './pixelShapes.js';
+import { disc, ditherDisc, outlinedRect, pixelLine, plot, ring, shadowEllipse } from './pixels.js';
 import { TileRoom } from './roomTiles.js';
 import { simGraphics, snapToArt, worldPx } from './scale.js';
 import { lightSlashMark } from './slash.js';
@@ -81,7 +83,12 @@ const HIT: HuskInk = {
 const GUIDE_START = 10;
 const GUIDE_STEP = 2;
 
-/** The Kindled's grounding shadow, world px (G1.5); a Husk's scales with its radius against the player's. */
+/**
+ * The Kindled's grounding shadow, world px (G1.5); a Husk's scales with its
+ * radius against the player's (the prop rule, the lowest opaque row plus 4,
+ * would give both Husks 12 × 6, not the 17 × 5 and 33 × 10 they have, so they
+ * keep theirs; ART 2026-10-17). A prop's comes from its sheet (propShadow.ts).
+ */
 const SHADOW_W = 20;
 const SHADOW_H = 6;
 
@@ -211,9 +218,9 @@ export class WorldRenderer {
       this.shadowAt(f, snapToArt(raw.x), snapToArt(raw.y + r), SHADOW_W * k, SHADOW_H * k);
     }
     this.shadowAt(f, snapToArt(pl.x), snapToArt(pl.y + PLAYER_FEET), SHADOW_W, SHADOW_H);
-    // The chests: a grounding shadow at each one's soles, the sprite y-sorted with the bodies.
-    for (const c of s.chests) this.shadowAt(f, snapToArt(c.x / SUB), snapToArt(c.y / SUB), SHADOW_W, SHADOW_H);
+    // The chests: a grounding shadow at each one's base, as wide as its frame's lowest row plus 4 (about 32 × 6), the sprite y-sorted with the bodies.
     this.chests.draw(s.chests, timeMs);
+    for (const c of s.chests) this.shadowAt(f, snapToArt(c.x / SUB), snapToArt(c.y / SUB), this.chests.shadowWidth(c.id), PROP_SHADOW_H);
     for (const k of s.pickups) this.drawPickup(f, toWorld(session.lerp(`k${k.id}`, k.x, k.y)), timeMs);
 
     // Bodies: the sprites, posed from the sim state; Husk spawn-in and stagger marks are engine effects.
@@ -256,7 +263,7 @@ export class WorldRenderer {
     const { x, y } = pos;
     if (h.action === 'spawn') {
       const f = h.t / Math.max(1, hp.spawn);
-      ring(g, x, y, Math.max(1, Math.round(r + (1 - f) * worldPx(8))), Palette.floorEdge);
+      plot(g, circlePixels(Math.max(1, Math.round(r + (1 - f) * worldPx(8)))), x, y, Palette.floorEdge);
       if (f > 0.5) disc(g, x, y, 1, Palette.core);
       return;
     }
@@ -438,10 +445,10 @@ export class WorldRenderer {
       const r = Math.round(worldPx(P.husks.nutshell.slamRadius / SUB));
       const cx = Math.round(worldPx((c.x - h.x) / SUB) + pos.x);
       const cy = Math.round(worldPx((c.y - h.y) / SUB) + pos.y);
-      // The landing area fills in as the slam winds up; the edge is there from the start.
-      disc(g, cx, cy, Math.max(1, Math.round(r * f)), Palette.telegraph, 0.28);
-      ditherDisc(g, cx, cy, r, Palette.telegraph, 0, r - 2);
-      ring(g, cx, cy, r, Palette.telegraphDark);
+      // Dither only (ART 2026-10-17): a telegraph-pink ordered dither inside the dark-pink 1 px ring, filling in as
+      // the wind-up runs from every 4th pixel to every other pixel. No translucent disc.
+      plot(g, dithered(discPixels(r - 1), slamDitherLevel(f), cx, cy), cx, cy, Palette.telegraph);
+      plot(g, circlePixels(r), cx, cy, Palette.telegraphDark);
     }
   }
 
@@ -647,7 +654,8 @@ export class WorldRenderer {
 
   /**
    * Slash arcs for light strikes (exact aim direction, not the 8-way facing; world px); the heavy is a line, see drawThrust.
-   * Only the arc, the hitbox flash: the sheet draws its own blade in the wind-up (`lightSlashMark`).
+   * Only the arc, the hitbox flash: the sheet draws its own blade in the wind-up (`lightSlashMark`). A pixel arc
+   * (ART 2026-10-17): the blade colour with a 2 px outline, a 50 % checker of itself over the recovery's tail ticks.
    */
   private drawSlash(g: G, run: Run, x: number, y: number): void {
     const P = run.params;
@@ -668,15 +676,13 @@ export class WorldRenderer {
     const to = from + (ccw ? 1 : -1) * 2 * half * sweep;
     const a0 = Math.min(from, to);
     const a1 = Math.max(from, to);
-    const fading = phase === 'recovery';
-    g.lineStyle(thick + 2, Palette.playerOutline, fading ? 0.5 : 1);
-    g.beginPath();
-    g.arc(x, cy, reach - thick / 2, a0, a1);
-    g.strokePath();
-    g.lineStyle(thick, Palette.blade, fading ? 0.5 : 1);
-    g.beginPath();
-    g.arc(x, cy, reach - thick / 2, a0, a1);
-    g.strokePath();
+    const tail = phase === 'recovery';
+    const arc = arcPixels(Math.round(reach), thick, a0, a1);
+    const rim = outlinePixels(arc, 2);
+    // The tail: every other pixel of the whole mark, on the world's checkerboard so it never crawls.
+    const phaseBit = (Math.round(x) + Math.round(cy)) & 1;
+    plot(g, tail ? checker(rim, phaseBit) : rim, x, cy, Palette.playerOutline);
+    plot(g, tail ? checker(arc, phaseBit) : arc, x, cy, Palette.blade);
   }
 
   /**
@@ -736,6 +742,14 @@ export class WorldRenderer {
       4,
     );
   }
+}
+
+/**
+ * The slam fill's dither level over the wind-up (`f` 0..1): from every 4th
+ * pixel (Bayer level 4) to every other pixel (level 8), in whole steps.
+ */
+export function slamDitherLevel(f: number): number {
+  return 4 + Math.round(4 * Math.max(0, Math.min(1, f)));
 }
 
 /** A sim-px point in whole world px. */

@@ -39,17 +39,37 @@ particles, text, dev panels):
 - **Outlines.** Every character and enemy has a 1 px dark colored outline, never black. **The
   player always has the highest-contrast outline in the room**: `dream-night` (`#1C2147`), the
   darkest value. Husks use `hollow-deep` (`#2A2540`).
-- **Grounding shadow.** Every character and enemy sits on a small dithered `hollow-deep` ellipse,
-  soft and directly underneath (never cast sideways), so position reads on pale floors: 20 × 6
-  world px under a Kindled, a Husk's scaled by its radius against the player's.
+- **Grounding shadow.** Every character, enemy and prop sits on a small dithered `hollow-deep`
+  ellipse, soft and directly underneath (never cast sideways), so position reads on pale floors:
+  20 × 6 world px under a Kindled, a Husk's scaled by its radius against the player's. A prop's
+  (the chest, the Sparkglass chip once it is a sheet) is as wide as the lowest opaque row of its
+  frame plus 4, and 6 high, computed once per sheet frame at load (`propShadow.ts`; the chest's
+  comes out 32 × 6). The Husks keep their scaled shadows: the prop rule would give both 12 × 6, not
+  the 17 × 5 and 33 × 10 they have (ART 2026-10-17).
 - **Husk cores.** The bright `husk-core` gets a 1 px `hollow-deep` ring wherever it shows, so it
   never merges with the pale floor.
 - **Telegraphs.** During a wind-up the whole Husk turns telegraph pink (dark pink shade and
   outline) and pulls back from its target. It blinks while the attack still tracks the player and
   holds solid once the aim locks. Ground decals in the same colors: the Peeling's dotted lunge
-  line, the Nutshell's slam circle (dark edge, filling in as the slam winds up).
+  line, the Nutshell's slam circle: a dark-pink 1 px pixel circle with a telegraph-pink ordered
+  dither inside it, filling in as the wind-up runs from every 4th pixel to every other pixel
+  (Bayer level 4 to 8, `slamDitherLevel`). Dither only, no translucent disc (ART 2026-10-17).
 - **Invulnerability.** The player flickers on alternate frames while invulnerable (dodge
   i-frames and the post-hit grace).
+- **Whole-pixel effects** (ART's answers to #61, 2026-10-17). The engine's own effects are built
+  from whole pixels in palette tokens at B density, with no anti-aliasing and no alpha anywhere;
+  the shapes come from one pure helper, `apps/client/src/render/pixelShapes.ts` (pixel circles,
+  arcs, checkers, dashes, ordered dithers, the 5 px plus), drawn by `plot` in `pixels.ts`:
+  - **The slash arc** (a light's hitbox flash) is a pixel arc in the blade colour, 3 px thick
+    (4 for the third hit), with a 2 px `dream-night` outline. Over the recovery's tail ticks
+    (`ARC_TAIL_TICKS`) it shows as a 50 % checker of itself, on the world's checkerboard; then it
+    is gone.
+  - **The fx rings** (spawn-in, held, perfect dodge, regrow, Ration, the slam, the core flare) are
+    1 px pixel circles; the hit ring, the shell-crack ring on a hit, is 2 px. As a ring fades it
+    breaks into dashes: the circle is cut into 8 arcs and each keeps a share of its angle that
+    falls with the ring's life (`dashed`), a fixed pattern by angle, never a lower alpha.
+  - **Particles** are 1 px everywhere, solid for their whole life, except the perfect dodge's
+    burst and the core flare, which use the 5 px plus (`plusPixels`) instead of a 2 × 2 square.
 - **Poise.** A poise bar (16 × 2 inside a 1 px outline) appears over an enemy **only once it has
   taken damage**, **one bar per shell layer**, outermost on top (the Nutshell shows both of its
   layers; a broken layer is an empty track, and the inner one refills when it regrows). A crack
