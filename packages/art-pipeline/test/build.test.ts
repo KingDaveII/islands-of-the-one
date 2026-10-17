@@ -223,9 +223,13 @@ describe('a finished Kindled sheet', () => {
     ]);
   });
 
-  it('passes without the M2 animations (carry_idle, carry_walk, sit), on the shared sheet checks too', () => {
+  it('passes without the M2 animations (carry_idle, carry_walk, sit) and the rows awaiting art, on the shared sheet checks too', () => {
     const m1 = KINDLED_ANIMS.filter(isRequiredAnim);
+    // The run transitions and run_back wait for ART's frames (M1 polish, 2026-10-17); carry and sit are M2's.
     expect(KINDLED_ANIMS.filter((a) => !isRequiredAnim(a)).map((a) => a.name)).toEqual([
+      'run_start',
+      'run_stop',
+      'run_back',
       'carry_idle',
       'carry_walk',
       'sit',
@@ -252,7 +256,14 @@ describe('a finished Kindled sheet', () => {
         { width: sheetMask.w, height: sheetMask.h, rgba: sheetMask.data },
       ),
     ).toEqual([]);
-    expect(r.report.optional).toEqual(['carry_idle (M2)', 'carry_walk (M2)', 'sit (M2)']);
+    expect(r.report.optional).toEqual([
+      'run_start (awaiting art)',
+      'run_stop (awaiting art)',
+      'run_back (awaiting art)',
+      'carry_idle (M2)',
+      'carry_walk (M2)',
+      'sit (M2)',
+    ]);
   });
 
   it('builds a finished Kindled sheet with run, and fails one with run incomplete', () => {

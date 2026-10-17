@@ -2,8 +2,13 @@ import type Phaser from 'phaser';
 import type { JuiceTuning } from '@iot/shared';
 import { Palette } from '../palette.js';
 import { DEPTH } from './depth.js';
+import { circlePixels, dashed, plusPixels, type Px } from './pixelShapes.js';
+import { plot } from './pixels.js';
 import { worldPx } from './scale.js';
 import { blinkOut, label, place, shadowed, worldWord, type WorldText } from './text.js';
+
+/** A particle is one pixel, or the 5 px plus (the perfect dodge's burst and the core flare; ART 2026-10-17). */
+export type ParticleShape = 'px' | 'plus';
 
 interface Particle {
   x: number;
@@ -13,7 +18,7 @@ interface Particle {
   life: number;
   max: number;
   color: number;
-  size: number;
+  shape: ParticleShape;
   drag: number;
 }
 
@@ -30,6 +35,21 @@ interface Ring {
 
 /** Floaters blink out over their last 200 ms. */
 const FLOATER_BLINK_MS = 200;
+
+const PLUS = plusPixels();
+const ONE_PX: readonly Px[] = [[0, 0]];
+
+/** Pixel circles by radius and width, built once each (a ring is a few hundred pixels sorted by angle). */
+const circles = new Map<string, readonly Px[]>();
+function circleOf(r: number, width: number): readonly Px[] {
+  const key = `${r}:${width}`;
+  let c = circles.get(key);
+  if (!c) {
+    c = circlePixels(r, width);
+    circles.set(key, c);
+  }
+  return c;
+}
 
 /** Floaters rise this fast, UI px per second. */
 const FLOATER_RISE = 18;
@@ -58,9 +78,14 @@ export type ToUi = (x: number, y: number) => { x: number; y: number };
  * into the sim. World time (dtWorld) slows down with the perfect-dodge slow-mo.
  * Callers speak sim px (positions, radii, `juice.particleSpeed`); particles
  * and rings are the engine's own drawings, so they are kept and drawn in
- * world px at 1 world px per pixel (the sim's numbers ×2, a particle 1 or 2
- * px, a ring's stroke its pixel width). Floaters are text: they live on the
- * UI grid, placed at their world position's projection (`toUi`) every frame.
+ * world px at 1 world px per pixel (the sim's numbers ×2). Whole pixels in
+ * palette tokens, no alpha and no anti-aliasing (ART 2026-10-17,
+ * readability.md §2): a particle is one pixel, or the 5 px plus for the
+ * perfect dodge's burst and the core flare, solid for its whole life; a ring
+ * is a 1 px pixel circle (2 px for the hit ring) that breaks into dashes as
+ * it fades, dropping a growing share of its pixels in a fixed pattern
+ * (`dashed`). Floaters are text: they live on the UI grid, placed at their
+ * world position's projection (`toUi`) every frame.
  */
 export class Fx {
   private particles: Particle[] = [];
@@ -114,14 +139,14 @@ export class Fx {
     this.shakeOffset.y = Math.round((Math.random() * 2 - 1) * reach);
   }
 
-  /** A burst of particles at (x, y) sim px, `speed` sim px/s. */
+  /** A burst of particles at (x, y) sim px, `speed` sim px/s: 1 px each, or the 5 px plus (`shape`). */
   burst(
     x: number,
     y: number,
     count: number,
     color: number,
     speed: number,
-    opts: { dir?: number; spread?: number; size?: number; life?: number } = {},
+    opts: { dir?: number; spread?: number; shape?: ParticleShape; life?: number } = {},
   ): void {
     const j = this.juice();
     const spread = opts.spread ?? Math.PI * 2;
@@ -137,13 +162,13 @@ export class Fx {
         life,
         max: life,
         color,
-        size: opts.size ?? (Math.random() < 0.3 ? 2 : 1),
+        shape: opts.shape ?? 'px',
         drag: 3.5,
       });
     }
   }
 
-  /** A ring at (x, y) sim px growing from radius r0 to r1 (sim px); `width` is its stroke in world px. */
+  /** A ring at (x, y) sim px growing from radius r0 to r1 (sim px); `width` is its pixel circle's thickness, 1 (2 for the hit ring). */
   ring(x: number, y: number, r0: number, r1: number, ms: number, color: number, width = 2): void {
     this.rings.push({ x: worldPx(x), y: worldPx(y), r0: worldPx(r0), r1: worldPx(r1), life: ms, max: ms, color, width });
   }
@@ -180,8 +205,7 @@ export class Fx {
       p.vy *= k;
       p.x += p.vx * dt;
       p.y += p.vy * dt;
-      g.fillStyle(p.color, Math.min(1, (p.life / p.max) * 1.6));
-      g.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+      plot(g, p.shape === 'plus' ? PLUS : ONE_PX, p.x, p.y, p.color);
       return true;
     });
     this.rings = this.rings.filter((r) => {
@@ -189,8 +213,9 @@ export class Fx {
       if (r.life <= 0) return false;
       const f = 1 - r.life / r.max;
       const ease = 1 - (1 - f) * (1 - f);
-      g.lineStyle(r.width, r.color, 1 - f);
-      g.strokeCircle(r.x, r.y, r.r0 + (r.r1 - r.r0) * ease);
+      const radius = Math.max(0, Math.round(r.r0 + (r.r1 - r.r0) * ease));
+      // Solid, breaking into dashes as its life runs out: a fixed pattern by angle, never a lower alpha.
+      plot(g, dashed(circleOf(radius, r.width), r.life / r.max), r.x, r.y, r.color);
       return true;
     });
     this.floaters = this.floaters.filter((f) => {
@@ -217,12 +242,12 @@ export class Fx {
     });
   }
 
-  /** Core flare when a Husk dies. */
+  /** Core flare when a Husk dies: two 1 px rings and a burst of 5 px pluses in the core colour. */
   coreFlare(x: number, y: number): void {
     const j = this.juice();
-    this.ring(x, y, 2, 22, 380, Palette.core, 3);
-    this.ring(x, y, 1, 12, 220, Palette.spark, 2);
-    this.burst(x, y, j.coreFlareParticles, Palette.core, j.particleSpeed * 1.4, { size: 2 });
+    this.ring(x, y, 2, 22, 380, Palette.core, 1);
+    this.ring(x, y, 1, 12, 220, Palette.spark, 1);
+    this.burst(x, y, j.coreFlareParticles, Palette.core, j.particleSpeed * 1.4, { shape: 'plus' });
     this.burst(x, y, Math.round(j.coreFlareParticles / 2), Palette.huskOutline, j.particleSpeed);
   }
 }

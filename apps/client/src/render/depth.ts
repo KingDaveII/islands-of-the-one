@@ -9,6 +9,8 @@ export const DEPTH = {
   /** The tile room's doors (roomTiles.ts), over its texture and under the floor decals. */
   roomDoors: 0.5,
   floor: 1,
+  /** The Sparkglass pickups from their prop sheet (pickupSprites.ts): over the floor decals and shadows, under the chain. */
+  pickups: 1.5,
   /** Chain links go under the bodies. */
   chain: 2,
   /** The perfect-dodge afterimages (rim, then ink one above). */

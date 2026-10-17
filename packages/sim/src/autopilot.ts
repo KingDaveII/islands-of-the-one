@@ -23,8 +23,17 @@ function moveToward(angle: number): { moveDir: number; moveMag: number } {
   return { moveDir: idiv(((angle % TURN) + TURN) % TURN, TURN / MOVE_DIRS) & 0xff, moveMag: MOVE_MAG_MAX };
 }
 
-/** Next step (tile center) on a BFS path from the player's tile to the goal tile, or null. */
-function pathStep(s: RunState, goalCol: number, goalRow: number): { x: number; y: number } | null {
+/**
+ * Whether a point is inside a chest's pillar, with the player's radius: chests
+ * are solid (GAME DESIGN 2026-10-17), so the bot plans around them like walls.
+ */
+function inChest(s: RunState, P: Params, x: number, y: number): boolean {
+  const reach = P.run.chestRadius + P.player.radius;
+  return s.chests.some((c) => length(c.x - x, c.y - y) < reach);
+}
+
+/** Next step (tile center) on a BFS path from the player's tile to the goal tile, or null. A tile under a chest counts as solid. */
+function pathStep(s: RunState, P: Params, goalCol: number, goalRow: number): { x: number; y: number } | null {
   const room = s.room;
   const sc = tileOf(s.player.x);
   const sr = tileOf(s.player.y);
@@ -54,7 +63,8 @@ function pathStep(s: RunState, goalCol: number, goalRow: number): { x: number; y
       if (nc < 0 || nr < 0 || nc >= room.cols || nr >= room.rows) continue;
       const ni = idx(nc, nr);
       if ((prev[ni] ?? 0) !== -1) continue;
-      if (isSolid(room, nc, nr) && !(nc === goalCol && nr === goalRow)) continue;
+      const solid = isSolid(room, nc, nr) || inChest(s, P, nc * TILE + TILE / 2, nr * TILE + TILE / 2);
+      if (solid && !(nc === goalCol && nr === goalRow)) continue;
       prev[ni] = cur;
       queue.push(ni);
     }
@@ -62,20 +72,21 @@ function pathStep(s: RunState, goalCol: number, goalRow: number): { x: number; y
   return null;
 }
 
-function lineClear(s: RunState, x0: number, y0: number, x1: number, y1: number): boolean {
+/** True when nothing solid (a wall, a chest) lies on the line between two points, the ends aside. */
+function lineClear(s: RunState, P: Params, x0: number, y0: number, x1: number, y1: number): boolean {
   const steps = Math.max(1, idiv(length(x1 - x0, y1 - y0), TILE / 4));
   for (let i = 1; i < steps; i++) {
     const x = x0 + idiv((x1 - x0) * i, steps);
     const y = y0 + idiv((y1 - y0) * i, steps);
-    if (isSolid(s.room, tileOf(x), tileOf(y))) return false;
+    if (isSolid(s.room, tileOf(x), tileOf(y)) || inChest(s, P, x, y)) return false;
   }
   return true;
 }
 
-function goTo(s: RunState, x: number, y: number): { moveDir: number; moveMag: number } {
+function goTo(s: RunState, P: Params, x: number, y: number): { moveDir: number; moveMag: number } {
   const p = s.player;
-  if (lineClear(s, p.x, p.y, x, y)) return moveToward(atan2(y - p.y, x - p.x));
-  const step = pathStep(s, tileOf(x), tileOf(y));
+  if (lineClear(s, P, p.x, p.y, x, y)) return moveToward(atan2(y - p.y, x - p.x));
+  const step = pathStep(s, P, tileOf(x), tileOf(y));
   if (!step) return moveToward(atan2(y - p.y, x - p.x));
   return moveToward(atan2(step.y - p.y, step.x - p.x));
 }
@@ -116,7 +127,7 @@ export function autopilot(s: RunState, P: Params, opts: AutopilotOptions = {}): 
     for (let r = 0; r < s.room.rows; r++) {
       for (let c = 0; c < s.room.cols; c++) {
         if (tileAt(s.room, c, r) === 'D') {
-          move = goTo(s, c * TILE + TILE / 2, r * TILE + TILE / 2);
+          move = goTo(s, P, c * TILE + TILE / 2, r * TILE + TILE / 2);
           return encodeInput({ aim, ...move, buttons });
         }
       }
@@ -127,8 +138,8 @@ export function autopilot(s: RunState, P: Params, opts: AutopilotOptions = {}): 
   if (targets.length === 0) {
     // Between waves: grab an unopened chest, else hover around the room middle.
     const chest = s.chests.find((c) => !c.opened);
-    if (chest) return encodeInput({ aim, ...goTo(s, chest.x, chest.y), buttons });
-    move = goTo(s, idiv(s.room.cols * TILE, 2), idiv(s.room.rows * TILE, 2));
+    if (chest) return encodeInput({ aim, ...goTo(s, P, chest.x, chest.y), buttons });
+    move = goTo(s, P, idiv(s.room.cols * TILE, 2), idiv(s.room.rows * TILE, 2));
     if (length(p.x - idiv(s.room.cols * TILE, 2), p.y - idiv(s.room.rows * TILE, 2)) < TILE * 2) move.moveMag = 0;
     return encodeInput({ aim, ...move, buttons });
   }
@@ -169,17 +180,17 @@ export function autopilot(s: RunState, P: Params, opts: AutopilotOptions = {}): 
     // Hold the thrust until it is fully charged and the target is on the line, then release.
     const inRange = best <= P.weapon.heavy.length + tr;
     const release = isFullyCharged(P, p.charge) && inRange;
-    return encodeInput({ aim, ...goTo(s, target.x, target.y), buttons: release ? 0 : Button.Heavy });
+    return encodeInput({ aim, ...goTo(s, P, target.x, target.y), buttons: release ? 0 : Button.Heavy });
   }
 
   const shelled = target.kind === 'nutshell' && target.shell.some((v) => v > 0);
   const busy = target.action === 'stagger' || target.action === 'flinch' || target.action === 'held';
   if (best > reach + tr) {
-    move = goTo(s, target.x, target.y);
+    move = goTo(s, P, target.x, target.y);
     const haul = P.weapon.abilities[0];
     const haulReady = (p.cooldowns[0] ?? 1) === 0 && haul !== undefined && !haul.locked && haul.haul !== null;
     const range = haul?.haul?.range ?? 0;
-    if (haulReady && best < range && best > 36 * 256 && lineClear(s, p.x, p.y, target.x, target.y)) {
+    if (haulReady && best < range && best > 36 * 256 && lineClear(s, P, p.x, p.y, target.x, target.y)) {
       // Haul a target out of reach; from a light/heavy recovery this is a cancel.
       buttons |= Button.Ability1;
     } else if (shelled && !busy && p.action === 'idle' && best < 70 * 256) {

@@ -192,9 +192,11 @@ draft's report lists the optional rows under its summary.
 
 **Awaiting art.** A row on `ANIMS_AWAITING_ART` (`packages/shared/src/sprites.ts`) is optional in the same way,
 whatever its milestone, until MAIN takes it off the list (`sprites.md` §4); its report lists it as
-`<name> (awaiting art)`. The list is empty: the Kindled's `run` (8 frames, 8 facings, looping, M1) came off it
+`<name> (awaiting art)`. The Kindled's `run` (8 frames, 8 facings, looping, M1) came off it
 when kindled-ash's run landed (#46), so every finished Kindled sheet carries it, its frames listed from the first
-contact (frame 0 is a foot landing). `run` grounds like `walk` (`"frame"` by default; set `ground` to
+contact (frame 0 is a foot landing). On it since the M1 polish (ART 2026-10-17): the Kindled's `run_start` and
+`run_stop` (2 frames each at 20 fps, 8 facings, played once) and `run_back` (4 frames, 8 facings, looping by
+distance, no frame rate), until ART's frames land. `run` grounds like `walk` (`"frame"` by default; set `ground` to
 `{ "ref": i }` to keep a flight phase off the floor, as kindled-ash does).
 
 | Prefix | Kind | Cell | Facings | Table | Palette and mask |

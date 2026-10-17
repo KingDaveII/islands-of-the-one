@@ -24,13 +24,13 @@ Accounts need no secrets: sessions are random tokens stored hashed, passwords ar
 
 ## Files
 
-| File                                   | Purpose                                                                       |
-| -------------------------------------- | ----------------------------------------------------------------------------- |
-| `docker/compose.staging.yml`           | caddy, client, server, postgres 16 (named volume), backup                     |
-| `docker/Caddyfile`                     | `{$STAGING_DOMAIN}` with automatic HTTPS and the routing above                |
-| `docker/deploy.sh`                     | runs on the VPS: `pull` + `up -d` (`--no-pull`, `--status`, `--logs` for ops) |
-| `.github/workflows/deploy-staging.yml` | build + push images, upload the files above, deploy, wait for `/health`       |
-| `.github/workflows/release.yml`        | on a published release, retag that commit's images as `vX.Y.Z` and `latest`   |
+| File                                   | Purpose                                                                          |
+| -------------------------------------- | -------------------------------------------------------------------------------- |
+| `docker/compose.staging.yml`           | caddy, client, server, postgres 16 (named volume), backup                        |
+| `docker/Caddyfile`                     | `{$STAGING_DOMAIN}` with automatic HTTPS and the routing above                   |
+| `docker/deploy.sh`                     | runs on the VPS: `pull` + `up -d` (`--login`, `--no-pull`, `--status`, `--logs`) |
+| `.github/workflows/deploy-staging.yml` | build + push images, upload the files above, deploy, wait for `/health`          |
+| `.github/workflows/release.yml`        | on a published release, retag that commit's images as `vX.Y.Z` and `latest`      |
 
 ## Images
 
@@ -71,16 +71,24 @@ Environment **`staging`** (Settings → Environments):
 
 | Kind     | Name                 | Value                                                                    |
 | -------- | -------------------- | ------------------------------------------------------------------------ |
-| secret   | `DEPLOY_HOST`        | VPS hostname or IP                                                       |
-| secret   | `DEPLOY_USER`        | `deploy`                                                                 |
+| variable | `DEPLOY_HOST`        | SSH host, when it is the public staging domain                           |
+| secret   | `DEPLOY_HOST`        | instead of the variable, when the SSH host is an IP address              |
+| variable | `DEPLOY_USER`        | `deploy`                                                                 |
 | secret   | `DEPLOY_PORT`        | SSH port                                                                 |
 | secret   | `DEPLOY_SSH_KEY`     | private key (OpenSSH format) for `DEPLOY_USER`                           |
 | secret   | `DEPLOY_KNOWN_HOSTS` | `ssh-keyscan -p <port> <host>` output; strict host checking is always on |
 | variable | `STAGING_DOMAIN`     | e.g. `203-0-113-7.sslip.io`                                              |
 
+Set `DEPLOY_HOST` once, as a variable or as a secret, never both (the variable wins). A bare IP
+address stays a secret: variables are visible to anyone with read access to the repo. `DEPLOY_USER`
+is a variable because a secret's value is masked everywhere in the logs, which turned every
+"deploy" into `***`; a secret of the same name still works as a fallback. The "Configure SSH" step
+logs where the SSH host came from and whether it equals `STAGING_DOMAIN`, without printing it.
+
 No registry PAT is needed: workflows push with `GITHUB_TOKEN` (`packages: write`), and the deploy job
-logs the VPS into `ghcr.io` with the same short-lived token over stdin, then `deploy.sh` logs out
-again after pulling. The packages stay private and are linked to this repository.
+passes the same short-lived token to `deploy.sh --login` over stdin; `deploy.sh` logs the VPS into
+`ghcr.io`, pulls, and logs out again when it exits. The packages stay private and are linked to this
+repository.
 
 ## Deploy flow
 
@@ -88,12 +96,19 @@ again after pulling. The packages stay private and are linked to this repository
 2. Build both images, push `:<sha>` and `:staging`.
 3. Write `deploy.env` (`SERVER_IMAGE`, `CLIENT_IMAGE`, `IMAGE_TAG=<sha>`, `STAGING_DOMAIN`) and `scp`
    it with `compose.staging.yml`, `Caddyfile` and `deploy.sh` to `/opt/islands`.
-4. `docker login ghcr.io`, then `deploy.sh`: `compose pull`, logout, `compose up -d --remove-orphans`.
+4. `deploy.sh --login <actor>` in one SSH session, token on stdin: it takes `/opt/islands/.deploy.lock`,
+   logs in to `ghcr.io`, runs `compose pull` and `compose up -d --remove-orphans`, and logs out on exit.
    The server applies pending migrations on start.
 5. Poll `https://$STAGING_DOMAIN/health` for up to 5 minutes until it reports `ok` **and** the new
    SHA; otherwise the job fails and prints `compose ps` + recent server/caddy logs.
 
 Deploys are serialized (`concurrency: deploy-staging`).
+
+**Dropped connections.** The upload (step 3) and the start (step 4) are retried when `scp`/`ssh`
+reports a connection failure (exit 255): up to 3 retries, 5, 10 and 20 s apart, each logged as a
+warning on the run. Any other failure, such as a failed `compose pull`, fails the job at once. A
+retried start waits on `.deploy.lock` (up to 10 minutes) if the dropped session's `deploy.sh` is
+still running on the VPS, so two starts never overlap. The VPS needs `flock` (util-linux).
 
 ## Rolling back
 

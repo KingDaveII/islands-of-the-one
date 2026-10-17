@@ -1,0 +1,17 @@
+{
+  "sheet": "prop-sparkglass",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "notes": "ART: drawn by art/clean/prop-sparkglass/sparkglass.py; the same chip as the Husks' drop frames.",
+  "anims": {
+    "idle": {
+      "src": "art/clean/prop-sparkglass/idle",
+      "frames": [
+        0,
+        1
+      ],
+      "fps": 3
+    }
+  }
+}

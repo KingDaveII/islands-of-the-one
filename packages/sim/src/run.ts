@@ -1,4 +1,4 @@
-import { brake, moveBody } from './body.js';
+import { brake, collideChests, moveBody } from './body.js';
 import { huskParams, type Ctx } from './combat.js';
 import { idiv, isqrt, length, SUB, TILE } from './fixed.js';
 import { hashValue } from './hash.js';
@@ -337,14 +337,36 @@ function updatePickups(ctx: Ctx): void {
   });
 }
 
-/** Chests open on contact; their contents are scripted by the order they are opened in the run. */
+/**
+ * Chests are solid pillars (GAME DESIGN 2026-10-17): after the walls, the
+ * Kindled and every Husk are pushed out of every chest as circles. A body a
+ * chest pushed gets a second wall pass, so a chest near a wall (the clearance
+ * rule asks for two tiles of floor around one, but not every template keeps
+ * it yet) never leaves a body in the wall at the end of a tick.
+ */
+function collideBodiesWithChests(ctx: Ctx): void {
+  const { s, P } = ctx;
+  const r = P.run.chestRadius;
+  if (collideChests(s.chests, s.player, P.player.radius, r)) collideWalls(s.room, s.player, P.player.radius);
+  for (const h of s.husks) {
+    const radius = huskParams(P, h.kind).radius;
+    if (collideChests(s.chests, h, radius, r)) collideWalls(s.room, h, radius);
+  }
+}
+
+/**
+ * A chest opens when the Kindled touches it: its edge within
+ * `run.chestOpenReachPx` of the chest's edge (the chest is solid, so the two
+ * never overlap). It stays standing, still solid, with its lid open. Its
+ * contents are scripted by the order chests are opened in the run.
+ */
 function updateChests(ctx: Ctx): void {
   const { s, P } = ctx;
   const p = s.player;
   if (p.action === 'dead') return;
   for (const c of s.chests) {
     if (c.opened) continue;
-    if (length(p.x - c.x, p.y - c.y) > P.player.radius + P.run.chestRadius) continue;
+    if (length(p.x - c.x, p.y - c.y) > P.player.radius + P.run.chestRadius + P.run.chestOpenReach) continue;
     c.opened = true;
     const script = P.run.chests;
     const contents = script[Math.min(s.chestsOpened, script.length - 1)];
@@ -371,6 +393,7 @@ export function stepRun(run: Run, packedInput: number): SimEvent[] {
   separate(ctx);
   collideWalls(s.room, s.player, run.params.player.radius);
   for (const h of s.husks) collideWalls(s.room, h, huskParams(run.params, h.kind).radius);
+  collideBodiesWithChests(ctx);
   updatePickups(ctx);
   updateChests(ctx);
   updateRoom(ctx, run.templates);

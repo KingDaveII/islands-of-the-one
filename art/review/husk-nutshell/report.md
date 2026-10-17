@@ -66,7 +66,7 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 | death_1 | `art/clean/husk-nutshell/death 1` | 0 | 0 | 0 | 0, 0 | 0 | 6 | 0 |
 | death_2 | `art/clean/husk-nutshell/death 2` | 0 | 0 | 0 | 0, 0 | 0 | 6 | 0 |
 | death_3 | `art/clean/husk-nutshell/death 3` | 0 | 0 | 0 | 0, 0 | 0 | 6 | 0 |
-| drop_0 | `art/clean/husk-nutshell/drop 0` | 0 | 0 | 0 | 0, 0 | 0 | 4 | 0 |
+| drop_0 | `art/clean/husk-nutshell/drop 0` | 0 | 0 | 0 | 0, 0 | 0 | 5 | 0 |
 
 ## Off-palette colours the snap moved
 

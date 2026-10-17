@@ -16,8 +16,8 @@ Kind kindled, outline player, cell 96×80, origin (48, 64).
 - Skin regions to resolve: 0.
 - Points: 88 placed (11 mirrored from their twin); missing: 0.
 - Remap rules: 8; stale (match no pixel in any frame they apply to): none.
-- Missing against the contract's table: carry_idle (all facings), carry_walk (all facings), sit (all facings).
-- Optional (after M1, or awaiting art: a finished sheet may leave them out, but carries every facing of any it has): carry_idle (M2), carry_walk (M2), sit (M2).
+- Missing against the contract's table: run_start (all facings), run_stop (all facings), run_back (all facings), carry_idle (all facings), carry_walk (all facings), sit (all facings).
+- Optional (after M1, or awaiting art: a finished sheet may leave them out, but carries every facing of any it has): run_start (awaiting art), run_stop (awaiting art), run_back (awaiting art), carry_idle (M2), carry_walk (M2), sit (M2).
 
 ## Review images
 

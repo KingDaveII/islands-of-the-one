@@ -29,7 +29,8 @@ import { facingIndex } from './facing.js';
  * every choice here reads the sim (action, phase ticks, hook, held husks,
  * shell layers, the tick for loops); the only client-side clocks are the
  * 100 ms hit frame, the Nutshell's regrow one-shot and the death animation,
- * which plays after the sim has stopped.
+ * which plays after the sim has stopped; the run transitions count sim ticks
+ * from when the Kindled started or stopped (`GaitClock`).
  *
  * Timing: the sim's move windows are the authority. An animation with a
  * window (dodge, lights, the thrust, Haul) is stretched or cut to fit its
@@ -61,12 +62,75 @@ export interface Clocks {
   deathMs?: number;
   /** Since the Nutshell's inner shell regrew. */
   regrowMs?: number;
+  /** Since the Kindled started moving from idle (`GaitClock`): `run_start` plays once while it is under the row's length. */
+  runStartMs?: number;
+  /** Since the Kindled stopped (`GaitClock`): `run_stop` plays once while it is under the row's length, then idle. */
+  runStopMs?: number;
 }
 
 /** The hit frame shows this long after a hit that did not stun (sprites.md: hit, 100 ms); a stun holds it for its whole length. */
 export const HIT_MS = 100;
 /** The player's walk cycle plays once the body moves faster than this (units per tick). */
 const WALK_THRESHOLD = SUB / 4;
+
+/** Whether a body moves fast enough for its walk or run cycle (over a quarter sim px a tick). */
+export function isMoving(b: { vx: number; vy: number }): boolean {
+  return Math.abs(b.vx) + Math.abs(b.vy) > WALK_THRESHOLD;
+}
+
+const msOfTicks = (ticks: number): number => (ticks * 1000) / TICK_HZ;
+
+/**
+ * The run transitions' clocks (M1 polish, ART 2026-10-17): `run_start` plays
+ * once when the Kindled starts moving from idle, `run_stop` once when it
+ * stops, both by time (2 frames at 20 fps, 100 ms). Visual only: the sim
+ * never waits for them. Fed the sim state every render frame, it keeps the
+ * tick a start or a stop began on and hands `kindledPose` the ms since, so
+ * the transitions count sim ticks like the loops (they slow with slow-mo and
+ * replay the same). A transition ends at once when the Kindled turns (its
+ * 8-way facing changes), attacks, dodges, is hurt or dies (the clocks clear
+ * and the right animation plays), or stops again (a stop during `run_start`
+ * starts `run_stop`, a start during `run_stop` starts `run_start`). A move
+ * that ends with the body already moving starts no `run_start`: it did not
+ * start from idle. Nothing here reads a sheet: a sheet without the rows just
+ * never shows them.
+ */
+export class GaitClock {
+  private moving = false;
+  private facing = -1;
+  private startTick = -1;
+  private stopTick = -1;
+
+  /** The clocks after this frame of the sim state. */
+  update(s: Pick<RunState, 'tick' | 'player'>): Pick<Clocks, 'runStartMs' | 'runStopMs'> {
+    const p = s.player;
+    const free = p.action === 'idle';
+    const moving = isMoving(p);
+    const facing = facingIndex(p.aim);
+    if (!free) {
+      this.startTick = -1;
+      this.stopTick = -1;
+    } else {
+      if (moving && !this.moving) {
+        this.startTick = s.tick;
+        this.stopTick = -1;
+      } else if (!moving && this.moving) {
+        this.stopTick = s.tick;
+        this.startTick = -1;
+      }
+      if (facing !== this.facing) {
+        this.startTick = -1;
+        this.stopTick = -1;
+      }
+    }
+    this.moving = moving;
+    this.facing = facing;
+    return {
+      runStartMs: this.startTick < 0 ? -1 : msOfTicks(s.tick - this.startTick),
+      runStopMs: this.stopTick < 0 ? -1 : msOfTicks(s.tick - this.stopTick),
+    };
+  }
+}
 
 /**
  * How far the Kindled's body has moved, for the walk and run cycles: the
@@ -87,14 +151,15 @@ export interface Stride {
  * The backpedal (G1.5h): the Kindled's aim and movement are separate, so it
  * often runs away from where it faces, and the run cycle would stride the
  * wrong way. While it runs with its movement more than `BACKPEDAL_ON_DEG`
- * from its facing (the aim), so in the three facings opposite the aim, the
- * run cycle plays backwards; it plays forwards again once they are less than
+ * from its facing (the aim), so in the three facings opposite the aim, it
+ * backpedals; it runs forwards again once they are less than
  * `BACKPEDAL_OFF_DEG` apart. The gap between the two is hysteresis: a stick
  * held near the boundary does not flicker. Strafing, about 90°, plays
- * forwards. The facing stays the aim's; only the frame order flips. The
- * movement direction is the render positions' (`StrideMeter.headingDeg`),
- * not a sim input. This is the stopgap for a drawn `run_back`: swap the
- * animation in `backpedalFrame` when ART draws one, under the same rule.
+ * forwards. The facing stays the aim's. A backpedal plays `run_back` by
+ * distance when the sheet has it (M1 polish, ART 2026-10-17), else the run
+ * cycle in reverse (`backpedalFrame`, the stopgap while the row awaits art).
+ * The movement direction is the render positions' (`StrideMeter.headingDeg`),
+ * not a sim input. Slowing the backpedal is the sim's (combat.md §2).
  */
 export const BACKPEDAL_ON_DEG = 112.5;
 export const BACKPEDAL_OFF_DEG = 100;
@@ -119,9 +184,9 @@ export function backpedals(prev: boolean, separation: number): boolean {
 }
 
 /**
- * The run's frame while backpedalling: the distance-driven frame `f` of an
- * `n`-frame cycle played in reverse, `n − 1 − f`. A drawn `run_back` would
- * replace this (and the animation name in `gaitPose`) under the same rule.
+ * The run's frame while backpedalling on a sheet without `run_back`: the
+ * distance-driven frame `f` of an `n`-frame cycle played in reverse,
+ * `n − 1 − f`. With `run_back` on the sheet, `gaitPose` plays that instead.
  */
 export function backpedalFrame(n: number, f: number): number {
   return Math.max(0, n - 1 - f);
@@ -254,8 +319,9 @@ function hasAnim(sheet: SpriteSheet, name: string): boolean {
  * `walk` at `anim.walkCyclePx`, the cycle by the gait either way. The frame
  * comes from the distance moved; without a stride (tools, tests of other
  * states) it keeps the sheet's frame rate on the tick. A backpedalling run
- * (`stride.backpedal`) plays its cycle in reverse (`backpedalFrame`); `walk`
- * for its own sake never does.
+ * (`stride.backpedal`) plays `run_back` forwards by distance, one cycle per
+ * `anim.backCyclePx`, when the sheet has it; else the run cycle in reverse
+ * (`backpedalFrame`). `walk` for its own sake never backpedals.
  */
 export function gaitPose(
   sheet: SpriteSheet,
@@ -267,12 +333,29 @@ export function gaitPose(
   const standIn = STAND_IN[gait];
   const name = standIn !== undefined && (isAwaitingArt({ name: gait }) || !hasAnim(sheet, gait)) ? standIn : gait;
   if (!stride) return kindledPoseOf(sheet, name, angle, (a) => loopFrame(a, tick));
+  const back = gait === 'run' && stride.backpedal === true;
+  if (back && hasAnim(sheet, 'run_back')) {
+    return kindledPoseOf(sheet, 'run_back', angle, (a) => strideFrame(a, stride.distancePx, stride.cycles.backCyclePx));
+  }
   const cyclePx = gait === 'run' ? stride.cycles.runCyclePx : stride.cycles.walkCyclePx;
-  const reverse = gait === 'run' && stride.backpedal === true;
   return kindledPoseOf(sheet, name, angle, (a) => {
     const f = strideFrame(a, stride.distancePx, cyclePx);
-    return reverse ? backpedalFrame(a.frames.length, f) : f;
+    return back ? backpedalFrame(a.frames.length, f) : f;
   });
+}
+
+/**
+ * A one-shot the sheet may lack (the run transitions), `ms` into it: its
+ * pose at the sheet's rate while `ms` is under the row's length
+ * (frames / fps), else null, the transition over or not on the sheet.
+ */
+function transientPose(sheet: SpriteSheet, name: string, angle: number, ms: number | undefined): KindledPose | null {
+  if (ms === undefined || ms < 0 || !hasAnim(sheet, name)) return null;
+  const anim = sheet.anims[`${name}_${sheetFacing(sheet, name, angle)}`];
+  if (!anim) return null;
+  const lengthMs = (anim.frames.length * 1000) / Math.max(1, anim.frameRate);
+  if (ms >= lengthMs) return null;
+  return kindledPoseOf(sheet, name, angle, (a) => onceFrame(a, ticks(ms)));
 }
 
 /** True while a Hook-thrust pins a Husk (the engine shows `heavy_hold`). */
@@ -284,7 +367,10 @@ function pinning(s: RunState): boolean {
  * The Kindled's pose from the player's sim state.
  *
  * - idle, or run while moving (walk standing in while run awaits art), facing
- *   the aim; run plays by `stride` (`gaitPose`), backwards while backpedalling;
+ *   the aim; run plays by `stride` (`gaitPose`), `run_back` (or the run in
+ *   reverse) while backpedalling; `run_start` for its length when it starts
+ *   moving from idle and `run_stop` when it stops (`clocks`, from `GaitClock`)
+ *   where the sheet has them, the run taking over at its distance phase;
  * - dodge: crouch, the roll (2 frames) and recover over the dodge window;
  * - light_1..3 by combo step, wind-up / swing / recover over the strike window;
  * - heavy_charge at the sheet's rate holding the last frame → heavy_thrust over
@@ -340,10 +426,12 @@ export function kindledPose(
     default:
       break;
   }
-  const moving = Math.abs(p.vx) + Math.abs(p.vy) > WALK_THRESHOLD;
   // In an encounter (Combat and Calm alike) the Kindled always runs; walking is for outside encounters (M2).
-  if (moving) return gaitPose(sheet, 'run', p.aim, tick, stride);
-  return kindledPoseOf(sheet, 'idle', p.aim, (a) => loopFrame(a, tick));
+  // The transitions, where the sheet has them: run_start once from idle, run_stop once on a stop (visual only).
+  if (isMoving(p)) {
+    return transientPose(sheet, 'run_start', p.aim, clocks.runStartMs) ?? gaitPose(sheet, 'run', p.aim, tick, stride);
+  }
+  return transientPose(sheet, 'run_stop', p.aim, clocks.runStopMs) ?? kindledPoseOf(sheet, 'idle', p.aim, (a) => loopFrame(a, tick));
 }
 
 function heavyPose(s: RunState, p: PlayerState, P: Params, sheet: SpriteSheet): KindledPose {
@@ -486,8 +574,7 @@ export function huskPose(
     case 'chase': {
       // The Nutshell walks: its shell rocks forward while it moves, as long as it is whole.
       const walk = sheet.anims.walk;
-      const moving = Math.abs(h.vx) + Math.abs(h.vy) > WALK_THRESHOLD;
-      if (walk && moving && base.anim === 'idle') return { anim: 'walk', frame: loopFrame(walk, s.tick) };
+      if (walk && isMoving(h) && base.anim === 'idle') return { anim: 'walk', frame: loopFrame(walk, s.tick) };
       return base;
     }
     default:

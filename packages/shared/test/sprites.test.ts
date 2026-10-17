@@ -27,11 +27,14 @@ import {
   PROP_TABLES,
   REQUIRED_MILESTONE,
   isRequiredAnim,
+  optionalReason,
   skinMaskName,
   SPRITE_CANVAS,
   SPRITE_CELLS,
   SPRITE_FACINGS,
   SPRITE_SHEET_NAMES,
+  OPTIONAL_SPRITE_SHEETS,
+  SPARKGLASS_SHEET,
   SPRITE_SHEET_VERSION,
   SPRITE_WHITELIST,
   spriteCellSpecFor,
@@ -47,6 +50,7 @@ import {
 } from '../src/index.js';
 import fixtureSheet from './fixtures/kindled-fixture.json' with { type: 'json' };
 import chestFixture from './fixtures/prop-chest.json' with { type: 'json' };
+import sparkglassFixture from './fixtures/prop-sparkglass.json' with { type: 'json' };
 import { decodePng } from './png.js';
 import { pointProblems, tableProblems, V1_RETIRED, v2Problems, type Rgba } from './sheetChecks.js';
 import { tileSheetProblems } from './tileChecks.js';
@@ -166,6 +170,36 @@ describe('the chest fixture sheet (test/fixtures/prop-chest)', () => {
   });
   // Shipped: the fixture carries the whole table, like ART's finished sheet must.
   sheetSuite(CHEST_SHEET, sheet, fixtureUrl, true);
+});
+
+describe('the Sparkglass pickup fixture sheet (test/fixtures/prop-sparkglass)', () => {
+  const sheet: SpriteSheet = sparkglassFixture;
+  it('is a v2 prop sheet without a table: idle alone, 2 frames (the glint) at the recipe rate, the chip 9 × 11 on the prop cell', () => {
+    expect(sheet.meta.version).toBe(SPRITE_SHEET_VERSION);
+    expect(SPARKGLASS_SHEET).toBe('prop-sparkglass');
+    expect(OPTIONAL_SPRITE_SHEETS).toEqual([SPARKGLASS_SHEET]);
+    expect(SPRITE_SHEET_NAMES).not.toContain(SPARKGLASS_SHEET);
+    expect(spriteSheetSpec(SPARKGLASS_SHEET).anims).toBeNull();
+    expect(propTable(SPARKGLASS_SHEET, sheet)).toEqual([propIdleSpec(2, 2)]);
+    expect(tableProblems(SPARKGLASS_SHEET, sheet, propTable(SPARKGLASS_SHEET, sheet) ?? [])).toEqual([]);
+    expect(Object.keys(sheet.anims)).toEqual(['idle']);
+    const png = decodePng(readFileSync(fixtureUrl(sheet.meta.image)));
+    const box = { x0: png.width, y0: png.height, x1: -1, y1: -1 };
+    const idle0 = sheet.frames.idle_0?.frame;
+    if (!idle0) throw new Error('no idle_0');
+    for (let y = idle0.y; y < idle0.y + idle0.h; y++) {
+      for (let x = idle0.x; x < idle0.x + idle0.w; x++) {
+        if ((png.rgba[(y * png.width + x) * 4 + 3] ?? 0) === 0) continue;
+        box.x0 = Math.min(box.x0, x);
+        box.y0 = Math.min(box.y0, y);
+        box.x1 = Math.max(box.x1, x);
+        box.y1 = Math.max(box.y1, y);
+      }
+    }
+    expect([box.x1 - box.x0 + 1, box.y1 - box.y0 + 1]).toEqual([9, 11]);
+    expect(box.y1).toBe(SPRITE_CANVAS.soleRow);
+  });
+  sheetSuite(SPARKGLASS_SHEET, sheet, fixtureUrl, true);
 });
 
 /** The checks of §6 for one sheet; `shipped` sheets also carry their table up to REQUIRED_MILESTONE (tableProblems). */
@@ -777,13 +811,20 @@ describe('optional animations (milestones)', () => {
   const sheetWith = (anims: SpriteSheet['anims']): SpriteSheet => ({ ...fixtureSheet, anims });
   const m1 = KINDLED_ANIMS.filter(isRequiredAnim);
 
-  it('makes carry and sit M2 and everything else M1, and requires every M1 row (nothing awaits art)', () => {
+  it('makes carry and sit M2 and everything else M1, and requires every M1 row but the three awaiting art', () => {
     expect(REQUIRED_MILESTONE).toBe('M1');
     expect(KINDLED_ANIMS.filter((a) => a.milestone === 'M2').map((a) => a.name)).toEqual(['carry_idle', 'carry_walk', 'sit']);
-    expect(ANIMS_AWAITING_ART).toEqual([]);
+    // The run transitions and run_back (M1 polish, ART 2026-10-17) are M1 rows optional until ART's frames land.
+    expect(ANIMS_AWAITING_ART).toEqual(['run_start', 'run_stop', 'run_back']);
     expect(m1.map((a) => a.name)).toEqual(
-      KINDLED_ANIMS.map((a) => a.name).filter((n) => !['carry_idle', 'carry_walk', 'sit'].includes(n)),
+      KINDLED_ANIMS.map((a) => a.name).filter(
+        (n) => !['carry_idle', 'carry_walk', 'sit', 'run_start', 'run_stop', 'run_back'].includes(n),
+      ),
     );
+    for (const name of ANIMS_AWAITING_ART) {
+      expect(isRequiredAnim({ name, milestone: 'M1' }), name).toBe(false);
+      expect(optionalReason({ name, milestone: 'M1' }), name).toBe('awaiting art');
+    }
     for (const a of [...HUSK_TABLES.peeling, ...HUSK_TABLES.nutshell, ...NPC_ANIMS]) expect(a.milestone, a.name).toBe('M1');
   });
 
@@ -827,6 +868,23 @@ describe('optional animations (milestones)', () => {
     expect(tableProblems('kindled-test', sheetWith(noRun), KINDLED_ANIMS)).toEqual(
       SPRITE_FACINGS.map((f) => `run_${f} is missing`),
     );
+  });
+
+  it('has the run transitions and run_back in the Kindled table (ART 2026-10-17): 8 facings, optional until drawn, complete when present', () => {
+    const rows = KINDLED_ANIMS.filter((a) => ['run_start', 'run_stop', 'run_back'].includes(a.name));
+    expect(rows.map((a) => [a.name, a.frames, a.fps, a.loop, a.hold, a.facings.length, a.milestone])).toEqual([
+      ['run_start', 2, 20, false, false, 8, 'M1'],
+      ['run_stop', 2, 20, false, false, 8, 'M1'],
+      ['run_back', 4, 0, true, false, 8, 'M1'],
+    ]);
+    // A finished sheet passes without them, and with all of them; one facing of run_back alone fails.
+    expect(tableProblems('kindled-test', sheetWith(animsOf(m1)), KINDLED_ANIMS)).toEqual([]);
+    expect(tableProblems('kindled-test', sheetWith(animsOf([...m1, ...rows])), KINDLED_ANIMS)).toEqual([]);
+    const anims = animsOf([...m1, ...rows]);
+    delete anims.run_back_SW;
+    expect(tableProblems('kindled-test', sheetWith(anims), KINDLED_ANIMS)).toEqual([
+      'run_back_SW is missing (run_back is awaiting art, but complete once present; required: M1)',
+    ]);
   });
 
   it('fails animations outside the table', () => {

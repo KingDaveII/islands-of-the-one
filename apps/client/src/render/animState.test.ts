@@ -1,9 +1,11 @@
 import {
+  ANIMS_AWAITING_ART,
   defaultTuning,
   HUSK_ANIMS,
   isRequiredAnim,
   KINDLED_ANIMS,
   roomTemplates,
+  SPRITE_FACINGS,
   spriteSheets,
   type SpriteSheet,
 } from '@iot/shared';
@@ -15,9 +17,11 @@ import {
   backpedalFrame,
   backpedals,
   facing4,
+  GaitClock,
   gaitPose,
   huskFlip,
   huskPose,
+  isMoving,
   kindledPose,
   loopFrame,
   onceFrame,
@@ -53,6 +57,30 @@ const KINDLED_M1: SpriteSheet = {
   anims: Object.fromEntries(
     Object.entries(KINDLED.anims).filter(([key]) => M1_PLAYABLE.some((n) => key.startsWith(`${n}_`))),
   ),
+};
+
+/**
+ * The Kindled sheet as it will be once ART's run transitions land: `run_start`
+ * and `run_stop` (2 frames at 20 fps, once) and `run_back` (4 frames, by
+ * distance) in every facing, made from the run's frames (the test reads frame
+ * indexes, never pixels).
+ */
+const KINDLED_TRANSITIONS: SpriteSheet = {
+  ...KINDLED,
+  anims: {
+    ...KINDLED.anims,
+    ...Object.fromEntries(
+      SPRITE_FACINGS.flatMap((f) => {
+        const run = KINDLED.anims[`run_${f}`];
+        if (!run) throw new Error(`no run_${f}`);
+        return [
+          [`run_start_${f}`, { frames: run.frames.slice(0, 2), frameRate: 20, repeat: 0 }],
+          [`run_stop_${f}`, { frames: run.frames.slice(2, 4), frameRate: 20, repeat: 0 }],
+          [`run_back_${f}`, { frames: run.frames.slice(0, 4), frameRate: 0, repeat: -1 }],
+        ];
+      }),
+    ),
+  },
 };
 
 function newRun(seed: number): Run {
@@ -173,8 +201,8 @@ describe('frame timing helpers', () => {
 describe('walk and run by distance (G1.5c)', () => {
   const stride = (distancePx: number): Stride => ({ distancePx, cycles: CYCLES });
 
-  it('takes the cycles from the anim tuning: 64 world px a walk, 96 a run', () => {
-    expect(CYCLES).toEqual({ walkCyclePx: 64, runCyclePx: 96 });
+  it('takes the cycles from the anim tuning: 64 world px a walk, 96 a run, 48 a run_back', () => {
+    expect(CYCLES).toEqual({ walkCyclePx: 64, runCyclePx: 96, backCyclePx: 48 });
   });
 
   it('picks the frame from distance: floor(distance / cyclePx × frames) mod frames', () => {
@@ -386,6 +414,136 @@ describe('the backpedal: the run played in reverse (G1.5h)', () => {
     expect(pose().frame).toBe(6);
     meter.step(88, 112);
     expect(meter.headingDeg).toBeCloseTo(45);
+  });
+});
+
+describe('run transitions and run_back (M1 polish, ART 2026-10-17)', () => {
+  const stride = (distancePx: number, backpedal = false): Stride => ({ distancePx, cycles: CYCLES, backpedal });
+  const T = KINDLED_TRANSITIONS;
+
+  it('lists the three rows as awaiting art, so kindled-ash without them is still finished and plays as before', () => {
+    expect(ANIMS_AWAITING_ART).toEqual(['run_start', 'run_stop', 'run_back']);
+    expect(Object.keys(KINDLED.anims).some((k) => /^run_(start|stop|back)_/.test(k))).toBe(false);
+    expect(Object.keys(T.anims).filter((k) => /^run_(start|stop|back)_/.test(k))).toHaveLength(24);
+  });
+
+  it('plays run_back forwards by distance, one cycle per anim.backCyclePx, when the sheet has it; else the run in reverse', () => {
+    const run = newRun(1);
+    const s = run.state;
+    s.player.aim = deg(0);
+    s.player.vx = -300;
+    // 4 frames over 48 px: a frame every 12 px, like the run's, wrapping each cycle.
+    const back = [0, 11, 12, 24, 36, 47, 48, 60].map((d) => kindledPose(s, run.params, T, NO_CLOCKS, stride(d, true)));
+    expect(back.map((p) => p.frame)).toEqual([0, 0, 1, 2, 3, 3, 0, 1]);
+    expect(back[0]).toMatchObject({ name: 'run_back', anim: 'run_back_E', facing: 'E' });
+    // Not backpedalling: the run, forwards, whatever the sheet has.
+    expect(kindledPose(s, run.params, T, NO_CLOCKS, stride(12))).toMatchObject({ name: 'run', frame: 1 });
+    // The same on kindled-ash today: the run in reverse (the stopgap).
+    expect(kindledPose(s, run.params, KINDLED, NO_CLOCKS, stride(12, true))).toMatchObject({ name: 'run', frame: 6 });
+    // walk never backpedals, and the gait helper agrees.
+    expect(gaitPose(T, 'walk', deg(0), 0, stride(12, true))).toMatchObject({ anim: 'walk_E', frame: 1 });
+    expect(gaitPose(T, 'run', deg(0), 0, stride(24, true))).toMatchObject({ anim: 'run_back_E', frame: 2 });
+  });
+
+  it('plays run_start once (2 frames at 20 fps, 100 ms) from the start clock, then hands over to the run at its distance phase', () => {
+    const run = newRun(1);
+    const s = run.state;
+    s.player.aim = deg(0);
+    s.player.vx = 300;
+    const at = (runStartMs: number, d = 60) => kindledPose(s, run.params, T, { hitMs: -1, runStartMs }, stride(d));
+    expect(at(0)).toMatchObject({ name: 'run_start', anim: 'run_start_E', frame: 0 });
+    expect(at(49)).toMatchObject({ name: 'run_start', frame: 0 });
+    expect(at(50)).toMatchObject({ name: 'run_start', frame: 1 });
+    expect(at(99)).toMatchObject({ name: 'run_start', frame: 1 });
+    // Over: the run, 60 px into its 96 px cycle (frame 5), not frame 0.
+    expect(at(100)).toMatchObject({ name: 'run', frame: 5 });
+    expect(at(-1)).toMatchObject({ name: 'run', frame: 5 });
+    // Into a backpedal the start plays too, then run_back at its phase.
+    s.player.vx = -300;
+    expect(kindledPose(s, run.params, T, { hitMs: -1, runStartMs: 0 }, stride(24, true))).toMatchObject({ name: 'run_start', frame: 0 });
+    expect(kindledPose(s, run.params, T, { hitMs: -1, runStartMs: 100 }, stride(24, true))).toMatchObject({ name: 'run_back', frame: 2 });
+    // Without the row on the sheet the run plays directly, as today.
+    expect(kindledPose(s, run.params, KINDLED, { hitMs: -1, runStartMs: 0 }, stride(24))).toMatchObject({ name: 'run' });
+  });
+
+  it('plays run_stop once from the stop clock, then idle; nothing without the row', () => {
+    const run = newRun(1);
+    const s = run.state;
+    s.player.aim = deg(90);
+    const at = (runStopMs: number) => kindledPose(s, run.params, T, { hitMs: -1, runStopMs });
+    expect(at(0)).toMatchObject({ name: 'run_stop', anim: 'run_stop_S', frame: 0 });
+    expect(at(50)).toMatchObject({ name: 'run_stop', frame: 1 });
+    expect(at(100)).toMatchObject({ name: 'idle' });
+    expect(at(-1)).toMatchObject({ name: 'idle' });
+    expect(kindledPose(s, run.params, KINDLED, { hitMs: -1, runStopMs: 0 })).toMatchObject({ name: 'idle' });
+    // A hit, an attack or a dodge wins over a transition clock: the sim's state is the authority.
+    expect(kindledPose(s, run.params, T, { hitMs: 10, runStopMs: 0 })).toMatchObject({ name: 'hit' });
+    s.player.action = 'dodge';
+    s.player.t = 1;
+    expect(kindledPose(s, run.params, T, { hitMs: -1, runStopMs: 0, runStartMs: 0 })).toMatchObject({ name: 'dodge' });
+  });
+
+  it('GaitClock: starts from idle, stops, ends on a turn, an attack or a stop again, in sim ticks', () => {
+    const run = newRun(1);
+    const s = run.state;
+    const p = s.player;
+    const clock = new GaitClock();
+    const tick = (n: number, patch: Partial<typeof p> = {}) => {
+      s.tick = n;
+      Object.assign(p, patch);
+      return clock.update(s);
+    };
+    p.aim = deg(0);
+    expect(tick(0)).toEqual({ runStartMs: -1, runStopMs: -1 });
+    // Starts moving at tick 10: the start clock runs, 50 ms at tick 13.
+    expect(tick(10, { vx: 300 })).toEqual({ runStartMs: 0, runStopMs: -1 });
+    expect(tick(13)).toEqual({ runStartMs: 50, runStopMs: -1 });
+    expect(tick(16)).toEqual({ runStartMs: 100, runStopMs: -1 });
+    // Stops at tick 40: the stop clock runs, the start one is gone.
+    expect(tick(40, { vx: 0 })).toEqual({ runStartMs: -1, runStopMs: 0 });
+    expect(tick(43)).toEqual({ runStartMs: -1, runStopMs: 50 });
+    // Starts again during the stop: run_start, and the stop ends.
+    expect(tick(44, { vx: 300 })).toEqual({ runStartMs: 0, runStopMs: -1 });
+    // Stops again during the start: run_stop.
+    expect(tick(46, { vx: 0 })).toEqual({ runStartMs: -1, runStopMs: 0 });
+    // A turn (the 8-way facing changes) ends a transition at once.
+    expect(tick(47, { aim: deg(90) })).toEqual({ runStartMs: -1, runStopMs: -1 });
+    expect(tick(50, { vx: 300 })).toEqual({ runStartMs: 0, runStopMs: -1 });
+    expect(tick(51, { aim: deg(180) })).toEqual({ runStartMs: -1, runStopMs: -1 });
+    // An attack clears the clocks; a move ending with the body still moving starts no run_start.
+    expect(tick(60, { action: 'light', t: 1 })).toEqual({ runStartMs: -1, runStopMs: -1 });
+    expect(tick(70, { action: 'idle', t: 0 })).toEqual({ runStartMs: -1, runStopMs: -1 });
+    // ... but stopping after it does play run_stop, and starting from that idle plays run_start.
+    expect(tick(72, { vx: 0 })).toEqual({ runStartMs: -1, runStopMs: 0 });
+    expect(tick(80, { vx: 300 })).toEqual({ runStartMs: 0, runStopMs: -1 });
+    // A dodge mid-run: the clocks clear and stay clear while the roll ends with the body moving.
+    expect(tick(81, { action: 'dodge', t: 1 })).toEqual({ runStartMs: -1, runStopMs: -1 });
+    expect(tick(95, { action: 'idle', vx: 200 })).toEqual({ runStartMs: -1, runStopMs: -1 });
+    expect(isMoving({ vx: 64, vy: 0 })).toBe(false);
+    expect(isMoving({ vx: 65, vy: 0 })).toBe(true);
+  });
+
+  it('shows run_start, run_stop and run_back on a sheet with them through an autopilot run, and the transition frames never go past 1', () => {
+    const run = newRun(1237);
+    const s = run.state;
+    const clock = new GaitClock();
+    const meter = new StrideMeter();
+    let back = false;
+    const shown = new Map<string, Set<number>>();
+    for (let i = 0; i < 60 * 60 * 2 && s.status === 'playing'; i++) {
+      stepRun(run, autopilot(s, run.params, { patient: true }));
+      meter.step(s.player.x / 256, s.player.y / 256);
+      if (meter.headingDeg !== null) back = backpedals(back, separationDeg(meter.headingDeg, simDeg(s.player.aim)));
+      const pose = kindledPose(s, run.params, T, { hitMs: -1, ...clock.update(s) }, { distancePx: meter.distancePx, cycles: CYCLES, backpedal: back });
+      expect(T.anims[pose.anim], pose.anim).toBeDefined();
+      (shown.get(pose.name) ?? shown.set(pose.name, new Set()).get(pose.name))?.add(pose.frame);
+    }
+    expect([...shown.keys()]).toEqual(expect.arrayContaining(['run_start', 'run_stop', 'run_back', 'run', 'idle']));
+    expect([...(shown.get('run_start') ?? [])].sort()).toEqual([0, 1]);
+    // The bot rarely stands still for the full 100 ms: run_stop shows its first frame at least, never a third.
+    expect([...(shown.get('run_stop') ?? [])].every((f) => f === 0 || f === 1)).toBe(true);
+    expect(shown.get('run_stop')?.has(0)).toBe(true);
+    expect(Math.max(...(shown.get('run_back') ?? []))).toBeLessThanOrEqual(3);
   });
 });
 

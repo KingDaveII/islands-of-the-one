@@ -149,6 +149,11 @@ function startGame(): void {
     chestFrames(): string[] {
       return activeGame()?.world.chests.frames() ?? [];
     },
+    /** What draws the Sparkglass pickups (`sheet` once prop-sparkglass is on disk, else `fallback`), and their frames this render frame. */
+    pickups(): { renderer: 'sheet' | 'fallback'; frames: string[] } | null {
+      const w = activeGame()?.world;
+      return w ? { renderer: w.pickups.renderer, frames: w.pickups.frames() } : null;
+    },
     setAutopilot(opts: AutopilotOptions | null): void {
       const s = activeGame();
       if (s) s.session.autopilot = opts;
