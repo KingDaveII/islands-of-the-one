@@ -13,10 +13,10 @@
  * another client (main before G1.5) as `<name>.png`.
  *
  * `--run` (G1.5c, no account needed) runs the Kindled east and south at
- * moveSpeed 100 and shoots a strip of one run cycle per facing (`walk`
- * standing in for `run` until ART draws it), one 4× crop per frame, as
+ * moveSpeed 100 and shoots a strip of one run cycle per facing (`run`, 8
+ * frames since ART drew it in #46), one 4× crop per frame, as
  * `run-<facing>-strip.png`. The cycle plays by distance, so frame k shows
- * after k × 16 world px (`anim.runCyclePx` 96 over 6 frames).
+ * after k × 12 world px (`anim.runCyclePx` 96 over 8 frames).
  *
  * `--rooms` (G1.5e, G1.5g; no account needed) shoots each of the five M1 rooms
  * at 1920 × 912 from the shipped sheets (tiles-cave, prop-chest, the Husks):
@@ -452,16 +452,16 @@ async function runShots() {
     const aim = aimOf(facing);
     const run = (((aim & 0xfff) | (moveDir << 12) | (7 << 20)) >>> 0).toString();
     // Up to speed first: the strip starts on the cycle's first frame after the body has been running.
-    await posed(page, 21, `() => ${run}`, `(s, pose) => pose?.anim === 'walk_${facing}' && pose.frame === 5`);
+    await posed(page, 21, `() => ${run}`, `(s, pose) => pose?.anim === 'run_${facing}' && pose.frame === 7`);
     const crops = [];
-    for (let k = 0; k < 6; k++) {
+    for (let k = 0; k < 8; k++) {
       await page.evaluate(() => window.__iot.setSpeed(0.25));
       await page.waitForFunction(
         ({ facing, k }) => {
           const scene = window.__iot.scene();
           scene.session.state.husks.length = 0;
           const pose = window.__iot.pose();
-          const done = pose?.anim === `walk_${facing}` && pose.frame === k;
+          const done = pose?.anim === `run_${facing}` && pose.frame === k;
           if (done) window.__iot.setSpeed(0);
           return done;
         },
