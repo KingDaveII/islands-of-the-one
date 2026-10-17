@@ -26,6 +26,7 @@ const ROWS: [ControlAction, string, string][] = [
   ['interact', 'INTERACT', 'calm only · soon'],
   ['chartPeek', 'CHART PEEK', 'hold · soon'],
   ['journal', 'JOURNAL', 'soon'],
+  ['inventory', 'INVENTORY', 'pack and store'],
   ['menu', 'MENU', ''],
   ['tuning', 'TUNING', 'the F2 panel'],
 ];

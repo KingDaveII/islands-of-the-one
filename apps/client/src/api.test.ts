@@ -20,12 +20,26 @@ function fake(status: number, body?: unknown) {
 
 describe('the API client', () => {
   it("GETs /health for the server's build; a page that answers with HTML is unreachable", async () => {
-    const { calls, api } = fake(200, { status: 'ok', db: 'postgres', version: 'abc1234', protocolVersion: 1 });
-    expect(await api.health()).toEqual({ ok: true, value: { status: 'ok', db: 'postgres', version: 'abc1234', protocolVersion: 1 } });
+    const { calls, api } = fake(200, {
+      status: 'ok',
+      db: 'postgres',
+      version: 'abc1234',
+      protocolVersion: 1,
+    });
+    expect(await api.health()).toEqual({
+      ok: true,
+      value: { status: 'ok', db: 'postgres', version: 'abc1234', protocolVersion: 1 },
+    });
     expect(calls[0]?.input).toBe(HEALTH_ROUTE);
     expect(calls[0]?.init).toMatchObject({ method: 'GET' });
-    expect(await fake(200, '<!doctype html><title>dev</title>').api.health()).toMatchObject({ ok: false, error: 'unreachable' });
-    expect(await fake(503, { status: 'error', db: 'postgres' }).api.health()).toMatchObject({ ok: false, error: 'unreachable' });
+    expect(await fake(200, '<!doctype html><title>dev</title>').api.health()).toMatchObject({
+      ok: false,
+      error: 'unreachable',
+    });
+    expect(await fake(503, { status: 'error', db: 'postgres' }).api.health()).toMatchObject({
+      ok: false,
+      error: 'unreachable',
+    });
   });
 
   it('GETs /api/me with cookies and checks the response shape', async () => {
@@ -35,15 +49,54 @@ describe('the API client', () => {
     expect(calls[0]?.init).toMatchObject({ method: 'GET', credentials: 'include' });
   });
 
-  it('GETs the inventory and unwraps its items', async () => {
-    const items = [{ item: 'sealed-gin', quantity: 12 }];
-    const { calls, api } = fake(200, { items });
-    expect(await api.inventory()).toEqual({ ok: true, value: items });
+  it('GETs the inventory by place and checks its shape', async () => {
+    const inventory = {
+      purse: [{ itemId: 'sealed-gin', quantity: 12 }],
+      pack: [],
+      store: [{ itemId: 'black-stone', quantity: 3 }],
+      baskets: {},
+    };
+    const { calls, api } = fake(200, inventory);
+    expect(await api.inventory()).toEqual({ ok: true, value: inventory });
     expect(calls[0]?.input).toBe(ApiRoute.Inventory);
     expect(calls[0]?.init).toMatchObject({ method: 'GET', credentials: 'include' });
-    expect(await fake(200, { items: [{ item: 'sealed-gin', quantity: -1 }] }).api.inventory()).toMatchObject({
+    expect(
+      await fake(200, {
+        ...inventory,
+        purse: [{ itemId: 'sealed-gin', quantity: -1 }],
+      }).api.inventory(),
+    ).toMatchObject({
       ok: false,
       error: 'unreachable',
+    });
+    // Task 2's shape no longer passes.
+    expect(await fake(200, { items: [] }).api.inventory()).toMatchObject({
+      ok: false,
+      error: 'unreachable',
+    });
+  });
+
+  it('POSTs a move and answers the new inventory, or the refusal', async () => {
+    const inventory = {
+      purse: [],
+      pack: [{ itemId: 'black-stone', quantity: 3 }],
+      store: [],
+      baskets: {},
+    };
+    const { calls, api } = fake(200, inventory);
+    const body = { itemId: 'black-stone', from: 'store', to: 'pack', quantity: 3 } as const;
+    expect(await api.move(body)).toEqual({ ok: true, value: inventory });
+    expect(calls[0]?.input).toBe(ApiRoute.InventoryMove);
+    expect(calls[0]?.init).toMatchObject({
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify(body),
+    });
+    expect(await fake(409, { error: 'pack-full', message: 'Pack full.' }).api.move(body)).toEqual({
+      ok: false,
+      status: 409,
+      error: 'pack-full',
+      message: 'Pack full.',
     });
   });
 

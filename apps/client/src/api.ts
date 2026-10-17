@@ -10,7 +10,8 @@ import {
   type CreateKindledRequest,
   type CredentialsRequest,
   type HealthResponse,
-  type InventoryEntry,
+  type InventoryMoveRequest,
+  type InventoryResponse,
   type KindledView,
   type MeResponse,
 } from '@iot/shared';
@@ -67,8 +68,10 @@ export interface Api {
   login(body: CredentialsRequest): Promise<ApiResult<MeResponse>>;
   logout(): Promise<ApiResult<undefined>>;
   createKindled(body: CreateKindledRequest): Promise<ApiResult<KindledView>>;
-  /** The signed-in Kindled's items, in items.json order; `no-kindled` before creation. */
-  inventory(): Promise<ApiResult<InventoryEntry[]>>;
+  /** The signed-in Kindled's items by place, each in items.json order; `no-kindled` before creation. */
+  inventory(): Promise<ApiResult<InventoryResponse>>;
+  /** Move items between two places; answers the new inventory, or `pack-full`, `stack-limit`, `insufficient`, `wrong-place`, `bad-request`. */
+  move(body: InventoryMoveRequest): Promise<ApiResult<InventoryResponse>>;
   /** The server's build (its /health, same origin); `unreachable` when the page's origin doesn't serve it. */
   health(): Promise<ApiResult<HealthResponse>>;
 }
@@ -83,10 +86,8 @@ export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)):
       const res = await request(fetchFn, ApiRoute.Kindled, 'POST', body, isKindledResponse);
       return res.ok ? { ok: true, value: res.value.kindled } : res;
     },
-    inventory: async () => {
-      const res = await request(fetchFn, ApiRoute.Inventory, 'GET', undefined, isInventoryResponse);
-      return res.ok ? { ok: true, value: res.value.items } : res;
-    },
+    inventory: () => request(fetchFn, ApiRoute.Inventory, 'GET', undefined, isInventoryResponse),
+    move: (body) => request(fetchFn, ApiRoute.InventoryMove, 'POST', body, isInventoryResponse),
     health: () => request(fetchFn, HEALTH_ROUTE, 'GET', undefined, isHealthResponse),
   };
 }

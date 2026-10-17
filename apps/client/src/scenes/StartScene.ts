@@ -4,7 +4,7 @@ import { isWeaponAvailable, type Tuning } from '@iot/sim';
 import { accountStore, api } from '../api.js';
 import { deviceStore } from '../game/activeDevice.js';
 import { controlsStore } from '../game/controlsStore.js';
-import { glyphsFor, MENU_BUTTONS, padEdges, padEdgeState, type PadFamily } from '../game/gamepad.js';
+import { buttonsFor, glyphsFor, MENU_BUTTONS, padEdges, padEdgeState, type PadFamily } from '../game/gamepad.js';
 import { eventKeyFor, keyboardBinding } from '../game/keyboard.js';
 import { parseSeed, randomSeed } from '../game/seed.js';
 import { displayable } from '../game/drawable.js';
@@ -183,11 +183,13 @@ export class StartScene extends Phaser.Scene {
 
     // Text entry reads DOM key events directly (Phaser's key queue is for game controls).
     const controlsKey = eventKeyFor(keyboardBinding('controls')).toLowerCase();
+    const inventoryKey = eventKeyFor(keyboardBinding('inventory')).toLowerCase();
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === 'Enter') this.startRun();
       else if (e.key === 'Escape') this.logOut();
       else if (e.key.toLowerCase() === controlsKey) this.scene.start('controls');
+      else if (e.key.toLowerCase() === inventoryKey) this.scene.start('inventory');
       else if (e.key === 'Backspace') this.seedText = this.seedText.slice(0, -1);
       else if (/^[a-z0-9]$/i.test(e.key) && this.seedText.length < MAX_SEED_LEN)
         this.seedText += e.key.toUpperCase();
@@ -235,6 +237,7 @@ export class StartScene extends Phaser.Scene {
           ...menu(MENU_BUTTONS.controls),
           word('controls  ·'),
           ...menu(MENU_BUTTONS.inventory),
+          ...padKey('inventory'),
           word('inventory  ·'),
           ...menu(MENU_BUTTONS.left),
           ...menu(MENU_BUTTONS.right),
@@ -269,6 +272,8 @@ export class StartScene extends Phaser.Scene {
         word('start  ·'),
         ...key('controls'),
         word('controls  ·'),
+        ...key('inventory'),
+        word('inventory  ·'),
         ...key('tuning'),
         word('tuning  ·'),
         ...key('debug'),
@@ -368,7 +373,11 @@ export class StartScene extends Phaser.Scene {
     const edges = padEdges(this.pad);
     if (MENU_BUTTONS.confirm.some((b) => edges.includes(b))) this.startRun();
     else if (edges.includes(MENU_BUTTONS.controls)) this.scene.start('controls');
-    else if (edges.includes(MENU_BUTTONS.inventory)) this.scene.start('inventory');
+    else if (
+      edges.includes(MENU_BUTTONS.inventory) ||
+      buttonsFor(controlsStore.get(), 'inventory', 'calm').some((b) => edges.includes(b))
+    )
+      this.scene.start('inventory');
     else if (edges.includes(MENU_BUTTONS.back)) this.logOut();
     else if (edges.includes(MENU_BUTTONS.left)) this.cycleWeapon(-1);
     else if (edges.includes(MENU_BUTTONS.right)) this.cycleWeapon(1);
