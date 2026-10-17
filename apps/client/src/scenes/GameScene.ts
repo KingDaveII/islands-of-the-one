@@ -14,7 +14,6 @@ import { clampScroll } from '../render/camera.js';
 import { DEPTH } from '../render/depth.js';
 import { simPx, worldPx } from '../render/scale.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
-import { preloadChestSheet } from '../render/chestSprites.js';
 import { preloadTileSheet } from '../render/roomTiles.js';
 import { preloadSpriteSheets, registerSpriteSheets } from '../render/spriteSheets.js';
 import { blinkOut, place, preloadFonts, registerFonts, worldWord, type Text } from '../render/text.js';
@@ -91,7 +90,6 @@ export class GameScene extends Phaser.Scene {
     preloadSheets(this);
     preloadSpriteSheets(this);
     preloadTileSheet(this);
-    preloadChestSheet(this);
     preloadFonts(this);
   }
 

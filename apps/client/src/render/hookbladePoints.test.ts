@@ -1,22 +1,10 @@
-import {
-  hookbladeFxSheet,
-  spriteSheets,
-  SPRITE_FACINGS,
-  type HookbladeFxSheet,
-  type SpriteSheet,
-} from '@iot/shared';
+import { hookbladeFxSheet, spriteSheets, type HookbladeFxSheet, type SpriteSheet } from '@iot/shared';
 import fixtureJson from '../../../../packages/shared/test/fixtures/kindled-fixture.json' with { type: 'json' };
 import hookbladeFixtureJson from '../../../../packages/shared/test/fixtures/hookblade-fixture.json' with { type: 'json' };
 import { describe, expect, it } from 'vitest';
 import { PLAYER_SHEET } from './characters.js';
-import {
-  chainLinks,
-  hookbladeDraw,
-  hookbladePoint,
-  m1HookbladeOffset,
-  pointInWorld,
-  type PlayerFrame,
-} from './hookbladePoints.js';
+import { PLAYER_FEET } from './feet.js';
+import { bodyCentre, chainLinks, hookbladeDraw, hookbladePoint, pointInWorld, type PlayerFrame } from './hookbladePoints.js';
 
 const fixture: SpriteSheet = fixtureJson;
 const cell = fixture.frames.idle_S_0;
@@ -39,28 +27,19 @@ const withPoints: SpriteSheet = {
   },
 };
 
-/** The player drawn with its origin at world px (200, 300), its body centre at sim px (100, 145). */
-const at = (sheet: SpriteSheet, frame: string, facing: string): PlayerFrame => ({
-  sheet,
-  frame,
-  anchor: { x: 200, y: 300 },
-  facing: SPRITE_FACINGS.indexOf(facing as (typeof SPRITE_FACINGS)[number]),
-  body: { x: 100, y: 145 },
-});
+/** The player drawn with its origin (the line under the soles) at world px (200, 300). */
+const at = (sheet: SpriteSheet, frame: string): PlayerFrame => ({ sheet, frame, anchor: { x: 200, y: 300 } });
 
 describe("the Hookblade's points in the world", () => {
-  it('maps a point like its frame: anchor + (point − origin) × pixelScale', () => {
+  it('maps a point like its frame: anchor + (point − origin), a sheet px a world px', () => {
     expect(pointInWorld(withPoints, 'heavy_charge_S_2', 'tip', { x: 200, y: 300 })).toEqual({ x: 183, y: 278 });
     expect(pointInWorld(withPoints, 'heavy_charge_S_2', 'hand', { x: 200, y: 300 })).toBeNull();
-    // The same frame read at the legacy 2: every sheet px is two world px from the anchor.
-    const doubled = { ...withPoints, meta: { ...withPoints.meta, pixelScale: 2 } };
-    expect(pointInWorld(doubled, 'heavy_charge_S_2', 'tip', { x: 200, y: 300 })).toEqual({ x: 166, y: 256 });
   });
 
   it('puts the charge spark on the tip in two facings, one of them mirrored', () => {
-    expect(hookbladePoint(at(withPoints, 'heavy_charge_S_2', 'S'), 'tip')).toEqual({ x: 183, y: 278 });
-    const ne = hookbladePoint(at(withPoints, 'heavy_charge_NE_2', 'NE'), 'tip');
-    const nw = hookbladePoint(at(withPoints, 'heavy_charge_NW_2', 'NW'), 'tip');
+    expect(hookbladePoint(at(withPoints, 'heavy_charge_S_2'), 'tip')).toEqual({ x: 183, y: 278 });
+    const ne = hookbladePoint(at(withPoints, 'heavy_charge_NE_2'), 'tip');
+    const nw = hookbladePoint(at(withPoints, 'heavy_charge_NW_2'), 'tip');
     expect(ne).toEqual({ x: 212, y: 269 });
     expect(nw).toEqual({ x: 187, y: 269 });
     // Mirrored about the origin's column: 200 − 13 and 200 + 12 (a 96 px cell's mirror is 95 − x).
@@ -69,11 +48,11 @@ describe("the Hookblade's points in the world", () => {
 
   it("starts the chain's first link next to the hand, in E and in the mirrored W", () => {
     const { spacing } = hookbladeDraw(hookbladeFxSheet);
-    for (const [frame, facing, hookX, hand] of [
-      ['haul_throw_E_1', 'E', 400, { x: 210, y: 280 }],
-      ['haul_throw_W_1', 'W', 0, { x: 189, y: 280 }],
+    for (const [frame, hookX, hand] of [
+      ['haul_throw_E_1', 400, { x: 210, y: 280 }],
+      ['haul_throw_W_1', 0, { x: 189, y: 280 }],
     ] as const) {
-      const from = hookbladePoint(at(withPoints, frame, facing), 'hand');
+      const from = hookbladePoint(at(withPoints, frame), 'hand');
       expect(from, frame).toEqual(hand);
       const links = chainLinks(hookbladeFxSheet, from.x, from.y, hookX, 280, 16);
       // Half a spacing out from the hand, along the chain, at a whole world px.
@@ -100,33 +79,22 @@ describe("the Hookblade's points in the world", () => {
   });
 });
 
-describe('the v1 fallback (M1 offsets, a frame without the point)', () => {
-  // M1's numbers, sim px from the body centre (PR #40, section 2): the spark forward of the body, the chain 2 px up.
-  const M1_SPARK: Record<string, [number, number]> = {
-    S: [5, 8],
-    SE: [12, 8],
-    E: [12, -1],
-    NE: [12, -5],
-    N: [5, -5],
-    NW: [-12, -5],
-    W: [-12, -1],
-    SW: [-12, 8],
-  };
-
-  it('keeps the offsets exactly, for every facing', () => {
-    SPRITE_FACINGS.forEach((facing, i) => {
-      const [x, y] = M1_SPARK[facing] ?? [0, 0];
-      expect(m1HookbladeOffset('tip', i), facing).toEqual({ x, y });
-      expect(m1HookbladeOffset('hand', i), facing).toEqual({ x: 0, y: -2 });
-    });
+describe('every frame that needs a point has one (the sheet test guarantees it)', () => {
+  it("finds tip on every heavy_charge frame and hand on every haul frame of kindled-ash", () => {
+    const sheet = spriteSheets[PLAYER_SHEET];
+    for (const [key, anim] of Object.entries(sheet.anims)) {
+      const point = key.startsWith('heavy_charge_') ? 'tip' : key.startsWith('haul_') ? 'hand' : null;
+      if (!point) continue;
+      for (const frame of anim.frames) expect(pointInWorld(sheet, frame, point, { x: 0, y: 0 }), frame).not.toBeNull();
+    }
   });
 
-  it('draws at the body centre plus the offset, doubled, where the frame has no point (a v1 sheet, a fixture)', () => {
-    const v1: SpriteSheet = { ...withPoints, meta: { ...withPoints.meta, version: '1' }, frames: fixture.frames };
-    // Body (100, 145) sim px; W's spark (−12, −1) and the chain's (0, −2), in world px.
-    expect(hookbladePoint(at(v1, 'idle_S_0', 'W'), 'tip')).toEqual({ x: 176, y: 288 });
-    expect(hookbladePoint(at(v1, 'idle_S_0', 'W'), 'hand')).toEqual({ x: 200, y: 286 });
-    expect(hookbladePoint(at(withPoints, 'heavy_charge_S_2', 'S'), 'hand')).toEqual({ x: 200, y: 286 });
+  it('falls back to the body centre for the one frame shown over a charge or a Haul without one: the hit flinch after an armored hit', () => {
+    // The anchor is the line under the soles; the body centre is PLAYER_FEET sim px (×2) above it.
+    expect(bodyCentre({ x: 200, y: 300 })).toEqual({ x: 200, y: 300 - 2 * PLAYER_FEET });
+    expect(hookbladePoint(at(withPoints, 'idle_S_0'), 'tip')).toEqual({ x: 200, y: 290 });
+    expect(hookbladePoint(at(withPoints, 'idle_S_0'), 'hand')).toEqual({ x: 200, y: 290 });
+    expect(hookbladePoint(at(withPoints, 'heavy_charge_S_2'), 'hand')).toEqual({ x: 200, y: 290 });
   });
 });
 

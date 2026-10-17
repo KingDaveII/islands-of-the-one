@@ -7,34 +7,30 @@ import {
   playerAttackPhase,
   slamCenter,
   SUB,
-  tileAt,
   TILE_PX,
   TURN,
-  type ChestState,
   type HuskState,
   type Run,
   type RunState,
 } from '@iot/sim';
 import type { AnimTuning, JuiceTuning } from '@iot/shared';
-import { SPRITE_FACINGS } from '@iot/shared';
 import { Palette } from '../palette.js';
 import type { Reticle } from '../game/controls.js';
 import type { Session } from '../game/session.js';
 import { debugFlags } from '../ui/debugFlags.js';
 import { chargeStage } from './charge.js';
 import { CharacterSprites } from './characters.js';
-import { activeChestSheet, chestRenderer, ChestSprites } from './chestSprites.js';
+import { ChestSprites } from './chestSprites.js';
 import { DEPTH } from './depth.js';
 import { PLAYER_FEET } from './feet.js';
 import { facingIndex, facingStep } from './facing.js';
 import { hookbladePoint, type PlayerFrame } from './hookbladePoints.js';
 import type { Fx } from './fx.js';
 import { HookbladeFx } from './hookblade.js';
-import { disc, ditherDisc, groundShadow, outlinedRect, pixelLine, ring, shadowEllipse } from './pixels.js';
-import { activeTileSheet, roomRenderer, TileRoom } from './roomTiles.js';
-import { legacyGraphics, snapToArt, worldPx } from './scale.js';
+import { disc, ditherDisc, outlinedRect, pixelLine, ring, shadowEllipse } from './pixels.js';
+import { TileRoom } from './roomTiles.js';
+import { simGraphics, snapToArt, worldPx } from './scale.js';
 import { lightSlashMark } from './slash.js';
-import { spriteScale } from './spriteSheets.js';
 
 const RAD = (Math.PI * 2) / TURN;
 
@@ -43,14 +39,12 @@ export const rad = (a: number): number => a * RAD;
 
 type G = Phaser.GameObjects.Graphics;
 
-/** Cheap deterministic per-tile noise for floor flecks (presentation only). */
+/** Cheap deterministic noise for the debug shapes' cracks (presentation only). */
 function noise(a: number, b: number, k: number): number {
   let h = (a * 374761393 + b * 668265263 + k * 2246822519) >>> 0;
   h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
   return (h ^ (h >>> 16)) >>> 0;
 }
-
-const isWall = (t: string): boolean => t === '#' || t === 'o';
 
 /** Colors a Husk is drawn in: normal, telegraphing, or hit-flashed. */
 interface HuskInk {
@@ -103,26 +97,19 @@ const DEBUG_ALPHA = 0.6;
  * bars and the reticle. Purely a view: it reads state, never changes it.
  * With the F3 debug flag the old placeholder shapes draw over the sprites.
  *
- * The room comes from ART's tile sheet when it is loaded (roomTiles.ts, G1.5e):
- * the pieces `tileAt` picks, in world px at 1×, and the doors animated from
- * `doorOpen`. Without the sheet, M1's procedural room is the fallback. The
- * chests come from ART's `prop-chest` sheet the same way (chestSprites.ts,
- * G1.5f): sprites at their sim positions, y-sorted with the bodies, their
- * frame from `opened`; without the sheet, M1's procedural chest (`drawChest`)
- * is the fallback.
+ * The room comes from ART's tile sheet (roomTiles.ts, G1.5e): the pieces
+ * `tileAt` picks, in world px at 1×, and the doors animated from `doorOpen`.
+ * The chests come from ART's `prop-chest` sheet (chestSprites.ts, G1.5f):
+ * sprites at their sim positions, y-sorted with the bodies, their frame from
+ * `opened`. Nothing else draws a room or a chest (G1.5g).
  *
- * Two densities (scale.ts): M1's procedural room (tiles, doors) and its chests
- * are drawn in sim px into legacy Graphics shown at 2×, like the v1 sheets and
- * hookblade-fx; the engine's own drawings (decals, shadows, pickups, the
- * slash arc and thrust line, poise bars, the charge meter, the pad reticle
- * and the Haul guide) are drawn in world px at 1 world px per pixel: their
- * positions and sim lengths ×2, their pixel sizes as written. The F3 debug
- * shapes stay M1's placeholder figures at 2×, over the v1 sprites.
+ * One density (scale.ts): the sheets and the engine's own drawings (decals,
+ * shadows, pickups, the slash arc and thrust line, poise bars, the charge
+ * meter, the pad reticle and the Haul guide) are all at 1 world px per
+ * pixel: positions and sim lengths ×2, pixel sizes as written. Only the F3
+ * debug shapes, M1's hitbox figures, are drawn in sim px and scaled.
  */
 export class WorldRenderer {
-  private readonly room: G;
-  /** The room's furniture, M1 art at 2×: doors and chests (sim px). */
-  private readonly props: G;
   /** Floor layer, world px: decals, shadows, pickups (under the chain and the bodies). */
   private readonly floor: G;
   /** Overlays, world px: hitbox flashes, poise bars, the charge meter, the pad reticle, the Haul guide. */
@@ -131,10 +118,10 @@ export class WorldRenderer {
   private readonly debug: G;
   private readonly hookblade: HookbladeFx;
   readonly characters: CharacterSprites;
-  /** The room drawn from the tile sheet, when one is loaded; null draws the procedural fallback. */
-  readonly tiles: TileRoom | null;
-  /** The chests drawn from the prop-chest sheet, when it is loaded; null draws the procedural fallback. */
-  readonly chests: ChestSprites | null;
+  /** The room, drawn from the tile sheet. */
+  readonly tiles: TileRoom;
+  /** The chests, drawn from the prop-chest sheet. */
+  readonly chests: ChestSprites;
   private roomKey = '';
 
   constructor(
@@ -143,26 +130,16 @@ export class WorldRenderer {
     private readonly juice: () => JuiceTuning,
     anim: () => AnimTuning,
   ) {
-    this.room = legacyGraphics(scene).setDepth(DEPTH.room);
-    this.props = legacyGraphics(scene).setDepth(DEPTH.floor);
     this.floor = scene.add.graphics().setDepth(DEPTH.floor);
     this.gfx = scene.add.graphics().setDepth(DEPTH.overlay);
-    this.debug = legacyGraphics(scene).setDepth(DEPTH.debug).setAlpha(DEBUG_ALPHA);
-    layer.add([this.room, this.props, this.floor, this.gfx, this.debug]);
+    this.debug = simGraphics(scene).setDepth(DEPTH.debug).setAlpha(DEBUG_ALPHA);
+    layer.add([this.floor, this.gfx, this.debug]);
     // Chain links go under the bodies, the hook head and charge spark over them.
     this.hookblade = new HookbladeFx(scene);
     this.hookblade.mount(layer);
     this.characters = new CharacterSprites(scene, layer, anim);
-    const sheet = activeTileSheet();
-    this.tiles =
-      sheet && roomRenderer((key) => scene.textures.exists(key)) === 'tiles'
-        ? new TileRoom(scene, layer, sheet)
-        : null;
-    const chest = activeChestSheet();
-    this.chests =
-      chest && chestRenderer((key) => scene.textures.exists(key)) === 'sheet'
-        ? new ChestSprites(scene, layer, chest)
-        : null;
+    this.tiles = new TileRoom(scene, layer);
+    this.chests = new ChestSprites(scene, layer);
   }
 
   /** Room size in sim px. */
@@ -175,171 +152,15 @@ export class WorldRenderer {
     this.characters.perfectDodge();
   }
 
-  private drawRoom(run: Run): void {
+  /** Builds the room's tiles when the room changes (the floors' hash reads the template's name). */
+  private buildRoom(run: Run): void {
     const s = run.state;
     const key = `${s.roomIndex}:${s.room.template}`;
     if (key === this.roomKey) return;
     this.roomKey = key;
-    if (this.tiles) {
-      // The room's template by name (the floors' hash reads it) over the sim's rows, padded with wall as tileAt reads them.
-      const name = run.templates[s.room.template]?.name ?? String(s.room.template);
-      this.tiles.build({ name, tiles: s.room.tiles });
-      return;
-    }
-    this.drawProceduralRoom(s);
-  }
-
-  /**
-   * M1's procedural room, in sim px at 2×: the fallback while ART's tiles-cave
-   * is not on disk (G1.5e); a later task removes it once the sheet lands.
-   */
-  private drawProceduralRoom(s: RunState): void {
-    const g = this.room;
-    g.clear();
-    const { room } = s;
-    const at = (c: number, r: number): string =>
-      c < 0 || r < 0 || c >= room.cols || r >= room.rows ? '#' : tileAt(room, c, r);
-    // Wall tiles connected to the room's border are the outside (the Hollow); the rest are free-standing blocks with a solid cap.
-    const outside = new Uint8Array(room.cols * room.rows);
-    const queue: number[] = [];
-    for (let r = 0; r < room.rows; r++) {
-      for (let c = 0; c < room.cols; c++) {
-        if (
-          (r === 0 || c === 0 || r === room.rows - 1 || c === room.cols - 1) &&
-          (isWall(at(c, r)) || at(c, r) === 'D')
-        ) {
-          outside[r * room.cols + c] = 1;
-          queue.push(r * room.cols + c);
-        }
-      }
-    }
-    while (queue.length > 0) {
-      const i = queue.pop() ?? 0;
-      const c = i % room.cols;
-      const r = Math.floor(i / room.cols);
-      for (const [dc, dr] of [
-        [1, 0],
-        [-1, 0],
-        [0, 1],
-        [0, -1],
-      ] as const) {
-        const nc = c + dc;
-        const nr = r + dr;
-        if (nc < 0 || nr < 0 || nc >= room.cols || nr >= room.rows) continue;
-        const j = nr * room.cols + nc;
-        if (outside[j] === 0 && isWall(at(nc, nr))) {
-          outside[j] = 1;
-          queue.push(j);
-        }
-      }
-    }
-    const block = (c: number, r: number): boolean =>
-      isWall(at(c, r)) &&
-      outside[r * room.cols + c] === 0 &&
-      c >= 0 &&
-      r >= 0 &&
-      c < room.cols &&
-      r < room.rows;
-    for (let r = 0; r < room.rows; r++) {
-      for (let c = 0; c < room.cols; c++) {
-        const t = at(c, r);
-        const x = c * TILE_PX;
-        const y = r * TILE_PX;
-        if (isWall(t) || t === 'D') {
-          // Outside the floor is the Hollow; a wall facing the floor shows its face.
-          g.fillStyle(Palette.hollow, 1).fillRect(x, y, TILE_PX, TILE_PX);
-          const faces = isWall(t) && !isWall(at(c, r + 1)) && at(c, r + 1) !== 'D';
-          if (block(c, r) && !faces) {
-            // Top of a free-standing block or pillar: a solid cap, not a hole.
-            g.fillStyle(Palette.wall, 1).fillRect(x, y, TILE_PX, TILE_PX);
-            g.fillStyle(Palette.floorEdge, 1);
-            if (!block(c, r - 1)) g.fillRect(x, y, TILE_PX, 1);
-            if (!block(c - 1, r)) g.fillRect(x, y, 1, TILE_PX);
-            g.fillStyle(Palette.wallLine, 1);
-            if (!block(c + 1, r)) g.fillRect(x + TILE_PX - 1, y, 1, TILE_PX);
-            for (let k = 0; k < 2; k++) {
-              const n = noise(c, r, k + 30);
-              g.fillRect(x + 2 + (n % 12), y + 2 + ((n >>> 8) % 12), 2, 1);
-            }
-          }
-          if (faces) {
-            g.fillStyle(Palette.wall, 1).fillRect(x, y + 4, TILE_PX, TILE_PX - 4);
-            g.fillStyle(Palette.wallLine, 1);
-            for (let i = (c * 5) % 6; i < TILE_PX; i += 6) g.fillRect(x + i, y + 6, 1, TILE_PX - 7);
-            g.fillStyle(Palette.floorEdge, 1);
-            for (let k = 0; k < 3; k++) {
-              const n = noise(c, r, k);
-              g.fillRect(x + (n % 15), y + 5 + ((n >>> 8) % 10), 1, 1);
-            }
-            g.fillStyle(Palette.wallLine, 1).fillRect(x, y + TILE_PX - 1, TILE_PX, 1);
-          }
-          continue;
-        }
-        g.fillStyle(Palette.floor, 1).fillRect(x, y, TILE_PX, TILE_PX);
-        // Flecks of light.
-        g.fillStyle(Palette.floorFleck, 1);
-        for (let k = 0; k < 3; k++) {
-          const n = noise(c, r, k + 10);
-          if (n % 3 === 0) continue;
-          g.fillRect(x + (n % 16), y + ((n >>> 8) % 16), (n >>> 16) % 4 === 0 ? 2 : 1, 1);
-        }
-        // Scuffs.
-        const sc = noise(c, r, 99);
-        if (sc % 7 === 0) {
-          g.fillStyle(Palette.floorEdge, 1);
-          const sx = x + ((sc >>> 4) % 10);
-          const sy = y + ((sc >>> 12) % 14);
-          g.fillRect(sx, sy, 3, 1).fillRect(sx + 3, sy + 1, 2, 1);
-        }
-        // Dithered edge where the floor meets a wall.
-        g.fillStyle(Palette.floorEdge, 1);
-        const edges: [number, number, boolean][] = [
-          [0, -1, isWall(at(c, r - 1))],
-          [0, 1, isWall(at(c, r + 1))],
-          [-1, 0, isWall(at(c - 1, r))],
-          [1, 0, isWall(at(c + 1, r))],
-        ];
-        for (const [dx, dy, wall] of edges) {
-          if (!wall) continue;
-          for (let i = 0; i < TILE_PX; i++) {
-            for (let d = 0; d < 3; d++) {
-              const px = dx === 0 ? x + i : dx < 0 ? x + d : x + TILE_PX - 1 - d;
-              const py = dy === 0 ? y + i : dy < 0 ? y + d : y + TILE_PX - 1 - d;
-              const solid = d === 0;
-              if (solid || (d === 1 && ((px + py) & 1) === 0) || (d === 2 && (px + py) % 4 === 0))
-                g.fillRect(px, py, 1, 1);
-            }
-          }
-        }
-        if (t === 'S') g.fillStyle(Palette.floorEdge, 1).fillRect(x + 7, y + 7, 2, 2);
-      }
-    }
-  }
-
-  /** The doors: the tile room's animated images, else the procedural fallback's (sim px at 2×). */
-  private drawDoors(g: G, s: RunState, timeMs: number): void {
-    const { room } = s;
-    if (this.tiles) {
-      this.tiles.update(room.doorOpen, timeMs);
-      return;
-    }
-    for (let r = 0; r < room.rows; r++) {
-      for (let c = 0; c < room.cols; c++) {
-        if (tileAt(room, c, r) !== 'D') continue;
-        const x = c * TILE_PX;
-        const y = r * TILE_PX;
-        if (room.doorOpen) {
-          const on = Math.floor(timeMs / 300) % 2 === 0;
-          g.fillStyle(Palette.floor, 1).fillRect(x, y, TILE_PX, TILE_PX);
-          g.fillStyle(Palette.spark, 1).fillRect(x + 3, y + 3, TILE_PX - 6, TILE_PX - 6);
-          g.fillStyle(on ? Palette.floorFleck : Palette.sparkDeep, 1).fillRect(x + 6, y + 6, 4, 4);
-        } else {
-          g.fillStyle(Palette.hollow, 1).fillRect(x, y, TILE_PX, TILE_PX);
-          g.fillStyle(Palette.wall, 1);
-          for (let i = 2; i < TILE_PX; i += 5) g.fillRect(x + i, y + 1, 2, TILE_PX - 2);
-        }
-      }
-    }
+    // The room's template by name over the sim's rows, padded with wall as tileAt reads them.
+    const name = run.templates[s.room.template]?.name ?? String(s.room.template);
+    this.tiles.build({ name, tiles: s.room.tiles });
   }
 
   draw(
@@ -352,18 +173,17 @@ export class WorldRenderer {
   ): void {
     const run = session.run;
     const s = run.state;
-    this.drawRoom(run);
+    this.buildRoom(run);
     const f = this.floor;
     const g = this.gfx;
-    this.props.clear();
     f.clear();
     g.clear();
     this.debug.clear();
     this.hookblade.begin();
-    this.drawDoors(this.props, s, timeMs);
+    this.tiles.update(s.room.doorOpen, timeMs);
 
-    // Interpolated body centres: raw sim px for the sprites (each snaps to its own art grid),
-    // whole sim px for M1's art (the chain, the debug shapes), whole world px for the engine's drawings.
+    // Interpolated body centres: raw sim px for the sprites (each snaps to a whole world px),
+    // whole sim px for the debug shapes, whole world px for the engine's drawings.
     const huskRaw = new Map<number, Point>();
     const huskPos = new Map<number, Point>();
     const huskW = new Map<number, Point>();
@@ -386,19 +206,12 @@ export class WorldRenderer {
       const raw = huskRaw.get(h.id) ?? { x: h.x / SUB, y: h.y / SUB };
       const r = huskParams(run.params, h.kind).radius / SUB;
       const k = r / Math.max(1, playerR);
-      const scale = spriteScale(h.kind === 'peeling' ? 'husk-peeling' : 'husk-nutshell');
-      this.shadowAt(f, snapToArt(raw.x, scale), snapToArt(raw.y + r, scale), SHADOW_W * k, SHADOW_H * k);
+      this.shadowAt(f, snapToArt(raw.x), snapToArt(raw.y + r), SHADOW_W * k, SHADOW_H * k);
     }
-    const ks = this.characters.kindledScale;
-    this.shadowAt(f, snapToArt(pl.x, ks), snapToArt(pl.y + PLAYER_FEET, ks), SHADOW_W, SHADOW_H);
-    if (this.chests) {
-      // The chests from ART's sheet: a grounding shadow at each one's soles, the sprite y-sorted with the bodies.
-      const cs = this.chests.scale;
-      for (const c of s.chests) this.shadowAt(f, snapToArt(c.x / SUB, cs), snapToArt(c.y / SUB, cs), SHADOW_W, SHADOW_H);
-      this.chests.draw(s.chests, timeMs);
-    } else {
-      for (const c of s.chests) this.drawChest(this.props, c, timeMs);
-    }
+    this.shadowAt(f, snapToArt(pl.x), snapToArt(pl.y + PLAYER_FEET), SHADOW_W, SHADOW_H);
+    // The chests: a grounding shadow at each one's soles, the sprite y-sorted with the bodies.
+    for (const c of s.chests) this.shadowAt(f, snapToArt(c.x / SUB), snapToArt(c.y / SUB), SHADOW_W, SHADOW_H);
+    this.chests.draw(s.chests, timeMs);
     for (const k of s.pickups) this.drawPickup(f, toWorld(session.lerp(`k${k.id}`, k.x, k.y)), timeMs);
 
     // Bodies: the sprites, posed from the sim state; Husk spawn-in and stagger marks are engine effects.
@@ -406,7 +219,7 @@ export class WorldRenderer {
     for (const h of s.husks) this.drawHuskEffects(g, run, h, huskAt(h), timeMs);
     this.characters.draw(session, fx, pl, huskRaw, blink, dtWorldMs, dtRealMs);
     // The chain (floor layer) and the spark leave from points in the player's frame, so they come after it is posed.
-    const frame = this.playerFrame(player);
+    const frame = this.playerFrame();
     this.drawChain(f, session, frame, huskW);
     this.drawPlayerEffects(g, run, frame, pw, huskW);
 
@@ -458,14 +271,12 @@ export class WorldRenderer {
     }
   }
 
-  /** The player as drawn this frame, for the Hookblade's points; `body` is the centre in whole sim px (the v1 fallback's). */
-  private playerFrame(body: Point): PlayerFrame {
+  /** The player as drawn this frame, for the Hookblade's points. */
+  private playerFrame(): PlayerFrame {
     return {
       sheet: this.characters.playerSheet,
       frame: this.characters.playerFrame,
       anchor: this.characters.playerAnchor,
-      facing: Math.max(0, SPRITE_FACINGS.indexOf(this.characters.pose?.facing ?? 'S')),
-      body,
     };
   }
 
@@ -485,32 +296,6 @@ export class WorldRenderer {
       const tip = hookbladePoint(frame, 'tip');
       this.hookblade.spark(tip.x, tip.y, stage);
     }
-  }
-
-  /**
-   * M1's procedural chest, in sim px at 2×: a banded box with a blinking
-   * clasp; opened, the lid stands up and the inside is dark. The fallback
-   * while ART's prop-chest is not on disk (G1.5f), like the procedural room;
-   * a later task removes it once the sheet lands.
-   */
-  private drawChest(g: G, c: ChestState, timeMs: number): void {
-    const x = Math.round(c.x / SUB);
-    const y = Math.round(c.y / SUB);
-    groundShadow(g, x, y + 5, 7, 2);
-    if (c.opened) {
-      outlinedRect(g, x - 6, y - 2, 12, 7, Palette.wall, Palette.uiOutline);
-      g.fillStyle(Palette.hollow, 1).fillRect(x - 5, y - 1, 10, 3);
-      outlinedRect(g, x - 6, y - 8, 12, 3, Palette.wall, Palette.uiOutline);
-      g.fillStyle(Palette.floorEdge, 1).fillRect(x - 5, y - 7, 10, 1);
-      return;
-    }
-    outlinedRect(g, x - 6, y - 5, 12, 10, Palette.wall, Palette.uiOutline);
-    g.fillStyle(Palette.floorEdge, 1)
-      .fillRect(x - 6, y - 5, 12, 1)
-      .fillRect(x - 6, y - 1, 12, 1);
-    g.fillStyle(Palette.wallLine, 1).fillRect(x - 6, y - 2, 12, 1);
-    const on = Math.floor(timeMs / 400) % 2 === 0;
-    g.fillStyle(on ? Palette.spark : Palette.sparkDeep, 1).fillRect(x - 1, y - 2, 2, 3);
   }
 
   /**
@@ -859,7 +644,7 @@ export class WorldRenderer {
 
   /**
    * Slash arcs for light strikes (exact aim direction, not the 8-way facing; world px); the heavy is a line, see drawThrust.
-   * The wind-up stroke only over a v1 player sheet: a v2 sheet draws its own blade (`lightSlashMark`).
+   * Only the arc, the hitbox flash: the sheet draws its own blade in the wind-up (`lightSlashMark`).
    */
   private drawSlash(g: G, run: Run, x: number, y: number): void {
     const P = run.params;
@@ -872,15 +657,7 @@ export class WorldRenderer {
     const dir = rad(p.dir);
     const activeEnd = st.startup + st.active;
     const cy = y - worldPx(3);
-    const mark = lightSlashMark(this.characters.playerSheet, phase, p.t - activeEnd);
-    if (mark === 'windup') {
-      const back = dir + (p.comboStep % 2 === 0 ? -1 : 1) * half;
-      const len = worldPx(9);
-      pixelLine(g, x, cy, x + Math.cos(back) * len, cy + Math.sin(back) * len, Palette.playerOutline, 1, 3);
-      pixelLine(g, x, cy, x + Math.cos(back) * len, cy + Math.sin(back) * len, Palette.blade);
-      return;
-    }
-    if (mark !== 'arc') return;
+    if (lightSlashMark(phase, p.t - activeEnd) !== 'arc') return;
     const thick = p.comboStep === P.weapon.light.length - 1 ? 4 : 3;
     const sweep = phase === 'active' ? Math.min(1, (p.t - st.startup) / Math.max(1, st.active)) : 1;
     const ccw = p.comboStep % 2 === 0;

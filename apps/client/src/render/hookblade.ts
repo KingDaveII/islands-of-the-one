@@ -14,10 +14,10 @@ import { HOOKBLADE_TEXTURE } from './sheets.js';
  * the hook and spark over them.
  *
  * Callers pass world px. The sheet's `meta` (sprites.md "Engine sheets") says
- * how it draws: at `pixelScale` world px per sheet px (2 for today's M1
- * sheet), and either tinted (palette tokens, with a 1 sheet px
- * player-outline rim from four offset copies) or, untinted, in the frames'
- * own colours with no rim.
+ * how it draws: at `pixelScale` world px per sheet px (1 for ART's B sheet),
+ * and either tinted (palette tokens, with a 1 sheet px player-outline rim
+ * from four offset copies) or, untinted, in the frames' own colours with no
+ * rim.
  */
 type Image = Phaser.GameObjects.Image;
 

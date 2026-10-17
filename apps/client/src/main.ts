@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CHEST_SHEET, type ClayTone, type SpriteSheet, type TileSheet } from '@iot/shared';
+import type { ClayTone } from '@iot/shared';
 import {
   replayRun,
   hashRunState,
@@ -13,8 +13,6 @@ import { connectedPad, padSnapshot } from './game/gamepad.js';
 import { eventKeyFor, keyboardBinding } from './game/keyboard.js';
 import { Palette } from './palette.js';
 import { deviceNow, fitCanvasToWindow } from './render/cameras.js';
-import { setChestSheet } from './render/chestSprites.js';
-import { setTileSheet } from './render/roomTiles.js';
 import { GameScene, type GameData } from './scenes/GameScene.js';
 import { AccountScene } from './scenes/AccountScene.js';
 import { ControlsScene } from './scenes/ControlsScene.js';
@@ -134,31 +132,17 @@ function startGame(): void {
       const data: GameData = rooms ? { seed, weapon, rooms } : { seed, weapon };
       game.scene.start('game', data);
     },
-    /**
-     * Draw rooms from this tile sheet from the next run on, while ART's tiles-cave is not on disk
-     * (screenshots: the test fixture); `url` is its PNG, a data URL will do. null goes back.
-     */
-    useTileSheet(sheet: TileSheet | null, url = '', key = 'tiles-fixture'): void {
-      setTileSheet(sheet ? { key, sheet, url } : null);
-    },
-    /** The tile room at 1× (its pieces and doors as drawn now) as a PNG data URL, or null with the procedural room. */
+    /** The tile room at 1× (its pieces and doors as drawn now) as a PNG data URL, or null outside a run. */
     roomImage(): Promise<string | null> {
-      return activeGame()?.world.tiles?.snapshot() ?? Promise.resolve(null);
+      return activeGame()?.world.tiles.snapshot() ?? Promise.resolve(null);
     },
-    /** The tile room's door frames this render frame (empty with the procedural room). */
+    /** The tile room's door frames this render frame (empty outside a run). */
     doorFrames(): string[] {
-      return activeGame()?.world.tiles?.doorFrames() ?? [];
+      return activeGame()?.world.tiles.doorFrames() ?? [];
     },
-    /**
-     * Draw chests from this `prop-chest` sheet from the next run on, while ART's is not on disk
-     * (playtests: the test fixture); `url` is its PNG, a data URL will do. null goes back.
-     */
-    useChestSheet(sheet: SpriteSheet | null, url = '', key = CHEST_SHEET): void {
-      setChestSheet(sheet ? { key, sheet, url } : null);
-    },
-    /** The chests' frames this render frame, in sim order (empty with the procedural chest). */
+    /** The chests' frames this render frame, in sim order (empty outside a run). */
     chestFrames(): string[] {
-      return activeGame()?.world.chests?.frames() ?? [];
+      return activeGame()?.world.chests.frames() ?? [];
     },
     setAutopilot(opts: AutopilotOptions | null): void {
       const s = activeGame();

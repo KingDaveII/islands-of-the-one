@@ -1,15 +1,7 @@
-import { roomTemplates, tileAt, type TileSheet, type TileTemplate } from '@iot/shared';
+import { CAVE_TILE_SHEET, caveTileSheet, roomTemplates, tileAt, type TileSheet, type TileTemplate } from '@iot/shared';
 import { describe, expect, it } from 'vitest';
 import fixtureJson from '../../../../packages/shared/test/fixtures/tiles-fixture.json' with { type: 'json' };
-import {
-  activeTileSheet,
-  doorFrameAt,
-  nextDoorView,
-  roomRenderer,
-  roomTileFrames,
-  setTileSheet,
-  type DoorView,
-} from './roomTiles.js';
+import { doorFrameAt, nextDoorView, roomTileFrames, TILE_SHEET, type DoorView } from './roomTiles.js';
 
 const fixture: TileSheet = fixtureJson;
 const W = fixture.tiles;
@@ -161,17 +153,13 @@ describe('the door, from doorOpen on the client clock', () => {
 });
 
 describe('which room the world draws', () => {
-  it("draws from ART's tiles-cave, which is on disk", () => {
-    expect(activeTileSheet()?.key).toBe('tiles-cave');
-    expect(roomRenderer((key) => key === 'tiles-cave')).toBe('tiles');
-    // Not loaded (the PNG failed): still the fallback.
-    expect(roomRenderer(() => false)).toBe('procedural');
-  });
-
-  it("keeps tiles-cave over a sheet a playtest hands in (the fixture standing in for one)", () => {
-    setTileSheet({ key: 'tiles-fixture', sheet: fixture, url: 'data:image/png;base64,' });
-    expect(activeTileSheet()?.key).toBe('tiles-cave');
-    setTileSheet(null);
-    expect(activeTileSheet()?.key).toBe('tiles-cave');
+  it("ART's tiles-cave, bundled with the code, and nothing else", () => {
+    expect(TILE_SHEET).toEqual({ key: CAVE_TILE_SHEET, sheet: caveTileSheet });
+    expect(TILE_SHEET.sheet.meta.image).toBe('tiles-cave.png');
+    // The shipped sheet draws the same rooms as the fixture: the same pieces at the same cells, only the weights differ.
+    const shell = template('Shell Gallery');
+    const fromCave = roomTileFrames(shell, caveTileSheet).pieces.map((p) => `${p.x},${p.y}:${p.frame.replace(/_[0-9]$/, '')}`);
+    const fromFixture = roomTileFrames(shell, fixture).pieces.map((p) => `${p.x},${p.y}:${p.frame.replace(/_[0-9]$/, '')}`);
+    expect(fromCave).toEqual(fromFixture);
   });
 });

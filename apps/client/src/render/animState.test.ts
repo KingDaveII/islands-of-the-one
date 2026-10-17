@@ -1,12 +1,13 @@
 import {
   defaultTuning,
+  HUSK_ANIMS,
   isRequiredAnim,
   KINDLED_ANIMS,
   roomTemplates,
   spriteSheets,
   type SpriteSheet,
 } from '@iot/shared';
-import { autopilot, createRun, stepRun, TURN, type HuskState, type Run } from '@iot/sim';
+import { autopilot, createRun, stepRun, TURN, type HuskKind, type HuskState, type Run } from '@iot/sim';
 import { describe, expect, it } from 'vitest';
 import {
   facing4,
@@ -30,13 +31,11 @@ const PEELING = spriteSheets['husk-peeling'];
 const NUTSHELL = spriteSheets['husk-nutshell'];
 const NO_CLOCKS: Clocks = { hitMs: -1 };
 const CYCLES = defaultTuning.anim;
-/** The Kindled sheet without `run`, as M1's v1 sheets were: `walk` stands in. */
+/** The Kindled sheet without `run`, as a sheet is while run is on `ANIMS_AWAITING_ART`: `walk` stands in. */
 const KINDLED_NO_RUN: SpriteSheet = {
   ...KINDLED,
   anims: Object.fromEntries(Object.entries(KINDLED.anims).filter(([key]) => !key.startsWith('run_'))),
 };
-/** The Kindled sheet as a v1 (M1) sheet: no run, the fixed frame rate. */
-const KINDLED_V1: SpriteSheet = { ...KINDLED_NO_RUN, meta: { ...KINDLED.meta, version: '1' } };
 const deg = (d: number): number => Math.round((d * TURN) / 360) & (TURN - 1);
 
 /** Animations a run can show in M1: the required rows (carry and sit are M2's and have no sim state yet). */
@@ -54,26 +53,58 @@ function newRun(seed: number): Run {
   return createRun({ seed, tuning: defaultTuning, rooms: roomTemplates, weapon: 'hookblade' });
 }
 
-/** Drive a run with the autopilot through the state machine, collecting the animations it showed. */
+/** The Husk animations a playthrough showed, per kind. */
+type HuskShown = Record<HuskKind, Set<string>>;
+
+const HUSK_SHEETS: Record<HuskKind, SpriteSheet> = { peeling: PEELING, nutshell: NUTSHELL };
+
+/**
+ * Drive a run with the autopilot through the state machine, collecting the
+ * animations it showed: the Kindled's in `hits`, each Husk's in `husks` (the
+ * hit and regrow clocks from the sim's events, as the client keeps them; the
+ * telegraph blink at the tuning's rate from the tick).
+ */
 function playthrough(
   run: Run,
   maxTicks: number,
   hits: Set<string> = new Set(),
   sheet: SpriteSheet = KINDLED,
+  husks: HuskShown = { peeling: new Set(), nutshell: new Set() },
 ): Set<string> {
   let hitAt = -1000;
+  const huskHitAt = new Map<number, number>();
+  const regrowAt = new Map<number, number>();
+  const blinkHz = defaultTuning.juice.telegraphBlinkHz;
   for (let i = 0; i < maxTicks && run.state.status === 'playing'; i++) {
     // Patient: the autopilot lets moves play out (it would otherwise cancel every recovery and pin into the next move).
     const events = stepRun(run, autopilot(run.state, run.params, { patient: true }));
-    if (events.some((e) => e.type === 'playerHurt')) hitAt = run.state.tick;
-    const sinceHit = ((run.state.tick - hitAt) * 1000) / 60;
+    const tick = run.state.tick;
+    if (events.some((e) => e.type === 'playerHurt')) hitAt = tick;
+    for (const e of events) {
+      if (e.type === 'hit') huskHitAt.set(e.id, tick);
+      if (e.type === 'shellRegrow') regrowAt.set(e.id, tick);
+    }
+    const ms = (ticks: number): number => (ticks * 1000) / 60;
     const pose = kindledPose(run.state, run.params, sheet, {
-      hitMs: hitAt < 0 ? -1 : sinceHit,
+      hitMs: hitAt < 0 ? -1 : ms(tick - hitAt),
       deathMs: 0,
     });
     expect(sheet.anims[pose.anim], pose.anim).toBeDefined();
     expect(pose.frame).toBeLessThan(sheet.anims[pose.anim]?.frames.length ?? 0);
     hits.add(pose.name);
+    const blink = Math.floor((ms(tick) / 1000) * blinkHz) % 2 === 0;
+    for (const h of run.state.husks) {
+      const hs = HUSK_SHEETS[h.kind];
+      const hit = huskHitAt.get(h.id);
+      const regrow = regrowAt.get(h.id);
+      const hp = huskPose(run.state, run.params, h, hs, {
+        hitMs: hit === undefined ? -1 : ms(tick - hit),
+        ...(regrow === undefined ? {} : { regrowMs: ms(tick - regrow) }),
+      }, blink);
+      expect(hs.anims[hp.anim], `${h.kind} ${hp.anim}`).toBeDefined();
+      expect(hp.frame).toBeLessThan(hs.anims[hp.anim]?.frames.length ?? 0);
+      husks[h.kind].add(hp.anim);
+    }
   }
   return hits;
 }
@@ -218,20 +249,25 @@ describe('walk and run by distance (G1.5c)', () => {
     expect(meter.distancePx).toBe(68);
   });
 
-  it('keeps a v1 sheet, and a pose without a stride, on the fixed frame rate', () => {
+  it('keeps a pose without a stride on the fixed frame rate; with one, distance wins whatever the tick', () => {
     const run = newRun(1);
     const s = run.state;
     s.player.aim = deg(0);
     s.player.vx = 300;
-    s.tick = 6;
-    // 10 fps on the 60 Hz tick: frame 1 at tick 6, whatever the distance.
-    expect(kindledPose(s, run.params, KINDLED_V1, NO_CLOCKS, stride(0))).toMatchObject({ anim: 'walk_E', frame: 1 });
-    expect(kindledPose(s, run.params, KINDLED_V1, NO_CLOCKS, stride(80)).frame).toBe(1);
     s.tick = 18;
-    expect(kindledPose(s, run.params, KINDLED_V1, NO_CLOCKS, stride(80)).frame).toBe(3);
-    // A v2 sheet without a stride: run's 16 fps on the tick.
+    // Without a stride (tools, tests of other states): run's 16 fps on the tick.
     expect(kindledPose(s, run.params, KINDLED, NO_CLOCKS)).toMatchObject({ anim: 'run_E', frame: 4 });
-    // The Nutshell's walk stays time-based too (huskPose takes no stride).
+    // With one, the distance alone picks the frame: 80 px into a 96 px cycle of 8 is frame 6, at tick 18 as at tick 6.
+    expect(kindledPose(s, run.params, KINDLED, NO_CLOCKS, stride(80))).toMatchObject({ anim: 'run_E', frame: 6 });
+    s.tick = 6;
+    expect(kindledPose(s, run.params, KINDLED, NO_CLOCKS, stride(80)).frame).toBe(6);
+    // The Nutshell's walk stays time-based (huskPose takes no stride): 6 fps on the tick.
+    const h = fakeHusk(1, 'nutshell');
+    h.vx = 200;
+    s.tick = 10;
+    expect(huskPose(s, run.params, h, NUTSHELL, NO_CLOCKS, true)).toEqual({ anim: 'walk', frame: 1 });
+    s.tick = 20;
+    expect(huskPose(s, run.params, h, NUTSHELL, NO_CLOCKS, true)).toEqual({ anim: 'walk', frame: 2 });
   });
 });
 
@@ -516,13 +552,28 @@ describe('the Husk state machine', () => {
   });
 });
 
+/**
+ * Husk animations the state machine never returns: `death` and `drop` play on
+ * the corpse the renderer keeps after the sim removes the Husk (characters.ts,
+ * on the client clock), so no `huskPose` of a living Husk can show them.
+ */
+const HUSK_ON_CORPSE = ['death', 'drop'];
+/**
+ * Husk animations the autopilot never reaches: the Nutshell's `regrow` needs
+ * its inner shell chipped and then `innerRegrowMs` (8 s) with no hit, and
+ * the bot never backs off a chipped Nutshell (no seed in 1–80 regrows one).
+ * The state test above plays it from a regrow clock instead.
+ */
+const HUSK_NOT_BY_AUTOPILOT = ['regrow'];
+
 describe('headless playtest (autopilot through the state machine)', () => {
-  it('shows every M1 Kindled animation at least once across a clear and a death', () => {
+  it('shows every M1 Kindled animation, and every Husk animation of both tables the sim can reach, across a clear and a death', () => {
     // Seed 1237: the patient bot lands a Haul on a Nutshell (haul_slide); at moveSpeed 100 seed 1234 no longer does.
-    const shown = playthrough(newRun(1237), 60 * 60 * 5);
-    playthrough(newRun(11), 60 * 60 * 5, shown);
+    const husks: HuskShown = { peeling: new Set(), nutshell: new Set() };
+    const shown = playthrough(newRun(1237), 60 * 60 * 5, new Set(), KINDLED, husks);
+    playthrough(newRun(11), 60 * 60 * 5, shown, KINDLED, husks);
     const deathRun = newRun(5);
-    playthrough(deathRun, 60 * 20, shown);
+    playthrough(deathRun, 60 * 20, shown, KINDLED, husks);
     // Stop fighting back until the run ends, then a few frames of the death animation.
     for (let i = 0; i < 60 * 120 && deathRun.state.status === 'playing'; i++) stepRun(deathRun, 0);
     expect(deathRun.state.status).toBe('dead');
@@ -535,6 +586,13 @@ describe('headless playtest (autopilot through the state machine)', () => {
     // Logged for the PR's playtest record (vitest shows stdout with --silent=false).
     console.log(`Kindled animations played: ${[...shown].sort().join(', ')}`);
     expect(missing).toEqual([]);
+    // Every Husk animation the bot can reach showed; death and drop belong to the corpse, regrow to a patient player.
+    for (const kind of ['peeling', 'nutshell'] as const) {
+      const reachable = HUSK_ANIMS[kind].filter((n) => !HUSK_ON_CORPSE.includes(n) && !HUSK_NOT_BY_AUTOPILOT.includes(n));
+      console.log(`${kind} animations played: ${[...husks[kind]].sort().join(', ')}`);
+      expect(reachable.filter((n) => !husks[kind].has(n)), kind).toEqual([]);
+      expect([...husks[kind]].filter((n) => HUSK_ON_CORPSE.includes(n) || HUSK_NOT_BY_AUTOPILOT.includes(n)), kind).toEqual([]);
+    }
   });
 
   it('plays on a finished M1 sheet without carry or sit: nothing asks for them', () => {

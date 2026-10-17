@@ -17,7 +17,7 @@ import { PLAYER_SHEET } from '../render/characters.js';
 import { FIELD_H, FieldFrame } from '../render/field.js';
 import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
 import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
-import { animKey, spriteScale, toneTextureKey } from '../render/spriteSheets.js';
+import { animKey, toneTextureKey } from '../render/spriteSheets.js';
 import { body, label, place, type Text } from '../render/text.js';
 import { panel } from '../render/ui.js';
 import { createForm, type DomForm } from '../ui/formFields.js';
@@ -104,7 +104,7 @@ export class CreationScene extends Phaser.Scene {
         });
     });
 
-    // Preview: the placeholder sprite, 2×, in the chosen tone.
+    // Preview: the Kindled sprite in the chosen tone, at 1 UI px per sheet px (B's density).
     const g = this.add.graphics();
     panel(g, PREVIEW.x, PREVIEW.y, PREVIEW.w, PREVIEW.h, { plain: true });
     g.fillStyle(Palette.floor, 1).fillRect(
@@ -124,9 +124,7 @@ export class CreationScene extends Phaser.Scene {
         PREVIEW.x + PREVIEW.w / 2,
         PREVIEW.y + PREVIEW.h - 10,
         toneTextureKey(this, SHEET, this.tone),
-      )
-      // UI px: a v1 sheet at 2 per sheet px as in M1, a v2 sheet at 1 (its pixels are already B's density).
-      .setScale(spriteScale(SHEET));
+      );
     this.showTone();
 
     // Clay tone swatches.

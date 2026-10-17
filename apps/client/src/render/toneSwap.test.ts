@@ -60,17 +60,10 @@ describe('the clay-tone swap', () => {
     expect(after.masked.get(skin)).toBe(census(png.rgba).masked.get(shade));
   });
 
-  it('swaps the whole sheet without a mask (a v1 sheet)', () => {
-    const out = png.rgba.slice();
-    swapTone(out, swaps);
-    const after = census(out);
-    expect(after.bare.get(shade)).toBeUndefined();
-    expect(after.masked.get(shade)).toBeUndefined();
-  });
-
   it('leaves transparent pixels alone and refuses a mask of another size', () => {
     const px = new Uint8Array([0x8c, 0x7f, 0x6e, 0, 0x8c, 0x7f, 0x6e, 255]);
-    expect(swapTone(px, swaps)).toBe(1);
+    const all = new Uint8Array([0, 0, 0, 255, 0, 0, 0, 255]);
+    expect(swapTone(px, swaps, all)).toBe(1);
     expect([...px.subarray(0, 4)]).toEqual([0x8c, 0x7f, 0x6e, 0]);
     expect(() => swapTone(px, swaps, new Uint8Array(4))).toThrow();
   });
