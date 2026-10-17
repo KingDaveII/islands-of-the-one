@@ -431,8 +431,11 @@ export class GameScene extends Phaser.Scene {
     this.lastRoom = s.roomIndex;
     const scale = this.session.timeScale();
     this.tint.setFillStyle(Palette.hollow, scale < 1 ? 0.28 : 0);
-    this.world.draw(this.session, this.fx, this.time.now, delta * scale, delta, this.controls.reticle());
-    this.fx.update(delta * scale, delta);
+    // World time slows with the perfect-dodge slow-mo and with the playtest pacing (`setSpeed`), so the
+    // effects, corpses and trail keep step with the sim when a screenshot slows or freezes it.
+    const dtWorld = delta * scale * this.session.speed;
+    this.world.draw(this.session, this.fx, this.time.now, dtWorld, delta, this.controls.reticle());
+    this.fx.update(dtWorld, delta);
     this.updatePrompt();
     this.drawCursor();
     this.hud.draw(this.session.run, delta, this.bodyRects());
