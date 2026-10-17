@@ -875,7 +875,7 @@ describe('optional animations (milestones)', () => {
     expect(rows.map((a) => [a.name, a.frames, a.fps, a.loop, a.hold, a.facings.length, a.milestone])).toEqual([
       ['run_start', 2, 20, false, false, 8, 'M1'],
       ['run_stop', 2, 20, false, false, 8, 'M1'],
-      ['run_back', 4, 0, true, false, 8, 'M1'],
+      ['run_back', 4, 12, true, false, 8, 'M1'],
     ]);
     // A finished sheet passes without them, and with all of them; one facing of run_back alone fails.
     expect(tableProblems('kindled-test', sheetWith(animsOf(m1)), KINDLED_ANIMS)).toEqual([]);

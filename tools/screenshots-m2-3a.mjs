@@ -8,7 +8,10 @@
  * store cell (a stack to the pack), right-clicks a pack cell (one back to the
  * store), clicks a pack cell (a stack to the store), right-clicks a store
  * cell (one to the pack), checks each move through GET /api/inventory, fills
- * the pack to hit "Pack full.", and hovers a cell for the tooltip. Shots are
+ * the pack to hit "Pack full." (the line in the pack's header, shot during
+ * its hold), hovers a cell for the tooltip, and moves the focus with the
+ * keys to show the pack and then the store lit, then fills the store with
+ * logs for the store's limit line and the page counter (M2 3a follow-up). Shots are
  * whole-page screenshots at 1280 × 720 (UI zoom 2).
  *
  * Needs the dev stack running on Postgres (`pnpm dev` with DATABASE_URL set:
@@ -121,7 +124,8 @@ const moved = async () => {
   }
   await sleep(100);
 };
-const status = () => page.evaluate(() => window.__iot.game.scene.getScene('inventory').status.text);
+const refusal = () =>
+  page.evaluate(() => window.__iot.game.scene.getScene('inventory').refusal?.text ?? '');
 const expectInv = (inv, place, itemId, quantity) => {
   const got = inv[place].find((e) => e.itemId === itemId)?.quantity ?? 0;
   if (got !== quantity) throw new Error(`${place} ${itemId}: ${got}, expected ${quantity}`);
@@ -254,11 +258,13 @@ await waitScene('inventory');
 at = await cell('store', 0);
 await page.mouse.click(at.x, at.y);
 await moved();
-if ((await status()) !== 'Pack full.')
-  throw new Error(`expected "Pack full.", got "${await status()}"`);
+if ((await refusal()) !== 'Pack full.')
+  throw new Error(`expected "Pack full.", got "${await refusal()}"`);
 inv = await inventory();
 expectInv(inv, 'store', 'wild-sliver', 4);
 console.log('  click with a full pack: "Pack full."');
+// The line blinks twice (300 ms), then holds for 2 s: shoot it during the hold.
+await sleep(500);
 await shot('07-pack-full');
 
 // The tooltip, on hover.
@@ -268,15 +274,56 @@ await sleep(200);
 await shot('08-tooltip');
 
 // The tabs.
-const tab = await page.evaluate(() => {
-  const scene = window.__iot.game.scene.getScene('inventory');
-  const t = scene.tabTexts.find((x) => x.text === 'SPARKGLASS');
-  return { x: t.x + t.width / 2, y: t.y + 4 };
-});
-const tabAt = await toPage('inventory', tab.x, tab.y);
-await page.mouse.click(tabAt.x, tabAt.y);
-await page.mouse.move(tabAt.x, tabAt.y + 200);
+async function clickTab(name) {
+  const tab = await page.evaluate((name) => {
+    const scene = window.__iot.game.scene.getScene('inventory');
+    const t = scene.tabTexts.find((x) => x.text === name);
+    return { x: t.x + t.width / 2, y: t.y + 4 };
+  }, name);
+  const tabAt = await toPage('inventory', tab.x, tab.y);
+  await page.mouse.click(tabAt.x, tabAt.y);
+  await page.mouse.move(tabAt.x, tabAt.y + 200);
+}
+await clickTab('SPARKGLASS');
 await shot('09-tab-sparkglass');
+
+// The focus: the arrows light the pane the keys act on (the pack first, then the store).
+await page.mouse.move(10, 10);
+await page.keyboard.press('ArrowDown');
+await shot('10-focus-pack');
+for (let i = 0; i < 5; i++) await page.keyboard.press('ArrowRight');
+await shot('11-focus-store');
+const lit = await page.evaluate(() => window.__iot.game.scene.getScene('inventory').focus.pane);
+if (lit !== 'store') throw new Error(`the focus should be on the store, is on the ${lit}`);
+
+// The store's limit: 9,999 logs in the store and one in the pack; moving it is refused in the
+// store's header (the page counter under it comes back when the line goes), and the store now
+// has pages: the counter with its page glyphs.
+await clickTab('ALL');
+at = await cell('pack', 0);
+await page.mouse.click(at.x, at.y);
+await moved();
+grant('twisted-log', '1', 'pack');
+grant('twisted-log', '9994');
+await page.keyboard.press('i');
+await waitScene('start');
+await page.keyboard.press('i');
+await waitScene('inventory');
+// The pack's first cell is the log (items.json order puts logs before stone).
+at = await cell('pack', 0);
+await page.mouse.click(at.x, at.y);
+await moved();
+if (!(await refusal()).startsWith('Store: Twisted log full'))
+  throw new Error(`expected the store's limit, got "${await refusal()}"`);
+console.log(`  click with a full store: "${await refusal()}"`);
+await sleep(500);
+await shot('12-store-limit');
+await sleep(2500);
+await page.mouse.move(10, 10);
+await shot('13-store-pages');
+inv = await inventory();
+expectInv(inv, 'store', 'twisted-log', 9999);
+expectInv(inv, 'pack', 'twisted-log', 1);
 
 console.log(`GET /api/inventory: ${JSON.stringify(inv)}`);
 await browser.close();

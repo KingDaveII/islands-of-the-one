@@ -3,7 +3,7 @@ import { SPARKGLASS_SHEET, type SpriteSheet } from '@iot/shared';
 import { SUB, type PickupState } from '@iot/sim';
 import { DEPTH } from './depth.js';
 import { loopFrameAt } from './opening.js';
-import { propShadowWidths } from './propShadow.js';
+import { propShadowSizes, type ShadowSize } from './propShadow.js';
 import { snapToArt } from './scale.js';
 import { optionalSheet, texturePixels } from './spriteSheets.js';
 
@@ -40,7 +40,7 @@ export class PickupSprites {
   private readonly images = new Map<number, Phaser.GameObjects.Image>();
   /** The sheet the pickups draw from, when it is on disk (`prop-sparkglass`); undefined means the fallback drawing. */
   readonly sheet: SpriteSheet | undefined = optionalSheet(SPARKGLASS_SHEET);
-  private shadows: Map<string, number> | null = null;
+  private shadows: Map<string, ShadowSize> | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -62,13 +62,13 @@ export class PickupSprites {
     pickups: readonly PickupState[],
     at: (k: PickupState) => { x: number; y: number },
     timeMs: number,
-  ): Map<number, number> {
-    const widths = new Map<number, number>();
+  ): Map<number, ShadowSize> {
+    const shadows = new Map<number, ShadowSize>();
     const sheet = this.sheet;
-    if (!sheet) return widths;
+    if (!sheet) return shadows;
     if (!this.shadows) {
       const img = texturePixels(this.scene, SPARKGLASS_SHEET);
-      if (img) this.shadows = propShadowWidths(sheet, img);
+      if (img) this.shadows = propShadowSizes(sheet, img);
     }
     const seen = new Set<number>();
     const frame = pickupFrameAt(sheet, timeMs);
@@ -83,7 +83,7 @@ export class PickupSprites {
       if (image.frame.name !== frame) image.setFrame(frame);
       const p = at(k);
       image.setPosition(snapToArt(p.x), snapToArt(p.y));
-      widths.set(k.id, this.shadows?.get(frame) ?? 0);
+      shadows.set(k.id, this.shadows?.get(frame) ?? { w: 0, h: 0 });
     }
     for (const [id, image] of this.images) {
       if (seen.has(id)) continue;
@@ -91,7 +91,7 @@ export class PickupSprites {
       image.destroy();
       this.images.delete(id);
     }
-    return widths;
+    return shadows;
   }
 
   /** The pickups' frames this render frame, in sim order (playtests). */
