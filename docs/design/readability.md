@@ -84,10 +84,14 @@ particles, text, dev panels):
   stops at the first wall along the aim (the hook projectile's own wall test), so it never runs
   into the Hollow. Hidden during the cooldown (so also while the hook is out) and when the slot
   is locked.
-- **Room.** Drawn from ART's tile sheet (`tiles-cave`, [`sprites.md`](sprites.md) §10) once it
-  lands. Until then M1's procedural room: pale `hollow-lavender` floors with `hollow-light` flecks
-  and a dithered edge where they meet walls; walls show a `hollow-below` face with `hollow-deep`
-  lines. Outside the room is `hollow-deep` either way.
+- **Room.** Drawn from ART's tile sheet (`tiles-cave`, [`sprites.md`](sprites.md) §10), light from the
+  top left. Floors are quiet pale `hollow-lavender` grit with a few `hollow-light` flecks, so the pale
+  Husks and the Kindled read on them. A `hollow-dusk` dither shades the floor at the foot of a wall face
+  and east of a wall. Wall faces (a wall above floor) are rough `hollow-below` stones with `hollow-dusk`
+  light on their top left and `hollow-deep` joints, under a lit `hollow-dusk` lip. Wall tops are dark,
+  `hollow-deep` with `hollow-below` pits, so solid ground reads as the Hollow's dark and the walkable
+  floor is the only pale shape; an open side of a top gets a `hollow-deep` outline and a lit rim. Outside
+  the room is `hollow-deep`.
 - Pixel rules: whole pixels only, flat shading in 2–3 steps, dithering instead of gradients. The
   canvas runs at device resolution and each grid is drawn at **whole device pixels** per pixel:
   the world camera at `zW` per world px (2 in a 1080p browser window, a 960 × 456 view), the UI

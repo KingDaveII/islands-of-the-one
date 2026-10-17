@@ -81,18 +81,18 @@ describe('the chest from the prop-chest fixture, from `opened` on the client clo
 });
 
 describe('which chest the world draws', () => {
-  it('is the procedural fallback while no prop-chest sheet is on disk', () => {
-    expect(activeChestSheet()).toBeNull();
-    expect(chestRenderer(() => true)).toBe('procedural');
-  });
-
-  it("draws from the sheet once it is loaded (the fixture standing in for ART's)", () => {
-    setChestSheet({ key: CHEST_SHEET, sheet: fixture, url: 'data:image/png;base64,' });
+  it("draws from ART's prop-chest, which is on disk", () => {
     expect(activeChestSheet()?.key).toBe('prop-chest');
+    expect(activeChestSheet()?.sheet).not.toBe(fixture);
     expect(chestRenderer((key) => key === 'prop-chest')).toBe('sheet');
     // Not loaded (the PNG failed): still the fallback.
     expect(chestRenderer(() => false)).toBe('procedural');
+  });
+
+  it('keeps the sheet on disk over one a playtest hands in (the fixture standing in for one)', () => {
+    setChestSheet({ key: CHEST_SHEET, sheet: fixture, url: 'data:image/png;base64,' });
+    expect(activeChestSheet()?.sheet).not.toBe(fixture);
     setChestSheet(null);
-    expect(chestRenderer(() => true)).toBe('procedural');
+    expect(activeChestSheet()?.key).toBe('prop-chest');
   });
 });

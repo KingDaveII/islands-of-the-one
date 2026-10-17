@@ -161,19 +161,17 @@ describe('the door, from doorOpen on the client clock', () => {
 });
 
 describe('which room the world draws', () => {
-  it('is the procedural fallback while no tile sheet is on disk', () => {
-    expect(activeTileSheet()).toBeNull();
-    expect(roomRenderer(() => true)).toBe('procedural');
-  });
-
-  it("draws from the tile sheet once it is loaded (the fixture standing in for ART's)", () => {
-    setTileSheet({ key: 'tiles-fixture', sheet: fixture, url: 'data:image/png;base64,' });
-    expect(activeTileSheet()?.key).toBe('tiles-fixture');
-    expect(activeTileSheet()?.sheet.tiles).toEqual(fixture.tiles);
-    expect(roomRenderer((key) => key === 'tiles-fixture')).toBe('tiles');
+  it("draws from ART's tiles-cave, which is on disk", () => {
+    expect(activeTileSheet()?.key).toBe('tiles-cave');
+    expect(roomRenderer((key) => key === 'tiles-cave')).toBe('tiles');
     // Not loaded (the PNG failed): still the fallback.
     expect(roomRenderer(() => false)).toBe('procedural');
+  });
+
+  it("keeps tiles-cave over a sheet a playtest hands in (the fixture standing in for one)", () => {
+    setTileSheet({ key: 'tiles-fixture', sheet: fixture, url: 'data:image/png;base64,' });
+    expect(activeTileSheet()?.key).toBe('tiles-cave');
     setTileSheet(null);
-    expect(roomRenderer(() => true)).toBe('procedural');
+    expect(activeTileSheet()?.key).toBe('tiles-cave');
   });
 });
