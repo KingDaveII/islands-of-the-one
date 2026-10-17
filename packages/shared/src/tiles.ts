@@ -1,4 +1,5 @@
 import tilesCave from '../assets/sprites/tiles-cave.json' with { type: 'json' };
+import tilesHolding from '../assets/sprites/tiles-holding.json' with { type: 'json' };
 import type { AtlasFrame, SpriteAnim, SpriteAnimSpec } from './sprites.js';
 
 /**
@@ -28,6 +29,9 @@ export const TILE_SHEET_PREFIX = 'tiles-';
 
 /** The cave set, the first tile sheet (ART's `tiles-cave`). */
 export const CAVE_TILE_SHEET = 'tiles-cave';
+
+/** The holding's set (M2 Task 3b): MAIN's placeholder through the pipeline until ART draws it; the same pieces as the cave's. */
+export const HOLDING_TILE_SHEET = 'tiles-holding';
 
 /** The open sides of a wall cell, in the order its piece names them: n, w, e. */
 export const TILE_SIDES = ['n', 'w', 'e'] as const;
@@ -221,6 +225,9 @@ export interface TileSheet {
  * sprite sheets (`spriteSheets`); its PNG loads as the atlas's image.
  */
 export const caveTileSheet: TileSheet = tilesCave;
+
+/** The holding's sheet (`tiles-holding`), the one the holding scene draws its ground and edge from, bundled like the cave's. */
+export const holdingTileSheet: TileSheet = tilesHolding;
 
 /** Whether a sheet name is a tile sheet's (`tiles-<set>`). */
 export function isTileSheetName(name: string): boolean {

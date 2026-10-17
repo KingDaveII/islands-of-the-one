@@ -3,6 +3,9 @@ import huskNutshell from '../assets/sprites/husk-nutshell.json' with { type: 'js
 import huskPeeling from '../assets/sprites/husk-peeling.json' with { type: 'json' };
 import kindledAsh from '../assets/sprites/kindled-ash.json' with { type: 'json' };
 import propChest from '../assets/sprites/prop-chest.json' with { type: 'json' };
+import propStoneOutcrop from '../assets/sprites/prop-stone-outcrop.json' with { type: 'json' };
+import propTwistedTree from '../assets/sprites/prop-twisted-tree.json' with { type: 'json' };
+import propWritPost from '../assets/sprites/prop-writ-post.json' with { type: 'json' };
 import { TILE_DOOR_ANIMS, TILE_WORLD_PX } from './tiles.js';
 
 /**
@@ -149,12 +152,21 @@ export interface SpriteSheet {
 }
 
 /**
- * The sheets the client loads: the Kindled, the two Husks and the chest
- * (`CHEST_SHEET`). The sheet test runs on every sheet on disk and checks that
+ * The sheets the client loads: the Kindled, the two Husks, the chest
+ * (`CHEST_SHEET`) and the holding's three station props (`STATION_SHEETS`,
+ * M2 Task 3b). The sheet test runs on every sheet on disk and checks that
  * each name here is one of them; a sheet on disk (an NPC's, say) joins this
  * list when the client starts using it. Tile sheets load apart (tiles.ts).
  */
-export const SPRITE_SHEET_NAMES = ['kindled-ash', 'husk-peeling', 'husk-nutshell', 'prop-chest'] as const;
+export const SPRITE_SHEET_NAMES = [
+  'kindled-ash',
+  'husk-peeling',
+  'husk-nutshell',
+  'prop-chest',
+  'prop-writ-post',
+  'prop-twisted-tree',
+  'prop-stone-outcrop',
+] as const;
 export type SpriteSheetName = (typeof SPRITE_SHEET_NAMES)[number];
 
 /** Every animated sheet the client loads, by name (the texture key the engine uses). */
@@ -163,6 +175,20 @@ export const spriteSheets: Readonly<Record<SpriteSheetName, SpriteSheet>> = {
   'husk-peeling': huskPeeling,
   'husk-nutshell': huskNutshell,
   'prop-chest': propChest,
+  'prop-writ-post': propWritPost,
+  'prop-twisted-tree': propTwistedTree,
+  'prop-stone-outcrop': propStoneOutcrop,
+};
+
+/**
+ * The holding's station props (docs/design/holding.md), by station kind: a
+ * prop without a table each, `idle` alone, one frame (MAIN's placeholders
+ * through the pipeline; ART replaces the pixels without an engine change).
+ */
+export const STATION_SHEETS: Readonly<Record<'post' | 'trees' | 'outcrop', SpriteSheetName>> = {
+  post: 'prop-writ-post',
+  trees: 'prop-twisted-tree',
+  outcrop: 'prop-stone-outcrop',
 };
 
 /** Kindled facings in sheet order. */

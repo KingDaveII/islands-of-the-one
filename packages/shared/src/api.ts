@@ -1,5 +1,7 @@
 import { isClayTone, isRemembrance, type Remembrance } from './accounts.js';
+import { isHoldingStationId } from './holding.js';
 import { isPlace, isStationId, type Place } from './places.js';
+import { isSkill, type Skill } from './skills.js';
 import type { ClayTone } from './sprites.js';
 
 /**
@@ -17,6 +19,10 @@ export const ApiRoute = {
   Kindled: '/api/kindled',
   Inventory: '/api/inventory',
   InventoryMove: '/api/inventory/move',
+  Holding: '/api/holding',
+  HoldingWork: '/api/holding/work',
+  HoldingStop: '/api/holding/stop',
+  HoldingTake: '/api/holding/take',
 } as const;
 export type ApiRoute = (typeof ApiRoute)[keyof typeof ApiRoute];
 
@@ -56,6 +62,9 @@ export const ApiErrorCode = {
   StackLimit: 'stack-limit',
   Insufficient: 'insufficient',
   WrongPlace: 'wrong-place',
+  // The holding (docs/design/holding.md).
+  UnknownStation: 'unknown-station',
+  NoAction: 'no-action',
 } as const;
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
 
@@ -142,6 +151,53 @@ export interface InventoryMoveRequest {
   from: Place;
   to: Place;
   quantity: number;
+}
+
+/**
+ * The holding's active action (docs/design/holding.md): the station being
+ * worked, when it started (ISO 8601, the server's clock) and its cycle, so
+ * the client draws the cycle ring from `startedAt` and the server's `now`.
+ */
+export interface HoldingActivity {
+  stationId: string;
+  startedAt: string;
+  cycleMs: number;
+}
+
+/** A skill's XP, level, XP into the level and XP to the next (skills.ts). */
+export interface SkillView {
+  xp: number;
+  level: number;
+  into: number;
+  toNext: number;
+}
+
+/** What a take-all moved from a station's basket into the store, and what stayed (what didn't fit). */
+export interface HoldingTake {
+  stationId: string;
+  moved: InventoryEntry[];
+  left: InventoryEntry[];
+}
+
+/**
+ * GET /api/holding, and the answer to work, stop and take: the layout, every
+ * station's basket (by station id, every station listed), the active action
+ * or null, the server's clock and the skills. The server settles the action
+ * before answering, so the counts are true as of `now`. A take-all answer
+ * adds `take`.
+ */
+export interface HoldingResponse {
+  layoutId: string;
+  baskets: Record<string, InventoryEntry[]>;
+  activity: HoldingActivity | null;
+  now: string;
+  skills: Record<Skill, SkillView>;
+  take?: HoldingTake;
+}
+
+/** POST /api/holding/work and /take: the station, by id (stations.json). */
+export interface HoldingStationRequest {
+  stationId: string;
 }
 
 type Obj = Record<string, unknown>;
@@ -234,6 +290,59 @@ export function isInventoryMoveRequest(value: unknown): value is InventoryMoveRe
     isPlace(value.from) &&
     isPlace(value.to) &&
     isPositiveInt(value.quantity)
+  );
+}
+
+export function isHoldingStationRequest(value: unknown): value is HoldingStationRequest {
+  return isObject(value) && hasOnly(value, ['stationId']) && typeof value.stationId === 'string';
+}
+
+const isNonNegativeInt = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+
+export function isSkillView(value: unknown): value is SkillView {
+  return (
+    isObject(value) &&
+    hasOnly(value, ['xp', 'level', 'into', 'toNext']) &&
+    isNonNegativeInt(value.xp) &&
+    isPositiveInt(value.level) &&
+    isNonNegativeInt(value.into) &&
+    isPositiveInt(value.toNext)
+  );
+}
+
+export function isHoldingActivity(value: unknown): value is HoldingActivity {
+  return (
+    isObject(value) &&
+    hasOnly(value, ['stationId', 'startedAt', 'cycleMs']) &&
+    isHoldingStationId(value.stationId) &&
+    isIsoDate(value.startedAt) &&
+    isPositiveInt(value.cycleMs)
+  );
+}
+
+export function isHoldingTake(value: unknown): value is HoldingTake {
+  return (
+    isObject(value) &&
+    hasOnly(value, ['stationId', 'moved', 'left']) &&
+    isHoldingStationId(value.stationId) &&
+    isEntryList(value.moved) &&
+    isEntryList(value.left)
+  );
+}
+
+export function isHoldingResponse(value: unknown): value is HoldingResponse {
+  return (
+    isObject(value) &&
+    hasOnly(value, ['layoutId', 'baskets', 'activity', 'now', 'skills', 'take']) &&
+    typeof value.layoutId === 'string' &&
+    isObject(value.baskets) &&
+    Object.entries(value.baskets).every(([k, v]) => isHoldingStationId(k) && isEntryList(v)) &&
+    (value.activity === null || isHoldingActivity(value.activity)) &&
+    isIsoDate(value.now) &&
+    isObject(value.skills) &&
+    Object.entries(value.skills).every(([k, v]) => isSkill(k) && isSkillView(v)) &&
+    (value.take === undefined || isHoldingTake(value.take))
   );
 }
 
