@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import { CHEST_SHEET, PROP_TABLES, propFrameName, spriteSheets, type SpriteSheet } from '@iot/shared';
 import { SUB, type ChestState } from '@iot/sim';
-import { DEPTH } from './depth.js';
+import { bodyDepth } from './feet.js';
 import { loopFrameAt, nextOpenView, openingStateAt, type OpenView } from './opening.js';
 import { snapToArt } from './scale.js';
 
@@ -10,7 +10,7 @@ import { snapToArt } from './scale.js';
  * "Props", G1.5f): each chest of the sim state as an image at its sim
  * position through the same render boundary as the other sprites (its origin,
  * the line under the soles, on the position, in whole world px; y-sorted with
- * the bodies), its frame from `ChestState.opened` on the client clock like
+ * the bodies by that line, `bodyDepth`), its frame from `ChestState.opened` on the client clock like
  * the tile doors (opening.ts): `closed` looping at the sheet's rate (still
  * with one frame), `opening` once when `opened` turns true, then `open`,
  * held; a chest already open when the client first sees it shows `open`. The
@@ -70,7 +70,7 @@ export class ChestSprites {
       if (entry.image.frame.name !== frame) entry.image.setFrame(frame);
       const x = c.x / SUB;
       const y = c.y / SUB;
-      entry.image.setPosition(snapToArt(x), snapToArt(y)).setDepth(DEPTH.bodies + y * DEPTH.perPixel);
+      entry.image.setPosition(snapToArt(x), snapToArt(y)).setDepth(bodyDepth({ kind: 'chest' }, y));
     }
     for (const [id, entry] of this.chests) {
       if (seen.has(id)) continue;

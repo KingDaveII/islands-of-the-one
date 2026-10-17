@@ -1,7 +1,8 @@
 /**
  * Draw order inside a layer (Phaser sorts a layer's children by
- * depth, ties by insertion). Bodies sort among themselves by their feet's y
- * so a Husk in front of the Kindled draws over it.
+ * depth, ties by insertion). Bodies sort among themselves by the line they
+ * stand on (`bodyDepth`, feet.ts: the Kindled's and a Husk's feet, a chest's
+ * base) so a body in front of another on the floor draws over it.
  */
 export const DEPTH = {
   room: 0,
@@ -13,7 +14,7 @@ export const DEPTH = {
   /** The perfect-dodge afterimages (rim, then ink one above). */
   trail: 4,
   bodies: 10,
-  /** Added per world pixel of y to a body's depth; keeps every body below the overlays. */
+  /** Added per world pixel of a body's ground line to its depth (`bodyDepth`); keeps every body below the overlays. */
   perPixel: 1e-4,
   /** The debug hitbox shapes (F3). */
   debug: 18,
