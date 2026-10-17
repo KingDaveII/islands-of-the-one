@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  type LayoutStation,
   HOLDING_HEARTBEAT_MS,
   HOLDING_LAYOUT_ID,
   HOLDING_SOLID,
@@ -57,6 +58,7 @@ const good: HoldingLayout = {
   plots: [{ col: 1, row: 6, cols: 6, rows: 6 }],
 };
 const withTiles = (tiles: string[]): HoldingLayout => ({ ...good, tiles });
+const [POST, TREES, OUTCROP] = good.stations as [LayoutStation, LayoutStation, LayoutStation];
 
 describe('stations.json', () => {
   it('holds the three M2 stations with GAME DESIGN\'s numbers', () => {
@@ -125,9 +127,9 @@ describe('the layout validator', () => {
       'test: tile (8, 7) is "R" but belongs to no station',
     ]);
     expect(
-      holdingLayoutProblems({ ...good, stations: [...good.stations, { ...good.stations[1]!, id: 'twisted-oaks' }] }, stations),
+      holdingLayoutProblems({ ...good, stations: [...good.stations, { ...TREES, id: 'twisted-oaks' }] }, stations),
     ).toEqual(['test: station twisted-oaks is not in stations.json']);
-    expect(holdingLayoutProblems({ ...good, stations: [{ ...good.stations[1]!, kind: 'outcrop' }] }, stations)).toEqual(
+    expect(holdingLayoutProblems({ ...good, stations: [{ ...TREES, kind: 'outcrop' }] }, stations)).toEqual(
       expect.arrayContaining(['test: station twisted-trees is a outcrop here but a trees in stations.json']),
     );
   });
@@ -165,7 +167,7 @@ describe('the layout validator', () => {
     const pocket = { ...walled, stations: walled.stations.map((s) => (s.id === 'twisted-trees' ? { ...s, rect: { col: 3, row: 2, cols: 2, rows: 2 }, interact: { col: 5, row: 3 } } : s)), plots: [] };
     const cut = withTiles(['##########', '#.T.#....#', '#.T.#.W..#', '#...#....#', '#####P.RR#', '#......RR#', '#........#', '#........#', '#........#', '##########']);
     expect(
-      holdingLayoutProblems({ ...cut, stations: [cut.stations[0]!, { ...cut.stations[1]!, rect: { col: 2, row: 1, cols: 1, rows: 2 }, interact: { col: 3, row: 2 } }, cut.stations[2]!], plots: [] }, stations),
+      holdingLayoutProblems({ ...cut, stations: [POST, { ...TREES, rect: { col: 2, row: 1, cols: 1, rows: 2 }, interact: { col: 3, row: 2 } }, OUTCROP], plots: [] }, stations),
     ).toEqual(['test: station twisted-trees: its interact point (3, 2) can\'t be reached from the start']);
     expect(holdingLayoutProblems(pocket, stations)).toEqual([]);
   });
