@@ -79,6 +79,52 @@ export interface Stride {
   distancePx: number;
   /** The `anim` tuning: world px per full walk cycle and per full run cycle. */
   cycles: AnimTuning;
+  /** The Kindled is backpedalling (`backpedals`): the run cycle plays in reverse (G1.5h). */
+  backpedal?: boolean;
+}
+
+/**
+ * The backpedal (G1.5h): the Kindled's aim and movement are separate, so it
+ * often runs away from where it faces, and the run cycle would stride the
+ * wrong way. While it runs with its movement more than `BACKPEDAL_ON_DEG`
+ * from its facing (the aim), so in the three facings opposite the aim, the
+ * run cycle plays backwards; it plays forwards again once they are less than
+ * `BACKPEDAL_OFF_DEG` apart. The gap between the two is hysteresis: a stick
+ * held near the boundary does not flicker. Strafing, about 90°, plays
+ * forwards. The facing stays the aim's; only the frame order flips. The
+ * movement direction is the render positions' (`StrideMeter.headingDeg`),
+ * not a sim input. This is the stopgap for a drawn `run_back`: swap the
+ * animation in `backpedalFrame` when ART draws one, under the same rule.
+ */
+export const BACKPEDAL_ON_DEG = 112.5;
+export const BACKPEDAL_OFF_DEG = 100;
+
+/** The smaller angle between two directions in degrees, 0..180. */
+export function separationDeg(aDeg: number, bDeg: number): number {
+  return Math.abs(((((aDeg - bDeg) % 360) + 540) % 360) - 180);
+}
+
+/** A sim angle (1/`TURN` turn, clockwise from east) in degrees. */
+export const simDeg = (angle: number): number => ((angle & (TURN - 1)) * 360) / TURN;
+
+/**
+ * Whether the Kindled backpedals this frame, from whether it did last frame
+ * and the angle (degrees, 0..180) between its movement and its facing:
+ * on above `BACKPEDAL_ON_DEG`, off below `BACKPEDAL_OFF_DEG`, unchanged between.
+ */
+export function backpedals(prev: boolean, separation: number): boolean {
+  if (separation > BACKPEDAL_ON_DEG) return true;
+  if (separation < BACKPEDAL_OFF_DEG) return false;
+  return prev;
+}
+
+/**
+ * The run's frame while backpedalling: the distance-driven frame `f` of an
+ * `n`-frame cycle played in reverse, `n − 1 − f`. A drawn `run_back` would
+ * replace this (and the animation name in `gaitPose`) under the same rule.
+ */
+export function backpedalFrame(n: number, f: number): number {
+  return Math.max(0, n - 1 - f);
 }
 
 /** The Kindled's two ways of moving. In an encounter it always runs (GAME DESIGN 2026-10-16); walking is M2's holding. */
@@ -207,7 +253,9 @@ function hasAnim(sheet: SpriteSheet, name: string): boolean {
  * `ANIMS_AWAITING_ART`, or missing from the sheet) at `anim.runCyclePx`, or
  * `walk` at `anim.walkCyclePx`, the cycle by the gait either way. The frame
  * comes from the distance moved; without a stride (tools, tests of other
- * states) it keeps the sheet's frame rate on the tick.
+ * states) it keeps the sheet's frame rate on the tick. A backpedalling run
+ * (`stride.backpedal`) plays its cycle in reverse (`backpedalFrame`); `walk`
+ * for its own sake never does.
  */
 export function gaitPose(
   sheet: SpriteSheet,
@@ -220,7 +268,11 @@ export function gaitPose(
   const name = standIn !== undefined && (isAwaitingArt({ name: gait }) || !hasAnim(sheet, gait)) ? standIn : gait;
   if (!stride) return kindledPoseOf(sheet, name, angle, (a) => loopFrame(a, tick));
   const cyclePx = gait === 'run' ? stride.cycles.runCyclePx : stride.cycles.walkCyclePx;
-  return kindledPoseOf(sheet, name, angle, (a) => strideFrame(a, stride.distancePx, cyclePx));
+  const reverse = gait === 'run' && stride.backpedal === true;
+  return kindledPoseOf(sheet, name, angle, (a) => {
+    const f = strideFrame(a, stride.distancePx, cyclePx);
+    return reverse ? backpedalFrame(a.frames.length, f) : f;
+  });
 }
 
 /** True while a Hook-thrust pins a Husk (the engine shows `heavy_hold`). */
@@ -232,7 +284,7 @@ function pinning(s: RunState): boolean {
  * The Kindled's pose from the player's sim state.
  *
  * - idle, or run while moving (walk standing in while run awaits art), facing
- *   the aim; run plays by `stride` (`gaitPose`);
+ *   the aim; run plays by `stride` (`gaitPose`), backwards while backpedalling;
  * - dodge: crouch, the roll (2 frames) and recover over the dodge window;
  * - light_1..3 by combo step, wind-up / swing / recover over the strike window;
  * - heavy_charge at the sheet's rate holding the last frame → heavy_thrust over

@@ -10,15 +10,18 @@ import { SUB, type HuskKind, type Params, type Run } from '@iot/sim';
 import type { Session } from '../game/session.js';
 import { Palette } from '../palette.js';
 import {
+  backpedals,
   huskFlip,
   huskPose,
   kindledPose,
+  separationDeg,
+  simDeg,
   type Clocks,
   type KindledPose,
   type Pose,
 } from './animState.js';
 import { DEPTH } from './depth.js';
-import { huskFeet, PLAYER_FEET } from './feet.js';
+import { bodyDepth, huskFeet, PLAYER_FEET } from './feet.js';
 import type { Fx } from './fx.js';
 import { snapToArt } from './scale.js';
 import { toneTextureKey } from './spriteSheets.js';
@@ -78,7 +81,8 @@ interface Ghost {
  * Effects stay in the engine: the grounding shadow (world.ts), the white hit
  * flash (a fill tint), chips as particles (fx.ts), the Hookblade FX at the
  * hook tip (hookblade.ts). Facing comes from the sim's aim or move direction;
- * Husks flip horizontally when they move or lunge west.
+ * Husks flip horizontally when they move or lunge west. Bodies y-sort by the
+ * line they stand on (`bodyDepth`), so one in front on the floor draws over.
  */
 export class CharacterSprites {
   private readonly player: Sprite;
@@ -96,8 +100,10 @@ export class CharacterSprites {
   readonly playerSheet: SpriteSheet = spriteSheets[PLAYER_SHEET];
   /** The run's params at the last draw (a corpse's feet come from its kind's radius). */
   private params: Params | null = null;
-  /** How far the player has moved (world px), for the run and walk cycles. */
+  /** How far the player has moved (world px), for the run and walk cycles, and which way last. */
   private readonly stride = new StrideMeter();
+  /** The Kindled runs backwards (`backpedals`, with hysteresis): its movement is away from where it faces. */
+  private backpedal = false;
   /** Recent player positions (sim px), for the trail to start behind the dodge. */
   private recent: { x: number; y: number; pose: KindledPose; age: number }[] = [];
   private trailLeft = 0;
@@ -118,7 +124,7 @@ export class CharacterSprites {
   ) {
     this.tone = tone;
     this.player = this.sprite(this.playerTexture());
-    this.player.setDepth(DEPTH.bodies);
+    this.player.setDepth(bodyDepth({ kind: 'kindled' }, 0));
   }
 
   /** The Kindled's texture in the current tone (built on first use). */
@@ -255,7 +261,11 @@ export class CharacterSprites {
     // The player.
     if (p.action === 'dead' && this.deathAt < 0) this.deathAt = this.now;
     if (p.action !== 'dead') this.deathAt = -1;
-    const stride = { distancePx: this.stride.step(player.x, player.y), cycles: this.anim() };
+    const distancePx = this.stride.step(player.x, player.y);
+    // The backpedal: the movement (the render positions' heading) against the facing, the aim.
+    const heading = this.stride.headingDeg;
+    if (heading !== null) this.backpedal = backpedals(this.backpedal, separationDeg(heading, simDeg(p.aim)));
+    const stride = { distancePx, cycles: this.anim(), backpedal: this.backpedal };
     const pose = kindledPose(s, P, this.playerSheet, this.clocks('p'), stride);
     this.pose = pose;
     this.playerFrame = this.frameName(this.playerSheet, pose);
@@ -268,7 +278,7 @@ export class CharacterSprites {
     this.player
       .setPosition(this.playerAnchor.x, this.playerAnchor.y)
       .setVisible(!hidden)
-      .setDepth(DEPTH.bodies + player.y * DEPTH.perPixel);
+      .setDepth(bodyDepth({ kind: 'kindled' }, player.y));
     this.tint(this.player, flash);
 
     // The Husks.
@@ -298,7 +308,7 @@ export class CharacterSprites {
         .setPosition(snapToArt(x), snapToArt(y + feet))
         .setFlipX(entry.flip)
         .setVisible(true)
-        .setDepth(DEPTH.bodies + y * DEPTH.perPixel);
+        .setDepth(bodyDepth({ kind: 'husk', husk: h.kind, P }, y));
       this.tint(sprite, fx.isFlashing(`h${h.id}`));
     }
     for (const [id, entry] of this.husks) {

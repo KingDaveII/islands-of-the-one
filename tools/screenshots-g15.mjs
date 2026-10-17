@@ -45,11 +45,24 @@
  * a light wind-up (`light_1` frame 0, the startup) facing E and S. With
  * `--only <facing>`, the shots of that facing alone.
  *
+ * `--sort` (G1.5h, no account needed) opens the Shell Gallery, clears it and
+ * stands the Kindled at the chest, its feet 1 sim px in front of the chest's
+ * base and then 1 px behind, for the draw order by the ground line: the page
+ * and a 4× crop each (`sort-kindled-front`, `sort-kindled-behind`).
+ *
+ * `--backpedal` (G1.5h, no account needed) runs the Kindled west while it
+ * faces east, at moveSpeed 100, and shoots a strip of one run cycle as it
+ * backpedals (`backpedal-E-moving-W-strip.png`): the run's frames in reverse,
+ * 7 down to 0, one 4× crop per frame. Default folder `docs/screenshots/g15h`
+ * for both.
+ *
  *   pnpm dev   # in another shell
  *   node tools/screenshots-g15.mjs [outDir] [baseUrl]
  *   node tools/screenshots-g15.mjs --poses [outDir] [baseUrl]
  *   node tools/screenshots-g15.mjs --run [outDir] [baseUrl]
  *   node tools/screenshots-g15.mjs --rooms [outDir] [baseUrl]
+ *   node tools/screenshots-g15.mjs --sort [outDir] [baseUrl]
+ *   node tools/screenshots-g15.mjs --backpedal [outDir] [baseUrl]
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
@@ -87,7 +100,20 @@ const roomsMode = (() => {
   if (i >= 0) args.splice(i, 1);
   return i >= 0;
 })();
-const OUT = resolve(args[0] ?? join(ROOT, roomsMode ? 'docs/screenshots/g15g' : 'docs/screenshots/g15'));
+const sortMode = (() => {
+  const i = args.indexOf('--sort');
+  if (i >= 0) args.splice(i, 1);
+  return i >= 0;
+})();
+const backpedalMode = (() => {
+  const i = args.indexOf('--backpedal');
+  if (i >= 0) args.splice(i, 1);
+  return i >= 0;
+})();
+const OUT = resolve(
+  args[0] ??
+    join(ROOT, roomsMode ? 'docs/screenshots/g15g' : sortMode || backpedalMode ? 'docs/screenshots/g15h' : 'docs/screenshots/g15'),
+);
 const BASE = args[1] ?? 'http://localhost:5173';
 
 /** The window sizes of the brief: CSS size at a device pixel ratio. */
@@ -505,6 +531,120 @@ async function runShots() {
   await context.close();
 }
 
+/**
+ * G1.5h: the Kindled stood at the Shell Gallery's chest with the sim frozen,
+ * its feet (`y + PLAYER_FEET`, 5 sim px below the centre) 1 sim px in front
+ * of the chest's base, then 1 px behind, 8 sim px to the chest's right so the
+ * body overlaps it: the draw order by the ground line, the page and a 4× crop
+ * around the player each time.
+ */
+async function sortShots() {
+  const context = await browser.newContext({ viewport: { width: 1920, height: 912 } });
+  const page = await context.newPage();
+  page.on('pageerror', (e) => console.error('page error:', e.message));
+  await page.goto(BASE);
+  for (let i = 0; i < 100 && !(await page.evaluate(() => Boolean(window.__iot))); i++) await sleep(100);
+  await openRoom(page, 'Shell Gallery', 5);
+  for (const [name, feetOffset] of [
+    ['front', 1],
+    ['behind', -1],
+  ]) {
+    const at = await page.evaluate((feetOffset) => {
+      const PLAYER_FEET = 5;
+      const s = window.__iot.scene().session.state;
+      s.husks.length = 0;
+      const ch = s.chests[0];
+      if (!ch) throw new Error('Shell Gallery has no chest');
+      // Facing south, standing still, the feet `feetOffset` sim px from the chest's base line.
+      s.player.aim = 1024;
+      s.player.vx = 0;
+      s.player.vy = 0;
+      s.player.x = ch.x + 8 * 256;
+      s.player.y = ch.y + (feetOffset - PLAYER_FEET) * 256;
+      return { chest: { x: ch.x / 256, y: ch.y / 256 }, feet: (s.player.y + PLAYER_FEET * 256) / 256 };
+    }, feetOffset);
+    await sleep(400);
+    console.log(`  ${name}: chest base y ${at.chest.y}, the Kindled's feet y ${at.feet} (sim px)`);
+    await shot(page, `sort-kindled-${name}`);
+    await playerCrop(page, `sort-kindled-${name}-4x`, 96, 80);
+  }
+  await context.close();
+}
+
+/** A strip of 4× player crops (PNG base64 each) side by side on white, as a PNG buffer. */
+async function stripOfCrops(page, crops) {
+  const strip = await page.evaluate(async (crops) => {
+    const imgs = await Promise.all(
+      crops.map(async (b64) => {
+        const img = new Image();
+        img.src = `data:image/png;base64,${b64}`;
+        await img.decode();
+        return img;
+      }),
+    );
+    const gap = 8;
+    const canvas = document.createElement('canvas');
+    canvas.width = imgs.reduce((w, img) => w + img.width, 0) + gap * (imgs.length - 1);
+    canvas.height = imgs[0].height;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    let x = 0;
+    for (const img of imgs) {
+      ctx.drawImage(img, x, 0);
+      x += img.width + gap;
+    }
+    return canvas.toDataURL('image/png').split(',')[1];
+  }, crops);
+  return Buffer.from(strip, 'base64');
+}
+
+/**
+ * G1.5h: one backpedalling run cycle as a strip of 4× crops, each frame
+ * frozen the moment it shows. The Kindled faces east (the aim) and runs west
+ * at full stick from the open tile, at quarter speed: 180° between movement
+ * and facing, so the run plays in reverse, frame 7 down to 0.
+ */
+async function backpedalShots() {
+  const context = await browser.newContext({ viewport: { width: 1920, height: 912 } });
+  const page = await context.newPage();
+  page.on('pageerror', (e) => console.error('page error:', e.message));
+  await page.goto(BASE);
+  for (let i = 0; i < 100 && !(await page.evaluate(() => Boolean(window.__iot))); i++) await sleep(100);
+  const facing = 'E';
+  const moveDir = 128; // west, 1/256 turn
+  const aim = aimOf(facing);
+  const run = (((aim & 0xfff) | (moveDir << 12) | (7 << 20)) >>> 0).toString();
+  // Up to speed first: the strip starts once the reversed cycle has shown its last frame (frame 0).
+  await posed(page, 21, `() => ${run}`, `(s, pose) => pose?.anim === 'run_${facing}' && pose.frame === 0 && s.player.vx < 0`);
+  const crops = [];
+  for (const k of [7, 6, 5, 4, 3, 2, 1, 0]) {
+    await page.evaluate(() => window.__iot.setSpeed(0.25));
+    await page.waitForFunction(
+      ({ facing, k }) => {
+        const scene = window.__iot.scene();
+        scene.session.state.husks.length = 0;
+        const pose = window.__iot.pose();
+        const done = pose?.anim === `run_${facing}` && pose.frame === k;
+        if (done) window.__iot.setSpeed(0);
+        return done;
+      },
+      { facing, k },
+      { polling: 'raf', timeout: 30000 },
+    );
+    await sleep(150);
+    const p = await page.evaluate(() => {
+      const s = window.__iot.scene().session.state.player;
+      return { x: s.x / 256, y: s.y / 256, vx: s.vx, vy: s.vy };
+    });
+    console.log(`  ${facing} facing, moving W, frame ${k}: (${p.x.toFixed(1)}, ${p.y.toFixed(1)}) sim px, v (${p.vx}, ${p.vy})`);
+    crops.push((await playerCropPng(page, 56, 64)).toString('base64'));
+  }
+  writeFileSync(join(OUT, `backpedal-${facing}-moving-W-strip.png`), await stripOfCrops(page, crops));
+  console.log(`  backpedal-${facing}-moving-W-strip.png`);
+  await context.close();
+}
+
 /** The five M1 rooms, by their names in rooms.json. */
 const ROOMS = ['Shell Gallery', 'Crossing', 'Narrow Hollow', 'Core Ring', 'Spill'];
 const slug = (name) => name.toLowerCase().replaceAll(' ', '-');
@@ -801,6 +941,10 @@ async function roomShots() {
 
 if (roomsMode) {
   await roomShots();
+} else if (sortMode) {
+  await sortShots();
+} else if (backpedalMode) {
+  await backpedalShots();
 } else if (runStrip) {
   await runShots();
 } else if (poses) {

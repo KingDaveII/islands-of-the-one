@@ -10,6 +10,10 @@ import {
 import { autopilot, createRun, stepRun, TURN, type HuskKind, type HuskState, type Run } from '@iot/sim';
 import { describe, expect, it } from 'vitest';
 import {
+  BACKPEDAL_OFF_DEG,
+  BACKPEDAL_ON_DEG,
+  backpedalFrame,
+  backpedals,
   facing4,
   gaitPose,
   huskFlip,
@@ -17,7 +21,9 @@ import {
   kindledPose,
   loopFrame,
   onceFrame,
+  separationDeg,
   sheetFacing,
+  simDeg,
   spreadFrame,
   strideFrame,
   type Clocks,
@@ -268,6 +274,118 @@ describe('walk and run by distance (G1.5c)', () => {
     expect(huskPose(s, run.params, h, NUTSHELL, NO_CLOCKS, true)).toEqual({ anim: 'walk', frame: 1 });
     s.tick = 20;
     expect(huskPose(s, run.params, h, NUTSHELL, NO_CLOCKS, true)).toEqual({ anim: 'walk', frame: 2 });
+  });
+});
+
+describe('the backpedal: the run played in reverse (G1.5h)', () => {
+  const stride = (distancePx: number, backpedal: boolean): Stride => ({ distancePx, cycles: CYCLES, backpedal });
+
+  /** The run frames over one cycle (8 frames, 12 world px each) facing east while moving `moveDeg` from east. */
+  function cycle(moveDeg: number): number[] {
+    const run = newRun(1);
+    const s = run.state;
+    s.player.aim = deg(0);
+    s.player.vx = 300;
+    const back = backpedals(false, separationDeg(moveDeg, simDeg(s.player.aim)));
+    return [0, 1, 2, 3, 4, 5, 6, 7].map((k) => kindledPose(s, run.params, KINDLED, NO_CLOCKS, stride(k * 12, back)).frame);
+  }
+
+  it('measures the angle between movement and facing the short way round, and reads the sim aim in degrees', () => {
+    expect(separationDeg(0, 0)).toBe(0);
+    expect(separationDeg(90, 0)).toBe(90);
+    expect(separationDeg(0, 90)).toBe(90);
+    expect(separationDeg(180, 0)).toBe(180);
+    expect(separationDeg(350, 10)).toBe(20);
+    expect(separationDeg(-90, 90)).toBe(180);
+    expect(separationDeg(135, -90)).toBe(135);
+    expect([deg(0), deg(90), deg(180), deg(270)].map(simDeg)).toEqual([0, 90, 180, 270]);
+  });
+
+  it('plays forwards at 0° and 90° (strafing), backwards at 135° and 180°: frame n − 1 − f, the facing the aim\'s', () => {
+    expect(cycle(0)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    expect(cycle(90)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    expect(cycle(135)).toEqual([7, 6, 5, 4, 3, 2, 1, 0]);
+    expect(cycle(180)).toEqual([7, 6, 5, 4, 3, 2, 1, 0]);
+    const run = newRun(1);
+    run.state.player.aim = deg(0);
+    run.state.player.vx = -300;
+    expect(kindledPose(run.state, run.params, KINDLED, NO_CLOCKS, stride(12, true))).toMatchObject({
+      name: 'run',
+      anim: 'run_E',
+      frame: 6,
+    });
+    expect(backpedalFrame(8, 0)).toBe(7);
+    expect(backpedalFrame(8, 7)).toBe(0);
+    expect(backpedalFrame(1, 0)).toBe(0);
+  });
+
+  it('turns on above 112.5° and off below 100°; 105° keeps whatever it had', () => {
+    expect([BACKPEDAL_ON_DEG, BACKPEDAL_OFF_DEG]).toEqual([112.5, 100]);
+    expect(backpedals(false, 113)).toBe(true);
+    expect(backpedals(false, 112.5)).toBe(false);
+    expect(backpedals(true, 99)).toBe(false);
+    expect(backpedals(true, 100)).toBe(true);
+    expect(backpedals(false, 105)).toBe(false);
+    expect(backpedals(true, 105)).toBe(true);
+    // A stick wandering over the boundary: on once past 112.5, held through 105, off once under 100.
+    let back = false;
+    const trace = [90, 105, 112, 113, 110, 105, 101, 99, 105].map((a) => (back = backpedals(back, a)));
+    expect(trace).toEqual([false, false, false, true, true, true, true, false, false]);
+  });
+
+  it('keeps walk, and the Nutshell, forwards: only the run gait reverses', () => {
+    expect(gaitPose(KINDLED, 'walk', deg(0), 0, stride(11, true))).toMatchObject({ anim: 'walk_E', frame: 1 });
+    expect(gaitPose(KINDLED, 'run', deg(0), 0, stride(12, true))).toMatchObject({ anim: 'run_E', frame: 6 });
+    // walk standing in for run (a sheet without run) is the run gait: it reverses with it, at the run's cycle.
+    expect(gaitPose(KINDLED_NO_RUN, 'run', deg(0), 0, stride(16, true))).toMatchObject({ anim: 'walk_E', frame: 4 });
+  });
+
+  it('carries the distance cycle on through a stop while backpedalling, and the meter keeps the heading', () => {
+    const run = newRun(1);
+    const s = run.state;
+    s.player.aim = deg(0);
+    const meter = new StrideMeter();
+    let back = false;
+    const pose = () => {
+      if (meter.headingDeg !== null) back = backpedals(back, separationDeg(meter.headingDeg, simDeg(s.player.aim)));
+      return kindledPose(s, run.params, KINDLED, NO_CLOCKS, stride(meter.distancePx, back));
+    };
+    meter.step(100, 100);
+    expect(meter.headingDeg).toBeNull();
+    // Running west 6 sim px (12 world px) a frame while facing east: the cycle counts down from 7.
+    s.player.vx = -300;
+    const frames: number[] = [];
+    for (const x of [94, 88, 82]) {
+      meter.step(x, 100);
+      frames.push(pose().frame);
+    }
+    expect(meter.headingDeg).toBe(180);
+    expect(frames).toEqual([6, 5, 4]);
+    // Stop for a second: idle; the distance and the heading hold.
+    s.player.vx = 0;
+    for (let i = 0; i < 60; i++) {
+      s.tick++;
+      meter.step(82, 100);
+      expect(pose().name).toBe('idle');
+    }
+    expect(meter.distancePx).toBe(36);
+    expect(meter.headingDeg).toBe(180);
+    // Restart west: the cycle picks up at 4, then 3; no pop to 7.
+    s.player.vx = -300;
+    expect(pose().frame).toBe(4);
+    meter.step(76, 100);
+    expect(pose().frame).toBe(3);
+    // Turn and run east, towards the aim: forwards from the same distance, 60 px in is frame 5.
+    s.player.vx = 300;
+    meter.step(82, 100);
+    expect(meter.headingDeg).toBe(0);
+    expect(pose().frame).toBe(5);
+    // South is 90°, strafing: forwards, and the diagonal's heading is 45°.
+    meter.step(82, 106);
+    expect(meter.headingDeg).toBe(90);
+    expect(pose().frame).toBe(6);
+    meter.step(88, 112);
+    expect(meter.headingDeg).toBeCloseTo(45);
   });
 });
 
