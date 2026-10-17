@@ -20,12 +20,16 @@ import {
   headerTotals,
   initials,
   INVENTORY_TABS,
+  litPane,
   maxScroll,
   moveFocus,
   PACK_COLS,
   PACK_ROWS,
   packCells,
   packUsed,
+  REFUSAL_LIFE_MS,
+  refusalPane,
+  refusalVisible,
   scrollToShow,
   storeCells,
   TAB_LABELS,
@@ -61,7 +65,12 @@ const PANE_H = GRID_Y + PACK_ROWS * PITCH - (PITCH - CELL) + PANE_PAD;
 const HEADER_Y = 28;
 const TABS_Y = 42;
 const ITEMS_Y = PANE_Y + PANE_H + 8;
-const STATUS_Y = ITEMS_Y + 2;
+/** The consumable slots' key glyphs sit centred under them, as the HUD shows its key hints. */
+const ITEM_SLOT = 14;
+const ITEM_SLOT_X = PACK_X + 44;
+const ITEM_SLOT_GAP = 44;
+/** The pane header row: the pane's title left, the refusal line or the store's page counter right. */
+const HEADER_ROW_Y = PANE_Y + 6;
 const TOOLTIP_W = 150;
 const TIP_DEPTH = 10;
 /** A pointer that travels this far (UI px) before it is released is a drag, not a click. */
@@ -75,6 +84,13 @@ const STICK_DEADZONE = 0.5;
 
 type Pane = Focus['pane'];
 const other = (pane: Pane): Pane => (pane === 'pack' ? 'store' : 'pack');
+
+/** A refused move's line, in the header of the pane the move went to, from `at` (the scene clock). */
+interface Refusal {
+  pane: Pane;
+  text: string;
+  at: number;
+}
 
 interface Press {
   pane: Pane;
@@ -92,8 +108,9 @@ interface Press {
  * filtered by the tabs, the purse and Sparkglass totals in the header, the
  * two consumable slots under the pack, and a tooltip on hover or focus.
  * Every move is a POST /api/inventory/move; the screen redraws from the
- * answer, never ahead of it, and a refusal shows its reason in one line.
- * Placeholder look (the panel style, initials for icons) until ART's M2 UI
+ * answer, never ahead of it, and a refusal shows its reason in one line in
+ * the header of the pane the move went to (blinks twice, holds, gone).
+ * Only the pane the keys or the pad act on has a lit frame. Placeholder look (the panel style, initials for icons) until ART's M2 UI
  * kit; nothing here can destroy an item.
  */
 export class InventoryScene extends Phaser.Scene {
@@ -101,7 +118,13 @@ export class InventoryScene extends Phaser.Scene {
   private tip!: Phaser.GameObjects.Graphics;
   private header!: Text;
   private packTitle!: Text;
-  private status!: Text;
+  /** The refusal line in a pane header (one text, moved to the pane it is for). */
+  private refusalText!: Text;
+  private refusal: Refusal | null = null;
+  /** What the load answered when it failed; shown in the store's grid. */
+  private loadError = '';
+  /** The store's page counter with the page glyphs on either side. */
+  private pager!: HintRow;
   private tabTexts: Text[] = [];
   private cellTexts: Text[] = [];
   private tipTexts: Text[] = [];
@@ -151,6 +174,8 @@ export class InventoryScene extends Phaser.Scene {
     this.keyNav = false;
     this.press = null;
     this.busy = false;
+    this.refusal = null;
+    this.loadError = '';
     this.cellTexts = [];
     this.tipTexts = [];
     this.input.mouse?.disableContextMenu();
@@ -162,8 +187,9 @@ export class InventoryScene extends Phaser.Scene {
     place(label(this, 0, 0, 'INVENTORY', Palette.uiInk, 16), cx, 6, 0.5);
     this.header = label(this, 0, 0, '', Palette.uiInk);
     this.packTitle = label(this, PACK_X + PANE_PAD, PANE_Y + 6, 'PACK', Palette.uiInk);
-    place(label(this, 0, 0, 'STORE', Palette.uiInk), STORE_X + PANE_PAD, PANE_Y + 6);
-    this.status = body(this, STORE_X, STATUS_Y, '', Palette.uiInk);
+    place(label(this, 0, 0, 'STORE', Palette.uiInk), STORE_X + PANE_PAD, HEADER_ROW_Y);
+    this.refusalText = body(this, 0, 0, '', Palette.uiInk).setVisible(false);
+    this.pager = new HintRow(this, { wordColor: Palette.uiInkMuted });
 
     // Tabs: a row of labels, the active one lit; click to switch.
     this.tabTexts = INVENTORY_TABS.map((tab) => {
@@ -236,7 +262,7 @@ export class InventoryScene extends Phaser.Scene {
       offPreset();
     });
 
-    // Keys: Esc or I close; arrows move the focus; Enter moves the stack; Tab switches tabs.
+    // Keys: Esc or I close; the arrows (or WASD) move the focus; Enter moves the stack; Tab switches tabs.
     const back = () => {
       this.scene.start('start');
     };
@@ -251,6 +277,10 @@ export class InventoryScene extends Phaser.Scene {
       ['DOWN', 'down'],
       ['LEFT', 'left'],
       ['RIGHT', 'right'],
+      ['W', 'up'],
+      ['S', 'down'],
+      ['A', 'left'],
+      ['D', 'right'],
     ];
     for (const [key, dir] of arrows)
       kb?.on(`keydown-${key}`, () => {
@@ -268,7 +298,8 @@ export class InventoryScene extends Phaser.Scene {
     void api.inventory().then((res) => {
       if (!this.scene.isActive()) return;
       if (!res.ok) {
-        this.status.setText(res.message);
+        this.loadError = res.message;
+        this.sync();
         return;
       }
       this.inventory = res.value;
@@ -350,14 +381,14 @@ export class InventoryScene extends Phaser.Scene {
     const from: Place = pane;
     const to: Place = other(pane);
     this.busy = true;
-    this.status.setText('');
+    this.refusal = null;
     void api
       .move({ itemId: cell.itemId, from, to, quantity: all ? cell.quantity : 1 })
       .then((res) => {
         if (!this.scene.isActive()) return;
         this.busy = false;
         if (res.ok) this.inventory = res.value;
-        else this.status.setText(res.message);
+        else this.refusal = { pane: refusalPane(to), text: res.message, at: this.time.now };
         this.sync();
       });
   }
@@ -383,11 +414,27 @@ export class InventoryScene extends Phaser.Scene {
 
     const g = this.g;
     g.clear();
-    panel(g, PACK_X, PANE_Y, PACK_W, PANE_H);
-    panel(g, STORE_X, PANE_Y, STORE_W, PANE_H);
+    // Only the pane the keys or the pad act on has the lit rim; the other keeps the plain frame.
+    const showFocus = deviceStore.get() === 'gamepad' || this.keyNav;
+    const lit = litPane(this.focus, showFocus);
+    panel(
+      g,
+      PACK_X,
+      PANE_Y,
+      PACK_W,
+      PANE_H,
+      lit === 'pack' ? { rim: Palette.uiFocus } : { plain: true },
+    );
+    panel(
+      g,
+      STORE_X,
+      PANE_Y,
+      STORE_W,
+      PANE_H,
+      lit === 'store' ? { rim: Palette.uiFocus } : { plain: true },
+    );
     for (const t of this.cellTexts) t.destroy();
     this.cellTexts = [];
-    const showFocus = deviceStore.get() === 'gamepad' || this.keyNav;
     const drawCell = (pane: Pane, index: number, cell: Cell): void => {
       const at = this.cellAt(pane, index);
       if (!at) return;
@@ -424,25 +471,21 @@ export class InventoryScene extends Phaser.Scene {
     const first = this.scrollRow * STORE_COLS;
     for (let i = first; i < Math.min(this.cells.store.length, first + STORE_COLS * STORE_ROWS); i++)
       drawCell('store', i, this.cells.store[i] ?? null);
-    if (this.cells.store.length === 0 && this.loaded)
+    if (this.cells.store.length === 0 && (this.loaded || this.loadError))
       this.cellTexts.push(
-        body(this, STORE_X + PANE_PAD, PANE_Y + GRID_Y + 2, 'Nothing here.', Palette.uiInkMuted),
-      );
-    if (max > 0) {
-      const text = `${this.scrollRow + 1}-${Math.min(this.scrollRow + STORE_ROWS, max + STORE_ROWS)} of ${max + STORE_ROWS}`;
-      this.cellTexts.push(
-        place(
-          body(this, 0, 0, text, Palette.uiInkMuted),
-          STORE_X + STORE_W - PANE_PAD,
-          PANE_Y + 7,
-          1,
+        body(
+          this,
+          STORE_X + PANE_PAD,
+          PANE_Y + GRID_Y + 2,
+          this.loadError || 'Nothing here.',
+          Palette.uiInkMuted,
         ),
       );
-    }
+    this.syncHeaderRows(max);
 
     // The two consumable slots: sunken and empty.
     CONSUMABLE_SLOTS.forEach((_action, i) => {
-      abilitySlot(g, PACK_X + 44 + i * 44, ITEMS_Y, {
+      abilitySlot(g, ITEM_SLOT_X + i * ITEM_SLOT_GAP, ITEMS_Y, {
         icon: 'ration',
         cooldown: 0,
         locked: false,
@@ -452,6 +495,34 @@ export class InventoryScene extends Phaser.Scene {
       });
     });
     this.syncTip();
+  }
+
+  /**
+   * The right side of the pane header rows: a refused move's line in the
+   * header of the pane it went to while it lives, and the store's page
+   * counter (with the page glyphs on either side) while it has pages and no
+   * refusal line is over it.
+   */
+  private syncHeaderRows(maxScrollRow: number): void {
+    const refusal = this.refusal;
+    if (refusal) {
+      const right = refusal.pane === 'pack' ? PACK_X + PACK_W : STORE_X + STORE_W;
+      place(this.refusalText.setText(refusal.text), right - PANE_PAD, HEADER_ROW_Y + 1, 1);
+      this.refusalText.setVisible(refusalVisible(this.time.now - refusal.at));
+    } else this.refusalText.setVisible(false);
+    const pages = maxScrollRow > 0 && !(refusal && refusal.pane === 'store');
+    if (pages) {
+      const last = maxScrollRow + STORE_ROWS;
+      const text = `${this.scrollRow + 1}-${Math.min(this.scrollRow + STORE_ROWS, last)} of ${last}`;
+      const padMode = deviceStore.get() === 'gamepad';
+      const up = padMode ? menuGlyph(MENU_BUTTONS.up) : 'W';
+      const down = padMode ? menuGlyph(MENU_BUTTONS.down) : 'S';
+      const family = padMode ? this.family : 'keyboard';
+      this.pager
+        .setItems([...glyphs([up], family), word(text), ...glyphs([down], family)])
+        .place(STORE_X + STORE_W - PANE_PAD, HEADER_ROW_Y - 2, 1);
+    }
+    this.pager.setVisible(pages);
   }
 
   /** The tooltip for the hovered cell (mouse) or the focused one (pad, keys); none over an empty cell. */
@@ -500,7 +571,7 @@ export class InventoryScene extends Phaser.Scene {
     CONSUMABLE_SLOTS.forEach((action, i) => {
       this.itemHints[i]
         ?.setHint(hintFrom(source, action))
-        .place(PACK_X + 44 + i * 44 + 16, ITEMS_Y + 1);
+        .place(ITEM_SLOT_X + i * ITEM_SLOT_GAP + ITEM_SLOT / 2, ITEMS_Y + ITEM_SLOT + 1, 0.5);
     });
     const items: HintItem[] = padMode
       ? [
@@ -560,6 +631,14 @@ export class InventoryScene extends Phaser.Scene {
     if (family !== this.family) {
       this.family = family;
       this.syncHints();
+    }
+    // The refusal line blinks, holds, then goes in one frame; the page counter comes back after it.
+    if (this.refusal) {
+      const elapsed = this.time.now - this.refusal.at;
+      if (elapsed >= REFUSAL_LIFE_MS) {
+        this.refusal = null;
+        this.sync();
+      } else this.refusalText.setVisible(refusalVisible(elapsed));
     }
     const edges = padEdges(this.pad);
     const closes = [MENU_BUTTONS.back, ...buttonsFor(controlsStore.get(), 'inventory', 'calm')];

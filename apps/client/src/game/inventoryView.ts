@@ -15,8 +15,9 @@ import { displayable } from './drawable.js';
  * The inventory screen's layout logic (docs/design/inventory.md), pure so it
  * is tested in node: the pack's 20 slots and the store's cells derived from
  * an inventory answer, the tab filters, the header totals, the tooltip's
- * lines and the grid navigation. The scene (scenes/InventoryScene.ts) draws
- * these and sends the moves; it decides nothing about items itself.
+ * lines, the grid navigation, which pane holds the focus and the refusal
+ * line's place and timing. The scene (scenes/InventoryScene.ts) draws these
+ * and sends the moves; it decides nothing about items itself.
  */
 
 /** The tabs, in order: everything, then one kind each. The Words tab comes with Task 5. */
@@ -209,4 +210,40 @@ export function scrollToShow(
 /** The most the store grid can scroll: its last page's first row, never below 0. */
 export function maxScroll(count: number, cols: number, visibleRows: number): number {
   return Math.max(0, Math.ceil(count / cols) - visibleRows);
+}
+
+/**
+ * Which pane's frame is lit (ART, 2026-10-17): only the pane the keys or
+ * the pad act on takes ui-focus on its frame, the other keeps the plain
+ * panel frame; with the mouse alone (no focus shown) neither is lit. The
+ * focused cell inside the pane keeps its own frame regardless.
+ */
+export function litPane(focus: Focus, showFocus: boolean): Focus['pane'] | null {
+  return showFocus ? focus.pane : null;
+}
+
+/**
+ * A refused move's line (ART, 2026-10-17): it sits right-aligned in the
+ * header row of the pane the move went to ("PACK 20/20 … Pack full."),
+ * blinks twice, holds for REFUSAL_HOLD_MS, then disappears in one frame.
+ * No fade: the blinks are whole steps on blinkOut()'s pattern (off, on,
+ * off, on over the blink window), then solid.
+ */
+export const REFUSAL_BLINK_MS = 300;
+export const REFUSAL_HOLD_MS = 2000;
+export const REFUSAL_BLINKS = 2;
+/** How long the line lives from the refusal. */
+export const REFUSAL_LIFE_MS = REFUSAL_BLINK_MS + REFUSAL_HOLD_MS;
+
+/** The pane whose header shows a refused move's line: the one the move went to. */
+export function refusalPane(to: Focus['pane']): Focus['pane'] {
+  return to;
+}
+
+/** Whether the refusal line is drawn `elapsedMs` after the refusal. */
+export function refusalVisible(elapsedMs: number): boolean {
+  if (elapsedMs < 0 || elapsedMs >= REFUSAL_LIFE_MS) return false;
+  if (elapsedMs >= REFUSAL_BLINK_MS) return true;
+  const slot = Math.floor((elapsedMs * 2 * REFUSAL_BLINKS) / REFUSAL_BLINK_MS);
+  return slot % 2 === 1;
 }
