@@ -1,7 +1,7 @@
 import { CAVE_TILE_SHEET, caveTileSheet, roomTemplates, tileAt, type TileSheet, type TileTemplate } from '@iot/shared';
 import { describe, expect, it } from 'vitest';
 import fixtureJson from '../../../../packages/shared/test/fixtures/tiles-fixture.json' with { type: 'json' };
-import { doorFrameAt, nextDoorView, roomTileFrames, TILE_SHEET, type DoorView } from './roomTiles.js';
+import { doorFrameAt, nextDoorView, roomTextureSize, roomTileFrames, TILE_SHEET, type DoorView } from './roomTiles.js';
 
 const fixture: TileSheet = fixtureJson;
 const W = fixture.tiles;
@@ -96,6 +96,22 @@ describe('the room from the tile fixture (tileAt on rooms.json)', () => {
   it('draws the same floors as the pipeline (the same rule and hash)', () => {
     const at = tileAt(shell, 12, 10, W);
     expect(piecesAt(shell, 12, 10)).toEqual([at.base, ...at.overlays]);
+  });
+});
+
+describe('the room texture', () => {
+  it('is cols × 32 by rows × 32 for every template (the widest row counts)', () => {
+    for (const t of roomTemplates) {
+      const cols = Math.max(...t.tiles.map((r) => r.length));
+      expect(roomTextureSize(t), t.name).toEqual({ w: cols * 32, h: t.tiles.length * 32 });
+    }
+    expect(roomTextureSize(template('Narrow Hollow'))).toEqual({ w: 1280, h: 320 });
+    expect(roomTextureSize(template('Shell Gallery'))).toEqual({ w: 1024, h: 608 });
+    expect(roomTextureSize({ name: 'ragged', tiles: ['###', '#....', '#'] })).toEqual({ w: 160, h: 96 });
+  });
+
+  it('never asks for an empty texture', () => {
+    expect(roomTextureSize({ name: 'empty', tiles: [] })).toEqual({ w: 1, h: 1 });
   });
 });
 

@@ -404,7 +404,8 @@ never #FFFFFF or #FFE7A3. `floor_*`, `face_*`, `top_*` and every door frame are 
 may be transparent. Checked by §6 item 9.
 
 **The engine** (`apps/client/src/render/roomTiles.ts`). The room's static pieces are drawn once per room into a texture on the world layer at `DEPTH.room`, a cell (c, r) at world (c × 32,
-r × 32), no piece scaled; the doors are images over it (`DEPTH.roomDoors`) whose frame comes from the state's
+r × 32), no piece scaled; the texture is made anew at each room's size and the last room's destroyed (resizing one leaves its GPU target at the first room's size and clips a larger room, G1.5i;
+`tools/screenshots-g15.mjs --room-changes` checks the texture after each change); the doors are images over it (`DEPTH.roomDoors`) whose frame comes from the state's
 `doorOpen` on the client clock (the client only renders it). Depth, camera clamping and the hollow margin around
 the room are unchanged. The sheet is bundled with the code (`caveTileSheet`) and its PNG loads with the sprite
 sheets; a missing PNG is the same error as a missing sprite sheet's. There is no other room: M1's procedural room

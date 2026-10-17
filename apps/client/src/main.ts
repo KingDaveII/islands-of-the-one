@@ -22,6 +22,7 @@ import { InventoryScene } from './scenes/InventoryScene.js';
 import { ResultsScene } from './scenes/ResultsScene.js';
 import { StartScene } from './scenes/StartScene.js';
 import { TestScene } from './scenes/TestScene.js';
+import { buildStore } from './game/build.js';
 import { debugFlags } from './ui/debugFlags.js';
 import { DebugOverlay } from './ui/debugOverlay.js';
 import { TuningPanel } from './ui/tuningPanel.js';
@@ -136,6 +137,10 @@ function startGame(): void {
     roomImage(): Promise<string | null> {
       return activeGame()?.world.tiles.snapshot() ?? Promise.resolve(null);
     },
+    /** The tile room texture's size and its GPU target's, or null outside a run (playtests: --room-changes). */
+    roomTextureSize() {
+      return activeGame()?.world.tiles.textureSize() ?? null;
+    },
     /** The tile room's door frames this render frame (empty outside a run). */
     doorFrames(): string[] {
       return activeGame()?.world.tiles.doorFrames() ?? [];
@@ -187,6 +192,10 @@ function startGame(): void {
     /** The active device the hints and the reticle follow. */
     device(): Device {
       return deviceStore.get();
+    },
+    /** The client's build, the server's once /health answered, and the label the menus show (game/build.ts). */
+    get build() {
+      return buildStore.snapshot();
     },
     panel,
     debug,
