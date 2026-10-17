@@ -71,12 +71,19 @@ Environment **`staging`** (Settings → Environments):
 
 | Kind     | Name                 | Value                                                                    |
 | -------- | -------------------- | ------------------------------------------------------------------------ |
-| secret   | `DEPLOY_HOST`        | VPS hostname or IP                                                       |
-| secret   | `DEPLOY_USER`        | `deploy`                                                                 |
+| variable | `DEPLOY_HOST`        | SSH host, when it is the public staging domain                           |
+| secret   | `DEPLOY_HOST`        | instead of the variable, when the SSH host is an IP address              |
+| variable | `DEPLOY_USER`        | `deploy`                                                                 |
 | secret   | `DEPLOY_PORT`        | SSH port                                                                 |
 | secret   | `DEPLOY_SSH_KEY`     | private key (OpenSSH format) for `DEPLOY_USER`                           |
 | secret   | `DEPLOY_KNOWN_HOSTS` | `ssh-keyscan -p <port> <host>` output; strict host checking is always on |
 | variable | `STAGING_DOMAIN`     | e.g. `203-0-113-7.sslip.io`                                              |
+
+Set `DEPLOY_HOST` once, as a variable or as a secret, never both (the variable wins). A bare IP
+address stays a secret: variables are visible to anyone with read access to the repo. `DEPLOY_USER`
+is a variable because a secret's value is masked everywhere in the logs, which turned every
+"deploy" into `***`; a secret of the same name still works as a fallback. The "Configure SSH" step
+logs where the SSH host came from and whether it equals `STAGING_DOMAIN`, without printing it.
 
 No registry PAT is needed: workflows push with `GITHUB_TOKEN` (`packages: write`), and the deploy job
 passes the same short-lived token to `deploy.sh --login` over stdin; `deploy.sh` logs the VPS into
