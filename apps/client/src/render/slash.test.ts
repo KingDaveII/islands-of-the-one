@@ -4,7 +4,8 @@ import { PLAYER_SHEET } from './characters.js';
 import { ARC_TAIL_TICKS, lightSlashMark } from './slash.js';
 
 const v2 = spriteSheets[PLAYER_SHEET];
-const v1 = spriteSheets['husk-peeling'];
+// Every shipped sheet is v2 since ART's Husks landed; a v1 sheet is the player's read as M1's.
+const v1 = { ...v2, meta: { ...v2.meta, version: '1' } };
 
 describe('the light strike marks', () => {
   it('uses one v2 and one v1 sheet', () => {

@@ -2,7 +2,7 @@
   "sheet": "husk-peeling",
   "kind": "husk",
   "outline": "other",
-  "draft": true,
+  "draft": false,
   "cell": {
     "w": 64,
     "h": 64
@@ -12,345 +12,63 @@
     "y": 54
   },
   "rows": [
+    "spawn",
     "idle",
+    "telegraph",
     "lunge",
     "hit",
-    "death"
+    "chipped",
+    "death",
+    "drop"
   ],
   "totals": {
-    "frames": 10,
-    "offPalette": 301,
-    "maxDeltaE": 7.32,
-    "outlineGaps": 241
+    "frames": 18,
+    "offPalette": 0,
+    "maxDeltaE": 0,
+    "outlineGaps": 194
   },
   "flags": {
     "seam": [],
-    "bob": [
-      "idle"
-    ],
+    "bob": [],
     "held": [],
-    "colours": [
-      "idle_0",
-      "hit_0"
-    ]
+    "colours": []
   },
-  "missing": [
-    "spawn",
-    "telegraph",
-    "chipped",
-    "drop"
-  ],
+  "missing": [],
   "optional": [],
   "skinProblems": [],
   "missingPoints": [],
   "remap": [],
   "staleRemap": [],
-  "snappedColours": 38,
-  "snapped": [
-    {
-      "colour": "#1b1831",
-      "pixels": 150,
-      "to": "#1c2147",
-      "deltaE": 4.7,
-      "materials": [
-        "player outline",
-        "paper"
-      ],
-      "frames": [
-        "idle_0",
-        "idle_1",
-        "hit_0"
-      ]
-    },
-    {
-      "colour": "#9c94b5",
-      "pixels": 12,
-      "to": "#a99fc4",
-      "deltaE": 3.92,
-      "materials": [
-        "shell",
-        "stone"
-      ],
-      "frames": [
-        "idle_0",
-        "idle_1",
-        "hit_0"
-      ]
-    },
-    {
-      "colour": "#b8b2c6",
-      "pixels": 11,
-      "to": "#a99fc4",
-      "deltaE": 5.72,
-      "materials": [
-        "shell",
-        "stone"
-      ],
-      "frames": [
-        "idle_0",
-        "idle_1",
-        "hit_0"
-      ]
-    },
-    {
-      "colour": "#9a95b3",
-      "pixels": 11,
-      "to": "#a99fc4",
-      "deltaE": 4.07,
-      "materials": [
-        "shell",
-        "stone"
-      ],
-      "frames": [
-        "death_0",
-        "death_2",
-        "death_3"
-      ]
-    },
-    {
-      "colour": "#d7d0d8",
-      "pixels": 11,
-      "to": "#d9d2e9",
-      "deltaE": 2.32,
-      "materials": [
-        "stone"
-      ],
-      "frames": [
-        "idle_0",
-        "idle_1",
-        "hit_0"
-      ]
-    },
-    {
-      "colour": "#c4bcce",
-      "pixels": 8,
-      "to": "#d9d2e9",
-      "deltaE": 6.94,
-      "materials": [
-        "stone"
-      ],
-      "frames": [
-        "idle_0",
-        "idle_1",
-        "hit_0"
-      ]
-    },
-    {
-      "colour": "#bbb2d2",
-      "pixels": 8,
-      "to": "#a99fc4",
-      "deltaE": 5.85,
-      "materials": [
-        "shell",
-        "stone"
-      ],
-      "frames": [
-        "idle_0",
-        "hit_0"
-      ]
-    },
-    {
-      "colour": "#9d95b7",
-      "pixels": 8,
-      "to": "#a99fc4",
-      "deltaE": 3.54,
-      "materials": [
-        "shell",
-        "stone"
-      ],
-      "frames": [
-        "lunge_0",
-        "lunge_1",
-        "lunge_2"
-      ]
-    },
-    {
-      "colour": "#d1cbd0",
-      "pixels": 7,
-      "to": "#d9d2e9",
-      "deltaE": 3.72,
-      "materials": [
-        "stone"
-      ],
-      "frames": [
-        "death_0",
-        "death_1",
-        "death_2"
-      ]
-    },
-    {
-      "colour": "#dbd5d1",
-      "pixels": 6,
-      "to": "#d9d2e9",
-      "deltaE": 3.69,
-      "materials": [
-        "stone"
-      ],
-      "frames": [
-        "idle_0",
-        "idle_1",
-        "hit_0"
-      ]
-    },
-    {
-      "colour": "#beb6c8",
-      "pixels": 5,
-      "to": "#a99fc4",
-      "deltaE": 7.07,
-      "materials": [
-        "shell",
-        "stone"
-      ],
-      "frames": [
-        "death_0",
-        "death_1",
-        "death_3"
-      ]
-    },
-    {
-      "colour": "#8e89ad",
-      "pixels": 5,
-      "to": "#7d8794",
-      "deltaE": 4.66,
-      "materials": [
-        "cloth",
-        "steel"
-      ],
-      "frames": [
-        "idle_0",
-        "idle_1",
-        "hit_0"
-      ]
-    },
-    {
-      "colour": "#160e30",
-      "pixels": 4,
-      "to": "#1c2147",
-      "deltaE": 7.09,
-      "materials": [
-        "player outline",
-        "paper"
-      ],
-      "frames": [
-        "idle_0",
-        "hit_0"
-      ]
-    },
-    {
-      "colour": "#3c3556",
-      "pixels": 4,
-      "to": "#24305a",
-      "deltaE": 4.44,
-      "materials": [
-        "water",
-        "hair"
-      ],
-      "frames": [
-        "idle_0",
-        "hit_0"
-      ]
-    },
-    {
-      "colour": "#c9c2aa",
-      "pixels": 4,
-      "to": "#e3c29e",
-      "deltaE": 3.9,
-      "materials": [
-        "red clay"
-      ],
-      "frames": [
-        "idle_0",
-        "hit_0"
-      ]
-    },
-    {
-      "colour": "#655e82",
-      "pixels": 4,
-      "to": "#5b5478",
-      "deltaE": 3.54,
-      "materials": [
-        "stone",
-        "hair"
-      ],
-      "frames": [
-        "idle_0",
-        "hit_0"
-      ]
-    },
-    {
-      "colour": "#565063",
-      "pixels": 4,
-      "to": "#4a4e57",
-      "deltaE": 2.89,
-      "materials": [
-        "cloth",
-        "steel"
-      ],
-      "frames": [
-        "idle_0",
-        "hit_0"
-      ]
-    },
-    {
-      "colour": "#d4cec4",
-      "pixels": 3,
-      "to": "#e3c29e",
-      "deltaE": 5.04,
-      "materials": [
-        "red clay"
-      ],
-      "frames": [
-        "idle_0",
-        "idle_1",
-        "hit_0"
-      ]
-    },
-    {
-      "colour": "#cdc5d4",
-      "pixels": 3,
-      "to": "#d9d2e9",
-      "deltaE": 4.33,
-      "materials": [
-        "stone"
-      ],
-      "frames": [
-        "idle_1"
-      ]
-    },
-    {
-      "colour": "#35304a",
-      "pixels": 3,
-      "to": "#24305a",
-      "deltaE": 3.88,
-      "materials": [
-        "water",
-        "hair"
-      ],
-      "frames": [
-        "death_0",
-        "death_1",
-        "death_2"
-      ]
-    }
-  ],
+  "snappedColours": 0,
+  "snapped": [],
   "anims": [
+    {
+      "key": "spawn",
+      "frames": 4,
+      "held": []
+    },
     {
       "key": "idle",
       "frames": 2,
       "held": [],
       "seam": {
-        "lastToFirst": 452,
-        "meanInCycle": 452,
+        "lastToFirst": 194,
+        "meanInCycle": 194,
         "flag": false
       },
       "bob": {
         "tops": [
-          45,
-          41
+          17,
+          18
         ],
-        "range": 4,
-        "flag": true
+        "range": 1,
+        "flag": false
       }
+    },
+    {
+      "key": "telegraph",
+      "frames": 2,
+      "held": []
     },
     {
       "key": "lunge",
@@ -363,67 +81,149 @@
       "held": []
     },
     {
+      "key": "chipped",
+      "frames": 1,
+      "held": []
+    },
+    {
       "key": "death",
       "frames": 4,
+      "held": []
+    },
+    {
+      "key": "drop",
+      "frames": 1,
       "held": []
     }
   ],
   "frames": [
     {
-      "name": "idle_0",
-      "source": "art/raw/husks-m1/peeling/idle 1",
-      "offPalette": 92,
-      "maxDeltaE": 7.32,
+      "name": "spawn_0",
+      "source": "art/clean/husk-peeling/spawn 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
       "dx": 0,
-      "dy": -2,
+      "dy": 0,
       "shift": 0,
-      "outlineGaps": 7,
-      "colours": 14,
-      "interiorDreamNight": 24
+      "outlineGaps": 0,
+      "colours": 2,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "spawn_1",
+      "source": "art/clean/husk-peeling/spawn 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 5,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "spawn_2",
+      "source": "art/clean/husk-peeling/spawn 2",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 5,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "spawn_3",
+      "source": "art/clean/husk-peeling/spawn 3",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 5,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "idle_0",
+      "source": "art/clean/husk-peeling/idle 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 5,
+      "interiorDreamNight": 0
     },
     {
       "name": "idle_1",
-      "source": "art/raw/husks-m1/peeling/idle 3",
-      "offPalette": 69,
-      "maxDeltaE": 6.94,
+      "source": "art/clean/husk-peeling/idle 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
       "dx": 0,
-      "dy": -2,
-      "shift": 0,
-      "outlineGaps": 9,
-      "colours": 9,
-      "interiorDreamNight": 21
-    },
-    {
-      "name": "lunge_0",
-      "source": "art/raw/husks-m1/peeling/lunge 1",
-      "offPalette": 9,
-      "maxDeltaE": 5.08,
-      "dx": 0,
-      "dy": -2,
+      "dy": 0,
       "shift": 0,
       "outlineGaps": 0,
+      "colours": 5,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "telegraph_0",
+      "source": "art/clean/husk-peeling/telegraph 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 101,
       "colours": 7,
       "interiorDreamNight": 0
     },
     {
-      "name": "lunge_1",
-      "source": "art/raw/husks-m1/peeling/lunge 2",
-      "offPalette": 1,
-      "maxDeltaE": 3.54,
+      "name": "telegraph_1",
+      "source": "art/clean/husk-peeling/telegraph 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
       "dx": 0,
-      "dy": -2,
+      "dy": 0,
       "shift": 0,
-      "outlineGaps": 2,
+      "outlineGaps": 93,
+      "colours": 7,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "lunge_0",
+      "source": "art/clean/husk-peeling/lunge 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 5,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "lunge_1",
+      "source": "art/clean/husk-peeling/lunge 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
       "colours": 5,
       "interiorDreamNight": 0
     },
     {
       "name": "lunge_2",
-      "source": "art/raw/husks-m1/peeling/lunge 6",
-      "offPalette": 7,
-      "maxDeltaE": 4.79,
+      "source": "art/clean/husk-peeling/lunge 2",
+      "offPalette": 0,
+      "maxDeltaE": 0,
       "dx": 0,
-      "dy": -2,
+      "dy": 0,
       "shift": 0,
       "outlineGaps": 0,
       "colours": 5,
@@ -431,61 +231,85 @@
     },
     {
       "name": "hit_0",
-      "source": "art/raw/husks-m1/peeling/idle 1",
-      "offPalette": 92,
-      "maxDeltaE": 7.32,
+      "source": "art/clean/husk-peeling/hit 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
       "dx": 0,
-      "dy": -2,
+      "dy": 0,
       "shift": 0,
-      "outlineGaps": 7,
-      "colours": 14,
-      "interiorDreamNight": 24
+      "outlineGaps": 0,
+      "colours": 5,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "chipped_0",
+      "source": "art/clean/husk-peeling/chipped 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 5,
+      "interiorDreamNight": 0
     },
     {
       "name": "death_0",
-      "source": "art/raw/husks-m1/peeling/death 1",
-      "offPalette": 9,
-      "maxDeltaE": 7.07,
+      "source": "art/clean/husk-peeling/death 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
       "dx": 0,
-      "dy": -2,
+      "dy": 0,
       "shift": 0,
-      "outlineGaps": 13,
+      "outlineGaps": 0,
       "colours": 5,
       "interiorDreamNight": 0
     },
     {
       "name": "death_1",
-      "source": "art/raw/husks-m1/peeling/death 2",
-      "offPalette": 3,
-      "maxDeltaE": 7.07,
+      "source": "art/clean/husk-peeling/death 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
       "dx": 0,
-      "dy": -2,
+      "dy": 0,
       "shift": 0,
-      "outlineGaps": 82,
+      "outlineGaps": 0,
       "colours": 5,
       "interiorDreamNight": 0
     },
     {
       "name": "death_2",
-      "source": "art/raw/husks-m1/peeling/death 3",
-      "offPalette": 17,
-      "maxDeltaE": 4.89,
+      "source": "art/clean/husk-peeling/death 2",
+      "offPalette": 0,
+      "maxDeltaE": 0,
       "dx": 0,
-      "dy": -2,
+      "dy": 0,
       "shift": 0,
-      "outlineGaps": 67,
-      "colours": 7,
+      "outlineGaps": 0,
+      "colours": 5,
       "interiorDreamNight": 0
     },
     {
       "name": "death_3",
-      "source": "art/raw/husks-m1/peeling/death 4",
-      "offPalette": 2,
-      "maxDeltaE": 7.07,
+      "source": "art/clean/husk-peeling/death 3",
+      "offPalette": 0,
+      "maxDeltaE": 0,
       "dx": 0,
-      "dy": -2,
+      "dy": 0,
       "shift": 0,
-      "outlineGaps": 54,
+      "outlineGaps": 0,
+      "colours": 5,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "drop_0",
+      "source": "art/clean/husk-peeling/drop 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
       "colours": 4,
       "interiorDreamNight": 0
     }
@@ -493,6 +317,8 @@
   "outputs": [
     "art/review/husk-peeling/contact.png",
     "art/review/husk-peeling/report.json",
-    "art/review/husk-peeling/report.md"
+    "art/review/husk-peeling/report.md",
+    "packages/shared/assets/sprites/husk-peeling.json",
+    "packages/shared/assets/sprites/husk-peeling.png"
   ]
 }
