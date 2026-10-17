@@ -249,7 +249,7 @@ function healTick(p: PlayerState, maxHp: number): void {
  * eased linearly in integer math on the 1/4096-turn angles down to
  * `player.backpedal` at `player.backpedalFull`, and held there to 180°. With
  * a gamepad stick centred the aim follows the movement, so that player is
- * never slowed.
+ * never slowed. Applied in Combat only, to the idle run (`locomotion`).
  */
 export function backpedalFactor(P: Params, moveAngle: number, aim: number): number {
   const { backpedal, backpedalFrom, backpedalFull } = P.player;
@@ -261,11 +261,13 @@ export function backpedalFactor(P: Params, moveAngle: number, aim: number): numb
 
 /**
  * Free movement: the stick or keys toward a target speed, at `factorPermille`
- * of `player.speed` (the charge walks slower) and the backpedal's factor on
- * top. Only here: the dodge, the Haul's pull and every forced movement keep
- * their full distances.
+ * of `player.speed` (the charge walks slower at `chargeMove`, with no
+ * backpedal on top; GAME DESIGN 2026-10-17). The backpedal's factor applies
+ * only with `backpedal`: the idle run in Combat, never in Calm (a cleared
+ * room, the holding). The dodge, the Haul's pull and every forced movement
+ * keep their full distances.
  */
-function locomotion(ctx: Ctx, factorPermille: number): void {
+function locomotion(ctx: Ctx, factorPermille: number, backpedal: boolean): void {
   const { s, P } = ctx;
   const p = s.player;
   if (p.moveMag === 0) {
@@ -273,7 +275,7 @@ function locomotion(ctx: Ctx, factorPermille: number): void {
     return;
   }
   const full = idiv(idiv(P.player.speed * p.moveMag, MOVE_MAG_MAX) * factorPermille, 1000);
-  const speed = idiv(full * backpedalFactor(P, p.moveAngle, p.aim), 1000);
+  const speed = backpedal ? idiv(full * backpedalFactor(P, p.moveAngle, p.aim), 1000) : full;
   accelerate(p, dirX(p.moveAngle, speed), dirY(p.moveAngle, speed), P.player.accel);
 }
 
@@ -457,7 +459,8 @@ function advanceAction(ctx: Ctx): void {
   const p = s.player;
   switch (p.action) {
     case 'idle':
-      locomotion(ctx, 1000);
+      // The backpedal costs speed in Combat only (GAME DESIGN 2026-10-17).
+      locomotion(ctx, 1000, s.context === 'combat');
       if (p.comboTimer > 0 && --p.comboTimer === 0) p.nextCombo = 0;
       break;
     case 'light':
@@ -470,7 +473,7 @@ function advanceAction(ctx: Ctx): void {
     case 'charge':
       p.t++;
       p.charge = Math.min(P.weapon.heavy.chargeMax, p.charge + 1);
-      locomotion(ctx, P.weapon.heavy.chargeMove);
+      locomotion(ctx, P.weapon.heavy.chargeMove, false);
       if (!p.heavyHeld) startHeavy(ctx);
       break;
     case 'heavy':
