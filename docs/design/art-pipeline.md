@@ -194,9 +194,10 @@ draft's report lists the optional rows under its summary.
 whatever its milestone, until MAIN takes it off the list (`sprites.md` §4); its report lists it as
 `<name> (awaiting art)`. The Kindled's `run` (8 frames, 8 facings, looping, M1) came off it
 when kindled-ash's run landed (#46), so every finished Kindled sheet carries it, its frames listed from the first
-contact (frame 0 is a foot landing). On it since the M1 polish (ART 2026-10-17): the Kindled's `run_start` and
+contact (frame 0 is a foot landing). The M1 polish (ART 2026-10-17) put the Kindled's `run_start` and
 `run_stop` (2 frames each at 20 fps, 8 facings, played once) and `run_back` (4 frames, 8 facings, looping by
-distance, no frame rate), until ART's frames land. `run` grounds like `walk` (`"frame"` by default; set `ground` to
+distance, nominal 12 fps) on it; the two transitions came off when ART's frames landed (#72), so every finished
+Kindled sheet carries them. `run_back` stays on it until its frames land. `run` grounds like `walk` (`"frame"` by default; set `ground` to
 `{ "ref": i }` to keep a flight phase off the floor, as kindled-ash does).
 
 | Prefix | Kind | Cell | Facings | Table | Palette and mask |

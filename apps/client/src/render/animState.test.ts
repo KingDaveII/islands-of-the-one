@@ -426,8 +426,8 @@ describe('run transitions and run_back (M1 polish, ART 2026-10-17)', () => {
   const stride = (distancePx: number, backpedal = false): Stride => ({ distancePx, cycles: CYCLES, backpedal });
   const T = KINDLED_TRANSITIONS;
 
-  it('lists the three rows as awaiting art, so kindled-ash without them is still finished and plays as before', () => {
-    expect(ANIMS_AWAITING_ART).toEqual(['run_start', 'run_stop', 'run_back']);
+  it("lists run_back as awaiting art; ART's run_start and run_stop are on kindled-ash (#72) and required", () => {
+    expect(ANIMS_AWAITING_ART).toEqual(['run_back']);
     // ART's run_start and run_stop are on kindled-ash (16 rows); run_back is still to come.
     expect(Object.keys(KINDLED.anims).filter((k) => /^run_(start|stop)_/.test(k))).toHaveLength(16);
     expect(Object.keys(KINDLED.anims).some((k) => /^run_back_/.test(k))).toBe(false);
@@ -864,7 +864,10 @@ describe('headless playtest (autopilot through the state machine)', () => {
       kindledPose(deathRun.state, deathRun.params, KINDLED, { hitMs: -1, deathMs: 300 }).name,
     );
     // walk is an M1 row but plays only in M2's holding (and for run on a sheet without it), never in an encounter.
-    const missing = M1_PLAYABLE.filter((n) => n !== 'walk' && !shown.has(n));
+    // run_start and run_stop play from the client's GaitClock, which this sim-only playthrough doesn't feed;
+    // the 'run transitions and run_back' tests above cover them with the clock.
+    const CLOCK_DRIVEN = ['walk', 'run_start', 'run_stop'];
+    const missing = M1_PLAYABLE.filter((n) => !CLOCK_DRIVEN.includes(n) && !shown.has(n));
     expect(shown.has('walk')).toBe(false);
     // Logged for the PR's playtest record (vitest shows stdout with --silent=false).
     console.log(`Kindled animations played: ${[...shown].sort().join(', ')}`);
