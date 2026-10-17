@@ -20,10 +20,41 @@ import { kindled } from '../db/schema.js';
  */
 
 /**
- * What each Kindled holds: one row per Kindled and item, quantity never below
- * zero. Room is left for tier, rarity and Virtue columns later (new nullable
- * columns, expand-only): rows have their own id, so items that differ by
- * those can get a wider unique key beside this one.
+ * What each Kindled holds, by place (M2 Task 3a): one row per Kindled, item
+ * and place (`purse`, `pack`, `store` or `basket:<stationId>`; the shared
+ * place guard), quantity never below zero. Pack slots are derived from the
+ * counts, never stored. Room is left for tier, rarity and Virtue columns
+ * later (new nullable columns, expand-only): rows have their own id, so
+ * items that differ by those can get a wider unique key beside this one.
+ */
+export const itemStacks = pgTable(
+  'item_stacks',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    kindledId: uuid('kindled_id')
+      .notNull()
+      .references(() => kindled.id, { onDelete: 'cascade' }),
+    /** An id from data/items.json. */
+    itemId: text('item_id').notNull(),
+    /** A Place (packages/shared/src/places.ts). */
+    place: text('place').notNull(),
+    quantity: bigint('quantity', { mode: 'number' }).notNull().default(0),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('item_stacks_kindled_item_place_unique').on(t.kindledId, t.itemId, t.place),
+    check('item_stacks_quantity_non_negative', sql`${t.quantity} >= 0`),
+  ],
+);
+
+/**
+ * Retired (M2 Task 3a): Task 2's one balance per Kindled and item, copied
+ * into item_stacks by migration 0003 (currency to the purse, the rest to the
+ * store). No code reads or writes it any more. It stays here so drizzle-kit
+ * does not generate a DROP: migrations are expand-only, and staging rolls
+ * code back but not migrations (a rollback to Task 2 would read this stale
+ * copy; acceptable on staging, which holds no real players). A later
+ * contract migration drops it.
  */
 export const items = pgTable(
   'items',
@@ -32,7 +63,6 @@ export const items = pgTable(
     kindledId: uuid('kindled_id')
       .notNull()
       .references(() => kindled.id, { onDelete: 'cascade' }),
-    /** An id from data/items.json. */
     itemId: text('item_id').notNull(),
     quantity: bigint('quantity', { mode: 'number' }).notNull().default(0),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -52,8 +82,15 @@ export const itemLedger = pgTable(
       .notNull()
       .references(() => kindled.id, { onDelete: 'cascade' }),
     itemId: text('item_id').notNull(),
+    /**
+     * The place the change happened in (M2 Task 3a). Null on rows from before
+     * places existed: Task 2's single balance, whose balance_after was the
+     * Kindled's whole count of the item.
+     */
+    place: text('place'),
     /** Never 0. */
     delta: bigint('delta', { mode: 'number' }).notNull(),
+    /** The balance of that place after the change. */
     balanceAfter: bigint('balance_after', { mode: 'number' }).notNull(),
     /** An InventoryReason (packages/shared/src/items.ts). */
     reason: text('reason').notNull(),
@@ -65,8 +102,15 @@ export const itemLedger = pgTable(
   },
   (t) => [
     index('item_ledger_kindled_idx').on(t.kindledId, t.id),
-    uniqueIndex('item_ledger_ref_unique')
-      .on(t.ref, t.kindledId, t.itemId)
+    /**
+     * A ref names one change set, in which each (Kindled, item, place) appears
+     * once. This replaces Task 2's (ref, kindled, item) index, which would
+     * refuse a valid move (the same item in two places under one ref); old
+     * rows (place null) can't collide with new ones under the same ref since
+     * a ref applies once.
+     */
+    uniqueIndex('item_ledger_ref_place_unique')
+      .on(t.ref, t.kindledId, t.itemId, t.place)
       .where(sql`${t.ref} is not null`),
     check('item_ledger_delta_non_zero', sql`${t.delta} <> 0`),
     check('item_ledger_balance_non_negative', sql`${t.balanceAfter} >= 0`),

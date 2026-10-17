@@ -4,8 +4,8 @@ import { grantByUsername, parseGrantArgs } from './grant.js';
 import { createInventory } from './inventory.js';
 
 /**
- * pnpm --filter @iot/server inv:grant <username> <item> <qty>
- * (in the server container: node dist/inventory/grant-cli.js <username> <item> <qty>).
+ * pnpm --filter @iot/server inv:grant <username> <item> <qty> [place]
+ * (in the server container: node dist/inventory/grant-cli.js <username> <item> <qty> [place]).
  * Uses DATABASE_URL (or PGLITE_DIR) like the server; see docs/design/inventory.md.
  */
 const parsed = parseGrantArgs(process.argv.slice(2));
@@ -24,7 +24,7 @@ try {
   } else {
     const { entry } = result;
     console.log(
-      `[inv:grant] ${parsed.args.username}: ${entry.delta > 0 ? '+' : ''}${entry.delta} ${entry.itemId}, now ${entry.balanceAfter} (ledger #${entry.id}, ${entry.reason}, ${entry.tellingId})`,
+      `[inv:grant] ${parsed.args.username}: ${entry.delta > 0 ? '+' : ''}${entry.delta} ${entry.itemId} in the ${entry.place ?? ''}, now ${entry.balanceAfter} (ledger #${entry.id}, ${entry.reason}, ${entry.tellingId})`,
     );
   }
 } finally {

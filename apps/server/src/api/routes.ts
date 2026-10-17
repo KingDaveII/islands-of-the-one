@@ -6,6 +6,7 @@ import {
   DEFAULT_CLAY_TONE,
   isClayTone,
   isCreateKindledRequest,
+  isInventoryMoveRequest,
   isLoginRequest,
   isRegisterRequest,
   isRemembrance,
@@ -37,7 +38,7 @@ import { LoginThrottle, type LoginThrottleOptions } from '../auth/throttle.js';
 import type { Database } from '../db/client.js';
 import { isUniqueViolation } from '../db/errors.js';
 import { accounts, kindled, type Account, type KindledRow } from '../db/schema.js';
-import { createInventory } from '../inventory/index.js';
+import { canReachStore, createInventory, moveItems } from '../inventory/index.js';
 
 /**
  * The HTTP JSON API under /api (docs/design/accounts.md). Every route, body
@@ -294,10 +295,40 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
     if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
     const k = await findKindled(account.id);
     if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
-    const held = await inventory.holdings(k.id);
-    const body: InventoryResponse = {
-      items: held.map((h) => ({ item: h.itemId, quantity: h.quantity })),
-    };
+    const body: InventoryResponse = await inventory.view(k.id);
+    return reply.send(body);
+  });
+
+  // A move between two of the Kindled's places (docs/design/inventory.md): the pack and the
+  // store both ways, a basket to the store. Nothing is clamped; a refusal names its reason.
+  app.post(path(ApiRoute.InventoryMove), { bodyLimit: BODY_LIMIT }, async (req, reply) => {
+    const account = await signedIn(req, reply);
+    if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
+    const k = await findKindled(account.id);
+    if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+    if (!isInventoryMoveRequest(req.body))
+      return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
+    const { itemId, from, to, quantity } = req.body;
+    if ((from === 'store' || to === 'store') && !canReachStore(k))
+      return fail(reply, 409, ApiErrorCode.WrongPlace, 'The store is on the holding.');
+    const result = await moveItems(inventory, { kindledId: k.id, itemId, from, to, quantity });
+    if (!result.ok) {
+      switch (result.error) {
+        case 'bad-request':
+          return fail(reply, 400, ApiErrorCode.BadRequest, result.message);
+        case 'unknown-kindled':
+          return fail(reply, 404, ApiErrorCode.NoKindled, result.message);
+        case 'pack-full':
+          return fail(reply, 409, ApiErrorCode.PackFull, 'Pack full.');
+        case 'stack-limit':
+          return fail(reply, 409, ApiErrorCode.StackLimit, result.message);
+        case 'insufficient':
+          return fail(reply, 409, ApiErrorCode.Insufficient, 'Not that many there.');
+        case 'wrong-place':
+          return fail(reply, 409, ApiErrorCode.WrongPlace, result.message);
+      }
+    }
+    const body: InventoryResponse = await inventory.view(k.id);
     return reply.send(body);
   });
 }
