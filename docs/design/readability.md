@@ -91,7 +91,11 @@ particles, text, dev panels):
   No new signal color: the chain is the player's weapon, so it uses the weapon's tokens.
 - **Chests.** ART's `prop-chest` sheet ([`sprites.md`](sprites.md) §4): closed with the clasp glint,
   the lid rising once when it opens, then open and held; the engine adds only the grounding shadow
-  under it.
+  under it. A chest is solid (`combat.md` §2), so the Kindled and the Husks circle it.
+- **Sparkglass pickups.** ART's `prop-sparkglass` sheet once it is on disk ([`sprites.md`](sprites.md)
+  §4): the 9 × 11 chip with its 2-frame glint at each pickup's position, keeping the sim's fly-out
+  and magnet motion, with a grounding shadow by the prop rule above. Until it lands, the engine's
+  7 × 9 chip in `spark-amber` and `spark-ember` on a `hollow-deep` outline is the fallback.
 - **Aim.** The reticle marks the exact 360° aim: four broken rims on the diagonals around a spark,
   `hollow-light` with a `ui-outline` outline (never a cross or plus). With the mouse it sits on the
   pointer, as the cursor (UI camera, UI px); on the gamepad (Playtest 2) it is drawn in the world

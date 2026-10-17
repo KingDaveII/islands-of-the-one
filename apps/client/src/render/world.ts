@@ -21,6 +21,7 @@ import { debugFlags } from '../ui/debugFlags.js';
 import { chargeStage } from './charge.js';
 import { CharacterSprites } from './characters.js';
 import { ChestSprites } from './chestSprites.js';
+import { PickupSprites } from './pickupSprites.js';
 import { DEPTH } from './depth.js';
 import { PLAYER_FEET } from './feet.js';
 import { PROP_SHADOW_H } from './propShadow.js';
@@ -131,6 +132,8 @@ export class WorldRenderer {
   readonly tiles: TileRoom;
   /** The chests, drawn from the prop-chest sheet. */
   readonly chests: ChestSprites;
+  /** The Sparkglass pickups from prop-sparkglass when it is on disk; else `drawPickup`, the fallback. */
+  readonly pickups: PickupSprites;
   private roomKey = '';
 
   constructor(
@@ -149,6 +152,7 @@ export class WorldRenderer {
     this.characters = new CharacterSprites(scene, layer, anim);
     this.tiles = new TileRoom(scene, layer);
     this.chests = new ChestSprites(scene, layer);
+    this.pickups = new PickupSprites(scene, layer);
   }
 
   /** Room size in sim px. */
@@ -220,8 +224,22 @@ export class WorldRenderer {
     this.shadowAt(f, snapToArt(pl.x), snapToArt(pl.y + PLAYER_FEET), SHADOW_W, SHADOW_H);
     // The chests: a grounding shadow at each one's base, as wide as its frame's lowest row plus 4 (about 32 × 6), the sprite y-sorted with the bodies.
     this.chests.draw(s.chests, timeMs);
-    for (const c of s.chests) this.shadowAt(f, snapToArt(c.x / SUB), snapToArt(c.y / SUB), this.chests.shadowWidth(c.id), PROP_SHADOW_H);
-    for (const k of s.pickups) this.drawPickup(f, toWorld(session.lerp(`k${k.id}`, k.x, k.y)), timeMs);
+    for (const c of s.chests) {
+      const w = this.chests.shadowWidth(c.id);
+      if (w > 0) this.shadowAt(f, snapToArt(c.x / SUB), snapToArt(c.y / SUB), w, PROP_SHADOW_H);
+    }
+    // The pickups: ART's sheet at their positions with a shadow by the prop rule, or the fallback drawing until it lands.
+    if (this.pickups.renderer === 'sheet') {
+      const widths = this.pickups.draw(s.pickups, (k) => session.lerp(`k${k.id}`, k.x, k.y), timeMs);
+      for (const k of s.pickups) {
+        const w = widths.get(k.id) ?? 0;
+        if (w === 0) continue;
+        const p = session.lerp(`k${k.id}`, k.x, k.y);
+        this.shadowAt(f, snapToArt(p.x), snapToArt(p.y), w, PROP_SHADOW_H);
+      }
+    } else {
+      for (const k of s.pickups) this.drawPickup(f, toWorld(session.lerp(`k${k.id}`, k.x, k.y)), timeMs);
+    }
 
     // Bodies: the sprites, posed from the sim state; Husk spawn-in and stagger marks are engine effects.
     const blink = Math.floor((timeMs / 1000) * this.juice().telegraphBlinkHz) % 2 === 0;
@@ -397,7 +415,12 @@ export class WorldRenderer {
     }
   }
 
-  /** A Sparkglass piece on the floor at a world-px point. */
+  /**
+   * The fallback Sparkglass piece on the floor at a world-px point: M1's
+   * 7 × 9 chip, drawn while `prop-sparkglass` is not on disk (ART delivers
+   * it; pickupSprites.ts draws from it once it lands, the same pattern as
+   * the chest before #61).
+   */
   private drawPickup(g: G, p: Point, timeMs: number): void {
     const x = Math.round(p.x);
     const y = Math.round(p.y);

@@ -33,6 +33,8 @@ import {
   SPRITE_CELLS,
   SPRITE_FACINGS,
   SPRITE_SHEET_NAMES,
+  OPTIONAL_SPRITE_SHEETS,
+  SPARKGLASS_SHEET,
   SPRITE_SHEET_VERSION,
   SPRITE_WHITELIST,
   spriteCellSpecFor,
@@ -48,6 +50,7 @@ import {
 } from '../src/index.js';
 import fixtureSheet from './fixtures/kindled-fixture.json' with { type: 'json' };
 import chestFixture from './fixtures/prop-chest.json' with { type: 'json' };
+import sparkglassFixture from './fixtures/prop-sparkglass.json' with { type: 'json' };
 import { decodePng } from './png.js';
 import { pointProblems, tableProblems, V1_RETIRED, v2Problems, type Rgba } from './sheetChecks.js';
 import { tileSheetProblems } from './tileChecks.js';
@@ -167,6 +170,36 @@ describe('the chest fixture sheet (test/fixtures/prop-chest)', () => {
   });
   // Shipped: the fixture carries the whole table, like ART's finished sheet must.
   sheetSuite(CHEST_SHEET, sheet, fixtureUrl, true);
+});
+
+describe('the Sparkglass pickup fixture sheet (test/fixtures/prop-sparkglass)', () => {
+  const sheet: SpriteSheet = sparkglassFixture;
+  it('is a v2 prop sheet without a table: idle alone, 2 frames (the glint) at the recipe rate, the chip 9 × 11 on the prop cell', () => {
+    expect(sheet.meta.version).toBe(SPRITE_SHEET_VERSION);
+    expect(SPARKGLASS_SHEET).toBe('prop-sparkglass');
+    expect(OPTIONAL_SPRITE_SHEETS).toEqual([SPARKGLASS_SHEET]);
+    expect(SPRITE_SHEET_NAMES).not.toContain(SPARKGLASS_SHEET);
+    expect(spriteSheetSpec(SPARKGLASS_SHEET).anims).toBeNull();
+    expect(propTable(SPARKGLASS_SHEET, sheet)).toEqual([propIdleSpec(2, 2)]);
+    expect(tableProblems(SPARKGLASS_SHEET, sheet, propTable(SPARKGLASS_SHEET, sheet) ?? [])).toEqual([]);
+    expect(Object.keys(sheet.anims)).toEqual(['idle']);
+    const png = decodePng(readFileSync(fixtureUrl(sheet.meta.image)));
+    const box = { x0: png.width, y0: png.height, x1: -1, y1: -1 };
+    const idle0 = sheet.frames.idle_0?.frame;
+    if (!idle0) throw new Error('no idle_0');
+    for (let y = idle0.y; y < idle0.y + idle0.h; y++) {
+      for (let x = idle0.x; x < idle0.x + idle0.w; x++) {
+        if ((png.rgba[(y * png.width + x) * 4 + 3] ?? 0) === 0) continue;
+        box.x0 = Math.min(box.x0, x);
+        box.y0 = Math.min(box.y0, y);
+        box.x1 = Math.max(box.x1, x);
+        box.y1 = Math.max(box.y1, y);
+      }
+    }
+    expect([box.x1 - box.x0 + 1, box.y1 - box.y0 + 1]).toEqual([9, 11]);
+    expect(box.y1).toBe(SPRITE_CANVAS.soleRow);
+  });
+  sheetSuite(SPARKGLASS_SHEET, sheet, fixtureUrl, true);
 });
 
 /** The checks of §6 for one sheet; `shipped` sheets also carry their table up to REQUIRED_MILESTONE (tableProblems). */

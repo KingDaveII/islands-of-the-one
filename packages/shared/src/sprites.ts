@@ -424,6 +424,22 @@ export function propIdleSpec(frames: number, fps: number = PROP_IDLE.defaultFps)
 /** The chest's sheet (`prop-chest`), the first prop with a table of its own; the engine draws every chest from it (`SPRITE_SHEET_NAMES`). */
 export const CHEST_SHEET: SpriteSheetName = 'prop-chest';
 
+/**
+ * The Sparkglass pickup's sheet (ART delivers it; M1 polish 2026-10-17): a
+ * prop without a table, so `idle` alone, a 9 × 11 chip with a 2-frame glint
+ * at the recipe's fps. Optional: the client draws pickups from it when it is
+ * on disk and keeps its own drawing as the fallback until then
+ * (`OPTIONAL_SPRITE_SHEETS`), so it is not in `SPRITE_SHEET_NAMES`.
+ */
+export const SPARKGLASS_SHEET = 'prop-sparkglass';
+
+/**
+ * Sheets the client loads when they are on disk and does without otherwise
+ * (each with its fallback in the engine). The sheet test checks one like any
+ * other sheet once it lands.
+ */
+export const OPTIONAL_SPRITE_SHEETS: readonly string[] = [SPARKGLASS_SHEET];
+
 /** The chest's animations, in table order: `closed` (looping), `opening` (once), `open` (held). */
 export const CHEST_ANIMS = ['closed', 'opening', 'open'] as const;
 export type ChestAnim = (typeof CHEST_ANIMS)[number];
