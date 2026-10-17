@@ -14,7 +14,17 @@ import {
   TILE,
   type Run,
 } from '../src/index.js';
-import { addHusk, arena, Button, input, step, stepUntil, tuning, WEAPON } from './helpers.js';
+import {
+  addHusk,
+  arena,
+  Button,
+  input,
+  retune,
+  step,
+  stepUntil,
+  tuning,
+  WEAPON,
+} from './helpers.js';
 
 /**
  * The backpedal (GAME DESIGN 2026-10-17): free movement away from the aim is
@@ -47,10 +57,22 @@ const S = 64;
 const W = 128;
 const AIM_E = 0;
 
-/** World px the Kindled moved over `ticks` of full-stick movement along `moveDir` while aiming `aim`. */
-function travel(moveDir: number, aim: number, ticks = 60, buttons = 0): number {
+/**
+ * World px the Kindled moved over `ticks` of full-stick movement along
+ * `moveDir` while aiming `aim`; in Combat (a Peeling awake across the room,
+ * held still) or in Calm (no hostile).
+ */
+function travel(moveDir: number, aim: number, ticks = 60, buttons = 0, combat = true): number {
   const run = arena();
   openRoom(run);
+  if (combat) {
+    retune(run, (t) => {
+      t.husks.peeling.speed = 0;
+    });
+    addHusk(run, 'peeling', 0, { x: run.state.player.x, y: run.state.player.y - 100 * SUB });
+    step(run);
+    expect(run.state.context).toBe('combat');
+  }
   const p = run.state.player;
   const x0 = p.x;
   const y0 = p.y;
@@ -89,7 +111,7 @@ describe('the backpedal factor', () => {
     expect(at(123.75)).toBe(888);
   });
 
-  it('slows free movement away from the aim to 0.85, strafing and running toward the aim not at all', () => {
+  it('slows free movement away from the aim to 0.85 in Combat, strafing and running toward the aim not at all', () => {
     const forward = travel(E, AIM_E);
     const strafe = travel(S, AIM_E);
     const back = travel(W, AIM_E);
@@ -101,12 +123,22 @@ describe('the backpedal factor', () => {
     expect(travel(W, HALF_TURN)).toBeCloseTo(forward, 0);
   });
 
-  it('slows the charge walk the same way: it is free movement at the charge factor', () => {
+  it('never slows in Calm: a cleared room, or the holding (GAME DESIGN 2026-10-17)', () => {
+    const forward = travel(E, AIM_E, 60, 0, false);
+    const back = travel(W, AIM_E, 60, 0, false);
+    expect(forward).toBeGreaterThan(80);
+    expect(back).toBe(forward);
+    // The arena is Calm until a hostile wakes.
+    const run = arena();
+    expect(run.state.context).toBe('calm');
+  });
+
+  it("never slows the heavy's charge walk: 0.45 × with no backpedal on top, even at 180° in Combat", () => {
     const forward = travel(E, AIM_E, 60, Button.Heavy);
     const back = travel(W, AIM_E, 60, Button.Heavy);
     expect(forward).toBeGreaterThan(30);
     expect(forward).toBeLessThan(travel(E, AIM_E));
-    expect(back / forward).toBeCloseTo(0.85, 2);
+    expect(back).toBe(forward);
   });
 
   it('a dodge at a backwards angle keeps its full distance', () => {

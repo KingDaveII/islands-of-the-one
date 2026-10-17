@@ -32,10 +32,10 @@ CHIP = [
     ".oaaaaao.",
     "oaaaaaeao",
     "oaaaaeeao",
+    "oaaaeeeao",
     ".oaaeeao.",
     "..oaeao..",
     "...oao...",
-    "....o....",
     "....o....",
 ]
 

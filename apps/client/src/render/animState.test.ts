@@ -76,7 +76,7 @@ const KINDLED_TRANSITIONS: SpriteSheet = {
         return [
           [`run_start_${f}`, { frames: run.frames.slice(0, 2), frameRate: 20, repeat: 0 }],
           [`run_stop_${f}`, { frames: run.frames.slice(2, 4), frameRate: 20, repeat: 0 }],
-          [`run_back_${f}`, { frames: run.frames.slice(0, 4), frameRate: 0, repeat: -1 }],
+          [`run_back_${f}`, { frames: run.frames.slice(0, 4), frameRate: 12, repeat: -1 }],
         ];
       }),
     ),

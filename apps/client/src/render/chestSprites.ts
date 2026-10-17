@@ -3,7 +3,7 @@ import { CHEST_SHEET, PROP_TABLES, propFrameName, spriteSheets, type SpriteSheet
 import { SUB, type ChestState } from '@iot/sim';
 import { bodyDepth } from './feet.js';
 import { loopFrameAt, nextOpenView, openingStateAt, type OpenView } from './opening.js';
-import { propShadowWidths } from './propShadow.js';
+import { propShadowSizes, type ShadowSize } from './propShadow.js';
 import { snapToArt } from './scale.js';
 import { texturePixels } from './spriteSheets.js';
 
@@ -17,9 +17,9 @@ import { texturePixels } from './spriteSheets.js';
  * with one frame), `opening` once when `opened` turns true, then `open`,
  * held; a chest already open when the client first sees it shows `open`. The
  * engine draws nothing of its own over it: the glint, if any, is ART's, in
- * `closed`; the grounding shadow under it stays the engine's (world.ts), as
- * wide as the shown frame's lowest opaque row plus 4 (`shadowWidth`,
- * propShadow.ts; about 32 × 6), read from the sheet's pixels once.
+ * `closed`; the grounding shadow under it stays the engine's (world.ts), by
+ * the prop rule (`shadow`, propShadow.ts: 32 × 6), read from the sheet's
+ * pixels once.
  *
  * The sheet is one of the client's sprite sheets (`SPRITE_SHEET_NAMES`), so
  * it loads with them and a missing PNG is the same error as the Kindled's.
@@ -51,8 +51,8 @@ export class ChestSprites {
   private readonly chests = new Map<number, { image: Phaser.GameObjects.Image; view: OpenView | null }>();
   /** The sheet the chests draw from (`prop-chest`). */
   readonly sheet: SpriteSheet = spriteSheets[CHEST_SHEET];
-  /** Each frame's shadow width from the sheet's pixels, read on the first draw (null until then, or without a canvas). */
-  private shadows: Map<string, number> | null = null;
+  /** Each frame's shadow size from the sheet's pixels, read on the first draw (null until then, or without a canvas). */
+  private shadows: Map<string, ShadowSize> | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -92,16 +92,16 @@ export class ChestSprites {
   }
 
   /**
-   * The grounding shadow's width (world px) under a chest this frame: its
-   * shown frame's lowest opaque row plus 4 (propShadow.ts). The Kindled's 20
-   * until the sheet's pixels can be read, or for a chest not drawn yet.
+   * The grounding shadow (world px) under a chest this frame, by the prop
+   * rule on its shown frame (propShadow.ts). The Kindled's 20 × 6 until the
+   * sheet's pixels can be read, or for a chest not drawn yet.
    */
-  shadowWidth(id: number): number {
+  shadow(id: number): ShadowSize {
     if (!this.shadows) {
       const img = texturePixels(this.scene, CHEST_SHEET);
-      if (img) this.shadows = propShadowWidths(this.sheet, img);
+      if (img) this.shadows = propShadowSizes(this.sheet, img);
     }
     const frame = this.chests.get(id)?.image.frame.name;
-    return (frame === undefined ? undefined : this.shadows?.get(frame)) ?? 20;
+    return (frame === undefined ? undefined : this.shadows?.get(frame)) ?? { w: 20, h: 6 };
   }
 }
