@@ -2,20 +2,22 @@ import palette from '../data/palette.json' with { type: 'json' };
 import huskNutshell from '../assets/sprites/husk-nutshell.json' with { type: 'json' };
 import huskPeeling from '../assets/sprites/husk-peeling.json' with { type: 'json' };
 import kindledAsh from '../assets/sprites/kindled-ash.json' with { type: 'json' };
+import propChest from '../assets/sprites/prop-chest.json' with { type: 'json' };
 import { TILE_DOOR_ANIMS, TILE_WORLD_PX } from './tiles.js';
 
 /**
- * Animated character sheets (docs/design/sprites.md): a 1× PNG plus a Phaser
+ * Animated sprite sheets (docs/design/sprites.md): a 1× PNG plus a Phaser
  * JSON Hash atlas with two extra blocks the engine reads itself, `anims` and
- * `palette`. The sheets live in packages/shared/assets/sprites; a hand-drawn
- * sheet replaces a placeholder PNG + JSON pair without any engine change.
- * `packages/shared/test/sprites.test.ts` checks every sheet against its PNG.
+ * `palette`. The sheets live in packages/shared/assets/sprites, built by the
+ * art pipeline from ART's recipes; a redrawn sheet replaces the PNG + JSON
+ * pair without any engine change. `packages/shared/test/sprites.test.ts`
+ * checks every sheet against its PNG.
  *
- * Two versions of the contract (sprites.md §2, §5): v1 sheets are M1's art,
- * drawn at 2× in the world; v2 sheets are option B's (64×64 art canvases,
- * soles on row 53), drawn at 1×, with the cells below and a skin mask for the
- * Kindled's clay tones. The engine, the test and the G1.2 pipeline all read
- * these numbers from here.
+ * Every sheet is on the v2 contract (sprites.md §2, §5): option B's art on
+ * 64×64 canvases with the soles on row 53, drawn at 1 world px per sheet px,
+ * with the cells below and a skin mask for the Kindled's clay tones. M1's v1
+ * sheets (drawn at 2×) are retired (G1.5g); the sheet test rejects one. The
+ * engine, the test and the art pipeline all read these numbers from here.
  */
 
 /**
@@ -24,9 +26,6 @@ import { TILE_DOOR_ANIMS, TILE_WORLD_PX } from './tiles.js';
  * at the render boundary; the sim, its units and the tuning never change.
  */
 export const WORLD_PX_PER_UNIT = 2;
-
-/** World px per sheet px of a v1 sheet and of the engine's M1 art (hookblade-fx, the room, the FX): drawn at 2× until replaced. */
-export const LEGACY_PIXEL_SCALE = 2;
 
 /** The art canvas every B sprite comes on (style sheet, option B): 64×64, the soles on row 53. */
 export const SPRITE_CANVAS = { w: 64, h: 64, soleRow: 53 } as const;
@@ -97,7 +96,7 @@ export interface AtlasFrame {
   /** The origin as a fraction of the cell (Phaser's setOrigin). */
   anchor: { x: number; y: number };
   /**
-   * v2 Kindled frames that need them (`spritePointsFor`): named pixel positions
+   * Kindled frames that need them (`spritePointsFor`): named pixel positions
    * in the frame's cell, `[x, y]` from the cell's top left, written by ART's
    * recipe and placed by the art pipeline with the frame (sprites.md §5).
    */
@@ -117,16 +116,17 @@ export interface SpriteSheetMeta {
   size: { w: number; h: number };
   scale: string;
   format: string;
-  /** "placeholder" for sheets drawn by tools/placeholder-sheets.py; the art pipeline writes its own id. */
+  /** "iot-art-pipeline": every shipped sheet is built by the art pipeline (the fixtures say "fixture"). */
   app: string;
+  /** "2", the v2 contract; the sheet test rejects anything else. */
   version: string;
   cell: { w: number; h: number };
   /** The origin in pixels from the cell's top left (the point between the feet). */
   origin: { x: number; y: number };
   /** Kindled sheets only, in sheet order: S, SE, E, NE, N, NW, W, SW. */
   facings?: string[];
-  /** v2 only: world px per sheet px (1). A v1 sheet has none and draws at `LEGACY_PIXEL_SCALE`. */
-  pixelScale?: number;
+  /** World px per sheet px: 1 (the sheet test holds it there); the engine draws every sprite sheet at 1. */
+  pixelScale: number;
 }
 
 /** Palette swaps: the drawn tone's hex values → each other tone's. */
@@ -134,11 +134,11 @@ export interface SpritePalette {
   drawn: string;
   swaps: Record<string, Record<string, string>>;
   /**
-   * v2 Kindled sheets: the skin mask, `<name>.skin.png` next to the sheet and
-   * the same size; the swaps apply only under its opaque pixels (the clay ramp
-   * is shared with wood, rope, belts and boots). A v1 sheet swaps everywhere.
+   * The skin mask, `<name>.skin.png` next to the sheet and the same size; the
+   * swaps apply only under its opaque pixels (the clay ramp is shared with
+   * wood, rope, belts and boots).
    */
-  mask?: string;
+  mask: string;
 }
 
 export interface SpriteSheet {
@@ -149,18 +149,20 @@ export interface SpriteSheet {
 }
 
 /**
- * The sheets the client loads. The sheet test runs on every sheet on disk and
- * checks that each name here is one of them; a sheet on disk (an NPC's, say)
- * joins this list when the client starts using it.
+ * The sheets the client loads: the Kindled, the two Husks and the chest
+ * (`CHEST_SHEET`). The sheet test runs on every sheet on disk and checks that
+ * each name here is one of them; a sheet on disk (an NPC's, say) joins this
+ * list when the client starts using it. Tile sheets load apart (tiles.ts).
  */
-export const SPRITE_SHEET_NAMES = ['kindled-ash', 'husk-peeling', 'husk-nutshell'] as const;
+export const SPRITE_SHEET_NAMES = ['kindled-ash', 'husk-peeling', 'husk-nutshell', 'prop-chest'] as const;
 export type SpriteSheetName = (typeof SPRITE_SHEET_NAMES)[number];
 
-/** Every animated sheet in packages/shared/assets/sprites, by name (the texture key the engine uses). */
+/** Every animated sheet the client loads, by name (the texture key the engine uses). */
 export const spriteSheets: Readonly<Record<SpriteSheetName, SpriteSheet>> = {
   'kindled-ash': kindledAsh,
   'husk-peeling': huskPeeling,
   'husk-nutshell': huskNutshell,
+  'prop-chest': propChest,
 };
 
 /** Kindled facings in sheet order. */
@@ -312,7 +314,7 @@ export function isKindledPoint(name: string): name is KindledPoint {
 
 /**
  * A frame's point as `{ x, y }` in its cell, or null when the frame has none
- * (a v1 sheet, a frame that carries no points, a malformed entry).
+ * (a frame that carries no points, a malformed entry).
  */
 export function framePoint(sheet: SpriteSheet, frame: string, point: KindledPoint): { x: number; y: number } | null {
   const p = sheet.frames[frame]?.points?.[point];
@@ -409,8 +411,8 @@ export function propIdleSpec(frames: number, fps: number = PROP_IDLE.defaultFps)
   return propAnimSpec(PROP_IDLE, frames, fps);
 }
 
-/** The chest's sheet (`prop-chest`), the first prop with a table of its own; the engine draws the chest from it when it is loaded. */
-export const CHEST_SHEET = 'prop-chest';
+/** The chest's sheet (`prop-chest`), the first prop with a table of its own; the engine draws every chest from it (`SPRITE_SHEET_NAMES`). */
+export const CHEST_SHEET: SpriteSheetName = 'prop-chest';
 
 /** The chest's animations, in table order: `closed` (looping), `opening` (once), `open` (held). */
 export const CHEST_ANIMS = ['closed', 'opening', 'open'] as const;
@@ -541,19 +543,12 @@ export function isKindledSheet(name: string): boolean {
   return name.startsWith('kindled-');
 }
 
-/** True for a sheet on the v2 contract (option B art, `meta.version` "2"). */
-export function isV2Sheet(sheet: SpriteSheet): boolean {
-  return sheet.meta.version === '2';
-}
+/** The contract's version: every sprite sheet is "2"; the sheet test rejects a v1 sheet (M1's, drawn at 2×, retired in G1.5g). */
+export const SPRITE_SHEET_VERSION = '2';
 
 /** The v2 cell spec of a sheet by its name: the Kindled's, or every other kind's (`spriteSheetSpec`). */
 export function spriteCellSpecFor(name: string): SpriteCellSpec {
   return spriteSheetSpec(name).cell;
-}
-
-/** World px per sheet px: a v2 sheet's `meta.pixelScale` (1), a v1 sheet's legacy 2. */
-export function sheetPixelScale(sheet: SpriteSheet): number {
-  return isV2Sheet(sheet) ? (sheet.meta.pixelScale ?? 1) : LEGACY_PIXEL_SCALE;
 }
 
 /** The tokens a v2 sheet may not use anywhere: spark-glow (the perfect-dodge trail) and the three signal colours. */

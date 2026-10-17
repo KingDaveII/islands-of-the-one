@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import {
   CAVE_TILE_SHEET,
+  caveTileSheet,
   DOOR_STATES,
   doorAnimKey,
   doorFrameName,
@@ -16,69 +17,28 @@ import { nextOpenView, openingStateAt, type OpenView } from './opening.js';
 import { spritePngUrl } from './spriteSheets.js';
 
 /**
- * The room drawn from a tile sheet (docs/design/sprites.md "Tiles", G1.5e):
+ * The room drawn from the tile sheet (docs/design/sprites.md "Tiles", G1.5e):
  * the static pieces `tileAt` picks, drawn once per room into a texture under
  * everything, and the doors as images over it, animated on the client clock
  * from the state's `doorOpen` (the client only renders it). A cell (c, r) is
  * at world (c × 32, r × 32), no piece scaled (`pixelScale` 1).
  *
- * The sheet is ART's `tiles-cave` (packages/shared/assets/sprites). Until it
- * lands, `activeTileSheet` is null and the world draws M1's procedural room,
- * the fallback (world.ts), unless a playtest hands in a sheet (`setTileSheet`;
- * the G1.5e screenshots use the test fixture).
+ * The sheet is ART's `tiles-cave` (`caveTileSheet`, bundled with the code like
+ * the sprite sheets); its PNG loads like theirs (`preloadTileSheet`), and a
+ * missing PNG is the same error as a missing sprite sheet's. There is no other
+ * room: M1's procedural room went in G1.5g.
  */
 
-/** A tile sheet the client can draw from: its texture key, its JSON contract and its PNG's URL. */
-export interface ActiveTileSheet {
-  key: string;
-  sheet: TileSheet;
-  url: string;
-}
+/** The tile sheet the room draws from: its texture key and its JSON contract. */
+export const TILE_SHEET: { key: string; sheet: TileSheet } = { key: CAVE_TILE_SHEET, sheet: caveTileSheet };
 
-/** Tile sheets on disk, by file name: empty until ART's tiles-cave lands. */
-const TILE_JSON: Record<string, TileSheet> = Object.fromEntries(
-  Object.entries(
-    import.meta.glob<TileSheet>('../../../../packages/shared/assets/sprites/tiles-*.json', {
-      eager: true,
-      import: 'default',
-    }),
-  ).map(([path, sheet]) => [path.slice(path.lastIndexOf('/') + 1, -'.json'.length), sheet]),
-);
-
-/** A sheet a playtest hands in (`setTileSheet`): the G1.5e screenshots draw rooms from the test fixture this way. */
-let override: ActiveTileSheet | null = null;
-
-/**
- * The tile sheet the room draws from: ART's tiles-cave when it is on disk,
- * else one a playtest set (`setTileSheet`), else null (the procedural fallback).
- */
-export function activeTileSheet(): ActiveTileSheet | null {
-  const cave = TILE_JSON[CAVE_TILE_SHEET];
-  const url = cave ? spritePngUrl(cave.meta.image) : undefined;
-  if (cave && url) return { key: CAVE_TILE_SHEET, sheet: cave, url };
-  return override;
-}
-
-/**
- * Playtests and screenshots: draw rooms from this sheet while ART's
- * tiles-cave is not on disk (`window.__iot.useTileSheet`, which
- * tools/screenshots-g15.mjs --rooms calls with the test fixture); null
- * clears it. Takes effect from the next run.
- */
-export function setTileSheet(sheet: ActiveTileSheet | null): void {
-  override = sheet;
-}
-
-/** Which room the world draws: from the tile sheet when one is loaded, else the procedural fallback. */
-export function roomRenderer(texturesHave: (key: string) => boolean): 'tiles' | 'procedural' {
-  const active = activeTileSheet();
-  return active && texturesHave(active.key) ? 'tiles' : 'procedural';
-}
-
-/** Loads the active tile sheet as an atlas (its JSON is bundled with the code); nothing without one. */
+/** Loads the tile sheet as an atlas (its JSON is bundled with the code); the PNG must be next to it. */
 export function preloadTileSheet(scene: Phaser.Scene): void {
-  const active = activeTileSheet();
-  if (active && !scene.textures.exists(active.key)) scene.load.atlas(active.key, active.url, active.sheet);
+  const { key, sheet } = TILE_SHEET;
+  if (scene.textures.exists(key)) return;
+  const url = spritePngUrl(sheet.meta.image);
+  if (!url) throw new Error(`no PNG for the ${key} sheet`);
+  scene.load.atlas(key, url, sheet);
 }
 
 /** One static piece to draw into the room texture: its frame and its top left in world px. */
@@ -140,7 +100,7 @@ export class TileRoom {
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly layer: Phaser.GameObjects.Layer,
-    private readonly active: ActiveTileSheet,
+    private readonly active: { key: string; sheet: TileSheet } = TILE_SHEET,
   ) {}
 
   /** Draws a new room: its static pieces into the texture, its doors as images. */

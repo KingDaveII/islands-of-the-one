@@ -2,7 +2,6 @@ import {
   hexOf,
   isKindledPoint,
   isRequiredAnim,
-  isV2Sheet,
   kindledAnimKey,
   kindledFrameName,
   optionalReason,
@@ -10,6 +9,7 @@ import {
   propFrameRangeProblem,
   REQUIRED_MILESTONE,
   SPRITE_FACINGS,
+  SPRITE_SHEET_VERSION,
   SPRITE_WHITELIST,
   spritePointsFor,
   spriteSheetSpec,
@@ -34,21 +34,26 @@ const hexAt = (img: Rgba, x: number, y: number): string => {
   return hexOf(img.rgba[i] ?? 0, img.rgba[i + 1] ?? 0, img.rgba[i + 2] ?? 0);
 };
 
+/** Why a sheet that is not version "2" fails: M1's v1 sheets are retired (G1.5g). */
+export const V1_RETIRED = 'v1 sprite sheets are retired; build it through the pipeline';
+
 /**
  * What breaks the v2 contract (docs/design/sprites.md §2, §5, §6) in a sheet
- * and its PNG (and its skin mask, for a sheet with a palette block): the
- * cell and origin of its kind, `meta.pixelScale` 1, nothing on a cell's
- * outer 1 px ring, only the whitelist's colours (the telegraph colours in
- * `telegraph*` frames only, #FFFFFF and #FFE7A3 nowhere), and a mask the
- * size of the sheet, opaque only over swap-key colours, covering every key.
- * An empty list is a sheet that passes.
+ * and its PNG (and its skin mask, for a sheet with a palette block): version
+ * "2" (a v1 sheet is retired: `V1_RETIRED`), the cell and origin of its kind,
+ * `meta.pixelScale` 1, nothing on a cell's outer 1 px ring, only the
+ * whitelist's colours (the telegraph colours in `telegraph*` frames only,
+ * #FFFFFF and #FFE7A3 nowhere), and a mask the size of the sheet, opaque only
+ * over swap-key colours, covering every key. An empty list is a sheet that
+ * passes.
  */
 export function v2Problems(name: string, sheet: SpriteSheet, png: Rgba, mask: Rgba | null): string[] {
   const problems: string[] = [];
   const kind = spriteSheetSpec(name);
   const spec = kind.cell;
   const { cell, origin } = sheet.meta;
-  if (sheet.meta.version !== '2') problems.push(`meta.version is ${sheet.meta.version}, not "2"`);
+  if (sheet.meta.version !== SPRITE_SHEET_VERSION)
+    problems.push(`meta.version is ${sheet.meta.version}, not "${SPRITE_SHEET_VERSION}": ${V1_RETIRED}`);
   if (cell.w !== spec.cell.w || cell.h !== spec.cell.h)
     problems.push(`cell ${cell.w}×${cell.h}, not ${spec.cell.w}×${spec.cell.h}`);
   if (origin.x !== spec.origin.x || origin.y !== spec.origin.y)
@@ -82,7 +87,7 @@ export function v2Problems(name: string, sheet: SpriteSheet, png: Rgba, mask: Rg
   if (kind.palette && !palette) problems.push('a Kindled sheet without a palette block');
   if (!kind.palette && palette) problems.push(`a palette block on a ${kind.kind} sheet (only Kindled sheets have one)`);
   if (!palette) return problems;
-  if (palette.mask !== `${name}.skin.png`) problems.push(`palette.mask is ${String(palette.mask)}, not ${name}.skin.png`);
+  if (palette.mask !== `${name}.skin.png`) problems.push(`palette.mask is ${palette.mask}, not ${name}.skin.png`);
   if (!mask) return [...problems, 'no skin mask'];
   if (mask.width !== png.width || mask.height !== png.height) {
     return [...problems, `mask ${mask.width}×${mask.height}, sheet ${png.width}×${png.height}`];
@@ -163,20 +168,15 @@ function animOfFrames(name: string, sheet: SpriteSheet): Map<string, string> {
 }
 
 /**
- * What breaks the points rules (sprites.md §5, §6): a v1 sheet has none; on a
- * v2 sheet every point is a known name (`KINDLED_POINTS`), on a frame whose
- * animation carries it (`spritePointsFor`), a whole pixel inside the cell and
- * off its outer 1 px ring; and a `finished` sheet has every required point on
- * every frame of the animations that carry one. An empty list is a sheet that
- * passes.
+ * What breaks the points rules (sprites.md §5, §6): every point is a known
+ * name (`KINDLED_POINTS`), on a frame whose animation carries it
+ * (`spritePointsFor`), a whole pixel inside the cell and off its outer 1 px
+ * ring; and a `finished` sheet has every required point on every frame of the
+ * animations that carry one. An empty list is a sheet that passes.
  */
 export function pointProblems(name: string, sheet: SpriteSheet, finished = true): string[] {
   const problems: string[] = [];
   const withPoints = Object.entries(sheet.frames).filter(([, f]) => f.points !== undefined);
-  if (!isV2Sheet(sheet)) {
-    if (withPoints.length) problems.push(`points on a v1 sheet: ${withPoints.map(([n]) => n).join(', ')}`);
-    return problems;
-  }
   const animOf = animOfFrames(name, sheet);
   const { w, h } = sheet.meta.cell;
   for (const [frame, f] of withPoints) {

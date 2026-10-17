@@ -12,13 +12,14 @@ How every animated character reaches the engine: a 1× PNG plus a JSON contract,
 
 ## 2. Frame grid
 
-Two versions of the contract (G1.5). **v2** is option B's art (PixelLab, G1.3b): every sprite on a
-64×64 canvas with the soles on row 53, drawn at 1 world px per sheet px in the 2× world. **v1** is
-M1's art (the table further down), drawn at 2 world px per sheet px until its v2 version replaces
-it through the G1.2 pipeline ([`art-pipeline.md`](art-pipeline.md): recipes, `pnpm art:build`, `pnpm art:check`). Heights, proportions and drawing rules belong to ART:
+One contract, **v2** (G1.5): option B's art (PixelLab, G1.3b), every sprite on a 64×64 canvas with
+the soles on row 53, drawn at 1 world px per sheet px in the 2× world, built through the pipeline
+([`art-pipeline.md`](art-pipeline.md): recipes, `pnpm art:build`, `pnpm art:check`). M1's v1 sheets
+(drawn at 2 world px per sheet px) are retired; the §6 test rejects one (history in §8). Heights,
+proportions and drawing rules belong to ART:
 [`art/anchors/style-sheet.md`](../../art/anchors/style-sheet.md) (not repeated here).
 
-### v2 cells
+### Cells
 
 The engine, the §6 test and the G1.2 pipeline read these numbers from `packages/shared/src/sprites.ts`
 (`SPRITE_CELLS`, `SPRITE_CANVAS`):
@@ -37,18 +38,9 @@ The engine, the §6 test and the G1.2 pipeline read these numbers from `packages
 - Where a sprite stands does not come from the cell: the feet are 5 sim px below the body centre for
   the Kindled and a Husk's radius below for a Husk, ×2 in world px (`apps/client/src/render/feet.ts`).
 
-### v1 cells (M1)
-
-| Sheet | Cell (w×h) | Origin (x, y from the cell's top left) | Why |
-|---|---|---|---|
-| Kindled (`kindled-<rem>`), one per Remembrance: clay, ash, tide, wing | 48×40 | (24, 36) — the point between the feet | the body is 16×24; the Hookblade heavy reaches 22 px past the hand and Haul's throw frame holds the first chain link, so the cell is wider than the body |
-| Peeling (`husk-peeling`) | 24×24 | (12, 18) | 12×9 body with room for the lunge stretch |
-| Nutshell (`husk-nutshell`) | 40×40 | (20, 34) | 24×24 shell plus the roll squash |
-| Later: Rind-Eel 48×32 (24, 26), Mourning Husk 40×48 (20, 44) | | | |
-
 - Cells are a regular grid: `frame.x = col * cellW`, `frame.y = row * cellH`. No trimming, no rotation, no padding; the empty pixels are the cost of a grid the test can check by arithmetic.
 - The shadow is **not** in the sheet; the engine draws it (readability.md: a navy dithered ellipse under the origin).
-- Colours: v1, the 32-colour palette (design system `tokens.json`, `color`); v2, the 28-colour whitelist (§5). The Kindled sheets are drawn in the **grey-ochre** clay tone; the other three tones are palette swaps (`palette` block below), so one sheet per Remembrance, not twelve.
+- Colours: the 28-colour whitelist (§5). The Kindled sheets are drawn in the **grey-ochre** clay tone; the other three tones are palette swaps (`palette` block below), so one sheet per Remembrance, not twelve.
 
 ## 3. Facings
 
@@ -90,8 +82,8 @@ Frame rates are per animation; `hold` means the last frame stays until the state
 | Name | Frames | fps | Loop | Facings | Milestone | Notes |
 |---|---|---|---|---|---|---|
 | `idle` | 2 | 2 | yes | 8 | M1 | a breath: one pixel of chest and hood |
-| `walk` | 6 | 10 | yes | 8 | M1 | the blade bobs with the hand; on a v2 sheet it plays by distance, one cycle per `anim.walkCyclePx` (64 world px, §8). In encounters the engine plays it only as `run`'s stand-in; walking for its own sake is M2's holding |
-| `run` | 8 | 16 | yes | 8 | M1 | the Kindled's movement in encounters, Combat and Calm alike (GAME DESIGN 2026-10-16); plays by distance, one cycle per `anim.runCyclePx` (96 world px, §8), so 12 world px a frame; the fps only matters where nothing drives it by distance. 8 frames because PixelLab's `running-8-frames` template draws 8, and dropping two would break the cycle's even timing. The recipe lists the frames starting at the first contact (a foot lands), so frame 0 is a contact. Required since #46 (off `ANIMS_AWAITING_ART`); on a sheet without it (v1) the engine plays `walk` at the run's cycle in its place |
+| `walk` | 6 | 10 | yes | 8 | M1 | the blade bobs with the hand; it plays by distance, one cycle per `anim.walkCyclePx` (64 world px, §8). In encounters the engine plays it only as `run`'s stand-in; walking for its own sake is M2's holding |
+| `run` | 8 | 16 | yes | 8 | M1 | the Kindled's movement in encounters, Combat and Calm alike (GAME DESIGN 2026-10-16); plays by distance, one cycle per `anim.runCyclePx` (96 world px, §8), so 12 world px a frame; the fps only matters where nothing drives it by distance. 8 frames because PixelLab's `running-8-frames` template draws 8, and dropping two would break the cycle's even timing. The recipe lists the frames starting at the first contact (a foot lands), so frame 0 is a contact. Required since #46 (off `ANIMS_AWAITING_ART`); while a row awaits art and a sheet lacks it, the engine plays `walk` at the run's cycle in its place |
 | `dodge` | 4 | 16 | no | 8 | M1 | 1 = crouch, 2–3 = the roll (body a 12×12 ball), 4 = recover; frame 2–3 are the perfect-dodge window art |
 | `light_1`, `light_2`, `light_3` | 3 each | 15 | no | 8 | M1 | wind-up, swing (the arc), recover; `light_3` ends lower |
 | `heavy_charge` | 3 | 12 | hold last | 8 | M1 | the drawn-back stance; the spark comes from `hookblade-fx`, drawn at each frame's `tip` point (§5), not from the sheet |
@@ -179,10 +171,9 @@ The engine (`apps/client/src/render/chestSprites.ts`) draws each chest as a spri
 same render boundary and origin as the other props (the soles row on its sim position, snapped to the sheet's art
 grid), y-sorted with the bodies, its frame from `opened` on the client clock like the tile doors (§10, the shared
 `opening.ts` helper): `closed` loops at the sheet's rate (still with 1 frame); `opened` turning true plays `opening`
-once, then `open` holds. With the sheet the engine draws nothing of its own over the chest (the blinking clasp belongs
-to the procedural drawing; any glint is ART's, in `closed`); the grounding shadow stays the engine's, under it.
-Without the sheet, `drawChest` in `world.ts` stays as it is: the fallback until ART's `prop-chest` lands, like the
-procedural room. `window.__iot.useChestSheet(sheet, pngUrl)` hands the client a sheet for a playtest, and
+once, then `open` holds. The engine draws nothing of its own over the chest (any glint is ART's, in `closed`); the
+grounding shadow stays the engine's, under it. The sheet is one of the client's sprite sheets (`SPRITE_SHEET_NAMES`),
+loaded with the characters, and the only chest there is (M1's procedural chest went with the v1 path, G1.5g).
 `window.__iot.chestFrames()` reads the frames; the client tests use the fixture `packages/shared/test/fixtures/prop-chest.*`
 (made by the `.py` beside it; it never ships).
 
@@ -193,12 +184,12 @@ Phaser 3 **JSON Hash atlas** (`this.load.atlas(key, png, json)`) with two extra 
 ```json
 {
   "frames": {
-    "walk_S_0": { "frame": { "x": 0, "y": 40, "w": 48, "h": 40 }, "rotated": false, "trimmed": false,
-                  "spriteSourceSize": { "x": 0, "y": 0, "w": 48, "h": 40 }, "sourceSize": { "w": 48, "h": 40 },
-                  "anchor": { "x": 0.5, "y": 0.9 } }
+    "walk_S_0": { "frame": { "x": 0, "y": 80, "w": 96, "h": 80 }, "rotated": false, "trimmed": false,
+                  "spriteSourceSize": { "x": 0, "y": 0, "w": 96, "h": 80 }, "sourceSize": { "w": 96, "h": 80 },
+                  "anchor": { "x": 0.5, "y": 0.8 } }
   },
-  "meta": { "image": "kindled-ash.png", "size": { "w": 768, "h": 1480 }, "scale": "1", "format": "RGBA8888",
-            "app": "islands-of-the-one/art", "version": "1", "cell": { "w": 48, "h": 40 }, "origin": { "x": 24, "y": 36 },
+  "meta": { "image": "kindled-ash.png", "size": { "w": 768, "h": 2960 }, "scale": "1", "format": "RGBA8888",
+            "app": "iot-art-pipeline", "version": "2", "pixelScale": 1, "cell": { "w": 96, "h": 80 }, "origin": { "x": 48, "y": 64 },
             "facings": ["S", "SE", "E", "NE", "N", "NW", "W", "SW"] },
   "anims": {
     "walk_S": { "frames": ["walk_S_0", "walk_S_1", "walk_S_2", "walk_S_3", "walk_S_4", "walk_S_5"], "frameRate": 10, "repeat": -1 },
@@ -206,6 +197,7 @@ Phaser 3 **JSON Hash atlas** (`this.load.atlas(key, png, json)`) with two extra 
   },
   "palette": {
     "drawn": "clay-grey-ochre",
+    "mask": "kindled-ash.skin.png",
     "swaps": { "clay-pale": { "#8c7f6e": "#e8e2d6", "#5e5448": "#8c7f6e" },
                "clay-red": { "#8c7f6e": "#c98f78", "#5e5448": "#9c5b4a" },
                "clay-river-dark": { "#8c7f6e": "#5e5448", "#5e5448": "#2a2540" } }
@@ -220,12 +212,12 @@ Phaser 3 **JSON Hash atlas** (`this.load.atlas(key, png, json)`) with two extra 
 
 ### v2 (G1.5)
 
-What changes from v1; the facings, the animation table, frame names, frame rates, `anims` and the shadow staying out of the sheet do not.
+The contract's version, the only one the engine loads (`SPRITE_SHEET_VERSION`); the §6 test rejects a sheet that is not it.
 
-- **Meta.** `meta.version: "2"` and `meta.pixelScale: 1` (world px per sheet px). v1 sheets keep `"1"`, have no `pixelScale`, and draw at 2.
-- **Cells.** The §2 v2 table, by kind.
+- **Meta.** `meta.version: "2"` and `meta.pixelScale: 1` (world px per sheet px; the test holds it at 1, and the engine draws every sprite sheet at 1).
+- **Cells.** The §2 table, by kind.
 - **Colours.** Only the 28-colour whitelist: `palette.json`'s tokens minus spark-glow and the three signal colours (`SPRITE_WHITELIST`, derived in code; `palette.json` changes only through art PRs). The two telegraph colours are allowed only in `telegraph*` frames. `#FFFFFF` and `#FFE7A3` never appear.
-- **Skin mask.** The grey-ochre skin ramp (unwritten-sail, unwritten-tar) is shared with wood, rope, belts, boots and the singe's shade; in the 45 px exemplar the belt and both boots are unwritten-tar, so a plain colour swap would recolour them with the skin. A v2 Kindled sheet ships `<name>.skin.png`, the same size as the sheet, an opaque pixel marking skin, and names it in `palette.mask`. The engine swaps `palette.swaps` only under the mask. v1 sheets keep the whole-sheet swap.
+- **Skin mask.** The grey-ochre skin ramp (unwritten-sail, unwritten-tar) is shared with wood, rope, belts, boots and the singe's shade; in the 45 px exemplar the belt and both boots are unwritten-tar, so a plain colour swap would recolour them with the skin. A Kindled sheet ships `<name>.skin.png`, the same size as the sheet, an opaque pixel marking skin, and names it in `palette.mask`. The engine swaps `palette.swaps` only under the mask; there is no other swap.
 
 ```json
 "meta": { "image": "kindled-ash.png", "version": "2", "pixelScale": 1, "cell": { "w": 96, "h": 80 }, "origin": { "x": 48, "y": 64 }, "...": "..." },
@@ -248,9 +240,11 @@ What changes from v1; the facings, the animation table, frame names, frame rates
   | `tip` | the hook's tip: the charge spark | `heavy_charge` |
   | `hand` | the hand the Haul chain leaves from | `haul_throw`, `haul_pull`, `haul_slide`, `haul_recover` |
 
-  - Allowed nowhere else for now, and only on Kindled sheets. A finished v2 Kindled sheet has every required
+  - Allowed nowhere else for now, and only on Kindled sheets. A finished Kindled sheet has every required
     point; an unknown name, a point on another frame, or one outside the cell or on its outer 1 px ring fails.
-  - v1 sheets have no points: the engine keeps M1's offsets for them (§8).
+  - So every frame the engine attaches an effect to has its point. The one frame it shows over a charge or a
+    Haul that has none, the hit flinch after an armored hit (100 ms), keeps the effect where the action last drew
+    it (§8); `hit` frames carry no points.
 
 ### Engine sheets
 
@@ -298,16 +292,16 @@ tasks register NPC sheets as they use them). Every name must have a known kind (
    block. `anchor` matches `meta.origin / cell`.
 5. Every opaque pixel's colour is in the 32-colour palette (tokens.json), the telegraph colours only in `telegraph_*` frames, #FFFFFF nowhere.
 6. Every `palette.swaps` key is one of the four clay tones and every swapped hex occurs in the PNG.
-7. A v1 sheet is version "1" with no `pixelScale` and no mask, has its M1 cell (§2) and `meta.app` `"placeholder"`.
-   A v2 sheet has `meta.app` `"iot-art-pipeline"` (so `kindled-ash` turning v2 needs no test change) and (`packages/shared/test/sheetChecks.ts`):
+7. Every sheet is version "2" and has `meta.app` `"iot-art-pipeline"`. A v1 sheet (version "1", M1's placeholders)
+   fails with "v1 sprite sheets are retired; build it through the pipeline", and the test checks no v1 rule any more.
+   Besides (`packages/shared/test/sheetChecks.ts`):
    - the cell and origin match its kind (§2), and `meta.pixelScale` is 1;
    - no opaque pixel lies on a cell's outer 1 px ring, so nothing was clipped;
    - colours follow §5: the whitelist, the telegraph colours only in `telegraph*` frames, #FFFFFF and #FFE7A3 nowhere;
    - a sheet with a palette block (every Kindled sheet) has its mask: it exists, has the sheet's size, is opaque only on pixels whose colour is a swap key, and every swap key has at least one masked pixel.
-8. Points (§5, `pointProblems` in `sheetChecks.ts`): a v1 sheet has none. On a v2 sheet every point is a known
-   name (`tip`, `hand`), on a frame whose animation carries it, two whole pixels inside the cell and off its outer
-   1 px ring; a finished sheet has every required point on every frame of `heavy_charge` and the four `haul_*`
-   animations.
+8. Points (§5, `pointProblems` in `sheetChecks.ts`): every point is a known name (`tip`, `hand`), on a frame whose
+   animation carries it, two whole pixels inside the cell and off its outer 1 px ring; a finished sheet has every
+   required point on every frame of `heavy_charge` and the four `haul_*` animations.
 
 9. A tile sheet (`tiles-<set>`, §10; `tileSheetProblems` in `packages/shared/test/tileChecks.ts`) skips 1–8 and has
    its own checks: meta `version` "2", `pixelScale` 1 and `app` `"iot-art-pipeline"`, the PNG the size of
@@ -316,13 +310,11 @@ tasks register NPC sheets as they use them). Every name must have a known kind (
    (6 frames at 12 fps) and `_open` (1 frame), played once and held; the `tiles` block, `tileSize` 32,
    `floorWeights` four positive integers and, when present, `faceMidWeights` and `topMidWeights` two positive
    integers each; only the whitelist's colours (no telegraph colours, never #FFFFFF or
-   #FFE7A3) and no soft alpha; `floor_*`, `face_*`, `top_*` and every door frame fully opaque. They run on
-   `packages/shared/test/fixtures/tiles-fixture.*` (made by the `.py` beside it) and broken copies of it until
-   ART's `tiles-cave` lands, then on every tile sheet on disk.
+   #FFE7A3) and no soft alpha; `floor_*`, `face_*`, `top_*` and every door frame fully opaque. They run on every tile sheet on disk
+   (`tiles-cave`), and on `packages/shared/test/fixtures/tiles-fixture.*` (made by the `.py` beside it) and broken
+   copies of it.
 
-The v2 checks run on a small fixture sheet with a mask (`packages/shared/test/fixtures/kindled-fixture.*`, made by the `.py` beside it; it doesn't ship), and on broken copies of it, so they are tested before the first v2 sheet arrives. The client tests its masked swap on the same fixture, and the point checks run on copies of it with `heavy_charge` and `haul_throw` frames. The chest's table runs the same way on `packages/shared/test/fixtures/prop-chest.*` (a 2-frame `closed`) and copies of it (a 1-frame `closed` passes, a 3-frame one fails, a finished chest without `opening` fails).
-
-Until a sheet exists, Claude Code draws the placeholder from this table (a 16×24 rectangle in the Remembrance's outfit colour with the frame name under it) so the animation state machine can be built and tested now.
+The v2 checks also run on a small fixture sheet with a mask (`packages/shared/test/fixtures/kindled-fixture.*`, made by the `.py` beside it; it doesn't ship), and on broken copies of it (a v1 copy among them), so the checks themselves are tested. The client tests its masked swap on the same fixture, and the point checks run on copies of it with `heavy_charge` and `haul_throw` frames. The chest's table runs the same way on `packages/shared/test/fixtures/prop-chest.*` (a 2-frame `closed`) and copies of it (a 1-frame `closed` passes, a 3-frame one fails, a finished chest without `opening` fails).
 
 ## 7. Delivery order
 
@@ -332,14 +324,14 @@ Until a sheet exists, Claude Code draws the placeholder from this table (a 16×2
 
 ## 8. Engine (how the sheets load and animate)
 
-What `apps/client` does with a sheet (MAIN, M1 task 5). Nothing here is in the sheets: a hand-drawn sheet that follows §2–§5 replaces a placeholder with no engine change.
+What `apps/client` does with a sheet (MAIN, M1 task 5). Nothing here is in the sheets: a redrawn sheet that follows §2–§5 replaces the old one with no engine change.
 
-- **Loading.** `apps/client/src/render/spriteSheets.ts`: every sheet in `packages/shared/assets/sprites` (listed in `packages/shared/src/sprites.ts`) loads as a Phaser JSON Hash atlas (`load.atlas(name, png, json)`), keyed by its file name (`kindled-ash`, `husk-peeling`, `husk-nutshell`), with its skin mask when it names one. The frames' `anchor` becomes the sprite origin, so a sprite is placed at the point between its feet (the sim's position is the body centre; the engine adds the feet offset, 5 sim px for the Kindled, the radius for a Husk, where the grounding shadow sits).
-- **Scale.** The world renders at 2× (`WORLD_PX_PER_UNIT`): sprite positions are the sim's ×2 in world px, each snapped to its own art grid. A sprite draws at its sheet's `pixelScale` (`sheetPixelScale`): 1 for a v2 sheet, 2 for a v1 sheet, so M1's sheets look as they did. Only M1's assets draw at 2: the three v1 sheets, hookblade-fx (at its own `meta.pixelScale`, 2 today; "Engine sheets" in §5) and the procedural room (the fallback until ART's tile sheet lands; a tile sheet draws at 1, §10). The engine's own drawings (the slash arc, the thrust line, particles, the perfect-dodge trail's rim, the grounding shadow, poise bars, the pad reticle, the Haul guide) are at the new density, 1 world px per pixel (`apps/client/src/render/scale.ts`); the hit flash is a fill tint of the sprite, so it is the sprite's own pixels.
+- **Loading.** `apps/client/src/render/spriteSheets.ts`: every sheet the client uses (`SPRITE_SHEET_NAMES` in `packages/shared/src/sprites.ts`: `kindled-ash`, `husk-peeling`, `husk-nutshell`, `prop-chest`) is bundled with the code and loads as a Phaser JSON Hash atlas (`load.atlas(name, png, json)`), keyed by its file name, a Kindled sheet with its skin mask. The tile sheet (`tiles-cave`, `caveTileSheet`) loads the same way from `roomTiles.ts`. A sheet whose PNG is not there is an error at load; there is no fallback drawing for anything (G1.5g). The frames' `anchor` becomes the sprite origin, so a sprite is placed at the point between its feet (the sim's position is the body centre; the engine adds the feet offset, 5 sim px for the Kindled, the radius for a Husk, where the grounding shadow sits).
+- **Scale.** The world renders at 2× (`WORLD_PX_PER_UNIT`): sprite positions are the sim's ×2 in world px, each on a whole world px. Every sheet draws at 1 world px per sheet px: the sprites and the chest (`meta.pixelScale` 1, held there by §6), the tile sheet (§10) and hookblade-fx (at its own `meta.pixelScale`, 1 for ART's B sheet; "Engine sheets" in §5). The engine's own drawings (the slash arc, the thrust line, particles, the perfect-dodge trail's rim, the grounding shadow, poise bars, the pad reticle, the Haul guide) are at the same density, 1 world px per pixel (`apps/client/src/render/scale.ts`); the hit flash is a fill tint of the sprite, so it is the sprite's own pixels. Only the F3 debug overlay, M1's hitbox figures, is drawn in sim px and scaled.
 - **Animations.** One Phaser animation per entry of the JSON `anims` block, named `<key>/<anim>` (`kindled-ash/walk_S`, `husk-peeling/telegraph`), with its `frameRate` and `repeat`. They exist for tooling; in play the frame is chosen directly (below), so hitstop, slow-mo and the sim's windows stay exact.
-- **Palette swaps.** For a Kindled sheet the engine builds a tone's texture the first time that tone is used (`toneTextureKey`): the drawn sheet's pixels are copied with each `from → to` hex replaced (`toneSwap.ts`; under the skin mask for a v2 sheet, everywhere for a v1 sheet) and registered as the same atlas under `<key>@<tone>` (`kindled-ash@clay-red`) with its own `<key>@<tone>/<anim>` animations, cached game-wide; tones never used are never built. `window.__iot.setClayTone(tone)` switches the Kindled in a run.
+- **Palette swaps.** For a Kindled sheet the engine builds a tone's texture the first time that tone is used (`toneTextureKey`): the drawn sheet's pixels are copied with each `from → to` hex replaced under the skin mask (`toneSwap.ts`) and registered as the same atlas under `<key>@<tone>` (`kindled-ash@clay-red`) with its own `<key>@<tone>/<anim>` animations, cached game-wide; tones never used are never built. `window.__iot.setClayTone(tone)` switches the Kindled in a run.
 - **The state machine** (`apps/client/src/render/animState.ts`, pure and tested in node) maps sim state to a frame every render frame; the client never decides gameplay. The Kindled:
-  - `idle`, or `run` while the body moves faster than a quarter sim px a tick, facing the nearest of the 8 facings to the aim. In an encounter, Combat and Calm alike, the Kindled always runs (GAME DESIGN 2026-10-16); where a sheet has no `run` (v1), or `run` is on `ANIMS_AWAITING_ART` (§4), `walk` plays in its place, at the run's cycle. `walk` at its own cycle (`gaitPose(sheet, 'walk', …)`) is kept for M2's holding, where walking happens;
+  - `idle`, or `run` while the body moves faster than a quarter sim px a tick, facing the nearest of the 8 facings to the aim. In an encounter, Combat and Calm alike, the Kindled always runs (GAME DESIGN 2026-10-16); while `run` is on `ANIMS_AWAITING_ART` (§4) and a sheet lacks it, `walk` plays in its place, at the run's cycle. `walk` at its own cycle (`gaitPose(sheet, 'walk', …)`) is kept for M2's holding, where walking happens;
   - `dodge` over the dodge window (crouch in the startup, the two roll frames over the active ticks, recover over the recovery);
   - `light_1..3` by combo step: wind-up / swing / recover over the strike's startup / active / recovery;
   - `heavy_charge` while charging, at the sheet's rate, holding the last frame → `heavy_thrust` over startup + active → `heavy_hold` from the tick the thrust pins a Husk until the pin ends (through the hitstop) → `heavy_recover` over the rest of the recovery;
@@ -348,17 +340,18 @@ What `apps/client` does with a sheet (MAIN, M1 task 5). Nothing here is in the s
   - an animation with fewer facings than 8 takes the nearest it has: diagonals go to the nearest of the 4 (ties clockwise: SE→S, NE→E, NW→N, SW→W), `sit` to S or E. Attacks, the dodge and the Haul face the direction the sim locked at their start; idle, charge and the hit face the aim.
   - `carry_*` and `sit` have no sim state yet (hour two, M2), so the engine never asks for them and a finished M1 sheet may leave them out (§4, milestones; `animState.test.ts` plays a run on a sheet without them).
 - **Timing.** The sim's move windows are the authority: an animation with a window is stretched or cut to its ticks. Its frames are split between the phases by fixed shares (lights 1:1:1, dodge 1:2:1, thrust 1:1 over startup and active) and spread evenly inside each phase, so a sheet may change a frame count without touching the engine. Loops and one-shots count sim ticks at the sheet's `frameRate`, so they freeze in hitstop and slow with slow-mo.
-- **Walk and run play by distance (G1.5c).** On a v2 sheet the Kindled's `walk` and `run` pick their frame from how far the body has moved, not from time: `frame = floor(distance / cyclePx × frames) mod frames`, with `cyclePx` from the `anim` block of `tuning.json`, in world px per full cycle: `walkCyclePx` 64, `runCyclePx` 96 (GAME DESIGN's numbers; feel values like `juice`, which ART may ask to adjust to the sheet, and live in F2). The distance is the world px between the interpolated render positions the client already has (`StrideMeter`, `apps/client/src/render/stride.ts`), summed for the whole session: it keeps growing through stops, so a restart carries on the cycle instead of popping to frame 0, and it stands still when the body does (a wall, hitstop). It only picks a frame; the sim moves the body. The `walk` that stands in for `run` plays at `runCyclePx`. At moveSpeed 100 (200 world px/s) a run cycle takes 0.48 s. Every other animation keeps its timing above; a v1 sheet keeps the fixed frame rate for walk too, and the Nutshell's `walk` stays time-based.
+- **Walk and run play by distance (G1.5c).** The Kindled's `walk` and `run` pick their frame from how far the body has moved, not from time: `frame = floor(distance / cyclePx × frames) mod frames`, with `cyclePx` from the `anim` block of `tuning.json`, in world px per full cycle: `walkCyclePx` 64, `runCyclePx` 96 (GAME DESIGN's numbers; feel values like `juice`, which ART may ask to adjust to the sheet, and live in F2). The distance is the world px between the interpolated render positions the client already has (`StrideMeter`, `apps/client/src/render/stride.ts`), summed for the whole session: it keeps growing through stops, so a restart carries on the cycle instead of popping to frame 0, and it stands still when the body does (a wall, hitstop). It only picks a frame; the sim moves the body. The `walk` that stands in for `run` plays at `runCyclePx`. At moveSpeed 100 (200 world px/s) a run cycle takes 0.48 s. Every other animation keeps its timing above, and the Nutshell's `walk` stays time-based (by design).
 - **Husks.** `spawn` stretched over the spawn-in (`spawnMs`), the engine's ring under it, the Husk not awake until it ends; `idle`; the Nutshell's `walk` by velocity while it chases whole (a chipped Nutshell keeps its chipped frame); `telegraph` through the wind-up, blinking with the resting frame while the attack still tracks the player and solid once it has locked (the sheet's pre-tinted frames are the telegraph colour); `lunge` stretch and hit over the Peeling's active ticks, settle through its recovery; the Nutshell's `slam`, frame 0 over the first half of its active ticks and frame 1 over the second, held through the recovery; `hit` for 100 ms after a hit; `chipped` / `chipped_outer` / `chipped_inner` once shell layers are gone; `regrow` as a one-shot on the regrow event; `death` then `drop` (250 ms) on a transient kept after the sim removes the Husk, where the engine's Sparkglass pickups fly out. `flipX` when a Husk moves or lunges west.
-- **Effects stay in the engine:** the grounding shadow (20×6 world px under a Kindled, a Husk's scaled by its radius against the player's), the white hit flash (a fill tint for `juice.hitFlashFrames`), chips and the core flare as particles, the slash arc and thrust line (hitbox flashes; M1's straight blade stroke in a light's wind-up only over a v1 sheet, since a v2 sheet draws its own blade), poise bars, the perfect-dodge trail (the sprite's frame as spark-glow afterimages over a 1 px hollow-deep rim) and the Hookblade FX (chain, hook, charge spark).
-- **The Hookblade's points.** The charge spark is drawn at the current frame's `tip`, and the Haul chain starts at its `hand` (§5). A point maps to the world like the frame itself: `world = the anchor the sprite is drawn at + (point − cell origin) × pixelScale`, in world px, with the anchor and rounding the sprite uses, so the spark and the chain move with the sprite pixel for pixel. The spark, the chain's links and the hook are placed at whole world px; the hook head stays at the sim's hook position (or the hooked Husk's). A frame without the point (a v1 sheet, a fixture) keeps M1's offsets from the body centre (`m1HookbladeOffset` in `apps/client/src/render/hookbladePoints.ts`, the v1 fallback). The player's sheet is named in one place, `PLAYER_SHEET` (`CharacterSprites.playerSheet`, `apps/client/src/render/characters.ts`), which the light strike's marks and these lookups read.
+- **Effects stay in the engine:** the grounding shadow (20×6 world px under a Kindled, a Husk's scaled by its radius against the player's), the white hit flash (a fill tint for `juice.hitFlashFrames`), chips and the core flare as particles, the slash arc and thrust line (hitbox flashes; nothing in a light's wind-up, where the sheet draws its own blade), poise bars, the perfect-dodge trail (the sprite's frame as spark-glow afterimages over a 1 px hollow-deep rim) and the Hookblade FX (chain, hook, charge spark).
+- **The Hookblade's points.** The charge spark is drawn at the current frame's `tip`, and the Haul chain starts at its `hand` (§5). A point maps to the world like the frame itself: `world = the anchor the sprite is drawn at + (point − cell origin) × pixelScale`, in world px, with the anchor and rounding the sprite uses, so the spark and the chain move with the sprite pixel for pixel. The spark, the chain's links and the hook are placed at whole world px; the hook head stays at the sim's hook position (or the hooked Husk's). Every frame of those animations has its point (§6); the one frame shown over a charge or a Haul without one, the hit flinch for 100 ms after an armored hit, keeps the last point drawn in the same action, as an offset from the sprite's anchor so it moves with the Kindled (`HookbladeAnchors` in `apps/client/src/render/hookbladePoints.ts`; the memory clears when the action changes), and an action with no earlier point puts the effect on the body centre (`bodyCentre`). The player's sheet is named in one place, `PLAYER_SHEET` (`CharacterSprites.playerSheet`, `apps/client/src/render/characters.ts`), which these lookups read.
 - **F3** draws the old placeholder hitbox shapes over the sprites (with the stats overlay); `window.__iot.setDebugShapes(on)` does the same from the console.
 - **Palette.** `packages/shared/data/palette.json` holds the design system's 32 raw colours (`tokens`, copied from its `tokens.json`; role tokens like `ui-ink` are aliases and stay out) and the four clay tones. It changes only through an art/ PR; the sheet test and the client's `palette.ts` read it.
-- **Placeholders** come from `tools/placeholder-sheets.py` (Python/PIL, reads `packages/shared/data/palette.json`): run it after editing the script or the palette. `packages/shared/test/sprites.test.ts` is the test of §6; `tools/screenshots.mjs` takes the reference shots in `docs/screenshots/m1-task5/` and `tools/screenshots-task7.mjs` those in `docs/screenshots/m1-task7/` (spawn, Haul throw → recover, the Nutshell's walk and slam, the hit flinch → stagger) through the `window.__iot` playtest hooks (`setInputSource`, `setSpeed`, `pose`). Those scripts, like the other M1 and M2 ones (`tools/screenshots-task*.mjs`, `tools/screenshots-m2-*.mjs`), assume M1's 480 × 270 canvas at a CSS zoom and no longer run as-is since G1.5; `tools/screenshots-g15.mjs` takes the current shots (`docs/screenshots/g15/`).
+- **History.** M1's three sheets were v1 placeholders (`meta.version` "1", 48×40 / 24×24 / 40×40 cells drawn at 2 world px per sheet px, made by a Python script in `tools/`); G1.5 replaced them one by one with B sheets through the pipeline, and G1.5g retired the v1 path, the procedural room and chest and the placeholder script, so the §6 test now rejects a v1 sheet.
+- **Tests and shots.** `packages/shared/test/sprites.test.ts` is the test of §6; `tools/screenshots.mjs` takes the reference shots in `docs/screenshots/m1-task5/` and `tools/screenshots-task7.mjs` those in `docs/screenshots/m1-task7/` (spawn, Haul throw → recover, the Nutshell's walk and slam, the hit flinch → stagger) through the `window.__iot` playtest hooks (`setInputSource`, `setSpeed`, `pose`). Those scripts, like the other M1 and M2 ones (`tools/screenshots-task*.mjs`, `tools/screenshots-m2-*.mjs`), assume M1's 480 × 270 canvas at a CSS zoom and no longer run as-is since G1.5; `tools/screenshots-g15.mjs` takes the current shots (`docs/screenshots/g15/`, `g15e/`, `g15g/`).
 
 ## 9. Answers to the PR #12 questions (ART, 2026-10-13)
 
-Done: §4 carries the answers (Husk `spawn`, `haul_recover`, the 2-frame `hit`, the Nutshell's `walk` and `slam` in place of `roll`, `heavy_hold` through the hitstop as the engine already did), §8 describes the engine that plays them, and the lists in `packages/shared/src/sprites.ts`, `animState.ts` and `tools/placeholder-sheets.py` match (M1 task 7). The hand-drawn `kindled-ash`, `husk-peeling` and `husk-nutshell` sheets follow this contract.
+Done: §4 carries the answers (Husk `spawn`, `haul_recover`, the 2-frame `hit`, the Nutshell's `walk` and `slam` in place of `roll`, `heavy_hold` through the hitstop as the engine already did), §8 describes the engine that plays them, and the lists in `packages/shared/src/sprites.ts` and `animState.ts` match (M1 task 7). The hand-drawn `kindled-ash`, `husk-peeling` and `husk-nutshell` sheets follow this contract.
 
 ## 10. Tiles (G1.5e)
 
@@ -372,8 +365,8 @@ ART through the pipeline's `tiles` kind ([`art-pipeline.md`](art-pipeline.md)).
 
 **Cells.** From the template legend (`rooms.json`): `#`, `o` and `D` are solid (a door counts as wall for its
 neighbours and draws its own piece), and so is every cell outside the room (and past a short row's end). Everything
-else is open: `.`, `P`, `S` and `C` draw as plain floor. The chest is a sprite from ART's `prop-chest` when that
-sheet is loaded (§4, "The chest"), else the engine's drawing.
+else is open: `.`, `P`, `S` and `C` draw as plain floor. The chest is a sprite from ART's `prop-chest` (§4, "The
+chest").
 
 **The rule.** Everything draws under the sprites. Open sides in a name are always in the order n, w, e.
 
@@ -408,11 +401,10 @@ Colours: the 28-colour whitelist only, no telegraph colours,
 never #FFFFFF or #FFE7A3. `floor_*`, `face_*`, `top_*` and every door frame are fully opaque; shades and corners
 may be transparent. Checked by §6 item 9.
 
-**The engine** (`apps/client/src/render/roomTiles.ts`). When the tile sheet is loaded, the room's static pieces
-are drawn once per room into a texture on the world layer at `DEPTH.room`, a cell (c, r) at world (c × 32,
+**The engine** (`apps/client/src/render/roomTiles.ts`). The room's static pieces are drawn once per room into a texture on the world layer at `DEPTH.room`, a cell (c, r) at world (c × 32,
 r × 32), no piece scaled; the doors are images over it (`DEPTH.roomDoors`) whose frame comes from the state's
 `doorOpen` on the client clock (the client only renders it). Depth, camera clamping and the hollow margin around
-the room are unchanged. Without the sheet, M1's procedural room stays as it was, at 2×: the fallback until ART's
-`tiles-cave` lands (a later task removes it). `window.__iot.useTileSheet(sheet, pngUrl)` hands the client a sheet
-for a playtest; `tools/screenshots-g15.mjs --rooms` uses it to shoot the five M1 rooms from the test fixture
-(`docs/screenshots/g15e/`).
+the room are unchanged. The sheet is bundled with the code (`caveTileSheet`) and its PNG loads with the sprite
+sheets; a missing PNG is the same error as a missing sprite sheet's. There is no other room: M1's procedural room
+went with the v1 path (G1.5g). `tools/screenshots-g15.mjs --rooms` shoots the five M1 rooms from it
+(`docs/screenshots/g15g/`; `g15e/` has the earlier shots from the test fixture).

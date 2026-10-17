@@ -1,7 +1,7 @@
-import { CHEST_SHEET, type SpriteSheet } from '@iot/shared';
+import { CHEST_SHEET, SPRITE_SHEET_NAMES, spriteSheets, type SpriteSheet } from '@iot/shared';
 import { describe, expect, it } from 'vitest';
 import fixtureJson from '../../../../packages/shared/test/fixtures/prop-chest.json' with { type: 'json' };
-import { activeChestSheet, chestFrameAt, chestRenderer, setChestSheet } from './chestSprites.js';
+import { chestFrameAt } from './chestSprites.js';
 import { loopFrameAt, nextOpenView, openingStateAt, type OpenView } from './opening.js';
 
 const fixture: SpriteSheet = fixtureJson;
@@ -81,18 +81,16 @@ describe('the chest from the prop-chest fixture, from `opened` on the client clo
 });
 
 describe('which chest the world draws', () => {
-  it("draws from ART's prop-chest, which is on disk", () => {
-    expect(activeChestSheet()?.key).toBe('prop-chest');
-    expect(activeChestSheet()?.sheet).not.toBe(fixture);
-    expect(chestRenderer((key) => key === 'prop-chest')).toBe('sheet');
-    // Not loaded (the PNG failed): still the fallback.
-    expect(chestRenderer(() => false)).toBe('procedural');
-  });
-
-  it('keeps the sheet on disk over one a playtest hands in (the fixture standing in for one)', () => {
-    setChestSheet({ key: CHEST_SHEET, sheet: fixture, url: 'data:image/png;base64,' });
-    expect(activeChestSheet()?.sheet).not.toBe(fixture);
-    setChestSheet(null);
-    expect(activeChestSheet()?.key).toBe('prop-chest');
+  it("ART's prop-chest, one of the sprite sheets the client loads, and nothing else", () => {
+    expect(SPRITE_SHEET_NAMES).toContain(CHEST_SHEET);
+    const sheet = spriteSheets[CHEST_SHEET];
+    expect(sheet).not.toBe(fixture);
+    expect(sheet.meta.image).toBe('prop-chest.png');
+    // Its states play as the fixture's do: closed with the glint, opening once, open held.
+    const view = nextOpenView(nextOpenView(null, false, 0), true, 100);
+    expect(chestFrameAt(sheet, nextOpenView(null, false, 0), 0)).toBe('closed_0');
+    expect(chestFrameAt(sheet, view, 100)).toBe('opening_0');
+    expect(chestFrameAt(sheet, view, 100 + 250)).toBe('opening_3');
+    expect(chestFrameAt(sheet, view, 100 + 334)).toBe('open_0');
   });
 });

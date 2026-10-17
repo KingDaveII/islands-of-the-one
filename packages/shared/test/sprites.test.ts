@@ -7,10 +7,8 @@ import {
   KINDLED_POINT_ANIMS,
   KINDLED_POINTS,
   spritePointsFor,
-  isV2Sheet,
   kindledAnimKey,
   kindledFrameName,
-  LEGACY_PIXEL_SCALE,
   HUSK_TABLES,
   ANIMS_AWAITING_ART,
   KINDLED_ANIMS,
@@ -29,12 +27,12 @@ import {
   PROP_TABLES,
   REQUIRED_MILESTONE,
   isRequiredAnim,
-  sheetPixelScale,
   skinMaskName,
   SPRITE_CANVAS,
   SPRITE_CELLS,
   SPRITE_FACINGS,
   SPRITE_SHEET_NAMES,
+  SPRITE_SHEET_VERSION,
   SPRITE_WHITELIST,
   spriteCellSpecFor,
   spriteSheetSpec,
@@ -42,13 +40,15 @@ import {
   spriteSheets,
   WORLD_PX_PER_UNIT,
   type SpriteSheet,
+  caveTileSheet,
+  CAVE_TILE_SHEET,
   isTileSheetName,
   type TileSheet,
 } from '../src/index.js';
 import fixtureSheet from './fixtures/kindled-fixture.json' with { type: 'json' };
 import chestFixture from './fixtures/prop-chest.json' with { type: 'json' };
 import { decodePng } from './png.js';
-import { pointProblems, tableProblems, v2Problems, type Rgba } from './sheetChecks.js';
+import { pointProblems, tableProblems, V1_RETIRED, v2Problems, type Rgba } from './sheetChecks.js';
 import { tileSheetProblems } from './tileChecks.js';
 
 /**
@@ -58,10 +58,11 @@ import { tileSheetProblems } from './tileChecks.js';
  * carry their table's animation × facing matrix up to REQUIRED_MILESTONE (later rows
  * absent or complete), the anchor is the origin, every
  * opaque pixel is a palette token (telegraph colours only in telegraph
- * frames, pure white nowhere) and the palette swaps are valid. A v2 sheet
- * also follows the v2 contract (sheetChecks.ts): its kind's cell and origin,
- * pixelScale 1, nothing clipped at a cell's edge, the colour whitelist, and
- * its skin mask. The v2 fixture in test/fixtures runs through the same checks.
+ * frames, pure white nowhere) and the palette swaps are valid. Every sheet
+ * follows the v2 contract (sheetChecks.ts): version "2" (a v1 sheet, M1's
+ * art at 2×, is retired and rejected), its kind's cell and origin, pixelScale
+ * 1, nothing clipped at a cell's edge, the colour whitelist, and its skin
+ * mask. The v2 fixture in test/fixtures runs through the same checks.
  */
 const SPRITE_DIR = new URL('../assets/sprites/', import.meta.url);
 const ON_DISK = readdirSync(SPRITE_DIR).sort();
@@ -110,6 +111,21 @@ describe('the sheets on disk (packages/shared/assets/sprites)', () => {
       expect(disk.has(name), `${name} is not on disk`).toBe(true);
       expect(spriteSheets[name], name).toEqual(disk.get(name));
     }
+    // The chest is one of them (G1.5g): the engine draws every chest from it, with no fallback.
+    expect(SPRITE_SHEET_NAMES).toContain(CHEST_SHEET);
+  });
+
+  it("hold the tile sheet the client draws every room from (tiles-cave), as the client's import has it", () => {
+    const disk = new Map(TILE_SHEETS);
+    expect(disk.has(CAVE_TILE_SHEET), `${CAVE_TILE_SHEET} is not on disk`).toBe(true);
+    expect(caveTileSheet).toEqual(disk.get(CAVE_TILE_SHEET));
+  });
+
+  it('are all v2 sheets built by the art pipeline: v1 sprite sheets are retired', () => {
+    for (const [name, sheet] of ALL_SHEETS as [string, SpriteSheet][]) {
+      expect(sheet.meta.version, `${name}: ${V1_RETIRED}`).toBe(SPRITE_SHEET_VERSION);
+      expect(sheet.meta.app, name).toBe('iot-art-pipeline');
+    }
   });
 });
 const fixtureUrl = (image: string): URL => new URL(`./fixtures/${image}`, import.meta.url);
@@ -135,8 +151,8 @@ for (const [name, sheet] of TILE_SHEETS) {
 describe('the v2 fixture sheet (test/fixtures/kindled-fixture)', () => {
   const sheet: SpriteSheet = fixtureSheet;
   it('is a v2 Kindled sheet', () => {
-    expect(isV2Sheet(sheet)).toBe(true);
-    expect(sheetPixelScale(sheet)).toBe(1);
+    expect(sheet.meta.version).toBe(SPRITE_SHEET_VERSION);
+    expect(sheet.meta.pixelScale).toBe(1);
   });
   sheetSuite('kindled-fixture', sheet, fixtureUrl, false);
 });
@@ -144,7 +160,7 @@ describe('the v2 fixture sheet (test/fixtures/kindled-fixture)', () => {
 describe('the chest fixture sheet (test/fixtures/prop-chest)', () => {
   const sheet: SpriteSheet = chestFixture;
   it('is a v2 prop sheet with the chest table: closed (2 frames), opening (4), open (1)', () => {
-    expect(isV2Sheet(sheet)).toBe(true);
+    expect(sheet.meta.version).toBe(SPRITE_SHEET_VERSION);
     expect(Object.keys(sheet.anims)).toEqual([...CHEST_ANIMS]);
     expect(sheet.anims.closed?.frames).toEqual(['closed_0', 'closed_1']);
   });
@@ -321,26 +337,20 @@ function sheetSuite(name: string, sheet: SpriteSheet, url: (image: string) => UR
     });
   }
 
-  if (isV2Sheet(sheet)) {
-    it('follows the v2 contract: cell, origin, pixelScale, nothing clipped, the whitelist, the skin mask', () => {
-      const maskFile = sheet.palette?.mask ? url(sheet.palette.mask) : null;
-      if (maskFile) expect(existsSync(maskFile), sheet.palette?.mask).toBe(true);
-      const mask = maskFile && existsSync(maskFile) ? decodePng(readFileSync(maskFile)) : null;
-      expect(v2Problems(name, sheet, png, mask)).toEqual([]);
-    });
+  it(`is a v2 sheet (${V1_RETIRED})`, () => {
+    expect(sheet.meta.version, V1_RETIRED).toBe(SPRITE_SHEET_VERSION);
+  });
 
-    it(`carries its points: known names, only where allowed, inside the cell${shipped ? ', every required one' : ''}`, () => {
-      expect(pointProblems(name, sheet, shipped)).toEqual([]);
-    });
-  } else {
-    it('is a v1 sheet: version "1", no pixelScale, drawn at the legacy 2×, no points', () => {
-      expect(pointProblems(name, sheet)).toEqual([]);
-      expect(sheet.meta.version).toBe('1');
-      expect(sheet.meta.pixelScale).toBeUndefined();
-      expect(sheet.palette?.mask).toBeUndefined();
-      expect(sheetPixelScale(sheet)).toBe(LEGACY_PIXEL_SCALE);
-    });
-  }
+  it('follows the v2 contract: cell, origin, pixelScale, nothing clipped, the whitelist, the skin mask', () => {
+    const maskFile = sheet.palette ? url(sheet.palette.mask) : null;
+    if (maskFile) expect(existsSync(maskFile), sheet.palette?.mask).toBe(true);
+    const mask = maskFile && existsSync(maskFile) ? decodePng(readFileSync(maskFile)) : null;
+    expect(v2Problems(name, sheet, png, mask)).toEqual([]);
+  });
+
+  it(`carries its points: known names, only where allowed, inside the cell${shipped ? ', every required one' : ''}`, () => {
+    expect(pointProblems(name, sheet, shipped)).toEqual([]);
+  });
 }
 
 describe('the palette', () => {
@@ -362,9 +372,10 @@ describe('the palette', () => {
 });
 
 describe('the v2 contract (sprites.md §2, §5)', () => {
-  it('draws the world at 2× and M1 art at 2×', () => {
+  it('draws the world at 2× and every sprite sheet at 1 world px per sheet px', () => {
     expect(WORLD_PX_PER_UNIT).toBe(2);
-    expect(LEGACY_PIXEL_SCALE).toBe(2);
+    expect(SPRITE_SHEET_VERSION).toBe('2');
+    for (const [name, sheet] of SHEETS) expect(sheet.meta.pixelScale, name).toBe(1);
   });
 
   it('puts the 64×64 canvas in each cell with the soles on the row above the origin', () => {
@@ -427,6 +438,13 @@ describe('the v2 contract (sprites.md §2, §5)', () => {
 
     it('passes as drawn', () => {
       expect(v2Problems('kindled-fixture', sheet, png, mask)).toEqual([]);
+    });
+
+    it('a v1 sheet: version "1" is retired, whatever else it gets right', () => {
+      const v1 = { ...sheet, meta: { ...sheet.meta, version: '1' } };
+      expect(v2Problems('kindled-fixture', v1, png, mask)).toEqual([`meta.version is 1, not "2": ${V1_RETIRED}`]);
+      // Its points follow the same rules as any other sheet's: no v1 rules remain.
+      expect(pointProblems('kindled-fixture', v1, false)).toEqual([]);
     });
 
     it('a wrong cell, origin or pixel scale for the kind', () => {
@@ -572,15 +590,6 @@ describe('points (sprites.md §5)', () => {
       'haul_throw_W_0: hand is [96.5,3], not [x, y] in whole pixels',
     ]);
     expect(pointProblems('kindled-test', withPoints({ ...good, heavy_charge_S_0: { tip: [94, 78] } }))).toEqual([]);
-  });
-
-  it('fails any point on a v1 sheet', () => {
-    const v1 = { ...withPoints(good), meta: { ...fixtureSheet.meta, version: '1' } };
-    expect(pointProblems('kindled-test', v1)).toEqual([
-      'points on a v1 sheet: heavy_charge_S_0, heavy_charge_S_1, haul_throw_W_0',
-    ]);
-    const bare = withPoints({});
-    expect(pointProblems('kindled-test', { ...bare, meta: { ...bare.meta, version: '1' } })).toEqual([]);
   });
 
   it('reads a point as { x, y } in the cell, null where a frame has none', () => {
@@ -862,30 +871,6 @@ describe('the chest table on a sheet (tableProblems on test/fixtures/prop-chest)
     expect(check(chest({ ...chestFixture.anims, idle: { frames: ['closed_0'], frameRate: 8, repeat: -1 } }))).toEqual([
       'animations outside the table: idle',
     ]);
-  });
-});
-
-describe('the sprite sheet table', () => {
-  // M1's v1 cells (sprites.md §2); a sheet that has turned v2 is checked by v2Problems instead.
-  const M1_CELLS: Record<string, { cell: { w: number; h: number }; origin: { x: number; y: number } }> = {
-    'kindled-ash': { cell: { w: 48, h: 40 }, origin: { x: 24, y: 36 } },
-    'husk-peeling': { cell: { w: 24, h: 24 }, origin: { x: 12, y: 18 } },
-    'husk-nutshell': { cell: { w: 40, h: 40 }, origin: { x: 20, y: 34 } },
-  };
-
-  it('names the cell grid and origin of each M1 sheet still on v1 (sprites.md §2)', () => {
-    for (const [name, sheet] of SHEETS) {
-      if (isV2Sheet(sheet)) continue;
-      const m1 = M1_CELLS[name];
-      expect(m1, `${name} is a v1 sheet that M1 never had`).toBeDefined();
-      expect({ cell: sheet.meta.cell, origin: sheet.meta.origin }, name).toEqual(m1);
-    }
-  });
-
-  it('marks v1 sheets as placeholders and v2 sheets as built by the art pipeline', () => {
-    for (const [name, sheet] of SHEETS) {
-      expect(sheet.meta.app, name).toBe(isV2Sheet(sheet) ? 'iot-art-pipeline' : 'placeholder');
-    }
   });
 });
 
