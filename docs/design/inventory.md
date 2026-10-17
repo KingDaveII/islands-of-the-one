@@ -216,9 +216,17 @@ draws them.
 - **Moving items** goes to the other pane: mouse, click moves the cell's stack, right-click moves one,
   drag to the other pane moves the stack; pad, Cross moves the stack, Square moves one, the D-pad or
   the left stick moves the focus, L1/R1 switch tabs; touch, tap moves the stack, long-press moves one;
-  keyboard, the arrows move the focus, Enter moves the stack, Tab switches tabs. Every move is a
-  `POST /api/inventory/move`; the screen redraws from the answer, never optimistically, and takes no
-  other move while one is in flight. A refusal shows its reason in one line ("Pack full.").
+  keyboard, the arrows or WASD move the focus, Enter moves the stack, Tab switches tabs. Every move is
+  a `POST /api/inventory/move`; the screen redraws from the answer, never optimistically, and takes no
+  other move while one is in flight. A refusal shows its reason in one line, right-aligned in the
+  header row of the pane the move went to (`PACK 20/20 … Pack full.`; the store's limit in the store's
+  header): it blinks twice, holds for 2 s, then disappears in one frame, never a fade
+  (`refusalVisible` in `inventoryView.ts`, on `blinkOut()`'s rule).
+- **Focus.** Only the pane the keys or the pad act on has the lit (`ui-focus`) rim; the other keeps
+  the plain panel frame, and with the mouse alone neither is lit. The focused cell keeps its own frame.
+  The store's page counter sits right-aligned in its header row, with the page glyphs (D-pad up and
+  down, or W and S) on either side; the Q / F key glyphs sit centred under their slots, as the HUD
+  shows its key hints.
 - **The tooltip** (hover with the mouse, focus on the pad) takes no input: the name, the kind line
   (`Material · Mining`, or just the kind), the card text muted under a 1 px divider, the count in
   this pane.
