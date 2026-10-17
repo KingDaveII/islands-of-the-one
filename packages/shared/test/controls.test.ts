@@ -97,6 +97,7 @@ describe('controls.json', () => {
       interact: { calm: 'E' },
       chartPeek: 'Tab',
       journal: 'J',
+      inventory: 'I',
       menu: 'Esc',
       controls: 'C',
       tuning: 'F2',
@@ -107,6 +108,14 @@ describe('controls.json', () => {
     expect(bindingKeys(KEYBOARD.dodge, 'calm')).toEqual(['Space']);
     // The middle mouse button first (the glyph the hints show), 1 as the alternate.
     expect(bindingKeys(KEYBOARD.ability1, 'combat')).toEqual(['MMB', '1']);
+  });
+
+  it('opens the inventory with I on the keyboard and the Touchpad on every pad preset (M2 Task 3a)', () => {
+    expect(bindingKeysAll(KEYBOARD.inventory)).toEqual(['I']);
+    for (const preset of controlsData.presets) {
+      const b: Record<string, ControlBinding> = preset.bindings;
+      expect(bindingKeysAll(b.inventory), preset.id).toEqual(['Touchpad']);
+    }
   });
 
   it('Triggers and Left-stick (Playtest 2): R1 light, R2 heavy, L2 Haul, L1 dodge', () => {

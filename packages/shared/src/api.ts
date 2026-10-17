@@ -1,4 +1,5 @@
 import { isClayTone, isRemembrance, type Remembrance } from './accounts.js';
+import { isPlace, isStationId, type Place } from './places.js';
 import type { ClayTone } from './sprites.js';
 
 /**
@@ -15,6 +16,7 @@ export const ApiRoute = {
   Me: '/api/me',
   Kindled: '/api/kindled',
   Inventory: '/api/inventory',
+  InventoryMove: '/api/inventory/move',
 } as const;
 export type ApiRoute = (typeof ApiRoute)[keyof typeof ApiRoute];
 
@@ -49,6 +51,11 @@ export const ApiErrorCode = {
   UnsupportedMediaType: 'unsupported-media-type',
   NotFound: 'not-found',
   Internal: 'internal',
+  // Inventory moves (docs/design/inventory.md), the same codes inventory.apply refuses with.
+  PackFull: 'pack-full',
+  StackLimit: 'stack-limit',
+  Insufficient: 'insufficient',
+  WrongPlace: 'wrong-place',
 } as const;
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
 
@@ -106,13 +113,35 @@ export interface KindledResponse {
 
 /** One held item: an id from data/items.json and how many (always more than 0). */
 export interface InventoryEntry {
-  item: string;
+  itemId: string;
   quantity: number;
 }
 
-/** GET /api/inventory: the signed-in Kindled's items, in items.json order. */
+/**
+ * GET /api/inventory, and the answer to a move: the signed-in Kindled's
+ * items by place (docs/design/inventory.md), each list in items.json order,
+ * the baskets keyed by station id. Pack slots are derived (packSlots in
+ * places.ts), never sent.
+ */
 export interface InventoryResponse {
-  items: InventoryEntry[];
+  purse: InventoryEntry[];
+  pack: InventoryEntry[];
+  store: InventoryEntry[];
+  baskets: Record<string, InventoryEntry[]>;
+}
+
+/**
+ * POST /api/inventory/move: `quantity` of an item from one place to
+ * another. The pack and the store move both ways; a basket moves to the
+ * store; nothing else (canMove in places.ts). Answers the new
+ * InventoryResponse, or pack-full, stack-limit, insufficient, wrong-place or
+ * bad-request.
+ */
+export interface InventoryMoveRequest {
+  itemId: string;
+  from: Place;
+  to: Place;
+  quantity: number;
 }
 
 type Obj = Record<string, unknown>;
@@ -174,18 +203,38 @@ export function isKindledResponse(value: unknown): value is KindledResponse {
   return isObject(value) && isKindledView(value.kindled);
 }
 
+const isPositiveInt = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
+
 export function isInventoryEntry(value: unknown): value is InventoryEntry {
+  return isObject(value) && typeof value.itemId === 'string' && isPositiveInt(value.quantity);
+}
+
+const isEntryList = (value: unknown): value is InventoryEntry[] =>
+  Array.isArray(value) && value.every(isInventoryEntry);
+
+export function isInventoryResponse(value: unknown): value is InventoryResponse {
   return (
     isObject(value) &&
-    typeof value.item === 'string' &&
-    typeof value.quantity === 'number' &&
-    Number.isSafeInteger(value.quantity) &&
-    value.quantity > 0
+    hasOnly(value, ['purse', 'pack', 'store', 'baskets']) &&
+    isEntryList(value.purse) &&
+    isEntryList(value.pack) &&
+    isEntryList(value.store) &&
+    isObject(value.baskets) &&
+    Object.entries(value.baskets).every(([k, v]) => isStationId(k) && isEntryList(v))
   );
 }
 
-export function isInventoryResponse(value: unknown): value is InventoryResponse {
-  return isObject(value) && Array.isArray(value.items) && value.items.every(isInventoryEntry);
+/** Shape only: the route then checks the item, the places and the counts. Nothing is clamped. */
+export function isInventoryMoveRequest(value: unknown): value is InventoryMoveRequest {
+  return (
+    isObject(value) &&
+    hasOnly(value, ['itemId', 'from', 'to', 'quantity']) &&
+    typeof value.itemId === 'string' &&
+    isPlace(value.from) &&
+    isPlace(value.to) &&
+    isPositiveInt(value.quantity)
+  );
 }
 
 const ERROR_CODES = new Set<string>(Object.values(ApiErrorCode));

@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
   CURRENT_TELLING,
+  DRAWABLE_CHARS,
   InventoryReason,
   isInventoryReason,
-  isInventoryResponse,
   isItemId,
   itemDef,
   ITEM_KINDS,
+  ITEM_SKILLS,
   ITEMS,
   itemOrder,
   RETIRED_WORDS,
+  SKILL_NAMES,
   validateItemsData,
 } from '../src/index.js';
 import { BANNED } from './banned.js';
@@ -52,7 +54,7 @@ describe('items.json', () => {
     ]);
   });
 
-  it('uses no retired glossary word and no banned name in any id or name', () => {
+  it('uses no retired glossary word and no banned name in any id, name or card text', () => {
     for (const item of ITEMS) {
       for (const text of [item.id, item.name, item.description]) {
         expect(BANNED.test(text), text).toBe(false);
@@ -62,13 +64,39 @@ describe('items.json', () => {
     }
   });
 
-  it('gives every item a known kind and a limit', () => {
+  it("has LORE's card text for every item, in characters the fonts can draw", () => {
+    // A character the atlases lack is flagged here, not changed in the text (tools/bitmap-fonts.py adds it).
+    const lacking: string[] = [];
+    for (const item of ITEMS) {
+      expect(item.description.trim(), item.id).not.toBe('');
+      for (const ch of `${item.name}${item.description}`)
+        if (!DRAWABLE_CHARS.has(ch))
+          lacking.push(`${item.id}: "${ch}" (U+${ch.codePointAt(0)?.toString(16)})`);
+    }
+    expect(lacking).toEqual([]);
+    expect(itemDef('glass-chip')?.name).toBe('Humming glass');
+    expect(itemDef('streaked-stone')?.description).toContain("bird's wing");
+  });
+
+  it('gives every item a known kind, a limit and at most one skill', () => {
     for (const item of ITEMS) {
       expect(ITEM_KINDS).toContain(item.kind);
       if (item.stackLimit !== null) expect(item.stackLimit).toBeGreaterThan(0);
+      if (item.skill !== null) expect(ITEM_SKILLS).toContain(item.skill);
     }
-    expect(itemDef('sealed-gin')).toMatchObject({ kind: 'currency', stackLimit: null });
-    expect(itemDef('twisted-log')?.stackLimit).toBe(9999);
+    expect(itemDef('sealed-gin')).toMatchObject({
+      kind: 'currency',
+      stackLimit: null,
+      skill: null,
+    });
+    expect(itemDef('twisted-log')).toMatchObject({ stackLimit: 9999, skill: 'woodcutting' });
+    expect(itemDef('black-stone')?.skill).toBe('mining');
+    expect(itemDef('streaked-stone')?.skill).toBe('mining');
+    expect(itemDef('grey-seeds')?.skill).toBe('farming');
+    expect(itemDef('pale-grain')?.skill).toBe('farming');
+    expect(itemDef('wild-sliver')?.skill).toBeNull();
+    expect(ITEM_KINDS).toEqual(['currency', 'sparkglass', 'material', 'consumable', 'lore']);
+    for (const skill of ITEM_SKILLS) expect(SKILL_NAMES[skill]).toMatch(/^[A-Z][a-z]+$/);
   });
 
   it('looks items up by id', () => {
@@ -84,7 +112,11 @@ describe('validateItemsData', () => {
   it('accepts a good entry', () => {
     expect(
       validateItemsData({ items: [good, { ...good, id: 'gin', stackLimit: 'unlimited' }] }),
-    ).toMatchObject({ ok: true, items: [{ stackLimit: 9999 }, { stackLimit: null }] });
+    ).toMatchObject({ ok: true, items: [{ stackLimit: 9999, skill: null }, { stackLimit: null }] });
+    expect(validateItemsData({ items: [{ ...good, skill: 'mining' }] })).toMatchObject({
+      ok: true,
+      items: [{ skill: 'mining' }],
+    });
   });
 
   it('refuses each kind of bad entry', () => {
@@ -99,6 +131,9 @@ describe('validateItemsData', () => {
     for (const stackLimit of [0, -1, 1.5, 'lots', null, 2 ** 60])
       expect(problemsOf([{ ...good, stackLimit }]), String(stackLimit)).toHaveLength(1);
     expect(problemsOf([{ ...good, description: 7 }])).toHaveLength(1);
+    expect(problemsOf([{ ...good, description: 'Stone \u05d0' }])).toHaveLength(1);
+    expect(problemsOf([{ ...good, skill: 'smithing' }])).toHaveLength(1);
+    expect(problemsOf([{ ...good, skill: null }])).toHaveLength(1);
     expect(problemsOf([{ ...good, rarity: 'rare' }])).toEqual([
       'items[0]: unknown field(s) rarity',
     ]);
@@ -116,6 +151,7 @@ describe('ledger vocabulary', () => {
       'craft',
       'trade',
       'admin',
+      'move',
     ]);
     expect(isInventoryReason('trade')).toBe(true);
     expect(isInventoryReason('theft')).toBe(false);
@@ -123,17 +159,5 @@ describe('ledger vocabulary', () => {
 
   it('names the current Telling with a kebab-case id', () => {
     expect(CURRENT_TELLING).toMatch(KEBAB);
-  });
-});
-
-describe('isInventoryResponse', () => {
-  it('accepts held items and refuses anything else', () => {
-    expect(isInventoryResponse({ items: [] })).toBe(true);
-    expect(isInventoryResponse({ items: [{ item: 'sealed-gin', quantity: 12 }] })).toBe(true);
-    expect(isInventoryResponse({ items: [{ item: 'sealed-gin', quantity: 0 }] })).toBe(false);
-    expect(isInventoryResponse({ items: [{ item: 'sealed-gin', quantity: 1.5 }] })).toBe(false);
-    expect(isInventoryResponse({ items: [{ item: 3, quantity: 1 }] })).toBe(false);
-    expect(isInventoryResponse({ items: {} })).toBe(false);
-    expect(isInventoryResponse(null)).toBe(false);
   });
 });

@@ -64,7 +64,8 @@ export default tseslint.config(
           patterns: [
             {
               group: ['**/inventory/tables', '**/inventory/tables.js'],
-              message: 'Only the inventory module touches the item tables: use inventory.apply() and its readers.',
+              message:
+                'Only the inventory module touches the item tables (item_stacks, item_ledger, the retired items): use inventory.apply() and its readers.',
             },
           ],
         },

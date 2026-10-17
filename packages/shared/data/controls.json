@@ -10,11 +10,18 @@
         "heavy": "R2",
         "dodge": "L1",
         "ability1": "L2",
-        "ability2": { "combat": "Square" },
-        "ability3": { "combat": "Triangle" },
-        "interact": { "calm": "Cross" },
+        "ability2": {
+          "combat": "Square"
+        },
+        "ability3": {
+          "combat": "Triangle"
+        },
+        "interact": {
+          "calm": "Cross"
+        },
         "chartPeek": "Circle",
         "journal": "Down",
+        "inventory": "Touchpad",
         "item1": "Left",
         "item2": "Right"
       }
@@ -25,14 +32,33 @@
       "aim": "right-stick",
       "bindings": {
         "light": "Square",
-        "heavy": ["Triangle", "R2"],
-        "dodge": { "combat": ["Cross", "L1"], "calm": "L1" },
-        "ability1": ["Circle", "R1"],
-        "ability2": { "combat": "L2" },
-        "ability3": { "combat": "Up" },
-        "interact": { "calm": "Cross" },
+        "heavy": [
+          "Triangle",
+          "R2"
+        ],
+        "dodge": {
+          "combat": [
+            "Cross",
+            "L1"
+          ],
+          "calm": "L1"
+        },
+        "ability1": [
+          "Circle",
+          "R1"
+        ],
+        "ability2": {
+          "combat": "L2"
+        },
+        "ability3": {
+          "combat": "Up"
+        },
+        "interact": {
+          "calm": "Cross"
+        },
         "chartPeek": "R3",
         "journal": "Down",
+        "inventory": "Touchpad",
         "item1": "Left",
         "item2": "Right"
       }
@@ -46,11 +72,18 @@
         "heavy": "R2",
         "dodge": "L1",
         "ability1": "L2",
-        "ability2": { "combat": "Square" },
-        "ability3": { "combat": "Triangle" },
-        "interact": { "calm": "Cross" },
+        "ability2": {
+          "combat": "Square"
+        },
+        "ability3": {
+          "combat": "Triangle"
+        },
+        "interact": {
+          "calm": "Cross"
+        },
         "chartPeek": "Circle",
         "journal": "Down",
+        "inventory": "Touchpad",
         "item1": "Left",
         "item2": "Right"
       }
@@ -60,14 +93,20 @@
     "light": "LMB",
     "heavy": "RMB",
     "dodge": "Space",
-    "ability1": ["MMB", "1"],
+    "ability1": [
+      "MMB",
+      "1"
+    ],
     "ability2": "2",
     "ability3": "3",
     "item1": "Q",
     "item2": "F",
-    "interact": { "calm": "E" },
+    "interact": {
+      "calm": "E"
+    },
     "chartPeek": "Tab",
     "journal": "J",
+    "inventory": "I",
     "menu": "Esc",
     "controls": "C",
     "tuning": "F2",
