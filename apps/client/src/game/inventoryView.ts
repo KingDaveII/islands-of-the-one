@@ -1,0 +1,212 @@
+import {
+  itemDef,
+  packSlots,
+  PACK_SLOTS,
+  SKILL_NAMES,
+  slotsFor,
+  type InventoryEntry,
+  type InventoryResponse,
+  type ItemKind,
+  type PackSlot,
+} from '@iot/shared';
+import { displayable } from './drawable.js';
+
+/**
+ * The inventory screen's layout logic (docs/design/inventory.md), pure so it
+ * is tested in node: the pack's 20 slots and the store's cells derived from
+ * an inventory answer, the tab filters, the header totals, the tooltip's
+ * lines and the grid navigation. The scene (scenes/InventoryScene.ts) draws
+ * these and sends the moves; it decides nothing about items itself.
+ */
+
+/** The tabs, in order: everything, then one kind each. The Words tab comes with Task 5. */
+export const INVENTORY_TABS = ['all', 'material', 'sparkglass', 'consumable', 'lore'] as const;
+export type InventoryTab = (typeof INVENTORY_TABS)[number];
+
+export const TAB_LABELS: Readonly<Record<InventoryTab, string>> = {
+  all: 'ALL',
+  material: 'MATERIALS',
+  sparkglass: 'SPARKGLASS',
+  consumable: 'CONSUMABLES',
+  lore: 'LORE',
+};
+
+/** The kind line's first word. */
+export const KIND_NAMES: Readonly<Record<ItemKind, string>> = {
+  currency: 'Currency',
+  sparkglass: 'Sparkglass',
+  material: 'Material',
+  consumable: 'Consumable',
+  lore: 'Lore object',
+};
+
+/** The pack grid: 5 across, 4 down. */
+export const PACK_COLS = 5;
+export const PACK_ROWS = PACK_SLOTS / PACK_COLS;
+
+/** One drawn cell: an item and the count in that cell, or empty. */
+export type Cell = PackSlot | null;
+
+/** The two consumable slots under the pack (Q / F): empty until consumables exist. */
+export const CONSUMABLE_SLOTS = ['item1', 'item2'] as const;
+
+/** An inventory with nothing in it. */
+export const EMPTY_INVENTORY: InventoryResponse = { purse: [], pack: [], store: [], baskets: {} };
+
+/** The kind of an item id (an id this build doesn't know counts as a material, the plainest kind). */
+const kindOf = (itemId: string): ItemKind => itemDef(itemId)?.kind ?? 'material';
+
+/** The entries a tab shows. */
+export function filterTab(entries: readonly InventoryEntry[], tab: InventoryTab): InventoryEntry[] {
+  return tab === 'all' ? [...entries] : entries.filter((e) => kindOf(e.itemId) === tab);
+}
+
+/**
+ * The pack's cells, always PACK_SLOTS of them: the pack's stacks split into
+ * slots (full ones first, then the remainder, in the server's order), the
+ * tab's items only, then empty cells. A tab hides the other kinds' slots but
+ * they still take their room: the grid keeps the pack's true count free.
+ */
+export function packCells(inventory: InventoryResponse, tab: InventoryTab): Cell[] {
+  const shown = packSlots(filterTab(inventory.pack, tab));
+  const cells: Cell[] = shown.slice(0, PACK_SLOTS);
+  while (cells.length < PACK_SLOTS) cells.push(null);
+  return cells;
+}
+
+/** How many of the pack's slots are taken, whatever the tab. */
+export function packUsed(inventory: InventoryResponse): number {
+  return inventory.pack.reduce((n, e) => n + slotsFor(e.itemId, e.quantity), 0);
+}
+
+/**
+ * The store's cells: its stacks split the way the pack would hold them (a
+ * cell is at most a pack slot's worth), so clicking a cell moves what fits
+ * in one slot. No empty cells: the grid is as long as the store is.
+ */
+export function storeCells(inventory: InventoryResponse, tab: InventoryTab): PackSlot[] {
+  return packSlots(filterTab(inventory.store, tab));
+}
+
+/** The header: the purse's gin and the Sparkglass totals across the pack and the store. */
+export interface HeaderTotals {
+  gin: number;
+  wildSliver: number;
+  hummingGlass: number;
+  deepGlass: number;
+}
+
+const total = (inventory: InventoryResponse, itemId: string): number =>
+  [...inventory.pack, ...inventory.store]
+    .filter((e) => e.itemId === itemId)
+    .reduce((n, e) => n + e.quantity, 0);
+
+export function headerTotals(inventory: InventoryResponse): HeaderTotals {
+  return {
+    gin: inventory.purse.find((e) => e.itemId === 'sealed-gin')?.quantity ?? 0,
+    wildSliver: total(inventory, 'wild-sliver'),
+    hummingGlass: total(inventory, 'glass-chip'),
+    deepGlass: total(inventory, 'deep-glass'),
+  };
+}
+
+/** The header's text. */
+export function headerLine(t: HeaderTotals): string {
+  return `GIN ${t.gin}   SLIVER ${t.wildSliver}   HUMMING ${t.hummingGlass}   DEEP ${t.deepGlass}`;
+}
+
+/** The icon placeholder until ART draws icons: the item's initials ("Black stone" → "BS"). */
+export function initials(itemId: string): string {
+  const name = itemDef(itemId)?.name ?? itemId.replaceAll('-', ' ');
+  return displayable(
+    name
+      .split(/[\s-]+/)
+      .filter((w) => w !== '')
+      .map((w) => w[0]?.toUpperCase() ?? '')
+      .join('')
+      .slice(0, 2),
+  );
+}
+
+/** The tooltip's lines for a cell: name, the kind line, the card text, the count in this pane. */
+export interface TooltipLines {
+  name: string;
+  kind: string;
+  text: string;
+  count: string;
+}
+
+export function tooltipLines(itemId: string, inPane: number, pane: 'pack' | 'store'): TooltipLines {
+  const def = itemDef(itemId);
+  const kind = def ? KIND_NAMES[def.kind] : '';
+  const skill = def?.skill ? SKILL_NAMES[def.skill] : null;
+  return {
+    name: displayable(def?.name ?? itemId),
+    kind: skill ? `${kind} · ${skill}` : kind,
+    text: displayable(def?.description ?? ''),
+    count: `${inPane} in ${pane}`,
+  };
+}
+
+/** Which pane a focus is in and which cell. */
+export interface Focus {
+  pane: 'pack' | 'store';
+  index: number;
+}
+
+export type Direction = 'up' | 'down' | 'left' | 'right';
+
+/**
+ * Where the pad's or the arrows' focus goes: within a grid by its columns,
+ * across to the other pane past the pack's right edge or the store's left
+ * one (onto the same row where there is one), never past a grid's edges
+ * otherwise. The store's cell count may be 0: then focus stays in the pack.
+ */
+export function moveFocus(
+  focus: Focus,
+  dir: Direction,
+  storeCols: number,
+  storeCount: number,
+): Focus {
+  const cols = focus.pane === 'pack' ? PACK_COLS : storeCols;
+  const count = focus.pane === 'pack' ? PACK_SLOTS : storeCount;
+  const row = Math.floor(focus.index / cols);
+  const col = focus.index % cols;
+  const clamp = (pane: Focus['pane'], index: number, n: number): Focus => ({
+    pane,
+    index: Math.max(0, Math.min(n - 1, index)),
+  });
+  switch (dir) {
+    case 'up':
+      return row > 0 ? { ...focus, index: focus.index - cols } : focus;
+    case 'down':
+      return focus.index + cols < count ? { ...focus, index: focus.index + cols } : focus;
+    case 'left':
+      if (col > 0) return { ...focus, index: focus.index - 1 };
+      if (focus.pane === 'store') return clamp('pack', row * PACK_COLS + PACK_COLS - 1, PACK_SLOTS);
+      return focus;
+    case 'right':
+      if (col < cols - 1 && focus.index + 1 < count) return { ...focus, index: focus.index + 1 };
+      if (focus.pane === 'pack' && storeCount > 0)
+        return clamp('store', row * storeCols, storeCount);
+      return focus;
+  }
+}
+
+/** The first row the store grid shows so that `index` is visible, given the rows on screen. */
+export function scrollToShow(
+  scrollRow: number,
+  index: number,
+  cols: number,
+  visibleRows: number,
+): number {
+  const row = Math.floor(index / cols);
+  if (row < scrollRow) return row;
+  if (row >= scrollRow + visibleRows) return row - visibleRows + 1;
+  return scrollRow;
+}
+
+/** The most the store grid can scroll: its last page's first row, never below 0. */
+export function maxScroll(count: number, cols: number, visibleRows: number): number {
+  return Math.max(0, Math.ceil(count / cols) - visibleRows);
+}

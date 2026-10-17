@@ -10,6 +10,8 @@ import pg from 'pg';
 import * as schema from './schema.js';
 
 export type Database = PgDatabase<PgQueryResultHKT, typeof schema>;
+/** A transaction of `Database` (what `db.transaction` hands its callback); inventory.apply can run inside one. */
+export type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
 
 export interface DbHandle {
   db: Database;

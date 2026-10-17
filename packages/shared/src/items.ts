@@ -9,8 +9,19 @@ import { isDrawable } from './accounts.js';
  * stamped with. The server is the only authority over who holds what.
  */
 
-export const ITEM_KINDS = ['currency', 'sparkglass', 'material'] as const;
+export const ITEM_KINDS = ['currency', 'sparkglass', 'material', 'consumable', 'lore'] as const;
 export type ItemKind = (typeof ITEM_KINDS)[number];
+
+/** The gathering skills an item's tooltip can name on its kind line ("Material · Mining"); 3b gives them rules. */
+export const ITEM_SKILLS = ['woodcutting', 'mining', 'farming'] as const;
+export type ItemSkill = (typeof ITEM_SKILLS)[number];
+
+/** The display name of a skill. */
+export const SKILL_NAMES: Readonly<Record<ItemSkill, string>> = {
+  woodcutting: 'Woodcutting',
+  mining: 'Mining',
+  farming: 'Farming',
+};
 
 export interface ItemDef {
   /** kebab-case, glossary terms only; stored in the ledger, so never renamed once shipped. */
@@ -18,10 +29,12 @@ export interface ItemDef {
   /** Display name. */
   name: string;
   kind: ItemKind;
-  /** The most one Kindled may hold; null = unlimited. */
+  /** The most of the item one place holds; null = unlimited. The pack and the store have their own limits (places.ts). */
   stackLimit: number | null;
-  /** Card text (LORE's to write; may be empty). */
+  /** Card text (LORE's; may be empty until written). */
   description: string;
+  /** The gathering skill the tooltip's kind line names, or null. */
+  skill: ItemSkill | null;
 }
 
 /** The largest balance or delta the ledger stores (quantities are bigint, read as JS numbers). */
@@ -35,7 +48,7 @@ export const MAX_QUANTITY = Number.MAX_SAFE_INTEGER;
 export const RETIRED_WORDS = ['void', 'island', 'tether', 'crystal', 'fishing', 'shard'] as const;
 
 const ITEM_ID = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
-const ITEM_KEYS = ['id', 'name', 'kind', 'stackLimit', 'description'];
+const ITEM_KEYS = ['id', 'name', 'kind', 'stackLimit', 'description', 'skill'];
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -60,7 +73,7 @@ export function validateItemsData(
       problems.push(`${at}: not an object`);
       return;
     }
-    const { id, name, kind, stackLimit, description } = entry;
+    const { id, name, kind, stackLimit, description, skill } = entry;
     const extra = Object.keys(entry).filter((k) => !ITEM_KEYS.includes(k));
     if (extra.length > 0) problems.push(`${at}: unknown field(s) ${extra.join(', ')}`);
     if (typeof id !== 'string' || !ITEM_ID.test(id)) {
@@ -87,6 +100,8 @@ export function validateItemsData(
     if (!limitOk) problems.push(`${where}: stackLimit must be a positive integer or "unlimited"`);
     if (typeof description !== 'string' || !isDrawable(description))
       problems.push(`${where}: description must be text the game can draw (may be empty)`);
+    if (skill !== undefined && !(ITEM_SKILLS as readonly string[]).includes(skill as string))
+      problems.push(`${where}: skill must be one of ${ITEM_SKILLS.join(', ')} (or left out)`);
     if (problems.length > 0) return;
     items.push({
       id,
@@ -94,6 +109,7 @@ export function validateItemsData(
       kind: kind as ItemKind,
       stackLimit: stackLimit === 'unlimited' ? null : (stackLimit as number),
       description: description as string,
+      skill: skill === undefined ? null : (skill as ItemSkill),
     });
   });
   return problems.length > 0 ? { ok: false, problems } : { ok: true, items };
@@ -133,6 +149,8 @@ export const InventoryReason = {
   Craft: 'craft',
   Trade: 'trade',
   Admin: 'admin',
+  /** Between two of one Kindled's places: one set with -n from one and +n to the other. */
+  Move: 'move',
 } as const;
 export type InventoryReason = (typeof InventoryReason)[keyof typeof InventoryReason];
 

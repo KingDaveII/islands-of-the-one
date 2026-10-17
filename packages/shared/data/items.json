@@ -1,68 +1,73 @@
 {
-  "$comment": "Items (docs/design/inventory.md). id: kebab-case, glossary terms only, never changed once shipped (the ledger stores it); name: display name; kind: currency | sparkglass | material; stackLimit: the most one Kindled may hold, or \"unlimited\"; description: card text, left empty for LORE to write. Listed in display order.",
+  "$comment": "Items (docs/design/inventory.md). id: kebab-case, glossary terms only, never changed once shipped (the ledger stores it); name: display name; kind: currency | sparkglass | material | consumable | lore; stackLimit: the most of the item one place holds, or \"unlimited\"; description: LORE's card text; skill (optional): the gathering skill the tooltip's kind line names. Listed in display order.",
   "items": [
     {
       "id": "sealed-gin",
       "name": "Sealed gin",
       "kind": "currency",
       "stackLimit": "unlimited",
-      "description": ""
+      "description": "A bead of Sparkglass cut to the Concord's weight and rolled with its seal: tower, bowls, hands, ring. Good at every counter in every city."
     },
     {
       "id": "wild-sliver",
       "name": "Wild sliver",
       "kind": "sparkglass",
       "stackLimit": "unlimited",
-      "description": ""
+      "description": "A sliver of hardened light, brittle and warm. It burns in a Writ. Concord counters weigh it short."
     },
     {
       "id": "glass-chip",
-      "name": "Glass chip",
+      "name": "Humming glass",
       "kind": "sparkglass",
       "stackLimit": "unlimited",
-      "description": ""
+      "description": "A thumb-sized piece of fallen light, brighter than a sliver. Hold it to your ear and it hums."
     },
     {
       "id": "deep-glass",
       "name": "Deep glass",
       "kind": "sparkglass",
       "stackLimit": "unlimited",
-      "description": ""
+      "description": "Dark at the edges, bright at the heart, and heavier than glass should be."
     },
     {
       "id": "twisted-log",
       "name": "Twisted log",
       "kind": "material",
       "stackLimit": 9999,
-      "description": ""
+      "skill": "woodcutting",
+      "description": "Dry and hard, but warm in the middle. The rings are tight and whorled, like the lines on a thumb."
     },
     {
       "id": "black-stone",
       "name": "Black stone",
       "kind": "material",
       "stackLimit": 9999,
-      "description": ""
+      "skill": "mining",
+      "description": "Heavy, dense and faintly warm. Good for walls, hearths and anything that has to stay put."
     },
     {
       "id": "streaked-stone",
       "name": "Streaked stone",
       "kind": "material",
       "stackLimit": 9999,
-      "description": ""
+      "skill": "mining",
+      "description": "Black stone with a pale, porous vein running through it, like the inside of a bird's wing. It's lighter than it should be."
     },
     {
       "id": "grey-seeds",
       "name": "Grey seeds",
       "kind": "material",
       "stackLimit": 9999,
-      "description": ""
+      "skill": "farming",
+      "description": "Small, hard and grey. They don't look alive. They are."
     },
     {
       "id": "pale-grain",
       "name": "Pale grain",
       "kind": "material",
       "stackLimit": 9999,
-      "description": ""
+      "skill": "farming",
+      "description": "Grain the color of old paper. It tastes of nothing and fills you up."
     }
   ]
 }

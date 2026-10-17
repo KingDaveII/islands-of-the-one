@@ -10,7 +10,11 @@ import type { GlyphFamily } from '../game/gamepad.js';
 export const GLYPH_SIZE: number = sheet.cell;
 const CELLS: ReadonlySet<string> = new Set(sheet.cells.map((c) => c.name));
 
-/** Pad glyph names (PlayStation-style in data) per family. D-pad and stick cells serve both pads. */
+/**
+ * Pad glyph names (PlayStation-style in data) per family. D-pad and stick
+ * cells serve both pads. The Touchpad is the DualSense's alone: an Xbox pad
+ * has none, so its binding shows as its text label there.
+ */
 const DPAD_AND_STICKS: Record<string, string> = {
   Up: 'ps_dpad_up',
   Down: 'ps_dpad_down',
@@ -31,6 +35,7 @@ const PAD_CELLS: Record<'ps' | 'xb', Record<string, string>> = {
     L2: 'ps_l2',
     R2: 'ps_r2',
     Start: 'ps_options',
+    Touchpad: 'ps_touchpad',
   },
   xb: {
     ...DPAD_AND_STICKS,

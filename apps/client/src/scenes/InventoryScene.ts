@@ -1,40 +1,130 @@
 import Phaser from 'phaser';
-import { accountStore, api } from '../api.js';
+import { PACK_SLOTS, type InventoryResponse, type Place } from '@iot/shared';
+import { api } from '../api.js';
 import { deviceStore } from '../game/activeDevice.js';
-import { MENU_BUTTONS, padEdges, padEdgeState, type PadFamily } from '../game/gamepad.js';
-import { inventoryRows } from '../game/inventoryRows.js';
+import { controlsStore } from '../game/controlsStore.js';
+import {
+  buttonsFor,
+  connectedPad,
+  glyphsFor,
+  hintFrom,
+  MENU_BUTTONS,
+  padEdges,
+  padEdgeState,
+  type PadFamily,
+} from '../game/gamepad.js';
+import {
+  CONSUMABLE_SLOTS,
+  EMPTY_INVENTORY,
+  headerLine,
+  headerTotals,
+  initials,
+  INVENTORY_TABS,
+  maxScroll,
+  moveFocus,
+  PACK_COLS,
+  PACK_ROWS,
+  packCells,
+  packUsed,
+  scrollToShow,
+  storeCells,
+  TAB_LABELS,
+  tooltipLines,
+  type Cell,
+  type Direction,
+  type Focus,
+  type InventoryTab,
+} from '../game/inventoryView.js';
 import { keyboardBinding, keyCodeFor } from '../game/keyboard.js';
-import { displayable } from '../game/drawable.js';
 import { Palette } from '../palette.js';
 import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
 import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { body, label, place, preloadFonts, registerFonts, type Text } from '../render/text.js';
-import { panel } from '../render/ui.js';
+import { abilitySlot, divider, panel } from '../render/ui.js';
 import { UI_H, UI_W } from '../game/view.js';
 import { menuCamera } from '../render/cameras.js';
 
-const PANEL_W = 240;
-const PANEL_Y = 50;
-const ROW_Y = PANEL_Y + 9;
-const ROW_PITCH = 14;
-const PAD_X = 12;
-/** Rows before the list stops (with a "+N more" line); the M2 item list fits. */
-const MAX_ROWS = 12;
+/** Cells are 24 px on a 26 px pitch; a pane is its panel, a title row and its grid. */
+const CELL = 24;
+const PITCH = 26;
+const PANE_PAD = 7;
+const GRID_Y = 18;
+const PANE_Y = 56;
+const PACK_X = 10;
+const PACK_W = PANE_PAD * 2 + PACK_COLS * PITCH - (PITCH - CELL);
+const STORE_X = PACK_X + PACK_W + 10;
+const STORE_COLS = 11;
+const STORE_ROWS = PACK_ROWS;
+const STORE_W = PANE_PAD * 2 + STORE_COLS * PITCH - (PITCH - CELL);
+const PANE_H = GRID_Y + PACK_ROWS * PITCH - (PITCH - CELL) + PANE_PAD;
+const HEADER_Y = 28;
+const TABS_Y = 42;
+const ITEMS_Y = PANE_Y + PANE_H + 8;
+const STATUS_Y = ITEMS_Y + 2;
+const TOOLTIP_W = 150;
+const TIP_DEPTH = 10;
+/** A pointer that travels this far (UI px) before it is released is a drag, not a click. */
+const DRAG_PX = 6;
+/** A touch held this long before it is released moves one item instead of the stack. */
+const LONG_PRESS_MS = 450;
+/** The left stick repeats the focus move after this long held, then at this rate. */
+const STICK_DELAY_MS = 320;
+const STICK_REPEAT_MS = 120;
+const STICK_DEADZONE = 0.5;
+
+type Pane = Focus['pane'];
+const other = (pane: Pane): Pane => (pane === 'pack' ? 'store' : 'pack');
+
+interface Press {
+  pane: Pane;
+  index: number;
+  x: number;
+  y: number;
+  at: number;
+  right: boolean;
+  touch: boolean;
+}
 
 /**
- * The inventory view (docs/design/inventory.md): what the signed-in Kindled
- * holds, as GET /api/inventory answers it, one row per item with its count.
- * Only here to see the ledger work; no icons until ART draws them. Esc or
- * Enter goes back, Circle on the pad.
+ * The inventory screen (docs/design/inventory.md): the pack (a 5 × 4 grid
+ * of its derived slots) and the holding store (a scrolling grid), both
+ * filtered by the tabs, the purse and Sparkglass totals in the header, the
+ * two consumable slots under the pack, and a tooltip on hover or focus.
+ * Every move is a POST /api/inventory/move; the screen redraws from the
+ * answer, never ahead of it, and a refusal shows its reason in one line.
+ * Placeholder look (the panel style, initials for icons) until ART's M2 UI
+ * kit; nothing here can destroy an item.
  */
 export class InventoryScene extends Phaser.Scene {
   private g!: Phaser.GameObjects.Graphics;
+  private tip!: Phaser.GameObjects.Graphics;
+  private header!: Text;
+  private packTitle!: Text;
   private status!: Text;
-  private rows: Text[] = [];
+  private tabTexts: Text[] = [];
+  private cellTexts: Text[] = [];
+  private tipTexts: Text[] = [];
+  private itemHints: HintRow[] = [];
+  private footer!: HintRow;
   private pad = { prev: [] as boolean[] };
   private family: PadFamily = 'ps';
-  private footer!: HintRow;
+  private inventory: InventoryResponse = EMPTY_INVENTORY;
+  private loaded = false;
+  private tab: InventoryTab = 'all';
+  private cells: Record<Pane, Cell[]> = { pack: [], store: [] };
+  private scrollRow = 0;
+  /** The pad's or the arrows' focus; shown while the device is not the mouse. */
+  private focus: Focus = { pane: 'pack', index: 0 };
+  private hover: Focus | null = null;
+  /** The keys moved the focus since the mouse last hovered a cell: show the focus ring in mouse mode too. */
+  private keyNav = false;
+  /** The pointer press in progress on a cell, until it is released. */
+  private press: Press | null = null;
+  /** A move is in flight: the screen waits for the answer before it takes another. */
+  private busy = false;
+  private stickDir: Direction | null = null;
+  private stickNext = 0;
 
   constructor() {
     super('inventory');
@@ -51,92 +141,443 @@ export class InventoryScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(Palette.hollow);
     menuCamera(this);
     this.pad = padEdgeState();
-    this.rows = [];
     this.family = padFamilyNow();
+    this.inventory = EMPTY_INVENTORY;
+    this.loaded = false;
+    this.tab = 'all';
+    this.scrollRow = 0;
+    this.focus = { pane: 'pack', index: 0 };
+    this.hover = null;
+    this.keyNav = false;
+    this.press = null;
+    this.busy = false;
+    this.cellTexts = [];
+    this.tipTexts = [];
+    this.input.mouse?.disableContextMenu();
     const cx = UI_W / 2;
-    place(label(this, 0, 0, 'INVENTORY', Palette.uiInk, 16), cx, 8, 0.5);
-    const who = accountStore.current?.kindled?.name;
-    if (who) place(body(this, 0, 0, displayable(who), Palette.uiInkMuted), cx, 30, 0.5);
+
     this.g = this.add.graphics();
-    this.status = body(this, 0, 0, '...', Palette.uiInkMuted);
-    this.layout(1);
-    place(this.status, cx, ROW_Y, 0.5);
+    // The tooltip sits over everything else (the cells' texts are made after it).
+    this.tip = this.add.graphics().setDepth(TIP_DEPTH);
+    place(label(this, 0, 0, 'INVENTORY', Palette.uiInk, 16), cx, 6, 0.5);
+    this.header = label(this, 0, 0, '', Palette.uiInk);
+    this.packTitle = label(this, PACK_X + PANE_PAD, PANE_Y + 6, 'PACK', Palette.uiInk);
+    place(label(this, 0, 0, 'STORE', Palette.uiInk), STORE_X + PANE_PAD, PANE_Y + 6);
+    this.status = body(this, STORE_X, STATUS_Y, '', Palette.uiInk);
+
+    // Tabs: a row of labels, the active one lit; click to switch.
+    this.tabTexts = INVENTORY_TABS.map((tab) => {
+      const t = label(this, 0, 0, TAB_LABELS[tab], Palette.uiInkMuted);
+      t.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+        this.setTab(tab);
+      });
+      return t;
+    });
+    let x = PACK_X;
+    for (const t of this.tabTexts) {
+      place(t, x, TABS_Y);
+      x += Math.round(t.width) + 12;
+    }
+
+    // The consumable slots (Q / F): empty until consumables exist; they take nothing yet.
+    place(label(this, 0, 0, 'ITEMS', Palette.uiInkMuted), PACK_X, ITEMS_Y + 3);
+    this.itemHints = CONSUMABLE_SLOTS.map(() => new HintRow(this));
+
+    // One zone per cell, for hover, clicks, drags and taps.
+    const zone = (pane: Pane, index: number, x: number, y: number): void => {
+      const z = this.add.zone(x, y, CELL, CELL).setOrigin(0, 0).setInteractive();
+      z.on('pointerover', () => {
+        this.hover = { pane, index };
+        this.keyNav = false;
+        this.sync();
+      });
+      z.on('pointerout', () => {
+        if (this.hover?.pane === pane && this.hover.index === index) this.hover = null;
+        this.sync();
+      });
+      z.on('pointerdown', (p: Phaser.Input.Pointer) => {
+        if (!this.cells[pane][index]) return;
+        this.press = {
+          pane,
+          index,
+          x: p.worldX,
+          y: p.worldY,
+          at: p.downTime,
+          right: p.rightButtonDown(),
+          touch: p.wasTouch,
+        };
+      });
+    };
+    for (let i = 0; i < PACK_SLOTS; i++) {
+      const at = this.cellAt('pack', i);
+      if (at) zone('pack', i, at.x, at.y);
+    }
+    for (let i = 0; i < STORE_COLS * STORE_ROWS; i++) {
+      const at = this.cellAt('store', this.scrollRow * STORE_COLS + i);
+      if (at) zone('store', i, at.x, at.y);
+    }
+    this.input.on('pointerup', (p: Phaser.Input.Pointer) => {
+      this.release(p);
+    });
+    this.input.on('wheel', (_p: Phaser.Input.Pointer, _over: unknown, _dx: number, dy: number) => {
+      this.scroll(dy > 0 ? 1 : -1);
+    });
 
     this.footer = new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInk });
-    this.syncFooter();
     const offDevice = deviceStore.subscribe(() => {
-      this.syncFooter();
+      this.syncHints();
+      this.syncTip();
     });
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, offDevice);
+    const offPreset = controlsStore.subscribe(() => {
+      this.syncHints();
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      offDevice();
+      offPreset();
+    });
 
+    // Keys: Esc or I close; arrows move the focus; Enter moves the stack; Tab switches tabs.
     const back = () => {
       this.scene.start('start');
     };
-    const menuCode = keyCodeFor(keyboardBinding('menu'));
-    if (menuCode !== undefined) this.input.keyboard?.addKey(menuCode, true).on('down', back);
-    this.input.keyboard?.on('keydown-ENTER', back);
+    const kb = this.input.keyboard;
+    for (const action of ['menu', 'inventory'] as const) {
+      const code = keyCodeFor(keyboardBinding(action));
+      if (code !== undefined) kb?.addKey(code, true).on('down', back);
+    }
+    kb?.addCapture(Phaser.Input.Keyboard.KeyCodes.TAB);
+    const arrows: [string, Direction][] = [
+      ['UP', 'up'],
+      ['DOWN', 'down'],
+      ['LEFT', 'left'],
+      ['RIGHT', 'right'],
+    ];
+    for (const [key, dir] of arrows)
+      kb?.on(`keydown-${key}`, () => {
+        this.moveFocusBy(dir);
+      });
+    kb?.on('keydown-ENTER', () => {
+      this.moveFocused(true);
+    });
+    kb?.on('keydown-TAB', (e: KeyboardEvent) => {
+      this.cycleTab(e.shiftKey ? -1 : 1);
+    });
 
+    this.sync();
+    this.syncHints();
     void api.inventory().then((res) => {
       if (!this.scene.isActive()) return;
       if (!res.ok) {
         this.status.setText(res.message);
-        place(this.status, cx, ROW_Y, 0.5);
         return;
       }
-      this.show(inventoryRows(res.value));
+      this.inventory = res.value;
+      this.loaded = true;
+      this.sync();
     });
   }
 
-  /** Draw the list; an empty inventory says so. */
-  private show(list: ReturnType<typeof inventoryRows>): void {
-    const cx = UI_W / 2;
-    if (list.length === 0) {
-      this.status.setText('Nothing yet.');
-      place(this.status, cx, ROW_Y, 0.5);
+  /** The grid cell's top left for a pane and a cell index (the store's index counts from its first row), or null when it is off the grid. */
+  private cellAt(pane: Pane, index: number): { x: number; y: number } | null {
+    const cols = pane === 'pack' ? PACK_COLS : STORE_COLS;
+    const row = Math.floor(index / cols) - (pane === 'store' ? this.scrollRow : 0);
+    const col = index % cols;
+    if (row < 0 || row >= PACK_ROWS) return null;
+    const x0 = (pane === 'pack' ? PACK_X : STORE_X) + PANE_PAD;
+    return { x: x0 + col * PITCH, y: PANE_Y + GRID_Y + row * PITCH };
+  }
+
+  /** Which pane a point (layout px) is over, by its panel. */
+  private paneAt(x: number, y: number): Pane | null {
+    if (y < PANE_Y || y >= PANE_Y + PANE_H) return null;
+    if (x >= PACK_X && x < PACK_X + PACK_W) return 'pack';
+    if (x >= STORE_X && x < STORE_X + STORE_W) return 'store';
+    return null;
+  }
+
+  private setTab(tab: InventoryTab): void {
+    this.tab = tab;
+    this.scrollRow = 0;
+    this.sync();
+  }
+
+  private cycleTab(delta: number): void {
+    const i = INVENTORY_TABS.indexOf(this.tab);
+    const n = INVENTORY_TABS.length;
+    this.setTab(INVENTORY_TABS[(((i + delta) % n) + n) % n] ?? 'all');
+  }
+
+  private scroll(rows: number): void {
+    const max = maxScroll(this.cells.store.length, STORE_COLS, STORE_ROWS);
+    const next = Math.max(0, Math.min(max, this.scrollRow + rows));
+    if (next === this.scrollRow) return;
+    this.scrollRow = next;
+    this.sync();
+  }
+
+  /** The pointer released: a drag to the other pane moves the stack; a click or tap moves the stack, a right click or a long press one. */
+  private release(p: Phaser.Input.Pointer): void {
+    const press = this.press;
+    this.press = null;
+    if (!press) return;
+    const dragged = Math.hypot(p.worldX - press.x, p.worldY - press.y) >= DRAG_PX;
+    if (dragged) {
+      if (this.paneAt(p.worldX, p.worldY) === other(press.pane))
+        this.move(press.pane, press.index, true);
       return;
     }
-    this.status.setVisible(false);
-    const shown = list.slice(0, MAX_ROWS);
-    const extra = list.length - shown.length;
-    this.layout(shown.length + (extra > 0 ? 1 : 0));
-    const left = cx - PANEL_W / 2 + PAD_X;
-    const right = cx + PANEL_W / 2 - PAD_X;
-    shown.forEach((row, i) => {
-      const y = ROW_Y + i * ROW_PITCH;
-      this.rows.push(
-        place(label(this, 0, 0, row.name.toUpperCase(), Palette.uiInk), left, y),
-        place(body(this, 0, 0, row.kind, Palette.uiInkMuted), left + 120, y + 1),
-        place(label(this, 0, 0, row.count, Palette.uiInk), right, y, 1),
-      );
+    const held = press.touch && p.upTime - press.at >= LONG_PRESS_MS;
+    this.move(press.pane, press.index, !(press.right || held));
+  }
+
+  private moveFocusBy(dir: Direction): void {
+    this.hover = null;
+    this.keyNav = true;
+    this.focus = moveFocus(this.focus, dir, STORE_COLS, this.cells.store.length);
+    if (this.focus.pane === 'store')
+      this.scrollRow = scrollToShow(this.scrollRow, this.focus.index, STORE_COLS, STORE_ROWS);
+    this.sync();
+  }
+
+  private moveFocused(all: boolean): void {
+    this.move(this.focus.pane, this.focus.index, all);
+  }
+
+  /** Ask the server to move a cell's stack (or one of it) to the other pane; redraw from its answer. */
+  private move(pane: Pane, index: number, all: boolean): void {
+    const cell = this.cells[pane][index];
+    if (!cell || this.busy || !this.loaded) return;
+    const from: Place = pane;
+    const to: Place = other(pane);
+    this.busy = true;
+    this.status.setText('');
+    void api
+      .move({ itemId: cell.itemId, from, to, quantity: all ? cell.quantity : 1 })
+      .then((res) => {
+        if (!this.scene.isActive()) return;
+        this.busy = false;
+        if (res.ok) this.inventory = res.value;
+        else this.status.setText(res.message);
+        this.sync();
+      });
+  }
+
+  /** Redraw everything from the inventory and the tab. */
+  private sync(): void {
+    this.cells = {
+      pack: packCells(this.inventory, this.tab),
+      store: storeCells(this.inventory, this.tab),
+    };
+    const max = maxScroll(this.cells.store.length, STORE_COLS, STORE_ROWS);
+    this.scrollRow = Math.min(this.scrollRow, max);
+    if (this.focus.pane === 'store' && this.cells.store.length === 0)
+      this.focus = { pane: 'pack', index: 0 };
+    else if (this.focus.pane === 'store')
+      this.focus.index = Math.min(this.focus.index, this.cells.store.length - 1);
+
+    place(this.header.setText(headerLine(headerTotals(this.inventory))), UI_W / 2, HEADER_Y, 0.5);
+    this.packTitle.setText(`PACK ${packUsed(this.inventory)}/${PACK_SLOTS}`);
+    INVENTORY_TABS.forEach((tab, i) => {
+      this.tabTexts[i]?.setTint(tab === this.tab ? Palette.uiFocus : Palette.uiInkMuted);
     });
-    if (extra > 0)
-      place(body(this, 0, 0, `+${extra} more`, Palette.uiInkMuted), left, ROW_Y + shown.length * ROW_PITCH);
+
+    const g = this.g;
+    g.clear();
+    panel(g, PACK_X, PANE_Y, PACK_W, PANE_H);
+    panel(g, STORE_X, PANE_Y, STORE_W, PANE_H);
+    for (const t of this.cellTexts) t.destroy();
+    this.cellTexts = [];
+    const showFocus = deviceStore.get() === 'gamepad' || this.keyNav;
+    const drawCell = (pane: Pane, index: number, cell: Cell): void => {
+      const at = this.cellAt(pane, index);
+      if (!at) return;
+      const focused = showFocus && this.focus.pane === pane && this.focus.index === index;
+      const hovered = this.hover?.pane === pane && this.hover.index === index;
+      g.fillStyle(Palette.uiOutline, 1).fillRect(at.x, at.y, CELL, CELL);
+      g.fillStyle(focused || hovered ? Palette.uiFocus : Palette.uiBevel, 1).fillRect(
+        at.x + 1,
+        at.y + 1,
+        CELL - 2,
+        CELL - 2,
+      );
+      g.fillStyle(cell ? Palette.uiPanel : Palette.hollow, 1).fillRect(
+        at.x + 2,
+        at.y + 2,
+        CELL - 4,
+        CELL - 4,
+      );
+      if (!cell) return;
+      this.cellTexts.push(
+        place(label(this, 0, 0, initials(cell.itemId), Palette.uiInk), at.x + 3, at.y + 3),
+        place(
+          label(this, 0, 0, String(cell.quantity), Palette.spark),
+          at.x + CELL - 2,
+          at.y + CELL - 2,
+          1,
+          1,
+        ),
+      );
+    };
+    this.cells.pack.forEach((cell, i) => {
+      drawCell('pack', i, cell);
+    });
+    const first = this.scrollRow * STORE_COLS;
+    for (let i = first; i < Math.min(this.cells.store.length, first + STORE_COLS * STORE_ROWS); i++)
+      drawCell('store', i, this.cells.store[i] ?? null);
+    if (this.cells.store.length === 0 && this.loaded)
+      this.cellTexts.push(
+        body(this, STORE_X + PANE_PAD, PANE_Y + GRID_Y + 2, 'Nothing here.', Palette.uiInkMuted),
+      );
+    if (max > 0) {
+      const text = `${this.scrollRow + 1}-${Math.min(this.scrollRow + STORE_ROWS, max + STORE_ROWS)} of ${max + STORE_ROWS}`;
+      this.cellTexts.push(
+        place(
+          body(this, 0, 0, text, Palette.uiInkMuted),
+          STORE_X + STORE_W - PANE_PAD,
+          PANE_Y + 7,
+          1,
+        ),
+      );
+    }
+
+    // The two consumable slots: sunken and empty.
+    CONSUMABLE_SLOTS.forEach((_action, i) => {
+      abilitySlot(g, PACK_X + 44 + i * 44, ITEMS_Y, {
+        icon: 'ration',
+        cooldown: 0,
+        locked: false,
+        ready: false,
+        small: true,
+        empty: true,
+      });
+    });
+    this.syncTip();
   }
 
-  /** The panel behind `count` rows. */
-  private layout(count: number): void {
-    const h = 16 + count * ROW_PITCH;
-    this.g.clear();
-    panel(this.g, UI_W / 2 - PANEL_W / 2, PANEL_Y, PANEL_W, h);
+  /** The tooltip for the hovered cell (mouse) or the focused one (pad, keys); none over an empty cell. */
+  private syncTip(): void {
+    for (const t of this.tipTexts) t.destroy();
+    this.tipTexts = [];
+    this.tip.clear();
+    const at = this.hover ?? (deviceStore.get() === 'gamepad' || this.keyNav ? this.focus : null);
+    const cell = at ? this.cells[at.pane][at.index] : null;
+    if (!at || !cell) return;
+    const pos = this.cellAt(at.pane, at.index);
+    if (!pos) return;
+    const inPane =
+      (at.pane === 'pack' ? this.inventory.pack : this.inventory.store).find(
+        (e) => e.itemId === cell.itemId,
+      )?.quantity ?? 0;
+    const lines = tooltipLines(cell.itemId, inPane, at.pane);
+    const x = pos.x + CELL + 4 + TOOLTIP_W <= UI_W - 4 ? pos.x + CELL + 4 : pos.x - 4 - TOOLTIP_W;
+    const inner = TOOLTIP_W - 2 * PANE_PAD;
+    const name = label(this, 0, 0, lines.name.toUpperCase(), Palette.uiInk);
+    const kind = body(this, 0, 0, lines.kind, Palette.uiInkMuted);
+    const text = body(this, 0, 0, lines.text, Palette.uiInkMuted, inner);
+    const count = body(this, 0, 0, lines.count, Palette.uiInk);
+    const h = PANE_PAD + 10 + 11 + 4 + 1 + 4 + Math.round(text.height) + 4 + 11 + PANE_PAD;
+    const y = Math.max(2, Math.min(UI_H - 2 - h, pos.y));
+    panel(this.tip, x, y, TOOLTIP_W, h, { plain: true });
+    let ly = y + PANE_PAD;
+    place(name, x + PANE_PAD, ly);
+    ly += 10;
+    place(kind, x + PANE_PAD, ly);
+    ly += 11 + 4;
+    divider(this.tip, x + PANE_PAD, ly, inner);
+    ly += 1 + 4;
+    place(text, x + PANE_PAD, ly);
+    ly += Math.round(text.height) + 4;
+    place(count, x + PANE_PAD, ly);
+    this.tipTexts.push(name, kind, text, count);
+    for (const t of this.tipTexts) t.setDepth(TIP_DEPTH);
   }
 
-  /** The footer for the device in use: how to go back with it. */
-  private syncFooter(): void {
-    const items: HintItem[] =
-      deviceStore.get() === 'gamepad'
-        ? [...glyphs([menuGlyph(MENU_BUTTONS.back)], this.family), word('back')]
-        : [...glyphs([keyboardBinding('menu')], 'keyboard'), word('back')];
+  /** The footer and the consumable key hints for the device in use. */
+  private syncHints(): void {
+    const padMode = deviceStore.get() === 'gamepad';
+    const preset = controlsStore.get();
+    const source = padMode ? { preset, family: this.family } : 'keyboard';
+    CONSUMABLE_SLOTS.forEach((action, i) => {
+      this.itemHints[i]
+        ?.setHint(hintFrom(source, action))
+        .place(PACK_X + 44 + i * 44 + 16, ITEMS_Y + 1);
+    });
+    const items: HintItem[] = padMode
+      ? [
+          ...glyphs([menuGlyph(MENU_BUTTONS.confirm[0])], this.family),
+          word('move  ·'),
+          ...glyphs([menuGlyph(MENU_BUTTONS.one)], this.family),
+          word('one  ·'),
+          ...glyphs(
+            [menuGlyph(MENU_BUTTONS.tabPrev), menuGlyph(MENU_BUTTONS.tabNext)],
+            this.family,
+          ),
+          word('tabs  ·'),
+          ...glyphs([menuGlyph(MENU_BUTTONS.back), ...glyphsFor(preset, 'inventory')], this.family),
+          word('back'),
+        ]
+      : [
+          ...glyphs(['LMB'], 'keyboard'),
+          word('move  ·'),
+          ...glyphs(['RMB'], 'keyboard'),
+          word('one  ·  drag between panes  ·'),
+          ...glyphs(['Tab'], 'keyboard'),
+          word('tabs  ·'),
+          ...glyphs([keyboardBinding('menu'), keyboardBinding('inventory')], 'keyboard'),
+          word('back'),
+        ];
     this.footer.setItems(items).place(UI_W / 2, UI_H - 16, 0.5);
     menuCursor(this);
+  }
+
+  /** The left stick as a D-pad with key repeat. */
+  private stick(now: number): void {
+    const pad = connectedPad();
+    const x = pad?.axes[0] ?? 0;
+    const y = pad?.axes[1] ?? 0;
+    const dir: Direction | null =
+      Math.abs(x) < STICK_DEADZONE && Math.abs(y) < STICK_DEADZONE
+        ? null
+        : Math.abs(x) > Math.abs(y)
+          ? x > 0
+            ? 'right'
+            : 'left'
+          : y > 0
+            ? 'down'
+            : 'up';
+    if (dir !== this.stickDir) {
+      this.stickDir = dir;
+      this.stickNext = now + STICK_DELAY_MS;
+      if (dir) this.moveFocusBy(dir);
+    } else if (dir && now >= this.stickNext) {
+      this.stickNext = now + STICK_REPEAT_MS;
+      this.moveFocusBy(dir);
+    }
   }
 
   override update(): void {
     const family = padFamilyNow();
     if (family !== this.family) {
       this.family = family;
-      this.syncFooter();
+      this.syncHints();
     }
     const edges = padEdges(this.pad);
-    if (edges.includes(MENU_BUTTONS.back)) this.scene.start('start');
+    const closes = [MENU_BUTTONS.back, ...buttonsFor(controlsStore.get(), 'inventory', 'calm')];
+    if (closes.some((b) => edges.includes(b))) {
+      this.scene.start('start');
+      return;
+    }
+    if (edges.includes(MENU_BUTTONS.confirm[0])) this.moveFocused(true);
+    else if (edges.includes(MENU_BUTTONS.one)) this.moveFocused(false);
+    else if (edges.includes(MENU_BUTTONS.tabPrev)) this.cycleTab(-1);
+    else if (edges.includes(MENU_BUTTONS.tabNext)) this.cycleTab(1);
+    const dpad: [number, Direction][] = [
+      [MENU_BUTTONS.up, 'up'],
+      [MENU_BUTTONS.down, 'down'],
+      [MENU_BUTTONS.left, 'left'],
+      [MENU_BUTTONS.right, 'right'],
+    ];
+    for (const [button, dir] of dpad) if (edges.includes(button)) this.moveFocusBy(dir);
+    this.stick(this.time.now);
   }
 }

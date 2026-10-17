@@ -20,6 +20,7 @@ describe('controller glyph cells', () => {
     expect(glyphCell('F2', 'keyboard')).toBe('key_f2');
     expect(glyphCell('F3', 'keyboard')).toBe('key_f3');
     expect(glyphCell('C', 'keyboard')).toBe('key_c');
+    expect(glyphCell('I', 'keyboard')).toBe('key_i');
     expect(GLYPH_SIZE).toBe(12);
   });
 
@@ -28,7 +29,9 @@ describe('controller glyph cells', () => {
       for (const action of Object.keys(preset.bindings)) {
         for (const g of glyphsFor(preset, action as keyof typeof KEYBOARD)) {
           expect(glyphCell(g, 'ps'), `${preset.id} ${action} ${g} (ps)`).toMatch(/^(ps_|stick_)/);
-          expect(glyphCell(g, 'xb'), `${preset.id} ${action} ${g} (xb)`).toMatch(/^(xb_|ps_dpad_|stick_)/);
+          // The Touchpad is the DualSense's alone; an Xbox pad shows its label.
+          if (g === 'Touchpad') expect(glyphCell(g, 'xb')).toBeNull();
+          else expect(glyphCell(g, 'xb'), `${preset.id} ${action} ${g} (xb)`).toMatch(/^(xb_|ps_dpad_|stick_)/);
         }
       }
     }
@@ -36,6 +39,7 @@ describe('controller glyph cells', () => {
     expect(glyphCell('R2', 'xb')).toBe('xb_rt');
     expect(glyphCell('Cross', 'xb')).toBe('xb_a');
     expect(glyphCell('Down', 'xb')).toBe('ps_dpad_down');
+    expect(glyphCell('Touchpad', 'ps')).toBe('ps_touchpad');
   });
 
   it('falls back to null for bindings without a cell', () => {

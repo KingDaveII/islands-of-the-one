@@ -38,6 +38,8 @@ export const GLYPH_BUTTON: Record<string, number> = {
   Down: 13,
   Left: 14,
   Right: 15,
+  /** The DualSense touchpad press (the browser reports it past the standard mapping's 17 buttons). */
+  Touchpad: 17,
 };
 
 /** Triggers report an analog value; count them as pressed past this. */
@@ -73,14 +75,19 @@ export function padSnapshot(pad: Gamepad | null): PadSnapshot | null {
 /**
  * Menu navigation on a pad, by standard-mapping index: Cross or Start
  * confirms, Circle goes back, Triangle opens the controls screen, the D-pad
- * steps through choices and rows. Not bindings (controls.json is for the game's
- * actions): the menus read these directly.
+ * steps through choices and rows; on the inventory screen Square moves one
+ * item (Cross the stack) and L1/R1 switch tabs. Not bindings (controls.json
+ * is for the game's actions; the inventory's own open/close binding is
+ * there): the menus read these directly.
  */
 export const MENU_BUTTONS = {
   confirm: [GLYPH_BUTTON.Cross ?? 0, GLYPH_BUTTON.Start ?? 9],
   back: GLYPH_BUTTON.Circle ?? 1,
   controls: GLYPH_BUTTON.Triangle ?? 3,
   inventory: GLYPH_BUTTON.Square ?? 2,
+  one: GLYPH_BUTTON.Square ?? 2,
+  tabPrev: GLYPH_BUTTON.L1 ?? 4,
+  tabNext: GLYPH_BUTTON.R1 ?? 5,
   left: GLYPH_BUTTON.Left ?? 14,
   right: GLYPH_BUTTON.Right ?? 15,
   up: GLYPH_BUTTON.Up ?? 12,

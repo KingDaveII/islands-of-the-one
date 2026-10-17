@@ -3,7 +3,7 @@
  * Keep this package dependency-free: plain types and constants only.
  */
 
-export const PROTOCOL_VERSION = 1;
+export const PROTOCOL_VERSION = 2;
 
 export const DEFAULT_SERVER_PORT = 2567;
 
