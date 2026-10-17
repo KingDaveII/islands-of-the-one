@@ -47,6 +47,15 @@ renders state; it never decides an outcome.
 - Free analog movement at any angle, with `player.acceleration` toward the target velocity and
   `player.friction` when there is no input. Turning through acceleration is the smoothing for
   keyboard play.
+- **The backpedal costs speed** (GAME DESIGN 2026-10-17): free movement away from the aim is
+  slower. The factor is 1 up to `player.backpedalFromDeg` (90°) between the movement and the aim,
+  so strafing is never slowed; it eases down linearly to `player.backpedalFactor` (0.85) at
+  `player.backpedalFullDeg` (135°) and stays there to 180° (`backpedalFactor` in
+  `packages/sim/src/player.ts`, integer math on the 1/4096-turn angles). It applies in encounters
+  only, to the target speed of free movement only: the stick or keys in idle and the slowed walk
+  while charging a heavy. The dodge, the Haul's pull and every forced movement keep their full
+  distances. With a gamepad stick centred the aim follows the movement, so that player is never
+  slowed.
 - The Kindled moves at `player.moveSpeed`: 100 sim px/s, 200 world px/s (GAME DESIGN 2026-10-16,
   down from 112). In an encounter, Combat and Calm alike, it always **runs** at that speed. Walking,
   and the automatic walk-to-run, happen only outside encounters (M2's holding). The run and walk
@@ -63,6 +72,12 @@ renders state; it never decides an outcome.
 - Collision is circles vs. tile walls and circles vs. circles, all in the sim (no Phaser physics).
   Overlapping bodies are pushed apart in proportion to their `mass` (not knockback; see §6). A
   dodging player, or one using an ability, passes through Husks.
+- **Chests are solid** (GAME DESIGN 2026-10-17): a chest is a small round pillar of
+  `run.chestRadiusPx` that blocks the Kindled and every Husk alike, whatever they are doing, so it
+  doubles as cover to circle around. After the walls, every body is pushed out of every chest as a
+  circle, with the bodies' integer push-out, the chest taking none of it; a body a chest pushed gets
+  a second wall pass. Projectiles and the Haul's hook pass over chests. The autopilot plans its paths
+  around them as around walls.
 - Sprites turn to the nearest of 8 facings; attack arcs, the aim reticle and telegraphs use the
   exact angle.
 
@@ -285,9 +300,14 @@ pursuit speed and attack cadence scale by `aggroPerSparkglass` per Sparkglass ca
 
 - **Waves:** each room has its waves in `run.rooms[i].waves`. The door opens when the last wave is
   dead, and walking into it loads the next room. Room 3 is the tough one, with Nutshells.
-- **Chests:** every room has one (`C`). A chest opens on contact (within `run.chestRadiusPx` of the
-  player) at any time, and its contents are **scripted by the order chests are opened in the run**:
-  `run.chests[n]` for the n-th chest, clamped to the last entry (the first chest gives 2 Rations).
+- **Chests:** every room has one (`C`). A chest is solid (§2). It opens when the Kindled touches
+  it, its edge within `run.chestOpenReachPx` of the chest's edge, at any time; it spills its items
+  and stays standing with its lid open, **still solid**. Its contents are **scripted by the order
+  chests are opened in the run**: `run.chests[n]` for the n-th chest, clamped to the last entry (the
+  first chest gives 2 Rations). Room templates keep two tiles of floor clear all round every `C`
+  (`CHEST_CLEAR_TILES`, `packages/shared/src/rooms.ts`), so a chest never closes a corridor;
+  `packages/shared/test/rooms.test.ts` reports the templates that break it (GAME DESIGN owns the
+  layouts).
 - **End of a run:** death, or clearing room 3.
   - Sparkglass kept: 100% on a clear, `run.sparkglassKeptOnDeath` (50%) on death.
   - The results screen shows time, rooms, kills, perfect dodges and Sparkglass found/kept.

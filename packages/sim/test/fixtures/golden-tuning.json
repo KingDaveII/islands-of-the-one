@@ -8,7 +8,10 @@
     "mass": 1,
     "hurtStunMs": 180,
     "hurtInvulnMs": 550,
-    "hurtKnockback": 170
+    "hurtKnockback": 170,
+    "backpedalFactor": 0.85,
+    "backpedalFromDeg": 90,
+    "backpedalFullDeg": 135
   },
   "dodge": {
     "startupMs": 0,
@@ -359,7 +362,8 @@
         "count": 1
       }
     ],
-    "chestRadiusPx": 8
+    "chestRadiusPx": 8,
+    "chestOpenReachPx": 2
   },
   "juice": {
     "shakeDurationMs": 120,

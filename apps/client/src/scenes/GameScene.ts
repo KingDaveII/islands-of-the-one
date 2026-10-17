@@ -221,7 +221,8 @@ export class GameScene extends Phaser.Scene {
           if (e.shell) this.fx.burst(x, y, 3, Palette.shell, j.particleSpeed * 1.5, { dir: rad(e.dir) + Math.PI, spread: 1.4, life: 160 });
           if (e.broke >= 0) {
             this.fx.chips(x, y, rad(e.dir), j.shellBreakParticles);
-            this.fx.ring(x, y, 4, 16, 260, Palette.shellCrack, 1);
+            // The hit ring: the one 2 px ring (ART 2026-10-17).
+            this.fx.ring(x, y, 4, 16, 260, Palette.shellCrack, 2);
             this.fx.float(x, y - 10, e.broke === 0 && P.husks[e.kind].shell.length > 1 ? 'CRACK' : 'BREAK', 600);
           }
           break;
@@ -268,8 +269,8 @@ export class GameScene extends Phaser.Scene {
           break;
         case 'perfectDodge':
           this.world.perfectDodge();
-          this.fx.ring(e.x / SUB, e.y / SUB, 4, 34, 420, Palette.spark, 2);
-          this.fx.burst(e.x / SUB, e.y / SUB, 18, Palette.spark, j.particleSpeed * 1.2, { size: 2 });
+          this.fx.ring(e.x / SUB, e.y / SUB, 4, 34, 420, Palette.spark, 1);
+          this.fx.burst(e.x / SUB, e.y / SUB, 18, Palette.spark, j.particleSpeed * 1.2, { shape: 'plus' });
           this.fx.float(e.x / SUB, e.y / SUB - 16, `PERFECT +${e.bonus}`, 900, Palette.spark);
           break;
         case 'huskAttack':
@@ -279,7 +280,7 @@ export class GameScene extends Phaser.Scene {
               const r = P.husks.nutshell.slamRadius / SUB;
               const cx = h.x / SUB + Math.cos(rad(h.attackDir)) * (P.husks.nutshell.slamOffset / SUB);
               const cy = h.y / SUB + Math.sin(rad(h.attackDir)) * (P.husks.nutshell.slamOffset / SUB);
-              this.fx.ring(cx, cy, r * 0.4, r, 260, Palette.shellCrack, 2);
+              this.fx.ring(cx, cy, r * 0.4, r, 260, Palette.shellCrack, 1);
               this.fx.burst(cx, cy, 10, Palette.floorEdge, 70, { life: 300 });
               this.fx.shake(2);
             }
@@ -430,8 +431,11 @@ export class GameScene extends Phaser.Scene {
     this.lastRoom = s.roomIndex;
     const scale = this.session.timeScale();
     this.tint.setFillStyle(Palette.hollow, scale < 1 ? 0.28 : 0);
-    this.world.draw(this.session, this.fx, this.time.now, delta * scale, delta, this.controls.reticle());
-    this.fx.update(delta * scale, delta);
+    // World time slows with the perfect-dodge slow-mo and with the playtest pacing (`setSpeed`), so the
+    // effects, corpses and trail keep step with the sim when a screenshot slows or freezes it.
+    const dtWorld = delta * scale * this.session.speed;
+    this.world.draw(this.session, this.fx, this.time.now, dtWorld, delta, this.controls.reticle());
+    this.fx.update(dtWorld, delta);
     this.updatePrompt();
     this.drawCursor();
     this.hud.draw(this.session.run, delta, this.bodyRects());

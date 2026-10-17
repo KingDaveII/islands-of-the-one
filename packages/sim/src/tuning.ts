@@ -1,6 +1,7 @@
 import {
   accelToUnits,
   degToAngle,
+  HALF_TURN,
   msToTicks,
   pxToUnits,
   speedToUnits,
@@ -237,6 +238,17 @@ export interface Tuning {
     hurtStunMs: number;
     hurtInvulnMs: number;
     hurtKnockback: number;
+    /**
+     * The backpedal (GAME DESIGN 2026-10-17): free movement away from the aim
+     * is slower. The factor is 1 up to `backpedalFromDeg` between the movement
+     * and the aim (strafing is never slowed), eases linearly down to
+     * `backpedalFactor` at `backpedalFullDeg` and stays there to 180°. The
+     * dodge, the Haul's pull and every forced movement keep their full
+     * distances.
+     */
+    backpedalFactor: number;
+    backpedalFromDeg: number;
+    backpedalFullDeg: number;
   };
   /** startup = no i-frames yet, active = i-frames, recovery = still sliding. */
   dodge: MoveTiming & {
@@ -290,7 +302,10 @@ export interface Tuning {
   run: {
     rooms: { waves: WaveTuning[] }[];
     chests: ChestTuning[];
+    /** A chest is a solid round pillar of this radius (GAME DESIGN 2026-10-17): it blocks the Kindled and every Husk alike. */
     chestRadiusPx: number;
+    /** A chest opens when the Kindled's edge comes within this of the chest's edge. */
+    chestOpenReachPx: number;
     waveDelayMs: number;
     clearDelayMs: number;
     spawnMinDistancePx: number;
@@ -432,6 +447,12 @@ export interface Params {
     hurtStun: number;
     hurtInvuln: number;
     hurtKnockback: number;
+    /** The backpedal's slowest factor, permille of the target speed. */
+    backpedal: number;
+    /** Movement this far from the aim (1/4096 turn) or less is never slowed. */
+    backpedalFrom: number;
+    /** The slowest factor applies from this far (1/4096 turn) on. */
+    backpedalFull: number;
   };
   dodge: { startup: number; active: number; recovery: number; speed: number; cooldown: number; exitSpeed: number };
   perfect: { window: number; margin: number; slowmo: number; slowmoScale: number; bonus: number; cooldownRefund: number };
@@ -464,6 +485,8 @@ export interface Params {
     rooms: { waves: WaveTuning[] }[];
     chests: { item: string; count: number }[];
     chestRadius: number;
+    /** A chest opens within this (units) of the Kindled's edge. */
+    chestOpenReach: number;
     waveDelay: number;
     clearDelay: number;
     spawnMinDistance: number;
@@ -649,6 +672,9 @@ export function compileTuning(t: Tuning, weaponId: string): Params {
       hurtStun: msToTicks(t.player.hurtStunMs),
       hurtInvuln: msToTicks(t.player.hurtInvulnMs),
       hurtKnockback: speedToUnits(t.player.hurtKnockback),
+      backpedal: Math.max(0, Math.min(1000, toPermille(t.player.backpedalFactor))),
+      backpedalFrom: Math.max(0, Math.min(HALF_TURN, degToAngle(t.player.backpedalFromDeg))),
+      backpedalFull: Math.max(0, Math.min(HALF_TURN, degToAngle(t.player.backpedalFullDeg))),
     },
     dodge: {
       startup: msToTicks(t.dodge.startupMs),
@@ -704,6 +730,7 @@ export function compileTuning(t: Tuning, weaponId: string): Params {
       })),
       chests: t.run.chests.map((c) => ({ item: c.item, count: Math.max(0, int(c.count)) })),
       chestRadius: pxToUnits(t.run.chestRadiusPx),
+      chestOpenReach: Math.max(0, pxToUnits(t.run.chestOpenReachPx)),
       waveDelay: msToTicks(t.run.waveDelayMs),
       clearDelay: msToTicks(t.run.clearDelayMs),
       spawnMinDistance: pxToUnits(t.run.spawnMinDistancePx),

@@ -190,10 +190,13 @@ export const REQUIRED_MILESTONE: SpriteMilestone = 'M1';
  * Table rows the contract has but ART hasn't drawn yet (sprites.md §4). While
  * an animation is here, the sheet test and the art pipeline treat it as
  * optional (complete when present) and the engine plays its stand-in
- * (`run` → `walk`). When ART's sheet lands with it, MAIN removes it here.
- * Empty since kindled-ash's run landed (#46).
+ * (`run` → `walk`; `run_back` → the run in reverse; `run_start` and
+ * `run_stop` → none, the run and idle switch directly). When ART's sheet
+ * lands with it, MAIN removes it here. Empty from kindled-ash's run (#46) to
+ * the M1 polish (ART 2026-10-17), which added the run transitions and
+ * `run_back`.
  */
-export const ANIMS_AWAITING_ART: readonly string[] = [];
+export const ANIMS_AWAITING_ART: readonly string[] = ['run_start', 'run_stop', 'run_back'];
 
 /** Whether a table row is still waiting for ART (`ANIMS_AWAITING_ART`). */
 export function isAwaitingArt(row: Pick<SpriteAnimSpec, 'name'>): boolean {
@@ -255,12 +258,19 @@ const NO_FACINGS: readonly SpriteFacing[] = [];
  * The Kindled animations of every `kindled-<remembrance>` sheet, per facing.
  * Carry and sit are M2's (nothing uses them before), so a finished sheet may
  * leave them out until `REQUIRED_MILESTONE` reaches M2. `run` is M1's (the
- * Kindled always runs in encounters) and required like the rest.
+ * Kindled always runs in encounters) and required like the rest. The run
+ * transitions (`run_start`, `run_stop`: 2 frames at 20 fps, played once by
+ * time, 100 ms) and `run_back` (4 frames by distance, one cycle per
+ * `anim.backCyclePx`; its fps is n/a, 0) are M1 rows on `ANIMS_AWAITING_ART`
+ * until ART's frames land (M1 polish, ART 2026-10-17).
  */
 export const KINDLED_ANIMS: readonly SpriteAnimSpec[] = [
   spec('idle', 2, 2, true, false),
   spec('walk', 6, 10, true, false),
   spec('run', 8, 16, true, false),
+  spec('run_start', 2, 20, false, false),
+  spec('run_stop', 2, 20, false, false),
+  spec('run_back', 4, 0, true, false),
   spec('dodge', 4, 16, false, false),
   spec('light_1', 3, 15, false, false),
   spec('light_2', 3, 15, false, false),
@@ -413,6 +423,22 @@ export function propIdleSpec(frames: number, fps: number = PROP_IDLE.defaultFps)
 
 /** The chest's sheet (`prop-chest`), the first prop with a table of its own; the engine draws every chest from it (`SPRITE_SHEET_NAMES`). */
 export const CHEST_SHEET: SpriteSheetName = 'prop-chest';
+
+/**
+ * The Sparkglass pickup's sheet (ART delivers it; M1 polish 2026-10-17): a
+ * prop without a table, so `idle` alone, a 9 × 11 chip with a 2-frame glint
+ * at the recipe's fps. Optional: the client draws pickups from it when it is
+ * on disk and keeps its own drawing as the fallback until then
+ * (`OPTIONAL_SPRITE_SHEETS`), so it is not in `SPRITE_SHEET_NAMES`.
+ */
+export const SPARKGLASS_SHEET = 'prop-sparkglass';
+
+/**
+ * Sheets the client loads when they are on disk and does without otherwise
+ * (each with its fallback in the engine). The sheet test checks one like any
+ * other sheet once it lands.
+ */
+export const OPTIONAL_SPRITE_SHEETS: readonly string[] = [SPARKGLASS_SHEET];
 
 /** The chest's animations, in table order: `closed` (looping), `opening` (once), `open` (held). */
 export const CHEST_ANIMS = ['closed', 'opening', 'open'] as const;

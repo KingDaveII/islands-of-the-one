@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
 import { Palette } from '../palette.js';
+import type { Px } from './pixelShapes.js';
 
 /**
  * Pixel-exact drawing on whole game pixels: discs and rings are built from
@@ -10,6 +11,14 @@ type G = Phaser.GameObjects.Graphics;
 /** Half-width of a disc of radius r at row offset dy. */
 function span(r: number, dy: number): number {
   return Math.floor(Math.sqrt(Math.max(0, r * r - dy * dy)) + 0.35);
+}
+
+/** Draws a pixel set (pixelShapes.ts) with its origin at (ox, oy), solid in one colour: one whole pixel each, no alpha. */
+export function plot(g: G, pixels: readonly Px[], ox: number, oy: number, color: number): void {
+  const x0 = Math.round(ox);
+  const y0 = Math.round(oy);
+  g.fillStyle(color, 1);
+  for (const [x, y] of pixels) g.fillRect(x0 + x, y0 + y, 1, 1);
 }
 
 export function disc(g: G, cx: number, cy: number, r: number, color: number, alpha = 1): void {

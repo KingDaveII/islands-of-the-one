@@ -11,6 +11,7 @@ import type { Session } from '../game/session.js';
 import { Palette } from '../palette.js';
 import {
   backpedals,
+  GaitClock,
   huskFlip,
   huskPose,
   kindledPose,
@@ -104,6 +105,8 @@ export class CharacterSprites {
   private readonly stride = new StrideMeter();
   /** The Kindled runs backwards (`backpedals`, with hysteresis): its movement is away from where it faces. */
   private backpedal = false;
+  /** When the Kindled started or stopped, for the run transitions (`run_start`, `run_stop`). */
+  private readonly gait = new GaitClock();
   /** Recent player positions (sim px), for the trail to start behind the dodge. */
   private recent: { x: number; y: number; pose: KindledPose; age: number }[] = [];
   private trailLeft = 0;
@@ -266,7 +269,7 @@ export class CharacterSprites {
     const heading = this.stride.headingDeg;
     if (heading !== null) this.backpedal = backpedals(this.backpedal, separationDeg(heading, simDeg(p.aim)));
     const stride = { distancePx, cycles: this.anim(), backpedal: this.backpedal };
-    const pose = kindledPose(s, P, this.playerSheet, this.clocks('p'), stride);
+    const pose = kindledPose(s, P, this.playerSheet, { ...this.clocks('p'), ...this.gait.update(s) }, stride);
     this.pose = pose;
     this.playerFrame = this.frameName(this.playerSheet, pose);
     this.show(this.player, this.playerTexture(), this.playerSheet, pose);

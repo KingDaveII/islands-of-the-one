@@ -69,6 +69,22 @@
  * room (`room-change-<n>-<name>.png`) and the texture (`-texture.png`).
  * Default folder `docs/screenshots/g15i`.
  *
+ * `--polish` (M1 polish, 2026-10-17; no account needed) shoots the whole-pixel
+ * effects, the Kindled circling a solid chest and the slowed backpedal at
+ * 1920 × 912, into `docs/screenshots/m1-polish`: the pixel slash arc on a
+ * light's active ticks and its 50 % checker on the recovery's tail
+ * (`polish-arc`, `polish-arc-tail`, page and 4× crop); a Nutshell's slam
+ * telegraph early and late in the wind-up, the dither from every 4th pixel to
+ * every other (`polish-slam-early`, `-late`); the 2 px hit ring breaking a
+ * Peeling's shell, then the core flare's 1 px rings and 5 px plus particles,
+ * soon after and later as the rings break into dashes (`polish-hit-ring`,
+ * `polish-flare`, `polish-flare-late`); the Kindled run round the Shell
+ * Gallery's chest with its aim on it, a strip of 4× crops over the circuit
+ * (`polish-chest-circle-strip`, the distance to the chest printed each time,
+ * never under 14 sim px) and the page; and the backpedal strip of
+ * `--backpedal` with the sim's slowdown (`backpedal-E-moving-W-strip`, the
+ * velocity printed: 0.85 of the forward run's).
+ *
  * `--build-label` (G1.5i; makes a throwaway account through the API) shoots
  * the account screen and the start screen at 1920 × 912 with the build label
  * bottom right (`build-label-account.png`, `build-label-start.png`) and
@@ -135,6 +151,11 @@ const roomChangesMode = (() => {
   if (i >= 0) args.splice(i, 1);
   return i >= 0;
 })();
+const polishMode = (() => {
+  const i = args.indexOf('--polish');
+  if (i >= 0) args.splice(i, 1);
+  return i >= 0;
+})();
 const buildLabelMode = (() => {
   const i = args.indexOf('--build-label');
   if (i >= 0) args.splice(i, 1);
@@ -144,7 +165,9 @@ const OUT = resolve(
   args[0] ??
     join(
       ROOT,
-      roomsMode
+      polishMode
+        ? 'docs/screenshots/m1-polish'
+        : roomsMode
         ? 'docs/screenshots/g15g'
         : sortMode || backpedalMode
           ? 'docs/screenshots/g15h'
@@ -684,6 +707,147 @@ async function backpedalShots() {
   await context.close();
 }
 
+/** A Peeling or Nutshell state for the polish shots, as the sim makes one (`createHusk`), awake. */
+const HUSK_STATE = `(s, kind, x, y, patch) => Object.assign({
+  id: s.nextId++, kind, x, y, vx: 0, vy: 0, shell: kind === 'nutshell' ? [30, 20] : [8], core: kind === 'nutshell' ? 50 : 16,
+  action: 'chase', t: 0, attackDir: 0, attackHit: false, cooldown: 100000, hitstop: 0, strafe: 1,
+  pushX: 0, pushY: 0, pushT: 0, stagger: 0, held: null, sinceHit: 0,
+}, patch)`;
+
+/** Runs the sim (at `speed`) until `src(s)` holds in the page, then freezes it; throws after `timeoutMs`. */
+async function runUntil(page, src, timeoutMs = 30000, speed = 0.25) {
+  await page.evaluate((speed) => window.__iot.setSpeed(speed), speed);
+  await page.waitForFunction(
+    (src) => {
+      const scene = window.__iot.scene();
+      if (!scene) throw new Error('the run ended');
+      const done = new Function('s', `return (${src})(s);`)(scene.session.state);
+      if (done) window.__iot.setSpeed(0);
+      return done;
+    },
+    src,
+    { polling: 'raf', timeout: timeoutMs },
+  );
+}
+
+/**
+ * M1 polish (2026-10-17): the whole-pixel effects, the Kindled circling a
+ * solid chest, and the backpedal strip with the sim's slowdown.
+ */
+async function polishShots() {
+  const context = await browser.newContext({ viewport: { width: 1920, height: 912 } });
+  const page = await context.newPage();
+  page.on('pageerror', (e) => console.error('page error:', e.message));
+  await page.goto(BASE);
+  for (let i = 0; i < 100 && !(await page.evaluate(() => Boolean(window.__iot))); i++) await sleep(100);
+
+  // The slash arc: light_1's active ticks (startup 4, active 3: t 5..7), full at t 7; the tail's checker at t 9.
+  const aim = aimOf('E');
+  await posed(page, 21, `() => ${packed(aim, BUTTON.Light)}`, `(s) => s.player.action === 'light' && s.player.comboStep === 0 && s.player.t === 7`);
+  await shot(page, 'polish-arc');
+  await playerCrop(page, 'polish-arc-4x', 160, 120);
+  await page.evaluate(() => window.__iot.setInputSource(() => 0));
+  await runUntil(page, `(s) => s.player.action === 'light' && s.player.t === 9`);
+  console.log(`  arc tail: ${await page.evaluate(() => `${window.__iot.scene().session.state.player.action} t${window.__iot.scene().session.state.player.t}`)}`);
+  await shot(page, 'polish-arc-tail');
+  await playerCrop(page, 'polish-arc-tail-4x', 160, 120);
+
+  // The slam telegraph: a Nutshell winding up beside the Kindled, early and late in the wind-up (the fill from every 4th pixel to every other).
+  await openRoom(page, 'Shell Gallery', 5);
+  for (const [name, f] of [
+    ['early', 0.1],
+    ['late', 0.95],
+  ]) {
+    await page.evaluate(
+      ({ f, husk }) => {
+        const scene = window.__iot.scene();
+        const s = scene.session.state;
+        const hp = scene.session.run.params.husks.nutshell;
+        s.husks.length = 0;
+        s.player.aim = 0;
+        s.player.vx = 0;
+        s.player.vy = 0;
+        const make = new Function('return ' + husk)();
+        s.husks.push(make(s, 'nutshell', s.player.x + 48 * 256, s.player.y, { action: 'windup', t: Math.round(hp.startup * f), attackDir: 2048 }));
+      },
+      { f, husk: HUSK_STATE },
+    );
+    await sleep(300);
+    await shot(page, `polish-slam-${name}`);
+    await playerCrop(page, `polish-slam-${name}-4x`, 200, 120);
+  }
+
+  // The hit ring (2 px, a shell breaking) and the core flare (1 px rings, 5 px plus particles), soon after and later as the rings break into dashes.
+  await openRoom(page, 'Shell Gallery', 5);
+  await page.evaluate((husk) => {
+    const s = window.__iot.scene().session.state;
+    s.husks.length = 0;
+    s.player.aim = 0;
+    const make = new Function('return ' + husk)();
+    // A Peeling in reach, its shell whole: the first light breaks it (the hit ring), the next kills it (the flare).
+    s.husks.push(make(s, 'peeling', s.player.x + 18 * 256, s.player.y, { shell: [8], core: 10 }));
+    window.__polish = { breakTick: -1, deathTick: -1 };
+    window.__iot.setInputSource((st) => {
+      const h = st.husks[0];
+      if (h && h.shell[0] <= 0 && window.__polish.breakTick < 0) window.__polish.breakTick = st.tick;
+      if (!h && window.__polish.deathTick < 0) window.__polish.deathTick = st.tick;
+      // A light every other tick, like the bot; the Peeling never fights back (its cooldown is huge).
+      return (st.tick & 1) === 0 ? 1 << 23 : 0;
+    });
+  }, HUSK_STATE);
+  await runUntil(page, `(s) => window.__polish.breakTick >= 0 && s.tick >= window.__polish.breakTick + 5`);
+  await shot(page, 'polish-hit-ring');
+  await playerCrop(page, 'polish-hit-ring-4x', 120, 80);
+  await runUntil(page, `(s) => window.__polish.deathTick >= 0 && s.tick >= window.__polish.deathTick + 6`);
+  await shot(page, 'polish-flare');
+  await playerCrop(page, 'polish-flare-4x', 120, 80);
+  await runUntil(page, `(s) => s.tick >= window.__polish.deathTick + 16`);
+  await shot(page, 'polish-flare-late');
+  await playerCrop(page, 'polish-flare-late-4x', 120, 80);
+  await page.evaluate(() => window.__iot.setInputSource(null));
+
+  // The Kindled circling the Shell Gallery's chest: aim on the chest, the stick 50° off it, the pillar pushes it round.
+  await openRoom(page, 'Shell Gallery', 5);
+  await page.evaluate(() => {
+    const s = window.__iot.scene().session.state;
+    s.husks.length = 0;
+    const c = s.chests[0];
+    s.player.x = c.x + 30 * 256;
+    s.player.y = c.y;
+    s.player.vx = 0;
+    s.player.vy = 0;
+    window.__iot.setInputSource((st) => {
+      const ch = st.chests[0];
+      const p = st.player;
+      const a = Math.atan2(ch.y - p.y, ch.x - p.x);
+      const aim = Math.round((((a / (2 * Math.PI)) % 1) + 1) * 4096) & 0xfff;
+      // The stick 50° off the chest: pressing into the pillar, the push-out slides the body round it.
+      const move = Math.round(((((a + (Math.PI * 50) / 180) / (2 * Math.PI)) % 1) + 1) * 256) & 0xff;
+      return ((aim | (move << 12) | (7 << 20)) >>> 0);
+    });
+  });
+  const crops = [];
+  const start = await page.evaluate(() => window.__iot.scene().session.state.tick);
+  for (let k = 0; k < 8; k++) {
+    await runUntil(page, `(s) => s.tick >= ${start + 12 + k * 14}`, 30000, 0.5);
+    const d = await page.evaluate(() => {
+      const s = window.__iot.scene().session.state;
+      const c = s.chests[0];
+      return { dist: Math.hypot(s.player.x - c.x, s.player.y - c.y) / 256, opened: c.opened, x: s.player.x / 256, y: s.player.y / 256 };
+    });
+    console.log(`  circling, crop ${k}: ${d.dist.toFixed(2)} sim px from the chest's centre (14 is touching), at (${d.x.toFixed(1)}, ${d.y.toFixed(1)}), chest ${d.opened ? 'open' : 'closed'}`);
+    if (k === 3) await shot(page, 'polish-chest-circle');
+    crops.push((await playerCropPng(page, 96, 96)).toString('base64'));
+  }
+  writeFileSync(join(OUT, 'polish-chest-circle-strip.png'), await stripOfCrops(page, crops));
+  console.log('  polish-chest-circle-strip.png');
+  await page.evaluate(() => window.__iot.setInputSource(null));
+  await context.close();
+
+  // The backpedal strip, now with the sim's slowdown (the velocity printed is 0.85 of the forward run's).
+  await backpedalShots();
+}
+
 /** The five M1 rooms, by their names in rooms.json. */
 const ROOMS = ['Shell Gallery', 'Crossing', 'Narrow Hollow', 'Core Ring', 'Spill'];
 const slug = (name) => name.toLowerCase().replaceAll(' ', '-');
@@ -1128,7 +1292,9 @@ async function buildLabelShots() {
   await context.close();
 }
 
-if (buildLabelMode) {
+if (polishMode) {
+  await polishShots();
+} else if (buildLabelMode) {
   await buildLabelShots();
 } else if (roomChangesMode) {
   await roomChangeShots();

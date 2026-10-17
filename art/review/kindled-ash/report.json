@@ -375,11 +375,17 @@
     ]
   },
   "missing": [
+    "run_start (all facings)",
+    "run_stop (all facings)",
+    "run_back (all facings)",
     "carry_idle (all facings)",
     "carry_walk (all facings)",
     "sit (all facings)"
   ],
   "optional": [
+    "run_start (awaiting art)",
+    "run_stop (awaiting art)",
+    "run_back (awaiting art)",
     "carry_idle (M2)",
     "carry_walk (M2)",
     "sit (M2)"
