@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { API_PREFIX, DEFAULT_SERVER_PORT } from '@iot/shared';
+import { API_PREFIX, DEFAULT_SERVER_PORT, HEALTH_ROUTE } from '@iot/shared';
 import { DEV_PROXY } from '../vite.config.js';
 import { resolveServerUrl } from './config.js';
 
@@ -34,8 +34,8 @@ describe('resolveServerUrl', () => {
 });
 
 describe('the dev proxy (vite.config.ts)', () => {
-  it('forwards the shared API prefix to the server port', () => {
-    expect(DEV_PROXY.prefix).toBe(API_PREFIX);
+  it('forwards the shared API prefix and the health route to the server port', () => {
+    expect(DEV_PROXY.prefixes).toEqual([API_PREFIX, HEALTH_ROUTE]);
     expect(DEV_PROXY.target).toBe(`http://localhost:${DEFAULT_SERVER_PORT}`);
   });
 });

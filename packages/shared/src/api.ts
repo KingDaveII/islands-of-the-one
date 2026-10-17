@@ -21,6 +21,15 @@ export type ApiRoute = (typeof ApiRoute)[keyof typeof ApiRoute];
 /** Every API route lives under this prefix (the dev proxy and Caddy route it to the server). */
 export const API_PREFIX = '/api';
 
+/** The server's liveness route, outside the prefix (Caddy and the dev proxy send it to the server too). */
+export const HEALTH_ROUTE = '/health';
+
+/** What GET /health answers when the server is up: among the rest, its build (the deploy's commit SHA, `dev` locally). */
+export interface HealthResponse {
+  status: 'ok';
+  version: string;
+}
+
 /** The httpOnly session cookie; the client never reads it, the server and room auth do. */
 export const SESSION_COOKIE = 'iot_session';
 
@@ -180,6 +189,10 @@ export function isInventoryResponse(value: unknown): value is InventoryResponse 
 }
 
 const ERROR_CODES = new Set<string>(Object.values(ApiErrorCode));
+
+export function isHealthResponse(value: unknown): value is HealthResponse {
+  return isObject(value) && value.status === 'ok' && typeof value.version === 'string';
+}
 
 export function isApiErrorBody(value: unknown): value is ApiErrorBody {
   return (

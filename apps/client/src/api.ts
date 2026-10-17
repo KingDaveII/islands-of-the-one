@@ -1,12 +1,15 @@
 import {
   ApiRoute,
+  HEALTH_ROUTE,
   isApiErrorBody,
+  isHealthResponse,
   isInventoryResponse,
   isKindledResponse,
   isMeResponse,
   type ApiErrorCode,
   type CreateKindledRequest,
   type CredentialsRequest,
+  type HealthResponse,
   type InventoryEntry,
   type KindledView,
   type MeResponse,
@@ -66,6 +69,8 @@ export interface Api {
   createKindled(body: CreateKindledRequest): Promise<ApiResult<KindledView>>;
   /** The signed-in Kindled's items, in items.json order; `no-kindled` before creation. */
   inventory(): Promise<ApiResult<InventoryEntry[]>>;
+  /** The server's build (its /health, same origin); `unreachable` when the page's origin doesn't serve it. */
+  health(): Promise<ApiResult<HealthResponse>>;
 }
 
 export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)): Api {
@@ -82,6 +87,7 @@ export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)):
       const res = await request(fetchFn, ApiRoute.Inventory, 'GET', undefined, isInventoryResponse);
       return res.ok ? { ok: true, value: res.value.items } : res;
     },
+    health: () => request(fetchFn, HEALTH_ROUTE, 'GET', undefined, isHealthResponse),
   };
 }
 

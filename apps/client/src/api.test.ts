@@ -1,4 +1,4 @@
-import { ApiRoute, type MeResponse } from '@iot/shared';
+import { ApiRoute, HEALTH_ROUTE, type MeResponse } from '@iot/shared';
 import { describe, expect, it } from 'vitest';
 import { createApi, UNREACHABLE } from './api.js';
 
@@ -19,6 +19,15 @@ function fake(status: number, body?: unknown) {
 }
 
 describe('the API client', () => {
+  it("GETs /health for the server's build; a page that answers with HTML is unreachable", async () => {
+    const { calls, api } = fake(200, { status: 'ok', db: 'postgres', version: 'abc1234', protocolVersion: 1 });
+    expect(await api.health()).toEqual({ ok: true, value: { status: 'ok', db: 'postgres', version: 'abc1234', protocolVersion: 1 } });
+    expect(calls[0]?.input).toBe(HEALTH_ROUTE);
+    expect(calls[0]?.init).toMatchObject({ method: 'GET' });
+    expect(await fake(200, '<!doctype html><title>dev</title>').api.health()).toMatchObject({ ok: false, error: 'unreachable' });
+    expect(await fake(503, { status: 'error', db: 'postgres' }).api.health()).toMatchObject({ ok: false, error: 'unreachable' });
+  });
+
   it('GETs /api/me with cookies and checks the response shape', async () => {
     const { calls, api } = fake(200, ME);
     expect(await api.me()).toEqual({ ok: true, value: ME });
