@@ -4,7 +4,15 @@ import hookbladeFixtureJson from '../../../../packages/shared/test/fixtures/hook
 import { describe, expect, it } from 'vitest';
 import { PLAYER_SHEET } from './characters.js';
 import { PLAYER_FEET } from './feet.js';
-import { bodyCentre, chainLinks, hookbladeDraw, hookbladePoint, pointInWorld, type PlayerFrame } from './hookbladePoints.js';
+import {
+  bodyCentre,
+  chainLinks,
+  HookbladeAnchors,
+  hookbladeDraw,
+  hookbladePoint,
+  pointInWorld,
+  type PlayerFrame,
+} from './hookbladePoints.js';
 
 const fixture: SpriteSheet = fixtureJson;
 const cell = fixture.frames.idle_S_0;
@@ -27,8 +35,13 @@ const withPoints: SpriteSheet = {
   },
 };
 
-/** The player drawn with its origin (the line under the soles) at world px (200, 300). */
-const at = (sheet: SpriteSheet, frame: string): PlayerFrame => ({ sheet, frame, anchor: { x: 200, y: 300 } });
+/** The player drawn with its origin (the line under the soles) at world px (200, 300), in `action` (idle unless said). */
+const at = (sheet: SpriteSheet, frame: string, action = 'idle', anchor = { x: 200, y: 300 }): PlayerFrame => ({
+  sheet,
+  frame,
+  anchor,
+  action,
+});
 
 describe("the Hookblade's points in the world", () => {
   it('maps a point like its frame: anchor + (point − origin), a sheet px a world px', () => {
@@ -89,12 +102,40 @@ describe('every frame that needs a point has one (the sheet test guarantees it)'
     }
   });
 
-  it('falls back to the body centre for the one frame shown over a charge or a Haul without one: the hit flinch after an armored hit', () => {
+  it('gives the body centre for a frame without the point, with no memory (hookbladePoint)', () => {
     // The anchor is the line under the soles; the body centre is PLAYER_FEET sim px (×2) above it.
     expect(bodyCentre({ x: 200, y: 300 })).toEqual({ x: 200, y: 300 - 2 * PLAYER_FEET });
     expect(hookbladePoint(at(withPoints, 'idle_S_0'), 'tip')).toEqual({ x: 200, y: 290 });
     expect(hookbladePoint(at(withPoints, 'idle_S_0'), 'hand')).toEqual({ x: 200, y: 290 });
     expect(hookbladePoint(at(withPoints, 'heavy_charge_S_2'), 'hand')).toEqual({ x: 200, y: 290 });
+  });
+});
+
+describe('the frame without a point over a charge or a Haul: the hit flinch after an armored hit (MAIN on #61)', () => {
+  it('keeps the spark where the charge last drew it, moving with the Kindled, until the charge frame comes back', () => {
+    const anchors = new HookbladeAnchors();
+    // Charging: the spark on the frame's tip.
+    expect(anchors.at(at(withPoints, 'heavy_charge_S_2', 'charge'), 'tip')).toEqual({ x: 183, y: 278 });
+    // An armored hit: the hit frame, still charging. The spark stays put.
+    expect(anchors.at(at(withPoints, 'idle_S_0', 'charge'), 'tip')).toEqual({ x: 183, y: 278 });
+    // The Kindled steps 3 px east during the flinch: the spark rides along.
+    expect(anchors.at(at(withPoints, 'idle_S_0', 'charge', { x: 203, y: 300 }), 'tip')).toEqual({ x: 186, y: 278 });
+    // The charge frame is back: its own point again.
+    expect(anchors.at(at(withPoints, 'heavy_charge_NE_2', 'charge'), 'tip')).toEqual({ x: 212, y: 269 });
+  });
+
+  it('starts over with the action: a new charge, or another action, with no point yet falls to the body centre', () => {
+    const anchors = new HookbladeAnchors();
+    expect(anchors.at(at(withPoints, 'heavy_charge_S_2', 'charge'), 'tip')).toEqual({ x: 183, y: 278 });
+    // The thrust, then idle: another action, nothing remembered.
+    expect(anchors.at(at(withPoints, 'idle_S_0', 'heavy'), 'tip')).toEqual({ x: 200, y: 290 });
+    expect(anchors.at(at(withPoints, 'idle_S_0', 'idle'), 'tip')).toEqual({ x: 200, y: 290 });
+    // A new charge hit on its first frame: no earlier point in this action.
+    expect(anchors.at(at(withPoints, 'idle_S_0', 'charge'), 'tip')).toEqual({ x: 200, y: 290 });
+    // The Haul's hand is remembered apart from the tip.
+    expect(anchors.at(at(withPoints, 'haul_throw_E_1', 'ability'), 'hand')).toEqual({ x: 210, y: 280 });
+    expect(anchors.at(at(withPoints, 'idle_S_0', 'ability'), 'hand')).toEqual({ x: 210, y: 280 });
+    expect(anchors.at(at(withPoints, 'idle_S_0', 'ability'), 'tip')).toEqual({ x: 200, y: 290 });
   });
 });
 

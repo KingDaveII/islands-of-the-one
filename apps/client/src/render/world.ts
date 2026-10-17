@@ -24,7 +24,7 @@ import { ChestSprites } from './chestSprites.js';
 import { DEPTH } from './depth.js';
 import { PLAYER_FEET } from './feet.js';
 import { facingIndex, facingStep } from './facing.js';
-import { hookbladePoint, type PlayerFrame } from './hookbladePoints.js';
+import { HookbladeAnchors, type PlayerFrame } from './hookbladePoints.js';
 import type { Fx } from './fx.js';
 import { HookbladeFx } from './hookblade.js';
 import { disc, ditherDisc, outlinedRect, pixelLine, ring, shadowEllipse } from './pixels.js';
@@ -117,6 +117,8 @@ export class WorldRenderer {
   /** The old hitbox shapes over the sprites, when debugFlags.shapes is on. */
   private readonly debug: G;
   private readonly hookblade: HookbladeFx;
+  /** The Hookblade's points, remembered within an action for the frame that has none. */
+  private readonly anchors = new HookbladeAnchors();
   readonly characters: CharacterSprites;
   /** The room, drawn from the tile sheet. */
   readonly tiles: TileRoom;
@@ -219,7 +221,7 @@ export class WorldRenderer {
     for (const h of s.husks) this.drawHuskEffects(g, run, h, huskAt(h), timeMs);
     this.characters.draw(session, fx, pl, huskRaw, blink, dtWorldMs, dtRealMs);
     // The chain (floor layer) and the spark leave from points in the player's frame, so they come after it is posed.
-    const frame = this.playerFrame();
+    const frame = this.playerFrame(s.player.action);
     this.drawChain(f, session, frame, huskW);
     this.drawPlayerEffects(g, run, frame, pw, huskW);
 
@@ -272,11 +274,12 @@ export class WorldRenderer {
   }
 
   /** The player as drawn this frame, for the Hookblade's points. */
-  private playerFrame(): PlayerFrame {
+  private playerFrame(action: string): PlayerFrame {
     return {
       sheet: this.characters.playerSheet,
       frame: this.characters.playerFrame,
       anchor: this.characters.playerAnchor,
+      action,
     };
   }
 
@@ -293,7 +296,7 @@ export class WorldRenderer {
     if (p.action === 'charge') {
       // The charge spark at the hook tip: spark_0 as the charge starts, spark_2 held at full charge.
       const stage = chargeStage(p.charge, run.params.weapon.heavy);
-      const tip = hookbladePoint(frame, 'tip');
+      const tip = this.anchors.at(frame, 'tip');
       this.hookblade.spark(tip.x, tip.y, stage);
     }
   }
@@ -311,7 +314,7 @@ export class WorldRenderer {
     if (!hk) return;
     const hit = hk.hitId >= 0 ? huskW.get(hk.hitId) : undefined;
     const end = hit ?? toWorld({ x: hk.x / SUB, y: hk.y / SUB });
-    const hand = hookbladePoint(frame, 'hand');
+    const hand = this.anchors.at(frame, 'hand');
     const set = hk.hitId >= 0;
     if (set) {
       pixelLine(g, hand.x, hand.y, end.x, end.y, Palette.chainOutline, 1, 3);
