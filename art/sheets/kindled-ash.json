@@ -116,6 +116,42 @@
         }
       }
     },
+    "run_back": {
+      "facings": {
+        "S": {
+          "src": "art/raw/run-back-kindled-ash/run_back/south",
+          "frames": [2, 4, 6, 5]
+        },
+        "SE": {
+          "src": "art/raw/run-back-kindled-ash/run_back/south-east",
+          "frames": [2, 5, 1, 4]
+        },
+        "E": {
+          "src": "art/clean/kindled-ash/run_back/east",
+          "frames": [2, 4, 6, 1]
+        },
+        "NE": {
+          "src": "art/raw/run-back-kindled-ash/run_back/north-east",
+          "frames": [5, 1, 6, 3]
+        },
+        "N": {
+          "src": "art/raw/run-back-kindled-ash/run_back/north",
+          "frames": [2, 4, 6, 1]
+        },
+        "NW": {
+          "src": "art/raw/run-back-kindled-ash/run_back/north-west",
+          "frames": [4, 1, 6, 2]
+        },
+        "W": {
+          "src": "art/clean/kindled-ash/run_back/west",
+          "frames": [2, 5, 4, 1]
+        },
+        "SW": {
+          "src": "art/raw/run-back-kindled-ash/run_back/south-west",
+          "frames": [3, 6, 5, 1]
+        }
+      }
+    },
     "dodge": {
       "ground": {
         "ref": 0
@@ -672,6 +708,7 @@
         "#624541",
         "#634341",
         "#644448",
+        "#662e2f",
         "#6a3e40",
         "#6a4043",
         "#6a4244",
@@ -687,6 +724,7 @@
         "#6f4b4e",
         "#704243",
         "#704848",
+        "#723038",
         "#723c44",
         "#724f4a",
         "#743c3e",
@@ -702,7 +740,9 @@
         "#7e4136",
         "#7e524c",
         "#7f403d",
-        "#834943"
+        "#814345",
+        "#834943",
+        "#883427"
       ],
       "to": "sleeper-ochre"
     },
@@ -2810,6 +2850,49 @@
         [49, 54, "#1c2147"],
         [50, 54, "#1c2147"]
       ]
+    },
+    {
+      "frame": "run_back_S_1",
+      "pixels": [
+        [41, 43, "#4a4e57"],
+        [41, 44, "#4a4e57"],
+        [40, 45, "#4a4e57"]
+      ]
+    },
+    {
+      "frame": "run_back_S_3",
+      "pixels": [
+        [41, 44, "#4a4e57"],
+        [42, 44, "#4a4e57"],
+        [41, 45, "#4a4e57"],
+        [40, 46, "#4a4e57"]
+      ]
+    },
+    {
+      "frame": "run_back_SE_2",
+      "pixels": [[21, 51, "#9c5b4a"]]
+    },
+    {
+      "frame": "run_back_E_0",
+      "pixels": [
+        [26, 47, "#4a4e57"],
+        [26, 48, "#4a4e57"]
+      ]
+    },
+    {
+      "frame": "run_back_E_3",
+      "pixels": [
+        [27, 46, "#4a4e57"],
+        [27, 47, "#4a4e57"],
+        [22, 50, "#9c5b4a"]
+      ]
+    },
+    {
+      "frame": "run_back_SW_1",
+      "pixels": [
+        [46, 51, "#9c5b4a"],
+        [35, 24, "#e8e2d6"]
+      ]
     }
   ],
   "skin": {
@@ -3112,7 +3195,28 @@
       "run_SW_5": [[32, 44]],
       "run_SE_1": [[51, 43]],
       "haul_pull_SE_1": [[55, 44]],
-      "haul_pull_NE_0": [[39, 40]]
+      "haul_pull_NE_0": [[39, 40]],
+      "run_back_E_3": [[35, 33]],
+      "run_back_NE_0": [[42, 26]],
+      "run_back_NE_1": [[42, 27]],
+      "run_back_NE_2": [[42, 28]],
+      "run_back_NE_3": [[42, 27]],
+      "run_back_N_2": [[20, 44]],
+      "run_back_NW_0": [[26, 21]],
+      "run_back_NW_1": [
+        [25, 20],
+        [24, 25]
+      ],
+      "run_back_NW_2": [
+        [26, 22],
+        [25, 28]
+      ],
+      "run_back_NW_3": [
+        [25, 20],
+        [24, 25]
+      ],
+      "run_back_W_0": [[31, 20]],
+      "run_back_W_1": [[30, 20]]
     }
   },
   "points": {
