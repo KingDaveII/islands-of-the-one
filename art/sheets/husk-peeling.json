@@ -2,28 +2,90 @@
   "sheet": "husk-peeling",
   "kind": "husk",
   "outline": "other",
-  "draft": true,
-  "notes": "Draft from art job husks-m1 (art/jobs/husks-m1.md; raw files and manifest in art/raw/husks-m1/). Animated east from the south rotation (= ART's exemplar art/anchors/husk-peeling-64.png) passed as the start frame, because the east rotation lost the core (David, 2026-10-16). idle is take 2 (both takes redesigned the curl; ART redraws it); hit repeats idle's first pick. lunge 3 is a smear and is skipped. spawn, telegraph, chipped and drop are ART's to draw.",
+  "draft": false,
+  "notes": "ART: every frame drawn by art/clean/husks/peeling.py from ART's exemplar art/anchors/husk-peeling-64.png (moved, stretched by whole columns, squashed by whole rows, cut, recoloured). The husks-m1 job's generated frames (art/raw/husks-m1/peeling/, #55) lost the curl and the core and are not used.",
   "anims": {
+    "spawn": {
+      "src": "art/clean/husk-peeling/spawn",
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "ground": {
+        "ref": 3
+      }
+    },
     "idle": {
-      "src": "art/raw/husks-m1/peeling/idle",
-      "frames": [1, 3],
-      "ground": { "ref": 0 }
+      "src": "art/clean/husk-peeling/idle",
+      "frames": [
+        0,
+        1
+      ],
+      "ground": {
+        "ref": 0
+      }
+    },
+    "telegraph": {
+      "src": "art/clean/husk-peeling/telegraph",
+      "frames": [
+        0,
+        1
+      ],
+      "ground": {
+        "ref": 0
+      }
     },
     "lunge": {
-      "src": "art/raw/husks-m1/peeling/lunge",
-      "frames": [1, 2, 6],
-      "ground": { "ref": 0 }
+      "src": "art/clean/husk-peeling/lunge",
+      "frames": [
+        0,
+        1,
+        2
+      ],
+      "ground": {
+        "ref": 0
+      }
     },
     "hit": {
-      "src": "art/raw/husks-m1/peeling/idle",
-      "frames": [1],
-      "ground": { "ref": 0 }
+      "src": "art/clean/husk-peeling/hit",
+      "frames": [
+        0
+      ],
+      "ground": {
+        "ref": 0
+      }
+    },
+    "chipped": {
+      "src": "art/clean/husk-peeling/chipped",
+      "frames": [
+        0
+      ],
+      "ground": {
+        "ref": 0
+      }
     },
     "death": {
-      "src": "art/raw/husks-m1/peeling/death",
-      "frames": [1, 2, 3, 4],
-      "ground": { "ref": 0 }
+      "src": "art/clean/husk-peeling/death",
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "ground": {
+        "ref": 0
+      }
+    },
+    "drop": {
+      "src": "art/clean/husk-peeling/drop",
+      "frames": [
+        0
+      ],
+      "ground": {
+        "ref": 0
+      }
     }
   }
 }
