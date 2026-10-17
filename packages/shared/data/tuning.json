@@ -382,7 +382,8 @@
   },
   "anim": {
     "walkCyclePx": 64,
-    "runCyclePx": 96
+    "runCyclePx": 96,
+    "backCyclePx": 48
   },
   "view": {
     "widthPx": 960,
