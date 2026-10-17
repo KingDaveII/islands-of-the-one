@@ -7,12 +7,18 @@ import {
   headerTotals,
   initials,
   INVENTORY_TABS,
+  litPane,
   maxScroll,
   moveFocus,
   PACK_COLS,
   PACK_ROWS,
   packCells,
   packUsed,
+  REFUSAL_BLINK_MS,
+  REFUSAL_HOLD_MS,
+  REFUSAL_LIFE_MS,
+  refusalPane,
+  refusalVisible,
   scrollToShow,
   storeCells,
   TAB_LABELS,
@@ -221,5 +227,41 @@ describe('the inventory screen layout', () => {
     expect(maxScroll(6, 11, 4)).toBe(0);
     expect(maxScroll(45, 11, 4)).toBe(1);
     expect(maxScroll(200, 11, 4)).toBe(15);
+  });
+
+  it('lights the frame of the pane the keys or pad act on, and neither with the mouse alone', () => {
+    expect(litPane({ pane: 'pack', index: 3 }, true)).toBe('pack');
+    expect(litPane({ pane: 'store', index: 0 }, true)).toBe('store');
+    expect(litPane({ pane: 'pack', index: 3 }, false)).toBeNull();
+    expect(litPane({ pane: 'store', index: 0 }, false)).toBeNull();
+  });
+
+  it("shows a refused move's line in the header of the pane it went to", () => {
+    // Pack full: a move into the pack; the store's limit: a move into the store.
+    expect(refusalPane('pack')).toBe('pack');
+    expect(refusalPane('store')).toBe('store');
+  });
+
+  it('blinks the refusal line twice, holds it 2 s, then drops it in one frame', () => {
+    expect(REFUSAL_HOLD_MS).toBe(2000);
+    expect(REFUSAL_LIFE_MS).toBe(REFUSAL_BLINK_MS + REFUSAL_HOLD_MS);
+    // Two blinks: off, on, off, on in four equal slots of the blink window.
+    const slot = REFUSAL_BLINK_MS / 4;
+    expect(refusalVisible(0)).toBe(false);
+    expect(refusalVisible(slot * 0.5)).toBe(false);
+    expect(refusalVisible(slot * 1.5)).toBe(true);
+    expect(refusalVisible(slot * 2.5)).toBe(false);
+    expect(refusalVisible(slot * 3.5)).toBe(true);
+    // Then solid for the hold.
+    expect(refusalVisible(REFUSAL_BLINK_MS)).toBe(true);
+    expect(refusalVisible(REFUSAL_BLINK_MS + 1000)).toBe(true);
+    expect(refusalVisible(REFUSAL_LIFE_MS - 1)).toBe(true);
+    // Gone in one frame, never faded.
+    expect(refusalVisible(REFUSAL_LIFE_MS)).toBe(false);
+    expect(refusalVisible(REFUSAL_LIFE_MS + 5000)).toBe(false);
+    expect(refusalVisible(-1)).toBe(false);
+    // The visible steps are whole: the function answers only true or false.
+    for (let t = 0; t < REFUSAL_LIFE_MS + 100; t += 7)
+      expect(typeof refusalVisible(t)).toBe('boolean');
   });
 });
