@@ -3,17 +3,17 @@
 How the fight is drawn so that everything that matters reads at 1× in a busy room. Two pixel grids
 (G1.5): the **world** renders at 2× (one sim pixel is two world px, a tile 32), in a view of up to
 960 × 432–540 world px that flexes with the window; the **UI** keeps M1's 480 × 270 design in UI
-px. Only M1's assets (the three v1 sheets, hookblade-fx and the procedural room) draw at 2 world px per
-pixel until ART's B versions replace them; the engine's own world drawings (shadows, decals, the
-slash arc and thrust line, particles, rings, poise bars, the pad reticle, the Haul guide) are at 1
-world px per pixel, on the world camera; sim lengths (reach, radii, `*Px` tuning) are ×2 there.
+px. Every sheet (ART's sprites, the chest, the room tiles, hookblade-fx) and the engine's own world
+drawings (shadows, decals, the slash arc and thrust line, particles, rings, poise bars, the pad
+reticle, the Haul guide) are at 1 world px per pixel, on the world camera; sim lengths (reach, radii,
+`*Px` tuning) are ×2 there.
 Text, the HUD, the menus and the mouse reticle (the cursor in a run) are UI px on the UI camera.
 Combat rules are in [`combat.md`](combat.md). Colors are the design-system tokens in
 [`apps/client/src/palette.ts`](../../apps/client/src/palette.ts); never use a color that is not a
 token.
 
-Characters and enemies are still placeholder shapes (real sprite sheets come later), but they use
-the palettes and outlines below.
+Characters, enemies, the chest and the room are ART's B sprite sheets ([`sprites.md`](sprites.md));
+the palettes and outlines below are the rules they and the engine's own drawings follow.
 
 ## 1. Reserved signal colors
 
@@ -69,8 +69,9 @@ particles, text, dev panels):
   player outline. On a hit every link swaps to `chain_link_taut` in `spark-amber`, the hook to
   `hook_set`, over a straight `spark-amber` line while the target, or the player, slides along it.
   No new signal color: the chain is the player's weapon, so it uses the weapon's tokens.
-- **Chests.** A banded `hollow-below` box with a `dream-night` outline and a blinking
-  `spark-amber` clasp; opened, the lid stands up and the inside is the Hollow.
+- **Chests.** ART's `prop-chest` sheet ([`sprites.md`](sprites.md) §4): closed with the clasp glint,
+  the lid rising once when it opens, then open and held; the engine adds only the grounding shadow
+  under it.
 - **Aim.** The reticle marks the exact 360° aim: four broken rims on the diagonals around a spark,
   `hollow-light` with a `ui-outline` outline (never a cross or plus). With the mouse it sits on the
   pointer, as the cursor (UI camera, UI px); on the gamepad (Playtest 2) it is drawn in the world
