@@ -18,14 +18,24 @@
  * `run-<facing>-strip.png`. The cycle plays by distance, so frame k shows
  * after k × 16 world px (`anim.runCyclePx` 96 over 6 frames).
  *
- * `--rooms` (G1.5e, no account needed) hands the client the tile fixture
- * (packages/shared/test/fixtures/tiles-fixture.*, `__iot.useTileSheet`), so
- * rooms draw from it until ART's tiles-cave lands, and shoots each of the five M1 rooms at 1920 × 912 as it
- * loads (doors closed), plus the room texture itself at 1× (the static pieces,
- * the whole room) as `room-<name>-texture.png`. For the Shell Gallery and the
- * Narrow Hollow it then lets the autopilot clear the room and shoots the door
- * open; and the Shell Gallery once more without the fixture, the procedural
- * fallback. Default folder `docs/screenshots/g15e`.
+ * `--rooms` (G1.5e, G1.5g; no account needed) shoots each of the five M1 rooms
+ * at 1920 × 912 from the shipped sheets (tiles-cave, prop-chest, the Husks):
+ * as it loads (doors closed, the chest shut), plus the room texture itself at
+ * 1× (the static pieces, the whole room) as `room-<name>-texture.png`; then
+ * it lets the autopilot fight and freezes the sim for a shot of the fight
+ * (`room-<name>-fight.png`: a Husk hurt, the HUD moving), of the Hookblade's
+ * charge (`-charge.png`, the spark at the tip; the bot charges only to open a
+ * shelled Nutshell, so it may not come: `--poses` has the full charge in every
+ * facing), of the Haul with the hook out (`-haul.png`) and, playing on at 4×
+ * into the run's third room where the Nutshells come, of a Nutshell next to
+ * the Kindled (`-nutshell.png`), each when the bot gets there within its
+ * budget. For
+ * the Shell Gallery and the Narrow Hollow it then lets the bot clear the room
+ * and shoots the door open, with a strip of the door's frames at 4×; for the
+ * Shell Gallery it also waits for the bot to open the chest and takes a strip
+ * of the chest's frames at 4× (`chest-shell-gallery-strip.png`: closed with
+ * the glint, opening, open) and the page with it open. Default folder
+ * `docs/screenshots/g15g` (G1.5e's shots from the test fixture are in g15e).
  *
  * `--poses` (G1.5b, no account needed) poses the Kindled at 1920 × 912 in
  * each of the 8 facings and shoots the page plus a 4× crop around the
@@ -42,7 +52,7 @@
  *   node tools/screenshots-g15.mjs --rooms [outDir] [baseUrl]
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
@@ -77,7 +87,7 @@ const roomsMode = (() => {
   if (i >= 0) args.splice(i, 1);
   return i >= 0;
 })();
-const OUT = resolve(args[0] ?? join(ROOT, roomsMode ? 'docs/screenshots/g15e' : 'docs/screenshots/g15'));
+const OUT = resolve(args[0] ?? join(ROOT, roomsMode ? 'docs/screenshots/g15g' : 'docs/screenshots/g15'));
 const BASE = args[1] ?? 'http://localhost:5173';
 
 /** The window sizes of the brief: CSS size at a device pixel ratio. */
@@ -507,30 +517,150 @@ async function openRoom(page, name, seed = 5) {
   await page.evaluate(() => window.__iot.setSpeed(0));
 }
 
-/** G1.5e: the five rooms drawn from the tile fixture, doors closed, and two with the door open. */
+/**
+ * Lets the sim run (at `speed`) until `until(state)` holds in the page, then
+ * freezes it (speed 0) for a shot. False when `timeoutMs` passes first.
+ */
+async function freezeWhen(page, until, timeoutMs, speed = 1) {
+  await page.evaluate((speed) => window.__iot.setSpeed(speed), speed);
+  try {
+    await page.waitForFunction(
+      (src) => {
+        const scene = window.__iot.scene();
+        if (!scene) return false;
+        const done = new Function('s', `return (${src})(s);`)(scene.session.state);
+        if (done) window.__iot.setSpeed(0);
+        return done;
+      },
+      until,
+      { polling: 'raf', timeout: timeoutMs },
+    );
+    return true;
+  } catch {
+    await page.evaluate(() => window.__iot.setSpeed(0));
+    return false;
+  }
+}
+
+/** A Husk is hurt and the player is solid (no i-frame flicker): the fight is on. */
+const FIGHT_ON = `(s) => {
+  const hostiles = s.husks.filter((h) => h.action !== 'spawn' && h.core > 0);
+  const hurt = s.husks.some((h) => h.shell.some((v) => v <= 0) || h.action === 'flinch' || h.hitstop > 0);
+  return hostiles.length >= 1 && hurt && s.player.iframes === 0 && s.player.hurtInvuln === 0;
+}`;
+/** A Nutshell awake and within ten tiles of the player, so the shot has it next to the Kindled. */
+const NUTSHELL_NEAR = `(s) => s.husks.some((h) => h.kind === 'nutshell' && h.action !== 'spawn' && h.core > 0 &&
+  Math.hypot(h.x - s.player.x, h.y - s.player.y) / 256 < 160) && s.player.iframes === 0 && s.player.hurtInvuln === 0`;
+/** The heavy held past its first charge stage (the spark at the tip), a Husk awake to aim at. */
+const CHARGE_FULL = `(s) => s.player.action === 'charge' &&
+  s.player.charge >= window.__iot.scene().session.run.params.weapon.heavy.chargeMin && s.husks.some((h) => h.core > 0)`;
+/** The Haul thrown: the hook out and some way from the hand. */
+const HAUL_OUT = `(s) => Boolean(s.player.hook) && s.player.action === 'ability' &&
+  Math.hypot(s.player.hook.x - s.player.x, s.player.hook.y - s.player.y) / 256 >= 24`;
+
+/**
+ * A strip of crops around a sim point (`w` × `h` world px around its origin,
+ * `ox`, `oy` the origin's offset into the box), one per page image, at 4×.
+ */
+async function stripAround(page, urls, sim, box) {
+  return page.evaluate(
+    async ({ urls, sim, box }) => {
+      const scene = window.__iot.scene();
+      const { zU } = scene.fits().ui;
+      const { zW } = scene.fits().world;
+      const c = scene.toUi(sim.x, sim.y);
+      const at = { x: Math.round(c.x * zU - box.ox * zW), y: Math.round(c.y * zU - box.oy * zW), w: box.w * zW, h: box.h * zW };
+      const imgs = await Promise.all(
+        urls.map(async (u) => {
+          const img = new Image();
+          img.src = u;
+          await img.decode();
+          return img;
+        }),
+      );
+      const k = 4;
+      const gap = 8;
+      const canvas = document.createElement('canvas');
+      canvas.width = imgs.length * (box.w * k + gap) - gap;
+      canvas.height = box.h * k;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      imgs.forEach((img, i) => ctx.drawImage(img, at.x, at.y, at.w, at.h, i * (box.w * k + gap), 0, box.w * k, box.h * k));
+      return canvas.toDataURL('image/png').split(',')[1];
+    },
+    { urls, sim, box },
+  );
+}
+
+/**
+ * The page's pixels at each new value of `frames()` over `ms` of the client
+ * clock, through Phaser's renderer snapshot: [frame name, data URL] pairs in
+ * the order first seen.
+ */
+async function framesSeen(page, framesSrc, ms) {
+  return page.evaluate(
+    async ({ framesSrc, ms }) => {
+      const read = new Function(`return (${framesSrc})();`);
+      const snap = () =>
+        new Promise((resolve) => {
+          window.__iot.game.renderer.snapshot((img) => resolve(img instanceof HTMLImageElement ? img.src : null));
+        });
+      const seen = new Map();
+      const until = performance.now() + ms;
+      while (performance.now() < until) {
+        const [frame] = read();
+        if (frame && !seen.has(frame)) {
+          seen.set(frame, null);
+          seen.set(frame, await snap());
+        }
+        await new Promise((r) => requestAnimationFrame(r));
+      }
+      return [...seen];
+    },
+    { framesSrc, ms },
+  );
+}
+
+/**
+ * G1.5g: the five rooms from the shipped sheets, as they load and in a fight
+ * (with the charge and the Haul where the bot gets to them), two door
+ * openings and the chest's three states.
+ */
 async function roomShots() {
   const context = await browser.newContext({ viewport: { width: 1920, height: 912 } });
   const page = await context.newPage();
   page.on('pageerror', (e) => console.error('page error:', e.message));
   await page.goto(BASE);
   for (let i = 0; i < 100 && !(await page.evaluate(() => Boolean(window.__iot))); i++) await sleep(100);
-  const fixtures = join(ROOT, 'packages/shared/test/fixtures');
-  await page.evaluate(
-    ({ sheet, png }) => window.__iot.useTileSheet(sheet, `data:image/png;base64,${png}`),
-    {
-      sheet: JSON.parse(readFileSync(join(fixtures, 'tiles-fixture.json'), 'utf8')),
-      png: readFileSync(join(fixtures, 'tiles-fixture.png')).toString('base64'),
-    },
-  );
   for (const name of ROOMS) {
     if (only && only !== slug(name)) continue;
     await openRoom(page, name);
     await sleep(600);
     await shot(page, `room-${slug(name)}`);
     const url = await page.evaluate(() => window.__iot.roomImage());
-    if (!url) throw new Error(`${name}: no tile room (did useTileSheet take the fixture?)`);
+    if (!url) throw new Error(`${name}: no tile room`);
     writeFileSync(join(OUT, `room-${slug(name)}-texture.png`), Buffer.from(url.split(',')[1], 'base64'));
     console.log(`  room-${slug(name)}-texture.png`);
+    // The fight: the bot plays; the sim freezes the frame a Husk is hurt with the player solid.
+    await page.evaluate(() => window.__iot.setAutopilot({}));
+    if (await freezeWhen(page, FIGHT_ON, 40000)) await shot(page, `room-${slug(name)}-fight`);
+    else console.log(`  ${name}: no fight within the budget`);
+    for (const [what, until, budget, speed] of [
+      ['charge', CHARGE_FULL, 60000, 1],
+      ['haul', HAUL_OUT, 60000, 1],
+      // Nutshells come with the third room of a run (tuning.json `run.rooms`), so this one plays on at 4×.
+      ['nutshell', NUTSHELL_NEAR, 120000, 4],
+    ]) {
+      if (await freezeWhen(page, until, budget, speed)) await shot(page, `room-${slug(name)}-${what}`);
+      else console.log(`  ${name}: no ${what} within the budget`);
+    }
+    const state = await page.evaluate(() => {
+      const s = window.__iot.scene().session.state;
+      return `${s.husks.map((h) => h.kind).join(', ') || 'no Husks'}; player ${s.player.action}`;
+    });
+    console.log(`  ${name}: ${state}`);
   }
   for (const name of ['Shell Gallery', 'Narrow Hollow']) {
     if (only && only !== slug(name)) continue;
@@ -599,17 +729,61 @@ async function roomShots() {
     writeFileSync(join(OUT, `door-${slug(name)}-strip.png`), Buffer.from(strip, 'base64'));
     console.log(`  door-${slug(name)}-strip.png`);
   }
+  if (!only || only === 'shell-gallery') {
+    // The chest: closed (both glint frames) as the room loads, then the bot opens it between waves.
+    await openRoom(page, 'Shell Gallery');
+    const chest = await page.evaluate(() => {
+      const c = window.__iot.scene().session.state.chests[0];
+      return c ? { x: c.x / 256, y: c.y / 256 } : null;
+    });
+    if (!chest) throw new Error('Shell Gallery: no chest');
+    const closed = await framesSeen(page, '() => window.__iot.chestFrames()', 1200);
+    console.log(`  chest closed frames seen: ${closed.map(([f]) => f).join(', ')}`);
+    // The bot only takes a chest between waves and rarely gets there: stand the Kindled four tiles east of
+    // it with the room emptied and walk it in; the sim freezes the tick the chest opens, the client clock
+    // plays the lid.
+    await page.evaluate(() => {
+      const scene = window.__iot.scene();
+      const s = scene.session.state;
+      const c = s.chests[0];
+      s.player.x = c.x + 64 * 256;
+      s.player.y = c.y;
+      window.__iot.setInputSource((st) => {
+        st.husks.length = 0;
+        const ch = st.chests[0];
+        if (!ch) return 0;
+        const turn = Math.atan2(ch.y - st.player.y, ch.x - st.player.x) / (Math.PI * 2);
+        const aim = Math.round(turn * 4096) & 0xfff;
+        const dir = Math.round(turn * 256) & 0xff;
+        return (aim | (dir << 12) | (7 << 20)) >>> 0;
+      });
+      window.__iot.setSpeed(1);
+    });
+    const opened = await page
+      .waitForFunction(
+        () => {
+          const s = window.__iot.scene()?.session.state;
+          const done = Boolean(s?.chests[0]?.opened);
+          if (done) window.__iot.setSpeed(0);
+          return done;
+        },
+        null,
+        { polling: 'raf', timeout: 20000 },
+      )
+      .then(() => true)
+      .catch(() => false);
+    if (!opened) throw new Error('Shell Gallery: the Kindled never reached the chest');
+    await page.evaluate(() => window.__iot.setInputSource(null));
+    const opening = await framesSeen(page, '() => window.__iot.chestFrames()', 900);
+    console.log(`  chest frames seen: ${opening.map(([f]) => f).join(', ')}`);
+    await shot(page, 'room-shell-gallery-chest-open');
+    // The chest's cell is 64×64 with its origin at (32, 54): the box around the sim point.
+    const frames = [...closed, ...opening].filter(([, u]) => u);
+    const strip = await stripAround(page, frames.map(([, u]) => u), chest, { w: 64, h: 64, ox: 32, oy: 54 });
+    writeFileSync(join(OUT, 'chest-shell-gallery-strip.png'), Buffer.from(strip, 'base64'));
+    console.log(`  chest-shell-gallery-strip.png (${frames.map(([f]) => f).join(', ')})`);
+  }
   await context.close();
-  if (only && only !== 'shell-gallery') return;
-  // The procedural room, the fallback without a tile sheet, for comparison.
-  const plain = await browser.newContext({ viewport: { width: 1920, height: 912 } });
-  const p2 = await plain.newPage();
-  await p2.goto(BASE);
-  for (let i = 0; i < 100 && !(await p2.evaluate(() => Boolean(window.__iot))); i++) await sleep(100);
-  await openRoom(p2, 'Shell Gallery');
-  await sleep(600);
-  await shot(p2, 'room-shell-gallery-procedural');
-  await plain.close();
 }
 
 if (roomsMode) {
