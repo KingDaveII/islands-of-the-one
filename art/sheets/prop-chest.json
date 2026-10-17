@@ -1,0 +1,32 @@
+{
+  "sheet": "prop-chest",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "notes": "ART: drawn by art/clean/prop-chest/chest.py, with the tiles-cave job chest (PR #56) as the reference for its look.",
+  "anims": {
+    "closed": {
+      "src": "art/clean/prop-chest/closed",
+      "frames": [
+        0,
+        1
+      ],
+      "fps": 2
+    },
+    "opening": {
+      "src": "art/clean/prop-chest/opening",
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "open": {
+      "src": "art/clean/prop-chest/open",
+      "frames": [
+        0
+      ]
+    }
+  }
+}

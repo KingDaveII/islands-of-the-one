@@ -1,0 +1,221 @@
+{
+  "frames": {
+    "closed_0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.84375
+      }
+    },
+    "closed_1": {
+      "frame": {
+        "x": 64,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.84375
+      }
+    },
+    "opening_0": {
+      "frame": {
+        "x": 128,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.84375
+      }
+    },
+    "opening_1": {
+      "frame": {
+        "x": 192,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.84375
+      }
+    },
+    "opening_2": {
+      "frame": {
+        "x": 256,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.84375
+      }
+    },
+    "opening_3": {
+      "frame": {
+        "x": 320,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.84375
+      }
+    },
+    "open_0": {
+      "frame": {
+        "x": 384,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.84375
+      }
+    }
+  },
+  "meta": {
+    "image": "prop-chest.png",
+    "size": {
+      "w": 448,
+      "h": 64
+    },
+    "scale": "1",
+    "format": "RGBA8888",
+    "app": "iot-art-pipeline",
+    "version": "2",
+    "cell": {
+      "w": 64,
+      "h": 64
+    },
+    "origin": {
+      "x": 32,
+      "y": 54
+    },
+    "pixelScale": 1
+  },
+  "anims": {
+    "closed": {
+      "frames": [
+        "closed_0",
+        "closed_1"
+      ],
+      "frameRate": 2,
+      "repeat": -1
+    },
+    "opening": {
+      "frames": [
+        "opening_0",
+        "opening_1",
+        "opening_2",
+        "opening_3"
+      ],
+      "frameRate": 12,
+      "repeat": 0,
+      "hold": true
+    },
+    "open": {
+      "frames": [
+        "open_0"
+      ],
+      "frameRate": 0,
+      "repeat": 0,
+      "hold": true
+    }
+  }
+}
