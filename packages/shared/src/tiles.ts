@@ -1,3 +1,4 @@
+import tilesCave from '../assets/sprites/tiles-cave.json' with { type: 'json' };
 import type { AtlasFrame, SpriteAnim, SpriteAnimSpec } from './sprites.js';
 
 /**
@@ -213,6 +214,13 @@ export interface TileSheet {
   anims: Record<string, SpriteAnim>;
   tiles: TileSheetTiles;
 }
+
+/**
+ * The cave set's sheet (ART's `tiles-cave`, packages/shared/assets/sprites),
+ * the one the client draws every room from, bundled with the code like the
+ * sprite sheets (`spriteSheets`); its PNG loads as the atlas's image.
+ */
+export const caveTileSheet: TileSheet = tilesCave;
 
 /** Whether a sheet name is a tile sheet's (`tiles-<set>`). */
 export function isTileSheetName(name: string): boolean {
