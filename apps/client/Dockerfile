@@ -20,6 +20,12 @@ COPY apps/client apps/client
 # origin (wss://<host>), which is how the Caddy deployment serves it.
 ARG VITE_SERVER_URL=""
 ENV VITE_SERVER_URL=${VITE_SERVER_URL}
+# The build the label on the start screen shows (docs/DEPLOY.md): the full
+# commit SHA (the same APP_VERSION the server image gets; `dev` when unset)
+# and when the image was built, ISO 8601 UTC. Nothing secret goes in.
+ARG APP_VERSION=dev
+ARG BUILD_TIME=""
+ENV VITE_BUILD_SHA=${APP_VERSION} VITE_BUILD_TIME=${BUILD_TIME}
 RUN pnpm --filter @iot/client build
 
 FROM nginx:1.27-alpine AS runtime

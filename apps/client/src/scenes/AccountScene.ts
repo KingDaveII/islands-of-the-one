@@ -17,6 +17,7 @@ import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
 import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
 import { body, label, place, type Text } from '../render/text.js';
 import { panel } from '../render/ui.js';
+import { buildLabel } from '../ui/buildLabel.js';
 import { createForm, type DomForm } from '../ui/formFields.js';
 import { UI_H, UI_W } from '../game/view.js';
 import { menuCamera, uiToCss, type MenuLayout } from '../render/cameras.js';
@@ -155,6 +156,8 @@ export class AccountScene extends Phaser.Scene {
     this.marker = label(this, 0, 0, '>', Palette.uiFocus);
 
     this.hint = new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInkMuted });
+    // The build, bottom right, in the band between the panel and the hint line.
+    buildLabel(this, PANEL.y + PANEL.h + 14);
     this.family = padFamilyNow();
     this.setMode('login');
     this.form.layout(this.game.canvas, uiToCss(this.game.canvas, this.layout()));

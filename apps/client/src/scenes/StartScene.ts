@@ -18,6 +18,7 @@ import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { body, label, place, preloadFonts, registerFonts, type Text } from '../render/text.js';
 import { abilitySlot, divider, panel, tierPips } from '../render/ui.js';
 import { drawKindled } from '../render/world.js';
+import { buildLabel } from '../ui/buildLabel.js';
 import type { GameData } from './GameScene.js';
 import { UI_H, UI_W } from '../game/view.js';
 import { menuCamera } from '../render/cameras.js';
@@ -152,6 +153,9 @@ export class StartScene extends Phaser.Scene {
       this.scene.start('inventory');
     });
     inventory.container.setX(cx - 50 - inventory.width);
+
+    // The build, bottom right, in the band between the buttons and the hint panel.
+    buildLabel(this, HINT_PANEL_Y - 2);
 
     // Mood: the Kindled facing a Husk at the shore.
     const mood = this.add.graphics();

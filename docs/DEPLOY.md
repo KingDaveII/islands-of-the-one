@@ -43,6 +43,11 @@ Staging always runs a pinned SHA (`IMAGE_TAG` in `/opt/islands/deploy.env`); `st
 pointer for humans. `/health` returns `{"status":"ok","version":"<sha>",...}`, which the deploy job
 checks before it reports success. Images are built for `linux/amd64`.
 
+The client shows its build bottom right of the start and account screens, `build <sha7> · <UTC date>`
+(`build dev` in `pnpm dev`), from the `APP_VERSION` and `BUILD_TIME` arguments the workflow passes to the
+client image, plus ` · server <sha7>` when `/health` names another build: after a deploy the label
+should show the new SHA alone, and a `server` part means the two images are out of step.
+
 ## Server prerequisites (one-time)
 
 - Docker Engine with the Compose v2 plugin (≥ 2.17, for multiple `--env-file`s).

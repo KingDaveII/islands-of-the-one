@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { createNodeMatchmakingMiddleware, matchMaker, Server as GameServer } from '@colyseus/core';
 import { setTransport } from '@colyseus/core/Transport';
 import { WebSocketTransport } from '@colyseus/ws-transport';
-import { API_PREFIX, PROTOCOL_VERSION, RoomName } from '@iot/shared';
+import { API_PREFIX, HEALTH_ROUTE, PROTOCOL_VERSION, RoomName } from '@iot/shared';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { apiRoutes, DEFAULT_RATE_LIMITS, type ApiOptions } from './api/routes.js';
 import type { Clock } from './auth/sessions.js';
@@ -67,7 +67,7 @@ export async function createApp({
       }),
   });
 
-  http.get('/health', async (_req, reply) => {
+  http.get(HEALTH_ROUTE, async (_req, reply) => {
     try {
       await db.ping();
       return { status: 'ok', db: db.kind, version, protocolVersion: PROTOCOL_VERSION };

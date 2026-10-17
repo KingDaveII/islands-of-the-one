@@ -56,8 +56,28 @@
  * 7 down to 0, one 4× crop per frame. Default folder `docs/screenshots/g15h`
  * for both.
  *
+ * `--room-changes` (G1.5i, no account needed) is a check that fails loudly:
+ * a run through the Narrow Hollow (10 × 40 cells) and the Shell Gallery
+ * (19 × 32), so each room change is into a taller or a wider room, at
+ * 1920 × 912. After each change (the room cleared and the Kindled stood in
+ * the doorway) it reads the room texture's size and its GPU target's, and
+ * compares the texture (`roomImage()`) with the pipeline's drawing of that
+ * template cut from `art/review/tiles-cave/rooms.png`, pixel for pixel. It
+ * prints a line per room and exits non-zero if a size is off, a pixel
+ * differs or the renderer holds more GPU textures after the last room than
+ * after the first (the old texture must be freed). Shots: the page in each
+ * room (`room-change-<n>-<name>.png`) and the texture (`-texture.png`).
+ * Default folder `docs/screenshots/g15i`.
+ *
+ * `--build-label` (G1.5i; makes a throwaway account through the API) shoots
+ * the account screen and the start screen at 1920 × 912 with the build label
+ * bottom right (`build-label-account.png`, `build-label-start.png`) and
+ * prints what `window.__iot.build` says. Default folder `docs/screenshots/g15i`.
+ *
  *   pnpm dev   # in another shell
  *   node tools/screenshots-g15.mjs [outDir] [baseUrl]
+ *   node tools/screenshots-g15.mjs --room-changes [outDir] [baseUrl]
+ *   node tools/screenshots-g15.mjs --build-label [outDir] [baseUrl]
  *   node tools/screenshots-g15.mjs --poses [outDir] [baseUrl]
  *   node tools/screenshots-g15.mjs --run [outDir] [baseUrl]
  *   node tools/screenshots-g15.mjs --rooms [outDir] [baseUrl]
@@ -65,7 +85,7 @@
  *   node tools/screenshots-g15.mjs --backpedal [outDir] [baseUrl]
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
@@ -110,9 +130,28 @@ const backpedalMode = (() => {
   if (i >= 0) args.splice(i, 1);
   return i >= 0;
 })();
+const roomChangesMode = (() => {
+  const i = args.indexOf('--room-changes');
+  if (i >= 0) args.splice(i, 1);
+  return i >= 0;
+})();
+const buildLabelMode = (() => {
+  const i = args.indexOf('--build-label');
+  if (i >= 0) args.splice(i, 1);
+  return i >= 0;
+})();
 const OUT = resolve(
   args[0] ??
-    join(ROOT, roomsMode ? 'docs/screenshots/g15g' : sortMode || backpedalMode ? 'docs/screenshots/g15h' : 'docs/screenshots/g15'),
+    join(
+      ROOT,
+      roomsMode
+        ? 'docs/screenshots/g15g'
+        : sortMode || backpedalMode
+          ? 'docs/screenshots/g15h'
+          : roomChangesMode || buildLabelMode
+            ? 'docs/screenshots/g15i'
+            : 'docs/screenshots/g15',
+    ),
 );
 const BASE = args[1] ?? 'http://localhost:5173';
 
@@ -939,7 +978,161 @@ async function roomShots() {
   await context.close();
 }
 
-if (roomsMode) {
+/**
+ * Stand the Kindled in the doorway of a cleared room: the room's phase set
+ * to cleared with its door open, as the sim leaves it after the last wave,
+ * and the player on a door cell; the next tick enters room `index`.
+ */
+async function enterNextRoom(page, index) {
+  await page.evaluate(() => {
+    const s = window.__iot.scene().session.state;
+    const door = [];
+    s.room.tiles.forEach((row, r) => [...row].forEach((ch, c) => ch === 'D' && door.push([c, r])));
+    if (!door.length) throw new Error(`no door in room ${s.roomIndex + 1}`);
+    const [c, r] = door[0];
+    s.husks.length = 0;
+    s.room.phase = 'cleared';
+    s.room.doorOpen = true;
+    s.player.x = (c * 16 + 8) * 256;
+    s.player.y = (r * 16 + 8) * 256;
+    window.__iot.setSpeed(1);
+  });
+  await page.waitForFunction(
+    (index) => {
+      const s = window.__iot.scene()?.session.state;
+      const done = s?.roomIndex === index;
+      if (done) window.__iot.setSpeed(0);
+      return done;
+    },
+    index,
+    { polling: 'raf', timeout: 10000 },
+  );
+}
+
+/**
+ * G1.5i: the room texture after each room change. Three rooms from two
+ * templates of different shapes, so the texture has to grow in each
+ * direction; after each change its size, its GPU target's size and its
+ * pixels against the pipeline's rooms.png. Throws on any difference.
+ */
+async function roomChangeShots() {
+  const review = join(ROOT, 'art/review/tiles-cave');
+  const report = JSON.parse(readFileSync(join(review, 'report.json'), 'utf8'));
+  const roomsPng = `data:image/png;base64,${readFileSync(join(review, 'rooms.png')).toString('base64')}`;
+  const context = await browser.newContext({ viewport: { width: 1920, height: 912 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto(BASE);
+  for (let i = 0; i < 100 && !(await page.evaluate(() => Boolean(window.__iot))); i++) await sleep(100);
+  await page.evaluate(() => window.__iot.startRun(5, 'hookblade', ['Narrow Hollow', 'Shell Gallery']));
+  await waitScene(page, 'game');
+  await page.waitForFunction(() => Boolean(window.__iot.scene()?.session), null, { timeout: 10000 });
+  await page.evaluate(() => window.__iot.setSpeed(0));
+  const order = await page.evaluate(() => {
+    const { run, state } = window.__iot.scene().session;
+    return state.roomOrder.map((i) => run.templates[i].name);
+  });
+  console.log(`  rooms: ${order.join(' > ')}`);
+  const rows = [];
+  for (let i = 0; i < order.length; i++) {
+    if (i > 0) await enterNextRoom(page, i);
+    await sleep(400);
+    const name = order[i];
+    const room = report.rooms.find((r) => r.name === name);
+    if (!room) throw new Error(`${name} is not in ${review}/report.json`);
+    const expect = { w: room.cols * 32, h: room.rows * 32 };
+    const got = await page.evaluate(
+      async ({ roomsPng, at, expect }) => {
+        const size = window.__iot.roomTextureSize();
+        const url = await window.__iot.roomImage();
+        const load = async (src) => {
+          const img = new Image();
+          img.src = src;
+          await img.decode();
+          return img;
+        };
+        const [tex, ref] = await Promise.all([load(url), load(roomsPng)]);
+        // Both through a canvas: the texture's pixels (transparent past its edge) against the reference's cut.
+        const pixels = (img, sx, sy) => {
+          const canvas = document.createElement('canvas');
+          canvas.width = expect.w;
+          canvas.height = expect.h;
+          const ctx = canvas.getContext('2d', { willReadFrequently: true });
+          ctx.drawImage(img, sx, sy, expect.w, expect.h, 0, 0, expect.w, expect.h);
+          return ctx.getImageData(0, 0, expect.w, expect.h).data;
+        };
+        const a = pixels(tex, 0, 0);
+        const b = pixels(ref, at[0], at[1]);
+        let differ = 0;
+        let first = null;
+        for (let p = 0; p < a.length; p += 4) {
+          if (a[p] === b[p] && a[p + 1] === b[p + 1] && a[p + 2] === b[p + 2] && a[p + 3] === b[p + 3]) continue;
+          differ++;
+          first ??= [(p / 4) % expect.w, Math.floor(p / 4 / expect.w)];
+        }
+        const wrappers = window.__iot.game.renderer.glTextureWrappers;
+        return { size, image: { w: tex.width, h: tex.height }, differ, first, glTextures: wrappers ? wrappers.length : null, url };
+      },
+      { roomsPng, at: room.at, expect },
+    );
+    const tag = `room-change-${i + 1}-${slug(name)}`;
+    writeFileSync(join(OUT, `${tag}-texture.png`), Buffer.from(got.url.split(',')[1], 'base64'));
+    await shot(page, tag);
+    const dim = (d) => (d ? `${d.w}x${d.h}` : 'none');
+    const problems = [];
+    if (!got.size || got.size.w !== expect.w || got.size.h !== expect.h) problems.push('texture size');
+    if (got.size?.target && (got.size.target.w !== expect.w || got.size.target.h !== expect.h)) problems.push('GPU target size');
+    if (got.image.w !== expect.w || got.image.h !== expect.h) problems.push('image size');
+    if (got.differ > 0) problems.push(`${got.differ} px differ from rooms.png, first at (${got.first.join(', ')})`);
+    rows.push({ name, problems, glTextures: got.glTextures });
+    console.log(
+      `  ${i + 1}. ${name}: expected ${dim(expect)}, texture ${dim(got.size)}, GPU target ${dim(got.size?.target)}, image ${dim(got.image)}, ` +
+        `${got.differ} px differ, ${got.glTextures ?? '?'} GPU textures` +
+        (problems.length ? `  <-- ${problems.join('; ')}` : ''),
+    );
+  }
+  await context.close();
+  const first = rows[0]?.glTextures;
+  const last = rows[rows.length - 1]?.glTextures;
+  if (first !== null && last !== null && last > first) rows[rows.length - 1].problems.push(`GPU textures grew from ${first} to ${last}: a room texture leaked`);
+  const failed = rows.filter((r) => r.problems.length);
+  if (errors.length) throw new Error(`page errors: ${errors.join('; ')}`);
+  if (failed.length) throw new Error(`room changes failed: ${failed.map((r) => `${r.name}: ${r.problems.join('; ')}`).join(' | ')}`);
+  console.log(`  ${rows.length} rooms, each texture its room's size and the pipeline's picture`);
+}
+
+/** G1.5i: the build label on the account screen and, signed in, on the start screen. */
+async function buildLabelShots() {
+  const context = await browser.newContext({ viewport: { width: 1920, height: 912 } });
+  const page = await context.newPage();
+  page.on('pageerror', (e) => console.error('page error:', e.message));
+  await page.goto(BASE);
+  await waitScene(page, 'account');
+  await sleep(600);
+  console.log(`  build: ${JSON.stringify(await page.evaluate(() => window.__iot.build))}`);
+  await shot(page, 'build-label-account');
+  const username = `build${Date.now() % 100000}`;
+  const status = await page.evaluate(async (username) => {
+    const post = (url, body) =>
+      fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const reg = await post('/api/register', { username, password: 'correct horse battery' });
+    const k = await post('/api/kindled', { name: 'Iltani', remembrance: 'ash' });
+    return [reg.status, k.status];
+  }, username);
+  if (status.join() !== '201,201') throw new Error(`setup failed: ${status.join()}`);
+  await page.reload();
+  await waitScene(page, 'start');
+  await sleep(600);
+  await shot(page, 'build-label-start');
+  await context.close();
+}
+
+if (buildLabelMode) {
+  await buildLabelShots();
+} else if (roomChangesMode) {
+  await roomChangeShots();
+} else if (roomsMode) {
   await roomShots();
 } else if (sortMode) {
   await sortShots();
