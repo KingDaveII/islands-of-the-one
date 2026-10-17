@@ -11,14 +11,15 @@ Every route, request and response body, guard and error code lives in
 [`accounts.ts`](../../packages/shared/src/accounts.ts) next to it. Apps never spell a route or error
 code. Routes are under `/api` (Caddy routes it to the server in staging; Vite proxies it in dev).
 
-| Route                | Body                                                 | Answer                                                                                 |
-| -------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `POST /api/register` | `{ username, password }`                             | `201` `MeResponse` + cookie · `400` invalid-username/-password · `409` taken           |
-| `POST /api/login`    | `{ username, password }`                             | `200` `MeResponse` + cookie · `401` wrong-credentials                                  |
-| `POST /api/logout`   | `{}`                                                 | `204`, the session row deleted, the cookie cleared                                     |
-| `GET /api/me`        |                                                      | `200` `{ account, kindled \| null }` · `401` not-signed-in                             |
-| `POST /api/kindled`  | `{ name, remembrance, clayTone? }` (needs a session) | `201` `{ kindled }` · `400` name-refused/bad-request · `409` kindled-exists            |
-| `GET /api/inventory` |                                                      | `200` `{ items }` · `401` not-signed-in · `404` no-kindled ([inventory](inventory.md)) |
+| Route                      | Body                                                 | Answer                                                                                                       |
+| -------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `POST /api/register`       | `{ username, password }`                             | `201` `MeResponse` + cookie · `400` invalid-username/-password · `409` taken                                 |
+| `POST /api/login`          | `{ username, password }`                             | `200` `MeResponse` + cookie · `401` wrong-credentials                                                        |
+| `POST /api/logout`         | `{}`                                                 | `204`, the session row deleted, the cookie cleared                                                           |
+| `GET /api/me`              |                                                      | `200` `{ account, kindled \| null }` · `401` not-signed-in                                                   |
+| `POST /api/kindled`        | `{ name, remembrance, clayTone? }` (needs a session) | `201` `{ kindled }` · `400` name-refused/bad-request · `409` kindled-exists                                  |
+| `GET /api/inventory`       |                                                      | `200` `{ purse, pack, store, baskets }` · `401` not-signed-in · `404` no-kindled ([inventory](inventory.md)) |
+| `POST /api/inventory/move` | `{ itemId, from, to, quantity }` (needs a session)   | `200` the new inventory · `400`/`409` ([inventory](inventory.md))                                            |
 
 Errors are `{ error, message }`: `error` a code from `ApiErrorCode`, `message` the player-facing
 line. Every body goes through a shared guard (unknown fields refused), then the validators; malformed

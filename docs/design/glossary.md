@@ -68,18 +68,22 @@ text says the Kindled.
 The M2 items ([`inventory.md`](inventory.md), `packages/shared/data/items.json`). Item ids are
 kebab-case and never renamed once shipped (the ledger stores them).
 
-| Term           | Meaning                                                                                  | In code                           |
-| -------------- | ---------------------------------------------------------------------------------------- | --------------------------------- |
-| sealed gin     | The currency unit: wild Sparkglass weighed and sealed at the Weighing. "120 sealed gin". | `sealed-gin`                      |
-| wild sliver    | The smallest piece of wild Sparkglass.                                                   | `wild-sliver`                     |
-| glass chip     | Wild Sparkglass worth three slivers (the book's "shard"; a Shard is always an island).   | `glass-chip`                      |
-| deep glass     | The largest grade of wild Sparkglass, worth nine slivers.                                | `deep-glass`                      |
-| twisted log    | Wood (the first raft takes five).                                                        | `twisted-log`                     |
-| black stone    | Stone; Works are built from it.                                                          | `black-stone`                     |
-| streaked stone | Stone from a deeper quarry layer.                                                        | `streaked-stone`                  |
-| grey seeds     | Seeds for a field.                                                                       | `grey-seeds`                      |
-| pale grain     | What a field grows; Rations are cooked from it.                                          | `pale-grain`                      |
-| item ledger    | The record of every item change (`inventory.apply`).                                     | `itemLedger`, table `item_ledger` |
+| Term           | Meaning                                                                                                                | In code                           |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| sealed gin     | The currency unit: wild Sparkglass weighed and sealed at the Weighing. "120 sealed gin".                               | `sealed-gin`                      |
+| wild sliver    | The smallest piece of wild Sparkglass.                                                                                 | `wild-sliver`                     |
+| humming glass  | Wild Sparkglass worth three slivers (the book's "shard"; a Shard is always an island). Was "glass chip"; the id stays. | `glass-chip`                      |
+| deep glass     | The largest grade of wild Sparkglass, worth nine slivers.                                                              | `deep-glass`                      |
+| twisted log    | Wood (the first raft takes five).                                                                                      | `twisted-log`                     |
+| black stone    | Stone; Works are built from it.                                                                                        | `black-stone`                     |
+| streaked stone | Stone from a deeper quarry layer.                                                                                      | `streaked-stone`                  |
+| grey seeds     | Seeds for a field.                                                                                                     | `grey-seeds`                      |
+| pale grain     | What a field grows; Rations are cooked from it.                                                                        | `pale-grain`                      |
+| item ledger    | The record of every item change (`inventory.apply`).                                                                   | `itemLedger`, table `item_ledger` |
+| purse          | Where a Kindled's gin is; takes no slot, never lost.                                                                   | `purse`                           |
+| pack           | What a Kindled carries abroad: 20 slots; death costs only what is in it.                                               | `pack`                            |
+| store          | The holding store by the Writ post; reachable only on the holding.                                                     | `store`                           |
+| basket         | A station's basket: what it makes, until the Kindled takes it to the store.                                            | `basket:<stationId>`              |
 
 ## Combat (the Hookblade)
 
@@ -106,16 +110,16 @@ kebab-case and never renamed once shipped (the ledger stores them).
 
 ## Retired terms
 
-| Don't use                                            | Use                                                                             |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------- |
-| void, the Deep (the sea, the backdrop around a room) | the Hollow, `hollow`                                                            |
-| island                                               | Shard, or holding for a player's own Shard                                      |
-| tether as a noun, data ID or identifier              | Writ                                                                            |
-| crystal                                              | Sparkglass                                                                      |
-| fishing                                              | deep-casting                                                                    |
-| tier of a Writ                                       | Writ line                                                                       |
-| shard for a fragment of something                    | chip, piece (a Shard is always an island); the Sparkglass grade is a glass chip |
-| any other name or title for the deity                | the One                                                                         |
+| Don't use                                            | Use                                                                              |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------- |
+| void, the Deep (the sea, the backdrop around a room) | the Hollow, `hollow`                                                             |
+| island                                               | Shard, or holding for a player's own Shard                                       |
+| tether as a noun, data ID or identifier              | Writ                                                                             |
+| crystal                                              | Sparkglass                                                                       |
+| fishing                                              | deep-casting                                                                     |
+| tier of a Writ                                       | Writ line                                                                        |
+| shard for a fragment of something                    | chip, piece (a Shard is always an island); the Sparkglass grade is humming glass |
+| any other name or title for the deity                | the One                                                                          |
 
 These stay as they are: the TypeScript keyword `void`; "hollow" as an adjective (a Husk's hollow
 shell); the title "Islands of the One" and the repo, package and deploy names taken from it

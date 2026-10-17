@@ -42,6 +42,7 @@ The `keyboard` block, one key per action. Move and aim are not actions and stay 
 | Interact               | E, Calm only (chests open on contact)   |
 | Chart peek             | hold Tab (no function yet)              |
 | Journal                | J (no function yet)                     |
+| Inventory              | I (opens and closes the inventory screen) |
 | Menu                   | Esc (back, on the controls screen)      |
 | Tuning / debug         | F2 / F3 (`tuning`, `debug`)             |
 | Controls screen        | C on the start screen (`controls`)      |
@@ -71,6 +72,7 @@ alternates) per action. No button is bound twice within a preset.
 | interact         | Cross (Calm)           | Cross (Calm)                    | Cross (Calm)         |
 | chart peek       | Circle                 | R3                              | Circle               |
 | journal          | Down                   | Down                            | Down                 |
+| inventory        | Touchpad               | Touchpad                        | Touchpad             |
 | item 1 / 2       | Left / Right           | Left / Right                    | Left / Right         |
 | aim              | right stick            | right stick                     | follows movement     |
 
@@ -136,7 +138,8 @@ frame, so the device never flickers; a pad going away hands it back to the keybo
   on the mouse in mouse mode and on the pad aim in pad mode (§3).
 - **Menus**: the OS cursor shows in mouse mode and hides in pad mode. They stay navigable on the
   pad with a fixed convention (`MENU_BUTTONS` in `gamepad.ts`, not bindings): Cross or Start
-  confirms, Circle goes back, Triangle opens the controls screen from the start screen, Square the inventory view (no keyboard key
-  yet: the glyph sheet has no I key, so keyboard players click INVENTORY), the D-pad
+  confirms, Circle goes back, Triangle opens the controls screen from the start screen, Square the inventory screen
+  (the `inventory` binding, I and the DualSense Touchpad, opens and closes it too; on the inventory screen
+  Cross moves a stack, Square one item, L1/R1 switch tabs; [`inventory.md`](inventory.md)), the D-pad
   (left/right) steps through choices (the weapon on the start screen, the preset on the controls
   screen).
