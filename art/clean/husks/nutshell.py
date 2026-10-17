@@ -281,9 +281,9 @@ def death():
 
 
 def drop():
-    g = blank(16, 7)
+    g = blank(19, 12)
     paste(g, sparkglass(), 0, 1)
-    paste(g, sparkglass(), 8, 0)
+    paste(g, sparkglass(), 10, 0)
     return [on_canvas(g, CX, FOOT)]
 
 

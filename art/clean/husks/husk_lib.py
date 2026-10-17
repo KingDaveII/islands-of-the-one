@@ -200,15 +200,26 @@ def save(out_dir, anim, frames):
         img.save(d / f"frame-{i}.png")
 
 
-def sparkglass():
-    """The drop: a Sparkglass chip lying on the floor, an amber crystal lit top left (7 x 6)."""
-    k = {".": CLEAR, "o": OUTLINE, "A": AMBER, "e": EMBER, "L": LIGHT}
+def sparkglass(glint=False):
+    """A Sparkglass chip, 9 x 11: a standing six-sided amber crystal, its left facet lit, its right shaded.
+    The Husks' drop frames and the pickup (prop-sparkglass) draw this same chip; `glint` puts a paper
+    sparkle on its lit facet (the pickup's second frame)."""
+    k = {".": CLEAR, "o": OUTLINE, "A": AMBER, "e": EMBER, "L": LIGHT, "P": rgb("choir-paper"), "G": rgb("choir-gold")}
     rows = [
-        "..oo...",
-        ".oLAo..",
-        "oLAAeo.",
-        "oAAAeeo",
-        ".oAeeo.",
-        "..ooo..",
+        "....o....",
+        "...oLo...",
+        "..oLLGo..",
+        ".oLLAGeo.",
+        ".oLAAGeo.",
+        ".oLAAGeo.",
+        ".oLAAGeo.",
+        ".oLAAGeo.",
+        "..oAAeo..",
+        "...oeo...",
+        "....o....",
     ]
+    if glint:
+        rows[1] = "...oPo..."
+        rows[2] = "..oPLGo.."
+        rows[3] = ".oPLAGeo."
     return [[k[ch] for ch in r] for r in rows]
