@@ -85,6 +85,13 @@
  * `--backpedal` with the sim's slowdown (`backpedal-E-moving-W-strip`, the
  * velocity printed: 0.85 of the forward run's).
  *
+ * `--chests` (M1 polish 2, 2026-10-17; no account needed) shoots each of the
+ * five M1 rooms at 1920 × 912 with the Kindled stood beside its chest (the
+ * chests moved to keep two tiles of plain floor all round, no spawn point or
+ * player start among them): the page (`chest-<room>.png`) and a 4× crop around
+ * the chest (`chest-<room>-4x.png`), printing the chest's cell. Default folder
+ * `docs/screenshots/m1-polish-2`.
+ *
  * `--build-label` (G1.5i; makes a throwaway account through the API) shoots
  * the account screen and the start screen at 1920 × 912 with the build label
  * bottom right (`build-label-account.png`, `build-label-start.png`) and
@@ -156,6 +163,11 @@ const polishMode = (() => {
   if (i >= 0) args.splice(i, 1);
   return i >= 0;
 })();
+const chestsMode = (() => {
+  const i = args.indexOf('--chests');
+  if (i >= 0) args.splice(i, 1);
+  return i >= 0;
+})();
 const buildLabelMode = (() => {
   const i = args.indexOf('--build-label');
   if (i >= 0) args.splice(i, 1);
@@ -165,7 +177,9 @@ const OUT = resolve(
   args[0] ??
     join(
       ROOT,
-      polishMode
+      chestsMode
+        ? 'docs/screenshots/m1-polish-2'
+        : polishMode
         ? 'docs/screenshots/m1-polish'
         : roomsMode
         ? 'docs/screenshots/g15g'
@@ -848,6 +862,36 @@ async function polishShots() {
   await backpedalShots();
 }
 
+/** M1 polish 2: each room's chest where it stands now, the Kindled beside it. */
+async function chestShots() {
+  const context = await browser.newContext({ viewport: { width: 1920, height: 912 } });
+  const page = await context.newPage();
+  page.on('pageerror', (e) => console.error('page error:', e.message));
+  await page.goto(BASE);
+  for (let i = 0; i < 100 && !(await page.evaluate(() => Boolean(window.__iot))); i++) await sleep(100);
+  for (const name of ROOMS) {
+    await openRoom(page, name, 5);
+    const at = await page.evaluate(() => {
+      const s = window.__iot.scene().session.state;
+      s.husks.length = 0;
+      const c = s.chests[0];
+      if (!c) throw new Error('no chest');
+      // Beside the chest, facing it from the right: 2 sim px short of touching, so it stays shut for the shot.
+      s.player.x = c.x + 16 * 256;
+      s.player.y = c.y + 2 * 256;
+      s.player.vx = 0;
+      s.player.vy = 0;
+      s.player.aim = 2048;
+      return { col: Math.floor(c.x / 256 / 16), row: Math.floor(c.y / 256 / 16), x: c.x / 256, y: c.y / 256 };
+    });
+    await sleep(400);
+    console.log(`  ${name}: chest at cell (${at.col}, ${at.row}), sim (${at.x}, ${at.y})`);
+    await shot(page, `chest-${slug(name)}`);
+    await playerCrop(page, `chest-${slug(name)}-4x`, 128, 96);
+  }
+  await context.close();
+}
+
 /** The five M1 rooms, by their names in rooms.json. */
 const ROOMS = ['Shell Gallery', 'Crossing', 'Narrow Hollow', 'Core Ring', 'Spill'];
 const slug = (name) => name.toLowerCase().replaceAll(' ', '-');
@@ -1292,7 +1336,9 @@ async function buildLabelShots() {
   await context.close();
 }
 
-if (polishMode) {
+if (chestsMode) {
+  await chestShots();
+} else if (polishMode) {
   await polishShots();
 } else if (buildLabelMode) {
   await buildLabelShots();
