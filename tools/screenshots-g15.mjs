@@ -559,22 +559,14 @@ const CHARGE_FULL = `(s) => s.player.action === 'charge' &&
 const HAUL_OUT = `(s) => Boolean(s.player.hook) && s.player.action === 'ability' &&
   Math.hypot(s.player.hook.x - s.player.x, s.player.hook.y - s.player.y) / 256 >= 24`;
 
-/**
- * A strip of crops around a sim point (`w` × `h` world px around its origin,
- * `ox`, `oy` the origin's offset into the box), one per page image, at 4×.
- */
-async function stripAround(page, urls, sim, box) {
+/** A strip of `framesSeen` entries, each image cut at its own box, `w` × `h` world px each at 4×. */
+async function stripOf(page, entries, w, h) {
   return page.evaluate(
-    async ({ urls, sim, box }) => {
-      const scene = window.__iot.scene();
-      const { zU } = scene.fits().ui;
-      const { zW } = scene.fits().world;
-      const c = scene.toUi(sim.x, sim.y);
-      const at = { x: Math.round(c.x * zU - box.ox * zW), y: Math.round(c.y * zU - box.oy * zW), w: box.w * zW, h: box.h * zW };
+    async ({ entries, w, h }) => {
       const imgs = await Promise.all(
-        urls.map(async (u) => {
+        entries.map(async (e) => {
           const img = new Image();
-          img.src = u;
+          img.src = e.url;
           await img.decode();
           return img;
         }),
@@ -582,45 +574,59 @@ async function stripAround(page, urls, sim, box) {
       const k = 4;
       const gap = 8;
       const canvas = document.createElement('canvas');
-      canvas.width = imgs.length * (box.w * k + gap) - gap;
-      canvas.height = box.h * k;
+      canvas.width = imgs.length * (w * k + gap) - gap;
+      canvas.height = h * k;
       const ctx = canvas.getContext('2d');
       ctx.imageSmoothingEnabled = false;
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      imgs.forEach((img, i) => ctx.drawImage(img, at.x, at.y, at.w, at.h, i * (box.w * k + gap), 0, box.w * k, box.h * k));
+      imgs.forEach((img, i) => {
+        const { at } = entries[i];
+        ctx.drawImage(img, at.x, at.y, at.w, at.h, i * (w * k + gap), 0, w * k, h * k);
+      });
       return canvas.toDataURL('image/png').split(',')[1];
     },
-    { urls, sim, box },
+    { entries, w, h },
   );
 }
 
 /**
  * The page's pixels at each new value of `frames()` over `ms` of the client
- * clock, through Phaser's renderer snapshot: [frame name, data URL] pairs in
- * the order first seen.
+ * clock, through Phaser's renderer snapshot: `{ frame, url, at }` in the order
+ * first seen, `at` the canvas-px box of `crop` (`w` × `h` world px around the
+ * sim point, the point `ox`, `oy` into the box) as the camera stood at that
+ * moment, so a strip can cut each image where the thing was.
  */
-async function framesSeen(page, framesSrc, ms) {
+async function framesSeen(page, framesSrc, ms, crop) {
   return page.evaluate(
-    async ({ framesSrc, ms }) => {
+    async ({ framesSrc, ms, crop }) => {
       const read = new Function(`return (${framesSrc})();`);
+      const scene = window.__iot.scene();
       const snap = () =>
         new Promise((resolve) => {
           window.__iot.game.renderer.snapshot((img) => resolve(img instanceof HTMLImageElement ? img.src : null));
         });
-      const seen = new Map();
+      const boxNow = () => {
+        const { zU } = scene.fits().ui;
+        const { zW } = scene.fits().world;
+        const c = scene.toUi(crop.sim.x, crop.sim.y);
+        return { x: Math.round(c.x * zU - crop.ox * zW), y: Math.round(c.y * zU - crop.oy * zW), w: crop.w * zW, h: crop.h * zW };
+      };
+      const seen = [];
       const until = performance.now() + ms;
       while (performance.now() < until) {
         const [frame] = read();
-        if (frame && !seen.has(frame)) {
-          seen.set(frame, null);
-          seen.set(frame, await snap());
+        if (frame && !seen.some((e) => e.frame === frame)) {
+          const at = boxNow();
+          const entry = { frame, url: null, at };
+          seen.push(entry);
+          entry.url = await snap();
         }
         await new Promise((r) => requestAnimationFrame(r));
       }
-      return [...seen];
+      return seen;
     },
-    { framesSrc, ms },
+    { framesSrc, ms, crop },
   );
 }
 
@@ -738,8 +744,10 @@ async function roomShots() {
       return c ? { x: c.x / 256, y: c.y / 256 } : null;
     });
     if (!chest) throw new Error('Shell Gallery: no chest');
-    const closed = await framesSeen(page, '() => window.__iot.chestFrames()', 1200);
-    console.log(`  chest closed frames seen: ${closed.map(([f]) => f).join(', ')}`);
+    // The chest's cell is 64×64 with its origin at (32, 54): the crop around the sim point.
+    const CHEST_CROP = { sim: chest, w: 64, h: 64, ox: 32, oy: 54 };
+    const closed = await framesSeen(page, '() => window.__iot.chestFrames()', 1200, CHEST_CROP);
+    console.log(`  chest closed frames seen: ${closed.map((e) => e.frame).join(', ')}`);
     // The bot only takes a chest between waves and rarely gets there: stand the Kindled four tiles east of
     // it with the room emptied and walk it in; the sim freezes the tick the chest opens, the client clock
     // plays the lid.
@@ -774,15 +782,19 @@ async function roomShots() {
       .then(() => true)
       .catch(() => false);
     if (!opened) throw new Error('Shell Gallery: the Kindled never reached the chest');
-    await page.evaluate(() => window.__iot.setInputSource(null));
-    const opening = await framesSeen(page, '() => window.__iot.chestFrames()', 900);
-    console.log(`  chest frames seen: ${opening.map(([f]) => f).join(', ')}`);
+    // Step the Kindled clear of the chest (the sim is frozen; the render reads the state) so the lid shows whole.
+    await page.evaluate(() => {
+      window.__iot.setInputSource(null);
+      const s = window.__iot.scene().session.state;
+      s.player.x = s.chests[0].x + 56 * 256;
+    });
+    const opening = await framesSeen(page, '() => window.__iot.chestFrames()', 900, CHEST_CROP);
+    console.log(`  chest frames seen: ${opening.map((e) => e.frame).join(', ')}`);
     await shot(page, 'room-shell-gallery-chest-open');
-    // The chest's cell is 64×64 with its origin at (32, 54): the box around the sim point.
-    const frames = [...closed, ...opening].filter(([, u]) => u);
-    const strip = await stripAround(page, frames.map(([, u]) => u), chest, { w: 64, h: 64, ox: 32, oy: 54 });
+    const frames = [...closed, ...opening].filter((e) => e.url);
+    const strip = await stripOf(page, frames, CHEST_CROP.w, CHEST_CROP.h);
     writeFileSync(join(OUT, 'chest-shell-gallery-strip.png'), Buffer.from(strip, 'base64'));
-    console.log(`  chest-shell-gallery-strip.png (${frames.map(([f]) => f).join(', ')})`);
+    console.log(`  chest-shell-gallery-strip.png (${frames.map((e) => e.frame).join(', ')})`);
   }
   await context.close();
 }
