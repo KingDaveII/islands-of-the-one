@@ -1,0 +1,154 @@
+{
+  "sheet": "prop-chest",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "cell": {
+    "w": 64,
+    "h": 64
+  },
+  "origin": {
+    "x": 32,
+    "y": 54
+  },
+  "rows": [
+    "closed",
+    "opening",
+    "open"
+  ],
+  "totals": {
+    "frames": 7,
+    "offPalette": 0,
+    "maxDeltaE": 0,
+    "outlineGaps": 0
+  },
+  "flags": {
+    "seam": [],
+    "bob": [],
+    "held": [],
+    "colours": []
+  },
+  "missing": [],
+  "optional": [],
+  "skinProblems": [],
+  "missingPoints": [],
+  "remap": [],
+  "staleRemap": [],
+  "snappedColours": 0,
+  "snapped": [],
+  "anims": [
+    {
+      "key": "closed",
+      "frames": 2,
+      "held": [],
+      "seam": {
+        "lastToFirst": 5,
+        "meanInCycle": 5,
+        "flag": false
+      }
+    },
+    {
+      "key": "opening",
+      "frames": 4,
+      "held": []
+    },
+    {
+      "key": "open",
+      "frames": 1,
+      "held": []
+    }
+  ],
+  "frames": [
+    {
+      "name": "closed_0",
+      "source": "art/clean/prop-chest/closed 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 5,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "closed_1",
+      "source": "art/clean/prop-chest/closed 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 7,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "opening_0",
+      "source": "art/clean/prop-chest/opening 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 5,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "opening_1",
+      "source": "art/clean/prop-chest/opening 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 6,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "opening_2",
+      "source": "art/clean/prop-chest/opening 2",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 6,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "opening_3",
+      "source": "art/clean/prop-chest/opening 3",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 6,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "open_0",
+      "source": "art/clean/prop-chest/open 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 6,
+      "interiorDreamNight": 0
+    }
+  ],
+  "outputs": [
+    "art/review/prop-chest/contact.png",
+    "art/review/prop-chest/report.json",
+    "art/review/prop-chest/report.md",
+    "packages/shared/assets/sprites/prop-chest.json",
+    "packages/shared/assets/sprites/prop-chest.png"
+  ]
+}
