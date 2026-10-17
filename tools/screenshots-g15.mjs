@@ -524,10 +524,11 @@ async function openRoom(page, name, seed = 5) {
 async function freezeWhen(page, until, timeoutMs, speed = 1) {
   await page.evaluate((speed) => window.__iot.setSpeed(speed), speed);
   try {
-    await page.waitForFunction(
+    const result = await page.waitForFunction(
       (src) => {
         const scene = window.__iot.scene();
-        if (!scene) return false;
+        // The run ended (the results screen): nothing more to wait for.
+        if (!scene) return 'over';
         const done = new Function('s', `return (${src})(s);`)(scene.session.state);
         if (done) window.__iot.setSpeed(0);
         return done;
@@ -535,9 +536,9 @@ async function freezeWhen(page, until, timeoutMs, speed = 1) {
       until,
       { polling: 'raf', timeout: timeoutMs },
     );
-    return true;
+    return (await result.jsonValue()) === true;
   } catch {
-    await page.evaluate(() => window.__iot.setSpeed(0));
+    await page.evaluate(() => window.__iot.scene() && window.__iot.setSpeed(0));
     return false;
   }
 }
@@ -657,8 +658,8 @@ async function roomShots() {
       else console.log(`  ${name}: no ${what} within the budget`);
     }
     const state = await page.evaluate(() => {
-      const s = window.__iot.scene().session.state;
-      return `${s.husks.map((h) => h.kind).join(', ') || 'no Husks'}; player ${s.player.action}`;
+      const s = window.__iot.scene()?.session.state;
+      return s ? `${s.husks.map((h) => h.kind).join(', ') || 'no Husks'}; player ${s.player.action}` : 'the run is over';
     });
     console.log(`  ${name}: ${state}`);
   }
