@@ -1,6 +1,7 @@
 import {
   accelToUnits,
   degToAngle,
+  HALF_TURN,
   msToTicks,
   pxToUnits,
   speedToUnits,
@@ -237,6 +238,17 @@ export interface Tuning {
     hurtStunMs: number;
     hurtInvulnMs: number;
     hurtKnockback: number;
+    /**
+     * The backpedal (GAME DESIGN 2026-10-17): free movement away from the aim
+     * is slower. The factor is 1 up to `backpedalFromDeg` between the movement
+     * and the aim (strafing is never slowed), eases linearly down to
+     * `backpedalFactor` at `backpedalFullDeg` and stays there to 180°. The
+     * dodge, the Haul's pull and every forced movement keep their full
+     * distances.
+     */
+    backpedalFactor: number;
+    backpedalFromDeg: number;
+    backpedalFullDeg: number;
   };
   /** startup = no i-frames yet, active = i-frames, recovery = still sliding. */
   dodge: MoveTiming & {
@@ -435,6 +447,12 @@ export interface Params {
     hurtStun: number;
     hurtInvuln: number;
     hurtKnockback: number;
+    /** The backpedal's slowest factor, permille of the target speed. */
+    backpedal: number;
+    /** Movement this far from the aim (1/4096 turn) or less is never slowed. */
+    backpedalFrom: number;
+    /** The slowest factor applies from this far (1/4096 turn) on. */
+    backpedalFull: number;
   };
   dodge: { startup: number; active: number; recovery: number; speed: number; cooldown: number; exitSpeed: number };
   perfect: { window: number; margin: number; slowmo: number; slowmoScale: number; bonus: number; cooldownRefund: number };
@@ -654,6 +672,9 @@ export function compileTuning(t: Tuning, weaponId: string): Params {
       hurtStun: msToTicks(t.player.hurtStunMs),
       hurtInvuln: msToTicks(t.player.hurtInvulnMs),
       hurtKnockback: speedToUnits(t.player.hurtKnockback),
+      backpedal: Math.max(0, Math.min(1000, toPermille(t.player.backpedalFactor))),
+      backpedalFrom: Math.max(0, Math.min(HALF_TURN, degToAngle(t.player.backpedalFromDeg))),
+      backpedalFull: Math.max(0, Math.min(HALF_TURN, degToAngle(t.player.backpedalFullDeg))),
     },
     dodge: {
       startup: msToTicks(t.dodge.startupMs),

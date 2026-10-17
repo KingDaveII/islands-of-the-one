@@ -20,7 +20,7 @@ export {
 } from './combat.js';
 export { huskAggro, slamCenter } from './husks.js';
 export * from './moves.js';
-export { canStart, heavyHit, type Intent } from './player.js';
+export { backpedalFactor, canStart, heavyHit, type Intent } from './player.js';
 export * from './hash.js';
 export * from './run.js';
 export { autopilot, type AutopilotOptions } from './autopilot.js';

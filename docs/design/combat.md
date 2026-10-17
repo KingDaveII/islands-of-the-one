@@ -47,6 +47,15 @@ renders state; it never decides an outcome.
 - Free analog movement at any angle, with `player.acceleration` toward the target velocity and
   `player.friction` when there is no input. Turning through acceleration is the smoothing for
   keyboard play.
+- **The backpedal costs speed** (GAME DESIGN 2026-10-17): free movement away from the aim is
+  slower. The factor is 1 up to `player.backpedalFromDeg` (90°) between the movement and the aim,
+  so strafing is never slowed; it eases down linearly to `player.backpedalFactor` (0.85) at
+  `player.backpedalFullDeg` (135°) and stays there to 180° (`backpedalFactor` in
+  `packages/sim/src/player.ts`, integer math on the 1/4096-turn angles). It applies in encounters
+  only, to the target speed of free movement only: the stick or keys in idle and the slowed walk
+  while charging a heavy. The dodge, the Haul's pull and every forced movement keep their full
+  distances. With a gamepad stick centred the aim follows the movement, so that player is never
+  slowed.
 - The Kindled moves at `player.moveSpeed`: 100 sim px/s, 200 world px/s (GAME DESIGN 2026-10-16,
   down from 112). In an encounter, Combat and Calm alike, it always **runs** at that speed. Walking,
   and the automatic walk-to-run, happen only outside encounters (M2's holding). The run and walk

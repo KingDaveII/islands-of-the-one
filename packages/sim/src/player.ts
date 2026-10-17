@@ -13,7 +13,7 @@ import {
   type Ctx,
   type Hit,
 } from './combat.js';
-import { idiv, length } from './fixed.js';
+import { angleDiff, idiv, length } from './fixed.js';
 import { Button, MOVE_MAG_MAX, moveDirToAngle, type TickInput } from './input.js';
 import {
   abilityAt,
@@ -242,6 +242,29 @@ function healTick(p: PlayerState, maxHp: number): void {
   if (p.healLeft === 0) p.healPool = 0;
 }
 
+/**
+ * The backpedal's speed factor, permille (GAME DESIGN 2026-10-17): moving away
+ * from the aim is slower. 1000 while the movement is within
+ * `player.backpedalFrom` of the aim (strafing, at 90°, is never slowed),
+ * eased linearly in integer math on the 1/4096-turn angles down to
+ * `player.backpedal` at `player.backpedalFull`, and held there to 180°. With
+ * a gamepad stick centred the aim follows the movement, so that player is
+ * never slowed.
+ */
+export function backpedalFactor(P: Params, moveAngle: number, aim: number): number {
+  const { backpedal, backpedalFrom, backpedalFull } = P.player;
+  const sep = Math.abs(angleDiff(moveAngle, aim));
+  if (sep <= backpedalFrom) return 1000;
+  if (sep >= backpedalFull) return backpedal;
+  return 1000 - idiv((1000 - backpedal) * (sep - backpedalFrom), backpedalFull - backpedalFrom);
+}
+
+/**
+ * Free movement: the stick or keys toward a target speed, at `factorPermille`
+ * of `player.speed` (the charge walks slower) and the backpedal's factor on
+ * top. Only here: the dodge, the Haul's pull and every forced movement keep
+ * their full distances.
+ */
 function locomotion(ctx: Ctx, factorPermille: number): void {
   const { s, P } = ctx;
   const p = s.player;
@@ -249,7 +272,8 @@ function locomotion(ctx: Ctx, factorPermille: number): void {
     brake(p, P.player.friction);
     return;
   }
-  const speed = idiv(idiv(P.player.speed * p.moveMag, MOVE_MAG_MAX) * factorPermille, 1000);
+  const full = idiv(idiv(P.player.speed * p.moveMag, MOVE_MAG_MAX) * factorPermille, 1000);
+  const speed = idiv(full * backpedalFactor(P, p.moveAngle, p.aim), 1000);
   accelerate(p, dirX(p.moveAngle, speed), dirY(p.moveAngle, speed), P.player.accel);
 }
 
