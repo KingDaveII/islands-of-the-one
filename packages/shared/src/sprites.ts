@@ -261,7 +261,8 @@ const NO_FACINGS: readonly SpriteFacing[] = [];
  * Kindled always runs in encounters) and required like the rest. The run
  * transitions (`run_start`, `run_stop`: 2 frames at 20 fps, played once by
  * time, 100 ms) and `run_back` (4 frames by distance, one cycle per
- * `anim.backCyclePx`; its fps is n/a, 0) are M1 rows on `ANIMS_AWAITING_ART`
+ * `anim.backCyclePx`; its 12 fps is nominal, for tools and previews where
+ * nothing drives it by distance; ART's answer on #69) are M1 rows on `ANIMS_AWAITING_ART`
  * until ART's frames land (M1 polish, ART 2026-10-17).
  */
 export const KINDLED_ANIMS: readonly SpriteAnimSpec[] = [
@@ -270,7 +271,7 @@ export const KINDLED_ANIMS: readonly SpriteAnimSpec[] = [
   spec('run', 8, 16, true, false),
   spec('run_start', 2, 20, false, false),
   spec('run_stop', 2, 20, false, false),
-  spec('run_back', 4, 0, true, false),
+  spec('run_back', 4, 12, true, false),
   spec('dodge', 4, 16, false, false),
   spec('light_1', 3, 15, false, false),
   spec('light_2', 3, 15, false, false),

@@ -41,11 +41,12 @@ particles, text, dev panels):
   darkest value. Husks use `hollow-deep` (`#2A2540`).
 - **Grounding shadow.** Every character, enemy and prop sits on a small dithered `hollow-deep`
   ellipse, soft and directly underneath (never cast sideways), so position reads on pale floors:
-  20 × 6 world px under a Kindled, a Husk's scaled by its radius against the player's. A prop's
-  (the chest, the Sparkglass chip once it is a sheet) is as wide as the lowest opaque row of its
-  frame plus 4, and 6 high, computed once per sheet frame at load (`propShadow.ts`; the chest's
-  comes out 32 × 6). The Husks keep their scaled shadows: the prop rule would give both 12 × 6, not
-  the 17 × 5 and 33 × 10 they have (ART 2026-10-17).
+  20 × 6 world px under a Kindled, a Husk's scaled by its radius against the player's (17 × 5 and
+  33 × 10). A prop's (the chest, the Sparkglass chip once it is a sheet) follows ART's rule (answer
+  on #69): as wide as the widest of the lowest 3 opaque rows of its frame plus 4, and 6 high, or 3
+  high when the shadow is narrower than 16 px, computed once per sheet frame at load
+  (`propShadow.ts`): the chest's comes out 32 × 6, the Sparkglass chip's 9 × 3. The rule is for
+  props only; the Husks keep their scaled shadows.
 - **Husk cores.** The bright `husk-core` gets a 1 px `hollow-deep` ring wherever it shows, so it
   never merges with the pale floor.
 - **Telegraphs.** During a wind-up the whole Husk turns telegraph pink (dark pink shade and

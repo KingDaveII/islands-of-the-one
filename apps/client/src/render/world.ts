@@ -24,7 +24,6 @@ import { ChestSprites } from './chestSprites.js';
 import { PickupSprites } from './pickupSprites.js';
 import { DEPTH } from './depth.js';
 import { PLAYER_FEET } from './feet.js';
-import { PROP_SHADOW_H } from './propShadow.js';
 import { facingIndex, facingStep } from './facing.js';
 import { HookbladeAnchors, type PlayerFrame } from './hookbladePoints.js';
 import type { Fx } from './fx.js';
@@ -86,9 +85,8 @@ const GUIDE_STEP = 2;
 
 /**
  * The Kindled's grounding shadow, world px (G1.5); a Husk's scales with its
- * radius against the player's (the prop rule, the lowest opaque row plus 4,
- * would give both Husks 12 × 6, not the 17 × 5 and 33 × 10 they have, so they
- * keep theirs; ART 2026-10-17). A prop's comes from its sheet (propShadow.ts).
+ * radius against the player's (17 × 5 and 33 × 10; the prop rule is for props
+ * only, ART's answer on #69). A prop's comes from its sheet (propShadow.ts).
  */
 const SHADOW_W = 20;
 const SHADOW_H = 6;
@@ -222,20 +220,20 @@ export class WorldRenderer {
       this.shadowAt(f, snapToArt(raw.x), snapToArt(raw.y + r), SHADOW_W * k, SHADOW_H * k);
     }
     this.shadowAt(f, snapToArt(pl.x), snapToArt(pl.y + PLAYER_FEET), SHADOW_W, SHADOW_H);
-    // The chests: a grounding shadow at each one's base, as wide as its frame's lowest row plus 4 (about 32 × 6), the sprite y-sorted with the bodies.
+    // The chests: a grounding shadow at each one's base by the prop rule (32 × 6), the sprite y-sorted with the bodies.
     this.chests.draw(s.chests, timeMs);
     for (const c of s.chests) {
-      const w = this.chests.shadowWidth(c.id);
-      if (w > 0) this.shadowAt(f, snapToArt(c.x / SUB), snapToArt(c.y / SUB), w, PROP_SHADOW_H);
+      const sh = this.chests.shadow(c.id);
+      if (sh.w > 0) this.shadowAt(f, snapToArt(c.x / SUB), snapToArt(c.y / SUB), sh.w, sh.h);
     }
     // The pickups: ART's sheet at their positions with a shadow by the prop rule, or the fallback drawing until it lands.
     if (this.pickups.renderer === 'sheet') {
-      const widths = this.pickups.draw(s.pickups, (k) => session.lerp(`k${k.id}`, k.x, k.y), timeMs);
+      const shadows = this.pickups.draw(s.pickups, (k) => session.lerp(`k${k.id}`, k.x, k.y), timeMs);
       for (const k of s.pickups) {
-        const w = widths.get(k.id) ?? 0;
-        if (w === 0) continue;
+        const sh = shadows.get(k.id);
+        if (!sh || sh.w === 0) continue;
         const p = session.lerp(`k${k.id}`, k.x, k.y);
-        this.shadowAt(f, snapToArt(p.x), snapToArt(p.y), w, PROP_SHADOW_H);
+        this.shadowAt(f, snapToArt(p.x), snapToArt(p.y), sh.w, sh.h);
       }
     } else {
       for (const k of s.pickups) this.drawPickup(f, toWorld(session.lerp(`k${k.id}`, k.x, k.y)), timeMs);
