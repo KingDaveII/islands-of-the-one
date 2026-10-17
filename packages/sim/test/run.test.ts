@@ -113,8 +113,9 @@ describe('headless playtest (autopilot)', () => {
 
   it('lands a Haul on a light and on a heavy Husk, and a fully charged thrust', () => {
     // A seed on which the bot meets a Nutshell at Haul range and fully charges a thrust (the light chain delay
-    // moved its timing off seed 1234, moveSpeed 112 → 100 off seed 1232).
-    const run = createRun({ seed: 1252, tuning, rooms: roomTemplates, weapon: WEAPON });
+    // moved its timing off seed 1234, moveSpeed 112 → 100 off seed 1232, solid chests off seed 1252: the bot
+    // no longer walked through the chest, so it met no Nutshell at Haul range; GAME DESIGN 2026-10-17).
+    const run = createRun({ seed: 1268, tuning, rooms: roomTemplates, weapon: WEAPON });
     const events = drive(run, 60 * 60 * 5);
     expect(run.state.status).toBe('cleared');
     expect(haulsBy(events, 'light').length).toBeGreaterThan(0);
@@ -185,7 +186,7 @@ describe('replay determinism', () => {
     const t: Tuning = golden;
     const run = createRun({ seed: 2024, tuning: t, rooms: roomTemplates, weapon: WEAPON });
     drive(run, 60 * 30);
-    expect(hashRunState(run.state)).toMatchInlineSnapshot(`2874163036`);
+    expect(hashRunState(run.state)).toMatchInlineSnapshot(`3913947995`);
   });
 
   it('cloneTuning does not alias the data file', () => {

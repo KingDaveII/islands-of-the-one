@@ -290,7 +290,10 @@ export interface Tuning {
   run: {
     rooms: { waves: WaveTuning[] }[];
     chests: ChestTuning[];
+    /** A chest is a solid round pillar of this radius (GAME DESIGN 2026-10-17): it blocks the Kindled and every Husk alike. */
     chestRadiusPx: number;
+    /** A chest opens when the Kindled's edge comes within this of the chest's edge. */
+    chestOpenReachPx: number;
     waveDelayMs: number;
     clearDelayMs: number;
     spawnMinDistancePx: number;
@@ -464,6 +467,8 @@ export interface Params {
     rooms: { waves: WaveTuning[] }[];
     chests: { item: string; count: number }[];
     chestRadius: number;
+    /** A chest opens within this (units) of the Kindled's edge. */
+    chestOpenReach: number;
     waveDelay: number;
     clearDelay: number;
     spawnMinDistance: number;
@@ -704,6 +709,7 @@ export function compileTuning(t: Tuning, weaponId: string): Params {
       })),
       chests: t.run.chests.map((c) => ({ item: c.item, count: Math.max(0, int(c.count)) })),
       chestRadius: pxToUnits(t.run.chestRadiusPx),
+      chestOpenReach: Math.max(0, pxToUnits(t.run.chestOpenReachPx)),
       waveDelay: msToTicks(t.run.waveDelayMs),
       clearDelay: msToTicks(t.run.clearDelayMs),
       spawnMinDistance: pxToUnits(t.run.spawnMinDistancePx),

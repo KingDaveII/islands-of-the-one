@@ -5,6 +5,7 @@ export * from './input.js';
 export * from './tuning.js';
 export * from './state.js';
 export * from './rooms.js';
+export { collideChests } from './body.js';
 export {
   displace,
   hookSnags,

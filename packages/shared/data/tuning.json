@@ -359,7 +359,8 @@
         "count": 1
       }
     ],
-    "chestRadiusPx": 8
+    "chestRadiusPx": 8,
+    "chestOpenReachPx": 2
   },
   "juice": {
     "shakeDurationMs": 120,
@@ -378,7 +379,8 @@
   },
   "anim": {
     "walkCyclePx": 64,
-    "runCyclePx": 96
+    "runCyclePx": 96,
+    "backCyclePx": 48
   },
   "view": {
     "widthPx": 960,

@@ -18,6 +18,8 @@ export type JuiceTuning = TuningData['juice'];
 export type AnimTuning = TuningData['anim'];
 
 export const roomTemplates = rooms.templates;
+/** One hand-made room of rooms.json: its name and its rows of legend characters. */
+export type RoomTemplate = (typeof roomTemplates)[number];
 export const TILE_SIZE_PX = rooms.tileSize;
 
 export const controlsData = controls;

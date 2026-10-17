@@ -359,7 +359,8 @@
         "count": 1
       }
     ],
-    "chestRadiusPx": 8
+    "chestRadiusPx": 8,
+    "chestOpenReachPx": 2
   },
   "juice": {
     "shakeDurationMs": 120,
