@@ -23,6 +23,7 @@ import type { Session } from '../game/session.js';
 import { debugFlags } from '../ui/debugFlags.js';
 import { chargeStage } from './charge.js';
 import { CharacterSprites } from './characters.js';
+import { activeChestSheet, chestRenderer, ChestSprites } from './chestSprites.js';
 import { DEPTH } from './depth.js';
 import { PLAYER_FEET } from './feet.js';
 import { facingIndex, facingStep } from './facing.js';
@@ -104,9 +105,13 @@ const DEBUG_ALPHA = 0.6;
  *
  * The room comes from ART's tile sheet when it is loaded (roomTiles.ts, G1.5e):
  * the pieces `tileAt` picks, in world px at 1×, and the doors animated from
- * `doorOpen`. Without the sheet, M1's procedural room is the fallback.
+ * `doorOpen`. Without the sheet, M1's procedural room is the fallback. The
+ * chests come from ART's `prop-chest` sheet the same way (chestSprites.ts,
+ * G1.5f): sprites at their sim positions, y-sorted with the bodies, their
+ * frame from `opened`; without the sheet, M1's procedural chest (`drawChest`)
+ * is the fallback.
  *
- * Two densities (scale.ts): M1's procedural room (tiles, doors) and the chests
+ * Two densities (scale.ts): M1's procedural room (tiles, doors) and its chests
  * are drawn in sim px into legacy Graphics shown at 2×, like the v1 sheets and
  * hookblade-fx; the engine's own drawings (decals, shadows, pickups, the
  * slash arc and thrust line, poise bars, the charge meter, the pad reticle
@@ -128,6 +133,8 @@ export class WorldRenderer {
   readonly characters: CharacterSprites;
   /** The room drawn from the tile sheet, when one is loaded; null draws the procedural fallback. */
   readonly tiles: TileRoom | null;
+  /** The chests drawn from the prop-chest sheet, when it is loaded; null draws the procedural fallback. */
+  readonly chests: ChestSprites | null;
   private roomKey = '';
 
   constructor(
@@ -150,6 +157,11 @@ export class WorldRenderer {
     this.tiles =
       sheet && roomRenderer((key) => scene.textures.exists(key)) === 'tiles'
         ? new TileRoom(scene, layer, sheet)
+        : null;
+    const chest = activeChestSheet();
+    this.chests =
+      chest && chestRenderer((key) => scene.textures.exists(key)) === 'sheet'
+        ? new ChestSprites(scene, layer, chest)
         : null;
   }
 
@@ -379,7 +391,14 @@ export class WorldRenderer {
     }
     const ks = this.characters.kindledScale;
     this.shadowAt(f, snapToArt(pl.x, ks), snapToArt(pl.y + PLAYER_FEET, ks), SHADOW_W, SHADOW_H);
-    for (const c of s.chests) this.drawChest(this.props, c, timeMs);
+    if (this.chests) {
+      // The chests from ART's sheet: a grounding shadow at each one's soles, the sprite y-sorted with the bodies.
+      const cs = this.chests.scale;
+      for (const c of s.chests) this.shadowAt(f, snapToArt(c.x / SUB, cs), snapToArt(c.y / SUB, cs), SHADOW_W, SHADOW_H);
+      this.chests.draw(s.chests, timeMs);
+    } else {
+      for (const c of s.chests) this.drawChest(this.props, c, timeMs);
+    }
     for (const k of s.pickups) this.drawPickup(f, toWorld(session.lerp(`k${k.id}`, k.x, k.y)), timeMs);
 
     // Bodies: the sprites, posed from the sim state; Husk spawn-in and stagger marks are engine effects.
@@ -468,7 +487,12 @@ export class WorldRenderer {
     }
   }
 
-  /** A chest: a banded box with a clasp; opened, the lid stands up and the inside is dark. */
+  /**
+   * M1's procedural chest, in sim px at 2×: a banded box with a blinking
+   * clasp; opened, the lid stands up and the inside is dark. The fallback
+   * while ART's prop-chest is not on disk (G1.5f), like the procedural room;
+   * a later task removes it once the sheet lands.
+   */
   private drawChest(g: G, c: ChestState, timeMs: number): void {
     const x = Math.round(c.x / SUB);
     const y = Math.round(c.y / SUB);

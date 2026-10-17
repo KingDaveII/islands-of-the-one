@@ -6,7 +6,9 @@ import {
   TILE_FRAMES,
   TILE_RECIPE_PIECES,
   TILE_WORLD_PX,
+  type TileSheetTiles,
   type TileTemplate,
+  type TileWeights,
 } from '@iot/shared';
 import { APP_ID, ASSET_DIR, REVIEW_DIR } from './build.js';
 import { describeHex, FLOOR, HOLLOW_DEEP, WALL } from './colour.js';
@@ -260,8 +262,15 @@ export function tileSheetJson(
     if (!names.every((n) => rects.has(n))) continue;
     anims[row.name] = { frames: names, frameRate: row.fps, repeat: 0, hold: true };
   }
-  const tiles = { tileSize: TILE_WORLD_PX, floorWeights: recipe.tiles?.floorWeights ?? [] };
-  return `${JSON.stringify({ frames, meta, anims, tiles }, null, 2)}\n`;
+  return `${JSON.stringify({ frames, meta, anims, tiles: tilesBlock(recipe) }, null, 2)}\n`;
+}
+
+/** The sheet's `tiles` block (sprites.md "Tiles"): the tile size, `floorWeights`, and the mid weights the recipe gives. */
+export function tilesBlock(recipe: Recipe): TileSheetTiles {
+  const out: TileSheetTiles = { tileSize: TILE_WORLD_PX, floorWeights: recipe.tiles?.floorWeights ?? [] };
+  if (recipe.tiles?.faceMidWeights) out.faceMidWeights = recipe.tiles.faceMidWeights;
+  if (recipe.tiles?.topMidWeights) out.topMidWeights = recipe.tiles.topMidWeights;
+  return out;
 }
 
 /** The static pieces' rows of contact.png: floors, shades, faces, tops, corners. */
@@ -334,11 +343,11 @@ export interface RoomReport {
  */
 export function renderRooms(
   tiles: readonly BuiltTile[],
-  floorWeights: readonly number[],
+  weights: TileWeights,
   templates: readonly TileTemplate[] = roomTemplates,
 ): { img: Img; rooms: RoomReport[] } {
   const byName = new Map(tiles.map((t) => [t.name, t.img]));
-  const plans = templates.map((t) => ({ t, ...roomTiles(t, floorWeights) }));
+  const plans = templates.map((t) => ({ t, ...roomTiles(t, weights) }));
   const problems = plans.flatMap((p) => p.problems.map((m) => `rooms.json: ${m}`));
   if (problems.length) throw new PipelineError(problems);
   const cols = (t: TileTemplate) => t.tiles.reduce((m, r) => Math.max(m, r.length), 0);
@@ -405,6 +414,9 @@ export interface TileReport {
   draft: boolean;
   tileSize: number;
   floorWeights: number[];
+  /** The plain-wall weights, when the recipe gives them (absent: an even pick). */
+  faceMidWeights?: number[];
+  topMidWeights?: number[];
   totals: { frames: number; offPalette: number; maxDeltaE: number; outlineGaps: number; masked?: number };
   /** Pieces and door frames the recipe lacks against the contract (a finished sheet fails on them). */
   missing: string[];
@@ -449,8 +461,7 @@ function tileReport(
     kind: 'tiles',
     outline: recipe.outline,
     draft: recipe.draft,
-    tileSize: TILE_WORLD_PX,
-    floorWeights: recipe.tiles?.floorWeights ?? [],
+    ...tilesBlock(recipe),
     totals: {
       frames: frames.length,
       offPalette: frames.reduce((s, f) => s + f.offPalette, 0),
@@ -481,7 +492,8 @@ function tileMarkdown(r: TileReport): string {
   lines.push(`# ${r.sheet}${r.draft ? ' (draft)' : ''}`, '');
   lines.push(
     `Built by \`pnpm art:build ${r.sheet}\` from \`art/sheets/${r.sheet}.json\`; do not edit by hand (\`pnpm art:check\` rebuilds it).`,
-    `Kind tiles, outline ${r.outline}, ${r.tileSize}×${r.tileSize} tiles, floor weights ${r.floorWeights.join(':')} (floor_0 to floor_3).` +
+    `Kind tiles, outline ${r.outline}, ${r.tileSize}×${r.tileSize} tiles, floor weights ${r.floorWeights.join(':')} (floor_0 to floor_3), ` +
+      `plain face ${(r.faceMidWeights ?? [1, 1]).join(':')} and plain top ${(r.topMidWeights ?? [1, 1]).join(':')} (mid_0 to mid_1).` +
       (r.draft ? ' A draft writes this review only, never `packages/shared/assets`.' : ''),
     '',
   );
@@ -590,8 +602,7 @@ export function buildTiles(recipe: Recipe, root: string): TileBuildResult {
     ];
     if (problems.length) throw new PipelineError(problems);
   }
-  const floorWeights = recipe.tiles?.floorWeights ?? [];
-  const rooms = renderRooms(tiles, floorWeights);
+  const rooms = renderRooms(tiles, tilesBlock(recipe));
   const outputs = new Map<string, Buffer>();
   if (!recipe.draft) {
     const packed = packTiles(tiles);

@@ -9,7 +9,8 @@ import type { AtlasFrame, SpriteAnim, SpriteAnimSpec } from './sprites.js';
  *
  * The rule (`tileAt`) is a pure function with no runtime dependencies, so the
  * engine (apps/client) and the art pipeline's review (`rooms.png`) both use it
- * and always agree. The sheet's own numbers (`floorWeights`) live in its JSON.
+ * and always agree. The sheet's own numbers (`floorWeights`, `faceMidWeights`,
+ * `topMidWeights`) live in its JSON.
  */
 
 /** A room as the rule reads it: a template of rooms.json, its name and its rows. */
@@ -165,10 +166,28 @@ export const TILE_RECIPE_PIECES: readonly { name: string; w: number; h: number; 
   ),
 ];
 
-/** The sheet's own block: its tile size and the weights of `floor_0` … `floor_3` (four positive integers). */
+/**
+ * The weights the picks read (G1.5f): `floorWeights` for `floor_0` … `floor_3`
+ * (four positive integers), `faceMidWeights` for `face_mid_0` / `face_mid_1`
+ * and `topMidWeights` for `top_mid_0` / `top_mid_1` (two positive integers
+ * each; absent means `MID_WEIGHTS_DEFAULT`, an even pick). A sheet's `tiles`
+ * block is one, so `tileAt(template, col, row, sheet.tiles)`.
+ */
+export interface TileWeights {
+  floorWeights: readonly number[];
+  faceMidWeights?: readonly number[];
+  topMidWeights?: readonly number[];
+}
+
+/** The plain-wall weights when a sheet gives none: `*_mid_0` and `*_mid_1` as often as each other. */
+export const MID_WEIGHTS_DEFAULT: readonly number[] = [1, 1];
+
+/** The sheet's own block: its tile size and the weights (`TileWeights`). */
 export interface TileSheetTiles {
   tileSize: number;
   floorWeights: number[];
+  faceMidWeights?: number[];
+  topMidWeights?: number[];
 }
 
 export interface TileSheetMeta {
@@ -233,13 +252,19 @@ export function pickWeighted(hash: number, weights: readonly number[]): number {
   return weights.length - 1;
 }
 
+/** Whether `v` is `n` positive integers. */
+function isWeights(v: unknown, n: number): v is number[] {
+  return Array.isArray(v) && v.length === n && v.every((w) => typeof w === 'number' && Number.isInteger(w) && w > 0);
+}
+
 /** Whether a `floorWeights` value is valid: four positive integers. */
 export function isFloorWeights(v: unknown): v is number[] {
-  return (
-    Array.isArray(v) &&
-    v.length === FLOOR_PIECES.length &&
-    v.every((w) => typeof w === 'number' && Number.isInteger(w) && w > 0)
-  );
+  return isWeights(v, FLOOR_PIECES.length);
+}
+
+/** Whether a `faceMidWeights` or `topMidWeights` value is valid: two positive integers. */
+export function isMidWeights(v: unknown): v is number[] {
+  return isWeights(v, 2);
 }
 
 /** The template's width in cells: its longest row (shorter rows are wall past their end, as in the sim). */
@@ -349,16 +374,18 @@ export function tileDoors(template: TileTemplate): { doors: TileDoor[]; problems
   return { doors, problems };
 }
 
-/** `prefix_` plus the open sides among n, w, e in that order, or one of the two plain variants by the hash. */
+/** `prefix_` plus the open sides among n, w, e in that order, or one of the two plain variants by the hash, weighted by the sheet. */
 function wallPiece(
   prefix: 'face' | 'top',
   open: readonly TileSide[],
   template: TileTemplate,
   col: number,
   row: number,
+  weights: TileWeights,
 ): FacePiece | TopPiece {
   if (open.length) return `${prefix}_${open.join('')}` as FacePiece | TopPiece;
-  const variant = tileHash(template.name, col, row, SALT[prefix]) & 1;
+  const w = (prefix === 'face' ? weights.faceMidWeights : weights.topMidWeights) ?? MID_WEIGHTS_DEFAULT;
+  const variant = pickWeighted(tileHash(template.name, col, row, SALT[prefix]), w);
   return `${prefix}_mid_${variant}` as FacePiece | TopPiece;
 }
 
@@ -370,19 +397,16 @@ function wallPiece(
  *   N and W (E) are both open; no south shade;
  * - a solid, non-door cell with an open S is a wall face, `face_` plus its
  *   open sides among N, W, E (`face_n` … `face_nwe`), or `face_mid_0` /
- *   `face_mid_1` by the hash with none open;
+ *   `face_mid_1` by the hash weighted by `faceMidWeights` with none open;
  * - a solid, non-door cell with a solid S is a wall top, named the same way
- *   (`top_n` … `top_nwe`, `top_mid_0` / `top_mid_1`), under `corner_nw` where N
- *   and W are solid and NW is open, and `corner_ne` the same way;
+ *   (`top_n` … `top_nwe`, `top_mid_0` / `top_mid_1` by `topMidWeights`), under
+ *   `corner_nw` where N and W are solid and NW is open, and `corner_ne` the
+ *   same way;
  * - a `D` cell is part of its door (`tileDoors`), which draws it.
  * Cells outside the room are solid for their neighbours and draw nothing.
+ * `weights` is the sheet's `tiles` block (`TileWeights`).
  */
-export function tileAt(
-  template: TileTemplate,
-  col: number,
-  row: number,
-  floorWeights: readonly number[],
-): TileCell {
+export function tileAt(template: TileTemplate, col: number, row: number, weights: TileWeights): TileCell {
   const empty: TileCell = { base: null, overlays: [], door: null };
   if (row < 0 || col < 0 || row >= template.tiles.length || col >= templateCols(template)) return empty;
   const t = charAt(template, col, row);
@@ -398,7 +422,8 @@ export function tileAt(
   const e = solid(1, 0);
   const overlays: StaticTilePiece[] = [];
   if (!isSolidTile(template, col, row)) {
-    const base = FLOOR_PIECES[pickWeighted(tileHash(template.name, col, row, SALT.floor), floorWeights)] ?? 'floor_0';
+    const base =
+      FLOOR_PIECES[pickWeighted(tileHash(template.name, col, row, SALT.floor), weights.floorWeights)] ?? 'floor_0';
     if (n) overlays.push('shade_n');
     if (w) overlays.push('shade_w');
     if (e) overlays.push('shade_e');
@@ -407,10 +432,10 @@ export function tileAt(
     return { base, overlays, door: null };
   }
   const open = TILE_SIDES.filter((s) => !{ n, w, e }[s]);
-  if (!solid(0, 1)) return { base: wallPiece('face', open, template, col, row), overlays, door: null };
+  if (!solid(0, 1)) return { base: wallPiece('face', open, template, col, row, weights), overlays, door: null };
   if (n && w && !solid(-1, -1)) overlays.push('corner_nw');
   if (n && e && !solid(1, -1)) overlays.push('corner_ne');
-  return { base: wallPiece('top', open, template, col, row), overlays, door: null };
+  return { base: wallPiece('top', open, template, col, row, weights), overlays, door: null };
 }
 
 /** One static piece to draw: the piece and its cell. A cell's base comes before its overlays. */
@@ -427,13 +452,13 @@ export interface TileDraw {
  */
 export function roomTiles(
   template: TileTemplate,
-  floorWeights: readonly number[],
+  weights: TileWeights,
 ): { draws: TileDraw[]; doors: TileDoor[]; problems: string[] } {
   const draws: TileDraw[] = [];
   const cols = templateCols(template);
   for (let row = 0; row < template.tiles.length; row++) {
     for (let col = 0; col < cols; col++) {
-      const cell = tileAt(template, col, row, floorWeights);
+      const cell = tileAt(template, col, row, weights);
       if (cell.base) draws.push({ piece: cell.base, col, row });
       for (const p of cell.overlays) draws.push({ piece: p, col, row });
     }

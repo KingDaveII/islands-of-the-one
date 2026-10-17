@@ -12,6 +12,7 @@ import {
   type TileTemplate,
 } from '@iot/shared';
 import { DEPTH } from './depth.js';
+import { nextOpenView, openingStateAt, type OpenView } from './opening.js';
 import { spritePngUrl } from './spriteSheets.js';
 
 /**
@@ -92,30 +93,22 @@ export function roomTileFrames(
   template: TileTemplate,
   sheet: TileSheet,
 ): { pieces: TileFrameDraw[]; doors: TileDoor[] } {
-  const { draws, doors } = roomTiles(template, sheet.tiles.floorWeights);
+  const { draws, doors } = roomTiles(template, sheet.tiles);
   return {
     pieces: draws.map((d) => ({ frame: d.piece, x: d.col * TILE_WORLD_PX, y: d.row * TILE_WORLD_PX })),
     doors,
   };
 }
 
-/** What the client has seen of a room's door: open or not, and since when it has been opening (null: open at load). */
-export interface DoorView {
-  open: boolean;
-  since: number | null;
-}
+/** What the client has seen of a room's door (opening.ts): open or not, and since when it has been opening (null: open at load). */
+export type DoorView = OpenView;
 
 /**
  * The door's view after this frame's `doorOpen`: a room that loads with the
  * door open shows it open (`prev` null); `doorOpen` turning true starts the
- * opening at `timeMs`; turning false closes it.
+ * opening at `timeMs`; turning false closes it. The chest shares it (opening.ts).
  */
-export function nextDoorView(prev: DoorView | null, doorOpen: boolean, timeMs: number): DoorView {
-  if (!prev) return { open: doorOpen, since: null };
-  if (!doorOpen) return { open: false, since: null };
-  if (!prev.open) return { open: true, since: timeMs };
-  return prev;
-}
+export const nextDoorView: (prev: DoorView | null, doorOpen: boolean, timeMs: number) => DoorView = nextOpenView;
 
 /**
  * The door's frame: `<door>_closed_0` while shut; `<door>_opening_<k>`, played
@@ -123,14 +116,16 @@ export function nextDoorView(prev: DoorView | null, doorOpen: boolean, timeMs: n
  * (also for a door that was open when the room loaded).
  */
 export function doorFrameAt(sheet: TileSheet, door: DoorPiece, view: DoorView, timeMs: number): string {
-  if (!view.open) return doorFrameName(door, 'closed', 0);
-  if (view.since === null) return doorFrameName(door, 'open', 0);
   const opening = DOOR_STATES.find((s) => s.state === 'opening');
   const anim = sheet.anims[doorAnimKey(door, 'opening')];
-  const frames = anim?.frames.length ?? opening?.frames ?? 0;
-  const fps = anim?.frameRate ?? opening?.fps ?? 1;
-  const k = Math.floor(((timeMs - view.since) * Math.max(1, fps)) / 1000);
-  return k < frames ? doorFrameName(door, 'opening', Math.max(0, k)) : doorFrameName(door, 'open', 0);
+  const state = openingStateAt(
+    view,
+    { frames: anim?.frames.length ?? opening?.frames ?? 0, fps: anim?.frameRate ?? opening?.fps ?? 1 },
+    timeMs,
+  );
+  if (state.state === 'closed') return doorFrameName(door, 'closed', 0);
+  if (state.state === 'opening') return doorFrameName(door, 'opening', state.n);
+  return doorFrameName(door, 'open', 0);
 }
 
 /**

@@ -107,7 +107,7 @@ file fails the build with a message naming the field.
 | `notes` | Optional text; the pipeline ignores it. |
 | `anims.<name>` | An animation, named in the sheet's table (see "Kinds"). Only a Husk with no table yet may use any `lower_snake` name, in a draft. |
 | `anims.<name>.facings.<F>` | Kindled and NPCs: one source per facing. Husks and props have no facings: put `src`, `frames` (and `downscale`) on the animation itself. |
-| `anims.idle.fps` | Props only: the frame rate of `idle` (default 8). |
+| `anims.<name>.fps` | Props only, on the animations the recipe rates (`idle`; the chest's `closed`): the frame rate (default 8). Every other animation takes its rate from the table. |
 | `src` | Repo-relative, under `art/`: a folder of `frame-<n>.png`, one PNG (its only frame is 0), or a GIF. Raw files (`art/raw/…`) or files you cleaned (`art/clean/…`). |
 | `frames` | Source frame indices, in play order. Repeats are allowed. In v3 animations frame 0 is the rotation: skip it. Skip smear frames. The light attack keeps 3 of v3's 6. |
 | `downscale` | Optional, on a source: a whole number k ≥ 2 for a ×k delivery (Retro Diffusion's ×4). Every k×k block must be one colour. |
@@ -118,6 +118,7 @@ file fails the build with a message naming the field.
 | `remap` | Colour rules applied before the snap (step 4), in order: generator greys to the right ramp. See "Remap". |
 | `skin.add`, `skin.remove` | Kindled only, per output frame name, in source pixels (after any downscale and any `flipX`): lists of pixels `[x, y]` or rectangles `[[x0, y0], [x1, y1]]` (corners included). See step 10. |
 | `floorWeights` | Tiles only: the weights of `floor_0` … `floor_3`, four positive integers, written to the sheet's `tiles` block (see "Tiles"). |
+| `faceMidWeights`, `topMidWeights` | Tiles only, optional: the weights of `face_mid_0` / `face_mid_1` and of `top_mid_0` / `top_mid_1`, two positive integers each, written to the sheet when given; absent means an even pick (see "Tiles"). |
 | `pieces` | Tiles only, in place of `anims`: the pieces by name, each `{ "src": …, "frames": [i] }` (see "Tiles"). |
 | `points` | Kindled only: named points (`sprites.md` §5), keyed by point name, then by output frame name, `[x, y]` in that frame's **source** pixels (after any downscale and any `flipX`), like `fixes`. See "Points". |
 
@@ -201,10 +202,16 @@ contact (frame 0 is a foot landing). `run` grounds like `walk` (`"frame"` by def
 | `kindled-` | `kindled` | 96×80 | per animation (8, 4 or 2) | `KINDLED_ANIMS` | yes |
 | `husk-` | `husk` | 64×64 | none | the Husk's own in `HUSK_TABLES` (`peeling`, `nutshell`); a Husk without one builds only as a draft | no |
 | `npc-` | `npc` | 64×64 | all 8 | `NPC_ANIMS`: `idle` 2 frames at 2 fps, `walk` 6 at 10, both looping | no |
-| `prop-` | `prop` | 64×64 | none | `idle` only, 1–8 frames, at the recipe's `fps` (default 8), looping with more than one frame | no |
+| `prop-` | `prop` | 64×64 | none | the prop's own in `PROP_TABLES` when it has one (`chest`: `closed` 1–2 frames at the recipe's `fps`, `opening` 4 at 12, `open` 1 held; a finished sheet carries all three, a draft any subset); else `idle` only, 1–8 frames, at the recipe's `fps` (default 8), looping with more than one frame | no |
 | `tiles-` | `tiles` | each piece its own size: 32×32, doors 64×32 or 32×64 | none | the pieces and door animations of `packages/shared/src/tiles.ts` (`sprites.md` §10), listed under `pieces` | no |
 
 Husk `telegraph*` frames may carry the two telegraph colours (they are pre-tinted); every other frame may not.
+
+**A prop with its own table** (G1.5f) is built like a Husk: its animations are the table's names, in the table's
+order, and only the rows the recipe rates (`fromRecipe` in `packages/shared/src/sprites.ts`: `idle` of a prop
+without a table, the chest's `closed`) take `fps` and choose their frame count, within the row's range; the rest
+have the table's count and rate. The chest's `closed` with 2 frames loops (the glint), with 1 it holds; `opening`
+plays once and holds; `open` holds.
 
 Frame names are `<anim>_<FACING>_<n>` with facings and `<anim>_<n>` without; `n` counts the recipe's
 `frames` list from 0, whatever the source indices are.
@@ -215,7 +222,8 @@ the pipeline never does it. The same goes for a stubby blade or anything else th
 ### Tiles
 
 A `tiles-<set>` recipe (G1.5e) builds a tile sheet (`sprites.md` §10): it lists pieces rather than animations,
-with the floor weights the sheet carries, and always `"outline": "other"`.
+with the weights the sheet carries (`floorWeights`, and optionally `faceMidWeights` and `topMidWeights`, G1.5f),
+and always `"outline": "other"`.
 
 ```json
 {
@@ -224,6 +232,8 @@ with the floor weights the sheet carries, and always `"outline": "other"`.
   "outline": "other",
   "draft": true,
   "floorWeights": [6, 3, 2, 1],
+  "faceMidWeights": [3, 1],
+  "topMidWeights": [3, 1],
   "pieces": {
     "floor_0": { "src": "art/clean/tiles-cave/floor_0.png" },
     "door_n_opening": { "src": "art/clean/tiles-cave/door_n_opening", "frames": [0, 1, 2, 3, 4, 5] }
@@ -247,6 +257,10 @@ with the floor weights the sheet carries, and always `"outline": "other"`.
   - No skin mask, no ground, no bob or seam checks.
   - **Opacity.** `floor_*`, `face_*`, `top_*` and every door frame must be fully opaque; shades and corners may
     be transparent.
+- **Weights.** `floorWeights` (four positive integers) is required; `faceMidWeights` and `topMidWeights` (two
+  positive integers each, for `*_mid_0` and `*_mid_1`) are optional and written to the sheet's `tiles` block only
+  when given; absent, the engine and `rooms.png` pick the two plain variants evenly. `tiles-cave` uses `[3, 1]`
+  for both, so the spare plain face and top show about a quarter of the time instead of reading as a pattern.
 - **Packing.** In the contract's order, left to right in rows of at most 256 px, each row as tall as its tallest
   frame; door frames stay whole, never split into cells. The JSON is `sprites.md` §10: named frames, the door
   `anims`, `meta` (`version` "2", `pixelScale` 1, `app` `"iot-art-pipeline"`) and the `tiles` block.
@@ -392,7 +406,7 @@ unless the message says otherwise; read failures give the file's own.
 | `kind must be one of kindled, husk, npc, prop, tiles` | Pick one. |
 | `sheet "<s>" has no known kind: a sheet name starts with kindled-, husk-, npc-, prop-, tiles-` | Rename the sheet (and the file) with its kind's prefix. |
 | `kind is <k> but the name "<s>" makes it <k2>` | The name decides how the engine and the sheet test treat a sheet; rename the sheet or fix the kind. |
-| `anims.<a>.fps is only for props …` / `must be a whole number, 0 or more` | Other kinds take their rates from the table. |
+| `anims.<a>.fps is only for props …` / `is only for <rated> (<a> takes its rate from the prop animation table)` / `must be a whole number, 0 or more` | Other kinds, and a prop table's fixed rows (the chest's `opening`, `open`), take their rates from the table; `fps` goes on `idle`, or the chest's `closed`. |
 | `outline must be "player" or "other"` / `outline is "player" but only Kindled sheets use the player outline` | Use `"other"` for everyone but the player. |
 | `draft must be true or false` | Say which it is. |
 | `anims must be an object with at least one animation` | Add an animation. |
@@ -431,6 +445,7 @@ unless the message says otherwise; read failures give the file's own.
 | `points.<p>.<f> must be [x, y], whole pixels in the frame's source` | Two whole numbers from 0. |
 | `anims is not a recipe field` (a tiles recipe) / `floorWeights is not a recipe field` (any other) | A tiles recipe has `pieces` and `floorWeights` in place of `anims`, `skin` and `points`. |
 | `floorWeights must be four positive integers (the weights of floor_0 … floor_3)` | One whole number above 0 per floor piece. |
+| `faceMidWeights must be two positive integers (the weights of face_mid_0 and face_mid_1)` / `topMidWeights …` | Two whole numbers above 0, or leave the field out for an even pick. |
 | `pieces must be an object with at least one piece` | Add a piece. |
 | `pieces.<p> is not a tile piece (…)` | Use a name from the list (`sprites.md` §10); a door's pieces are its animations (`door_n_opening`). |
 | `pieces.<p> must be an object with "src" (and "frames" for a door animation)` / `pieces.<p>.<k> is not a piece field` | A piece has `src`, `frames` and `despeckle` only. |
@@ -462,7 +477,7 @@ unless the message says otherwise; read failures give the file's own.
 | `<sheet>: <key> is missing (a finished sheet carries every animation and facing)` / `<sheet>: <key> has <n> frames; the table says <m>` | A non-draft must be complete up to `REQUIRED_MILESTONE`. Add what's missing, or keep `"draft": true`. |
 | `<sheet>: <key> is missing (<anim> is optional until <M>, but a finished sheet that has it carries every facing)` | An optional animation is all or nothing: add its other facings, or leave it out entirely. |
 | `<sheet>: the sprite contract has no animation table (frame counts and rates) for this husk yet, so only a draft can be built` | A new enemy needs its table in `HUSK_TABLES` first; build a draft and ask MAIN. |
-| `<sheet>: a prop's idle has 1 to 8 frames, not <n>` | Pick at most 8 frames. |
+| `<sheet>: a prop's idle has 1 to 8 frames, not <n>` / `a prop's closed has 1 to 2 frames, not <n>` | Pick a count in the range: at most 8 for `idle`, 1 or 2 for the chest's `closed`. |
 | `<sheet>: no masked pixel is <hex>; every swap key needs some skin in it` | The sheet test needs both skin colours under the mask somewhere. Check the skin is still in the clay ramp after the snap. |
 | `<sheet>: <n> frames of <w>×<h> need a <W>×<H> sheet; the most is 2048×2048` | Too many frames for one sheet; ask MAIN to split it. |
 | `<frame> (<src> frame <n>): the source is <w>×<h>, but <piece> is <W>×<H>; a piece's source must be its exact size (nothing is scaled or shifted)` | Tiles: crop or redraw the piece to its size in `art/clean/`. |

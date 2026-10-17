@@ -12,7 +12,7 @@ import {
 } from './roomTiles.js';
 
 const fixture: TileSheet = fixtureJson;
-const W = fixture.tiles.floorWeights;
+const W = fixture.tiles;
 
 function template(name: string): TileTemplate {
   const t = roomTemplates.find((r) => r.name === name);

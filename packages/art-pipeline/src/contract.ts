@@ -1,7 +1,9 @@
 import {
-  propIdleSpec,
+  propRecipeAnims,
+  propTableFor,
   PROP_IDLE,
   SPRITE_CANVAS,
+  type PropAnimGiven,
   SPRITE_CELLS,
   SPRITE_FACINGS,
   SPRITE_KINDS,
@@ -48,24 +50,28 @@ export function hasFacings(kind: Kind): boolean {
   return kind === 'kindled' || kind === 'npc';
 }
 
-/** A recipe's own numbers for a prop's `idle`: how many frames, at what rate. */
-export interface PropIdle {
-  frames: number;
-  fps?: number;
-}
+/**
+ * A recipe's own numbers for the animations a prop rates itself (sprites.md
+ * §4: `idle` of a prop without a table, the chest's `closed`), by name: how
+ * many frames, at what rate.
+ */
+export type PropGiven = Record<string, PropAnimGiven>;
 
 /**
  * The animation table a finished sheet carries, in the contract's order: the
- * Kindled's, a Husk's, the NPCs', or a prop's `idle` from its recipe. Null when
+ * Kindled's, a Husk's, the NPCs', or a prop's (its own table, or `idle`) with
+ * the rows the recipe rates resolved from `prop` (`propTableFor`). Null when
  * the contract has no table for the sheet yet (a Husk not in `HUSK_TABLES`).
  */
-export function sheetTable(
-  sheet: string,
-  prop: PropIdle | null = null,
-): readonly SpriteAnimSpec[] | null {
+export function sheetTable(sheet: string, prop: PropGiven | null = null): readonly SpriteAnimSpec[] | null {
   const spec = spriteSheetSpec(sheet);
-  if (spec.kind === 'prop') return prop ? [propIdleSpec(prop.frames, prop.fps)] : [propIdleSpec(1)];
+  if (spec.kind === 'prop') return propTableFor(sheet, (anim) => prop?.[anim]);
   return spec.anims;
+}
+
+/** The animations a recipe for this sheet rates itself (`fps`, its own frame count): none for every kind but props. */
+export function recipeRatedAnims(sheet: string): readonly string[] {
+  return propRecipeAnims(sheet).map((a) => a.name);
 }
 
 /** The animation names a recipe for this sheet may use, in the contract's order, or null when any name is allowed. */
@@ -81,11 +87,7 @@ export function facingsFor(sheet: string, anim: string): readonly Facing[] {
 }
 
 /** The table row of one animation of a sheet, if the contract has it. */
-export function animRow(
-  sheet: string,
-  anim: string,
-  prop: PropIdle | null = null,
-): SpriteAnimSpec | undefined {
+export function animRow(sheet: string, anim: string, prop: PropGiven | null = null): SpriteAnimSpec | undefined {
   return sheetTable(sheet, prop)?.find((a) => a.name === anim);
 }
 

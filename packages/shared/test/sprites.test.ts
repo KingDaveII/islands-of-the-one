@@ -16,8 +16,17 @@ import {
   KINDLED_ANIMS,
   NPC_ANIMS,
   paletteData,
+  CHEST_ANIMS,
+  CHEST_CLOSED,
+  CHEST_SHEET,
+  propAnimSpec,
+  propFrameName,
+  propFrameRangeProblem,
   propIdleSpec,
+  propRecipeAnims,
+  propTableFor,
   PROP_IDLE,
+  PROP_TABLES,
   REQUIRED_MILESTONE,
   isRequiredAnim,
   sheetPixelScale,
@@ -37,6 +46,7 @@ import {
   type TileSheet,
 } from '../src/index.js';
 import fixtureSheet from './fixtures/kindled-fixture.json' with { type: 'json' };
+import chestFixture from './fixtures/prop-chest.json' with { type: 'json' };
 import { decodePng } from './png.js';
 import { pointProblems, tableProblems, v2Problems, type Rgba } from './sheetChecks.js';
 import { tileSheetProblems } from './tileChecks.js';
@@ -129,6 +139,17 @@ describe('the v2 fixture sheet (test/fixtures/kindled-fixture)', () => {
     expect(sheetPixelScale(sheet)).toBe(1);
   });
   sheetSuite('kindled-fixture', sheet, fixtureUrl, false);
+});
+
+describe('the chest fixture sheet (test/fixtures/prop-chest)', () => {
+  const sheet: SpriteSheet = chestFixture;
+  it('is a v2 prop sheet with the chest table: closed (2 frames), opening (4), open (1)', () => {
+    expect(isV2Sheet(sheet)).toBe(true);
+    expect(Object.keys(sheet.anims)).toEqual([...CHEST_ANIMS]);
+    expect(sheet.anims.closed?.frames).toEqual(['closed_0', 'closed_1']);
+  });
+  // Shipped: the fixture carries the whole table, like ART's finished sheet must.
+  sheetSuite(CHEST_SHEET, sheet, fixtureUrl, true);
 });
 
 /** The checks of §6 for one sheet; `shipped` sheets also carry their table up to REQUIRED_MILESTONE (tableProblems). */
@@ -245,7 +266,7 @@ function sheetSuite(name: string, sheet: SpriteSheet, url: (image: string) => UR
   if (shipped) {
     it(`carries its ${kind.kind} table up to ${REQUIRED_MILESTONE}: every animation, facing and frame, with its rate, loop and hold`, () => {
       expect(sheet.meta.facings).toEqual(kind.facings ? [...SPRITE_FACINGS] : undefined);
-      const table = kind.anims ?? (kind.kind === 'prop' ? propTable(sheet) : null);
+      const table = kind.kind === 'prop' ? propTable(name, sheet) : kind.anims;
       expect(table, `no animation table for ${name} in the contract`).not.toBeNull();
       if (!table) return;
       expect(tableProblems(name, sheet, table)).toEqual([]);
@@ -604,6 +625,64 @@ describe('which kind a sheet is (spriteSheetSpec)', () => {
     });
     // A Husk the contract has no table for yet.
     expect(spriteSheetSpec('husk-rind-eel').anims).toBeNull();
+    // The chest, the first prop with a table of its own (G1.5f); a prop named like a table's key is one too.
+    expect(spriteSheetSpec('prop-chest')).toEqual({
+      kind: 'prop',
+      cell: SPRITE_CELLS.other,
+      anims: PROP_TABLES.chest,
+      facings: false,
+      palette: false,
+    });
+    expect(CHEST_SHEET).toBe('prop-chest');
+    for (const name of ['prop-chests', 'prop-chest-old', 'prop-constructor', 'prop-toString'])
+      expect(spriteSheetSpec(name).anims, name).toBeNull();
+  });
+
+  it('holds the chest table of sprites.md §4: closed 1 or 2 frames at the recipe\'s rate, opening 4 at 12, open held', () => {
+    const rows = (t: readonly SpriteAnimSpec[]): [string, number, number, boolean, boolean][] =>
+      t.map((a) => [a.name, a.frames, a.fps, a.loop, a.hold]);
+    expect(rows(PROP_TABLES.chest)).toEqual([
+      ['closed', 2, 8, true, false],
+      ['opening', 4, 12, false, true],
+      ['open', 1, 0, false, true],
+    ]);
+    expect(PROP_TABLES.chest.map((a) => a.name)).toEqual([...CHEST_ANIMS]);
+    for (const a of PROP_TABLES.chest) {
+      expect(a.facings, a.name).toEqual([]);
+      expect(a.milestone, a.name).toBe('M1');
+      expect(isRequiredAnim(a), a.name).toBe(true);
+    }
+    expect(PROP_TABLES.chest[0]?.fromRecipe).toBe(CHEST_CLOSED);
+    expect(CHEST_CLOSED).toEqual({ name: 'closed', minFrames: 1, maxFrames: 2, defaultFps: 8 });
+    expect(PROP_TABLES.chest.slice(1).map((a) => a.fromRecipe)).toEqual([undefined, undefined]);
+    expect(propRecipeAnims('prop-chest')).toEqual([CHEST_CLOSED]);
+    expect(propRecipeAnims('prop-jar')).toEqual([PROP_IDLE]);
+    expect(propRecipeAnims('husk-peeling')).toEqual([]);
+    expect(propFrameName('opening', 3)).toBe('opening_3');
+  });
+
+  it('resolves a prop table to what the recipe or the sheet gives its recipe-rated rows (propTableFor)', () => {
+    // The chest's closed at 2 frames and 2 fps (the glint), or 1 frame, still; opening and open as the table has them.
+    const glint = propTableFor('prop-chest', (a) => (a === 'closed' ? { frames: 2, fps: 2 } : undefined));
+    expect(glint?.map((a) => [a.name, a.frames, a.fps, a.loop, a.hold])).toEqual([
+      ['closed', 2, 2, true, false],
+      ['opening', 4, 12, false, true],
+      ['open', 1, 0, false, true],
+    ]);
+    expect(glint?.[0]?.fromRecipe).toBe(CHEST_CLOSED);
+    const still = propTableFor('prop-chest', (a) => (a === 'closed' ? { frames: 1 } : undefined));
+    expect(still?.[0]).toEqual({ ...propAnimSpec(CHEST_CLOSED, 1), fps: 8 });
+    expect(still?.[0]).toMatchObject({ frames: 1, loop: false, hold: true });
+    // Given nothing, closed keeps its most frames at the default rate; a count out of range stays for the checks.
+    expect(propTableFor('prop-chest', () => undefined)).toEqual(PROP_TABLES.chest);
+    expect(propTableFor('prop-chest', () => ({ frames: 3 }))?.[0]?.frames).toBe(3);
+    expect(propFrameRangeProblem(CHEST_CLOSED, 3)).toBe("a prop's closed has 1 to 2 frames, not 3");
+    expect(propFrameRangeProblem(CHEST_CLOSED, 2)).toBeNull();
+    expect(propFrameRangeProblem(PROP_IDLE, 9)).toBe("a prop's idle has 1 to 8 frames, not 9");
+    // A prop without a table still gets idle from the recipe, 1 to 8 frames.
+    expect(propTableFor('prop-jar', () => ({ frames: 4, fps: 12 }))).toEqual([propIdleSpec(4, 12)]);
+    expect(propTableFor('prop-jar', () => undefined)).toEqual([propIdleSpec(8)]);
+    expect(propTableFor('husk-peeling', () => undefined)).toBeNull();
   });
 
   it('fails on an unknown prefix', () => {
@@ -655,6 +734,7 @@ describe('which kind a sheet is (spriteSheetSpec)', () => {
       hold: false,
       facings: [],
       milestone: 'M1',
+      fromRecipe: PROP_IDLE,
     });
     expect(propIdleSpec(1, 0)).toEqual({
       name: 'idle',
@@ -664,6 +744,7 @@ describe('which kind a sheet is (spriteSheetSpec)', () => {
       hold: true,
       facings: [],
       milestone: 'M1',
+      fromRecipe: PROP_IDLE,
     });
   });
 });
@@ -745,6 +826,45 @@ describe('optional animations (milestones)', () => {
   });
 });
 
+describe('the chest table on a sheet (tableProblems on test/fixtures/prop-chest)', () => {
+  const chest = (anims: SpriteSheet['anims']): SpriteSheet => ({ ...chestFixture, anims });
+  const check = (sheet: SpriteSheet): string[] => tableProblems(CHEST_SHEET, sheet, propTable(CHEST_SHEET, sheet) ?? []);
+
+  it('passes the fixture: a 2-frame closed looping at its own rate, opening once at 12 fps, open held', () => {
+    expect(check(chestFixture)).toEqual([]);
+  });
+
+  it('passes a 1-frame closed, still and held, with no glint', () => {
+    const still = chest({ ...chestFixture.anims, closed: { frames: ['closed_0'], frameRate: 0, repeat: 0, hold: true } });
+    expect(check(still)).toEqual([]);
+    const looping = chest({ ...chestFixture.anims, closed: { frames: ['closed_0'], frameRate: 8, repeat: -1 } });
+    expect(check(looping)).toEqual(['closed has repeat -1; the table says 0', 'closed has hold false; the table says true']);
+  });
+
+  it('fails a 3-frame closed, a 2-frame closed that does not loop, and opening at the wrong count or rate', () => {
+    const three = chest({ ...chestFixture.anims, closed: { frames: ['closed_0', 'closed_1', 'closed_0'], frameRate: 2, repeat: -1 } });
+    expect(check(three)).toEqual(["closed has 3 frames; a prop's closed has 1 to 2 frames, not 3"]);
+    const held = chest({ ...chestFixture.anims, closed: { frames: ['closed_0', 'closed_1'], frameRate: 2, repeat: 0, hold: true } });
+    expect(check(held)).toEqual(['closed has repeat 0; the table says -1', 'closed has hold true; the table says false']);
+    const slow = chest({
+      ...chestFixture.anims,
+      opening: { frames: ['opening_0', 'opening_1', 'opening_2'], frameRate: 8, repeat: 0, hold: true },
+    });
+    expect(check(slow)).toEqual([
+      'opening has frames opening_0, opening_1, opening_2; the table says opening_0, opening_1, opening_2, opening_3',
+      'opening runs at 8 fps; the table says 12',
+    ]);
+  });
+
+  it('fails a finished chest without opening, or with an animation outside the table', () => {
+    const rest = Object.fromEntries(Object.entries(chestFixture.anims).filter(([k]) => k !== 'opening'));
+    expect(check(chest(rest))).toEqual(['opening is missing']);
+    expect(check(chest({ ...chestFixture.anims, idle: { frames: ['closed_0'], frameRate: 8, repeat: -1 } }))).toEqual([
+      'animations outside the table: idle',
+    ]);
+  });
+});
+
 describe('the sprite sheet table', () => {
   // M1's v1 cells (sprites.md §2); a sheet that has turned v2 is checked by v2Problems instead.
   const M1_CELLS: Record<string, { cell: { w: number; h: number }; origin: { x: number; y: number } }> = {
@@ -769,11 +889,10 @@ describe('the sprite sheet table', () => {
   });
 });
 
-/** A prop's table from its own `idle`: 1 to 8 frames at the sheet's rate (sprites.md §4). */
-function propTable(sheet: SpriteSheet): SpriteAnimSpec[] | null {
-  const idle = sheet.anims[PROP_IDLE.name];
-  if (!idle) return null;
-  const n = idle.frames.length;
-  if (n < PROP_IDLE.minFrames || n > PROP_IDLE.maxFrames) return null;
-  return [propIdleSpec(n, idle.frameRate)];
+/** A prop's table resolved from its own sheet: its recipe-rated rows (`idle`, the chest's `closed`) at the sheet's count and rate (sprites.md §4). */
+function propTable(name: string, sheet: SpriteSheet): SpriteAnimSpec[] | null {
+  return propTableFor(name, (anim) => {
+    const def = sheet.anims[anim];
+    return def ? { frames: def.frames.length, fps: def.frameRate } : undefined;
+  });
 }

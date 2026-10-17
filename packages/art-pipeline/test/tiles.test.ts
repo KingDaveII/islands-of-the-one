@@ -163,7 +163,7 @@ describe('a finished tiles recipe', () => {
     fillRect(want, 0, 0, w, h, C['hollow-deep']);
     let oy = ROOM_GAP;
     for (const t of roomTemplates) {
-      const { draws, doors } = roomTiles(t, [6, 3, 2, 1]);
+      const { draws, doors } = roomTiles(t, { floorWeights: [6, 3, 2, 1] });
       for (const d of draws) blit(want, piece(d.piece), ROOM_GAP + d.col * 32, oy + d.row * 32);
       for (const d of doors) blit(want, piece(doorFrameName(d.piece, 'closed', 0)), ROOM_GAP + d.col * 32, oy + d.row * 32);
       oy += t.tiles.length * 32 + ROOM_GAP;
@@ -173,6 +173,32 @@ describe('a finished tiles recipe', () => {
     // Spot checks: the Shell Gallery's north door (closed) and a floor cell's shade.
     expect(hexAt(got, ROOM_GAP + 15 * 32 + 1, ROOM_GAP + 1)).toBe(C['watcher-rain']);
     expect(hexAt(got, ROOM_GAP + 32 + 26, ROOM_GAP + 32 + 1)).toBe(C['hollow-dusk']);
+  });
+
+  it('writes faceMidWeights and topMidWeights into the tiles block when the recipe gives them, and draws rooms.png with them', () => {
+    const rare = build(root, recipe({ faceMidWeights: [3, 1], topMidWeights: [3, 1] }));
+    const json = rare.outputs.get('packages/shared/assets/sprites/tiles-test.json');
+    if (!json) throw new Error('no sheet');
+    const sheet = JSON.parse(json.toString()) as TileSheet;
+    expect(sheet.tiles).toEqual({ tileSize: 32, floorWeights: [6, 3, 2, 1], faceMidWeights: [3, 1], topMidWeights: [3, 1] });
+    expect(tileSheetProblems('tiles-test', sheet, { width: 1, height: 1, rgba: new Uint8Array(4) })).not.toContain(
+      expect.stringContaining('MidWeights'),
+    );
+    expect(rare.report).toMatchObject({ floorWeights: [6, 3, 2, 1], faceMidWeights: [3, 1], topMidWeights: [3, 1] });
+    expect(rare.outputs.get('art/review/tiles-test/report.md')?.toString()).toContain('plain face 3:1 and plain top 3:1 (mid_0 to mid_1)');
+    // Without them the block has only floorWeights, the report says 1:1, and rooms.png is the even pick's.
+    expect(full.report.faceMidWeights).toBeUndefined();
+    expect(full.outputs.get('art/review/tiles-test/report.md')?.toString()).toContain('plain face 1:1 and plain top 1:1');
+    const even = decodePng(full.outputs.get('art/review/tiles-test/rooms.png') ?? Buffer.alloc(0));
+    const weighted = decodePng(rare.outputs.get('art/review/tiles-test/rooms.png') ?? Buffer.alloc(0));
+    expect(sameImg(even, weighted)).toBe(false);
+    // The Narrow Hollow's north wall (row 0 of the second room) with 3:1 shows the spare face (watcher-iron body) less than a third of the time.
+    const narrow = roomTemplates.findIndex((t) => t.name === 'Narrow Hollow');
+    const oy = roomTemplates.slice(0, narrow).reduce((s, t) => s + t.tiles.length * 32 + ROOM_GAP, ROOM_GAP);
+    const spare = (img: typeof even) =>
+      Array.from({ length: 38 }, (_, c) => hexAt(img, ROOM_GAP + (c + 1) * 32 + 28, oy + 28)).filter((h) => h === C['watcher-iron']).length;
+    expect(spare(weighted)).toBeLessThan(spare(even));
+    expect(spare(weighted)).toBeGreaterThan(0);
   });
 
   it('rebuilds byte for byte (art:check)', () => {
@@ -308,7 +334,14 @@ describe('the tiles recipe guard', () => {
     expect(r.kind).toBe('tiles');
     expect(r.tiles?.pieces.floor_0).toEqual({ src: 'art/clean/tiles-test/floor_0.png', frames: [0] });
     expect(r.tiles?.floorWeights).toEqual([6, 3, 2, 1]);
+    expect(r.tiles?.faceMidWeights).toBeUndefined();
+    expect(r.tiles?.topMidWeights).toBeUndefined();
     expect(r.anims).toEqual({});
+    const rare = parseRecipe(recipe({ faceMidWeights: [3, 1], topMidWeights: [1, 2] }), 'art/sheets/tiles-test.json', root);
+    expect([rare.tiles?.faceMidWeights, rare.tiles?.topMidWeights]).toEqual([[3, 1], [1, 2]]);
+    expect(problems({ ...recipe(), faceMidWeights: [1, 1, 1] })).toEqual([
+      'art/sheets/tiles-test.json: faceMidWeights must be two positive integers (the weights of face_mid_0 and face_mid_1)',
+    ]);
   });
 
   it('names every problem', () => {
@@ -317,6 +350,8 @@ describe('the tiles recipe guard', () => {
         recipe({
           outline: 'player',
           floorWeights: [6, 3, 0, 1],
+          faceMidWeights: [3],
+          topMidWeights: [3, 0],
           anims: {},
           pieces: {
             floor_9: { src: 'art/clean/tiles-test/floor_0.png' },
@@ -332,6 +367,8 @@ describe('the tiles recipe guard', () => {
       'art/sheets/tiles-test.json: anims is not a recipe field',
       'art/sheets/tiles-test.json: outline is "player" but only Kindled sheets use the player outline',
       'art/sheets/tiles-test.json: floorWeights must be four positive integers (the weights of floor_0 … floor_3)',
+      'art/sheets/tiles-test.json: faceMidWeights must be two positive integers (the weights of face_mid_0 and face_mid_1)',
+      'art/sheets/tiles-test.json: topMidWeights must be two positive integers (the weights of top_mid_0 and top_mid_1)',
       `art/sheets/tiles-test.json: pieces.floor_9 is not a tile piece (${TILE_RECIPE_PIECES.map((p) => p.name).join(', ')})`,
       'art/sheets/tiles-test.json: pieces.floor_0.frames lists 2 frames; floor_0 is one frame',
       'art/sheets/tiles-test.json: pieces.floor_1.downscale is not a piece field',

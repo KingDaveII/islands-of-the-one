@@ -2,19 +2,22 @@ import { existsSync, statSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import {
   isFloorWeights,
+  isMidWeights,
   isKindledPoint,
   KINDLED_POINT_ANIMS,
   KINDLED_POINTS,
   spritePointsFor,
   TILE_RECIPE_PIECES,
   type KindledPoint,
+  type PropAnimGiven,
   type SpriteAnimSpec,
 } from '@iot/shared';
 import {
   animKey,
   animNames,
+  recipeRatedAnims,
   sheetTable,
-  type PropIdle,
+  type PropGiven,
   facingsFor,
   frameName,
   hasFacings,
@@ -58,7 +61,7 @@ export interface RecipeAnim {
   facings?: Partial<Record<Facing, FrameSource>>;
   /** Kinds without facings (husk, prop): the source sits on the animation itself. */
   source?: FrameSource;
-  /** Props only: the frame rate of `idle` (default 8). */
+  /** Props only, on the animations the recipe rates (`idle`, the chest's `closed`): the frame rate (default 8). */
   fps?: number;
 }
 
@@ -67,10 +70,14 @@ export interface TileSource extends FrameSource {
   despeckle?: boolean;
 }
 
-/** What a tiles recipe (kind `tiles`) has in place of `anims`: the floor weights and the pieces, by name. */
+/** What a tiles recipe (kind `tiles`) has in place of `anims`: the weights and the pieces, by name. */
 export interface TilesRecipe {
   /** The weights of floor_0 … floor_3, four positive integers, written to the sheet's `tiles` block. */
   floorWeights: number[];
+  /** The weights of face_mid_0 and face_mid_1, two positive integers, written to the sheet when given (absent: an even pick). */
+  faceMidWeights?: number[];
+  /** The same for top_mid_0 and top_mid_1. */
+  topMidWeights?: number[];
   pieces: Record<string, TileSource>;
 }
 
@@ -165,7 +172,7 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
     'outline',
     'draft',
     'notes',
-    ...(tilesRecipe ? ['floorWeights', 'pieces'] : ['anims', 'skin', 'points']),
+    ...(tilesRecipe ? ['floorWeights', 'faceMidWeights', 'topMidWeights', 'pieces'] : ['anims', 'skin', 'points']),
     'fixes',
     'remap',
   ]);
@@ -229,8 +236,14 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
         else out.despeckle = a.despeckle;
       }
       if (a.fps !== undefined) {
+        const rated = recipeRatedAnims(sheet);
         if (k !== 'prop')
           bad(`${path}.fps`, 'is only for props (every other kind takes its rate from the table)');
+        else if (!rated.includes(name))
+          bad(
+            `${path}.fps`,
+            `is only for ${rated.join(', ')} (${name} takes its rate from the ${k} animation table)`,
+          );
         else if (typeof a.fps !== 'number' || !Number.isInteger(a.fps) || a.fps < 0)
           bad(`${path}.fps`, 'must be a whole number, 0 or more');
         else out.fps = a.fps;
@@ -423,11 +436,12 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
 }
 
 /**
- * A tiles recipe's `floorWeights` and `pieces`: every piece named in the
- * contract (`TILE_RECIPE_PIECES`), with a `src`, its `frames` (a static piece
- * one, default [0]; a door animation its frames in order, at most the
- * contract's count) and an optional `despeckle`. Nothing is scaled or
- * mirrored, so `downscale` and `flipX` are not piece fields.
+ * A tiles recipe's `floorWeights`, its optional `faceMidWeights` and
+ * `topMidWeights` (two positive integers each) and `pieces`: every piece
+ * named in the contract (`TILE_RECIPE_PIECES`), with a `src`, its `frames` (a
+ * static piece one, default [0]; a door animation its frames in order, at
+ * most the contract's count) and an optional `despeckle`. Nothing is scaled
+ * or mirrored, so `downscale` and `flipX` are not piece fields.
  */
 function parseTiles(
   json: Record<string, Json>,
@@ -438,6 +452,13 @@ function parseTiles(
   if (!isFloorWeights(json.floorWeights))
     bad('floorWeights', 'must be four positive integers (the weights of floor_0 … floor_3)');
   else out.floorWeights = [...json.floorWeights];
+  for (const k of ['faceMidWeights', 'topMidWeights'] as const) {
+    const v = json[k];
+    if (v === undefined) continue;
+    const piece = k === 'faceMidWeights' ? 'face_mid' : 'top_mid';
+    if (!isMidWeights(v)) bad(k, `must be two positive integers (the weights of ${piece}_0 and ${piece}_1)`);
+    else out[k] = [...v];
+  }
   if (!isObj(json.pieces) || Object.keys(json.pieces).length === 0) {
     bad('pieces', 'must be an object with at least one piece');
     return out;
@@ -558,16 +579,21 @@ export function recipeAnimKeys(recipe: Recipe): string[] {
   );
 }
 
-/** A prop recipe's `idle`: its frame count and rate (null for other kinds). */
-export function propIdleOf(recipe: Recipe): PropIdle | null {
+/** A prop recipe's own numbers for the animations it rates (`idle`, the chest's `closed`): frame count and rate, by name (null for other kinds). */
+export function propGivenOf(recipe: Recipe): PropGiven | null {
   if (recipe.kind !== 'prop') return null;
-  const idle = recipe.anims.idle;
-  const out: PropIdle = { frames: idle?.source?.frames.length ?? 0 };
-  if (idle?.fps !== undefined) out.fps = idle.fps;
+  const out: PropGiven = {};
+  for (const name of recipeRatedAnims(recipe.sheet)) {
+    const a = recipe.anims[name];
+    if (!a) continue;
+    const given: PropAnimGiven = { frames: a.source?.frames.length ?? 0 };
+    if (a.fps !== undefined) given.fps = a.fps;
+    out[name] = given;
+  }
   return out;
 }
 
 /** The animation table a recipe's finished sheet carries (see `sheetTable`), or null when the contract has none. */
 export function recipeTable(recipe: Recipe): readonly SpriteAnimSpec[] | null {
-  return sheetTable(recipe.sheet, propIdleOf(recipe));
+  return sheetTable(recipe.sheet, propGivenOf(recipe));
 }

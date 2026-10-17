@@ -225,6 +225,13 @@ export interface SpriteAnimSpec {
   facings: readonly SpriteFacing[];
   /** The milestone that first uses it; a finished sheet may leave out rows after `REQUIRED_MILESTONE`. */
   milestone: SpriteMilestone;
+  /**
+   * Props only: the recipe gives this row's frame count, within the range, and
+   * its rate, like a prop's `idle` (`PROP_IDLE`). In a table (`PROP_TABLES`)
+   * `frames` is then the most it may have and `fps` the default; `propTableFor`
+   * resolves such rows to what a recipe or a sheet gives them (`propAnimSpec`).
+   */
+  fromRecipe?: PropRecipeAnim;
 }
 
 /** One row of the Kindled table (the name it had before every kind had a table). */
@@ -360,20 +367,114 @@ export const HUSK_ANIMS: Readonly<Record<'peeling' | 'nutshell', readonly string
  */
 export const NPC_ANIMS: readonly SpriteAnimSpec[] = [spec('idle', 2, 2, true, false), spec('walk', 6, 10, true, false)];
 
-/** A prop (`prop-<name>`) has only `idle`, no facings, 1 to 8 frames at a rate its recipe gives. */
-export const PROP_IDLE = { name: 'idle', minFrames: 1, maxFrames: 8, defaultFps: 8 } as const;
+/**
+ * An animation a prop draws at the recipe's frame count and rate (sprites.md
+ * §4): `name`, from `minFrames` to `maxFrames` frames, at the recipe's `fps`
+ * (`defaultFps` when it gives none); looping with more than one frame, held
+ * with one (`propAnimSpec`).
+ */
+export interface PropRecipeAnim {
+  name: string;
+  minFrames: number;
+  maxFrames: number;
+  defaultFps: number;
+}
 
-/** The table row of a prop's `idle` with `frames` frames: looping when there is more than one, else held. */
-export function propIdleSpec(frames: number, fps: number = PROP_IDLE.defaultFps): SpriteAnimSpec {
+/** A prop (`prop-<name>`) without a table of its own has only `idle`, no facings, 1 to 8 frames at a rate its recipe gives. */
+export const PROP_IDLE: PropRecipeAnim = { name: 'idle', minFrames: 1, maxFrames: 8, defaultFps: 8 };
+
+/** The chest's `closed`: like `idle`, capped at 2 frames (ART's clasp glint, about 2 fps); 1 frame is still, with no glint. */
+export const CHEST_CLOSED: PropRecipeAnim = { name: 'closed', minFrames: 1, maxFrames: 2, defaultFps: PROP_IDLE.defaultFps };
+
+/**
+ * The table row of a recipe-rated prop animation with `frames` frames at
+ * `fps`: looping when there is more than one, else held. The row keeps
+ * `fromRecipe`, so the sheet test and the pipeline can check the range.
+ */
+export function propAnimSpec(anim: PropRecipeAnim, frames: number, fps: number = anim.defaultFps): SpriteAnimSpec {
   return {
-    name: PROP_IDLE.name,
+    name: anim.name,
     frames,
     fps,
     loop: frames > 1,
     hold: frames === 1,
     facings: NO_FACINGS,
     milestone: 'M1',
+    fromRecipe: anim,
   };
+}
+
+/** The table row of a prop's `idle` with `frames` frames: looping when there is more than one, else held. */
+export function propIdleSpec(frames: number, fps: number = PROP_IDLE.defaultFps): SpriteAnimSpec {
+  return propAnimSpec(PROP_IDLE, frames, fps);
+}
+
+/** The chest's sheet (`prop-chest`), the first prop with a table of its own; the engine draws the chest from it when it is loaded. */
+export const CHEST_SHEET = 'prop-chest';
+
+/** The chest's animations, in table order: `closed` (looping), `opening` (once), `open` (held). */
+export const CHEST_ANIMS = ['closed', 'opening', 'open'] as const;
+export type ChestAnim = (typeof CHEST_ANIMS)[number];
+
+/**
+ * The prop tables (sprites.md §4), keyed by the sheet name after `prop-`, each
+ * with no facings and all M1. A prop without an entry has `idle` alone
+ * (`PROP_IDLE`). The chest: `closed`, 1 or 2 frames at the recipe's rate
+ * (`CHEST_CLOSED`, the glint), `opening`, 4 frames at 12 fps played once, and
+ * `open`, 1 frame held; the engine plays `opening` when `ChestState.opened`
+ * turns true and shows `open` for a chest already open when it first sees it.
+ */
+export const PROP_TABLES: Readonly<Record<'chest', readonly SpriteAnimSpec[]>> = {
+  chest: [
+    propAnimSpec(CHEST_CLOSED, CHEST_CLOSED.maxFrames),
+    spec('opening', 4, 12, false, true, NO_FACINGS),
+    spec('open', 1, 0, false, true, NO_FACINGS),
+  ],
+};
+
+/** The frame name of a prop animation's frame `n`: `closed_0`, `opening_3` (no facings). */
+export function propFrameName(anim: string, n: number): string {
+  return `${anim}_${n}`;
+}
+
+/** What a recipe or a sheet gives a recipe-rated prop animation: its frame count and, when it says, its rate. */
+export interface PropAnimGiven {
+  frames: number;
+  fps?: number;
+}
+
+/**
+ * A prop sheet's table resolved to what `given` says of each recipe-rated
+ * animation (by name): its own table (`PROP_TABLES`) or `idle` alone, each
+ * `fromRecipe` row at the given frame count and rate (`propAnimSpec`); a row
+ * given nothing keeps its most frames at its default rate. A count outside the
+ * row's range stays in the row, for the checks to report. Null for other kinds.
+ */
+export function propTableFor(
+  name: string,
+  given: (anim: string) => PropAnimGiven | undefined,
+): SpriteAnimSpec[] | null {
+  const kind = spriteSheetSpec(name);
+  if (kind.kind !== 'prop') return null;
+  const table = kind.anims ?? [propAnimSpec(PROP_IDLE, PROP_IDLE.maxFrames)];
+  return table.map((row) => {
+    if (!row.fromRecipe) return row;
+    const g = given(row.name);
+    return g ? propAnimSpec(row.fromRecipe, g.frames, g.fps) : row;
+  });
+}
+
+/** The recipe-rated animations of a prop sheet (`fromRecipe` rows of its table, or `idle`); none for other kinds. */
+export function propRecipeAnims(name: string): readonly PropRecipeAnim[] {
+  const kind = spriteSheetSpec(name);
+  if (kind.kind !== 'prop') return [];
+  return kind.anims ? kind.anims.flatMap((r) => (r.fromRecipe ? [r.fromRecipe] : [])) : [PROP_IDLE];
+}
+
+/** Why a recipe-rated row's frame count breaks its range, or null: `a prop's closed has 1 to 2 frames, not 3`. */
+export function propFrameRangeProblem(anim: PropRecipeAnim, frames: number): string | null {
+  if (frames >= anim.minFrames && frames <= anim.maxFrames) return null;
+  return `a prop's ${anim.name} has ${anim.minFrames} to ${anim.maxFrames} frames, not ${frames}`;
 }
 
 /** The kinds of sheet, each named by its prefix: `kindled-`, `husk-`, `npc-`, `prop-`, `tiles-` (room tiles, tiles.ts). */
@@ -387,9 +488,11 @@ export interface SpriteSheetSpec {
   cell: SpriteCellSpec;
   /**
    * The animations a finished sheet carries, or null when its count is the
-   * recipe's (props: `idle` only, see `PROP_IDLE`) or when the contract has no
-   * table for it yet (a Husk that is not in `HUSK_TABLES`). For tiles, the
-   * door animations (`TILE_DOOR_ANIMS`); its static pieces are in tiles.ts.
+   * recipe's (a prop without a table in `PROP_TABLES`: `idle` only, see
+   * `PROP_IDLE`) or when the contract has no table for it yet (a Husk that is
+   * not in `HUSK_TABLES`). A prop's table may have rows the recipe rates
+   * (`fromRecipe`); `propTableFor` resolves them. For tiles, the door
+   * animations (`TILE_DOOR_ANIMS`); its static pieces are in tiles.ts.
    */
   anims: readonly SpriteAnimSpec[] | null;
   /** Whether frames and anims are named per facing and `meta.facings` is present (Kindled, NPCs). */
@@ -421,8 +524,11 @@ export function spriteSheetSpec(name: string): SpriteSheetSpec {
     }
     case 'npc':
       return { kind, cell: SPRITE_CELLS.other, anims: NPC_ANIMS, facings: true, palette: false };
-    case 'prop':
-      return { kind, cell: SPRITE_CELLS.other, anims: null, facings: false, palette: false };
+    case 'prop': {
+      const prop = name.slice('prop-'.length);
+      const anims = Object.hasOwn(PROP_TABLES, prop) ? PROP_TABLES[prop as keyof typeof PROP_TABLES] : null;
+      return { kind, cell: SPRITE_CELLS.other, anims, facings: false, palette: false };
+    }
     case 'tiles':
       return { kind, cell: TILE_CELL, anims: TILE_DOOR_ANIMS, facings: false, palette: false };
     default:

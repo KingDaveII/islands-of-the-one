@@ -61,8 +61,9 @@ The engine, the §6 test and the G1.2 pipeline read these numbers from `packages
 ## 4. Animations
 
 **The tables live in code** (`packages/shared/src/sprites.ts`, G1.2b): `KINDLED_ANIMS`, `HUSK_TABLES` (one per Husk),
-`NPC_ANIMS` and `PROP_IDLE`, each row a frame count, fps, loop, hold, facings and milestone. The tables below describe them;
-if the two ever disagree, the code is the contract the sheet test and the art pipeline hold sheets to.
+`NPC_ANIMS`, `PROP_TABLES` (one per prop that has one, G1.5f) and `PROP_IDLE`, each row a frame count, fps, loop, hold, facings
+and milestone. The tables below describe them; if the two ever disagree, the code is the contract the sheet test and the
+art pipeline hold sheets to.
 
 **Milestones (G1.2c).** Each row's `milestone` is the milestone that first uses it, and `REQUIRED_MILESTONE`
 (`"M1"`) is the one a finished sheet is complete for: it carries every row at or before it, and later rows are
@@ -149,11 +150,41 @@ M2 adds the station animations (`chop`, `hoe`, `fish`, `knead`: 4 frames, 8 fps,
 
 ### Props (`prop-<name>`, G1.2b)
 
+A prop may have a table of its own, like a Husk: `PROP_TABLES`, keyed by the name after `prop-` (G1.5f).
+`spriteSheetSpec('prop-<name>')` returns it when there is one; the pipeline and the §6 test read it through
+`spriteSheetSpec`, as they do for Husks, so a finished sheet carries every row and a draft may carry any subset.
+A prop without an entry keeps the rule below: `idle` only.
+
 | Name | Frames | fps | Loop | Facings |
 |---|---|---|---|---|
 | `idle` | 1–8, from the recipe | from the recipe, default 8 | yes with more than one frame; one frame holds | none |
 
-For flames and the like. No palette block and no mask.
+For flames and the like. No palette block and no mask. The cell is the 64×64 prop cell, origin (32, 54) (§2).
+
+A row's frame count and rate can come from the recipe within a range, like `idle` (`fromRecipe` on the row,
+`PropRecipeAnim`): the pipeline writes the recipe's count and `fps`, the sheet test takes the sheet's, and
+`propTableFor` resolves the table for both. Such a row loops with more than one frame and holds with one.
+
+#### The chest (`prop-chest`, G1.5f)
+
+The first entry. Every row has no facings and is M1:
+
+| Name | Frames | fps | Loop | Hold | Notes |
+|---|---|---|---|---|---|
+| `closed` | 1 or 2, from the recipe | from the recipe, default 8 | yes with 2 | with 1 | like `idle`, capped at 2 frames: ART draws the clasp glint as its 2 frames (about 2 fps); a 1-frame `closed` is still, with no glint |
+| `opening` | 4 | 12 | no | yes | the lid rising, played once on the client clock when `ChestState.opened` turns true |
+| `open` | 1 | 0 | no | yes | held; also what a chest already open when the client first sees it shows |
+
+The engine (`apps/client/src/render/chestSprites.ts`) draws each chest as a sprite at its sim position, through the
+same render boundary and origin as the other props (the soles row on its sim position, snapped to the sheet's art
+grid), y-sorted with the bodies, its frame from `opened` on the client clock like the tile doors (§10, the shared
+`opening.ts` helper): `closed` loops at the sheet's rate (still with 1 frame); `opened` turning true plays `opening`
+once, then `open` holds. With the sheet the engine draws nothing of its own over the chest (the blinking clasp belongs
+to the procedural drawing; any glint is ART's, in `closed`); the grounding shadow stays the engine's, under it.
+Without the sheet, `drawChest` in `world.ts` stays as it is: the fallback until ART's `prop-chest` lands, like the
+procedural room. `window.__iot.useChestSheet(sheet, pngUrl)` hands the client a sheet for a playtest, and
+`window.__iot.chestFrames()` reads the frames; the client tests use the fixture `packages/shared/test/fixtures/prop-chest.*`
+(made by the `.py` beside it; it never ships).
 
 ## 5. The JSON contract
 
@@ -261,8 +292,9 @@ tasks register NPC sheets as they use them). Every name must have a known kind (
 3. Every name in every `anims[*].frames` exists in `frames`; every frame belongs to at least one anim.
 4. Every sheet carries its kind's table (§4), and nothing else: every animation up to `REQUIRED_MILESTONE`, for every
    facing it lists (Kindled and NPCs, which also carry `meta.facings`; Husks and props have none), with the table's
-   frame count, rate, loop and hold; a later (optional) animation is either absent or complete the same way; a prop's
-   `idle` has 1–8 frames. Husk `telegraph` frames are pre-tinted. Only Kindled sheets have a palette
+   frame count, rate, loop and hold; a later (optional) animation is either absent or complete the same way; a row
+   the recipe rates (a prop's `idle`, the chest's `closed`) has its frame count within its range (`tableProblems`
+   on the table `propTableFor` resolves from the sheet). Husk `telegraph` frames are pre-tinted. Only Kindled sheets have a palette
    block. `anchor` matches `meta.origin / cell`.
 5. Every opaque pixel's colour is in the 32-colour palette (tokens.json), the telegraph colours only in `telegraph_*` frames, #FFFFFF nowhere.
 6. Every `palette.swaps` key is one of the four clay tones and every swapped hex occurs in the PNG.
@@ -281,13 +313,14 @@ tasks register NPC sheets as they use them). Every name must have a known kind (
    its own checks: meta `version` "2", `pixelScale` 1 and `app` `"iot-art-pipeline"`, the PNG the size of
    `meta.size`; every piece and door frame of `packages/shared/src/tiles.ts` present at its size (32×32, 64×32,
    32×64), inside the PNG, on no other frame, and nothing else; each door's `_closed` (1 frame), `_opening`
-   (6 frames at 12 fps) and `_open` (1 frame), played once and held; the `tiles` block, `tileSize` 32 and
-   `floorWeights` four positive integers; only the whitelist's colours (no telegraph colours, never #FFFFFF or
+   (6 frames at 12 fps) and `_open` (1 frame), played once and held; the `tiles` block, `tileSize` 32,
+   `floorWeights` four positive integers and, when present, `faceMidWeights` and `topMidWeights` two positive
+   integers each; only the whitelist's colours (no telegraph colours, never #FFFFFF or
    #FFE7A3) and no soft alpha; `floor_*`, `face_*`, `top_*` and every door frame fully opaque. They run on
    `packages/shared/test/fixtures/tiles-fixture.*` (made by the `.py` beside it) and broken copies of it until
    ART's `tiles-cave` lands, then on every tile sheet on disk.
 
-The v2 checks run on a small fixture sheet with a mask (`packages/shared/test/fixtures/kindled-fixture.*`, made by the `.py` beside it; it doesn't ship), and on broken copies of it, so they are tested before the first v2 sheet arrives. The client tests its masked swap on the same fixture, and the point checks run on copies of it with `heavy_charge` and `haul_throw` frames.
+The v2 checks run on a small fixture sheet with a mask (`packages/shared/test/fixtures/kindled-fixture.*`, made by the `.py` beside it; it doesn't ship), and on broken copies of it, so they are tested before the first v2 sheet arrives. The client tests its masked swap on the same fixture, and the point checks run on copies of it with `heavy_charge` and `haul_throw` frames. The chest's table runs the same way on `packages/shared/test/fixtures/prop-chest.*` (a 2-frame `closed`) and copies of it (a 1-frame `closed` passes, a 3-frame one fails, a finished chest without `opening` fails).
 
 Until a sheet exists, Claude Code draws the placeholder from this table (a 16×24 rectangle in the Remembrance's outfit colour with the frame name under it) so the animation state machine can be built and tested now.
 
@@ -332,23 +365,23 @@ Done: §4 carries the answers (Husk `spawn`, `haul_recover`, the 2-frame `hit`, 
 The room is drawn from a tile sheet: named 32×32 world px pieces, one per room cell, chosen by a 4-neighbour rule
 (ART's design, B). Not a 16-tile corner set: a corner set can't draw a wall's front face, and on a dual grid its
 transitions straddle the sim's collision edges; named pieces sit exactly on the sim's 16 sim px cells. The names,
-sizes and the rule are in `packages/shared/src/tiles.ts`; `tileAt(template, col, row, floorWeights)` is a pure
-function with no runtime dependencies, so the engine and the art pipeline's review (`rooms.png`) draw a room the
-same way. The first sheet is `tiles-cave` (`packages/shared/assets/sprites/tiles-cave.png` + `.json`), made by
+sizes and the rule are in `packages/shared/src/tiles.ts`; `tileAt(template, col, row, weights)` is a pure
+function with no runtime dependencies (`weights` is the sheet's `tiles` block), so the engine and the art
+pipeline's review (`rooms.png`) draw a room the same way. The first sheet is `tiles-cave` (`packages/shared/assets/sprites/tiles-cave.png` + `.json`), made by
 ART through the pipeline's `tiles` kind ([`art-pipeline.md`](art-pipeline.md)).
 
 **Cells.** From the template legend (`rooms.json`): `#`, `o` and `D` are solid (a door counts as wall for its
 neighbours and draws its own piece), and so is every cell outside the room (and past a short row's end). Everything
-else is open: `.`, `P`, `S` and `C` draw as plain floor. The chest stays the engine's drawing until ART's
-`prop-chest`.
+else is open: `.`, `P`, `S` and `C` draw as plain floor. The chest is a sprite from ART's `prop-chest` when that
+sheet is loaded (§4, "The chest"), else the engine's drawing.
 
 **The rule.** Everything draws under the sprites. Open sides in a name are always in the order n, w, e.
 
 | Cell | Piece | Overlays, stacked in this order |
 |---|---|---|
 | open | `floor_0` … `floor_3`, by an integer hash of (template name, col, row) weighted by the sheet's `floorWeights`; no `Math.random`, so a room always looks the same | `shade_n`, `shade_w`, `shade_e` where that neighbour is solid; `shade_nw` where NW is solid and N and W are both open, `shade_ne` the same way. No south shade |
-| solid, not a door, S open: a wall face (the bottom 24 px the face, the top 8 px the cap) | `face_` + the open sides among N, W, E: `face_n`, `face_w`, `face_e`, `face_nw`, `face_ne`, `face_we`, `face_nwe`; with none open `face_mid_0` or `face_mid_1` by the hash (the second is ART's repeat variant) | none |
-| solid, not a door, S solid: a wall top | `top_` + the open sides the same way (`top_n` … `top_nwe`); with none open `top_mid_0` or `top_mid_1` by the hash (the spare plain top for thick masses) | `corner_nw` where N and W are solid and NW is open, `corner_ne` the same way |
+| solid, not a door, S open: a wall face (the bottom 24 px the face, the top 8 px the cap) | `face_` + the open sides among N, W, E: `face_n`, `face_w`, `face_e`, `face_nw`, `face_ne`, `face_we`, `face_nwe`; with none open `face_mid_0` or `face_mid_1` by the hash weighted by the sheet's `faceMidWeights` (the second is ART's repeat variant) | none |
+| solid, not a door, S solid: a wall top | `top_` + the open sides the same way (`top_n` … `top_nwe`); with none open `top_mid_0` or `top_mid_1` by the hash weighted by `topMidWeights` (the spare plain top for thick masses) | `corner_nw` where N and W are solid and NW is open, `corner_ne` the same way |
 | `D` | its door, below | |
 
 **Doors**, by the wall the door's two cells sit in: `door_n` (64×32) covers a `DD` in the north wall (row 0),
@@ -364,10 +397,14 @@ its size, `anchor` (0, 0); door animations under `anims` (`door_n_opening`: its 
 `hold`); `meta` with `"version": "2"` and `"pixelScale": 1`; and a `tiles` block:
 
 ```json
-"tiles": { "tileSize": 32, "floorWeights": [6, 3, 2, 1] }
+"tiles": { "tileSize": 32, "floorWeights": [6, 3, 2, 1], "faceMidWeights": [3, 1], "topMidWeights": [3, 1] }
 ```
 
-`floorWeights` lives in the sheet, never in code. Colours: the 28-colour whitelist only, no telegraph colours,
+`floorWeights` lives in the sheet, never in code, and so do `faceMidWeights` and `topMidWeights` (G1.5f, ART's
+answer to G1.5e: at 50/50 the spare plain face and top read as a pattern): two positive integers each, the
+weights of `*_mid_0` and `*_mid_1`, picked through the same hash and `pickWeighted` as the floors; absent means
+`[1, 1]`, the even pick, so a sheet without them draws as before. ART's `tiles-cave` uses `[3, 1]` for both.
+Colours: the 28-colour whitelist only, no telegraph colours,
 never #FFFFFF or #FFE7A3. `floor_*`, `face_*`, `top_*` and every door frame are fully opaque; shades and corners
 may be transparent. Checked by §6 item 9.
 
