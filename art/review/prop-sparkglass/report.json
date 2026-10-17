@@ -1,0 +1,90 @@
+{
+  "sheet": "prop-sparkglass",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "cell": {
+    "w": 64,
+    "h": 64
+  },
+  "origin": {
+    "x": 32,
+    "y": 54
+  },
+  "rows": [
+    "idle"
+  ],
+  "totals": {
+    "frames": 2,
+    "offPalette": 0,
+    "maxDeltaE": 0,
+    "outlineGaps": 0
+  },
+  "flags": {
+    "seam": [],
+    "bob": [],
+    "held": [],
+    "colours": []
+  },
+  "missing": [],
+  "optional": [],
+  "skinProblems": [],
+  "missingPoints": [],
+  "remap": [],
+  "staleRemap": [],
+  "snappedColours": 0,
+  "snapped": [],
+  "anims": [
+    {
+      "key": "idle",
+      "frames": 2,
+      "held": [],
+      "seam": {
+        "lastToFirst": 3,
+        "meanInCycle": 3,
+        "flag": false
+      },
+      "bob": {
+        "tops": [
+          10,
+          10
+        ],
+        "range": 0,
+        "flag": false
+      }
+    }
+  ],
+  "frames": [
+    {
+      "name": "idle_0",
+      "source": "art/clean/prop-sparkglass/idle 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 5,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "idle_1",
+      "source": "art/clean/prop-sparkglass/idle 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 0,
+      "colours": 6,
+      "interiorDreamNight": 0
+    }
+  ],
+  "outputs": [
+    "art/review/prop-sparkglass/contact.png",
+    "art/review/prop-sparkglass/report.json",
+    "art/review/prop-sparkglass/report.md",
+    "packages/shared/assets/sprites/prop-sparkglass.json",
+    "packages/shared/assets/sprites/prop-sparkglass.png"
+  ]
+}
