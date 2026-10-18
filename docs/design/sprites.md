@@ -116,8 +116,10 @@ This is the combat sheet, `kindled-<rem>`: encounters only.
 
 The Kindled outside combat, with the blade put away under the cloak and not drawn (David's playtest of the
 holding: no blade in hand outside combat). The same cell, origin, 8 facings, palette block and skin mask as the
-combat sheet; ART erases the blade from the combat sheet's own frames by script and closes the empty hand (the
-Haul's method), so the two sheets match frame for frame when the holding and an encounter swap between them.
+combat sheet; ART makes it from the combat sheet's own frames by script, so the two sheets match when the holding
+and an encounter swap between them: W, SW, NW and N with the blade erased and the empty hand closed (the Haul's
+method); E, SE and NE are those mirrored (without the blade the figure has no handedness); S takes its left half
+below the chin from the frame half a cycle on, mirrored.
 Its own table, `KINDLED_SHEATHED_ANIMS`; a finished sheathed sheet carries the five roaming rows (`required`).
 It exists because the combat sheet is nearly full: 2048 × 2048 holds 525 cells and `kindled-ash` uses 456.
 
