@@ -2,6 +2,7 @@ import palette from '../data/palette.json' with { type: 'json' };
 import huskNutshell from '../assets/sprites/husk-nutshell.json' with { type: 'json' };
 import huskPeeling from '../assets/sprites/husk-peeling.json' with { type: 'json' };
 import kindledAsh from '../assets/sprites/kindled-ash.json' with { type: 'json' };
+import kindledAshSheathed from '../assets/sprites/kindled-ash-sheathed.json' with { type: 'json' };
 import propChest from '../assets/sprites/prop-chest.json' with { type: 'json' };
 import propHoldingStore from '../assets/sprites/prop-holding-store.json' with { type: 'json' };
 import propKeshRock from '../assets/sprites/prop-kesh-rock.json' with { type: 'json' };
@@ -176,7 +177,8 @@ export interface SpriteSheet {
 }
 
 /**
- * The sheets the client loads: the Kindled, the two Husks, the chest
+ * The sheets the client loads: the Kindled (its combat sheet and its sheathed
+ * sheet, the holding's), the two Husks, the chest
  * (`CHEST_SHEET`), the holding's station props (`STATION_SHEETS`, M2 Task
  * 3b and 3c) and Kesh's needle of rock off its shore (`KESH_ROCK_SHEET`, 3c).
  * The sheet test runs on every sheet on disk and checks that each name here
@@ -185,6 +187,7 @@ export interface SpriteSheet {
  */
 export const SPRITE_SHEET_NAMES = [
   'kindled-ash',
+  'kindled-ash-sheathed',
   'husk-peeling',
   'husk-nutshell',
   'prop-chest',
@@ -199,6 +202,7 @@ export type SpriteSheetName = (typeof SPRITE_SHEET_NAMES)[number];
 /** Every animated sheet the client loads, by name (the texture key the engine uses). */
 export const spriteSheets: Readonly<Record<SpriteSheetName, SpriteSheet>> = {
   'kindled-ash': kindledAsh,
+  'kindled-ash-sheathed': kindledAshSheathed,
   'husk-peeling': huskPeeling,
   'husk-nutshell': huskNutshell,
   'prop-chest': propChest,

@@ -14,7 +14,7 @@ import {
 import type { RoamState } from '@iot/sim';
 import { nearestPart, propBase, propIdlePlays, standsOnGround } from '../game/holdingView.js';
 import { RoamGaitClock, roamPose, type KindledPose } from './animState.js';
-import { PLAYER_SHEET } from './characters.js';
+import { PLAYER_SHEATHED_SHEET } from './characters.js';
 import { DEPTH } from './depth.js';
 import { bodyDepth, PLAYER_FEET } from './feet.js';
 import { shadowEllipse } from './pixels.js';
@@ -68,7 +68,8 @@ export class HoldingWorld {
   private readonly stride = new StrideMeter();
   private readonly gait = new RoamGaitClock();
   private shadows = new Map<string, Map<string, ShadowSize>>();
-  readonly playerSheet: SpriteSheet = spriteSheets[PLAYER_SHEET];
+  /** The Kindled on the holding: its sheathed sheet, no blade in hand outside combat. */
+  readonly playerSheet: SpriteSheet = spriteSheets[PLAYER_SHEATHED_SHEET];
   /** The pose shown this frame (playtests). */
   pose: KindledPose | null = null;
 
@@ -109,7 +110,7 @@ export class HoldingWorld {
   }
 
   private playerTexture(): string {
-    return toneTextureKey(this.scene, PLAYER_SHEET, this.tone);
+    return toneTextureKey(this.scene, PLAYER_SHEATHED_SHEET, this.tone);
   }
 
   setTone(tone: ClayTone): void {

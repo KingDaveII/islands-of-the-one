@@ -130,7 +130,7 @@ It exists because the combat sheet is nearly full: 2048 × 2048 holds 525 cells 
 | `sit` | 1 | — | hold | 2 (S, E) | M2 | the ebb, by the post |
 
 M2 adds the station animations (`chop`, `hoe`, `fish`, `knead`: 4 frames, 8 fps, 2 facings) here too. The
-holding draws the Kindled from its sheathed sheet once one is on disk, and from the combat sheet until then.
+holding draws the Kindled from its sheathed sheet (`PLAYER_SHEATHED_SHEET`, `kindled-ash-sheathed`, ART #87); encounters keep the combat sheet.
 
 ### Peeling
 
