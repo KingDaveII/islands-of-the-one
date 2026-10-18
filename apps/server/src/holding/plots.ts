@@ -1,6 +1,7 @@
 import {
   cycleLengthMs,
   InventoryReason,
+  pieceDef,
   layoutPlot,
   PLOT_TEXT,
   plotKindDef,
@@ -18,6 +19,7 @@ import {
   type PlotView,
   type StationAction,
   type StationCycle,
+  type StandingPiece,
   type StationCycleView,
   type WordDef,
   type WritLine,
@@ -26,8 +28,9 @@ import {
 } from '@iot/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { Transaction } from '../db/client.js';
-import { basketCycles, plots, type BasketCycleRow, type PlotRow } from '../db/schema.js';
+import { basketCycles, plots, type BasketCycleRow, type PlotPieceRow, type PlotRow } from '../db/schema.js';
 import type { Inventory } from '../inventory/index.js';
+import { piecesOfPlot, takeDownAllIn } from './pieces.js';
 import { knownWordIds } from './words.js';
 import { feedChanges } from './writ.js';
 
@@ -108,12 +111,13 @@ export function plotBonusPermille(row: Pick<PlotRow, 'virtue' | 'virtueSetAt' | 
   return yieldBonusPermille(plotEffect(row), row.virtueSetAt?.getTime() ?? null, row.virtuePausedMs, at);
 }
 
-/** The plots on the wire: one per layout plot, in order. */
-export function plotViews(layout: HoldingLayout, rows: readonly PlotRow[], writ: WritStored, now: number): PlotView[] {
+/** The plots on the wire: one per layout plot, in order, each with the pieces standing in it (M2 Task 6) and its level from them. */
+export function plotViews(layout: HoldingLayout, rows: readonly PlotRow[], pieceRows: readonly PlotPieceRow[], writ: WritStored, now: number): PlotView[] {
   return layout.plots.map((p, index) => {
     const row = rows.find((r) => r.plotId === p.id);
     const state = plotState(index, writ, now);
-    if (!row) return { id: p.id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, level: plotLevel(), state };
+    if (!row) return { id: p.id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, pieces: [], level: plotLevel(), state };
+    const pieces = piecesOfPlot(pieceRows, p.id).filter((piece) => pieceDef(piece.pieceId) !== undefined);
     return {
       id: p.id,
       ground: row.ground,
@@ -122,15 +126,21 @@ export function plotViews(layout: HoldingLayout, rows: readonly PlotRow[], writ:
       virtueSetAt: row.virtueSetAt?.toISOString() ?? null,
       sownAt: row.sownAt?.toISOString() ?? null,
       kind: plotKindOf(row)?.id ?? row.ground,
-      level: plotLevel(),
+      pieces,
+      level: plotLevel(pieces),
       state,
     };
   });
 }
 
-/** A station's cycle on the wire, from its clock row and the Virtue's bonus at `now` (0 for a station without a Virtue). */
-export function cycleView(cycle: StationCycle, clock: Pick<BasketCycleRow, 'cycledUntil'>, bonusPermille: number): StationCycleView {
-  return { cycleMs: cycleLengthMs(cycle), cycledUntil: clock.cycledUntil.toISOString(), bonusPermille };
+/** A station's cycle on the wire, from its clock row, the Virtue's bonus at `now` (0 for a station without a Virtue) and its real length from the pieces standing (M2 Task 6). */
+export function cycleView(
+  cycle: StationCycle,
+  clock: Pick<BasketCycleRow, 'cycledUntil'>,
+  bonusPermille: number,
+  pieces: readonly StandingPiece[] = [],
+): StationCycleView {
+  return { cycleMs: cycleLengthMs(cycle, pieces), cycledUntil: clock.cycledUntil.toISOString(), bonusPermille };
 }
 
 export type PlotError =
@@ -165,7 +175,8 @@ export interface NamePlotArgs {
  * ordinary filter across the divider, both orders); `insufficient` (a rename
  * without the gin). The first naming is free; any later change costs
  * `RENAME_COST_GIN` from the purse (reason `name-plot`) and restarts the
- * Virtue's count. A change of Ground clears the sowing.
+ * Virtue's count. A change of Ground clears the sowing and takes every piece
+ * down with its refund (M2 Task 6; that refund may overfill the store).
  */
 export async function namePlotIn(
   tx: Transaction,
@@ -176,6 +187,7 @@ export async function namePlotIn(
   rows: readonly PlotRow[],
   args: NamePlotArgs,
   now: Date,
+  pieceRows: readonly PlotPieceRow[] = [],
 ): Promise<PlotResult> {
   const index = layout.plots.findIndex((p) => p.id === args.plotId);
   if (index < 0 || !layoutPlot(layout, args.plotId)) return refuse('unknown-plot', PLOT_TEXT.UNKNOWN_PLOT);
@@ -206,7 +218,8 @@ export async function namePlotIn(
       if (paid.error === 'insufficient') return refuse('insufficient', PLOT_TEXT.INSUFFICIENT);
       throw new Error(`name-plot: ${paid.message}`);
     }
-    // Any change to either tile restarts the Virtue's count; a new Ground needs sowing again.
+    // Any change to either tile restarts the Virtue's count; a new Ground needs sowing again, and its pieces come down.
+    if (existing.ground !== ground.id) await takeDownAllIn(tx, inventory, kindledId, args.plotId, pieceRows);
     await tx
       .update(plots)
       .set({

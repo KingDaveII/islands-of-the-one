@@ -11,7 +11,9 @@ import {
   isKeshGiftRequest,
   isKeshSliverRequest,
   isPlotNameRequest,
+  isPlotPieceRequest,
   isPlotSowRequest,
+  isPlotTakeDownRequest,
   isLoginRequest,
   isRegisterRequest,
   isRemembrance,
@@ -396,6 +398,23 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
         return fail(reply, 409, ApiErrorCode.NotSown, result.message);
       case 'already-sown':
         return fail(reply, 409, ApiErrorCode.AlreadySown, result.message);
+      // Build mode (docs/design/holding.md "Build mode", M2 Task 6).
+      case 'unknown-piece':
+        return fail(reply, 400, ApiErrorCode.UnknownPiece, result.message);
+      case 'already-built':
+        return fail(reply, 409, ApiErrorCode.AlreadyBuilt, result.message);
+      case 'needs-line':
+        return fail(reply, 409, ApiErrorCode.NeedsLine, result.message);
+      case 'needs-skill':
+        return fail(reply, 409, ApiErrorCode.NeedsSkill, result.message);
+      case 'limit':
+        return fail(reply, 409, ApiErrorCode.Limit, result.message);
+      case 'blocked':
+        return fail(reply, 400, ApiErrorCode.Blocked, result.message);
+      case 'not-built':
+        return fail(reply, 409, ApiErrorCode.NotBuilt, result.message);
+      case 'store-full':
+        return fail(reply, 409, ApiErrorCode.StoreFull, result.message);
     }
   };
 
@@ -509,5 +528,34 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
     if (!isPlotSowRequest(req.body))
       return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
     return holdingReply(reply, await holding.sowPlot(k.id, req.body.plotId, now()));
+  });
+
+  // Build mode (docs/design/holding.md "Build mode", M2 Task 6): a piece built in a named plot (its cost from the
+  // store), moved for free, or taken down with its refund. Holding requests like the rest; every answer is the holding.
+  for (const [route, act] of [
+    [ApiRoute.PlotsBuild, 'build'],
+    [ApiRoute.PlotsMove, 'move'],
+  ] as const) {
+    app.post(path(route), { bodyLimit: BODY_LIMIT }, async (req, reply) => {
+      const account = await signedIn(req, reply);
+      if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
+      const k = await findKindled(account.id);
+      if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+      if (!isPlotPieceRequest(req.body))
+        return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
+      const { plotId, pieceId, col, row, rotation } = req.body;
+      const args = { plotId, pieceId, col, row, rotation };
+      return holdingReply(reply, act === 'build' ? await holding.buildPiece(k.id, args, now()) : await holding.movePiece(k.id, args, now()));
+    });
+  }
+
+  app.post(path(ApiRoute.PlotsTakeDown), { bodyLimit: BODY_LIMIT }, async (req, reply) => {
+    const account = await signedIn(req, reply);
+    if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
+    const k = await findKindled(account.id);
+    if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+    if (!isPlotTakeDownRequest(req.body))
+      return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
+    return holdingReply(reply, await holding.takeDownPiece(k.id, { plotId: req.body.plotId, pieceId: req.body.pieceId }, now()));
   });
 }

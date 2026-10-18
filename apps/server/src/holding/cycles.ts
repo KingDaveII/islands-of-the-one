@@ -8,13 +8,15 @@ import {
   OFFLINE_CAP_MS,
   stationDef,
   type HoldingLayout,
+  type StandingPiece,
   type StationCycle,
   type WritStored,
 } from '@iot/shared';
 import { and, eq } from 'drizzle-orm';
 import type { Transaction } from '../db/client.js';
-import { basketCycles, type BasketCycleRow, type PlotRow } from '../db/schema.js';
+import { basketCycles, type BasketCycleRow, type PlotPieceRow, type PlotRow } from '../db/schema.js';
 import type { Inventory } from '../inventory/index.js';
+import { piecesOfPlot } from './pieces.js';
 import { plotEffect, plotKindOf } from './plots.js';
 
 /**
@@ -30,7 +32,11 @@ import { plotEffect, plotKindOf } from './plots.js';
  * went dark or the cap bit (the lost time and the partial cycle are never
  * paid later). No XP. A faded plot is settled the same way: its `end` is at
  * most the moment the Writ went dark, so nothing dark is ever paid, and its
- * clock stands at now for the relight.
+ * clock stands at now for the relight. A plot's cycle runs at the speed its
+ * standing pieces give (M2 Task 6, `cycleLengthMs`): a settle pays the
+ * cycles up to now at the speed the pieces had, and a build after it leaves
+ * `cycled_until` where it stands, so the partial cycle carries on at the new
+ * speed.
  */
 
 /** The idempotency ref of one settle's harvest: the Kindled, the station and the stretch of cycles it pays (ms since the epoch). */
@@ -65,14 +71,16 @@ export interface CyclingStation {
   /** Items per cycle: the cycle's quantity, times the part count for a `perPart` cycle (the trees). */
   yield: number;
   virtue: { effect: NonNullable<ReturnType<typeof plotEffect>>; setAt: number | null; pausedMs: number } | null;
+  /** The pieces standing in the plot (none for a station of stations.json): they set the cycle's speed. */
+  pieces: StandingPiece[];
 }
 
 /** The stations of a Kindled with a cycle to settle: the layout's stations with one (the trees), and its sown plots whose kind has one. */
-export function cyclingStations(layout: HoldingLayout, rows: readonly PlotRow[]): CyclingStation[] {
+export function cyclingStations(layout: HoldingLayout, rows: readonly PlotRow[], pieceRows: readonly PlotPieceRow[] = []): CyclingStation[] {
   const out: CyclingStation[] = [];
   for (const s of layout.stations) {
     const cycle = stationDef(s.id)?.cycle;
-    if (cycle) out.push({ stationId: s.id, cycle, yield: cycleYield(cycle, layout, s.id), virtue: null });
+    if (cycle) out.push({ stationId: s.id, cycle, yield: cycleYield(cycle, layout, s.id), virtue: null, pieces: [] });
   }
   for (const p of layout.plots) {
     const row = rows.find((r) => r.plotId === p.id);
@@ -84,6 +92,7 @@ export function cyclingStations(layout: HoldingLayout, rows: readonly PlotRow[])
       cycle,
       yield: cycleYield(cycle, layout, p.id),
       virtue: effect ? { effect, setAt: row.virtueSetAt?.getTime() ?? null, pausedMs: row.virtuePausedMs } : null,
+      pieces: piecesOfPlot(pieceRows, p.id),
     });
   }
   return out;
@@ -114,12 +123,13 @@ export async function settleCycles(
   rows: readonly PlotRow[],
   lastSeen: Date | null,
   now: Date,
+  pieceRows: readonly PlotPieceRow[] = [],
 ): Promise<CycleSettlement> {
   const credited: CycleSettlement = {};
   const end = cycleEnd(writ, lastSeen, now);
-  for (const station of cyclingStations(layout, rows)) {
+  for (const station of cyclingStations(layout, rows, pieceRows)) {
     const clock = await lockCycle(tx, kindledId, station.stationId, now);
-    const cycleMs = cycleLengthMs(station.cycle);
+    const cycleMs = cycleLengthMs(station.cycle, station.pieces);
     const from = clock.cycledUntil.getTime();
     const { n, to, next } = cycleMath(from, cycleMs, end, now.getTime());
     let carry = clock.carryPermille;

@@ -15,7 +15,8 @@
     "writ:set": "tsx --conditions=source src/holding/writ-cli.ts",
     "kesh:reset": "tsx --conditions=source src/holding/kesh-cli.ts",
     "words:grant": "tsx --conditions=source src/holding/words-cli.ts grant",
-    "words:forget": "tsx --conditions=source src/holding/words-cli.ts forget"
+    "words:forget": "tsx --conditions=source src/holding/words-cli.ts forget",
+    "plots:pieces": "tsx --conditions=source src/holding/pieces-cli.ts"
   },
   "dependencies": {
     "@colyseus/core": "^0.18.18",
