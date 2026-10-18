@@ -28,7 +28,7 @@ The engine, the §6 test and the G1.2 pipeline read these numbers from `packages
 |---|---|---|---|
 | Kindled player sheets (`kindled-<rem>`) | 96×80 | (48, 64) | (16, 10), so canvas row 53 is cell row 63 |
 | Every other sheet (Husks and other enemies, NPCs, props) | 64×64 | (32, 54) | (0, 0) |
-| Tall props (`PROP_CELLS`, M2 Task 3c; the first is `prop-twisted-tree`) | 64×96 | (32, 86), the line under the trunk | (0, 32), so canvas row 53 is cell row 85; the canopy overhangs upwards |
+| Tall props (`PROP_CELLS`, M2 Task 3c; the first is `prop-twisted-tree`) | 96×128 (ART on #82; 64×96 at first) | (48, 118), the line under the trunk | (16, 64), so canvas row 53 is cell row 117; the crown overhangs upwards and to the sides (the tree stands 2.5 times the Kindled's height, about 10 px past its 2 × 2 footprint a side) |
 | Room tiles (`tiles-<set>`, G1.5e) | 32×32 per piece; doors 64×32 (`door_n`) or 32×64 (`door_w`, `door_e`) | none: a piece's top left sits on its cell's | no canvas: a piece is its own size, on one 16 sim px cell ("Tiles", §10) |
 
 - The Kindled's extra room is for actions: the heavy thrust, the Haul throw and the death fall. SS-01 measured
@@ -164,7 +164,7 @@ A prop without an entry keeps the rule below: `idle` only.
 | `idle` | 1–8, from the recipe | from the recipe, default 8 | yes with more than one frame; one frame holds | none |
 
 For flames and the like. No palette block and no mask. The cell is the 64×64 prop cell, origin (32, 54) (§2),
-or the tall prop cell for a prop in `PROP_CELLS` (the twisted tree, 64×96, origin (32, 86)).
+or the tall prop cell for a prop in `PROP_CELLS` (the twisted tree, 96×128, origin (48, 118)).
 
 A row's frame count and rate can come from the recipe within a range, like `idle` (`fromRecipe` on the row,
 `PropRecipeAnim`): the pipeline writes the recipe's count and `fps`, the sheet test takes the sheet's, and

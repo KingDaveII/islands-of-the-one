@@ -36,7 +36,7 @@ export function kindOfName(sheet: string): Kind | null {
   }
 }
 
-/** The cell of a sheet, by its name (`spriteCellSpecFor`): the Kindled's 96×80, a tall prop's 64×96 (`PROP_CELLS`), else 64×64. */
+/** The cell of a sheet, by its name (`spriteCellSpecFor`): the Kindled's 96×80, a tall prop's 96×128 (`PROP_CELLS`), else 64×64. */
 export function cellFor(sheet: string): SpriteCellSpec {
   return spriteCellSpecFor(sheet);
 }

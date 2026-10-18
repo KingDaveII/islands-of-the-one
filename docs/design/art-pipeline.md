@@ -208,7 +208,7 @@ Kindled sheet carries them. `run_back` came off with the backwards-run job (#74)
 | `kindled-` | `kindled` | 96×80 | per animation (8, 4 or 2) | `KINDLED_ANIMS` | yes |
 | `husk-` | `husk` | 64×64 | none | the Husk's own in `HUSK_TABLES` (`peeling`, `nutshell`); a Husk without one builds only as a draft | no |
 | `npc-` | `npc` | 64×64 | all 8 | `NPC_ANIMS`: `idle` 2 frames at 2 fps, `walk` 6 at 10, both looping | no |
-| `prop-` | `prop` | 64×64, or the tall prop cell 64×96 with the origin at (32, 86) for a prop in `PROP_CELLS` (`prop-twisted-tree`; `sprites.md` §2) | none | the prop's own in `PROP_TABLES` when it has one (`chest`: `closed` 1–2 frames at the recipe's `fps`, `opening` 4 at 12, `open` 1 held; a finished sheet carries all three, a draft any subset); else `idle` only, 1–8 frames, at the recipe's `fps` (default 8), looping with more than one frame | no |
+| `prop-` | `prop` | 64×64, or the tall prop cell 96×128 with the origin at (48, 118) for a prop in `PROP_CELLS` (`prop-twisted-tree`; `sprites.md` §2) | none | the prop's own in `PROP_TABLES` when it has one (`chest`: `closed` 1–2 frames at the recipe's `fps`, `opening` 4 at 12, `open` 1 held; a finished sheet carries all three, a draft any subset); else `idle` only, 1–8 frames, at the recipe's `fps` (default 8), looping with more than one frame | no |
 | `tiles-` | `tiles` | each piece its own size: 32×32, doors 64×32 or 32×64 | none | the pieces of the set's rule (`cave` or `shore`) and, with doors, the door animations of `packages/shared/src/tiles.ts` (`sprites.md` §10), listed under `pieces` | no |
 
 Husk `telegraph*` frames may carry the two telegraph colours (they are pre-tinted); every other frame may not.
@@ -225,7 +225,7 @@ Frame names are `<anim>_<FACING>_<n>` with facings and `<anim>_<n>` without; `n`
 A pick that is too tall is trimmed by whole rows by you, into `art/clean/`, before it reaches a recipe;
 the pipeline never does it. The same goes for a stubby blade or anything else that needs drawing. A tall prop is
 the exception by design: its cell is taller (`PROP_CELLS`, declared in shared code, not in the recipe), and a
-source up to 64×96 is placed on it like any other frame, its lowest opaque row on cell row 85, centred on x 32.
+source up to 96×128 is placed on it like any other frame, its lowest opaque row on cell row 117, centred on x 48.
 
 ### Tiles
 
