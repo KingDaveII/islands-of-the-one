@@ -32,7 +32,9 @@ widths, column 0, white on transparent).
   and one placement (`cell`, `x`, `width`, `index`) per letter.
 - `apps/client/src/render/letters.ts`: `loadLetterSheet()` reads the PNG's pixels once;
   `drawLetters(ctx, sheet, text, x, y, { scale, state, states })` stamps the glyphs onto a 2D
-  canvas on whole pixels; `rasterize(...)` is the same without a canvas (tests, Phaser textures).
+  canvas on whole pixels; `plotLetters(g, ...)` does the same onto a Phaser Graphics (the HUD, the
+  Writ panel, the Name screen's tablet); `rasterize(...)` is the same without a canvas (tests,
+  Phaser textures).
 - **Letter states** for the Writ, one color each, all palette tokens: `lit` (`hollow-light`),
   `dim` (`hollow-dusk`), `dark` (`hollow-below`), `ember` (`spark-ember`). `states[i]` is the
   state of letter `i` (spaces not counted); `state` is the default for the rest.
@@ -74,12 +76,62 @@ are never spelled out anywhere in the repo; the test fixture builds them from po
 
 ## 3. Names
 
-- A Writ Name is 2–5 Old Letters (`packages/shared/data/names.json`).
+- A generated Writ Name (the sim's) is 2–5 Old Letters (`packages/shared/data/names.json`).
 - **Generated Names**: `generateName(rng, rules)` in `packages/sim` draws a seeded run of
   positions and redraws until `rules.safe` accepts it. `rules.safe` is the strict filter,
   `(p) => isSafePositions(p, { strict: true }).ok`; the generator cannot run without it.
-- **Player Names**: `validateName(input)` in `apps/server/src/names.ts` takes untrusted input and
-  returns the canonical Name or a refusal with the in-world line, `NAME_REFUSED`: "The Writ won't
-  take that name. Try another."
+- **The island's Name** (M2 Task 4a) is typed in any language the fonts can draw and heard into the
+  Old Letters by §4: `validateIslandName(input)` in `packages/shared/src/writ.ts` takes untrusted
+  input, applies the typed-name rules (`validateTypedName`, [accounts.md](accounts.md)), hears the
+  letters and checks them with the strict filter; it returns the Name and its letters, or a refusal
+  with the in-world line, `NAME_REFUSED`: "The Writ won't take that name. Try another." (a Name the
+  fonts can't draw keeps `NAME_NOT_DRAWABLE`). The old `validateName` (2–5 typed Old Letters) is
+  retired: nothing called it.
 - Every generator or input that produces letter sequences goes through the filter and has a test
   for it. The test room's display names do too (`isSafe`, non-strict).
+
+## 4. Hearing a Name
+
+A typed Name is cut into the Old Letters **as it sounds, not as it is spelled**: LORE's rules
+(book: Lore §4.5), fixed by the reference script
+[`reference/old-letters-transliteration.py`](reference/old-letters-transliteration.py) and ported
+to [`packages/shared/src/hear-name.ts`](../../packages/shared/src/hear-name.ts), `hearName(typed,
+lineLetters)`: base letters, words separated by spaces (`shapeLetters` adds the final forms when
+drawing); the same input gives the same letters every time. The tables are data in the module
+(`CONSONANTS`, `VOWEL_UNITS`, `INITIAL`, `MEDIAL`, `FINAL`, `LATIN_FOLD`), not `if` chains.
+
+1. Start from the Name as the account rules store it (NFC, trimmed, spaces collapsed). Old Letters
+   typed into a Name are kept as typed (the fonts can't draw them yet, so the validator refuses
+   them for now). Other scripts are romanized first once the fonts can draw them; until then only
+   Latin reaches step 2.
+2. Fold: lowercase; ß → ss, æ → ae, œ → oe, ø → o, å → o, ð and þ → th, ñ → ny, ç → s, ý and ÿ
+   → y; then strip the remaining accents.
+3. Split into words at spaces and hyphens; drop every other non-letter. Inside a word a doubled
+   consonant counts once, and a final h after a vowel is silent (Sarah, Noah).
+4. Read each word left to right, longest match first, into consonants (table A) and vowels (table
+   B). y and w are consonants before a vowel and vowels otherwise, and w is a vowel only right
+   after another vowel. A vowel pair ending in y or w breaks before a vowel (in Maya the y is a
+   consonant). c is samekh before e, i or y, and qof otherwise.
+5. Write each vowel by where it stands in its word: first, inside or last (table B). A word that
+   is a single vowel takes the "first" column.
+6. Two identical letters side by side merge into one when either came from a vowel.
+7. **Close the doors**, across the whole Name, ignoring spaces: where yod touches he, drop the yod
+   if it came from a vowel; otherwise, if the he came from a vowel, cut it as alef; otherwise cut
+   the he as het. Where yod touches yod, drop the one that came from a vowel. Repeat until no door
+   is open. No result ever contains the strict pair.
+8. **The lean hand:** if the Name has more letters than a Writ line holds (`lineLetters` in
+   writ.json, 12), drop the letters that came from inside vowels (yod and vav, never a word's first
+   or last letter), last word first and from the end of each word, until it fits; then close the
+   doors again. A Name that still doesn't fit is the layout's problem: the face widens.
+9. A Name left with one letter gets an alef in front of it.
+10. Final forms at the end of every word: `shapeLetters`.
+11. The result passes the safe-letters filter, strict (`validateIslandName`): a Name that happens
+    to sound like a banned run is refused.
+
+Where the script and the written rules disagree, the script wins, with two exceptions that read as
+accidents (both flagged in the PR of M2 Task 4a): the script has no row for a hard c and drops it
+("Cora" → "ora"), and a Python quirk reads a word-final c as samekh; the port follows rule 4 (qof)
+in both. `packages/shared/test/hear-name.test.ts` holds LORE's worked examples (Ash אש, Tide טידה,
+Maya מיא, Hyacinth חיסינת, Black Rock בלק רוק, Morningstar Rest מורננגסטר רסט in the lean hand…),
+the doors and the filter over thousands of generated names, the lean hand, the single letter and
+typed Old Letters.

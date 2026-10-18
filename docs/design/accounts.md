@@ -20,6 +20,9 @@ code. Routes are under `/api` (Caddy routes it to the server in staging; Vite pr
 | `POST /api/kindled`        | `{ name, remembrance, clayTone? }` (needs a session) | `201` `{ kindled }` · `400` name-refused/bad-request · `409` kindled-exists                                  |
 | `GET /api/inventory`       |                                                      | `200` `{ purse, pack, store, baskets }` · `401` not-signed-in · `404` no-kindled ([inventory](inventory.md)) |
 | `POST /api/inventory/move` | `{ itemId, from, to, quantity }` (needs a session)   | `200` the new inventory · `400`/`409` ([inventory](inventory.md))                                            |
+| `GET /api/holding` and `POST /api/holding/*` | ([holding](holding.md) §5)         | the holding, settled                                                                                         |
+| `POST /api/writ/name`      | `{ name }` (needs a session)                         | `200` the holding · `400` name-refused · `409` already-named ([holding](holding.md) §9)                     |
+| `POST /api/writ/feed`      | `{ itemId, count }` or `{ fill: true }`              | `200` the holding · `400` not-sparkglass · `409` unnamed / insufficient / full / too-much ([holding](holding.md) §9) |
 
 Errors are `{ error, message }`: `error` a code from `ApiErrorCode`, `message` the player-facing
 line. Every body goes through a shared guard (unknown fields refused), then the validators; malformed
@@ -62,10 +65,11 @@ application/json` (`415` otherwise) and an `Origin` whose host is the request's 
 - **Logging in** says only "Wrong username or password." whichever part was wrong, and always runs
   one argon2 verification (a dummy hash for an unknown username), so the answer and its timing are
   the same. argon2's comparison is constant-time; sessions are looked up by the token's hash.
-- **Kindled names**: NFC, trimmed, every run of whitespace (tabs and line breaks too) collapsed to
+- **Typed names** (`validateTypedName`; a Kindled's name, `validateKindledName`, and the island's
+  Name, [holding.md](holding.md) §9): NFC, trimmed, every run of whitespace (tabs and line breaks too) collapsed to
   one space; no control, format (bidi overrides and isolates, zero-width space, soft hyphen),
-  surrogate or private-use characters; through the safe-letters filter (not strict: a Kindled name
-  may contain yod-he); **only characters the game can draw**; 2–24 grapheme clusters; at least one
+  surrogate or private-use characters; through the safe-letters filter (not strict: a typed name
+  may contain yod-he; the island's letters are checked strict); **only characters the game can draw**; 2–24 grapheme clusters; at least one
   letter. Refused names get `NAME_REFUSED`, except undrawable ones (below). Names are not unique.
 - **Names the game can draw.** The book asks for names in any language; until the pixel fonts have
   more scripts, that is narrowed to the characters both atlases contain (`DRAWABLE_CHARS` in

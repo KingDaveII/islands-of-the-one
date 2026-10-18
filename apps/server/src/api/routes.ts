@@ -11,6 +11,8 @@ import {
   isLoginRequest,
   isRegisterRequest,
   isRemembrance,
+  isWritFeedRequest,
+  isWritNameRequest,
   validateKindledName,
   validatePassword,
   validateUsername,
@@ -351,6 +353,20 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
         return fail(reply, 400, ApiErrorCode.UnknownStation, result.message);
       case 'no-action':
         return fail(reply, 400, ApiErrorCode.NoAction, result.message);
+      case 'name-refused':
+        return fail(reply, 400, ApiErrorCode.NameRefused, result.message);
+      case 'already-named':
+        return fail(reply, 409, ApiErrorCode.AlreadyNamed, result.message);
+      case 'unnamed':
+        return fail(reply, 409, ApiErrorCode.Unnamed, result.message);
+      case 'not-sparkglass':
+        return fail(reply, 400, ApiErrorCode.NotSparkglass, result.message);
+      case 'insufficient':
+        return fail(reply, 409, ApiErrorCode.Insufficient, result.message);
+      case 'full':
+        return fail(reply, 409, ApiErrorCode.Full, result.message);
+      case 'too-much':
+        return fail(reply, 409, ApiErrorCode.TooMuch, result.message);
     }
   };
 
@@ -388,5 +404,29 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
     if (typeof req.body !== 'object' || req.body === null || Object.keys(req.body).length > 0)
       return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
     return holdingReply(reply, await holding.stop(k.id, now()));
+  });
+
+  // The Writ (docs/design/holding.md "The Writ"): the island's Name, once; feeding Sparkglass. The
+  // letters are heard on the server; every answer is the holding, settled.
+  app.post(path(ApiRoute.WritName), { bodyLimit: BODY_LIMIT }, async (req, reply) => {
+    const account = await signedIn(req, reply);
+    if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
+    const k = await findKindled(account.id);
+    if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+    if (!isWritNameRequest(req.body))
+      return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
+    return holdingReply(reply, await holding.name(k.id, req.body.name, now()));
+  });
+
+  app.post(path(ApiRoute.WritFeed), { bodyLimit: BODY_LIMIT }, async (req, reply) => {
+    const account = await signedIn(req, reply);
+    if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
+    const k = await findKindled(account.id);
+    if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+    if (!isWritFeedRequest(req.body))
+      return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
+    const body = req.body;
+    const result = 'fill' in body ? await holding.fill(k.id, now()) : await holding.feed(k.id, body.itemId, body.count, now());
+    return holdingReply(reply, result);
   });
 }

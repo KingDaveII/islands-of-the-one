@@ -1,4 +1,4 @@
-import { holdingLayout, holdingTemplate, type HoldingResponse } from '@iot/shared';
+import { holdingLayout, holdingTemplate, pressedWrit, toWritView, type HoldingResponse } from '@iot/shared';
 import { describe, expect, it } from 'vitest';
 import {
   chipState,
@@ -41,6 +41,7 @@ const working: HoldingResponse = {
     mining: { xp: 0, level: 1, into: 0, toNext: 40 },
     farming: { xp: 0, level: 1, into: 0, toNext: 40 },
   },
+  writ: toWritView(pressedWrit(T0), T0 + 13_000),
 };
 const idle: HoldingResponse = { ...working, activity: null };
 

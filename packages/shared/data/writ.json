@@ -1,0 +1,18 @@
+{
+  "$comment": "The Writ (docs/design/holding.md \"The Writ\"). GAME DESIGN's starting values (M2 Task 4a). sliverHours: one wild sliver's charge; capacityHours: a full Writ (three slivers; \"a full Writ holds six\" days); feeds: slivers' worth per item, by item id (only these can be fed); lowHours: under this the Writ flickers and the chip turns ember; pressChargeHours: the charge a Writ is pressed with when its row is created (\"keeps its name two days\"; it drains normally from then, so a Writ never fed goes dark after two days); graceHoursCertified and graceHoursUncertified: dark, but the island still remembers itself (both 48 until the Wet House opens in M4, whose task sets the uncertified one to 24); lineFadeHours: after the grace, one line fades each such stretch, outermost first; lineLetters: letters a Writ line holds (the lean hand, letters.md \"Hearing a Name\"); linePlots: plots each line tethers. GAME DESIGN's answers of 2026-10-18.",
+  "sliverHours": 48,
+  "capacityHours": 144,
+  "feeds": {
+    "wild-sliver": 1,
+    "sealed-gin": 1,
+    "glass-chip": 3,
+    "deep-glass": 9
+  },
+  "lowHours": 24,
+  "pressChargeHours": 48,
+  "graceHoursCertified": 48,
+  "graceHoursUncertified": 48,
+  "lineFadeHours": 24,
+  "lineLetters": 12,
+  "linePlots": 4
+}

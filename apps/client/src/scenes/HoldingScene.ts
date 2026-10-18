@@ -12,7 +12,7 @@ import { accountStore, api } from '../api.js';
 import { deviceStore } from '../game/activeDevice.js';
 import { Controls } from '../game/controls.js';
 import { controlsStore } from '../game/controlsStore.js';
-import { buttonsFor, MENU_BUTTONS, padEdges, padEdgeState } from '../game/gamepad.js';
+import { buttonsFor, connectedPad, MENU_BUTTONS, padEdges, padEdgeState } from '../game/gamepad.js';
 import {
   chipState,
   clockOffset,
@@ -29,6 +29,7 @@ import {
   type StationLines,
 } from '../game/holdingView.js';
 import { REFUSAL_LIFE_MS, refusalVisible } from '../game/inventoryView.js';
+import { derive, hudName, writChip } from '../game/writView.js';
 import { keyboardKeys, keyCodeFor } from '../game/keyboard.js';
 import { RoamSession } from '../game/roamSession.js';
 import { tuningStore } from '../game/tuningStore.js';
@@ -38,7 +39,9 @@ import { button, type Button as MenuButton } from '../render/button.js';
 import { clampScroll } from '../render/camera.js';
 import { DEPTH } from '../render/depth.js';
 import { hintItems, HintRow } from '../render/hint.js';
-import { HoldingHud } from '../render/holdingHud.js';
+import { HoldingHud, type WritHud } from '../render/holdingHud.js';
+import { loadLetterSheet, type LetterSheet } from '../render/letters.js';
+import { uiToCss } from '../render/cameras.js';
 import { HoldingWorld } from '../render/holdingWorld.js';
 import { menuCursor } from '../render/menus.js';
 import { HOLDING_SHEET, preloadTileSheet } from '../render/roomTiles.js';
@@ -47,6 +50,8 @@ import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { preloadSpriteSheets, registerSpriteSheets } from '../render/spriteSheets.js';
 import { blinkOut, body, label, place, preloadFonts, registerFonts, shadowed, type Shadowed, type Text } from '../render/text.js';
 import { divider, panel } from '../render/ui.js';
+import { NameScreen } from '../ui/nameScreen.js';
+import { WritPanel } from '../ui/writPanel.js';
 import type { InventoryData } from './InventoryScene.js';
 
 /** The station panel (UI px): a small panel over the view's centre with the station's lines and two buttons. */
@@ -83,10 +88,11 @@ interface StationPanel {
  * station props and the Kindled, the HUD on the UI camera. The active
  * action lives on the server: the scene calls GET /api/holding every 30 s and
  * after each interaction (the heartbeat), and redraws from the answers;
- * nothing of value is decided here. Use on the Writ post or the holding store
- * opens the inventory with the store pane; Use on a tree or the outcrop opens
- * the station panel. Stopping is on the chip and in the panel ("Stop
- * working"); there is no stop binding (GAME DESIGN 2026-10-18).
+ * nothing of value is decided here. Use on the Writ post opens the Writ panel
+ * (the Name screen first, while the island has no Name; M2 Task 4a); Use on
+ * the holding store opens the inventory with the store pane; Use on a tree
+ * or the outcrop opens the station panel. Stopping is on the chip and in the
+ * panel ("Stop working"); there is no stop binding (GAME DESIGN 2026-10-18).
  */
 export class HoldingScene extends Phaser.Scene {
   session!: RoamSession;
@@ -105,6 +111,8 @@ export class HoldingScene extends Phaser.Scene {
   private camY = 0;
   private prompt!: HintRow;
   private pad = { prev: [] as boolean[] };
+  /** The left stick's last direction on the Writ panel (−1, 0, 1 per axis), so a push moves the focus once. */
+  private stick = { x: 0, y: 0 };
   /** The server's latest answers, and its clock against ours. */
   response: HoldingResponse | null = null;
   inventory: InventoryResponse | null = null;
@@ -112,6 +120,11 @@ export class HoldingScene extends Phaser.Scene {
   /** A request is in flight: no other holding request until it answers. */
   busy = false;
   private panel: StationPanel | null = null;
+  /** The Writ panel and the Name screen (M2 Task 4a), one at a time, over the post. */
+  private writPanel: WritPanel | null = null;
+  private nameScreen: NameScreen | null = null;
+  /** The Old Letters sheet's ink, once loaded (the Name screen, the Writ panel and the HUD draw from it). */
+  private letterSheet: LetterSheet | null = null;
   private floaters: Floater[] = [];
   /** The cycles the ring had completed when last looked, for the "+1" prediction. */
   private lastCycles = -1;
@@ -144,10 +157,21 @@ export class HoldingScene extends Phaser.Scene {
     this.inventory = null;
     this.busy = false;
     this.panel = null;
+    this.writPanel = null;
+    this.nameScreen = null;
     this.floaters = [];
     this.lastCycles = -1;
     this.lastError = '';
     this.alive = true;
+    if (!this.letterSheet)
+      void loadLetterSheet().then(
+        (sheet) => {
+          if (this.alive) this.letterSheet = sheet;
+        },
+        (err: unknown) => {
+          console.warn(err);
+        },
+      );
     this.controls = new Controls(this, (p) => {
       const w = this.cameras.main.getWorldPoint(p.x, p.y);
       return { x: simPx(w.x), y: simPx(w.y) };
@@ -189,17 +213,30 @@ export class HoldingScene extends Phaser.Scene {
       }
     };
     bind(keyboardKeys('inventory'), () => {
-      this.openInventory();
+      if (!this.writPanel) this.openInventory();
     });
     bind(keyboardKeys('menu'), () => {
       this.back();
     });
     kb?.on('keydown-ENTER', () => {
-      this.pressFocused();
+      if (this.writPanel) {
+        this.keyNav = true;
+        this.writPanel.press();
+      } else this.pressFocused();
     });
     for (const key of ['LEFT', 'RIGHT', 'TAB'])
       kb?.on(`keydown-${key}`, () => {
-        this.moveFocus(1);
+        if (this.writPanel) {
+          this.keyNav = true;
+          if (key === 'TAB') this.writPanel.moveFocus(1);
+          else this.writPanel.moveSide(key === 'LEFT' ? -1 : 1);
+        } else this.moveFocus(1);
+      });
+    for (const key of ['UP', 'DOWN'])
+      kb?.on(`keydown-${key}`, () => {
+        if (!this.writPanel) return;
+        this.keyNav = true;
+        this.writPanel.moveFocus(key === 'UP' ? -1 : 1);
       });
 
     // A tap on the world is Use (interact is E, Cross or a tap); taps on the HUD's zones are theirs.
@@ -223,6 +260,8 @@ export class HoldingScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.alive = false;
       offDevice();
+      this.closeNameScreen();
+      this.closeWritPanel();
       this.controls.dispose();
       this.heartbeat?.remove();
       this.heartbeat = null;
@@ -281,6 +320,7 @@ export class HoldingScene extends Phaser.Scene {
     this.lastCycles = res.value.activity ? cyclesDone(res.value.activity, this.serverNow()) : -1;
     this.lastError = '';
     this.syncPanel();
+    this.syncWritPanel();
     return true;
   }
 
@@ -290,7 +330,9 @@ export class HoldingScene extends Phaser.Scene {
       if (this.alive) this.take(res);
     });
     void api.inventory().then((res) => {
-      if (this.alive && res.ok) this.inventory = res.value;
+      if (!this.alive || !res.ok) return;
+      this.inventory = res.value;
+      this.syncWritPanel();
     });
   }
 
@@ -350,8 +392,13 @@ export class HoldingScene extends Phaser.Scene {
     return nearestStationPart(p.x, p.y, tuningStore.get().juice.promptRangePx, this.session.layout);
   }
 
-  /** Use: the post and the store open the inventory with the store pane; a tree or the outcrop opens its panel. */
+  /** Use: the post opens the Writ panel (the Name screen first, unnamed); the store opens the inventory with the store pane; a tree or the outcrop opens its panel. */
   private use(): void {
+    if (this.nameScreen) return;
+    if (this.writPanel) {
+      this.closeWritPanel();
+      return;
+    }
     if (this.panel) {
       this.closePanel();
       return;
@@ -359,19 +406,173 @@ export class HoldingScene extends Phaser.Scene {
     const near = this.near();
     if (!near) return;
     const { station } = near;
-    if (station.kind === 'post' || station.kind === 'store') this.openInventory();
+    if (station.kind === 'post') this.openWrit();
+    else if (station.kind === 'store') this.openInventory();
     else this.openPanel(station);
   }
 
+  // --- The Writ (M2 Task 4a) ----------------------------------------------------
+
+  /** The post's Use: the Name screen while the island has no Name, else the Writ panel. */
+  private openWrit(): void {
+    if (!this.response) return;
+    if (this.response.writ.name === null) this.openNameScreen();
+    else this.openWritPanel();
+  }
+
+  /** How the UI grid maps to CSS px for the Name screen's DOM input: the UI camera sits at zU over the whole canvas. */
+  private cssMap(): { zoom: number; x: number; y: number } {
+    return uiToCss(this.game.canvas, { ui: this.uiFit, origin: { x: 0, y: 0 } });
+  }
+
+  private openNameScreen(): void {
+    this.closePanel();
+    this.closeWritPanel();
+    if (this.nameScreen) return;
+    this.session.held = true;
+    // The DOM input has the keyboard: the plugin's captures (WASD, E, I) would swallow the typing, so they
+    // stop preventing the default while the screen is open; the scene's handlers ignore Use and the
+    // inventory key meanwhile, the roam is held, and Esc still backs out through the menu key.
+    const kb = this.input.keyboard;
+    if (kb) kb.manager.preventDefault = false;
+    this.nameScreen = new NameScreen({
+      scene: this,
+      layer: this.hudLayer,
+      frame: () => this.frame,
+      cssMap: () => this.cssMap(),
+      sheet: () => this.letterSheet,
+      submit: (name) => {
+        this.nameIsland(name);
+      },
+    });
+  }
+
+  private closeNameScreen(): void {
+    if (!this.nameScreen) return;
+    this.nameScreen.destroy();
+    this.nameScreen = null;
+    const kb = this.input.keyboard;
+    if (kb) {
+      kb.manager.preventDefault = true;
+      // Keys typed into the input were seen going down and up; none stays held.
+      kb.resetKeys();
+    }
+    this.session.held = false;
+  }
+
+  /** POST /api/writ/name: the server's answer decides; a refusal shows its message in one line; an accepted Name flares, then the panel opens. */
+  private nameIsland(name: string): void {
+    if (this.busy) return;
+    this.busy = true;
+    void api.writName({ name }).then((res) => {
+      if (!this.alive) return;
+      this.busy = false;
+      const screen = this.nameScreen;
+      if (!screen) return;
+      if (!res.ok) {
+        screen.setError(res.message);
+        return;
+      }
+      const letters = this.take(res) ? this.response?.writ.letters : null;
+      if (letters) screen.accept(letters);
+      else screen.setError('');
+    });
+  }
+
+  private openWritPanel(): void {
+    this.closePanel();
+    if (this.writPanel) return;
+    this.session.held = true;
+    this.writPanel = new WritPanel({
+      scene: this,
+      layer: this.hudLayer,
+      frame: () => this.frame,
+      sheet: () => this.letterSheet,
+      showFocus: () => this.showFocus(),
+      feed: (itemId, count) => {
+        this.feedWrit({ itemId, count });
+      },
+      fill: () => {
+        this.feedWrit({ fill: true });
+      },
+    });
+    this.syncWritPanel();
+    // Opening the panel is an interaction: the Writ and the Sparkglass it shows are fresh.
+    this.refresh();
+  }
+
+  private closeWritPanel(): void {
+    if (!this.writPanel) return;
+    this.writPanel.destroy();
+    this.writPanel = null;
+    this.session.held = false;
+  }
+
+  /** The panel's lines from the latest answers (the holding and the inventory). */
+  private syncWritPanel(): void {
+    if (this.writPanel && this.response) this.writPanel.sync(this.response.writ, this.inventory, this.serverNow());
+  }
+
+  /** POST /api/writ/feed: the face relights from the answer, never ahead of it; a refusal is the panel's one line. */
+  private feedWrit(body: Parameters<typeof api.writFeed>[0]): void {
+    if (this.busy) return;
+    this.busy = true;
+    void api.writFeed(body).then((res) => {
+      if (!this.alive) return;
+      this.busy = false;
+      if (!res.ok) {
+        this.writPanel?.setResult(res.message);
+        return;
+      }
+      if (!this.take(res)) return;
+      void api.inventory().then((inv) => {
+        if (this.alive && inv.ok) {
+          this.inventory = inv.value;
+          this.syncWritPanel();
+        }
+      });
+      this.afterFeeding();
+    });
+  }
+
+  /**
+   * The seams for 4b (Kesh, LORE's lines after naming and feeding, the tide):
+   * called once the server has accepted a Name, and once a feed has landed.
+   */
+  private afterNaming(): void {
+    // 4b: Kesh's line across the water, the Narrator, the hint.
+  }
+
+  private afterFeeding(): void {
+    // 4b: the once-per-tide sliver, the tide clock.
+  }
+
+  /** The Writ block of the HUD: the Name and the chip, re-derived at the server's clock between heartbeats. */
+  private writHud(): WritHud | null {
+    const view = this.response?.writ;
+    if (!view) return null;
+    return { name: hudName(view), chip: writChip(derive(view, this.serverNow())) };
+  }
+
   openInventory(): void {
+    if (this.nameScreen) return;
     if (this.panel) this.closePanel();
+    if (this.writPanel) this.closeWritPanel();
     const data: InventoryData = { back: 'holding' };
     this.scene.launch('inventory', data);
     this.scene.pause();
   }
 
-  /** Esc / Circle: close the panel, else back to the start screen. */
+  /** Esc / Circle: close the Name screen or a panel, else back to the start screen. */
   private back(): void {
+    if (this.nameScreen) {
+      this.closeNameScreen();
+      return;
+    }
+    if (this.writPanel) {
+      this.closeWritPanel();
+      return;
+    }
     if (this.panel) {
       this.closePanel();
       return;
@@ -381,6 +582,7 @@ export class HoldingScene extends Phaser.Scene {
 
   private openPanel(station: LayoutStation): void {
     this.closePanel();
+    this.closeWritPanel();
     const g = this.add.graphics();
     const texts = [
       label(this, 0, 0, '', Palette.uiInk),
@@ -526,7 +728,7 @@ export class HoldingScene extends Phaser.Scene {
   }
 
   private updatePrompt(): void {
-    const near = this.panel ? null : this.near();
+    const near = this.panel || this.writPanel || this.nameScreen ? null : this.near();
     if (!near) {
       this.prompt.setVisible(false);
       return;
@@ -597,6 +799,14 @@ export class HoldingScene extends Phaser.Scene {
     /** Every prop's sheet, frame and depth, and the Kindled's depth, for the draw-order checks. */
     props: ReturnType<HoldingWorld['propFrames']>;
     playerDepth: number;
+    /** The Writ (M2 Task 4a): the HUD's block, the panel and the Name screen while open. */
+    writ: WritHud | null;
+    writPanel: ReturnType<WritPanel['snapshot']> | null;
+    nameScreen: ReturnType<NameScreen['snapshot']> | null;
+    writTip: boolean;
+    /** The HUD's Writ block (UI px), for the tooltip hover. */
+    writRect: ViewRect;
+    lettersLoaded: boolean;
   } {
     const s = this.session.state;
     return {
@@ -610,6 +820,12 @@ export class HoldingScene extends Phaser.Scene {
       chip: chipState(this.response, this.serverNow()),
       props: this.world.propFrames(),
       playerDepth: this.world.playerDepth(),
+      writ: this.writHud(),
+      writPanel: this.writPanel?.snapshot() ?? null,
+      nameScreen: this.nameScreen?.snapshot() ?? null,
+      writTip: this.hud.writTipVisible,
+      writRect: this.hud.writRect,
+      lettersLoaded: this.letterSheet !== null,
     };
   }
 
@@ -619,17 +835,41 @@ export class HoldingScene extends Phaser.Scene {
     if (this.session.pressed & Button.Interact) this.use();
     this.followCamera(refit || this.session.state.tick <= 1);
     this.world.draw(this.session.state, this.session.position());
-    this.hud.draw(chipState(this.response, this.serverNow()), packFill(this.inventory), purseGin(this.inventory));
+    this.hud.draw(chipState(this.response, this.serverNow()), packFill(this.inventory), purseGin(this.inventory), this.writHud(), this.letterSheet);
     this.updatePrompt();
     this.updateFloaters(delta);
     this.updatePanelResult();
+    if (this.nameScreen) {
+      this.nameScreen.update(this.game.canvas);
+      if (this.nameScreen.done) {
+        this.closeNameScreen();
+        this.afterNaming();
+        this.openWritPanel();
+      }
+    }
+    this.writPanel?.update(this.serverNow());
 
     // The pad: Circle backs out, the D-pad moves the panel's focus, Cross presses it (Cross is also interact in
     // Calm, which `use` handles through the roam's input while no panel is open). No stop binding: the chip and the panel.
     const edges = padEdges(this.pad);
     const preset = controlsStore.get();
     if (edges.includes(MENU_BUTTONS.back)) this.back();
-    else if (this.panel) {
+    else if (this.writPanel) {
+      const p = this.writPanel;
+      // The left stick moves the focus like the D-pad: once per push past the deadzone.
+      const axes = connectedPad()?.axes ?? [];
+      const sx = Math.abs(axes[0] ?? 0) > 0.5 ? Math.sign(axes[0] ?? 0) : 0;
+      const sy = Math.abs(axes[1] ?? 0) > 0.5 ? Math.sign(axes[1] ?? 0) : 0;
+      const pushedX = sx !== 0 && sx !== this.stick.x ? sx : 0;
+      const pushedY = sy !== 0 && sy !== this.stick.y ? sy : 0;
+      this.stick = { x: sx, y: sy };
+      if (edges.includes(MENU_BUTTONS.up) || pushedY < 0) p.moveFocus(-1);
+      else if (edges.includes(MENU_BUTTONS.down) || pushedY > 0) p.moveFocus(1);
+      else if (edges.includes(MENU_BUTTONS.left) || pushedX < 0) p.moveSide(-1);
+      else if (edges.includes(MENU_BUTTONS.right) || pushedX > 0) p.moveSide(1);
+      else if (edges.includes(MENU_BUTTONS.confirm[0]) && !buttonsFor(preset, 'interact', 'calm').includes(MENU_BUTTONS.confirm[0])) p.press();
+      else if (MENU_BUTTONS.confirm.slice(1).some((b) => edges.includes(b))) p.press();
+    } else if (this.panel) {
       if ([MENU_BUTTONS.left, MENU_BUTTONS.right, MENU_BUTTONS.up, MENU_BUTTONS.down].some((b) => edges.includes(b))) this.moveFocus(1);
       else if (edges.includes(MENU_BUTTONS.confirm[0]) && !buttonsFor(preset, 'interact', 'calm').includes(MENU_BUTTONS.confirm[0])) this.pressFocused();
       else if (MENU_BUTTONS.confirm.slice(1).some((b) => edges.includes(b))) this.pressFocused();

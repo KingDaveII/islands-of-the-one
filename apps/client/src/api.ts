@@ -17,6 +17,8 @@ import {
   type InventoryResponse,
   type KindledView,
   type MeResponse,
+  type WritFeedRequest,
+  type WritNameRequest,
 } from '@iot/shared';
 
 /**
@@ -85,6 +87,10 @@ export interface Api {
   holdingStop(): Promise<ApiResult<HoldingResponse>>;
   /** Take all: what fits of a station's basket into the store; the answer's `take` says what moved and what stayed. */
   holdingTake(body: HoldingStationRequest): Promise<ApiResult<HoldingResponse>>;
+  /** Name the island (once): the typed Name; the server hears its letters. `name-refused`, `already-named`. */
+  writName(body: WritNameRequest): Promise<ApiResult<HoldingResponse>>;
+  /** Feed the Writ: a count of a kind, or `fill` (wild slivers). `unnamed`, `not-sparkglass`, `insufficient`, `full`, `too-much`. */
+  writFeed(body: WritFeedRequest): Promise<ApiResult<HoldingResponse>>;
 }
 
 export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)): Api {
@@ -104,6 +110,8 @@ export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)):
     holdingWork: (body) => request(fetchFn, ApiRoute.HoldingWork, 'POST', body, isHoldingResponse),
     holdingStop: () => request(fetchFn, ApiRoute.HoldingStop, 'POST', {}, isHoldingResponse),
     holdingTake: (body) => request(fetchFn, ApiRoute.HoldingTake, 'POST', body, isHoldingResponse),
+    writName: (body) => request(fetchFn, ApiRoute.WritName, 'POST', body, isHoldingResponse),
+    writFeed: (body) => request(fetchFn, ApiRoute.WritFeed, 'POST', body, isHoldingResponse),
   };
 }
 
