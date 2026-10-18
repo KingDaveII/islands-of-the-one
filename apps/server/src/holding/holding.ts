@@ -1,5 +1,8 @@
 import {
   basketPlace,
+  feedPreview,
+  FILL_ITEM,
+  fillPreview,
   HOLDING_LAYOUT_ID,
   holdingLayout,
   InventoryReason,
@@ -10,38 +13,36 @@ import {
   SKILLS,
   stationDef,
   storeLimitOf,
+  toWritView,
+  validateIslandName,
+  writView,
   type HoldingResponse,
   type HoldingTake,
   type InventoryEntry,
   type Skill,
   type SkillView,
   type StationDef,
+  type WritStored,
 } from '@iot/shared';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type { Database, Transaction } from '../db/client.js';
-import { holdingActivity, kindled, skillXp, type HoldingActivityRow, type KindledRow } from '../db/schema.js';
+import { holdingActivity, kindled, skillXp, writs, type HoldingActivityRow, type KindledRow, type WritRow } from '../db/schema.js';
 import type { Inventory } from '../inventory/index.js';
+import { feedable, feedChanges, lockWrit, WRIT_ALREADY_NAMED, WRIT_INSUFFICIENT, WRIT_UNNAMED, writStored } from './writ.js';
 
 /**
  * The holding's active action (docs/design/holding.md): one per Kindled,
  * settled on every holding request. Nothing ticks in the background: the
  * server computes what a stretch of work produced when it is next asked, in
- * one transaction with the Kindled's row and the activity row locked, credits
- * the yield into the station's basket through `inventory.apply` (reason
- * `gather`, inside the same transaction) and the XP into `skill_xp`, and
- * restarts the cycle clock when the time away went past the cap, so lost
- * time is never paid later.
+ * one transaction with the Kindled's row, the activity row and the Writ row
+ * locked, credits the yield into the station's basket through
+ * `inventory.apply` (reason `gather`, inside the same transaction) and the
+ * XP into `skill_xp`, and restarts the cycle clock when the time away went
+ * past the cap, so lost time is never paid later. The Writ (M2 Task 4a) sets
+ * the offline horizon: a dark Writ stops offline earning at the moment it
+ * went dark; its row is pressed on the Kindled's first request. Naming the
+ * island and feeding the Writ run here too, under the same lock.
  */
-
-/**
- * Whether a Kindled's stations keep earning while it is away. A Writ that is
- * dark (Task 4) stops offline earning; today every Writ counts as lit.
- */
-// The Kindled is here for Task 4 to read its Writ.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Task 4 reads the Writ
-export function offlineAllowed(_kindled: Pick<KindledRow, 'id'>): boolean {
-  return true;
-}
 
 /**
  * Whether a Kindled stands close enough to a station to work it or take from
@@ -57,11 +58,35 @@ export function inRange(_kindled: Pick<KindledRow, 'id'>, _stationId: string): b
 /**
  * While a Writ is dark a stretch still counts the heartbeat's own gap, so
  * online play never loses a partial cycle to a 30 s heartbeat: twice the
- * heartbeat.
+ * heartbeat. Hands still work online at full rate and XP: dark means idling
+ * stops, not that the player is locked out.
  */
 export const ONLINE_GRACE_MS = 2 * 30_000;
 
-export type HoldingError = 'unknown-kindled' | 'unknown-station' | 'no-action';
+/**
+ * How far past its last heartbeat a stretch earns unattended: the full
+ * offline cap while the Writ is lit or flickering at `now`; otherwise only
+ * until the moment the Writ went dark, `min(cap, emptyAt − lastSeenAt)`, and
+ * never less than the online grace.
+ */
+export function offlineHorizonMs(writ: WritStored, lastSeenAt: Date, now: Date): number {
+  const { state } = writView(writ, now.getTime());
+  if (state === 'lit' || state === 'flickering') return OFFLINE_CAP_MS;
+  const untilDark = writ.emptyAt - lastSeenAt.getTime();
+  return Math.max(ONLINE_GRACE_MS, Math.min(OFFLINE_CAP_MS, untilDark));
+}
+
+export type HoldingError =
+  | 'unknown-kindled'
+  | 'unknown-station'
+  | 'no-action'
+  | 'name-refused'
+  | 'already-named'
+  | 'unnamed'
+  | 'not-sparkglass'
+  | 'insufficient'
+  | 'full'
+  | 'too-much';
 
 export type HoldingResult =
   | { ok: true; value: HoldingResponse }
@@ -76,6 +101,12 @@ export interface Holding {
   stop(kindledId: string, now: Date): Promise<HoldingResult>;
   /** Settle, then move what fits of a station's basket into the store. */
   takeAll(kindledId: string, stationId: string, now: Date): Promise<HoldingResult>;
+  /** Settle, then name the island (once): the typed Name and its letters, heard on the server. */
+  name(kindledId: string, name: unknown, now: Date): Promise<HoldingResult>;
+  /** Settle, then feed `count` of an item to the Writ, from the store first, then the pack. */
+  feed(kindledId: string, itemId: string, count: number, now: Date): Promise<HoldingResult>;
+  /** Settle, then feed as many wild slivers as fit (never gin). */
+  fill(kindledId: string, now: Date): Promise<HoldingResult>;
   /** Settle alone (tests and the API's inventory routes). */
   settle(kindledId: string, now: Date): Promise<void>;
 }
@@ -88,7 +119,7 @@ export interface Settlement {
 
 /**
  * The cycles a stretch of work completed by `end`, minus those already paid,
- * and whether `end` fell short of `now` (time beyond the cap, lost).
+ * and whether `end` fell short of `now` (time beyond the horizon, lost).
  */
 export function settleMath(
   row: Pick<HoldingActivityRow, 'startedAt' | 'creditedCycles' | 'lastSeenAt'>,
@@ -113,6 +144,8 @@ export function fitsInStore(itemId: string, inStore: number, inBasket: number): 
   return Math.max(0, Math.min(inBasket, limit - inStore));
 }
 
+type Refused = { refused: HoldingResult };
+
 export function createHolding(db: Database, inventory: Inventory): Holding {
   const layout = holdingLayout(HOLDING_LAYOUT_ID);
 
@@ -130,9 +163,9 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
    * The settle, inside a transaction holding the Kindled's lock: the activity
    * row locked FOR UPDATE, the completed cycles since the last credit paid
    * into the basket and the skill, the clock restarted after lost time, the
-   * heartbeat refreshed. Nothing to do without a row.
+   * heartbeat refreshed. The Writ sets the horizon. Nothing to do without a row.
    */
-  async function settleIn(tx: Transaction, k: KindledRow, now: Date): Promise<Settlement> {
+  async function settleIn(tx: Transaction, k: KindledRow, w: WritRow, now: Date): Promise<Settlement> {
     const [row] = await tx.select().from(holdingActivity).where(eq(holdingActivity.kindledId, k.id)).for('update');
     if (!row) return { credited: 0, restarted: false };
     const station = stationDef(row.stationId);
@@ -142,7 +175,7 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
       await tx.delete(holdingActivity).where(eq(holdingActivity.kindledId, k.id));
       return { credited: 0, restarted: true };
     }
-    const horizon = offlineAllowed(k) ? OFFLINE_CAP_MS : ONLINE_GRACE_MS;
+    const horizon = offlineHorizonMs(writStored(w), row.lastSeenAt, now);
     const { cycles, due, lost } = settleMath(row, action.cycleMs, now, horizon);
     if (due > 0) {
       const ref = settleRef(k.id, row.startedAt, row.creditedCycles, cycles);
@@ -165,7 +198,7 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
       .update(holdingActivity)
       .set(
         lost
-          ? // Beyond the cap: the time from the cap to now is lost, so the cycle clock starts afresh.
+          ? // Beyond the horizon: the time from there to now is lost, so the cycle clock starts afresh.
             { startedAt: now, creditedCycles: 0, lastSeenAt: now }
           : { creditedCycles: cycles, lastSeenAt: now },
       )
@@ -173,7 +206,7 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
     return { credited: due, restarted: lost };
   }
 
-  /** What GET /api/holding answers, read inside the transaction after the settle. */
+  /** What GET /api/holding answers, read inside the transaction after the settle (and after the body's changes). */
   async function answer(tx: Transaction, k: KindledRow, now: Date, take?: HoldingTake): Promise<HoldingResponse> {
     const view = await inventory.view(k.id, tx);
     const baskets: Record<string, InventoryEntry[]> = {};
@@ -188,30 +221,64 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
       .orderBy(asc(skillXp.skill));
     const skills = {} as Record<Skill, SkillView>;
     for (const skill of SKILLS) skills[skill] = skillProgress(rows.find((r) => r.skill === skill)?.xp ?? 0);
-    const out: HoldingResponse = { layoutId: layout.id, baskets, activity, now: now.toISOString(), skills };
+    const [w] = await tx.select().from(writs).where(eq(writs.kindledId, k.id));
+    if (!w) throw new Error(`writ: no row for Kindled ${k.id}`);
+    const out: HoldingResponse = {
+      layoutId: layout.id,
+      baskets,
+      activity,
+      now: now.toISOString(),
+      skills,
+      writ: toWritView(writStored(w), now.getTime()),
+    };
     if (take) out.take = take;
     return out;
   }
 
-  /** One holding request: the Kindled locked, the action settled, then `body`, then the answer. */
+  /** One holding request: the Kindled and its Writ locked, the action settled, then `body`, then the answer. */
   async function request(
     kindledId: string,
     now: Date,
-    body: (tx: Transaction, k: KindledRow) => Promise<HoldingTake | undefined | { refused: HoldingResult }>,
+    body: (tx: Transaction, k: KindledRow, w: WritRow) => Promise<HoldingTake | undefined | Refused>,
   ): Promise<HoldingResult> {
     return db.transaction(async (tx) => {
       const k = await lockKindled(tx, kindledId);
       if (!k) return { ok: false, error: 'unknown-kindled', message: 'No such Kindled.' };
-      await settleIn(tx, k, now);
-      const result = await body(tx, k);
+      const w = await lockWrit(tx, k.id, now);
+      await settleIn(tx, k, w, now);
+      const result = await body(tx, k, w);
       if (result && 'refused' in result) return result.refused;
       return { ok: true, value: await answer(tx, k, now, result) };
     });
   }
 
-  const unknownStation = (stationId: string): { refused: HoldingResult } => ({
-    refused: { ok: false, error: 'unknown-station', message: `No station ${stationId} on this holding.` },
-  });
+  const refuse = (error: HoldingError, message: string): Refused => ({ refused: { ok: false, error, message } });
+  const unknownStation = (stationId: string): Refused => refuse('unknown-station', `No station ${stationId} on this holding.`);
+
+  /** One feed under the locks: the preview, the items, empty_at. */
+  async function feedIn(
+    tx: Transaction,
+    k: KindledRow,
+    w: WritRow,
+    itemId: string,
+    count: number,
+    now: Date,
+    held?: Awaited<ReturnType<Inventory['holdings']>>,
+  ): Promise<undefined | Refused> {
+    if (w.name === null) return refuse('unnamed', WRIT_UNNAMED);
+    const preview = feedPreview(writStored(w), itemId, count, now.getTime());
+    if (!preview.ok) return refuse(preview.error, preview.message);
+    const stacks = held ?? (await inventory.holdings(k.id, tx));
+    const changes = feedChanges(k.id, stacks, itemId, preview.count);
+    if (!changes) return refuse('insufficient', WRIT_INSUFFICIENT);
+    const taken = await inventory.apply(changes, InventoryReason.FeedWrit, { tx });
+    if (!taken.ok) {
+      if (taken.error === 'insufficient') return refuse('insufficient', WRIT_INSUFFICIENT);
+      throw new Error(`feed-writ: ${taken.message}`);
+    }
+    await tx.update(writs).set({ emptyAt: new Date(preview.emptyAt) }).where(eq(writs.kindledId, k.id));
+    return undefined;
+  }
 
   return {
     view: (kindledId, now) => request(kindledId, now, () => Promise.resolve(undefined)),
@@ -220,7 +287,7 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
       request(kindledId, now, async (tx, k) => {
         const station = stationIn(stationId);
         if (!station) return unknownStation(stationId);
-        if (!station.action) return { refused: { ok: false, error: 'no-action', message: `Nothing to work at the ${station.name}.` } };
+        if (!station.action) return refuse('no-action', `Nothing to work at the ${station.name}.`);
         if (!inRange(k, stationId)) return unknownStation(stationId);
         // The old stretch was settled above; this one starts now.
         await tx
@@ -269,10 +336,40 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
         return { stationId: station.id, moved, left };
       }),
 
+    // The island is named once in M2 (renaming comes later, at the Wet House). The letters are heard
+    // here, never taken from the client; a refusal answers the validator's own line.
+    name: (kindledId, name, now) =>
+      request(kindledId, now, async (tx, k, w) => {
+        if (w.name !== null) return refuse('already-named', WRIT_ALREADY_NAMED);
+        const checked = validateIslandName(name);
+        if (!checked.ok) return refuse('name-refused', checked.message);
+        await tx.update(writs).set({ name: checked.name, letters: checked.letters }).where(eq(writs.kindledId, k.id));
+        return undefined;
+      }),
+
+    // Feeding (docs/design/holding.md "The Writ"): under the Kindled's and the Writ's locks, the shared
+    // preview decides; the items go through inventory.apply (reason feed-writ) from the store first, then
+    // the pack (the pack is what goes abroad; currency from the purse); then empty_at is written. A
+    // refusal changes nothing. Fill feeds as many wild slivers as fit of what the Kindled holds, never gin.
+    feed: (kindledId, itemId, count, now) => request(kindledId, now, (tx, k, w) => feedIn(tx, k, w, itemId, count, now)),
+
+    fill: (kindledId, now) =>
+      request(kindledId, now, async (tx, k, w) => {
+        if (w.name === null) return refuse('unnamed', WRIT_UNNAMED);
+        const held = await inventory.holdings(k.id, tx);
+        const have = feedable(held, FILL_ITEM);
+        const preview = fillPreview(writStored(w), now.getTime());
+        if (!preview.ok) return refuse(preview.error, preview.message);
+        if (have === 0) return refuse('insufficient', WRIT_INSUFFICIENT);
+        return feedIn(tx, k, w, FILL_ITEM, Math.min(preview.count, have), now, held);
+      }),
+
     settle: async (kindledId, now) => {
       await db.transaction(async (tx) => {
         const k = await lockKindled(tx, kindledId);
-        if (k) await settleIn(tx, k, now);
+        if (!k) return;
+        const w = await lockWrit(tx, k.id, now);
+        await settleIn(tx, k, w, now);
       });
     },
   };

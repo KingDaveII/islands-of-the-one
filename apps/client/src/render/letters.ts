@@ -132,3 +132,44 @@ export function drawLetters(
   }
   return r;
 }
+
+/** What `plotLetters` draws into: a Phaser Graphics (fillStyle + fillRect), typed without Phaser so node tests can pass a stub. */
+export interface LetterGraphics {
+  fillStyle(color: number, alpha?: number): unknown;
+  fillRect(x: number, y: number, w: number, h: number): unknown;
+}
+
+/**
+ * `drawLetters` for a Phaser Graphics on the UI camera (the HUD, the Writ
+ * panel, the Name screen's tablet): the same whole-pixel runs in the state
+ * colours, `scale` × `scale` blocks, the text's left edge at (x, y).
+ */
+export function plotLetters(
+  g: LetterGraphics,
+  ink: LetterSheet,
+  text: string,
+  x: number,
+  y: number,
+  options: LetterOptions & { scale?: number } = {},
+): LetterRaster {
+  const r = rasterize(ink, text, options);
+  const s = options.scale ?? 1;
+  const x0 = Math.round(x);
+  const y0 = Math.round(y);
+  for (const [i, state] of LETTER_STATES.entries()) {
+    g.fillStyle(STATE_COLOR[state], 1);
+    for (let row = 0; row < r.height; row++) {
+      for (let col = 0; col < r.width; ) {
+        if (r.px[row * r.width + col] !== i + 1) {
+          col++;
+          continue;
+        }
+        let end = col;
+        while (end < r.width && r.px[row * r.width + end] === i + 1) end++;
+        g.fillRect(x0 + col * s, y0 + row * s, (end - col) * s, s);
+        col = end;
+      }
+    }
+  }
+  return r;
+}

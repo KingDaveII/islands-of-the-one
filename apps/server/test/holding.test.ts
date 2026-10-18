@@ -2,9 +2,15 @@ import {
   ApiRoute,
   HOLDING_LAYOUT_ID,
   isHoldingResponse,
+  NAME_NOT_DRAWABLE,
+  NAME_REFUSED,
+  pressedWrit,
   OFFLINE_CAP_MS,
   SESSION_COOKIE,
   skillProgress,
+  toWritView,
+  WRIT_TOO_MUCH_EVER,
+  WRIT_TOO_MUCH_NOW,
   type HoldingResponse,
 } from '@iot/shared';
 import { eq } from 'drizzle-orm';
@@ -12,8 +18,24 @@ import type { InjectOptions, LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp, type App } from '../src/app.js';
 import { createDb, type DbHandle } from '../src/db/client.js';
-import { accounts, holdingActivity, kindled, skillXp } from '../src/db/schema.js';
-import { createHolding, fitsInStore, moveAway, parseAwayArgs, settleMath, settleRef, type Holding } from '../src/holding/index.js';
+import { accounts, holdingActivity, kindled, skillXp, writs } from '../src/db/schema.js';
+import {
+  createHolding,
+  feedChanges,
+  fitsInStore,
+  moveAway,
+  offlineHorizonMs,
+  ONLINE_GRACE_MS,
+  parseAwayArgs,
+  parseWritSetArgs,
+  settleMath,
+  settleRef,
+  setWrit,
+  WRIT_ALREADY_NAMED,
+  WRIT_INSUFFICIENT,
+  WRIT_UNNAMED,
+  type Holding,
+} from '../src/holding/index.js';
 import { createInventory, type Inventory } from '../src/inventory/index.js';
 
 /**
@@ -64,10 +86,25 @@ afterAll(async () => {
   await handle.close();
 });
 
-describe('migration 0004', () => {
-  it('creates holding_activity and skill_xp, empty', async () => {
+describe('migrations 0004 and 0005', () => {
+  it('create holding_activity, skill_xp and writs, empty', async () => {
     await expect(handle.db.select().from(holdingActivity).limit(1)).resolves.toEqual([]);
     await expect(handle.db.select().from(skillXp).limit(1)).resolves.toEqual([]);
+    await expect(handle.db.select().from(writs).limit(1)).resolves.toEqual([]);
+  });
+
+  it('an existing Kindled gets its Writ pressed on its first holding request: two days of charge', async () => {
+    const k = await newKindled();
+    await expect(handle.db.select().from(writs).where(eq(writs.kindledId, k))).resolves.toEqual([]);
+    const r = value(await holding.view(k, at(0)));
+    expect(r.writ).toEqual(toWritView(pressedWrit(T0), T0));
+    expect(r.writ).toMatchObject({ state: 'lit', words: 'about two days', emptyAt: at(48 * HOUR).toISOString() });
+    const [row] = await handle.db.select().from(writs).where(eq(writs.kindledId, k));
+    expect(row).toMatchObject({ kindledId: k, name: null, letters: null, certified: false, emptyAt: at(48 * HOUR), lines: 1, createdAt: at(0) });
+    // Once only: the next request finds it, draining from the pressing; never fed, it goes dark after two days.
+    expect(value(await holding.view(k, at(30 * HOUR))).writ.state).toBe('flickering');
+    expect(value(await holding.view(k, at(49 * HOUR))).writ).toMatchObject({ state: 'dark', emptyAt: at(48 * HOUR).toISOString() });
+    await expect(handle.db.select().from(writs).where(eq(writs.kindledId, k))).resolves.toHaveLength(1);
   });
 });
 
@@ -86,6 +123,7 @@ describe('the settle', () => {
         mining: { xp: 0, level: 1, into: 0, toNext: 40 },
         farming: { xp: 0, level: 1, into: 0, toNext: 40 },
       },
+      writ: toWritView(pressedWrit(T0), T0),
     });
   });
 
@@ -114,7 +152,9 @@ describe('the settle', () => {
   });
 
   it('pays exactly 48 h away in full, and restarts the clock after 60 h so the lost 12 h are never paid', async () => {
-    const k = await newKindled();
+    // A Writ lit for the whole test: a pressed one would go dark at 48 h and stop the offline earning.
+    const k = await newKindled('capone');
+    await setWrit(handle.db, { username: 'capone', chargeHours: 1000 }, at(0));
     await holding.work(k, 'stone-outcrop', at(0));
     const cap = value(await holding.view(k, at(OFFLINE_CAP_MS)));
     expect(basket(cap, 'stone-outcrop', 'black-stone')).toBe(OFFLINE_CAP_MS / 6000);
@@ -231,6 +271,208 @@ describe('the away hook', () => {
   });
 });
 
+describe('the settle and the Writ', () => {
+  it('the horizon: the full cap while lit or flickering; until the dark moment otherwise, never under the online grace', () => {
+    const lit = { ...pressedWrit(T0), name: 'Ash', letters: 'אש' };
+    expect(offlineHorizonMs(lit, at(0), at(10 * HOUR))).toBe(OFFLINE_CAP_MS);
+    expect(offlineHorizonMs({ ...lit, emptyAt: T0 + 100 * HOUR }, at(0), at(10 * HOUR))).toBe(OFFLINE_CAP_MS);
+    expect(offlineHorizonMs({ ...lit, emptyAt: T0 + 100 * HOUR }, at(0), at(90 * HOUR))).toBe(OFFLINE_CAP_MS); // flickering
+    // Dark at now, lit at the last heartbeat: until it went dark.
+    expect(offlineHorizonMs({ ...lit, emptyAt: T0 + 10 * HOUR }, at(0), at(20 * HOUR))).toBe(10 * HOUR);
+    expect(offlineHorizonMs({ ...lit, emptyAt: T0 + 60 * HOUR }, at(0), at(70 * HOUR))).toBe(OFFLINE_CAP_MS);
+    // Dark the whole stretch: the online grace, so hands still work online.
+    expect(offlineHorizonMs({ ...lit, emptyAt: T0 - 10 * HOUR }, at(0), at(20 * HOUR))).toBe(ONLINE_GRACE_MS);
+    expect(offlineHorizonMs({ ...lit, emptyAt: T0 + 10_000 }, at(0), at(20 * HOUR))).toBe(ONLINE_GRACE_MS);
+  });
+
+  it('a stretch crossing the dark moment: paid up to emptyAt, nothing after while away, paid again for heartbeat-covered online time', async () => {
+    const k = await newKindled('darkone');
+    await holding.view(k, at(0));
+    await holding.name(k, 'Ash', at(0));
+    // Pressed at 0: empty at 48 h.
+    expect(value(await holding.view(k, at(0))).writ).toMatchObject({ state: 'lit', emptyAt: at(48 * HOUR).toISOString(), words: 'about two days' });
+    await holding.work(k, 'twisted-trees', at(0));
+    // Away 60 h: the Writ went dark at 48 h, so only 48 h of cycles pay (the cap would have paid the same here)...
+    const away = value(await holding.view(k, at(60 * HOUR)));
+    expect(basket(away, 'twisted-trees', 'twisted-log')).toBe((48 * HOUR) / 4000);
+    expect(away.writ.state).toBe('dark');
+    expect(away.activity?.startedAt).toBe(at(60 * HOUR).toISOString());
+    // ...and a shorter stretch shows the dark moment itself: lit for 10 h of a 30 h absence pays 10 h.
+    const k2 = await newKindled('darktwo');
+    await holding.view(k2, at(0));
+    await holding.name(k2, 'Tide', at(0));
+    await holding.work(k2, 'twisted-trees', at(38 * HOUR));
+    const crossed = value(await holding.view(k2, at(68 * HOUR)));
+    expect(basket(crossed, 'twisted-trees', 'twisted-log')).toBe((10 * HOUR) / 4000);
+    expect(crossed.writ).toMatchObject({ state: 'dark', darkSince: at(48 * HOUR).toISOString() });
+    // Nothing more while away and dark: the clock restarted at the last request, and a dark stretch earns only
+    // the online grace past its heartbeat (60 s, fifteen cycles), never the twelve hours...
+    const still = value(await holding.view(k2, at(80 * HOUR)));
+    expect(basket(still, 'twisted-trees', 'twisted-log')).toBe((10 * HOUR) / 4000 + 15);
+    // ...but heartbeat-covered online time pays at full rate: 30 s later, seven more cycles.
+    const online = value(await holding.view(k2, at(80 * HOUR + 30_000)));
+    expect(basket(online, 'twisted-trees', 'twisted-log')).toBe((10 * HOUR) / 4000 + 15 + 7);
+    expect(online.skills.woodcutting.xp).toBe(((10 * HOUR) / 4000 + 15 + 7) * 4);
+    // Fading, the same: hands work online (the grace, then every heartbeat), nothing unattended.
+    const fading = value(await holding.view(k2, at(200 * HOUR)));
+    expect(fading.writ.state).toBe('fading');
+    expect(basket(fading, 'twisted-trees', 'twisted-log')).toBe((10 * HOUR) / 4000 + 15 + 7 + 15);
+    expect(basket(value(await holding.view(k2, at(200 * HOUR + 4000))), 'twisted-trees', 'twisted-log')).toBe((10 * HOUR) / 4000 + 15 + 7 + 15 + 1);
+  });
+});
+
+describe('naming the island', () => {
+  it('accepts a typed Name, hears its letters on the server, and refuses a second naming', async () => {
+    const k = await newKindled();
+    const r = value(await holding.name(k, 'Black Rock', at(0)));
+    expect(r.writ).toMatchObject({ name: 'Black Rock', letters: 'בלק רוק', state: 'lit', certified: false, emptyAt: at(48 * HOUR).toISOString(), lineCount: 1 });
+    const [row] = await handle.db.select().from(writs).where(eq(writs.kindledId, k));
+    expect(row).toMatchObject({ name: 'Black Rock', letters: 'בלק רוק' });
+    expect(await holding.name(k, 'Ash', at(1))).toEqual({ ok: false, error: 'already-named', message: WRIT_ALREADY_NAMED });
+    expect(value(await holding.view(k, at(2))).writ.name).toBe('Black Rock');
+  });
+
+  it('refuses by the typed text, by the letters, and keeps the not-drawable line; a refusal changes nothing', async () => {
+    const k = await newKindled();
+    expect(await holding.name(k, 'A', at(0))).toEqual({ ok: false, error: 'name-refused', message: NAME_REFUSED });
+    expect(await holding.name(k, 'adni', at(0))).toEqual({ ok: false, error: 'name-refused', message: NAME_REFUSED });
+    expect(await holding.name(k, 'אמת', at(0))).toEqual({ ok: false, error: 'name-refused', message: NAME_NOT_DRAWABLE });
+    expect(await holding.name(k, 42, at(0))).toMatchObject({ ok: false, error: 'name-refused' });
+    expect(value(await holding.view(k, at(0))).writ.name).toBeNull();
+  });
+});
+
+describe('feeding the Writ', () => {
+  /** A named Kindled whose Writ was pressed at 0 (empty at 48 h). */
+  async function namedKindled(username?: string): Promise<string> {
+    const k = await newKindled(username);
+    await holding.name(k, 'Ash', at(0));
+    return k;
+  }
+
+  it('waits for the Name', async () => {
+    const k = await newKindled();
+    await inv.apply([{ kindledId: k, itemId: 'wild-sliver', place: 'store', delta: 1 }], 'admin');
+    expect(await holding.feed(k, 'wild-sliver', 1, at(0))).toEqual({ ok: false, error: 'unnamed', message: WRIT_UNNAMED });
+    expect(await inv.view(k)).toMatchObject({ store: [{ itemId: 'wild-sliver', quantity: 1 }] });
+  });
+
+  it('takes from the store first, then the pack, writes the ledger and empty_at; every refusal changes nothing', async () => {
+    const k = await namedKindled();
+    await inv.apply(
+      [
+        { kindledId: k, itemId: 'wild-sliver', place: 'store', delta: 1 },
+        { kindledId: k, itemId: 'wild-sliver', place: 'pack', delta: 2 },
+        { kindledId: k, itemId: 'twisted-log', place: 'store', delta: 5 },
+      ],
+      'admin',
+    );
+    expect(await holding.feed(k, 'twisted-log', 1, at(0))).toEqual({ ok: false, error: 'not-sparkglass', message: 'The Writ only takes Sparkglass.' });
+    expect(await holding.feed(k, 'deep-glass', 1, at(0))).toEqual({ ok: false, error: 'too-much', message: WRIT_TOO_MUCH_EVER });
+    // A humming glass fits only an empty Writ; this one holds its pressed two days.
+    expect(await holding.feed(k, 'glass-chip', 1, at(0))).toEqual({ ok: false, error: 'too-much', message: WRIT_TOO_MUCH_NOW });
+    expect(await holding.feed(k, 'wild-sliver', 3, at(0))).toEqual({ ok: false, error: 'too-much', message: WRIT_TOO_MUCH_NOW });
+    expect(await inv.ledger(k)).toHaveLength(3);
+    // Two slivers: one from the store, one from the pack, as one change set; 48 + 96 = 144 h.
+    const fed = value(await holding.feed(k, 'wild-sliver', 2, at(0)));
+    expect(fed.writ).toMatchObject({ state: 'lit', emptyAt: at(144 * HOUR).toISOString(), chargeMs: 144 * HOUR, words: 'about six days' });
+    expect(await inv.view(k)).toMatchObject({ store: [{ itemId: 'twisted-log', quantity: 5 }], pack: [{ itemId: 'wild-sliver', quantity: 1 }] });
+    const feeds = (await inv.ledger(k)).filter((e) => e.reason === 'feed-writ');
+    expect(feeds.map((e) => [e.itemId, e.place, e.delta, e.balanceAfter])).toEqual([
+      ['wild-sliver', 'store', -1, 0],
+      ['wild-sliver', 'pack', -1, 1],
+    ]);
+    // Full now: "Full.", and the ledger unchanged.
+    expect(await holding.feed(k, 'wild-sliver', 1, at(1 * HOUR))).toEqual({ ok: false, error: 'full', message: 'Full.' });
+    expect(await holding.fill(k, at(1 * HOUR))).toEqual({ ok: false, error: 'full', message: 'Full.' });
+    expect((await inv.ledger(k)).filter((e) => e.reason === 'feed-writ')).toHaveLength(2);
+    // Two hours under full a sliver still doesn't fit: full, nothing taken.
+    expect(await holding.feed(k, 'wild-sliver', 1, at(2 * HOUR))).toEqual({ ok: false, error: 'full', message: 'Full.' });
+    // Not enough across both places (one sliver left in the pack): refused, nothing taken.
+    expect(await holding.feed(k, 'wild-sliver', 2, at(100 * HOUR))).toEqual({ ok: false, error: 'insufficient', message: WRIT_INSUFFICIENT });
+    expect(await inv.view(k)).toMatchObject({ pack: [{ itemId: 'wild-sliver', quantity: 1 }] });
+    // Currency comes from the purse: 44 h left at 100 h, plus 48.
+    await inv.apply([{ kindledId: k, itemId: 'sealed-gin', place: 'purse', delta: 2 }], 'admin');
+    expect(value(await holding.feed(k, 'sealed-gin', 1, at(100 * HOUR))).writ).toMatchObject({ emptyAt: at(192 * HOUR).toISOString() });
+    expect(await inv.view(k)).toMatchObject({ purse: [{ itemId: 'sealed-gin', quantity: 1 }] });
+    expect((await inv.ledger(k)).filter((e) => e.reason === 'feed-writ')).toHaveLength(3);
+    expect(feedChanges(k, [{ itemId: 'wild-sliver', place: 'store', quantity: 1 }, { itemId: 'wild-sliver', place: 'pack', quantity: 2 }], 'wild-sliver', 2)).toEqual([
+      { kindledId: k, itemId: 'wild-sliver', place: 'store', delta: -1 },
+      { kindledId: k, itemId: 'wild-sliver', place: 'pack', delta: -1 },
+    ]);
+    expect(feedChanges(k, [], 'wild-sliver', 1)).toBeNull();
+  });
+
+  it('Fill feeds as many wild slivers as fit of what the Kindled holds, never gin', async () => {
+    const k = await namedKindled();
+    // Unnamed first: Fill waits for the Name too.
+    const unnamed = await newKindled();
+    expect(await holding.fill(unnamed, at(0))).toEqual({ ok: false, error: 'unnamed', message: WRIT_UNNAMED });
+    // Pressed to 48 h, two more fit; only one in the pack, and gin in the purse that Fill never touches.
+    await inv.apply(
+      [
+        { kindledId: k, itemId: 'wild-sliver', place: 'pack', delta: 1 },
+        { kindledId: k, itemId: 'sealed-gin', place: 'purse', delta: 5 },
+      ],
+      'admin',
+    );
+    expect(value(await holding.fill(k, at(0))).writ).toMatchObject({ emptyAt: at(96 * HOUR).toISOString() });
+    expect(await inv.view(k)).toMatchObject({ pack: [], purse: [{ itemId: 'sealed-gin', quantity: 5 }] });
+    expect(await holding.fill(k, at(0))).toEqual({ ok: false, error: 'insufficient', message: WRIT_INSUFFICIENT });
+    await inv.apply([{ kindledId: k, itemId: 'wild-sliver', place: 'store', delta: 5 }], 'admin');
+    expect(value(await holding.fill(k, at(0))).writ).toMatchObject({ emptyAt: at(144 * HOUR).toISOString() });
+    expect(await inv.view(k)).toMatchObject({ store: [{ itemId: 'wild-sliver', quantity: 4 }], purse: [{ itemId: 'sealed-gin', quantity: 5 }] });
+    expect(await holding.fill(k, at(0))).toEqual({ ok: false, error: 'full', message: 'Full.' });
+    // At 100 h (44 h left) two more slivers fit (140 h), one at a time.
+    expect(value(await holding.fill(k, at(100 * HOUR))).writ).toMatchObject({ emptyAt: at(240 * HOUR).toISOString() });
+    expect(await inv.view(k)).toMatchObject({ store: [{ itemId: 'wild-sliver', quantity: 2 }] });
+  });
+
+  it('relights a dark Writ from now, and the lines come back', async () => {
+    const k = await namedKindled();
+    await inv.apply([{ kindledId: k, itemId: 'wild-sliver', place: 'store', delta: 2 }], 'admin');
+    const dark = value(await holding.view(k, at(60 * HOUR)));
+    expect(dark.writ).toMatchObject({ state: 'dark', darkSince: at(48 * HOUR).toISOString(), lines: [{ line: 1, plots: 4, state: 'dark' }] });
+    const relit = value(await holding.feed(k, 'wild-sliver', 1, at(60 * HOUR)));
+    expect(relit.writ).toMatchObject({ state: 'lit', emptyAt: at(108 * HOUR).toISOString(), darkSince: null, lines: [{ line: 1, state: 'lit' }] });
+    // Fading too (past the grace): from now.
+    const faded = value(await holding.view(k, at(300 * HOUR)));
+    expect(faded.writ).toMatchObject({ state: 'fading', lines: [{ line: 1, state: 'faded' }] });
+    await inv.apply([{ kindledId: k, itemId: 'glass-chip', place: 'store', delta: 1 }], 'admin');
+    expect(value(await holding.feed(k, 'glass-chip', 1, at(300 * HOUR))).writ).toMatchObject({ state: 'lit', emptyAt: at(444 * HOUR).toISOString(), words: 'about six days' });
+  });
+});
+
+describe('the Writ hook (writ:set)', () => {
+  it('parses its options', () => {
+    expect(parseWritSetArgs(['writone', '--charge-hours', '10'])).toEqual({ ok: true, args: { username: 'writone', chargeHours: 10 } });
+    expect(parseWritSetArgs(['writone', '--dark-hours', '5', '--certified', 'on'])).toEqual({ ok: true, args: { username: 'writone', darkHours: 5, certified: true } });
+    expect(parseWritSetArgs(['writone', '--certified', 'off'])).toEqual({ ok: true, args: { username: 'writone', certified: false } });
+    for (const bad of [[], ['writone'], ['writone', '--charge-hours'], ['writone', '--charge-hours', '-1'], ['writone', '--certified', 'yes'], ['writone', '--charge-hours', '1', '--dark-hours', '1'], ['writone', '--what', '1'], ['!!', '--charge-hours', '1']])
+      expect(parseWritSetArgs(bad), bad.join(' ')).toMatchObject({ ok: false });
+  });
+
+  it('sets the charge, the dark time and the certification, creating the row when there is none', async () => {
+    const k = await newKindled('writone');
+    expect(await setWrit(handle.db, { username: 'nobody', chargeHours: 1 }, at(0))).toEqual({ ok: false, message: 'no Kindled for username nobody' });
+    const pressed = await setWrit(handle.db, { username: 'writone', certified: true }, at(0));
+    expect(pressed).toMatchObject({ ok: true, writ: { kindledId: k, emptyAt: at(48 * HOUR), certified: true, name: null } });
+    const lit = await setWrit(handle.db, { username: 'writone', chargeHours: 100, certified: false }, at(0));
+    expect(lit).toMatchObject({ ok: true, writ: { kindledId: k, emptyAt: at(100 * HOUR), certified: false, name: null } });
+    expect(value(await holding.view(k, at(0))).writ).toMatchObject({ state: 'lit', chargeMs: 100 * HOUR });
+    await setWrit(handle.db, { username: 'writone', chargeHours: 10 }, at(0));
+    expect(value(await holding.view(k, at(0))).writ.state).toBe('flickering');
+    await setWrit(handle.db, { username: 'writone', darkHours: 10, certified: true }, at(0));
+    expect(value(await holding.view(k, at(0))).writ).toMatchObject({ state: 'dark', certified: true, darkSince: at(-10 * HOUR).toISOString() });
+    await setWrit(handle.db, { username: 'writone', darkHours: 50 }, at(0));
+    expect(value(await holding.view(k, at(0))).writ).toMatchObject({ state: 'fading', certified: true });
+    // The Name is untouched.
+    await holding.name(k, 'Ash', at(0));
+    await setWrit(handle.db, { username: 'writone', certified: false }, at(0));
+    expect(value(await holding.view(k, at(0))).writ).toMatchObject({ name: 'Ash', certified: false, state: 'fading' });
+  });
+});
+
 describe('the holding API', () => {
   let app: App;
   const clock = { t: T0 };
@@ -277,7 +519,7 @@ describe('the holding API', () => {
     expect(body).toMatchObject({ layoutId: HOLDING_LAYOUT_ID, activity: null, now: new Date(clock.t).toISOString() });
     expect((await call(ApiRoute.Holding, { method: 'GET', auth: '' })).statusCode).toBe(401);
     expect((await call(ApiRoute.Holding, { method: 'GET', auth: noKindled })).json()).toMatchObject({ error: 'no-kindled' });
-    for (const route of [ApiRoute.HoldingWork, ApiRoute.HoldingStop, ApiRoute.HoldingTake]) {
+    for (const route of [ApiRoute.HoldingWork, ApiRoute.HoldingStop, ApiRoute.HoldingTake, ApiRoute.WritName, ApiRoute.WritFeed]) {
       expect((await call(route, { body: { stationId: 'twisted-trees' }, auth: '' })).statusCode).toBe(401);
       expect((await call(route, { body: { stationId: 'twisted-trees' }, auth: noKindled })).statusCode).toBe(404);
     }
@@ -323,5 +565,43 @@ describe('the holding API', () => {
     expect(stop.statusCode).toBe(200);
     expect(stop.json<HoldingResponse>().activity).toBeNull();
     expect(stop.json<HoldingResponse>().skills.woodcutting.xp).toBe(12);
+  });
+
+  it('names the island and feeds the Writ through the routes, with their guards and error codes', async () => {
+    expect((await call(ApiRoute.WritName, { body: { name: 'Ash', extra: 1 } })).json()).toMatchObject({ error: 'bad-request' });
+    expect((await call(ApiRoute.WritName, { body: {} })).statusCode).toBe(400);
+    expect((await call(ApiRoute.WritName, { body: { name: 'A' } })).json()).toEqual({ error: 'name-refused', message: NAME_REFUSED });
+    expect((await call(ApiRoute.WritName, { body: { name: 'אמת' } })).json()).toEqual({ error: 'name-refused', message: NAME_NOT_DRAWABLE });
+    // Feeding waits for the Name.
+    expect((await call(ApiRoute.WritFeed, { body: { itemId: 'wild-sliver', count: 1 } })).json()).toEqual({ error: 'unnamed', message: WRIT_UNNAMED });
+    const named = await call(ApiRoute.WritName, { body: { name: 'Black Rock' } });
+    expect(named.statusCode).toBe(200);
+    const body = named.json<HoldingResponse>();
+    expect(isHoldingResponse(body)).toBe(true);
+    expect(body.writ).toMatchObject({ name: 'Black Rock', letters: 'בלק רוק', state: 'lit' });
+    expect((await call(ApiRoute.WritName, { body: { name: 'Ash' } })).json()).toEqual({ error: 'already-named', message: WRIT_ALREADY_NAMED });
+    // The feed's guards: counts are positive integers, fill is true, nothing else.
+    for (const bad of [{ itemId: 'wild-sliver' }, { itemId: 'wild-sliver', count: 0 }, { itemId: 'wild-sliver', count: 1.5 }, { fill: false }, { itemId: 'wild-sliver', fill: true }, { itemId: 'wild-sliver', count: 1, fill: true }, { itemId: 'wild-sliver', count: 1, extra: 1 }])
+      expect((await call(ApiRoute.WritFeed, { body: bad })).json(), JSON.stringify(bad)).toMatchObject({ error: 'bad-request' });
+    expect((await call(ApiRoute.WritFeed, { body: { itemId: 'twisted-log', count: 1 } })).json()).toMatchObject({ error: 'not-sparkglass' });
+    expect((await call(ApiRoute.WritFeed, { body: { itemId: 'wild-sliver', count: 1 } })).json()).toEqual({ error: 'insufficient', message: WRIT_INSUFFICIENT });
+    const [k] = await handle.db.select({ id: kindled.id }).from(kindled).innerJoin(accounts, eq(kindled.accountId, accounts.id)).where(eq(accounts.username, 'apiholder'));
+    if (!k) throw new Error('no api Kindled');
+    await inv.apply([{ kindledId: k.id, itemId: 'wild-sliver', place: 'store', delta: 4 }, { kindledId: k.id, itemId: 'deep-glass', place: 'store', delta: 1 }], 'admin');
+    // The Writ was pressed when the first holding request ran, at T0; the clock is 13 s on.
+    const pressedAt = T0;
+    const fed = await call(ApiRoute.WritFeed, { body: { itemId: 'wild-sliver', count: 1 } });
+    expect(fed.statusCode).toBe(200);
+    expect(fed.json<HoldingResponse>().writ).toMatchObject({ state: 'lit', emptyAt: new Date(pressedAt + 96 * HOUR).toISOString(), words: 'about four days' });
+    expect((await call(ApiRoute.WritFeed, { body: { itemId: 'deep-glass', count: 1 } })).json()).toEqual({ error: 'too-much', message: WRIT_TOO_MUCH_EVER });
+    expect((await call(ApiRoute.WritFeed, { body: { itemId: 'wild-sliver', count: 2 } })).json()).toEqual({ error: 'too-much', message: WRIT_TOO_MUCH_NOW });
+    const filled = await call(ApiRoute.WritFeed, { body: { fill: true } });
+    expect(filled.json<HoldingResponse>().writ).toMatchObject({ emptyAt: new Date(pressedAt + 144 * HOUR).toISOString(), words: 'about six days' });
+    expect((await call(ApiRoute.WritFeed, { body: { itemId: 'wild-sliver', count: 1 } })).json()).toEqual({ error: 'full', message: 'Full.' });
+    expect((await call(ApiRoute.WritFeed, { body: { itemId: 'wild-sliver', count: 1 } })).statusCode).toBe(409);
+    expect((await call(ApiRoute.WritFeed, { body: { fill: true } })).statusCode).toBe(409);
+    expect((await call(ApiRoute.Inventory, { method: 'GET' })).json()).toMatchObject({
+      store: expect.arrayContaining([{ itemId: 'wild-sliver', quantity: 2 }, { itemId: 'deep-glass', quantity: 1 }]) as unknown,
+    });
   });
 });

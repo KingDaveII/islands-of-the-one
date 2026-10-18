@@ -3,6 +3,7 @@ import { isHoldingStationId } from './holding.js';
 import { isPlace, isStationId, type Place } from './places.js';
 import { isSkill, type Skill } from './skills.js';
 import type { ClayTone } from './sprites.js';
+import { WRIT_LINE_STATES, WRIT_STATES, type WritLineState, type WritState } from './writ.js';
 
 /**
  * The HTTP JSON API (docs/design/accounts.md): routes, request and response
@@ -23,6 +24,8 @@ export const ApiRoute = {
   HoldingWork: '/api/holding/work',
   HoldingStop: '/api/holding/stop',
   HoldingTake: '/api/holding/take',
+  WritName: '/api/writ/name',
+  WritFeed: '/api/writ/feed',
 } as const;
 export type ApiRoute = (typeof ApiRoute)[keyof typeof ApiRoute];
 
@@ -65,6 +68,12 @@ export const ApiErrorCode = {
   // The holding (docs/design/holding.md).
   UnknownStation: 'unknown-station',
   NoAction: 'no-action',
+  // The Writ (docs/design/holding.md "The Writ").
+  AlreadyNamed: 'already-named',
+  Unnamed: 'unnamed',
+  NotSparkglass: 'not-sparkglass',
+  Full: 'full',
+  TooMuch: 'too-much',
 } as const;
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
 
@@ -179,12 +188,42 @@ export interface HoldingTake {
   left: InventoryEntry[];
 }
 
+/** One Writ line on the wire: its number (1 is the Name's), the plots it tethers, its state and when it fades (ISO 8601). */
+export interface WritLineView {
+  line: number;
+  plots: number;
+  state: WritLineState;
+  fadesAt: string;
+}
+
 /**
- * GET /api/holding, and the answer to work, stop and take: the layout, every
- * station's basket (by station id, every station listed), the active action
- * or null, the server's clock and the skills. The server settles the action
- * before answering, so the counts are true as of `now`. A take-all answer
- * adds `take`.
+ * The Writ as GET /api/holding answers it (docs/design/holding.md "The
+ * Writ"): the stored state (the island's Name as typed and its letters, null
+ * until named; `certified`; `emptyAt`, set at the pressing; the line count) and what `writView` derives from it at the server's `now` (the
+ * state, the charge in ms and in words, when it went dark, when the grace
+ * ends, the lines). Times are ISO 8601. The client redraws from this and
+ * re-derives between heartbeats with the same function.
+ */
+export interface WritView {
+  name: string | null;
+  letters: string | null;
+  certified: boolean;
+  emptyAt: string;
+  lineCount: number;
+  state: WritState;
+  chargeMs: number;
+  words: string;
+  darkSince: string | null;
+  graceEndsAt: string;
+  lines: WritLineView[];
+}
+
+/**
+ * GET /api/holding, and the answer to work, stop, take, name and feed: the
+ * layout, every station's basket (by station id, every station listed), the
+ * active action or null, the server's clock, the skills and the Writ. The
+ * server settles the action before answering, so the counts are true as of
+ * `now`. A take-all answer adds `take`.
  */
 export interface HoldingResponse {
   layoutId: string;
@@ -192,8 +231,23 @@ export interface HoldingResponse {
   activity: HoldingActivity | null;
   now: string;
   skills: Record<Skill, SkillView>;
+  writ: WritView;
   take?: HoldingTake;
 }
+
+/** POST /api/writ/name: the island's Name as typed; the server hears its letters. Once only in M2 (`already-named` after). */
+export interface WritNameRequest {
+  name: string;
+}
+
+/**
+ * POST /api/writ/feed: feed `count` of a Sparkglass item (data/writ.json
+ * `feeds`), or `fill: true` for as many wild slivers as fit (never gin), from
+ * the store first, then the pack. Answers the holding, or `unnamed`,
+ * `not-sparkglass`, `insufficient`, `full` ("Full.") or `too-much` (the
+ * piece doesn't fit).
+ */
+export type WritFeedRequest = { itemId: string; count: number } | { fill: true };
 
 /** POST /api/holding/work and /take: the station, by id (stations.json). */
 export interface HoldingStationRequest {
@@ -331,10 +385,60 @@ export function isHoldingTake(value: unknown): value is HoldingTake {
   );
 }
 
+const isIsoOrNull = (value: unknown): value is string | null => value === null || isIsoDate(value);
+const isWritState = (value: unknown): value is WritState =>
+  typeof value === 'string' && (WRIT_STATES as readonly string[]).includes(value);
+const isWritLineState = (value: unknown): value is WritLineState =>
+  typeof value === 'string' && (WRIT_LINE_STATES as readonly string[]).includes(value);
+
+export function isWritLineView(value: unknown): value is WritLineView {
+  return (
+    isObject(value) &&
+    hasOnly(value, ['line', 'plots', 'state', 'fadesAt']) &&
+    isPositiveInt(value.line) &&
+    isNonNegativeInt(value.plots) &&
+    isWritLineState(value.state) &&
+    isIsoDate(value.fadesAt)
+  );
+}
+
+export function isWritView(value: unknown): value is WritView {
+  return (
+    isObject(value) &&
+    hasOnly(value, [
+      'name',
+      'letters',
+      'certified',
+      'emptyAt',
+      'lineCount',
+      'state',
+      'chargeMs',
+      'words',
+      'darkSince',
+      'graceEndsAt',
+      'lines',
+    ]) &&
+    (value.name === null || typeof value.name === 'string') &&
+    (value.letters === null || typeof value.letters === 'string') &&
+    (value.name === null) === (value.letters === null) &&
+    typeof value.certified === 'boolean' &&
+    isIsoDate(value.emptyAt) &&
+    isPositiveInt(value.lineCount) &&
+    isWritState(value.state) &&
+    isNonNegativeInt(value.chargeMs) &&
+    typeof value.words === 'string' &&
+    isIsoOrNull(value.darkSince) &&
+    isIsoDate(value.graceEndsAt) &&
+    Array.isArray(value.lines) &&
+    value.lines.length === value.lineCount &&
+    value.lines.every(isWritLineView)
+  );
+}
+
 export function isHoldingResponse(value: unknown): value is HoldingResponse {
   return (
     isObject(value) &&
-    hasOnly(value, ['layoutId', 'baskets', 'activity', 'now', 'skills', 'take']) &&
+    hasOnly(value, ['layoutId', 'baskets', 'activity', 'now', 'skills', 'writ', 'take']) &&
     typeof value.layoutId === 'string' &&
     isObject(value.baskets) &&
     Object.entries(value.baskets).every(([k, v]) => isHoldingStationId(k) && isEntryList(v)) &&
@@ -342,8 +446,21 @@ export function isHoldingResponse(value: unknown): value is HoldingResponse {
     isIsoDate(value.now) &&
     isObject(value.skills) &&
     Object.entries(value.skills).every(([k, v]) => isSkill(k) && isSkillView(v)) &&
+    isWritView(value.writ) &&
     (value.take === undefined || isHoldingTake(value.take))
   );
+}
+
+export function isWritNameRequest(value: unknown): value is WritNameRequest {
+  return isObject(value) && hasOnly(value, ['name']) && typeof value.name === 'string';
+}
+
+/** Shape only: the item and the Writ's room are judged by the route. Counts are positive integers; nothing is clamped. */
+export function isWritFeedRequest(value: unknown): value is WritFeedRequest {
+  if (!isObject(value)) return false;
+  if (hasOnly(value, ['itemId', 'count'])) return typeof value.itemId === 'string' && isPositiveInt(value.count);
+  if (hasOnly(value, ['fill'])) return value.fill === true;
+  return false;
 }
 
 const ERROR_CODES = new Set<string>(Object.values(ApiErrorCode));

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { bigint, index, integer, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { bigint, boolean, index, integer, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 /**
  * Retired: no code reads or writes this table any more (accounts and kindled
@@ -97,8 +97,31 @@ export const skillXp = pgTable(
   (t) => [primaryKey({ columns: [t.kindledId, t.skill] })],
 );
 
+/**
+ * The Writ (docs/design/holding.md "The Writ", M2 Task 4a): one per Kindled,
+ * created on its first holding request (so existing Kindled get one too),
+ * touched only by the holding module. The island's Name as typed and its
+ * letters (hearName, computed on the server), null until named; whether the
+ * Writ is certified (nobody can be in M2); when its charge runs out (set at
+ * the pressing, pressChargeHours ahead); how many lines it has (1 in M2).
+ * Everything else is derived by writView at request time; nothing ticks in
+ * the background.
+ */
+export const writs = pgTable('writs', {
+  kindledId: uuid('kindled_id')
+    .primaryKey()
+    .references(() => kindled.id, { onDelete: 'cascade' }),
+  name: text('name'),
+  letters: text('letters'),
+  certified: boolean('certified').notNull().default(false),
+  emptyAt: timestamp('empty_at', { withTimezone: true }).notNull(),
+  lines: integer('lines').notNull().default(1),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type Account = typeof accounts.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type KindledRow = typeof kindled.$inferSelect;
 export type HoldingActivityRow = typeof holdingActivity.$inferSelect;
 export type SkillXpRow = typeof skillXp.$inferSelect;
+export type WritRow = typeof writs.$inferSelect;

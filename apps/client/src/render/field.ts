@@ -26,6 +26,15 @@ export class FieldFrame {
     return { x: this.x, y: this.y, w: this.w, h: FIELD_H };
   }
 
+  /** The panel's graphics, for a scene that keeps its UI in a layer. */
+  get graphics(): Phaser.GameObjects.Graphics {
+    return this.g;
+  }
+
+  destroy(): void {
+    this.g.destroy();
+  }
+
   /** Redraw when the focus changed; call every frame. */
   update(): void {
     if (this.drawn === this.focused) return;

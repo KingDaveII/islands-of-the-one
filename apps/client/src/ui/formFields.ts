@@ -70,6 +70,8 @@ export interface DomForm {
   input(name: string): HTMLInputElement;
   /** Re-place the inputs over the canvas (call every frame: it only touches the DOM when something moved). */
   layout(canvas: HTMLCanvasElement, map: UiToCss): void;
+  /** Move a field's box (a panel laid out over a view that can move); the next layout places it. */
+  setBox(name: string, box: FieldBox): void;
   /** Submit as a browser would (password managers watch the submit event). */
   submit(): void;
   destroy(): void;
@@ -147,6 +149,12 @@ export function createForm(
         s.fontSize = `${box.fontSize}px`;
         s.lineHeight = `${box.height}px`;
       }
+    },
+    setBox(name, box) {
+      const spec = specs.find((s) => s.name === name);
+      if (!spec) throw new Error(`no input ${name}`);
+      spec.box = box;
+      placed = '';
     },
     submit() {
       form.requestSubmit();

@@ -34,6 +34,8 @@ import {
   type LayoutStation,
   type TilePoint,
   type TileRect,
+  pressedWrit,
+  toWritView,
 } from '../src/index.js';
 
 /**
@@ -413,6 +415,7 @@ describe('the holding API guards', () => {
       mining: { xp: 0, level: 1, into: 0, toNext: 40 },
       farming: { xp: 0, level: 1, into: 0, toNext: 40 },
     },
+    writ: toWritView(pressedWrit(Date.parse('2026-10-17T12:00:00.000Z')), Date.parse('2026-10-17T12:00:13.000Z')),
   };
 
   it('accept the holding answer, with or without a take, and refuse unknown fields, stations and skills', () => {
