@@ -13,6 +13,7 @@ import {
   type InventoryResponse,
   type LayoutStation,
   type SkillView,
+  type SpriteSheet,
   type StationPart,
   type TileRect,
   type TileTemplate,
@@ -242,6 +243,11 @@ export function standsOnGround(template: TileTemplate, rect: TileRect): boolean 
   const row = rect.row + rect.rows - 1;
   for (let c = rect.col; c < rect.col + rect.cols; c++) if (isShoreGround(template, c, row)) return true;
   return false;
+}
+
+/** Whether a prop's sheet plays its `idle` (more than one frame, like the Writ post's pulse) rather than holding `idle_0`. */
+export function propIdlePlays(sheet: Pick<SpriteSheet, 'anims'>): boolean {
+  return (sheet.anims.idle?.frames.length ?? 0) > 1;
 }
 
 /** The pack button's fill: "12/20". */

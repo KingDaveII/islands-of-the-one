@@ -13,6 +13,7 @@ import {
   packFill,
   pluralName,
   propBase,
+  propIdlePlays,
   standsOnGround,
   purseGin,
   serverTime,
@@ -193,5 +194,14 @@ describe('props in the void', () => {
     for (const station of layout.stations)
       for (const part of station.parts) expect([station.id, standsOnGround(template, part.rect)]).toEqual([station.id, true]);
     expect(standsOnGround(template, layout.kesh.rock)).toBe(false);
+  });
+});
+
+describe('prop idles', () => {
+  it('plays an idle of more than one frame (the Writ post pulse) and holds a one-frame one', () => {
+    const anim = (n: number) => ({ anims: { idle: { frames: Array.from({ length: n }, (_, i) => `idle_${i}`), frameRate: 2, repeat: -1 } } });
+    expect(propIdlePlays(anim(2))).toBe(true);
+    expect(propIdlePlays(anim(1))).toBe(false);
+    expect(propIdlePlays({ anims: {} })).toBe(false);
   });
 });
