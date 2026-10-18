@@ -147,9 +147,16 @@ export interface StationLines {
   letters: string | null;
   /** "Level 2" for a plot (1 plus its pieces, M2 Task 6), else null. */
   level: string | null;
-  /** The active action's rate, "1 twisted log every 4 s"; a plot's "By hand: 1 pale grain every 20 s" (GAME DESIGN); null while a field isn't sown. */
+  /**
+   * "By hand: 1 twisted log every 4 s", what working it gives (the pieces never speed the hands); null while working
+   * here (the line becomes `you`, so there are never three rate lines) and while a field isn't sown (GAME DESIGN
+   * 2026-10-18).
+   */
   rate: string | null;
-  /** The basket cycle's rate at its real speed, "6 twisted logs every 2 h"; a plot's "By itself: 1 pale grain every 12 min"; null without one (or not sown). */
+  /**
+   * "By itself: 1 twisted log every 20 min", the basket cycle at its real length (a plot's pieces speed it, M2 Task 6:
+   * "By itself: 1 pale grain every 12 min"); null for a station without one (the outcrop) or not sown.
+   */
   cycle: string | null;
   /** ישן's "+3% for keeping its name" under the cycle's rate, or null. */
   bonus: string | null;
@@ -157,7 +164,7 @@ export interface StationLines {
   basket: string | null;
   /** "Next in 12 min", or "Resting while your Writ is dark."; null without a cycle, faded or not sown. */
   next: string | null;
-  /** "You: 1 twisted log every 4 s" while working here (the item's full name, GAME DESIGN 2026-10-18), else null. */
+  /** "You: 1 twisted log every 4 s" while working here, in place of the By hand line, highlighted (the item's full name, GAME DESIGN 2026-10-18), else null. */
   you: string | null;
   /** "Woodcutting 2 · 1099 XP to next"; null while a field isn't sown. */
   skill: string | null;
@@ -172,12 +179,15 @@ export interface StationLines {
   buttons: StationButton[];
 }
 
+/** The station panel's two rate labels (GAME DESIGN 2026-10-18): the cycle, and what working it gives (the lines live in BUILD_TEXT). */
+export const BY_ITSELF: string = BUILD_TEXT.BY_ITSELF;
+export const BY_HAND: string = BUILD_TEXT.BY_HAND;
+
 export function stationLines(stationId: string, r: HoldingResponse | null, serverMs: number = r ? Date.parse(r.now) : 0): StationLines | null {
   const place = workplaceDef(stationId, r);
   const action = place?.action;
   if (!place || !action) return null;
   const plot = place.plot;
-  const layout = holdingLayout(r?.layoutId);
   const basket = r?.baskets[stationId] ?? [];
   const working = r?.activity?.stationId === stationId;
   const view = r?.skills[action.skill];
@@ -199,11 +209,11 @@ export function stationLines(stationId: string, r: HoldingResponse | null, serve
   const next = place.cycle && clock ? (dark ? PLOT_TEXT.RESTING : nextInLine(clock, serverMs)) : null;
   // A plot's cycle runs at the speed its pieces give (M2 Task 6): the real length, from the clock when it is known.
   const realCycle = place.cycle ? { ...place.cycle, cycleMs: clock?.cycleMs ?? cycleLengthMs(place.cycle, plot?.pieces ?? []) } : null;
-  const cycleLine = realCycle ? cycleRateLine(realCycle, layout, stationId) : null;
+  const cycleLine = realCycle ? cycleRateLine(realCycle) : null;
   return {
     ...base,
-    rate: plot ? `${BUILD_TEXT.BY_HAND}${rate}` : rate,
-    cycle: plot && cycleLine ? `${BUILD_TEXT.BY_ITSELF}${cycleLine}` : cycleLine,
+    rate: working ? null : `${BY_HAND}${rate}`,
+    cycle: cycleLine === null ? null : `${BY_ITSELF}${cycleLine}`,
     bonus: plot && clock ? bonusLine(clock.bonusPermille) : null,
     basket: basketLine,
     next,

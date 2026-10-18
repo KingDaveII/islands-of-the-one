@@ -202,7 +202,8 @@ export async function namePlotIn(
   const ground = lookup(args.ground);
   const virtue = lookup(args.virtue);
   if (ground === 'unknown' || virtue === 'unknown') return refuse('unknown-word', PLOT_TEXT.UNKNOWN_WORD);
-  if ((ground && ground.slot !== 'ground') || (virtue && virtue.slot !== 'virtue')) return refuse('wrong-slot', PLOT_TEXT.WRONG_SLOT);
+  if (ground && ground.slot !== 'ground') return refuse('wrong-slot', PLOT_TEXT.WRONG_SLOT_GROUND);
+  if (virtue && virtue.slot !== 'virtue') return refuse('wrong-slot', PLOT_TEXT.WRONG_SLOT_VIRTUE);
   if (!ground) return refuse('no-ground', PLOT_TEXT.NO_GROUND);
   const existing = rows.find((r) => r.plotId === args.plotId);
   if (existing && existing.ground === ground.id && existing.virtue === (virtue?.id ?? null)) return refuse('unchanged', PLOT_TEXT.UNCHANGED);

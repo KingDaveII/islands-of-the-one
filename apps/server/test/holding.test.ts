@@ -143,7 +143,7 @@ describe('the settle', () => {
       words: [],
       plots: ['plot-1', 'plot-2', 'plot-3', 'plot-4'].map(unnamedPlot),
       // The trees' cycle clock starts at the first settle (Task 5): nothing is paid for the time before it.
-      cycles: { 'twisted-trees': { cycleMs: 2 * HOUR, cycledUntil: at(0).toISOString(), bonusPermille: 0 } },
+      cycles: { 'twisted-trees': { cycleMs: 20 * 60 * SEC, cycledUntil: at(0).toISOString(), bonusPermille: 0 } },
     });
   });
 

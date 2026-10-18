@@ -268,7 +268,7 @@ await until((x) => x.nameScreen !== null, 'the Name screen');
 await page.keyboard.type('Black Rock', { delay: 40 });
 await until((x) => x.nameScreen?.letters === 'בלק רוק', 'the tablet heard the Name');
 await page.keyboard.press('Enter');
-await until(
+h = await until(
   (x) => x.talk?.kind === 'line' && x.plots.every((p) => p.drawn === 'outline'),
   'the plots drawn as outlines under the after-naming lines',
 );
@@ -411,8 +411,8 @@ expectEq('SOW alone', h.panelLines.buttons.join(), 'sow');
 await shot('08-not-sown-yet');
 await clickButton('SOW');
 h = await until((x) => x.panelLines?.next?.startsWith('Next in'), 'the cycle clock running');
-expectEq('the cycle', h.panelLines.cycle, '1 pale grain every 15 min');
-expectEq('the action', h.panelLines.rate, '1 pale grain every 20 s');
+expectEq('the cycle', h.panelLines.cycle, 'By itself: 1 pale grain every 15 min');
+expectEq('the action', h.panelLines.rate, 'By hand: 1 pale grain every 20 s');
 expectEq('the buttons', h.panelLines.buttons.join(), 'work,take,rename');
 r = await api('/api/inventory');
 expectEq('one seed spent', r.body.pack.find((e) => e.itemId === 'grey-seeds')?.quantity, 3);
@@ -455,7 +455,7 @@ h = await until(
   (x) => x.panelLines?.basket === 'Basket: 144 twisted logs',
   "the trees' basket line",
 );
-expectEq("the trees' cycle", h.panelLines.cycle, '6 twisted logs every 2 h');
+expectEq("the trees' cycle", h.panelLines.cycle, 'By itself: 1 twisted log every 20 min');
 await shot('10b-trees-basket-144');
 await page.keyboard.press('Escape');
 

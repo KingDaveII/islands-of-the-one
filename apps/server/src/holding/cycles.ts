@@ -3,7 +3,6 @@ import {
   creditCycles,
   cycleBonuses,
   cycleLengthMs,
-  cycleYield,
   InventoryReason,
   OFFLINE_CAP_MS,
   stationDef,
@@ -68,7 +67,7 @@ export function cycleMath(cycledUntil: number, cycleMs: number, end: number, now
 export interface CyclingStation {
   stationId: string;
   cycle: StationCycle;
-  /** Items per cycle: the cycle's quantity, times the part count for a `perPart` cycle (the trees). */
+  /** Items per cycle: the cycle's quantity (a basket fills one item at a time; GAME DESIGN 2026-10-18). */
   yield: number;
   virtue: { effect: NonNullable<ReturnType<typeof plotEffect>>; setAt: number | null; pausedMs: number } | null;
   /** The pieces standing in the plot (none for a station of stations.json): they set the cycle's speed. */
@@ -80,7 +79,7 @@ export function cyclingStations(layout: HoldingLayout, rows: readonly PlotRow[],
   const out: CyclingStation[] = [];
   for (const s of layout.stations) {
     const cycle = stationDef(s.id)?.cycle;
-    if (cycle) out.push({ stationId: s.id, cycle, yield: cycleYield(cycle, layout, s.id), virtue: null, pieces: [] });
+    if (cycle) out.push({ stationId: s.id, cycle, yield: cycle.quantity, virtue: null, pieces: [] });
   }
   for (const p of layout.plots) {
     const row = rows.find((r) => r.plotId === p.id);
@@ -90,7 +89,7 @@ export function cyclingStations(layout: HoldingLayout, rows: readonly PlotRow[],
     out.push({
       stationId: p.id,
       cycle,
-      yield: cycleYield(cycle, layout, p.id),
+      yield: cycle.quantity,
       virtue: effect ? { effect, setAt: row.virtueSetAt?.getTime() ?? null, pausedMs: row.virtuePausedMs } : null,
       pieces: piecesOfPlot(pieceRows, p.id),
     });

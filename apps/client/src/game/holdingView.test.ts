@@ -53,7 +53,7 @@ const working: HoldingResponse = {
   kesh: { firstGiven: false, due: 'first', nextTideAt: new Date(T0 + 6 * 3_600_000).toISOString(), wordDue: false, seedsDue: false },
   words: [],
   plots: holdingLayout().plots.map((p) => ({ id: p.id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, pieces: [], level: 1, state: 'lit' as const })),
-  cycles: { 'twisted-trees': { cycleMs: 7_200_000, cycledUntil: iso(0), bonusPermille: 0 } },
+  cycles: { 'twisted-trees': { cycleMs: 1_200_000, cycledUntil: iso(0), bonusPermille: 0 } },
 };
 const idle: HoldingResponse = { ...working, activity: null };
 /** The same holding with plot-1 a sown field, plot-2 named but not sown, plot-3 a field with ישן on a faded line. */
@@ -68,7 +68,7 @@ const fields: HoldingResponse = {
     { id: 'plot-4', ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, pieces: [], level: 1, state: 'lit' },
   ],
   cycles: {
-    'twisted-trees': { cycleMs: 7_200_000, cycledUntil: iso(0), bonusPermille: 0 },
+    'twisted-trees': { cycleMs: 1_200_000, cycledUntil: iso(0), bonusPermille: 0 },
     'plot-1': { cycleMs: 900_000, cycledUntil: iso(0), bonusPermille: 0 },
     'plot-3': { cycleMs: 900_000, cycledUntil: iso(0), bonusPermille: 30 },
   },
@@ -123,17 +123,18 @@ describe('the active-action chip', () => {
 });
 
 describe('the station panel', () => {
-  it('names the station, its rate, the basket, the skill, and the buttons; "You:" with the item\'s full name only while working here', () => {
+  it('names the station, its labelled rates, the basket, the skill, and the buttons; "You:" with the item\'s full name in place of By hand while working here', () => {
     expect(stationLines('twisted-trees', working)).toEqual({
       title: 'TWISTED TREES',
       letters: null,
       level: null,
-      rate: '1 twisted log every 4 s',
-      // The trees' trickle (Task 5): six trees, one log each every 2 h, and the next in 1 h 47 min at 13 s.
-      cycle: '6 twisted logs every 2 h',
+      // Working here: the By hand line becomes the highlighted You line, so never three rate lines (GAME DESIGN 2026-10-18).
+      rate: null,
+      // The trees' trickle (Task 5): six trees at one log each every 2 h fill the shared basket one log every 20 min.
+      cycle: 'By itself: 1 twisted log every 20 min',
       bonus: null,
       basket: 'Basket: 3 twisted logs',
-      next: 'Next in 2 h 0 min',
+      next: 'Next in 20 min',
       you: 'You: 1 twisted log every 4 s',
       skill: 'Woodcutting 2 · 1099 XP to next',
       note: null,
@@ -142,12 +143,13 @@ describe('the station panel', () => {
       working: true,
       buttons: ['work', 'take'],
     });
-    expect(stationLines('twisted-trees', working, T0 + 13 * 60_000)?.next).toBe('Next in 1 h 47 min');
+    expect(stationLines('twisted-trees', working, T0 + 13 * 60_000)?.next).toBe('Next in 7 min');
     expect(stationLines('stone-outcrop', working)).toEqual({
       title: 'STONE OUTCROP',
       letters: null,
       level: null,
-      rate: '1 black stone every 6 s',
+      // The outcrop has no By itself line: stone never comes by itself.
+      rate: 'By hand: 1 black stone every 6 s',
       cycle: null,
       bonus: null,
       basket: 'Basket: empty',
@@ -211,6 +213,7 @@ describe('the station panel', () => {
     // Without a clock in the answer, the length comes from the pieces themselves.
     expect(stationLines('plot-1', { ...built, cycles: {} }, now)?.cycle).toBe('By itself: 1 pale grain every 12 min');
     expect(stationLines('plot-1', { ...fields, activity: { stationId: 'plot-1', startedAt: iso(0), cycleMs: 20_000 } }, now)).toMatchObject({
+      rate: null,
       you: 'You: 1 pale grain every 20 s',
       work: 'STOP WORKING',
       working: true,

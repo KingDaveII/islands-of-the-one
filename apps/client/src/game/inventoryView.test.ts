@@ -313,7 +313,7 @@ describe('the Words tab (M2 Task 5)', () => {
       name: 'adamah',
       kind: 'Ground · Earth',
       text: '"Tilled ground." Ground that\'s ready to be worked. Earth.',
-      count: 'A word, not an item.',
+      count: "A word, not an item. Once learned, it's yours for good.",
     });
   });
 });

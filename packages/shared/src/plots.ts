@@ -121,30 +121,33 @@ export const RENAME_COST_ITEM = 'sealed-gin';
  */
 export const PLOT_TEXT = {
   // The server's refusals.
-  /** `unknown-plot` (placeholder). */
-  UNKNOWN_PLOT: 'No such plot on this holding.',
+  // LORE's lines (§14.3, "More plot lines", 2026-10-18), word for word.
+  /** `unknown-plot`: a plot that isn't part of the holding. */
+  UNKNOWN_PLOT: "That ground isn't yours to name.",
   /** `unnamed`: plots appear only once the island has a Name (LORE §14.3); the Writ's line. */
   UNNAMED: 'Name the island first.',
   /** `faded`: the plot's line has faded (LORE's panel line). */
   FADED: "Faded into the haze with your Writ's first line. Feed your Writ and it will remember.",
-  /** `unknown-word` (placeholder). */
-  UNKNOWN_WORD: "You don't know that word.",
-  /** `wrong-slot` (placeholder). */
-  WRONG_SLOT: 'That word goes in the other slot.',
-  /** `no-ground` (GAME DESIGN). */
-  NO_GROUND: 'A Ground tile decides the building; without a Ground the plot cannot be built on',
-  /** `unchanged` (placeholder). */
-  UNCHANGED: 'The plot already has that name.',
+  /** `unknown-word`. */
+  UNKNOWN_WORD: "You don't know that word yet.",
+  /** `wrong-slot`: a Virtue put in the Ground's slot. */
+  WRONG_SLOT_GROUND: "That's a Virtue, not a Ground.",
+  /** `wrong-slot`: a Ground put in the Virtue's slot. */
+  WRONG_SLOT_VIRTUE: "That's a Ground, not a Virtue.",
+  /** `no-ground`. */
+  NO_GROUND: "Choose a Ground first. Without one, the plot doesn't know what it is.",
+  /** `unchanged`: confirming the same sentence. */
+  UNCHANGED: 'It already has that name.',
   /** `sentence-refused` (LORE). */
   SENTENCE_REFUSED: "Those words won't hold together. Try another pair.",
   /** `insufficient`: a rename or a sowing without the gin or the seed (the Writ's line). */
   INSUFFICIENT: "You don't have that many.",
-  /** `unnamed-plot`: work, take or sow at a plot with no name (placeholder). */
+  /** `unnamed-plot`: work, take or sow at a plot with no name (LORE). */
   UNNAMED_PLOT: 'Give the plot a word first.',
   /** `not-sown`: work at a field not sown yet (GAME DESIGN's panel line). */
   NOT_SOWN: 'Not sown yet.',
-  /** `already-sown` (placeholder). */
-  ALREADY_SOWN: 'The field is sown.',
+  /** `already-sown` (LORE). */
+  ALREADY_SOWN: 'The field is already sown.',
   // The plot sentence panel (GAME DESIGN's screen, LORE's lines).
   TITLE_NAME: 'Name this plot',
   TITLE_RENAME: 'Rename this plot',
@@ -165,11 +168,15 @@ export const PLOT_TEXT = {
   CONFIRM: 'CONFIRM',
   RENAME: 'RENAME',
   SOW: 'SOW',
-  // Tooltips. The unnamed plot's is LORE's (§14.3, word for word); the brief names LORE's Field and Plot seal
-  // tooltips (§14.3) without quoting them, so these two are MAIN's placeholders until LORE's text lands.
+  // Tooltips, LORE's word for word (§14.3): the unnamed plot's; the Field's and the Plot seal's for a Ground alone
+  // (the first plot sentence) and for a Ground and a Virtue (the second plot).
   UNNAMED_PLOT_TIP: 'Ground, but not yet ground for anything. Give it a word.',
-  FIELD_TIP: 'Tilled ground with a word on it. Grain comes up on its own while your Writ is lit.',
-  SEAL_TIP: 'The sentence the plot answers to, and its sigil.',
+  FIELD_TIP: "Tilled ground. Its name says it's for growing.",
+  FIELD_TIP_VIRTUE: 'Tilled ground, and old. The longer it keeps its name, the more it gives.',
+  SEAL_TIP: "The word that holds this plot, pressed round in a ring of earth-ochre. The line at the center is the word's sigil.",
+  SEAL_TIP_VIRTUE: 'Two words round the ring. The sigil at the center is both of them drawn as one line.',
+  /** The signpost's tooltip (LORE 2026-10-18): it carries the plot's sigil, no words. */
+  SIGNPOST_TIP: "The plot's two words, drawn as one line.",
   // The field's station panel (GAME DESIGN's screen, LORE's lines).
   /** "+3% for keeping its name", the figure being the bonus so far. */
   BONUS_LINE: (percent: number): string => `+${percent}% for keeping its name`,
