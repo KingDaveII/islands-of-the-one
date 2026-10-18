@@ -2,6 +2,8 @@ import type Phaser from 'phaser';
 import {
   CAVE_TILE_SHEET,
   caveTileSheet,
+  HOLDING_TILE_SHEET,
+  holdingTileSheet,
   DOOR_STATES,
   doorAnimKey,
   doorFrameName,
@@ -32,9 +34,12 @@ import { spritePngUrl } from './spriteSheets.js';
 /** The tile sheet the room draws from: its texture key and its JSON contract. */
 export const TILE_SHEET: { key: string; sheet: TileSheet } = { key: CAVE_TILE_SHEET, sheet: caveTileSheet };
 
-/** Loads the tile sheet as an atlas (its JSON is bundled with the code); the PNG must be next to it. */
-export function preloadTileSheet(scene: Phaser.Scene): void {
-  const { key, sheet } = TILE_SHEET;
+/** The holding's tile sheet (M2 Task 3b): MAIN's placeholder `tiles-holding` until ART draws it; the same rule draws it. */
+export const HOLDING_SHEET: { key: string; sheet: TileSheet } = { key: HOLDING_TILE_SHEET, sheet: holdingTileSheet };
+
+/** Loads a tile sheet as an atlas (its JSON is bundled with the code); the PNG must be next to it. The cave's by default. */
+export function preloadTileSheet(scene: Phaser.Scene, active: { key: string; sheet: TileSheet } = TILE_SHEET): void {
+  const { key, sheet } = active;
   if (scene.textures.exists(key)) return;
   const url = spritePngUrl(sheet.meta.image);
   if (!url) throw new Error(`no PNG for the ${key} sheet`);

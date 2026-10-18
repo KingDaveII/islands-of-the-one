@@ -22,7 +22,11 @@ export function huskFeet(P: Params, kind: HuskKind): number {
  * the Kindled, a Husk (its radius from the run's params) or a chest.
  */
 export type Body =
-  { kind: 'kindled' } | { kind: 'husk'; husk: HuskKind; P: Params } | { kind: 'chest' };
+  | { kind: 'kindled' }
+  | { kind: 'husk'; husk: HuskKind; P: Params }
+  | { kind: 'chest' }
+  /** A holding station's prop (M2 Task 3b): its base, like a chest's. */
+  | { kind: 'prop' };
 
 /**
  * On the same ground line the order is today's, from under to over: a Husk,
@@ -31,7 +35,7 @@ export type Body =
  * its base. Fractions of a world px, so a rank never outweighs a real
  * difference in the line.
  */
-const TIE_ORDER: Readonly<Record<Body['kind'], number>> = { husk: 0, kindled: 1, chest: 2 };
+const TIE_ORDER: Readonly<Record<Body['kind'], number>> = { husk: 0, kindled: 1, chest: 2, prop: 2 };
 
 /**
  * The line a body stands on, in sim px, from its sim y (the body centre):
@@ -47,6 +51,7 @@ export function groundLine(body: Body, simY: number): number {
     case 'husk':
       return simY + huskFeet(body.P, body.husk);
     case 'chest':
+    case 'prop':
       return simY;
   }
 }

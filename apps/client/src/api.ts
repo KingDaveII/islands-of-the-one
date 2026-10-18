@@ -3,6 +3,7 @@ import {
   HEALTH_ROUTE,
   isApiErrorBody,
   isHealthResponse,
+  isHoldingResponse,
   isInventoryResponse,
   isKindledResponse,
   isMeResponse,
@@ -10,6 +11,8 @@ import {
   type CreateKindledRequest,
   type CredentialsRequest,
   type HealthResponse,
+  type HoldingResponse,
+  type HoldingStationRequest,
   type InventoryMoveRequest,
   type InventoryResponse,
   type KindledView,
@@ -74,6 +77,14 @@ export interface Api {
   move(body: InventoryMoveRequest): Promise<ApiResult<InventoryResponse>>;
   /** The server's build (its /health, same origin); `unreachable` when the page's origin doesn't serve it. */
   health(): Promise<ApiResult<HealthResponse>>;
+  /** The holding (docs/design/holding.md), settled: the baskets, the active action, the server's clock, the skills. */
+  holding(): Promise<ApiResult<HoldingResponse>>;
+  /** Start or switch to working a station; `unknown-station`, `no-action` (the post). */
+  holdingWork(body: HoldingStationRequest): Promise<ApiResult<HoldingResponse>>;
+  /** Settle and clear the active action. */
+  holdingStop(): Promise<ApiResult<HoldingResponse>>;
+  /** Take all: what fits of a station's basket into the store; the answer's `take` says what moved and what stayed. */
+  holdingTake(body: HoldingStationRequest): Promise<ApiResult<HoldingResponse>>;
 }
 
 export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)): Api {
@@ -89,6 +100,10 @@ export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)):
     inventory: () => request(fetchFn, ApiRoute.Inventory, 'GET', undefined, isInventoryResponse),
     move: (body) => request(fetchFn, ApiRoute.InventoryMove, 'POST', body, isInventoryResponse),
     health: () => request(fetchFn, HEALTH_ROUTE, 'GET', undefined, isHealthResponse),
+    holding: () => request(fetchFn, ApiRoute.Holding, 'GET', undefined, isHoldingResponse),
+    holdingWork: (body) => request(fetchFn, ApiRoute.HoldingWork, 'POST', body, isHoldingResponse),
+    holdingStop: () => request(fetchFn, ApiRoute.HoldingStop, 'POST', {}, isHoldingResponse),
+    holdingTake: (body) => request(fetchFn, ApiRoute.HoldingTake, 'POST', body, isHoldingResponse),
   };
 }
 
