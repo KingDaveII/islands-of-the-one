@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { shapeLetters } from '@iot/shared';
 import type { Rect as ViewRect } from '../game/view.js';
-import { HUD_CHIP_H, HUD_CHIP_W, HUD_PAD, hudRects, type ChipState } from '../game/holdingView.js';
+import { HUD_CHIP_H, HUD_CHIP_W, HUD_PAD, hudRects, panelsBehind, type ChipState, type HudPanel, type UiRect } from '../game/holdingView.js';
 import type { WritChip } from '../game/writView.js';
 import { Palette } from '../palette.js';
 import { plotLetters, type LetterSheet } from './letters.js';
@@ -12,6 +12,9 @@ import { icon, panel } from './ui.js';
 
 /** HUD inset from the world view's edge and panel padding (UI px): the pure layout in game/holdingView.ts (`hudRects`) owns them. */
 const PAD = HUD_PAD;
+/** A panel stays dithered this long after a body was last behind it, as on the run's HUD. */
+const BEHIND_HOLD_MS = 120;
+const EMPTY: UiRect = { x: 0, y: 0, w: 0, h: 0 };
 const ICON = 16;
 const CHIP_W = HUD_CHIP_W;
 const CHIP_H = HUD_CHIP_H;
@@ -56,6 +59,16 @@ export class HoldingHud {
   private readonly packZone: Phaser.GameObjects.Zone;
   private readonly writZone: Phaser.GameObjects.Zone;
   private frame: ViewRect = { x: 0, y: 0, w: 480, h: 270 };
+  /** The panels drawn last frame (a body behind one dithers it next frame, as the run's HUD does). */
+  private lastRects: Record<HudPanel, UiRect> = {
+    writ: { x: 0, y: 0, w: 0, h: 0 },
+    purse: { x: 0, y: 0, w: 0, h: 0 },
+    chip: { x: 0, y: 0, w: 0, h: 0 },
+    pack: { x: 0, y: 0, w: 0, h: 0 },
+  };
+  /** Until when (the HUD's own clock, ms) each panel is drawn dithered. */
+  private behindUntil: Record<HudPanel, number> = { writ: 0, purse: 0, chip: 0, pack: 0 };
+  private now = 0;
   /** The chip's rectangle last frame (UI px), empty while idle. */
   chipRect: ViewRect = { x: 0, y: 0, w: 0, h: 0 };
   packRect: ViewRect = { x: 0, y: 0, w: 0, h: 0 };
@@ -112,9 +125,22 @@ export class HoldingHud {
   }
 
   /** Draw the HUD: the chip from its state (null while idle), the pack's fill, the purse, and the Writ block (null until the holding answered). */
-  draw(chip: ChipState | null, packFill: string, gin: number, writ: WritHud | null, sheet: LetterSheet | null): void {
+  draw(
+    chip: ChipState | null,
+    packFill: string,
+    gin: number,
+    writ: WritHud | null,
+    sheet: LetterSheet | null,
+    bodies: readonly UiRect[] = [],
+    dtMs = 0,
+  ): void {
     const g = this.g;
     g.clear();
+    // The HUD never hides the room (readability.md, ART on #95): a panel the Kindled or Kesh is behind turns to the
+    // 50 % checkerboard dither, its ink solid, and stays so a moment after (BEHIND_HOLD_MS) so it never flickers.
+    this.now += dtMs;
+    for (const k of panelsBehind(this.lastRects, bodies)) this.behindUntil[k] = this.now + BEHIND_HOLD_MS;
+    const dither = (k: HudPanel): boolean => this.behindUntil[k] > this.now;
     if (this.gin.text !== String(gin)) this.gin.setText(String(gin));
     const packText = `PACK ${packFill}`;
     if (this.pack.text !== packText) this.pack.setText(packText);
@@ -130,17 +156,18 @@ export class HoldingHud {
     });
 
     // Top right: the purse.
+    this.lastRects = { writ: writ ? rects.writ : EMPTY, purse: rects.purse, chip: chip ? rects.chip : EMPTY, pack: rects.pack };
     const purse = rects.purse;
-    panel(g, purse.x, purse.y, purse.w, purse.h, { plain: true });
+    panel(g, purse.x, purse.y, purse.w, purse.h, { plain: true, dither: dither('purse') });
     icon(g, 'spark', purse.x + PAD, purse.y + PAD, 10, Palette.spark);
     place(this.gin, purse.x + PAD + 13, purse.y + PAD + 1);
 
     // Top left: the island's Name, its letters, the Writ chip.
-    this.drawWrit(rects.writ, writ, sheet);
+    this.drawWrit(rects.writ, writ, sheet, dither('writ'));
 
     // Bottom right: the pack button.
     const { x: brX, y: brY, w: brW, h: brH } = rects.pack;
-    panel(g, brX, brY, brW, brH, { plain: true });
+    panel(g, brX, brY, brW, brH, { plain: true, dither: dither('pack') });
     place(this.pack, brX + PAD, brY + PAD);
     this.packRect = { x: brX, y: brY, w: brW, h: brH };
     this.packZone.setPosition(brX, brY).setSize(brW, brH);
@@ -155,7 +182,7 @@ export class HoldingHud {
       return;
     }
     const { x, y } = rects.chip;
-    panel(g, x, y, CHIP_W, CHIP_H, { plain: true });
+    panel(g, x, y, CHIP_W, CHIP_H, { plain: true, dither: dither('chip') });
     this.chipRect = { x, y, w: CHIP_W, h: CHIP_H };
     if (!this.chipZone.input) this.chipZone.setInteractive({ useHandCursor: true });
     this.chipZone.setPosition(x, y).setSize(CHIP_W, CHIP_H);
@@ -191,7 +218,7 @@ export class HoldingHud {
    * the chip alone. The tooltip (the exact time) shows while the pointer is
    * over it.
    */
-  private drawWrit(rect: ViewRect, writ: WritHud | null, sheet: LetterSheet | null): void {
+  private drawWrit(rect: ViewRect, writ: WritHud | null, sheet: LetterSheet | null, dither = false): void {
     const g = this.g;
     const { x, y, w, h } = rect;
     if (!writ) {
@@ -206,7 +233,7 @@ export class HoldingHud {
     if (chip.text !== null) this.writWords.setTint(chipColor).setVisible(true);
     else this.writWords.setVisible(false);
     this.name.setVisible(name !== null);
-    panel(g, x, y, w, h, { plain: true });
+    panel(g, x, y, w, h, { plain: true, dither });
     let ly = y + PAD;
     if (name) {
       place(this.name, x + PAD, ly);

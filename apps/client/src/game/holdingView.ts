@@ -332,3 +332,83 @@ export function hudRects(frame: UiRect, widths: HudWidths): { writ: UiRect; purs
 export function rectsOverlap(a: UiRect, b: UiRect): boolean {
   return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 }
+
+/** The HUD panels by name (`hudRects`'s keys). */
+export type HudPanel = 'writ' | 'purse' | 'chip' | 'pack';
+
+/**
+ * The HUD panels a body is behind (readability.md "The HUD never hides the
+ * room", ART on #95): the Kindled's and Kesh's rectangles on the UI grid
+ * against the panels drawn last frame. Props alone never count, Kesh's rock
+ * included. An empty rectangle (a panel not drawn) never does.
+ */
+export function panelsBehind(rects: Readonly<Record<HudPanel, UiRect>>, bodies: readonly UiRect[]): HudPanel[] {
+  return (Object.keys(rects) as HudPanel[]).filter((k) => {
+    const r = rects[k];
+    return r.w > 0 && r.h > 0 && bodies.some((b) => rectsOverlap(b, r));
+  });
+}
+
+/** The opaque bounds of one frame of a sheet's pixels (RGBA, row-major), relative to the frame's top left; null when it has none. */
+export function opaqueBoundsIn(
+  img: { width: number; data: ArrayLike<number> },
+  frame: { x: number; y: number; w: number; h: number },
+): UiRect | null {
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  for (let y = 0; y < frame.h; y++)
+    for (let x = 0; x < frame.w; x++) {
+      if ((img.data[((frame.y + y) * img.width + frame.x + x) * 4 + 3] ?? 0) === 0) continue;
+      x0 = Math.min(x0, x);
+      y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x);
+      y1 = Math.max(y1, y);
+    }
+  return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+}
+
+/**
+ * The glyph indices of a line's stage directions as a wrapped BitmapText draws
+ * them: Phaser numbers drawn glyphs, and a wrap turns a space into a line
+ * break that isn't drawn, so every wrap before a character shifts its glyph
+ * index down by one. `wrapped` is the text as wrapped (the same length as
+ * `text`, `getTextBounds().wrappedText`).
+ */
+export function directionGlyphs(text: string, wrapped: string): number[] {
+  const out: number[] = [];
+  let breaks = 0;
+  let at = 0;
+  const inDirection = new Array<boolean>(text.length).fill(false);
+  for (const part of lineParts(text)) {
+    if (part.direction) for (let k = at; k < at + part.text.length; k++) inDirection[k] = true;
+    at += part.text.length;
+  }
+  for (let k = 0; k < wrapped.length; k++) {
+    if (wrapped[k] === '\n') {
+      breaks++;
+      continue;
+    }
+    if (inDirection[k]) out.push(k - breaks);
+  }
+  return out;
+}
+
+/**
+ * A talk line's parts (ART on #95): stage directions in brackets, "(flicks the
+ * sliver across the water)", drawn muted, and what is said, drawn in the
+ * speaker's ink. Brackets stay with their direction.
+ */
+export function lineParts(text: string): { text: string; direction: boolean }[] {
+  const parts: { text: string; direction: boolean }[] = [];
+  const re = /\([^()]*\)/g;
+  let at = 0;
+  for (let m = re.exec(text); m !== null; m = re.exec(text)) {
+    if (m.index > at) parts.push({ text: text.slice(at, m.index), direction: false });
+    parts.push({ text: m[0], direction: true });
+    at = m.index + m[0].length;
+  }
+  if (at < text.length) parts.push({ text: text.slice(at), direction: false });
+  return parts;
+}

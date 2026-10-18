@@ -456,7 +456,7 @@ Talk first plays the due toss (the first sliver's two lines, or the tide's one),
 `toss` reaches `toss_2` (`KESH_TOSS_RELEASE_FRAME`) and the server has given the sliver, the thrown thing
 leaves his hand: drawn from `prop-sparkglass`'s `idle`, it flies a whole-pixel arc (`render/keshToss.ts`)
 from that frame's `hand` point (mapped like the Hookblade's points: the anchor plus the point less the cell
-origin) to the Kindled's feet over `kesh.tossMs` (600) with the arc `kesh.tossArcPx` (20 world px) high,
+origin) to the Kindled's feet over `kesh.tossMs` (600) with the arc `kesh.tossArcPx` (32 world px, a lob over the water; ART on #95) high,
 both in `tuning.json`, and "+1" floats where it lands, the cycles' float. The flight is cosmetic: the count
 comes from the server's answer, never from the animation. A refusal ("Pack full.") is the box's note line
 under his line, and nothing flies.
