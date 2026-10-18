@@ -46,6 +46,11 @@ const KINDLED_NO_RUN: SpriteSheet = {
   ...KINDLED,
   anims: Object.fromEntries(Object.entries(KINDLED.anims).filter(([key]) => !key.startsWith('run_'))),
 };
+/** The Kindled sheet as it was before ART's run_start and run_stop landed: without the transition rows. */
+const KINDLED_NO_TRANSITIONS: SpriteSheet = {
+  ...KINDLED,
+  anims: Object.fromEntries(Object.entries(KINDLED.anims).filter(([key]) => !/^run_(start|stop)_/.test(key))),
+};
 const deg = (d: number): number => Math.round((d * TURN) / 360) & (TURN - 1);
 
 /** Animations a run can show in M1: the required rows (carry and sit are M2's and have no sim state yet). */
@@ -421,9 +426,11 @@ describe('run transitions and run_back (M1 polish, ART 2026-10-17)', () => {
   const stride = (distancePx: number, backpedal = false): Stride => ({ distancePx, cycles: CYCLES, backpedal });
   const T = KINDLED_TRANSITIONS;
 
-  it('lists the three rows as awaiting art, so kindled-ash without them is still finished and plays as before', () => {
-    expect(ANIMS_AWAITING_ART).toEqual(['run_start', 'run_stop', 'run_back']);
-    expect(Object.keys(KINDLED.anims).some((k) => /^run_(start|stop|back)_/.test(k))).toBe(false);
+  it("lists run_back as awaiting art; ART's run_start and run_stop are on kindled-ash (#72) and required", () => {
+    expect(ANIMS_AWAITING_ART).toEqual(['run_back']);
+    // ART's run_start and run_stop are on kindled-ash (16 rows); run_back is still to come.
+    expect(Object.keys(KINDLED.anims).filter((k) => /^run_(start|stop)_/.test(k))).toHaveLength(16);
+    expect(Object.keys(KINDLED.anims).some((k) => /^run_back_/.test(k))).toBe(false);
     expect(Object.keys(T.anims).filter((k) => /^run_(start|stop|back)_/.test(k))).toHaveLength(24);
   });
 
@@ -463,7 +470,7 @@ describe('run transitions and run_back (M1 polish, ART 2026-10-17)', () => {
     expect(kindledPose(s, run.params, T, { hitMs: -1, runStartMs: 0 }, stride(24, true))).toMatchObject({ name: 'run_start', frame: 0 });
     expect(kindledPose(s, run.params, T, { hitMs: -1, runStartMs: 100 }, stride(24, true))).toMatchObject({ name: 'run_back', frame: 2 });
     // Without the row on the sheet the run plays directly, as today.
-    expect(kindledPose(s, run.params, KINDLED, { hitMs: -1, runStartMs: 0 }, stride(24))).toMatchObject({ name: 'run' });
+    expect(kindledPose(s, run.params, KINDLED_NO_TRANSITIONS, { hitMs: -1, runStartMs: 0 }, stride(24))).toMatchObject({ name: 'run' });
   });
 
   it('plays run_stop once from the stop clock, then idle; nothing without the row', () => {
@@ -475,7 +482,7 @@ describe('run transitions and run_back (M1 polish, ART 2026-10-17)', () => {
     expect(at(50)).toMatchObject({ name: 'run_stop', frame: 1 });
     expect(at(100)).toMatchObject({ name: 'idle' });
     expect(at(-1)).toMatchObject({ name: 'idle' });
-    expect(kindledPose(s, run.params, KINDLED, { hitMs: -1, runStopMs: 0 })).toMatchObject({ name: 'idle' });
+    expect(kindledPose(s, run.params, KINDLED_NO_TRANSITIONS, { hitMs: -1, runStopMs: 0 })).toMatchObject({ name: 'idle' });
     // A hit, an attack or a dodge wins over a transition clock: the sim's state is the authority.
     expect(kindledPose(s, run.params, T, { hitMs: 10, runStopMs: 0 })).toMatchObject({ name: 'hit' });
     s.player.action = 'dodge';
@@ -857,7 +864,10 @@ describe('headless playtest (autopilot through the state machine)', () => {
       kindledPose(deathRun.state, deathRun.params, KINDLED, { hitMs: -1, deathMs: 300 }).name,
     );
     // walk is an M1 row but plays only in M2's holding (and for run on a sheet without it), never in an encounter.
-    const missing = M1_PLAYABLE.filter((n) => n !== 'walk' && !shown.has(n));
+    // run_start and run_stop play from the client's GaitClock, which this sim-only playthrough doesn't feed;
+    // the 'run transitions and run_back' tests above cover them with the clock.
+    const CLOCK_DRIVEN = ['walk', 'run_start', 'run_stop'];
+    const missing = M1_PLAYABLE.filter((n) => !CLOCK_DRIVEN.includes(n) && !shown.has(n));
     expect(shown.has('walk')).toBe(false);
     // Logged for the PR's playtest record (vitest shows stdout with --silent=false).
     console.log(`Kindled animations played: ${[...shown].sort().join(', ')}`);
