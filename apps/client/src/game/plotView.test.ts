@@ -21,7 +21,11 @@ import {
   sentenceLetters,
   sentenceSigil,
   sentenceStyle,
+  onSignpost,
+  sigilSegmentsLeft,
   signpostBase,
+  signpostBoard,
+  signpostTopY,
   sigilOrigin,
   sigilPoint,
   slotChoices,
@@ -91,7 +95,12 @@ describe('the plot sentence panel', () => {
     expect(plotPanelLines(unnamed, named)).toMatchObject({ builds: 'Builds: Field', letters: 'אדמה', confirmEnabled: true, previewTip: PLOT_TEXT.FIELD_TIP });
     // Renaming: the cost and its tooltip; the same sentence is greyed; a change is not.
     expect(plotPanelLines(named, named)).toMatchObject({ title: 'Rename this plot', renaming: true, cost: 'Renaming: 1 sealed gin', costTip: 'A name is paid for.', confirmEnabled: false });
-    expect(plotPanelLines(named, { ground: 'adamah', virtue: 'yashan' })).toMatchObject({ confirmEnabled: true, letters: 'אדמה · ישן', effect: PLOT_TEXT.YIELD_PER_DAY_EFFECT });
+    expect(plotPanelLines(named, { ground: 'adamah', virtue: 'yashan' })).toMatchObject({
+      confirmEnabled: true,
+      letters: 'אדמה · ישן',
+      effect: PLOT_TEXT.YIELD_PER_DAY_EFFECT,
+      previewTip: PLOT_TEXT.FIELD_TIP_VIRTUE,
+    });
     expect(plotPanelLines({ ground: 'adamah', virtue: 'yashan' }, named)).toMatchObject({ confirmEnabled: true, effect: null });
   });
 });
@@ -115,9 +124,10 @@ describe('the cycles', () => {
     expect(cyclesLanded({ cycleMs: 900_000, cycledUntil: 'soon' }, T0)).toBe(0);
   });
 
-  it("rates: the field's and the trees' (per tree, six trees); the bonus line from the permille, none at 0", () => {
-    expect(cycleRateLine({ itemId: 'pale-grain', quantity: 1, cycleMs: 900_000, perPart: false }, layout, 'plot-1')).toBe('1 pale grain every 15 min');
-    expect(cycleRateLine({ itemId: 'twisted-log', quantity: 1, cycleMs: 7_200_000, perPart: true }, layout, 'twisted-trees')).toBe('6 twisted logs every 2 h');
+  it("rates: the field's and the trees' (one log at a time, six trees); the bonus line from the permille, none at 0", () => {
+    expect(cycleRateLine({ itemId: 'pale-grain', quantity: 1, cycleMs: 900_000 })).toBe('1 pale grain every 15 min');
+    expect(cycleRateLine({ itemId: 'twisted-log', quantity: 1, cycleMs: 1_200_000 })).toBe('1 twisted log every 20 min');
+    expect(cycleRateLine({ itemId: 'pale-grain', quantity: 2, cycleMs: 8_000 })).toBe('2 pale grains every 8 s');
     expect(bonusLine(0)).toBeNull();
     expect(bonusLine(30)).toBe('+3% for keeping its name');
     expect(bonusLine(200)).toBe('+20% for keeping its name');
@@ -164,11 +174,26 @@ describe('the plots in the world', () => {
     ]);
     expect(ringPixels({ x: 0, y: 0, w: 4, h: 4 }, 2)).toHaveLength(12 + 4);
     expect(lettersBand(plot1, 30)).toEqual({ x: 7 * 32 + 4 + 92 - 30, y: 7 * 32 + 4 + 2 + 2 });
-    const origin = sigilOrigin(plot1);
-    expect(origin).toEqual({ x: 7 * 32 + 96 - 21, y: 7 * 32 + 96 - 21 });
-    expect(sigilPoint(origin, { row: 0, col: 0 })).toEqual({ x: origin.x + 7, y: origin.y + 7 });
-    expect(sigilPoint(origin, { row: 2, col: 1 })).toEqual({ x: origin.x + 14 + 7, y: origin.y + 28 + 7 });
+    // The signpost carries the sigil on its board (LORE 2026-10-18): a 30 px board on an 18 px post, the grid inset 3.
     expect(signpostBase(plot1)).toEqual({ x: 9.5 * 32, y: 10 * 32 });
+    expect(signpostBoard(plot1)).toEqual({ x: 9.5 * 32 - 15, y: 10 * 32 - 18 - 30, w: 30, h: 30 });
+    const origin = sigilOrigin(plot1);
+    expect(origin).toEqual({ x: 9.5 * 32 - 12, y: 10 * 32 - 45 });
+    expect(sigilPoint(origin, { row: 0, col: 0 })).toEqual({ x: origin.x + 4, y: origin.y + 4 });
+    expect(sigilPoint(origin, { row: 2, col: 1 })).toEqual({ x: origin.x + 8 + 4, y: origin.y + 16 + 4 });
+    expect(onSignpost(plot1, 9.5 * 32, 10 * 32 - 30)).toBe(true);
+    expect(onSignpost(plot1, 9.5 * 32, 10 * 32 - 5)).toBe(true);
+    expect(onSignpost(plot1, 9.5 * 32 + 10, 10 * 32 - 5)).toBe(false);
+    expect(signpostTopY(plot1)).toBe(10 * 32 - 48);
+    // It loses the line segment by segment while the plot's line is dark, all of it once faded.
+    const line = (state: 'lit' | 'dark' | 'faded') => ({ state, fadesAt: 1000 });
+    expect(sigilSegmentsLeft(4, line('lit'), null, 500)).toBe(4);
+    expect(sigilSegmentsLeft(4, undefined, null, 500)).toBe(4);
+    expect(sigilSegmentsLeft(4, line('dark'), 0, 0)).toBe(4);
+    expect(sigilSegmentsLeft(4, line('dark'), 0, 1)).toBe(4);
+    expect(sigilSegmentsLeft(4, line('dark'), 0, 500)).toBe(2);
+    expect(sigilSegmentsLeft(4, line('dark'), 0, 999)).toBe(1);
+    expect(sigilSegmentsLeft(4, line('faded'), 0, 1000)).toBe(0);
     expect(plotAtWorld(7 * 32 + 10, 7 * 32 + 10)?.id).toBe('plot-1');
     expect(plotAtWorld(0, 0)).toBeUndefined();
     expect(namedPlotIds({ plots: [{ id: 'plot-1', ground: 'adamah', virtue: null, namedAt: iso(0), virtueSetAt: null, sownAt: null, kind: 'field', level: 1, state: 'lit' }] })).toEqual(['plot-1']);

@@ -124,18 +124,21 @@ export function wordKindLine(row: WordRow): string {
   return `${WORD_SLOT_NAMES[row.slot]} · ${WORD_ELEMENT_NAMES[row.element]}`;
 }
 
-/** The tooltip over a word row: the tile's say, its slot and element, LORE's card text, and that it is a word, not an item. */
+/** The Words tab while no word is known (LORE 2026-10-18). */
+export const NO_WORDS_LINE = "No words yet. Out here, they're given or found.";
+
+/** The last line of a word's tooltip (LORE 2026-10-18). */
+export const WORD_TOOLTIP_LINE = "A word, not an item. Once learned, it's yours for good.";
+
+/** The tooltip over a word row: the tile's say, its slot and element, LORE's card text, and LORE's word-not-item line. */
 export function wordTooltipLines(row: WordRow): TooltipLines {
   return {
     name: displayable(row.say),
     kind: wordKindLine(row),
     text: displayable(row.card),
-    count: 'A word, not an item.',
+    count: WORD_TOOLTIP_LINE,
   };
 }
-
-/** The Words tab while no word is known (MAIN placeholder line). */
-export const NO_WORDS_LINE = 'No words yet.';
 
 /**
  * The pack's cells, always PACK_SLOTS of them: the pack's stacks split into

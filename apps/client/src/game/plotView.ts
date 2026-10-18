@@ -1,5 +1,4 @@
 import {
-  cycleYield,
   durationWords,
   exactTime,
   holdingLayout,
@@ -121,7 +120,7 @@ export interface PlotPanelLines {
   letters: string;
   /** CONFIRM is greyed while the sentence is unchanged or has no Ground. */
   confirmEnabled: boolean;
-  /** The preview's tooltip: the Field's (LORE), once a Ground is picked. */
+  /** The preview's tooltip: the Field's (LORE §14.3), once a Ground is picked; its two-word line with a Virtue. */
   previewTip: string | null;
 }
 
@@ -141,7 +140,7 @@ export function plotPanelLines(plot: Pick<PlotView, 'ground' | 'virtue'>, picked
     pieces: PLOT_TEXT.PIECES_NONE,
     letters: sentenceLetters(picked.ground, picked.virtue),
     confirmEnabled: changed && ground !== undefined,
-    previewTip: ground ? PLOT_TEXT.FIELD_TIP : null,
+    previewTip: ground ? (virtue ? PLOT_TEXT.FIELD_TIP_VIRTUE : PLOT_TEXT.FIELD_TIP) : null,
   };
 }
 
@@ -165,9 +164,9 @@ export function cyclesLanded(cycle: Pick<StationCycleView, 'cycleMs' | 'cycledUn
   return Math.max(0, Math.floor((serverMs - from) / cycle.cycleMs));
 }
 
-/** The cycle's rate line: "1 pale grain every 15 min", "6 twisted logs every 2 h" (a perPart cycle times the station's parts). */
-export function cycleRateLine(cycle: StationCycle, layout: HoldingLayout, stationId: string): string {
-  const n = cycleYield(cycle, layout, stationId);
+/** The cycle's rate: "1 pale grain every 15 min", "1 twisted log every 20 min" (a basket fills one item at a time; GAME DESIGN 2026-10-18). */
+export function cycleRateLine(cycle: StationCycle): string {
+  const n = cycle.quantity;
   const name = displayable((itemDef(cycle.itemId)?.name ?? cycle.itemId.replaceAll('-', ' ')).toLowerCase());
   return `${n} ${name}${n === 1 ? '' : 's'} every ${durationWords(cycle.cycleMs)}`;
 }
@@ -233,11 +232,16 @@ export const WORLD_SCALE = 2;
 /** The seal ring's band: inset from the plot's edge and its thickness, world px. */
 export const RING_INSET = 4;
 export const RING_WIDTH = 2;
-/** The sigil's 3 × 3 grid at the plot's centre: one cell this many world px a side. */
-export const SIGIL_CELL = 14;
-/** The signpost's placeholder: its post is this wide and tall over its tile's base (world px). */
-export const SIGNPOST_W = 6;
-export const SIGNPOST_H = 22;
+/**
+ * The signpost (LORE 2026-10-18): no words; its board carries the plot's sigil, the seal's centre. Placeholder sizes
+ * in world px until ART: the post this wide and tall over its tile's base, a square board on top of it, the sigil's
+ * 3 × 3 grid of `SIGIL_CELL` cells inset `BOARD_PAD` inside the board.
+ */
+export const SIGNPOST_W = 4;
+export const SIGNPOST_H = 18;
+export const SIGIL_CELL = 8;
+export const BOARD_PAD = 3;
+export const BOARD_SIZE = 3 * SIGIL_CELL + 2 * BOARD_PAD;
 
 /** A plot's rectangle in world px. */
 export function plotWorldRect(plot: LayoutPlot): WorldRect {
@@ -278,10 +282,10 @@ export function lettersBand(plot: LayoutPlot, lettersWidthPx: number, scale: num
   return { x: Math.round(ring.x + ring.w / 2 - (lettersWidthPx * scale) / 2), y: ring.y + RING_WIDTH + 2 };
 }
 
-/** The sigil grid's top-left corner, the grid centred on the plot. */
-export function sigilOrigin(plot: LayoutPlot, cell: number = SIGIL_CELL): { x: number; y: number } {
-  const r = plotWorldRect(plot);
-  return { x: Math.round(r.x + r.w / 2 - (3 * cell) / 2), y: Math.round(r.y + r.h / 2 - (3 * cell) / 2) };
+/** The sigil grid's top-left corner (world px): inside the signpost's board, the seal's centre (LORE 2026-10-18). */
+export function sigilOrigin(plot: LayoutPlot): { x: number; y: number } {
+  const board = signpostBoard(plot);
+  return { x: board.x + BOARD_PAD, y: board.y + BOARD_PAD };
 }
 
 /** The world px at the centre of a sigil step's chamber. */
@@ -293,6 +297,46 @@ export function sigilPoint(origin: { x: number; y: number }, step: { row: number
 export function signpostBase(plot: LayoutPlot): { x: number; y: number } {
   const px = TILE_SIZE_PX * WORLD_SCALE;
   return { x: (plot.station.rect.col + 0.5) * px, y: (plot.station.rect.row + 1) * px };
+}
+
+/** The signpost's board in world px: centred over the post, its bottom on the post's top. */
+export function signpostBoard(plot: LayoutPlot): WorldRect {
+  const base = signpostBase(plot);
+  return { x: Math.round(base.x - BOARD_SIZE / 2), y: Math.round(base.y - SIGNPOST_H - BOARD_SIZE), w: BOARD_SIZE, h: BOARD_SIZE };
+}
+
+/** The top of the signpost (world px): where the floats and the prompt rise from. */
+export function signpostTopY(plot: LayoutPlot): number {
+  return signpostBoard(plot).y;
+}
+
+/** Whether a world px point is on the signpost (its board or its post): the signpost's tooltip. */
+export function onSignpost(plot: LayoutPlot, x: number, y: number): boolean {
+  const board = signpostBoard(plot);
+  const base = signpostBase(plot);
+  const inBoard = x >= board.x && x < board.x + board.w && y >= board.y && y < board.y + board.h;
+  const inPost = Math.abs(x - base.x) <= SIGNPOST_W / 2 + 1 && y >= base.y - SIGNPOST_H && y < base.y;
+  return inBoard || inPost;
+}
+
+/**
+ * How many of a sigil's segments the signpost still shows (LORE 2026-10-18: it "loses the line segment by segment
+ * as the plot fades"): all while the plot's line is lit; while it is dark, the share of the dark stretch still to
+ * run, from the moment the Writ went dark to the line's fade, rounded up to whole segments; none once faded.
+ */
+export function sigilSegmentsLeft(
+  segments: number,
+  line: { state: 'lit' | 'dark' | 'faded'; fadesAt: number } | undefined,
+  darkSince: number | null,
+  serverMs: number,
+): number {
+  if (!line || line.state === 'lit') return segments;
+  if (line.state === 'faded') return 0;
+  const from = darkSince ?? serverMs;
+  const span = line.fadesAt - from;
+  if (span <= 0) return 0;
+  const left = Math.max(0, Math.min(1, (line.fadesAt - serverMs) / span));
+  return Math.ceil(segments * left);
 }
 
 /** The plot whose rectangle holds a world px point, if any (the seal's hover tooltip). */

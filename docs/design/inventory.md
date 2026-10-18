@@ -220,7 +220,8 @@ initials for an item the sheet lacks.
 - **Tabs** filter both panes: all, materials, Sparkglass, consumables, lore objects (empty kinds show
   empty), and **Words** (M2 Task 5): one panel in the panes' room, a row per known tile with its letters
   from the letter sheet, "adamah · tilled ground" and "Ground · Earth", the hovered or focused row lit, LORE's
-  card text in its tooltip ("A word, not an item."); nothing moves from it. A tab hides the other kinds' pack
+  card text in its tooltip with LORE's "A word, not an item. Once learned, it's yours for good."; empty, "No words
+  yet. Out here, they're given or found." (LORE 2026-10-18); nothing moves from it. A tab hides the other kinds' pack
   slots but they still take their room.
 - **The header** shows the purse (gin) and the Sparkglass totals across the pack and the store: wild
   slivers, humming glass, deep glass.

@@ -651,7 +651,7 @@ export class InventoryScene extends Phaser.Scene {
     );
     if (this.words.length === 0) {
       this.wordTexts.push(
-        body(this, WORDS_X + PANE_PAD, PANE_Y + GRID_Y + 2, NO_WORDS_LINE, Palette.uiInkMuted),
+        body(this, WORDS_X + PANE_PAD, PANE_Y + GRID_Y + 2, NO_WORDS_LINE, Palette.uiInkMuted, WORDS_W - 2 * PANE_PAD),
       );
       return;
     }
@@ -754,8 +754,9 @@ export class InventoryScene extends Phaser.Scene {
     const name = label(this, 0, 0, lines.name.toUpperCase(), Palette.uiInk);
     const kind = body(this, 0, 0, lines.kind, Palette.uiInkMuted);
     const text = body(this, 0, 0, lines.text, Palette.uiInkMuted, inner);
-    const count = body(this, 0, 0, lines.count, Palette.uiInk);
-    const h = PANE_PAD + 10 + 11 + 4 + 1 + 4 + Math.round(text.height) + 4 + 11 + PANE_PAD;
+    // The count line wraps too: a word's is LORE's two sentences ("A word, not an item. Once learned, …").
+    const count = body(this, 0, 0, lines.count, Palette.uiInk, inner);
+    const h = PANE_PAD + 10 + 11 + 4 + 1 + 4 + Math.round(text.height) + 4 + Math.max(11, Math.round(count.height)) + PANE_PAD;
     const y = Math.max(2, Math.min(UI_H - 2 - h, pos.y));
     panel(this.tip, x, y, TOOLTIP_W, h, { plain: true });
     let ly = y + PANE_PAD;

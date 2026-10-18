@@ -1,11 +1,13 @@
 import type Phaser from 'phaser';
 import {
+  plotLine,
   sigilPath,
   type HoldingLayout,
   type LayoutPlot,
   type PlotsTuning,
   type PlotView,
   type SigilPath,
+  type WritView,
 } from '@iot/shared';
 import {
   groundElement,
@@ -18,10 +20,14 @@ import {
   sealDurationMs,
   sealPhase,
   sentenceLetters,
+  BOARD_SIZE,
   SIGIL_CELL,
   sigilOrigin,
   sigilPoint,
+  sigilSegmentsLeft,
   signpostBase,
+  signpostBoard,
+  signpostTopY,
   SIGNPOST_H,
   SIGNPOST_W,
   WORLD_SCALE,
@@ -43,8 +49,11 @@ type G = Phaser.GameObjects.Graphics;
  * under the props and the Kindled), its seal (the ring round the plot in
  * the Ground's element colour, the sentence's letters from the letter sheet
  * along the top with the divider between the words and at the ring's other
- * join, the sigil at the centre over a faint 3 × 3 grid) and its signpost (a
- * solid 1 × 1 prop y-sorted with the bodies); a faded plot dim with no sigil.
+ * join) and its signpost at the centre (a solid 1 × 1 prop y-sorted with the
+ * bodies) whose board carries the sigil over a faint 3 × 3 grid (LORE
+ * 2026-10-18: the signpost has no words, only the sigil, and loses its line
+ * segment by segment while the plot's line is dark, `sigilSegmentsLeft`); a
+ * faded plot dim, its board blank.
  * The seal scene on a naming: the ring draws itself round the plot, the
  * letters appear one by one, the sigil traces from its circle to its bar,
  * then the ground turns; whole frames, timed by tuning.json's `plots`, and
@@ -77,6 +86,8 @@ interface DrawnPlot {
   sealStart: number;
   /** What was last drawn, so a frame redraws only on a change. */
   drawn: string;
+  /** The plot's index in the layout: its Writ line is `plotLine(index)`. */
+  index: number;
 }
 
 /** A plot's state and sentence as the drawing reads them. */
@@ -121,6 +132,9 @@ export class PlotsLayer {
   private named = false;
   /** The scene clock at the last update, for the seal scenes. */
   private now = 0;
+  /** The server's clock at the last update and the Writ's lines, for the signposts' fading line. */
+  private serverMs = 0;
+  private writ: Pick<WritView, 'darkSince' | 'lines'> | null = null;
 
   constructor(
     scene: Phaser.Scene,
@@ -147,7 +161,7 @@ export class PlotsLayer {
         .setDepth(bodyDepth({ kind: 'prop' }, base.y / WORLD_SCALE))
         .setVisible(false);
       layer.add([seal, ground, signpost]);
-      this.drawn.push({ plot, seal, ground, signpost, view: null, sealStart: -1, drawn: '' });
+      this.drawn.push({ plot, seal, ground, signpost, view: null, sealStart: -1, drawn: '', index: this.drawn.length });
     }
   }
 
@@ -159,8 +173,9 @@ export class PlotsLayer {
   }
 
   /** The latest answer: which plots are named and how (null before any answer; `named` is whether the island has a Name). */
-  sync(plots: readonly PlotView[] | null, named: boolean): void {
+  sync(plots: readonly PlotView[] | null, named: boolean, writ: Pick<WritView, 'darkSince' | 'lines'> | null = null): void {
     this.named = named;
+    this.writ = writ;
     for (const d of this.drawn) d.view = plots?.find((p) => p.id === d.plot.id) ?? null;
   }
 
@@ -186,13 +201,13 @@ export class PlotsLayer {
   signpostTop(plotId: string): { x: number; y: number } | null {
     const d = this.drawn.find((x) => x.plot.id === plotId);
     if (!d?.view || d.view.ground === null) return null;
-    const base = signpostBase(d.plot);
-    return { x: base.x, y: base.y - SIGNPOST_H - 2 };
+    return { x: signpostBase(d.plot).x, y: signpostTopY(d.plot) - 2 };
   }
 
   /** Every frame: the seal scenes move on and anything changed redraws. */
-  update(nowMs: number): void {
+  update(nowMs: number, serverMs: number = nowMs): void {
     this.now = nowMs;
+    this.serverMs = serverMs;
     for (const d of this.drawn) this.draw(d);
   }
 
@@ -213,7 +228,8 @@ export class PlotsLayer {
     const view = this.named ? d.view : null;
     const look = view && view.ground !== null ? plotLook(view) : null;
     const phase = look ? this.phaseOf(d, look) : null;
-    const key = JSON.stringify([this.named, view, this.sheet !== null, phase]);
+    const left = look ? this.segmentsLeft(d, look) : 0;
+    const key = JSON.stringify([this.named, view, this.sheet !== null, phase, left]);
     if (key === d.drawn) return;
     d.drawn = key;
     const g = d.seal;
@@ -258,21 +274,27 @@ export class PlotsLayer {
         g.fillStyle(ink, 1).fillRect(dx - WORLD_SCALE / 2, dy, WORLD_SCALE, WORLD_SCALE);
       }
     }
-    // The sigil at the centre over a faint grid, traced from its circle to its bar; none while faded.
-    if (!faded && (phase === null || phase.ring >= 1))
-      this.drawSigil(g, d.plot, look, phase ? phase.sigil : null, phase ? phase.letters : null);
-    // The signpost: a solid 1 × 1 placeholder prop on its tile.
+    // The signpost at the centre, its board carrying the sigil over a faint grid, traced from its circle to its bar in
+    // the seal scene and losing segments while the line is dark; blank once faded.
     this.drawSignpost(d, faded);
+    if (!faded && (phase === null || phase.ring >= 1))
+      this.drawSigil(d, look, phase ? Math.min(phase.sigil, left) : left, phase ? phase.letters : null);
   }
 
-  private drawSigil(
-    g: G,
-    plot: LayoutPlot,
-    look: PlotLook,
-    traced: number | null,
-    lettersShown: number | null,
-  ): void {
-    const origin = sigilOrigin(plot);
+  /** The sigil's segments the signpost still shows: all while lit, fewer while its line is dark, none once faded. */
+  private segmentsLeft(d: DrawnPlot, look: PlotLook): number {
+    const segments = Math.max(0, look.sigil.steps.length - 1);
+    const line = this.writ?.lines[plotLine(d.index) - 1];
+    const darkSince = this.writ?.darkSince ? Date.parse(this.writ.darkSince) : null;
+    return sigilSegmentsLeft(segments, line && { state: line.state, fadesAt: Date.parse(line.fadesAt) }, darkSince, this.serverMs);
+  }
+
+  /** The sigil on the signpost's board, drawn into its graphics (positioned at the signpost's base). */
+  private drawSigil(d: DrawnPlot, look: PlotLook, traced: number, lettersShown: number | null): void {
+    const g = d.signpost;
+    const base = signpostBase(d.plot);
+    const at = sigilOrigin(d.plot);
+    const origin = { x: Math.round(at.x - base.x), y: Math.round(at.y - base.y) };
     const grid = Palette.plotGrid;
     for (let i = 0; i <= 3; i++) {
       pixelLine(
@@ -304,12 +326,12 @@ export class PlotsLayer {
       return;
     const points = steps.map((s) => sigilPoint(origin, s));
     const segments = points.length - 1;
-    const share = traced ?? segments;
+    const share = traced;
     const color = look.color;
     const first = points[0];
     if (!first) return;
-    // The circle where the sentence begins.
-    pixelRing(g, first.x, first.y, 3, color);
+    // The circle where the sentence begins (it stays while the line erodes from its far end).
+    pixelRing(g, first.x, first.y, 2, color);
     for (let i = 0; i < segments; i++) {
       const a = points[i];
       const b = points[i + 1];
@@ -328,8 +350,8 @@ export class PlotsLayer {
       if (mark.step > share) continue;
       const p = points[mark.step];
       if (!p) continue;
-      if (mark.kind === 'loop') pixelRing(g, p.x, p.y, 3, color);
-      else if (mark.kind === 'hook') g.fillStyle(color, 1).fillRect(p.x + 2, p.y - 5, 2, 4);
+      if (mark.kind === 'loop') pixelRing(g, p.x, p.y, 2, color);
+      else if (mark.kind === 'hook') g.fillStyle(color, 1).fillRect(p.x + 2, p.y - 4, 2, 3);
     }
     // The bar where it ends, perpendicular to the last segment (across it when the line stands still).
     if (share >= segments) {
@@ -338,8 +360,8 @@ export class PlotsLayer {
       const prev = points[points.length - 2] ?? last;
       const horizontal = Math.abs(last.y - prev.y) >= Math.abs(last.x - prev.x);
       g.fillStyle(color, 1);
-      if (horizontal) g.fillRect(last.x - 4, last.y - 1, 8, 2);
-      else g.fillRect(last.x - 1, last.y - 4, 2, 8);
+      if (horizontal) g.fillRect(last.x - 3, last.y - 1, 6, 2);
+      else g.fillRect(last.x - 1, last.y - 3, 2, 6);
     }
   }
 
@@ -349,19 +371,17 @@ export class PlotsLayer {
     g.setVisible(true);
     const post = faded ? Palette.plotFaded : Palette.signpostWood;
     const plaque = faded ? Palette.plotFaded : Palette.signpostPlaque;
-    const x0 = -Math.floor(SIGNPOST_W / 2);
-    // Outline, post, plaque at the top.
-    g.fillStyle(Palette.playerOutline, 1).fillRect(
-      x0 - 1,
-      -SIGNPOST_H - 1,
-      SIGNPOST_W + 2,
-      SIGNPOST_H + 1,
-    );
-    g.fillStyle(post, 1).fillRect(x0, -SIGNPOST_H, SIGNPOST_W, SIGNPOST_H);
-    g.fillStyle(Palette.playerOutline, 1).fillRect(x0 - 4, -SIGNPOST_H - 1, SIGNPOST_W + 8, 9);
-    g.fillStyle(plaque, 1).fillRect(x0 - 3, -SIGNPOST_H, SIGNPOST_W + 6, 7);
-    // The grounding shadow under it, by the prop rule's small case (3 high under 16 wide).
     const base = signpostBase(d.plot);
+    const x0 = -Math.floor(SIGNPOST_W / 2);
+    // The post, outlined, then the square board on top of it, outlined: the sigil is drawn onto the board.
+    g.fillStyle(Palette.playerOutline, 1).fillRect(x0 - 1, -SIGNPOST_H, SIGNPOST_W + 2, SIGNPOST_H);
+    g.fillStyle(post, 1).fillRect(x0, -SIGNPOST_H, SIGNPOST_W, SIGNPOST_H);
+    const board = signpostBoard(d.plot);
+    const bx = board.x - base.x;
+    const by = board.y - base.y;
+    g.fillStyle(Palette.playerOutline, 1).fillRect(bx - 1, by - 1, BOARD_SIZE + 2, BOARD_SIZE + 2);
+    g.fillStyle(plaque, 1).fillRect(bx, by, BOARD_SIZE, BOARD_SIZE);
+    // The grounding shadow under it, by the prop rule's small case (3 high under 16 wide).
     shadowEllipse(d.seal, Math.round(base.x) - 6, Math.round(base.y) - 1, 12, 3);
   }
 

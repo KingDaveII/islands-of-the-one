@@ -125,7 +125,7 @@ ART #87), with the same tone swap; encounters keep the combat sheet.
 | `writ-post`     | post    | none: Use opens the Writ panel (the Name screen first, unnamed; §9) | n/a   | n/a   | n/a         | n/a          | none |
 | `holding-store` | store   | none: Use opens the inventory with the store pane | n/a | n/a | n/a | n/a | none |
 | `weapon-rack`   | rack    | none: a reserved spot until Task 8 | n/a | n/a | n/a | n/a | none |
-| `twisted-trees` | trees   | a dead branch   | 1 `twisted-log`   | 4 s   | Woodcutting | 4            | 1 `twisted-log` every 2 h per tree (`perPart`: six trees, 6 logs every 2 h) |
+| `twisted-trees` | trees   | a dead branch   | 1 `twisted-log`   | 4 s   | Woodcutting | 4            | 1 `twisted-log` every 20 min (six trees at 2 h each, one shared basket filling one log at a time) |
 | `stone-outcrop` | outcrop | surface stone   | 1 `black-stone`   | 6 s   | Mining      | 6            | none: stone never comes by itself (GAME DESIGN) |
 
 And the **plot kinds** (`plotKinds`), what a Ground word builds on a plot (§11); a named plot is a station of
@@ -137,7 +137,9 @@ its kind whose id is the plot's (`plot-1` …, basket `basket:plot-1`):
 
 A living branch ("mixed dead and living branches"), regrowth and the quarry's layers come later, with their
 items. The six trees are one station: any tree's interact point works it, and they share one basket. A `cycle`
-is optional on any station or plot kind (`itemId`, `quantity`, `cycleMs`, `perPart`), validated like the action.
+is optional on any station or plot kind (`itemId`, `quantity`, `cycleMs`), validated like the action; a basket
+fills one item at a time, so a cycle's quantity is above 1 only where one action really yields more (GAME DESIGN
+2026-10-18).
 
 **One active action per Kindled**, in the `holding_activity` table (the Kindled as primary key, the
 station, `started_at`, `credited_cycles`, `last_seen_at`; migration 0004, expand-only). Starting work
@@ -291,7 +293,7 @@ the Kindled and stops at the layout's edges.
 - **Over the station, a "+1"** as each cycle completes, predicted from the ring (`cyclesDone`), render
   only; the counts come from the server. A take-all floats what moved the same way ("+3"), over the
   station's part nearest the Kindled. A basket cycle landing while watching floats its yield the same way
-  (`cyclesLanded`, from `cycles`): "+1" over a field's signpost, "+6" over the tree nearest the Kindled.
+  (`cyclesLanded`, from `cycles`): "+1" over a field's signpost or the tree nearest the Kindled.
 - **The camera margin** (4b): the camera follows the Kindled and may scroll `cameraMarginTiles` (6, `holding.json`)
   into the void past every edge of the layout (`clampScroll`'s `near` and `far` on both axes), so the HUD's corner
   panels never cover the shore or Kesh's rock: the PACK chip covered the rock in a 1440 × 810 window before it, the
@@ -303,9 +305,10 @@ the Kindled and stops at the layout's edges.
 backs out, all from `controls.json`): Use on the Writ post opens the Writ panel, or the Name screen first
 while the island has no Name (§9); Use on the holding store opens the inventory with the store pane;
 Use on a tree or the outcrop opens a small station panel
-(`stationLines`): the name, "1 twisted log every 4 s", the basket cycle's rate ("6 twisted logs every 2 h")
-and "Next in 1 h 59 min" (or "Resting while your Writ is dark."), the basket count, "You: 1 twisted log every 4 s"
-while working here (the item's full name on both lines), the skill's level and XP to the next, and the
+(`stationLines`): the name; two labelled rate lines (GAME DESIGN 2026-10-18), "By itself: 1 twisted log every
+20 min" (the cycle; the outcrop has none) and "By hand: 1 twisted log every 4 s", which becomes the highlighted
+"You: 1 twisted log every 4 s" while working here, so there are never three (the item's full name on each);
+"Next in 19 min" (or "Resting while your Writ is dark."), the basket count, the skill's level and XP to the next, and the
 buttons WORK HERE (STOP WORKING while working here) and TAKE ALL. Use on a plot: the plot sentence panel
 while unnamed, its field's panel once named (§11). After Take all what moved floats over the
 station ("+3", `takeFloat`); "Store: twisted logs full." (`takeResultLine`) is the one panel line, shown
@@ -607,9 +610,12 @@ and אדמה · ישן is sealed as it stands. One shared function, `plotSentenc
 
 **Naming** (`POST /api/plots/name`, `{ plotId, ground, virtue }`, `virtue` may be null) runs as a holding request
 (the Kindled's lock, the Writ's, the plots' rows, then the settle, then the act; `apps/server/src/holding/plots.ts`).
-In order it refuses `unknown-plot` (400), `unnamed` (409: the island has no Name), `faded` (409: the plot's line
-has faded), `unknown-word` (400: not in words.json, or not known), `wrong-slot` (400), `no-ground` (400),
-`unchanged` (409: the same sentence), `sentence-refused` (400: the filter above, which no M2 pair trips;
+In order it refuses, with LORE's lines (2026-10-18, `PLOT_TEXT`): `unknown-plot` (400, "That ground isn't yours to
+name."), `unnamed` (409: the island has no Name), `faded` (409: the plot's line has faded), `unknown-word` (400:
+not in words.json, or not known; "You don't know that word yet."), `wrong-slot` (400: "That's a Virtue, not a
+Ground." / "That's a Ground, not a Virtue."), `no-ground` (400: "Choose a Ground first. Without one, the plot
+doesn't know what it is."), `unchanged` (409: the same sentence; "It already has that name."), `sentence-refused`
+(400: the filter above, which no M2 pair trips;
 "Those words won't hold together. Try another pair.") and `insufficient` (409: a rename without the gin, "You
 don't have that many."). The **first naming is free**; any later change (another Virtue, filling an empty
 Virtue, clearing it) costs 1 `sealed-gin` from the purse through `inventory.apply` with reason `name-plot`
@@ -665,9 +671,13 @@ as a faint dotted outline (`plotOutline`) with the USE prompt at its interact po
 but not yet ground for anything. Give it a word."; a named plot with its ground inside (a whole-pixel dither,
 `plotGrid`, under the props and the Kindled), its **seal** (the ring round the plot in the Ground's element
 colour, `sealEarth`; the sentence's letters from the letter sheet along the top of the ring with the divider
-between the words and at the ring's other join; the sigil at the centre over a faint 3 × 3 grid) and its
-signpost (`signpostWood`, `signpostPlaque`; a pillar in the roam, `setSolidPlots`); a faded plot dim with no
-sigil (`plotFaded`). Hovering a named plot shows LORE's seal tooltip. **The seal scene** plays from a naming's
+between the words and at the ring's other join) and, at its centre, its **signpost** (`signpostWood`,
+`signpostPlaque`; a pillar in the roam, `setSolidPlots`), which carries no words: its square board carries the
+plot's sigil over a faint 3 × 3 grid (LORE 2026-10-18; `signpostBoard`, `sigilOrigin`) and loses the line
+segment by segment while the plot's Writ line is dark, from the moment the Writ went dark to the line's fade,
+the circle staying last (`sigilSegmentsLeft`); a faded plot dim, its board blank (`plotFaded`). Hovering a named
+plot shows LORE's seal tooltip (§14.3; its two-word line once the plot has a Virtue), and hovering its signpost
+the signpost's, "The plot's two words, drawn as one line." (`onSignpost`). **The seal scene** plays from a naming's
 answer, never ahead of it (`startSeal`; `sealPhase` in `game/plotView.ts`, timed by `tuning.json` `plots`:
 `sealRingMs` 300, `sealLetterMs` 70 a letter, `sealSigilMs` 400, `sealGroundMs` 200): the ring draws itself
 round the plot, the letters appear one by one, the sigil traces from its circle to its bar, then the ground
@@ -677,14 +687,15 @@ panel: "Name this plot" / "Rename this plot"; the ring with two slots right to l
 Virtue on the left, labelled); the known tiles that fit the selected slot with their letters, `say`, meaning
 and effect ("You don't know any Ground words yet." / "… Virtue words yet." when none; "None" leaves the Virtue
 empty); the preview with the sigil drawn live, "Builds: Field", the Virtue's effect "+1% yield for each day it
-keeps its name, up to +20%", and LORE's Field tooltip; the cost line "First naming: free" / "Renaming: 1
+keeps its name, up to +20%", and LORE's Field tooltip (§14.3; its two-word line once a Virtue is picked); the cost line "First naming: free" / "Renaming: 1
 sealed gin" (tooltip "A name is paid for."); "Level 1" and "Pieces: none" for Task 6; CONFIRM, greyed while the
 sentence is unchanged or has no Ground; a refusal in one line. Inputs as the Writ panel's. **The field's
 station panel** (`stationLines`): until sown, only "Not sown yet." and SOW (without a seed, "You don't have
-that many."); once sown, "FIELD" with the sentence's letters, "Level 1", "1 pale grain every 20 s" (the
-action), "1 pale grain every 15 min" (the cycle; with ישן, "+3% for keeping its name" under it, the bonus so
-far), the basket count, "Next in 12 min" (`nextInLine`, rounded up to the minute; "Resting while your Writ is
-dark." while dark), "You: 1 pale grain every 20 s" while working here, Farming's level and XP to the next, and
+that many."); once sown, "FIELD" with the sentence's letters, "Level 1", "By itself: 1 pale grain every 15 min"
+(the cycle; with ישן, "+3% for keeping its name" under it, the bonus so far), "By hand: 1 pale grain every 20 s"
+(the highlighted "You: 1 pale grain every 20 s" in its place while working here), the basket count, "Next in 12
+min" (`nextInLine`, rounded up to the minute; "Resting while your Writ is dark." while dark), Farming's level and
+XP to the next, and
 WORK HERE / STOP WORKING, TAKE ALL, RENAME; faded, "Faded into the haze with your Writ's first line. Feed your
 Writ and it will remember." and no buttons. **Kesh's tosses** (§10): the `word` toss flies a placeholder clay
 tile (`clayTile`, a small rectangle drawn as a sprite texture) and lands showing the word's letters from the
@@ -701,7 +712,7 @@ days with a faded span paused out, the carry adding up exactly over 192 cycles, 
 the seeds, every naming refusal, the free first naming and the paid rename with its ledger reason, sowing
 from the store then the pack, work and take at a field, the trickle: 15 min gives 1, 48 h gives 192 and no
 more, dark mid-stretch, the relight's fresh clock, three days online, no XP, the ref paying once, the trees'
-6 logs every 2 h and nothing for the outcrop, ישן's bonus with the faded span at a relight, `holding:away`,
+one log every 20 min and nothing for the outcrop, ישן's bonus with the faded span at a relight, `holding:away`,
 the CLIs, migration 0007) and `holding.postgres.test.ts` (settles racing credit each cycle once; two names
 racing on one plot charge at most once); `apps/client/src/game/plotView.test.ts`, `holdingView.test.ts` (the
 field's lines lit, dark and faded; "Next in …"), `keshTalk.test.ts` (the flows with `wordDue` and `seedsDue`)
