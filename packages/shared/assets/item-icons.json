@@ -1,0 +1,75 @@
+{
+ "image": "item-icons-16px.png",
+ "cell": 16,
+ "meta": {
+  "version": "2",
+  "pixelScale": 1,
+  "tinted": false
+ },
+ "cells": [
+  {
+   "name": "sealed-gin",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "wild-sliver",
+   "x": 16,
+   "y": 0,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "glass-chip",
+   "x": 32,
+   "y": 0,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "deep-glass",
+   "x": 48,
+   "y": 0,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "twisted-log",
+   "x": 64,
+   "y": 0,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "black-stone",
+   "x": 80,
+   "y": 0,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "streaked-stone",
+   "x": 96,
+   "y": 0,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "grey-seeds",
+   "x": 112,
+   "y": 0,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "pale-grain",
+   "x": 128,
+   "y": 0,
+   "w": 16,
+   "h": 16
+  }
+ ],
+ "notes": "ART's M2 item icons, one per item id in items.json, 16 x 16 UI px, drawn in colour (never tinted). Draw at 1 UI px per px, centred in the 24 px inventory cell; the count sits over the bottom right."
+}
