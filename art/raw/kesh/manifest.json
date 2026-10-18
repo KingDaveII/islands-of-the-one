@@ -1,0 +1,1618 @@
+{
+ "job": "kesh",
+ "date": "2026-10-18",
+ "branch": "art/kesh",
+ "purpose": "raw material only: a seated Fishing state of Old Kesh and three south-east animations (fish, talk, toss); no recipe, no art:build, no code, nothing retouched",
+ "images_passed_as": "none needed: every call took the character id; no uploads, no inline base64. Results were downloaded as the character zip (GET https://api.pixellab.ai/mcp/characters/<id>/download with the API token), which bundles both states; frames copied byte for byte and renamed frame_00N.png -> frame-N.png",
+ "seed": {
+  "create_character_state": 1234,
+  "animate_character": "has no seed parameter"
+ },
+ "balance": {
+  "before_first_call": 1237.7,
+  "after_step1_state": 1227.7,
+  "after_fish": 1226.7,
+  "after_talk": 1225.7,
+  "after_toss": 1224.7,
+  "end": 1224.7,
+  "measured_total": 13.0,
+  "budget": "about 30, hard cap 50"
+ },
+ "generations": {
+  "create_character_state Fishing": 10,
+  "animate_character fish": 1,
+  "animate_character talk": 1,
+  "animate_character toss": 1,
+  "total": 13,
+  "source": "get_balance before and after each call (1237.70 -> 1227.70 -> 1226.70 -> 1225.70 -> 1224.70); the tool quoted ~10-25 for the state and 1 generation (1/dir x 1) for each animation"
+ },
+ "retakes": [],
+ "step1": {
+  "get_character": {
+   "character_id": "8fbb8b65-0614-45c7-8751-c1475b7f41d2",
+   "status": "completed",
+   "name": "npc-kesh (g13b-job3)",
+   "states_before": [
+    {
+     "state_name": "Idle",
+     "character_id": "8fbb8b65-0614-45c7-8751-c1475b7f41d2",
+     "group": "e01898c5-eb1a-42a9-8565-760ce7270245"
+    }
+   ],
+   "animations_before": "none",
+   "size": "64x64",
+   "view": "low top-down"
+  },
+  "create_character_state": {
+   "tool": "create_character_state",
+   "arguments": {
+    "character_id": "8fbb8b65-0614-45c7-8751-c1475b7f41d2",
+    "state_name": "Fishing",
+    "seed": 1234,
+    "edit_description": "sitting on the flat top of a rock with his legs hanging over its edge, knees bent and feet dangling, his back a little hunched; both hands hold a long thin wooden fishing rod angled forward and up, held out in front of him, a thin fishing line hanging from its tip; the same Old Kesh: river-dark brown-black clay, a few widely spaced amber freckles, long white hair and a white beard, the patched grey-ochre sailcloth tunic with its wet grey patch, dark trousers, wrapped dark feet. No rock or ground drawn under him."
+   },
+   "state_character_id": "3da78b62-e166-46ea-bba0-f7ada2c54e8e",
+   "job_id": "0dd226e1-2de6-470b-96c4-91596dbfc00b",
+   "group_id": "e01898c5-eb1a-42a9-8565-760ce7270245",
+   "quoted_cost": "~10-25 generations (Gemini tier by canvas size)",
+   "generations": 10,
+   "took_s": 108,
+   "canvas": "64x64 (the source size; no override)",
+   "retake": "none: the south-east rotation is seated (knees bent, feet dangling, back hunched), holds the rod forward and up, and keeps the white hair and beard, the dark clay skin and the tunic",
+   "south_east_measurements": {
+    "hair_top_row": 9,
+    "seat_lowest_row": 45,
+    "feet_lowest_row": 56,
+    "hair_to_seat_px": 37,
+    "hair_to_feet_px": 48,
+    "body_right_edge_col": 42,
+    "rod_tip_col": 58,
+    "rod_tip_row": 13,
+    "rod_reach_beyond_body_px": 16,
+    "bbox": [
+     20,
+     9,
+     58,
+     56
+    ],
+    "note": "the seat is the underside of the torso, the last row (45) before the two legs part at row 46; the rod tip stays 4 px below the hair top"
+   },
+   "what_is_missing": "no fishing line in the rotations (the fish animation draws one in frames 2-3), no amber freckles, no visible wet patch; the figure uses only 5 colours, all near-whitelist (dark outline #1E1C36, trousers #5B5149, tunic #836F51, hair shade #CCBED7, hair light #E3DCCF) and no skin colour apart from the outline/trouser tone",
+   "rotations": {
+    "files": [
+     {
+      "file": "art/raw/kesh/fishing/rotations/south.png",
+      "sha256": "5805f8c73094743e4bf1be1a594b5529d52f827b57ca5620a0ce1d45968afc39",
+      "size": [
+       64,
+       64
+      ],
+      "bbox": [
+       19,
+       9,
+       57,
+       57
+      ],
+      "colours": 5,
+      "palette_used": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/rotations/south-east.png",
+      "sha256": "04d844e6f629b310ace1755fe107f74c2844596fd708f73752b2e7a74719eb74",
+      "size": [
+       64,
+       64
+      ],
+      "bbox": [
+       20,
+       9,
+       59,
+       57
+      ],
+      "colours": 5,
+      "palette_used": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/rotations/east.png",
+      "sha256": "f167d2b911284c36e929eaee649b3efc5ba54ad132be2ec3823bb377965bbae2",
+      "size": [
+       64,
+       64
+      ],
+      "bbox": [
+       18,
+       9,
+       59,
+       58
+      ],
+      "colours": 5,
+      "palette_used": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/rotations/north-east.png",
+      "sha256": "6fe7237698f30b914a339c62545e357193c47086afc9af0d6de877b98af27ebc",
+      "size": [
+       64,
+       64
+      ],
+      "bbox": [
+       19,
+       7,
+       58,
+       56
+      ],
+      "colours": 5,
+      "palette_used": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/rotations/north.png",
+      "sha256": "470410939d0f33951bffe2a7a84fd07e2b4528e69450685f34bc86caa57f1630",
+      "size": [
+       64,
+       64
+      ],
+      "bbox": [
+       14,
+       6,
+       46,
+       55
+      ],
+      "colours": 5,
+      "palette_used": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/rotations/north-west.png",
+      "sha256": "d7d0b33f79c20d4f81d6e53ddff2b9ac28bac98e1b09b461bc1cd29f1dfd27c2",
+      "size": [
+       64,
+       64
+      ],
+      "bbox": [
+       8,
+       7,
+       47,
+       56
+      ],
+      "colours": 5,
+      "palette_used": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/rotations/west.png",
+      "sha256": "57d499ac1aac0523d53f9f634fac13c07127de3bb013f012c92374cbc45f453f",
+      "size": [
+       64,
+       64
+      ],
+      "bbox": [
+       6,
+       9,
+       47,
+       58
+      ],
+      "colours": 5,
+      "palette_used": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/rotations/south-west.png",
+      "sha256": "24dfde91def002c901064852af9660dbd1ed6855e0f4e00ce8e4a5301e08cac1",
+      "size": [
+       64,
+       64
+      ],
+      "bbox": [
+       6,
+       9,
+       45,
+       57
+      ],
+      "colours": 5,
+      "palette_used": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     }
+    ],
+    "set_colours": {
+     "colours_union": [
+      "#1E1C36",
+      "#5B5149",
+      "#836F51",
+      "#CCBED7",
+      "#E3DCCF"
+     ],
+     "colours_total": 5,
+     "max_colours_per_image": 5,
+     "off_whitelist": [
+      "#1E1C36",
+      "#5B5149",
+      "#836F51",
+      "#CCBED7",
+      "#E3DCCF"
+     ],
+     "forbidden": []
+    }
+   },
+   "character_metadata": "character-metadata.json (the zip metadata: both states, their prompts and frame lists)"
+  }
+ },
+ "step2": {
+  "tool": "animate_character",
+  "mode": "v3",
+  "directions": [
+   "south-east"
+  ],
+  "character_id": "3da78b62-e166-46ea-bba0-f7ada2c54e8e",
+  "stored_canvas": "76x76 (the character plus room to move); frame-0 is the rotation, kept",
+  "animations": [
+   {
+    "animation_name": "fish",
+    "arguments": {
+     "character_id": "3da78b62-e166-46ea-bba0-f7ada2c54e8e",
+     "mode": "v3",
+     "directions": [
+      "south-east"
+     ],
+     "animation_name": "fish",
+     "frame_count": 6,
+     "action_description": "sits still and fishes: the rod tip dips gently and comes back up, the line sways, he breathes; a calm seamless loop, the body hardly moves"
+    },
+    "job_id": "b03537c3-b289-4a80-9ae6-290766d923c6",
+    "group_id": "7150a8af-b270-47ee-91d8-c5f0a8f4b6ac",
+    "quoted_cost": "1 generation (1/dir x 1)",
+    "generations": 1,
+    "took_s": 120,
+    "frames_stored": 7,
+    "retake": "none",
+    "verdict": "passes: seated in every frame, the rod in every frame, same figure",
+    "best_frames": "frames 1-4 read best as the 4-frame loop: 1 rest, 2 the tip dips and the line hangs (a drop on the water), 3 the tip low with the line, 4 the tip back up high; 5 and 6 are near-repeats of 1",
+    "object_leaves_hand": "n/a",
+    "files": [
+     {
+      "file": "art/raw/kesh/fishing/fish/south-east/frame-0.png",
+      "sha256": "1bc7c3dd95e415fe4c033ad7ab78fd68e3b5b5eab8e5819cc7749046a14e0afc",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       26,
+       15,
+       65,
+       63
+      ],
+      "colours": 5,
+      "palette_used": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/fish/south-east/frame-1.png",
+      "sha256": "e6334742c4705979d70bde4711c982f4594446f2dcf118d7cdda11e82b48a1d5",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       26,
+       14,
+       66,
+       63
+      ],
+      "colours": 10,
+      "palette_used": [
+       "#1E1C36",
+       "#2E2B41",
+       "#494557",
+       "#5B5149",
+       "#836F51",
+       "#BCB0CB",
+       "#CCBED7",
+       "#D6CDD1",
+       "#D8D1C5",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#2E2B41",
+       "#494557",
+       "#5B5149",
+       "#836F51",
+       "#BCB0CB",
+       "#CCBED7",
+       "#D6CDD1",
+       "#D8D1C5",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/fish/south-east/frame-2.png",
+      "sha256": "712734c5873fdb70bb1e07a0f63c27dca8e51478b981967fe2ed0cb645910eb1",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       26,
+       14,
+       67,
+       63
+      ],
+      "colours": 10,
+      "palette_used": [
+       "#1E1C36",
+       "#2E2B41",
+       "#494557",
+       "#5B5149",
+       "#836F51",
+       "#B9B4A8",
+       "#BCB0CB",
+       "#CCBED7",
+       "#D8D1C5",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#2E2B41",
+       "#494557",
+       "#5B5149",
+       "#836F51",
+       "#B9B4A8",
+       "#BCB0CB",
+       "#CCBED7",
+       "#D8D1C5",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/fish/south-east/frame-3.png",
+      "sha256": "0baffc531e78bd6334e649aa946928fed383be867ba284df9094a3719bb856c1",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       26,
+       13,
+       69,
+       63
+      ],
+      "colours": 12,
+      "palette_used": [
+       "#1E1C36",
+       "#291C4C",
+       "#494557",
+       "#5B5149",
+       "#836F51",
+       "#957FA2",
+       "#9588AE",
+       "#AEA0C5",
+       "#BCB0CB",
+       "#CCBED7",
+       "#D8D1C5",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#291C4C",
+       "#494557",
+       "#5B5149",
+       "#836F51",
+       "#957FA2",
+       "#9588AE",
+       "#AEA0C5",
+       "#BCB0CB",
+       "#CCBED7",
+       "#D8D1C5",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/fish/south-east/frame-4.png",
+      "sha256": "e581c3b07cafb5c48cd12beb1522ec8f73d7b6ff6de29e9156ac32d3e1c98b0e",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       25,
+       13,
+       65,
+       63
+      ],
+      "colours": 9,
+      "palette_used": [
+       "#1E1C36",
+       "#494557",
+       "#5B5149",
+       "#836F51",
+       "#BCB0CB",
+       "#CCBED7",
+       "#D6CDD1",
+       "#D8D1C5",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#494557",
+       "#5B5149",
+       "#836F51",
+       "#BCB0CB",
+       "#CCBED7",
+       "#D6CDD1",
+       "#D8D1C5",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/fish/south-east/frame-5.png",
+      "sha256": "ba8f194e5d14cb1cad84a8842ae2215a3ce18eb862a1a18d402c5f9a544f7a5f",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       25,
+       14,
+       65,
+       63
+      ],
+      "colours": 13,
+      "palette_used": [
+       "#1E1C36",
+       "#2E2B41",
+       "#443961",
+       "#494557",
+       "#5B5149",
+       "#5F4E72",
+       "#70655D",
+       "#836F51",
+       "#BCB0CB",
+       "#CCBED7",
+       "#D6CDD1",
+       "#D8D1C5",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#2E2B41",
+       "#443961",
+       "#494557",
+       "#5B5149",
+       "#5F4E72",
+       "#70655D",
+       "#836F51",
+       "#BCB0CB",
+       "#CCBED7",
+       "#D6CDD1",
+       "#D8D1C5",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/fish/south-east/frame-6.png",
+      "sha256": "b32ebe805675c57712083080fa550f2a8352402f1a1a69e1b9a69d40ba8d9b22",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       26,
+       14,
+       65,
+       63
+      ],
+      "colours": 11,
+      "palette_used": [
+       "#1E1C36",
+       "#2E2B41",
+       "#494557",
+       "#5B5149",
+       "#817694",
+       "#836F51",
+       "#867B71",
+       "#BCB0CB",
+       "#CCBED7",
+       "#D8D1C5",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#2E2B41",
+       "#494557",
+       "#5B5149",
+       "#817694",
+       "#836F51",
+       "#867B71",
+       "#BCB0CB",
+       "#CCBED7",
+       "#D8D1C5",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     }
+    ],
+    "set_colours": {
+     "colours_union": [
+      "#1E1C36",
+      "#291C4C",
+      "#2E2B41",
+      "#443961",
+      "#494557",
+      "#5B5149",
+      "#5F4E72",
+      "#70655D",
+      "#817694",
+      "#836F51",
+      "#867B71",
+      "#957FA2",
+      "#9588AE",
+      "#AEA0C5",
+      "#B9B4A8",
+      "#BCB0CB",
+      "#CCBED7",
+      "#D6CDD1",
+      "#D8D1C5",
+      "#E3DCCF"
+     ],
+     "colours_total": 20,
+     "max_colours_per_image": 13,
+     "off_whitelist": [
+      "#1E1C36",
+      "#291C4C",
+      "#2E2B41",
+      "#443961",
+      "#494557",
+      "#5B5149",
+      "#5F4E72",
+      "#70655D",
+      "#817694",
+      "#836F51",
+      "#867B71",
+      "#957FA2",
+      "#9588AE",
+      "#AEA0C5",
+      "#B9B4A8",
+      "#BCB0CB",
+      "#CCBED7",
+      "#D6CDD1",
+      "#D8D1C5",
+      "#E3DCCF"
+     ],
+     "forbidden": []
+    }
+   },
+   {
+    "animation_name": "talk",
+    "arguments": {
+     "character_id": "3da78b62-e166-46ea-bba0-f7ada2c54e8e",
+     "mode": "v3",
+     "directions": [
+      "south-east"
+     ],
+     "animation_name": "talk",
+     "frame_count": 4,
+     "action_description": "turns his head and shoulders back over his right shoulder toward the left of the picture and talks, the rod still held out in front of him with one hand"
+    },
+    "job_id": "49661983-79ad-4c53-b606-f88789af7d53",
+    "group_id": "acc84690-4381-4880-993b-02cd096f041c",
+    "quoted_cost": "1 generation (1/dir x 1)",
+    "generations": 1,
+    "took_s": 113,
+    "frames_stored": 5,
+    "retake": "none",
+    "verdict": "passes the hard-failure test: seated, the rod kept, same figure. Not what was asked in 3-4: frames 1-2 turn the head toward the viewer (south) and speak, frames 3-4 turn the whole body to the south-west with the rod swung to the left; frames 1-2 are the usable pair, the glance back over the right shoulder toward the west was not drawn",
+    "best_frames": "frames 1 and 2 read best as the 2-frame talk loop (head turned toward the viewer, the mouth and beard change); 3-4 turn too far",
+    "object_leaves_hand": "n/a",
+    "files": [
+     {
+      "file": "art/raw/kesh/fishing/talk/south-east/frame-0.png",
+      "sha256": "1bc7c3dd95e415fe4c033ad7ab78fd68e3b5b5eab8e5819cc7749046a14e0afc",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       26,
+       15,
+       65,
+       63
+      ],
+      "colours": 5,
+      "palette_used": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/talk/south-east/frame-1.png",
+      "sha256": "6ac42767a518032bc325e7a57827c5dd6f032716c4a9d1266ec900b0d4a8b272",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       26,
+       16,
+       68,
+       63
+      ],
+      "colours": 28,
+      "palette_used": [
+       "#171625",
+       "#1E1C36",
+       "#2C283C",
+       "#302D49",
+       "#38313D",
+       "#3D384D",
+       "#41393E",
+       "#474042",
+       "#4B454E",
+       "#5B5149",
+       "#675E6A",
+       "#685C55",
+       "#70655A",
+       "#72624D",
+       "#836F51",
+       "#83766E",
+       "#8F87A4",
+       "#998984",
+       "#A091A0",
+       "#A29AB9",
+       "#A79BA4",
+       "#B5ACA7",
+       "#C0B5CC",
+       "#CCBED7",
+       "#D0C7B5",
+       "#D7CECF",
+       "#D9CFC4",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#171625",
+       "#1E1C36",
+       "#2C283C",
+       "#302D49",
+       "#38313D",
+       "#3D384D",
+       "#41393E",
+       "#474042",
+       "#4B454E",
+       "#5B5149",
+       "#675E6A",
+       "#685C55",
+       "#70655A",
+       "#72624D",
+       "#836F51",
+       "#83766E",
+       "#8F87A4",
+       "#998984",
+       "#A091A0",
+       "#A29AB9",
+       "#A79BA4",
+       "#B5ACA7",
+       "#C0B5CC",
+       "#CCBED7",
+       "#D0C7B5",
+       "#D7CECF",
+       "#D9CFC4",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/talk/south-east/frame-2.png",
+      "sha256": "80fda24faf68c51288efb6637c63f1bdd1cfdbf3aee430ee5b1212d3eb2d9c78",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       24,
+       15,
+       64,
+       63
+      ],
+      "colours": 19,
+      "palette_used": [
+       "#171625",
+       "#1E1C36",
+       "#2C283C",
+       "#38313D",
+       "#474042",
+       "#4B454E",
+       "#5B5149",
+       "#685C55",
+       "#6F6868",
+       "#70655A",
+       "#72624D",
+       "#836F51",
+       "#A29AB9",
+       "#B4A798",
+       "#C0B5CC",
+       "#CCBED7",
+       "#D7CECF",
+       "#D9CFC4",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#171625",
+       "#1E1C36",
+       "#2C283C",
+       "#38313D",
+       "#474042",
+       "#4B454E",
+       "#5B5149",
+       "#685C55",
+       "#6F6868",
+       "#70655A",
+       "#72624D",
+       "#836F51",
+       "#A29AB9",
+       "#B4A798",
+       "#C0B5CC",
+       "#CCBED7",
+       "#D7CECF",
+       "#D9CFC4",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/talk/south-east/frame-3.png",
+      "sha256": "36eade74c83d4539a6d4a0bbbadeaa5e8debfa11ee828d401d7312840b47e8aa",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       11,
+       14,
+       54,
+       63
+      ],
+      "colours": 28,
+      "palette_used": [
+       "#171625",
+       "#1E1C36",
+       "#2C283C",
+       "#302D49",
+       "#38313D",
+       "#3C3367",
+       "#41393E",
+       "#474042",
+       "#4B454E",
+       "#4E3273",
+       "#4F353D",
+       "#5B5149",
+       "#6F6868",
+       "#705C42",
+       "#72624D",
+       "#836F51",
+       "#83766E",
+       "#866E9C",
+       "#968066",
+       "#9887B3",
+       "#A48E69",
+       "#B1A1C0",
+       "#B6AED0",
+       "#C0B5CC",
+       "#CCBED7",
+       "#D7CECF",
+       "#D9CFC4",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#171625",
+       "#1E1C36",
+       "#2C283C",
+       "#302D49",
+       "#38313D",
+       "#3C3367",
+       "#41393E",
+       "#474042",
+       "#4B454E",
+       "#4E3273",
+       "#4F353D",
+       "#5B5149",
+       "#6F6868",
+       "#705C42",
+       "#72624D",
+       "#836F51",
+       "#83766E",
+       "#866E9C",
+       "#968066",
+       "#9887B3",
+       "#A48E69",
+       "#B1A1C0",
+       "#B6AED0",
+       "#C0B5CC",
+       "#CCBED7",
+       "#D7CECF",
+       "#D9CFC4",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/talk/south-east/frame-4.png",
+      "sha256": "aa644d518ae6f0dcf5d066d5ddfae88cb60b3cdfb11ca3588a7b3ab178db6ec5",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       11,
+       14,
+       60,
+       63
+      ],
+      "colours": 19,
+      "palette_used": [
+       "#171625",
+       "#1E1C36",
+       "#2C283C",
+       "#38313D",
+       "#41393E",
+       "#474042",
+       "#4B454E",
+       "#5B5149",
+       "#685C55",
+       "#6F6868",
+       "#70655A",
+       "#72624D",
+       "#836F51",
+       "#968066",
+       "#C0B5CC",
+       "#CCBED7",
+       "#D7CECF",
+       "#D9CFC4",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#171625",
+       "#1E1C36",
+       "#2C283C",
+       "#38313D",
+       "#41393E",
+       "#474042",
+       "#4B454E",
+       "#5B5149",
+       "#685C55",
+       "#6F6868",
+       "#70655A",
+       "#72624D",
+       "#836F51",
+       "#968066",
+       "#C0B5CC",
+       "#CCBED7",
+       "#D7CECF",
+       "#D9CFC4",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     }
+    ],
+    "set_colours": {
+     "colours_union": [
+      "#171625",
+      "#1E1C36",
+      "#2C283C",
+      "#302D49",
+      "#38313D",
+      "#3C3367",
+      "#3D384D",
+      "#41393E",
+      "#474042",
+      "#4B454E",
+      "#4E3273",
+      "#4F353D",
+      "#5B5149",
+      "#675E6A",
+      "#685C55",
+      "#6F6868",
+      "#705C42",
+      "#70655A",
+      "#72624D",
+      "#836F51",
+      "#83766E",
+      "#866E9C",
+      "#8F87A4",
+      "#968066",
+      "#9887B3",
+      "#998984",
+      "#A091A0",
+      "#A29AB9",
+      "#A48E69",
+      "#A79BA4",
+      "#B1A1C0",
+      "#B4A798",
+      "#B5ACA7",
+      "#B6AED0",
+      "#C0B5CC",
+      "#CCBED7",
+      "#D0C7B5",
+      "#D7CECF",
+      "#D9CFC4",
+      "#E3DCCF"
+     ],
+     "colours_total": 40,
+     "max_colours_per_image": 28,
+     "off_whitelist": [
+      "#171625",
+      "#1E1C36",
+      "#2C283C",
+      "#302D49",
+      "#38313D",
+      "#3C3367",
+      "#3D384D",
+      "#41393E",
+      "#474042",
+      "#4B454E",
+      "#4E3273",
+      "#4F353D",
+      "#5B5149",
+      "#675E6A",
+      "#685C55",
+      "#6F6868",
+      "#705C42",
+      "#70655A",
+      "#72624D",
+      "#836F51",
+      "#83766E",
+      "#866E9C",
+      "#8F87A4",
+      "#968066",
+      "#9887B3",
+      "#998984",
+      "#A091A0",
+      "#A29AB9",
+      "#A48E69",
+      "#A79BA4",
+      "#B1A1C0",
+      "#B4A798",
+      "#B5ACA7",
+      "#B6AED0",
+      "#C0B5CC",
+      "#CCBED7",
+      "#D0C7B5",
+      "#D7CECF",
+      "#D9CFC4",
+      "#E3DCCF"
+     ],
+     "forbidden": []
+    }
+   },
+   {
+    "animation_name": "toss",
+    "arguments": {
+     "character_id": "3da78b62-e166-46ea-bba0-f7ada2c54e8e",
+     "mode": "v3",
+     "directions": [
+      "south-east"
+     ],
+     "animation_name": "toss",
+     "frame_count": 6,
+     "action_description": "lets go of the rod with one hand and gives a short underarm flick, throwing a small object back over his shoulder toward the left of the picture, then takes hold of the rod again"
+    },
+    "job_id": "72371736-aadc-4b25-9599-3bc5bc0e746d",
+    "group_id": "1bac9036-1427-48ad-892a-5373558e2a8a",
+    "quoted_cost": "1 generation (1/dir x 1)",
+    "generations": 1,
+    "took_s": null,
+    "frames_stored": 7,
+    "retake": "none",
+    "verdict": "passes: a throw can be seen, the rod stays in every frame, same figure, the seat level does not rise. Surprising: from frame 2 the legs spread into a wide planted squat instead of dangling, and the rod goes horizontal in both hands in 3-6",
+    "best_frames": "frames 3-6 read as the throw: 3 the free hand swings back left with the object, 4 the arm fully out to the left, 5 the object in the air at the far left and the hand coming back, 6 the hand on the rod again (frames 1-2 are the grip shift)",
+    "object_leaves_hand": "frame 5 (in frame 4 the object is still in the hand at the far left; in 5 it is 6-8 px off the hand, at about column 8-12)",
+    "files": [
+     {
+      "file": "art/raw/kesh/fishing/toss/south-east/frame-0.png",
+      "sha256": "1bc7c3dd95e415fe4c033ad7ab78fd68e3b5b5eab8e5819cc7749046a14e0afc",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       26,
+       15,
+       65,
+       63
+      ],
+      "colours": 5,
+      "palette_used": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#5B5149",
+       "#836F51",
+       "#CCBED7",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/toss/south-east/frame-1.png",
+      "sha256": "5f725fe7ebd51f3e72c5f6ee8111aa793273a97a20d094f65c11fc3926ccaeb9",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       26,
+       15,
+       64,
+       63
+      ],
+      "colours": 18,
+      "palette_used": [
+       "#1E1C36",
+       "#2D283A",
+       "#2E2944",
+       "#3D353D",
+       "#422F55",
+       "#4C406A",
+       "#4E4543",
+       "#5B5149",
+       "#665B54",
+       "#73634D",
+       "#786867",
+       "#836F51",
+       "#A29AB8",
+       "#BCB1C0",
+       "#CCBED7",
+       "#D4CCD0",
+       "#D7CEBE",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#2D283A",
+       "#2E2944",
+       "#3D353D",
+       "#422F55",
+       "#4C406A",
+       "#4E4543",
+       "#5B5149",
+       "#665B54",
+       "#73634D",
+       "#786867",
+       "#836F51",
+       "#A29AB8",
+       "#BCB1C0",
+       "#CCBED7",
+       "#D4CCD0",
+       "#D7CEBE",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/toss/south-east/frame-2.png",
+      "sha256": "2fc93facf7196f8cd84ba3a8fddf44e5550b3e53ae5cbd7835f9359be707490e",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       23,
+       16,
+       65,
+       63
+      ],
+      "colours": 14,
+      "palette_used": [
+       "#1E1C36",
+       "#3D353D",
+       "#4C406A",
+       "#4E4543",
+       "#5B5149",
+       "#665B54",
+       "#73634D",
+       "#836F51",
+       "#AFA4BD",
+       "#BBAFCA",
+       "#CCBED7",
+       "#D4CCD0",
+       "#D7CEBE",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#3D353D",
+       "#4C406A",
+       "#4E4543",
+       "#5B5149",
+       "#665B54",
+       "#73634D",
+       "#836F51",
+       "#AFA4BD",
+       "#BBAFCA",
+       "#CCBED7",
+       "#D4CCD0",
+       "#D7CEBE",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/toss/south-east/frame-3.png",
+      "sha256": "f5cbde9cf71c0211c126a301b4e9fcde7fedf94bb2df0a381ea7c60d592e9e54",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       17,
+       15,
+       62,
+       63
+      ],
+      "colours": 18,
+      "palette_used": [
+       "#1E1C36",
+       "#2D283A",
+       "#2E2944",
+       "#352D37",
+       "#3D353D",
+       "#48444D",
+       "#4E4543",
+       "#5B5149",
+       "#665B54",
+       "#73634D",
+       "#836F51",
+       "#888089",
+       "#AFA4BD",
+       "#C6B9B8",
+       "#CCBED7",
+       "#D4CCD0",
+       "#D7CEBE",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#2D283A",
+       "#2E2944",
+       "#352D37",
+       "#3D353D",
+       "#48444D",
+       "#4E4543",
+       "#5B5149",
+       "#665B54",
+       "#73634D",
+       "#836F51",
+       "#888089",
+       "#AFA4BD",
+       "#C6B9B8",
+       "#CCBED7",
+       "#D4CCD0",
+       "#D7CEBE",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/toss/south-east/frame-4.png",
+      "sha256": "b596b722d74b7a9c97c1d453ee9474539741a1e10981df0f3b6748cded86b5fe",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       12,
+       14,
+       58,
+       63
+      ],
+      "colours": 15,
+      "palette_used": [
+       "#1E1C36",
+       "#2D283A",
+       "#3B3B4B",
+       "#3D353D",
+       "#48444D",
+       "#4E4543",
+       "#5B5149",
+       "#665B54",
+       "#73634D",
+       "#836F51",
+       "#888089",
+       "#CCBED7",
+       "#D4CCD0",
+       "#D7CEBE",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#2D283A",
+       "#3B3B4B",
+       "#3D353D",
+       "#48444D",
+       "#4E4543",
+       "#5B5149",
+       "#665B54",
+       "#73634D",
+       "#836F51",
+       "#888089",
+       "#CCBED7",
+       "#D4CCD0",
+       "#D7CEBE",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/toss/south-east/frame-5.png",
+      "sha256": "cd98d7bc6897eb693ae424e64066a4a36299ac1b29a01084cb85f2dc9db341e3",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       8,
+       14,
+       64,
+       63
+      ],
+      "colours": 15,
+      "palette_used": [
+       "#1E1C36",
+       "#2D283A",
+       "#352D37",
+       "#3D353D",
+       "#4C406A",
+       "#4E4543",
+       "#5B5149",
+       "#5B5181",
+       "#665B54",
+       "#73634D",
+       "#836F51",
+       "#CCBED7",
+       "#D4CCD0",
+       "#D7CEBE",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#2D283A",
+       "#352D37",
+       "#3D353D",
+       "#4C406A",
+       "#4E4543",
+       "#5B5149",
+       "#5B5181",
+       "#665B54",
+       "#73634D",
+       "#836F51",
+       "#CCBED7",
+       "#D4CCD0",
+       "#D7CEBE",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     },
+     {
+      "file": "art/raw/kesh/fishing/toss/south-east/frame-6.png",
+      "sha256": "fa9169a43cc7923b345a207c00e86cd439f8ce6812184de2d355f4e6aaf4e6ff",
+      "size": [
+       76,
+       76
+      ],
+      "bbox": [
+       23,
+       14,
+       66,
+       63
+      ],
+      "colours": 13,
+      "palette_used": [
+       "#1E1C36",
+       "#2D283A",
+       "#2E2944",
+       "#352D37",
+       "#4E4543",
+       "#5B5149",
+       "#665B54",
+       "#73634D",
+       "#836F51",
+       "#CCBED7",
+       "#D4CCD0",
+       "#D7CEBE",
+       "#E3DCCF"
+      ],
+      "off_whitelist": [
+       "#1E1C36",
+       "#2D283A",
+       "#2E2944",
+       "#352D37",
+       "#4E4543",
+       "#5B5149",
+       "#665B54",
+       "#73634D",
+       "#836F51",
+       "#CCBED7",
+       "#D4CCD0",
+       "#D7CEBE",
+       "#E3DCCF"
+      ],
+      "forbidden": [],
+      "semi_transparent_px": 0
+     }
+    ],
+    "set_colours": {
+     "colours_union": [
+      "#1E1C36",
+      "#2D283A",
+      "#2E2944",
+      "#352D37",
+      "#3B3B4B",
+      "#3D353D",
+      "#422F55",
+      "#48444D",
+      "#4C406A",
+      "#4E4543",
+      "#5B5149",
+      "#5B5181",
+      "#665B54",
+      "#73634D",
+      "#786867",
+      "#836F51",
+      "#888089",
+      "#A29AB8",
+      "#AFA4BD",
+      "#BBAFCA",
+      "#BCB1C0",
+      "#C6B9B8",
+      "#CCBED7",
+      "#D4CCD0",
+      "#D7CEBE",
+      "#E3DCCF"
+     ],
+     "colours_total": 26,
+     "max_colours_per_image": 18,
+     "off_whitelist": [
+      "#1E1C36",
+      "#2D283A",
+      "#2E2944",
+      "#352D37",
+      "#3B3B4B",
+      "#3D353D",
+      "#422F55",
+      "#48444D",
+      "#4C406A",
+      "#4E4543",
+      "#5B5149",
+      "#5B5181",
+      "#665B54",
+      "#73634D",
+      "#786867",
+      "#836F51",
+      "#888089",
+      "#A29AB8",
+      "#AFA4BD",
+      "#BBAFCA",
+      "#BCB1C0",
+      "#C6B9B8",
+      "#CCBED7",
+      "#D4CCD0",
+      "#D7CEBE",
+      "#E3DCCF"
+     ],
+     "forbidden": []
+    }
+   }
+  ]
+ },
+ "contact_sheet": {
+  "file": "art/raw/kesh/contact.png",
+  "scale": 4,
+  "background": "#2A2540 hollow-deep",
+  "rows": [
+   "the 8 Fishing rotations S SE E NE N NW W SW, then Job 3 standing SE",
+   "fish frames 0-6",
+   "talk frames 0-4",
+   "toss frames 0-6",
+   "scale only: SE Fishing on prop-kesh-rock idle frame-0 (rock bottom-centred on a 64x96 canvas, its 64x64 frame in the lower 64 rows, Kesh pasted at (0,-3) so his seat row 45 sits on the tip at rock row 10), the rock alone, Kesh alone"
+  ],
+  "note": "the composite uses a 64x96 canvas instead of 64x64: with the seat on the tip the head rises 26 rows above a 64-row canvas; the rock is still bottom-centred",
+  "sha256": "dc949677a1a0c733ee6ba1a887bbe59cc619dd758d50677d0ca04c2dd001a6a2"
+ },
+ "files_sha256": {
+  "art/raw/kesh/character-metadata.json": "9c3b936b14b57776c3352a1d10fbc6b08a0e1f9b577eb346f7dfa97473f53cce",
+  "art/raw/kesh/contact.png": "dc949677a1a0c733ee6ba1a887bbe59cc619dd758d50677d0ca04c2dd001a6a2",
+  "art/raw/kesh/fishing/fish/south-east/frame-0.png": "1bc7c3dd95e415fe4c033ad7ab78fd68e3b5b5eab8e5819cc7749046a14e0afc",
+  "art/raw/kesh/fishing/fish/south-east/frame-1.png": "e6334742c4705979d70bde4711c982f4594446f2dcf118d7cdda11e82b48a1d5",
+  "art/raw/kesh/fishing/fish/south-east/frame-2.png": "712734c5873fdb70bb1e07a0f63c27dca8e51478b981967fe2ed0cb645910eb1",
+  "art/raw/kesh/fishing/fish/south-east/frame-3.png": "0baffc531e78bd6334e649aa946928fed383be867ba284df9094a3719bb856c1",
+  "art/raw/kesh/fishing/fish/south-east/frame-4.png": "e581c3b07cafb5c48cd12beb1522ec8f73d7b6ff6de29e9156ac32d3e1c98b0e",
+  "art/raw/kesh/fishing/fish/south-east/frame-5.png": "ba8f194e5d14cb1cad84a8842ae2215a3ce18eb862a1a18d402c5f9a544f7a5f",
+  "art/raw/kesh/fishing/fish/south-east/frame-6.png": "b32ebe805675c57712083080fa550f2a8352402f1a1a69e1b9a69d40ba8d9b22",
+  "art/raw/kesh/fishing/rotations/east.png": "f167d2b911284c36e929eaee649b3efc5ba54ad132be2ec3823bb377965bbae2",
+  "art/raw/kesh/fishing/rotations/north-east.png": "6fe7237698f30b914a339c62545e357193c47086afc9af0d6de877b98af27ebc",
+  "art/raw/kesh/fishing/rotations/north-west.png": "d7d0b33f79c20d4f81d6e53ddff2b9ac28bac98e1b09b461bc1cd29f1dfd27c2",
+  "art/raw/kesh/fishing/rotations/north.png": "470410939d0f33951bffe2a7a84fd07e2b4528e69450685f34bc86caa57f1630",
+  "art/raw/kesh/fishing/rotations/south-east.png": "04d844e6f629b310ace1755fe107f74c2844596fd708f73752b2e7a74719eb74",
+  "art/raw/kesh/fishing/rotations/south-west.png": "24dfde91def002c901064852af9660dbd1ed6855e0f4e00ce8e4a5301e08cac1",
+  "art/raw/kesh/fishing/rotations/south.png": "5805f8c73094743e4bf1be1a594b5529d52f827b57ca5620a0ce1d45968afc39",
+  "art/raw/kesh/fishing/rotations/west.png": "57d499ac1aac0523d53f9f634fac13c07127de3bb013f012c92374cbc45f453f",
+  "art/raw/kesh/fishing/talk/south-east/frame-0.png": "1bc7c3dd95e415fe4c033ad7ab78fd68e3b5b5eab8e5819cc7749046a14e0afc",
+  "art/raw/kesh/fishing/talk/south-east/frame-1.png": "6ac42767a518032bc325e7a57827c5dd6f032716c4a9d1266ec900b0d4a8b272",
+  "art/raw/kesh/fishing/talk/south-east/frame-2.png": "80fda24faf68c51288efb6637c63f1bdd1cfdbf3aee430ee5b1212d3eb2d9c78",
+  "art/raw/kesh/fishing/talk/south-east/frame-3.png": "36eade74c83d4539a6d4a0bbbadeaa5e8debfa11ee828d401d7312840b47e8aa",
+  "art/raw/kesh/fishing/talk/south-east/frame-4.png": "aa644d518ae6f0dcf5d066d5ddfae88cb60b3cdfb11ca3588a7b3ab178db6ec5",
+  "art/raw/kesh/fishing/toss/south-east/frame-0.png": "1bc7c3dd95e415fe4c033ad7ab78fd68e3b5b5eab8e5819cc7749046a14e0afc",
+  "art/raw/kesh/fishing/toss/south-east/frame-1.png": "5f725fe7ebd51f3e72c5f6ee8111aa793273a97a20d094f65c11fc3926ccaeb9",
+  "art/raw/kesh/fishing/toss/south-east/frame-2.png": "2fc93facf7196f8cd84ba3a8fddf44e5550b3e53ae5cbd7835f9359be707490e",
+  "art/raw/kesh/fishing/toss/south-east/frame-3.png": "f5cbde9cf71c0211c126a301b4e9fcde7fedf94bb2df0a381ea7c60d592e9e54",
+  "art/raw/kesh/fishing/toss/south-east/frame-4.png": "b596b722d74b7a9c97c1d453ee9474539741a1e10981df0f3b6748cded86b5fe",
+  "art/raw/kesh/fishing/toss/south-east/frame-5.png": "cd98d7bc6897eb693ae424e64066a4a36299ac1b29a01084cb85f2dc9db341e3",
+  "art/raw/kesh/fishing/toss/south-east/frame-6.png": "fa9169a43cc7923b345a207c00e86cd439f8ce6812184de2d355f4e6aaf4e6ff"
+ }
+}
