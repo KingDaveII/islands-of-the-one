@@ -1,6 +1,6 @@
-import { sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createDb, type DbHandle } from '../src/db/client.js';
+import { openTestPostgres, type TestPostgres } from './postgres.js';
+import type { DbHandle } from '../src/db/client.js';
 import { accounts, kindled } from '../src/db/schema.js';
 import { createHolding, type Holding } from '../src/holding/index.js';
 import { createInventory, type Inventory } from '../src/inventory/index.js';
@@ -20,6 +20,7 @@ const at = (ms: number): Date => new Date(T0 + ms);
 if (process.env.CI && !url) throw new Error('CI must set TEST_DATABASE_URL (a Postgres service)');
 
 describe.runIf(url)('the holding settle on Postgres', () => {
+  let db: TestPostgres;
   let handle: DbHandle;
   let inv: Inventory;
   let holding: Holding;
@@ -27,18 +28,13 @@ describe.runIf(url)('the holding settle on Postgres', () => {
 
   beforeAll(async () => {
     if (!url) return;
-    if (!/test/i.test(new URL(url).pathname))
-      throw new Error(`refusing to wipe ${new URL(url).pathname}: its name must contain "test"`);
-    handle = await createDb({ url });
-    await handle.db.execute(sql`drop schema if exists drizzle cascade`);
-    await handle.db.execute(sql`drop schema if exists public cascade`);
-    await handle.db.execute(sql`create schema public`);
-    await handle.migrate();
+    db = await openTestPostgres(url);
+    handle = db.handle;
     inv = createInventory(handle.db);
     holding = createHolding(handle.db, inv);
   });
   afterAll(async () => {
-    await handle.close();
+    await db.release();
   });
 
   async function newKindled(): Promise<string> {

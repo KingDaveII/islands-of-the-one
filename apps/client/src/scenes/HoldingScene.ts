@@ -199,6 +199,10 @@ export class HoldingScene extends Phaser.Scene {
         this.moveFocus(1);
       });
 
+    // A tap on the world is Use (interact is E, Cross or a tap); taps on the HUD's zones are theirs.
+    this.input.on('pointerdown', (p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => {
+      if (p.wasTouch && over.length === 0) this.use();
+    });
     const offDevice = deviceStore.subscribe(() => {
       menuCursor(this);
     });
