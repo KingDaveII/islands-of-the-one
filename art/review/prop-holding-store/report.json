@@ -18,7 +18,7 @@
     "frames": 1,
     "offPalette": 0,
     "maxDeltaE": 0,
-    "outlineGaps": 0
+    "outlineGaps": 1
   },
   "flags": {
     "seam": [],
@@ -41,7 +41,7 @@
       "held": [],
       "bob": {
         "tops": [
-          25
+          41
         ],
         "range": 0,
         "flag": false
@@ -55,9 +55,9 @@
       "offPalette": 0,
       "maxDeltaE": 0,
       "dx": 0,
-      "dy": -1,
-      "shift": -1,
-      "outlineGaps": 0,
+      "dy": 0,
+      "shift": 0,
+      "outlineGaps": 1,
       "colours": 6,
       "interiorDreamNight": 0
     }

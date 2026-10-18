@@ -133,10 +133,13 @@ describe('the sheets on disk (packages/shared/assets/sprites)', () => {
     // The holding's placeholder set (M2 Task 3b), the same way.
     expect(disk.has(HOLDING_TILE_SHEET), `${HOLDING_TILE_SHEET} is not on disk`).toBe(true);
     expect(holdingTileSheet).toEqual(disk.get(HOLDING_TILE_SHEET));
-    // The station props and Kesh's rock load with the characters (one frame each, no table).
+    // The station props and Kesh's rock load with the characters (an idle, no table): one frame each,
+    // but the Writ post's, whose tablet marks pulse over two (ART, the holding art).
     for (const name of [...Object.values(STATION_SHEETS), KESH_ROCK_SHEET]) {
       expect(SPRITE_SHEET_NAMES).toContain(name);
-      expect(spriteSheets[name].anims.idle?.frames).toEqual(['idle_0']);
+      expect(spriteSheets[name].anims.idle?.frames, name).toEqual(
+        name === 'prop-writ-post' ? ['idle_0', 'idle_1'] : ['idle_0'],
+      );
     }
     expect(STATION_SHEETS).toEqual({ post: 'prop-writ-post', trees: 'prop-twisted-tree', outcrop: 'prop-stone-outcrop', store: 'prop-holding-store' });
   });

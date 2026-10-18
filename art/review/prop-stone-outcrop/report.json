@@ -41,7 +41,7 @@
       "held": [],
       "bob": {
         "tops": [
-          31
+          40
         ],
         "range": 0,
         "flag": false
@@ -55,8 +55,8 @@
       "offPalette": 0,
       "maxDeltaE": 0,
       "dx": 0,
-      "dy": -1,
-      "shift": -1,
+      "dy": 0,
+      "shift": 0,
       "outlineGaps": 0,
       "colours": 5,
       "interiorDreamNight": 0

@@ -15,10 +15,10 @@
     "idle"
   ],
   "totals": {
-    "frames": 1,
+    "frames": 2,
     "offPalette": 0,
     "maxDeltaE": 0,
-    "outlineGaps": 0
+    "outlineGaps": 4
   },
   "flags": {
     "seam": [],
@@ -37,11 +37,17 @@
   "anims": [
     {
       "key": "idle",
-      "frames": 1,
+      "frames": 2,
       "held": [],
+      "seam": {
+        "lastToFirst": 16,
+        "meanInCycle": 16,
+        "flag": false
+      },
       "bob": {
         "tops": [
-          41
+          43,
+          43
         ],
         "range": 0,
         "flag": false
@@ -55,10 +61,22 @@
       "offPalette": 0,
       "maxDeltaE": 0,
       "dx": 0,
-      "dy": -1,
-      "shift": -1,
-      "outlineGaps": 0,
-      "colours": 6,
+      "dy": -5,
+      "shift": -5,
+      "outlineGaps": 2,
+      "colours": 9,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "idle_1",
+      "source": "art/clean/prop-writ-post/idle 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": -5,
+      "shift": -5,
+      "outlineGaps": 2,
+      "colours": 9,
       "interiorDreamNight": 0
     }
   ],

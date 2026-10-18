@@ -7,7 +7,7 @@ Kind prop, outline other, cell 96×128, origin (48, 118).
 
 - Frames: 1.
 - Off-palette pixels snapped: 0 (largest ΔE 0).
-- Outline gaps (edge pixels not in an outline colour): 0.
+- Outline gaps (edge pixels not in an outline colour): 27.
 - Loop seam flags (last → first above 1.5× the mean change): none.
 - Body bob flags (top row moves more than 2 px): none.
 - Held frames (identical neighbours): none.
@@ -24,7 +24,7 @@ Rows, top to bottom: idle.
 
 | Anim | Frames | Seam (last→first / mean) | Bob (tops above the soles) | Held |
 |---|---|---|---|---|
-| idle | 1 |  | 113 (range 0) |  |
+| idle | 1 |  | 114 (range 0) |  |
 
 ## Frames
 
@@ -32,7 +32,7 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 
 | Frame | Source | Off-palette | Max ΔE | Shift | dx, dy | Outline gaps | Colours | Interior dream-night |
 |---|---|---|---|---|---|---|---|---|
-| idle_0 | `art/clean/prop-twisted-tree/idle 0` | 0 | 0 | -33 | 0, -1 | 0 | 7 | 0 |
+| idle_0 | `art/clean/prop-twisted-tree/idle 0` | 0 | 0 | -35 | 0, -3 | 27 | 10 | 0 |
 
 ## Off-palette colours the snap moved
 

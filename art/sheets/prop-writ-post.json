@@ -3,13 +3,15 @@
   "kind": "prop",
   "outline": "other",
   "draft": false,
-  "notes": "Placeholder by MAIN (tools/placeholder-holding.py); ART replaces the pixels through this recipe in the holding art job.",
+  "notes": "ART: cleaned from the holding job's pick (art/raw/holding/, PR #82) by art/clean/holding/props.py: 9 stone rows out so it stands about the player's height; idle 1 dims the tablet's amber marks to choir-gold (2 fps).",
   "anims": {
     "idle": {
       "src": "art/clean/prop-writ-post/idle",
       "frames": [
-        0
-      ]
+        0,
+        1
+      ],
+      "fps": 2
     }
   }
 }

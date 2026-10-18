@@ -23,12 +23,36 @@
         "x": 0.5,
         "y": 0.84375
       }
+    },
+    "idle_1": {
+      "frame": {
+        "x": 64,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.84375
+      }
     }
   },
   "meta": {
     "image": "prop-writ-post.png",
     "size": {
-      "w": 64,
+      "w": 128,
       "h": 64
     },
     "scale": "1",
@@ -48,11 +72,11 @@
   "anims": {
     "idle": {
       "frames": [
-        "idle_0"
+        "idle_0",
+        "idle_1"
       ],
-      "frameRate": 8,
-      "repeat": 0,
-      "hold": true
+      "frameRate": 2,
+      "repeat": -1
     }
   }
 }

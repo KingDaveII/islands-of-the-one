@@ -5,9 +5,9 @@ Kind prop, outline other, cell 64×64, origin (32, 54).
 
 ## Summary
 
-- Frames: 1.
+- Frames: 2.
 - Off-palette pixels snapped: 0 (largest ΔE 0).
-- Outline gaps (edge pixels not in an outline colour): 0.
+- Outline gaps (edge pixels not in an outline colour): 4.
 - Loop seam flags (last → first above 1.5× the mean change): none.
 - Body bob flags (top row moves more than 2 px): none.
 - Held frames (identical neighbours): none.
@@ -24,7 +24,7 @@ Rows, top to bottom: idle.
 
 | Anim | Frames | Seam (last→first / mean) | Bob (tops above the soles) | Held |
 |---|---|---|---|---|
-| idle | 1 |  | 41 (range 0) |  |
+| idle | 2 | 16 / 16 | 43 43 (range 0) |  |
 
 ## Frames
 
@@ -32,7 +32,8 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 
 | Frame | Source | Off-palette | Max ΔE | Shift | dx, dy | Outline gaps | Colours | Interior dream-night |
 |---|---|---|---|---|---|---|---|---|
-| idle_0 | `art/clean/prop-writ-post/idle 0` | 0 | 0 | -1 | 0, -1 | 0 | 6 | 0 |
+| idle_0 | `art/clean/prop-writ-post/idle 0` | 0 | 0 | -5 | 0, -5 | 2 | 9 | 0 |
+| idle_1 | `art/clean/prop-writ-post/idle 1` | 0 | 0 | -5 | 0, -5 | 2 | 9 | 0 |
 
 ## Off-palette colours the snap moved
 

@@ -24,7 +24,7 @@ Rows, top to bottom: idle.
 
 | Anim | Frames | Seam (last→first / mean) | Bob (tops above the soles) | Held |
 |---|---|---|---|---|
-| idle | 1 |  | 31 (range 0) |  |
+| idle | 1 |  | 40 (range 0) |  |
 
 ## Frames
 
@@ -32,7 +32,7 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 
 | Frame | Source | Off-palette | Max ΔE | Shift | dx, dy | Outline gaps | Colours | Interior dream-night |
 |---|---|---|---|---|---|---|---|---|
-| idle_0 | `art/clean/prop-stone-outcrop/idle 0` | 0 | 0 | -1 | 0, -1 | 0 | 5 | 0 |
+| idle_0 | `art/clean/prop-stone-outcrop/idle 0` | 0 | 0 | 0 | 0, 0 | 0 | 5 | 0 |
 
 ## Off-palette colours the snap moved
 

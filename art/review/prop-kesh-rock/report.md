@@ -7,7 +7,7 @@ Kind prop, outline other, cell 64×64, origin (32, 54).
 
 - Frames: 1.
 - Off-palette pixels snapped: 0 (largest ΔE 0).
-- Outline gaps (edge pixels not in an outline colour): 0.
+- Outline gaps (edge pixels not in an outline colour): 43.
 - Loop seam flags (last → first above 1.5× the mean change): none.
 - Body bob flags (top row moves more than 2 px): none.
 - Held frames (identical neighbours): none.
@@ -32,7 +32,7 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 
 | Frame | Source | Off-palette | Max ΔE | Shift | dx, dy | Outline gaps | Colours | Interior dream-night |
 |---|---|---|---|---|---|---|---|---|
-| idle_0 | `art/clean/prop-kesh-rock/idle 0` | 0 | 0 | -1 | 0, -1 | 0 | 4 | 0 |
+| idle_0 | `art/clean/prop-kesh-rock/idle 0` | 0 | 0 | -7 | 0, -7 | 43 | 7 | 0 |
 
 ## Off-palette colours the snap moved
 
