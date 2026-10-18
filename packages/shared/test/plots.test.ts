@@ -166,7 +166,7 @@ describe('the plots\' lines', () => {
     expect(PLOT_TEXT.FADED_PANEL).toBe("Faded into the haze with your Writ's first line. Feed your Writ and it will remember.");
     expect(PLOT_TEXT.UNNAMED_PLOT_TIP).toBe('Ground, but not yet ground for anything. Give it a word.');
     expect(PLOT_TEXT.NO_VIRTUE_WORDS).toBe("You don't know any Virtue words yet.");
-    expect(PLOT_TEXT.NO_GROUND).toBe('A Ground tile decides the building; without a Ground the plot cannot be built on');
+    expect(PLOT_TEXT.NO_GROUND).toBe("Choose a Ground first. Without one, the plot doesn't know what it is.");
     expect(PLOT_TEXT.SENTENCE_REFUSED).toBe("Those words won't hold together. Try another pair.");
     expect(PLOT_TEXT.COST_RENAME).toBe('Renaming: 1 sealed gin');
     expect(PLOT_TEXT.COST_RENAME_TIP).toBe('A name is paid for.');

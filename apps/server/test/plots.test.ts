@@ -188,8 +188,8 @@ describe('naming a plot', () => {
     expect(await holding.namePlot(k, { plotId: 'plot-1', ground: 'shalom', virtue: null }, at(0))).toEqual({ ok: false, error: 'unknown-word', message: PLOT_TEXT.UNKNOWN_WORD });
     expect(await holding.namePlot(k, { plotId: 'plot-1', ground: 'adamah', virtue: 'yashan' }, at(0))).toEqual({ ok: false, error: 'unknown-word', message: PLOT_TEXT.UNKNOWN_WORD });
     await learnWord(handle.db, k, 'yashan', at(0));
-    expect(await holding.namePlot(k, { plotId: 'plot-1', ground: 'yashan', virtue: null }, at(0))).toEqual({ ok: false, error: 'wrong-slot', message: PLOT_TEXT.WRONG_SLOT });
-    expect(await holding.namePlot(k, { plotId: 'plot-1', ground: 'adamah', virtue: 'adamah' }, at(0))).toEqual({ ok: false, error: 'wrong-slot', message: PLOT_TEXT.WRONG_SLOT });
+    expect(await holding.namePlot(k, { plotId: 'plot-1', ground: 'yashan', virtue: null }, at(0))).toEqual({ ok: false, error: 'wrong-slot', message: "That's a Virtue, not a Ground." });
+    expect(await holding.namePlot(k, { plotId: 'plot-1', ground: 'adamah', virtue: 'adamah' }, at(0))).toEqual({ ok: false, error: 'wrong-slot', message: "That's a Ground, not a Virtue." });
     expect(await holding.namePlot(k, { plotId: 'plot-1', ground: null, virtue: 'yashan' }, at(0))).toEqual({ ok: false, error: 'no-ground', message: PLOT_TEXT.NO_GROUND });
     expect(await holding.namePlot(k, { plotId: 'plot-1', ground: null, virtue: null }, at(0))).toEqual({ ok: false, error: 'no-ground', message: PLOT_TEXT.NO_GROUND });
     // Nothing was stored by a refusal.
@@ -390,21 +390,23 @@ describe("the field's trickle", () => {
 });
 
 describe("the trees' trickle", () => {
-  it('2 h gives 6 logs into the trees\' basket, from the first settle on; the outcrop gets none', async () => {
+  it("fills the trees' basket one log every 20 min (six trees at 2 h each), from the first settle on; the outcrop gets none", async () => {
     const k = await namedKindled();
     const start = value(await holding.view(k, at(0)));
-    expect(start.cycles).toEqual({ 'twisted-trees': { cycleMs: 2 * HOUR, cycledUntil: at(0).toISOString(), bonusPermille: 0 } });
-    expect(basket(value(await holding.view(k, at(2 * HOUR - 1))), 'twisted-trees', 'twisted-log')).toBe(0);
+    expect(start.cycles).toEqual({ 'twisted-trees': { cycleMs: 20 * MIN, cycledUntil: at(0).toISOString(), bonusPermille: 0 } });
+    expect(basket(value(await holding.view(k, at(20 * MIN - 1))), 'twisted-trees', 'twisted-log')).toBe(0);
+    expect(basket(value(await holding.view(k, at(20 * MIN))), 'twisted-trees', 'twisted-log')).toBe(1);
     const two = value(await holding.view(k, at(2 * HOUR)));
     expect(basket(two, 'twisted-trees', 'twisted-log')).toBe(6);
     expect(basket(two, 'stone-outcrop', 'black-stone')).toBe(0);
     expect(two.cycles['stone-outcrop']).toBeUndefined();
     expect(two.skills.woodcutting.xp).toBe(0);
-    // 48 h away: 24 cycles, 144 logs, as the brief's shot.
+    // 48 h away: 144 cycles, 144 logs, as the brief's shot.
     expect(basket(value(await holding.view(k, at(50 * HOUR))), 'twisted-trees', 'twisted-log')).toBe(6 + 144);
     const harvests = (await inv.ledger(k)).filter((e) => e.reason === 'harvest');
     expect(harvests.map((e) => [e.place, e.delta])).toEqual([
-      ['basket:twisted-trees', 6],
+      ['basket:twisted-trees', 1],
+      ['basket:twisted-trees', 5],
       ['basket:twisted-trees', 144],
     ]);
   });

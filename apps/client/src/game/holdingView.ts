@@ -145,9 +145,12 @@ export interface StationLines {
   letters: string | null;
   /** "Level 1" for a plot, else null. */
   level: string | null;
-  /** The active action's rate, "1 twisted log every 4 s"; null while a field isn't sown. */
+  /**
+   * "By hand: 1 twisted log every 4 s", what working it gives; null while working here (the line becomes `you`, so
+   * there are never three rate lines) and while a field isn't sown (GAME DESIGN 2026-10-18).
+   */
   rate: string | null;
-  /** The basket cycle's rate, "6 twisted logs every 2 h", or null for a station without one (or not sown). */
+  /** "By itself: 1 twisted log every 20 min", the basket cycle; null for a station without one (the outcrop) or not sown. */
   cycle: string | null;
   /** ישן's "+3% for keeping its name" under the cycle's rate, or null. */
   bonus: string | null;
@@ -155,7 +158,7 @@ export interface StationLines {
   basket: string | null;
   /** "Next in 12 min", or "Resting while your Writ is dark."; null without a cycle, faded or not sown. */
   next: string | null;
-  /** "You: 1 twisted log every 4 s" while working here (the item's full name, GAME DESIGN 2026-10-18), else null. */
+  /** "You: 1 twisted log every 4 s" while working here, in place of the By hand line, highlighted (the item's full name, GAME DESIGN 2026-10-18), else null. */
   you: string | null;
   /** "Woodcutting 2 · 1099 XP to next"; null while a field isn't sown. */
   skill: string | null;
@@ -170,12 +173,15 @@ export interface StationLines {
   buttons: StationButton[];
 }
 
+/** The station panel's two rate labels (GAME DESIGN 2026-10-18): the cycle, and what working it gives. */
+export const BY_ITSELF = 'By itself: ';
+export const BY_HAND = 'By hand: ';
+
 export function stationLines(stationId: string, r: HoldingResponse | null, serverMs: number = r ? Date.parse(r.now) : 0): StationLines | null {
   const place = workplaceDef(stationId, r);
   const action = place?.action;
   if (!place || !action) return null;
   const plot = place.plot;
-  const layout = holdingLayout(r?.layoutId);
   const basket = r?.baskets[stationId] ?? [];
   const working = r?.activity?.stationId === stationId;
   const view = r?.skills[action.skill];
@@ -197,8 +203,8 @@ export function stationLines(stationId: string, r: HoldingResponse | null, serve
   const next = place.cycle && clock ? (dark ? PLOT_TEXT.RESTING : nextInLine(clock, serverMs)) : null;
   return {
     ...base,
-    rate,
-    cycle: place.cycle ? cycleRateLine(place.cycle, layout, stationId) : null,
+    rate: working ? null : `${BY_HAND}${rate}`,
+    cycle: place.cycle ? `${BY_ITSELF}${cycleRateLine(place.cycle)}` : null,
     bonus: plot && clock ? bonusLine(clock.bonusPermille) : null,
     basket: basketLine,
     next,

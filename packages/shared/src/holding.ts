@@ -144,8 +144,6 @@ export interface StationCycle {
   itemId: string;
   quantity: number;
   cycleMs: number;
-  /** The yield is multiplied by the station's part count in the layout (the trees: one log per tree). */
-  perPart: boolean;
 }
 
 /** What a new plot of a kind is sown with, once, before it cycles or can be worked (the field: 1 grey seed). */
@@ -271,14 +269,13 @@ function parseCycle(cycle: unknown, where: string, problems: string[]): StationC
     return null;
   }
   const before = problems.length;
-  const more = Object.keys(cycle).filter((k) => !['itemId', 'quantity', 'cycleMs', 'perPart'].includes(k));
+  const more = Object.keys(cycle).filter((k) => !['itemId', 'quantity', 'cycleMs'].includes(k));
   if (more.length > 0) problems.push(`${where}: cycle has unknown field(s) ${more.join(', ')}`);
   if (!isItemId(cycle.itemId)) problems.push(`${where}: cycle.itemId must be an item of items.json`);
   if (!isCount(cycle.quantity)) problems.push(`${where}: cycle.quantity must be a positive integer`);
   if (!isCount(cycle.cycleMs)) problems.push(`${where}: cycle.cycleMs must be a positive integer`);
-  if (cycle.perPart !== undefined && typeof cycle.perPart !== 'boolean') problems.push(`${where}: cycle.perPart must be a boolean when present`);
   if (problems.length > before) return null;
-  return { itemId: cycle.itemId as string, quantity: cycle.quantity as number, cycleMs: cycle.cycleMs as number, perPart: cycle.perPart === true };
+  return { itemId: cycle.itemId as string, quantity: cycle.quantity as number, cycleMs: cycle.cycleMs as number };
 }
 
 /** A sow block of a plot kind: the item and the count, positive whole numbers. */
@@ -837,11 +834,6 @@ export function holdingRoomTiles(layout: HoldingLayout = holdingLayout(), solidP
 /** A station's parts in a layout, by id (none for a station the layout lacks). */
 export function stationParts(layout: HoldingLayout, stationId: string): readonly StationPart[] {
   return layout.stations.find((s) => s.id === stationId)?.parts ?? [];
-}
-
-/** A cycle's yield per cycle at a station: its quantity, times the station's part count in the layout for a `perPart` cycle (the trees). */
-export function cycleYield(cycle: Pick<StationCycle, 'quantity' | 'perPart'>, layout: HoldingLayout, stationId: string): number {
-  return cycle.perPart ? cycle.quantity * Math.max(1, stationParts(layout, stationId).length) : cycle.quantity;
 }
 
 /** A layout's plot by id, or undefined. */

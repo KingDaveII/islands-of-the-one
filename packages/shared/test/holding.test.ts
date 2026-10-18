@@ -25,7 +25,6 @@ import {
   isPlotNameRequest,
   isPlotSowRequest,
   isPlotView,
-  cycleYield,
   isStationCycleView,
   layoutPlot,
   plotIndex,
@@ -120,11 +119,9 @@ describe('stations.json', () => {
     expect(isHoldingStationId('stone-outcrop')).toBe(true);
     expect(isHoldingStationId('holding-store')).toBe(true);
     expect(isHoldingStationId('field')).toBe(false);
-    // The trees' cycle (GAME DESIGN): 1 log every 2 h per tree, six trees; the outcrop has none, stone never comes by itself.
-    expect(stationDef('twisted-trees')?.cycle).toEqual({ itemId: 'twisted-log', quantity: 1, cycleMs: 7_200_000, perPart: true });
-    expect(cycleYield({ quantity: 1, perPart: true }, shipped, 'twisted-trees')).toBe(6);
-    expect(cycleYield({ quantity: 1, perPart: false }, shipped, 'twisted-trees')).toBe(1);
-    expect(cycleYield({ quantity: 2, perPart: true }, shipped, 'plot-1')).toBe(2);
+    // The trees' cycle (GAME DESIGN): 1 log every 2 h per tree, six trees in one shared basket that fills one log at a
+    // time, so 1 every 20 min; the outcrop has none, stone never comes by itself.
+    expect(stationDef('twisted-trees')?.cycle).toEqual({ itemId: 'twisted-log', quantity: 1, cycleMs: 1_200_000 });
     expect(stationDef('stone-outcrop')?.cycle).toBeNull();
     expect(stationDef('writ-post')?.cycle).toBeNull();
   });
@@ -135,7 +132,7 @@ describe('stations.json', () => {
       id: 'field',
       name: 'Field',
       action: { name: 'farming', itemId: 'pale-grain', quantity: 1, cycleMs: 20_000, skill: 'farming', xp: 20 },
-      cycle: { itemId: 'pale-grain', quantity: 1, cycleMs: 900_000, perPart: false },
+      cycle: { itemId: 'pale-grain', quantity: 1, cycleMs: 900_000 },
       sow: { itemId: 'grey-seeds', quantity: 1 },
     });
     expect(isPlotKindId('field')).toBe(true);
@@ -172,11 +169,11 @@ describe('stations.json', () => {
     // A cycle (Task 5): optional on a station or a plot kind, the item, the count and the length checked.
     const field = plotKindDef('field');
     expect(problems({ stations: [{ ...trees, cycle: { itemId: 'twisted-log', quantity: 1, cycleMs: 60_000 } }] })).toEqual([]);
-    expect(problems({ stations: [{ ...trees, cycle: { itemId: 'oak-log', quantity: 0, cycleMs: 1.5, perPart: 'yes' } }] })).toEqual([
+    expect(problems({ stations: [{ ...trees, cycle: { itemId: 'oak-log', quantity: 0, cycleMs: 1.5, perPart: true } }] })).toEqual([
+      'stations[0] (trees): cycle has unknown field(s) perPart',
       'stations[0] (trees): cycle.itemId must be an item of items.json',
       'stations[0] (trees): cycle.quantity must be a positive integer',
       'stations[0] (trees): cycle.cycleMs must be a positive integer',
-      'stations[0] (trees): cycle.perPart must be a boolean when present',
     ]);
     expect(problems({ stations: [trees], plotKinds: [{ ...field, sow: { itemId: 'grey-seeds', quantity: 0, more: 1 } }] })).toEqual([
       'plotKinds[0] (field): sow has unknown field(s) more',

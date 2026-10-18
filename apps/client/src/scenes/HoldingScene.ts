@@ -32,6 +32,7 @@ import {
   takeFloat,
   takeResultLine,
   USE_LABEL,
+  workplaceDef,
   type NearStation,
   type StationButton,
   type StationLines,
@@ -45,7 +46,7 @@ import {
   type TalkContext,
   type TalkFlow,
 } from '../game/keshTalk.js';
-import { cyclesLanded, namedPlotIds, plotAtWorld, plotOf, type Picked } from '../game/plotView.js';
+import { cyclesLanded, namedPlotIds, onSignpost, plotAtWorld, plotOf, type Picked } from '../game/plotView.js';
 import { derive, hudName, writChip } from '../game/writView.js';
 import { keyboardKeys, keyCodeFor } from '../game/keyboard.js';
 import { RoamSession } from '../game/roamSession.js';
@@ -497,7 +498,7 @@ export class HoldingScene extends Phaser.Scene {
     );
     this.lastError = '';
     // The plots (M2 Task 5): drawn once the island has a Name; a named plot's signpost is a pillar for the roam.
-    this.plots.sync(res.value.plots, res.value.writ.name !== null);
+    this.plots.sync(res.value.plots, res.value.writ.name !== null, res.value.writ);
     this.session.setSolidPlots(namedPlotIds(res.value));
     this.syncPanel();
     this.syncWritPanel();
@@ -890,9 +891,16 @@ export class HoldingScene extends Phaser.Scene {
     this.plotTipG.setVisible(show);
     this.plotTip.setVisible(show);
     if (!show) return;
-    // LORE's lines: the seal's over a named plot, the unnamed plot's over one without a word yet.
+    // LORE's lines: the unnamed plot's over one without a word yet; over a named plot the signpost's on its signpost,
+    // else the seal's.
     this.plotTip.setText(
-      view.ground === null ? PLOT_TEXT.UNNAMED_PLOT_TIP : view.virtue === null ? PLOT_TEXT.SEAL_TIP : PLOT_TEXT.SEAL_TIP_VIRTUE,
+      view.ground === null
+        ? PLOT_TEXT.UNNAMED_PLOT_TIP
+        : plot && onSignpost(plot, w.x, w.y)
+          ? PLOT_TEXT.SIGNPOST_TIP
+          : view.virtue === null
+            ? PLOT_TEXT.SEAL_TIP
+            : PLOT_TEXT.SEAL_TIP_VIRTUE,
     );
     const ui = this.worldToUi(w.x, w.y);
     const tw = Math.round(this.plotTip.width) + 8;
@@ -1089,15 +1097,16 @@ export class HoldingScene extends Phaser.Scene {
     const g = this.add.graphics();
     const face = this.add.graphics();
     const title = label(this, 0, 0, '', Palette.uiInk);
-    // One text per line `stationLines` may give, in its order: level, rate, cycle, bonus, basket, next, you, skill, note.
+    // One text per line `stationLines` may give, in the panel's order (GAME DESIGN 2026-10-18): level, By itself (the
+    // cycle), its bonus, By hand, or the highlighted You line in its place while working, basket, next, skill, note.
     const rows = [
       body(this, 0, 0, '', Palette.uiInkMuted),
       body(this, 0, 0, '', Palette.uiInk),
-      body(this, 0, 0, '', Palette.uiInk),
       body(this, 0, 0, '', Palette.uiInkMuted),
       body(this, 0, 0, '', Palette.uiInk),
-      body(this, 0, 0, '', Palette.uiInkMuted),
       body(this, 0, 0, '', Palette.spark),
+      body(this, 0, 0, '', Palette.uiInk),
+      body(this, 0, 0, '', Palette.uiInkMuted),
       body(this, 0, 0, '', Palette.uiInkMuted),
       // The note (a faded plot's line) wraps to the panel's width.
       body(this, 0, 0, '', Palette.uiInk, PANEL_W - 2 * PANEL_PAD),
@@ -1189,12 +1198,12 @@ export class HoldingScene extends Phaser.Scene {
     p.title.setText(lines.title);
     const texts: (string | null)[] = [
       lines.level,
-      lines.rate,
       lines.cycle,
       lines.bonus,
+      lines.rate,
+      lines.you,
       lines.basket,
       lines.next,
-      lines.you,
       lines.skill,
       lines.note,
     ];
@@ -1421,9 +1430,8 @@ export class HoldingScene extends Phaser.Scene {
       const last = this.lastLanded[id];
       // Only while the Writ has charge: a dark Writ's clocks stand still on the server.
       if (last !== undefined && landed > last && (this.response?.writ.chargeMs ?? 0) > 0) {
-        const n = this.response
-          ? (stationLines(id, this.response, this.serverNow())?.cycle?.match(/^(\d+) /)?.[1] ?? '1')
-          : '1';
+        // What one cycle drops into the basket (one item at a time, GAME DESIGN 2026-10-18).
+        const n = workplaceDef(id, this.response)?.cycle?.quantity ?? 1;
         this.float(`+${n}`, id);
       }
       this.lastLanded[id] = landed;
@@ -1530,7 +1538,7 @@ export class HoldingScene extends Phaser.Scene {
     this.followCamera(refit || this.session.state.tick <= 1);
     this.world.setKeshTalking(this.talkBox !== null && keshSpeaking(this.talk.step));
     this.world.draw(this.session.state, this.session.position());
-    this.plots.update(this.time.now);
+    this.plots.update(this.time.now, this.serverNow());
     if (this.afterSeal && this.plots.sealing === null) {
       const next = this.afterSeal;
       this.afterSeal = null;
