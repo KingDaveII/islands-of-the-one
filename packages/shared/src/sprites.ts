@@ -68,18 +68,21 @@ export const SPRITE_CELLS = {
 /**
  * Props that need more room than the 64×64 prop cell (sprites.md §2, ART
  * 2026-10-18), by the name after `prop-`: a tall prop's canopy overhangs
- * upwards, so it gets a 64×96 cell with the origin at (32, 86), the line under
- * the trunk (the canvas at (0, 32): canvas row 53 is cell row 85). The
+ * upwards and sideways, so it gets a 96×128 cell with the origin at (48, 118),
+ * the line under the trunk (the canvas at (16, 64): canvas row 53 is cell row
+ * 117; ART on #82: the tree stands 2.5 times the Kindled's height and its crown
+ * overhangs the 2 × 2 footprint by about 10 px a side, so the grove's crowns
+ * just meet; 64×96 at first, M2 Task 3c). The
  * ground-line sort (G1.5h) puts the Kindled behind it; collision stays the
  * layout's footprint. The first is the holding's twisted tree. Declared here,
  * not in a recipe: `spriteSheetSpec` returns it, so the pipeline places frames
  * on it and the sheet test checks it.
  */
 export const PROP_CELLS: Readonly<Record<'twisted-tree', SpriteCellSpec>> = {
-  'twisted-tree': spriteCellSpec(64, 96, 86),
+  'twisted-tree': spriteCellSpec(96, 128, 118),
 };
 
-/** The tall prop cell (`PROP_CELLS`): 64×96, origin (32, 86). */
+/** The tall prop cell (`PROP_CELLS`): 96×128, origin (48, 118). */
 export const TALL_PROP_CELL: SpriteCellSpec = PROP_CELLS['twisted-tree'];
 
 /**

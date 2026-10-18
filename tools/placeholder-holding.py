@@ -18,9 +18,9 @@ an engine change; nothing here is final art.
 - prop-writ-post, prop-stone-outcrop, prop-holding-store, prop-kesh-rock:
   `idle`, one frame each, on the 64x64 prop canvas with the base on row 53,
   outlined in hollow-deep.
-- prop-twisted-tree: `idle`, one frame, on the tall prop cell (64x96, the
-  origin at (32, 86)): drawn 64x96 with the trunk's base on row 85, the
-  canopy overhanging upwards.
+- prop-twisted-tree: `idle`, one frame, on the tall prop cell (96x128, the
+  origin at (48, 118), ART on #82): drawn 96x128 with the trunk's base on
+  row 117, the crown overhanging upwards and about 10 px a side.
 
     python3 tools/placeholder-holding.py
     pnpm art:build tiles-holding prop-writ-post prop-twisted-tree prop-stone-outcrop prop-holding-store prop-kesh-rock
@@ -214,22 +214,23 @@ def writ_post():
 
 
 def twisted_tree():
-    # On the tall cell: a leaning trunk from row 46 to the base at row 85, roots either side, and a canopy
-    # from row 6 to 52 overhanging the trunk, so the Kindled standing behind it is hidden by the crown.
+    # On the tall cell (96x128, ART on #82): a leaning trunk from row 66 to the base at row 117, roots either
+    # side, and a crown from row 6 to 72, about 84 wide, overhanging the 2 x 2 footprint (64 px) by about 10 px
+    # a side, so the Kindled standing behind it is hidden by the crown and the grove's crowns just meet.
     px = {}
-    fill(px, 28, 46, 8, 40, T["unwritten-tar"])
-    fill(px, 28, 46, 2, 40, T["unwritten-sail"])
-    fill(px, 24, 60, 4, 6, T["unwritten-tar"])
-    fill(px, 36, 68, 4, 6, T["unwritten-tar"])
-    fill(px, 20, 82, 24, 4, T["unwritten-tar"])
-    fill(px, 14, 18, 36, 34, T["wheel-patina"])
-    fill(px, 8, 26, 48, 16, T["wheel-patina"])
-    fill(px, 20, 6, 24, 14, T["wheel-patina"])
-    fill(px, 20, 6, 24, 2, T["wheel-eye"])
-    fill(px, 14, 18, 36, 2, T["wheel-eye"])
-    fill(px, 8, 26, 4, 16, T["watcher-rain"])
-    fill(px, 14, 48, 36, 4, T["watcher-rain"])
-    text(px, 27, 30, "TT", PAPER)
+    fill(px, 44, 66, 8, 52, T["unwritten-tar"])
+    fill(px, 44, 66, 2, 52, T["unwritten-sail"])
+    fill(px, 40, 84, 4, 6, T["unwritten-tar"])
+    fill(px, 52, 94, 4, 6, T["unwritten-tar"])
+    fill(px, 34, 114, 28, 4, T["unwritten-tar"])
+    fill(px, 14, 22, 68, 46, T["wheel-patina"])
+    fill(px, 6, 34, 84, 22, T["wheel-patina"])
+    fill(px, 28, 6, 40, 18, T["wheel-patina"])
+    fill(px, 28, 6, 40, 2, T["wheel-eye"])
+    fill(px, 14, 22, 68, 2, T["wheel-eye"])
+    fill(px, 6, 34, 4, 22, T["watcher-rain"])
+    fill(px, 14, 64, 68, 4, T["watcher-rain"])
+    text(px, 43, 40, "TT", PAPER)
     return outlined(px)
 
 
@@ -298,14 +299,14 @@ def main():
         save(tiles / f"{name}.png", TILE, TILE, draw_drop(name))
     for name in LIPS:
         save(tiles / f"{name}.png", TILE, TILE, draw_lip(name))
-    for name, draw, h in (
-        ("prop-writ-post", writ_post, 64),
-        ("prop-twisted-tree", twisted_tree, 96),
-        ("prop-stone-outcrop", stone_outcrop, 64),
-        ("prop-holding-store", holding_store, 64),
-        ("prop-kesh-rock", kesh_rock, 64),
+    for name, draw, w, h in (
+        ("prop-writ-post", writ_post, 64, 64),
+        ("prop-twisted-tree", twisted_tree, 96, 128),
+        ("prop-stone-outcrop", stone_outcrop, 64, 64),
+        ("prop-holding-store", holding_store, 64, 64),
+        ("prop-kesh-rock", kesh_rock, 64, 64),
     ):
-        save(ROOT / "art/clean" / name / "idle" / "frame-0.png", 64, h, draw())
+        save(ROOT / "art/clean" / name / "idle" / "frame-0.png", w, h, draw())
 
 
 if __name__ == "__main__":

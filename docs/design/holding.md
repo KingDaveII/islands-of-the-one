@@ -62,7 +62,7 @@ ring of plots, the trees within reach of the post and the free ground north all 
 is ground (the station letters too, so the floor draws under the props), drawn as a floor with lips where the void
 is beside it; the void cell under a ground cell draws the drop, the cliff hanging below the island into the Hollow,
 and every other void cell draws nothing, so the hollow background shows through. The props are sprites: one per
-station part from `prop-writ-post`, `prop-twisted-tree` (on the tall 64 × 96 prop cell, the canopy overhanging
+station part from `prop-writ-post`, `prop-twisted-tree` (on the tall 96 × 128 prop cell, the canopy overhanging
 upwards: the Kindled standing north of a tree draws behind its crown by the ground-line sort), `prop-stone-outcrop`
 and `prop-holding-store` (`STATION_SHEETS`; a reserved spot has none), and Kesh's rock from `prop-kesh-rock`
 (`KESH_ROCK_SHEET`), each `idle`, one frame, standing on the bottom centre of its tile rectangle with a grounding
