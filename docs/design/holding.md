@@ -379,7 +379,7 @@ outer letters (the first and last of each line) switching between ember and dim 
 fading, the aleph dark so the Writ reads מת and the Name line dim while dark, then dark once line 1 has
 faded. A Name wider than the face after the lean hand widens the face, never the letters. Then the rim
 ("not certified: the Wet House in Malkhut", or "certified"), the charge in words with the exact time as a
-tooltip, the state line ("Lit", "Flickering", "Dark since 3 h 12 min, grace ends in 44 h 48 min", "Line 1
+tooltip (left out while dark or fading: the charge is 0 and the state line says so), the state line ("Lit", "Flickering", "Dark since 3 h 12 min, grace ends in 44 h 48 min", "Line 1
 fading"; relative times in hours and minutes), "Line 1: tethers 4 plots · lit", "Line 2: certified, Writ
 clay, 20 gin" greyed, and the Sparkglass by kind with what the pack and the store hold (the purse for gin),
 a kind that doesn't fit now greyed with its line. The player picks a kind, sees the preview ("+1/3 charge,

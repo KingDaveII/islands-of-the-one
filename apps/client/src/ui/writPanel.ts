@@ -191,8 +191,13 @@ export class WritPanel {
     const d = derive(view, this.serverMs);
     this.rim.setText(rimLine(view.certified));
     const charge = chargeLines(d);
-    this.charge.setText(`Charge: ${charge.words}`);
-    this.tip.setText(charge.exact);
+    this.charge.setText(charge ? `Charge: ${charge.words}` : '').setVisible(charge !== null);
+    this.tip.setText(charge?.exact ?? '');
+    if (charge) this.chargeZone.setInteractive();
+    else {
+      this.chargeZone.disableInteractive();
+      this.tipVisible = false;
+    }
     this.state.setText(stateLine(d, this.serverMs));
     const first = d.lines[0];
     this.line1.setText(first ? lineLine(first) : '');
@@ -331,10 +336,11 @@ export class WritPanel {
     const faceW = Math.max(INNER, shapeLetters(letters).width * SCALE + FACE_PAD * 2);
     const w = Math.max(W, faceW + 2 * PAD);
     const rows = this.choices.length;
-    const h = PAD + FACE_H + 6 + 4 * ROW + 4 + 1 + 4 + rows * ROW + 4 + ROW + 4 + 15 + 4 + ROW + PAD;
+    const chargeRows = this.charge.visible ? 1 : 0;
+    const h = PAD + FACE_H + 6 + (3 + chargeRows) * ROW + 4 + 1 + 4 + rows * ROW + 4 + ROW + 4 + 15 + 4 + ROW + PAD;
     const x = Math.round(frame.x + frame.w / 2 - w / 2);
     const y = Math.round(frame.y + frame.h / 2 - h / 2);
-    const key = `${x},${y},${w},${h},${this.feedLabel},${this.selected},${JSON.stringify(this.focus)},${this.host.showFocus()}`;
+    const key = `${x},${y},${w},${h},${chargeRows},${this.feedLabel},${this.selected},${JSON.stringify(this.focus)},${this.host.showFocus()}`;
     if (key === this.placed) return;
     this.placed = key;
     this.g.clear();
@@ -344,9 +350,11 @@ export class WritPanel {
     ly += FACE_H + 6;
     place(this.rim, x + PAD, ly);
     ly += ROW;
-    place(this.charge, x + PAD, ly);
-    this.chargeZone.setPosition(x + PAD, ly);
-    ly += ROW;
+    if (chargeRows) {
+      place(this.charge, x + PAD, ly);
+      this.chargeZone.setPosition(x + PAD, ly);
+      ly += ROW;
+    }
     place(this.state, x + PAD, ly);
     ly += ROW;
     place(this.line1, x + PAD, ly);
@@ -432,7 +440,7 @@ export class WritPanel {
     this.serverMs = serverMs;
     this.layout();
     this.drawFace(this.host.scene.time.now);
-    const showTip = this.tipVisible;
+    const showTip = this.tipVisible && this.charge.visible;
     this.tipG.setVisible(showTip);
     this.tip.setVisible(showTip);
     if (this.resultAt >= 0) {
@@ -447,7 +455,7 @@ export class WritPanel {
   /** What the playtests read. */
   snapshot(): {
     state: string;
-    charge: string;
+    charge: string | null;
     stateLine: string;
     rim: string;
     line1: string;
@@ -463,7 +471,7 @@ export class WritPanel {
   } {
     return {
       state: this.view?.state ?? '',
-      charge: this.charge.text,
+      charge: this.charge.visible ? this.charge.text : null,
       stateLine: this.state.text,
       rim: this.rim.text,
       line1: this.line1.text,

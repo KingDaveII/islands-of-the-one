@@ -137,6 +137,10 @@ describe("the panel's lines", () => {
     expect(rimLine(true)).toBe('certified');
     const lit = derive(named(at(41) + 12 * 60_000, at(0)), at(0));
     expect(chargeLines(lit)).toEqual({ words: 'about two days', exact: '41 h 12 min' });
+    expect(chargeLines(derive(named(at(10), at(0)), at(0)))).toEqual({ words: 'less than a day', exact: '10 h 0 min' });
+    // Dark or fading: the charge is 0 and the state line says so, so the charge line is left out (MAIN, #91).
+    expect(chargeLines(derive(named(at(0), at(10)), at(10)))).toBeNull();
+    expect(chargeLines(derive(named(at(0), at(100)), at(100)))).toBeNull();
     expect(stateLine(lit, at(0))).toBe('Lit');
     expect(stateLine(derive(named(at(10), at(0)), at(0)), at(0))).toBe('Flickering');
     const dark = derive(named(at(0), at(3) + 12 * 60_000), at(3) + 12 * 60_000);

@@ -188,8 +188,13 @@ export function lineLine(line: WritLine): string {
   return `Line ${line.line}: tethers ${line.plots} plot${line.plots === 1 ? '' : 's'} · ${line.state}`;
 }
 
-/** The charge in words, and the exact time for its tooltip. */
-export function chargeLines(writ: Pick<WritDerived, 'words' | 'chargeMs'>): { words: string; exact: string } {
+/**
+ * The charge in words, and the exact time for its tooltip, while the Writ is
+ * lit or flickering; null when it is dark or fading (the charge is 0 and
+ * the state line already says so: MAIN's review of #91).
+ */
+export function chargeLines(writ: Pick<WritDerived, 'state' | 'words' | 'chargeMs'>): { words: string; exact: string } | null {
+  if (writ.state === 'dark' || writ.state === 'fading') return null;
   return { words: writ.words, exact: exactTime(writ.chargeMs) };
 }
 

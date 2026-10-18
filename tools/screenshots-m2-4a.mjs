@@ -283,6 +283,7 @@ h = await until((x) => x.writPanel?.state === 'dark', 'dark');
 if (!/^Dark since (4 h 59|5 h 0) min, grace ends in 4[23] h \d+ min$/.test(h.writPanel.stateLine)) throw new Error(`dark line: ${h.writPanel.stateLine}`);
 console.log(`  ${h.writPanel.stateLine}`);
 expectEq('the chip reads met', h.writ.chip.letters, 'מת');
+expectEq('no charge line while dark', h.writPanel.charge, null);
 expectEq('a humming glass fits a dark Writ', h.writPanel.kinds.find((k) => k.itemId === 'glass-chip').enabled, true);
 await shot('11-panel-dark');
 await page.keyboard.press('Escape');
@@ -294,6 +295,7 @@ await openPost();
 h = await until((x) => x.writPanel?.state === 'fading', 'fading');
 expectEq('fading line', h.writPanel.stateLine, 'Line 1 fading');
 expectEq('line 1 faded', h.writPanel.line1, 'Line 1: tethers 4 plots · faded');
+expectEq('no charge line while fading', h.writPanel.charge, null);
 await shot('13-panel-fading');
 
 // 6. A relight from dark: the aleph first, then the line, over a few seconds.
