@@ -65,13 +65,11 @@ and every other void cell draws nothing, so the hollow background shows through.
 station part from `prop-writ-post`, `prop-twisted-tree` (on the tall 96 × 128 prop cell, the canopy overhanging
 upwards: the Kindled standing north of a tree draws behind its crown by the ground-line sort), `prop-stone-outcrop`
 and `prop-holding-store` (`STATION_SHEETS`; a reserved spot has none), and Kesh's rock from `prop-kesh-rock`
-(`KESH_ROCK_SHEET`), each `idle`, one frame, standing on the bottom centre of its tile rectangle with a grounding
+(`KESH_ROCK_SHEET`), each playing its `idle` (one frame, but the Writ post's two at 2 fps: its tablet's marks pulse), standing on the bottom centre of its tile rectangle with a grounding
 shadow by the prop rule (none for a prop standing in the void, Kesh's rock: `standsOnGround`), y-sorted with the Kindled by the line it stands on. `holdingRoomTiles` is the layout as
 the sim walks it: every station tile a pillar (`o`), a reserved spot ground, the rock's tiles already void. All
-six sheets are MAIN's placeholders through the pipeline (`tools/placeholder-holding.py` writes the source PNGs
-into `art/clean/`, the recipes in `art/sheets/` say "placeholder by MAIN; ART replaces" in the holding art job);
-ART replaces the pixels through the recipes without an engine change. The drops and lips and the props carry their
-name's initials, so a wrong pick shows in a shot; the floors carry only their flecks. The pipeline's `rooms.png`
+six sheets are ART's (the holding at B, #84), built through the recipes in `art/sheets/` from `art/clean/`;
+they replaced MAIN's placeholders without an engine change, and the placeholder script is retired. The pipeline's `rooms.png`
 for a shore set draws the holding's layout alone (the cave sets draw the rooms of rooms.json).
 
 ## 2. Roaming: walking outside encounters

@@ -11,7 +11,7 @@ import {
   type TileRect,
 } from '@iot/shared';
 import type { RoamState } from '@iot/sim';
-import { nearestPart, propBase, standsOnGround } from '../game/holdingView.js';
+import { nearestPart, propBase, propIdlePlays, standsOnGround } from '../game/holdingView.js';
 import { RoamGaitClock, roamPose, type KindledPose } from './animState.js';
 import { PLAYER_SHEET } from './characters.js';
 import { DEPTH } from './depth.js';
@@ -20,7 +20,7 @@ import { shadowEllipse } from './pixels.js';
 import { propShadowSizes, type ShadowSize } from './propShadow.js';
 import { HOLDING_SHEET, TileRoom } from './roomTiles.js';
 import { snapToArt } from './scale.js';
-import { texturePixels, toneTextureKey } from './spriteSheets.js';
+import { animKey, texturePixels, toneTextureKey } from './spriteSheets.js';
 import { StrideMeter } from './stride.js';
 
 type G = Phaser.GameObjects.Graphics;
@@ -34,7 +34,7 @@ interface Prop {
   /** The station it belongs to; null for Kesh's rock. */
   stationId: string | null;
   rect: TileRect;
-  image: Phaser.GameObjects.Image;
+  image: Phaser.GameObjects.Sprite;
   sheet: string;
   /** False for a prop in the void (Kesh's rock): no grounding shadow. */
   grounded: boolean;
@@ -80,8 +80,11 @@ export class HoldingWorld {
     const stand = (stationId: string | null, rect: TileRect, sheet: string): void => {
       const base = propBase({ rect });
       const image = scene.add
-        .image(snapToArt(base.x), snapToArt(base.y), sheet, 'idle_0')
+        .sprite(snapToArt(base.x), snapToArt(base.y), sheet, 'idle_0')
         .setDepth(bodyDepth({ kind: 'prop' }, base.y));
+      // A prop whose idle has more frames plays it at its rate (the Writ post's tablet pulses, ART's holding art).
+      if (propIdlePlays(spriteSheets[sheet as keyof typeof spriteSheets]) && scene.anims.exists(animKey(sheet, 'idle')))
+        image.play(animKey(sheet, 'idle'));
       layer.add(image);
       this.props.push({ stationId, rect, image, sheet, grounded: standsOnGround(template, rect) });
     };
