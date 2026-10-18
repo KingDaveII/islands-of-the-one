@@ -37,6 +37,13 @@ type Sprite = Phaser.GameObjects.Sprite;
  */
 export const PLAYER_SHEET: SpriteSheetName = 'kindled-ash';
 
+/**
+ * The player's sheet outside combat (`kindled-<rem>-sheathed`, ART #87): the
+ * blade put away under the cloak, David's playtest of the holding. The
+ * holding draws the Kindled from it; encounters keep `PLAYER_SHEET`.
+ */
+export const PLAYER_SHEATHED_SHEET: SpriteSheetName = 'kindled-ash-sheathed';
+
 const HUSK_SHEET: Record<HuskKind, SpriteSheetName> = {
   peeling: 'husk-peeling',
   nutshell: 'husk-nutshell',

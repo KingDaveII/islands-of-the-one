@@ -106,8 +106,8 @@ on where you stand: the server checks that a station exists in the layout, not w
 `anim.walkCyclePx`, `run` at `anim.runCyclePx` once the roam's gait is `run`, `idle` standing;
 `run_start` when the run begins and `run_stop` when it ends (`RoamGaitClock`) where a sheet has them
 (kindled-ash has both since #72). Outside combat the Kindled carries no blade (David's playtest, 2026-10-18):
-the holding is to draw it from `kindled-<rem>-sheathed` (sprites.md §4) once ART's sheet is on disk; until then,
-from the combat sheet.
+the holding draws it from its sheathed sheet, `kindled-ash-sheathed` (`PLAYER_SHEATHED_SHEET`, sprites.md §4,
+ART #87), with the same tone swap; encounters keep the combat sheet.
 
 ## 3. Stations and the active action
 

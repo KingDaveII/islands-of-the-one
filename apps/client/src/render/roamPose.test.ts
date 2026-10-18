@@ -2,7 +2,7 @@ import { defaultTuning, holdingLayout, holdingRoomTiles, holdingStart, spriteShe
 import { createRoam, encodeInput, stepRoam, tileCentre, type Roam } from '@iot/sim';
 import { describe, expect, it } from 'vitest';
 import { RoamGaitClock, roamPose } from './animState.js';
-import { PLAYER_SHEET } from './characters.js';
+import { PLAYER_SHEATHED_SHEET, PLAYER_SHEET } from './characters.js';
 import { StrideMeter } from './stride.js';
 
 /**
@@ -91,5 +91,31 @@ describe('roamPose', () => {
     const qc = new RoamGaitClock();
     for (let i = 0; i < 73; i++) stepRoam(q, move(0));
     expect(roamPose(q.state, KINDLED, qc.update(q.state)).name).toBe('run');
+  });
+
+  it('plays the holding from the sheathed sheet (ART #87): every pose it asks for is on that sheet, in all 8 facings', () => {
+    const sheathed = spriteSheets[PLAYER_SHEATHED_SHEET];
+    expect(PLAYER_SHEATHED_SHEET).toBe(`${PLAYER_SHEET}-sheathed`);
+    const r = roam();
+    const clock = new RoamGaitClock();
+    const stride = new StrideMeter();
+    const at = (): { distancePx: number; cycles: typeof CYCLES } => ({ distancePx: stride.step(r.state.x / 256, r.state.y / 256), cycles: CYCLES });
+    const seen = new Set<string>();
+    const look = (): void => {
+      const pose = roamPose(r.state, sheathed, clock.update(r.state), at());
+      expect(sheathed.anims[pose.anim], pose.anim).toBeDefined();
+      seen.add(pose.name);
+    };
+    for (let dir = 0; dir < 8; dir++) {
+      for (let i = 0; i < 100; i++) {
+        stepRoam(r, move(dir));
+        look();
+      }
+      for (let i = 0; i < 12; i++) {
+        stepRoam(r, still);
+        look();
+      }
+    }
+    expect([...seen].sort()).toEqual(['idle', 'run', 'run_start', 'run_stop', 'walk']);
   });
 });
