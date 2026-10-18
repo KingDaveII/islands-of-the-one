@@ -60,7 +60,7 @@ Each point in the cell (where the sheet stores it) and in the frame's source pix
 
 | Frame | Point | Cell | Source | From |
 |---|---|---|---|---|
-| toss_0 | hand | 25, 89 | 25, 89 | recipe |
-| toss_1 | hand | 21, 87 | 21, 87 | recipe |
-| toss_2 | hand | 16, 79 | 16, 79 | recipe |
-| toss_3 | hand | 51, 83 | 51, 83 | recipe |
+| toss_0 | hand | 25, 82 | 25, 82 | recipe |
+| toss_1 | hand | 21, 80 | 21, 80 | recipe |
+| toss_2 | hand | 16, 72 | 16, 72 | recipe |
+| toss_3 | hand | 51, 76 | 51, 76 | recipe |

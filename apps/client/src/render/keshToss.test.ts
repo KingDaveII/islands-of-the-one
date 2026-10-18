@@ -18,7 +18,7 @@ describe("Kesh's toss", () => {
     // Kesh is drawn at the rock's world point (the cell origin, (48, 118)); the hand is origin + (point − origin).
     const anchor = { x: 1000, y: 700 };
     expect(tossReleasePoint(sheet, anchor)).toEqual({ x: anchor.x + hand.x - 48, y: anchor.y + hand.y - 118 });
-    expect(tossReleasePoint(sheet, anchor)).toEqual({ x: 1000 + 16 - 48, y: 700 + 79 - 118 });
+    expect(tossReleasePoint(sheet, anchor)).toEqual({ x: 1000 + 16 - 48, y: 700 + 72 - 118 });
     // Every toss frame carries the hand (the sheet contract), so the release always has a start.
     for (const frame of sheet.anims.toss?.frames ?? []) expect(framePoint(sheet, frame, 'hand'), frame).not.toBeNull();
     const toss2 = sheet.frames.toss_2;
