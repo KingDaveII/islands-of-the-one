@@ -40,6 +40,7 @@ The `keyboard` block, one key per action. Move and aim are not actions and stay 
 | Abilities 2 / 3        | 2 / 3 (locked for now)                  |
 | Item 1 / Item 2        | Q / F                                   |
 | Interact               | E, Calm only (chests open on contact)   |
+| Rotate                 | R (turns the ghost in build mode, [`holding.md`](holding.md) §12) |
 | Chart peek             | hold Tab (no function yet)              |
 | Journal                | J (no function yet)                     |
 | Inventory              | I (opens and closes the inventory screen) |
@@ -70,6 +71,7 @@ alternates) per action. No button is bound twice within a preset.
 | ability 1 (Haul) | L2                     | Circle, R1                      | L2                   |
 | ability 2 / 3    | Square / Triangle \*   | L2 / Up \*                      | Square / Triangle \* |
 | interact         | Cross (Calm)           | Cross (Calm)                    | Cross (Calm)         |
+| rotate           | Triangle (Calm)        | unbound \*\*                   | Triangle (Calm)      |
 | chart peek       | Circle                 | R3                              | Circle               |
 | journal          | Down                   | Down                            | Down                 |
 | inventory        | Touchpad               | Touchpad                        | Touchpad             |
@@ -78,6 +80,9 @@ alternates) per action. No button is bound twice within a preset.
 
 \* Abilities 2 and 3 on buttons fire **only in Combat**; in Calm those buttons are free for menus
 and interaction. In Faces, Cross is the dodge in Combat and interact in Calm; L3 is unbound.
+\*\* Rotate (M2 Task 6, GAME DESIGN: Triangle in Calm) turns build mode's ghost. Faces binds Triangle
+to heavy in both contexts, so the uniqueness test leaves rotate unbound there (the turn button beside
+the ghost and R still turn it); GAME DESIGN has been asked for Faces' button.
 Playtest 2 moved Triggers and Left-stick to light R1, heavy R2 (hold), Haul L2, dodge L1: the
 attacks on the right hand, the hook and the roll on the left. Faces is unchanged.
 
