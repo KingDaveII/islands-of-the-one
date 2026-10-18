@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   KINDLED_ANIMS,
+  KINDLED_SHEATHED_ANIMS,
   kindledAnimKey,
   HUSK_TABLES,
   kindledFrameName,
@@ -223,41 +224,42 @@ describe('a finished Kindled sheet', () => {
     ]);
   });
 
-  it('passes without the M2 animations (carry_idle, carry_walk, sit) and the rows awaiting art, on the shared sheet checks too', () => {
-    const m1 = KINDLED_ANIMS.filter(isRequiredAnim);
-    // Carry and sit are M2's; the run transitions (#72) and run_back (#74) landed and are required.
-    expect(KINDLED_ANIMS.filter((a) => !isRequiredAnim(a)).map((a) => a.name)).toEqual([
-      'carry_idle',
-      'carry_walk',
-      'sit',
-    ]);
-    const r = build(root, fullKindled('art/clean/fig.png', {}, m1));
+  it('builds a sheathed sheet (ART 2026-10-18) with its five roaming rows alone, carry and sit optional, on the shared sheet checks too', () => {
+    const roaming = KINDLED_SHEATHED_ANIMS.filter(isRequiredAnim);
+    expect(roaming.map((a) => a.name)).toEqual(['idle', 'walk', 'run', 'run_start', 'run_stop']);
+    // The combat sheet has no optional rows left: carry and sit moved to the sheathed sheet.
+    expect(KINDLED_ANIMS.filter((a) => !isRequiredAnim(a))).toEqual([]);
+    const r = build(root, fullKindled('art/clean/fig.png', { sheet: 'kindled-test-sheathed' }, roaming));
     const json = JSON.parse(
-      r.outputs.get('packages/shared/assets/sprites/kindled-test.json')?.toString() ?? '{}',
+      r.outputs.get('packages/shared/assets/sprites/kindled-test-sheathed.json')?.toString() ?? '{}',
     ) as SpriteSheet;
     const sheetPng = decodePng(
-      r.outputs.get('packages/shared/assets/sprites/kindled-test.png') ?? Buffer.alloc(0),
+      r.outputs.get('packages/shared/assets/sprites/kindled-test-sheathed.png') ?? Buffer.alloc(0),
     );
     const sheetMask = decodePng(
-      r.outputs.get('packages/shared/assets/sprites/kindled-test.skin.png') ?? Buffer.alloc(0),
+      r.outputs.get('packages/shared/assets/sprites/kindled-test-sheathed.skin.png') ?? Buffer.alloc(0),
     );
-    expect(
-      Object.keys(json.anims).some((k) => k.startsWith('carry_') || k.startsWith('sit_')),
-    ).toBe(false);
-    expect(tableProblems('kindled-test', json, KINDLED_ANIMS)).toEqual([]);
+    expect(Object.keys(json.anims).some((k) => k.startsWith('carry_') || k.startsWith('sit_'))).toBe(false);
+    expect(tableProblems('kindled-test-sheathed', json, KINDLED_SHEATHED_ANIMS)).toEqual([]);
     expect(
       v2Problems(
-        'kindled-test',
+        'kindled-test-sheathed',
         json,
         { width: sheetPng.w, height: sheetPng.h, rgba: sheetPng.data },
         { width: sheetMask.w, height: sheetMask.h, rgba: sheetMask.data },
       ),
     ).toEqual([]);
-    expect(r.report.optional).toEqual([
-      'carry_idle (M2)',
-      'carry_walk (M2)',
-      'sit (M2)',
-    ]);
+    expect(r.report.optional).toEqual(['carry_idle (M2)', 'carry_walk (M2)', 'sit (M2)']);
+    // Without a roaming row it is not finished.
+    expect(
+      problemsOf(() =>
+        build(root, fullKindled('art/clean/fig.png', { sheet: 'kindled-test-sheathed' }, roaming.filter((a) => a.name !== 'run_stop'))),
+      ),
+    ).toEqual(
+      SPRITE_FACINGS.map(
+        (f) => `kindled-test-sheathed: run_stop_${f} is missing (a finished sheet carries every animation and facing)`,
+      ),
+    );
   });
 
   it('builds a finished Kindled sheet with run, and fails one with run incomplete', () => {
@@ -275,15 +277,15 @@ describe('a finished Kindled sheet', () => {
     ]);
   });
 
-  it('fails an optional animation that is there but incomplete', () => {
-    const json = fullKindled('art/clean/fig.png');
+  it('fails an optional animation that is there but incomplete (carry and sit, on the sheathed sheet)', () => {
+    const json = fullKindled('art/clean/fig.png', { sheet: 'kindled-test-sheathed' }, KINDLED_SHEATHED_ANIMS);
     const anims = json.anims as Record<string, { facings: Record<string, { frames: number[] }> }>;
     delete anims.sit?.facings.E;
     delete anims.carry_idle;
     anims.carry_walk?.facings.N?.frames.pop();
     expect(problemsOf(() => build(root, json))).toEqual([
-      'kindled-test: carry_walk_N has 5 frames; the table says 6',
-      'kindled-test: sit_E is missing (sit is optional until M2, but a finished sheet that has it carries every facing)',
+      'kindled-test-sheathed: carry_walk_N has 5 frames; the table says 6',
+      'kindled-test-sheathed: sit_E is missing (sit is optional until M2, but a finished sheet that has it carries every facing)',
     ]);
   });
 

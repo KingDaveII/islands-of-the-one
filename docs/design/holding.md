@@ -64,7 +64,9 @@ is beside it; the void cell under a ground cell draws the drop, the cliff hangin
 and every other void cell draws nothing, so the hollow background shows through. The props are sprites: one per
 station part from `prop-writ-post`, `prop-twisted-tree` (on the tall 96 × 128 prop cell, the canopy overhanging
 upwards: the Kindled standing north of a tree draws behind its crown by the ground-line sort), `prop-stone-outcrop`
-and `prop-holding-store` (`STATION_SHEETS`; a reserved spot has none), and Kesh's rock from `prop-kesh-rock`
+and `prop-holding-store` (`STATION_SHEETS`; a reserved spot has none; a part may name its own sheet instead,
+`sheet` in `holding.json`, from `STATION_PART_SHEETS`: every other tree is `prop-twisted-tree-2`, ART's forked
+crown on the same tall cell, drawn once it is on disk and `prop-twisted-tree` until then), and Kesh's rock from `prop-kesh-rock`
 (`KESH_ROCK_SHEET`), each playing its `idle` (one frame, but the Writ post's two at 2 fps: its tablet's marks pulse), standing on the bottom centre of its tile rectangle with a grounding
 shadow by the prop rule (none for a prop standing in the void, Kesh's rock: `standsOnGround`), y-sorted with the Kindled by the line it stands on. `holdingRoomTiles` is the layout as
 the sim walks it: every station tile a pillar (`o`), a reserved spot ground, the rock's tiles already void. All
@@ -103,7 +105,9 @@ on where you stand: the server checks that a station exists in the layout, not w
 **Animation** (`roamPose` in `apps/client/src/render/animState.ts`): `walk` by distance at
 `anim.walkCyclePx`, `run` at `anim.runCyclePx` once the roam's gait is `run`, `idle` standing;
 `run_start` when the run begins and `run_stop` when it ends (`RoamGaitClock`) where a sheet has them
-(the rows await art, so kindled-ash shows neither yet).
+(kindled-ash has both since #72). Outside combat the Kindled carries no blade (David's playtest, 2026-10-18):
+the holding draws it from its sheathed sheet, `kindled-ash-sheathed` (`PLAYER_SHEATHED_SHEET`, sprites.md §4,
+ART #87), with the same tone swap; encounters keep the combat sheet.
 
 ## 3. Stations and the active action
 

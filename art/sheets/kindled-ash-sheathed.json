@@ -1,0 +1,498 @@
+{
+  "sheet": "kindled-ash-sheathed",
+  "kind": "kindled",
+  "outline": "player",
+  "draft": false,
+  "notes": "The Kindled outside combat, the Hookblade put away under the cloak and not drawn (David's holding playtest, 2026-10-18; MAIN #86). Every frame is cut from the finished kindled-ash sheet by art/clean/kindled-ash-sheathed/_scripts/sheathe.py: W, SW, NW and N with the blade erased and the empty hand closed (the Haul's method), a few leftovers cleared by hand there; S with its left half below the chin mirrored from the frame half a cycle on; E, SE and NE are W, SW and NW mirrored (without the blade the figure has no handedness, and the east facings' blade crossed the legs). run_start and run_stop are made from the sheathed idle and run as the combat sheet's are. Each animation's ground reference (its last source frame) is a combat frame untouched, so nothing moves.",
+  "anims": {
+    "idle": {
+      "ground": {
+        "ref": 2
+      },
+      "facings": {
+        "S": {
+          "src": "art/clean/kindled-ash-sheathed/idle/south",
+          "frames": [0, 1]
+        },
+        "SE": {
+          "src": "art/clean/kindled-ash-sheathed/idle/south-west",
+          "frames": [0, 1],
+          "flipX": true
+        },
+        "E": {
+          "src": "art/clean/kindled-ash-sheathed/idle/west",
+          "frames": [0, 1],
+          "flipX": true
+        },
+        "NE": {
+          "src": "art/clean/kindled-ash-sheathed/idle/north-west",
+          "frames": [0, 1],
+          "flipX": true
+        },
+        "N": {
+          "src": "art/clean/kindled-ash-sheathed/idle/north",
+          "frames": [0, 1]
+        },
+        "NW": {
+          "src": "art/clean/kindled-ash-sheathed/idle/north-west",
+          "frames": [0, 1]
+        },
+        "W": {
+          "src": "art/clean/kindled-ash-sheathed/idle/west",
+          "frames": [0, 1]
+        },
+        "SW": {
+          "src": "art/clean/kindled-ash-sheathed/idle/south-west",
+          "frames": [0, 1]
+        }
+      }
+    },
+    "walk": {
+      "ground": {
+        "ref": 6
+      },
+      "facings": {
+        "S": {
+          "src": "art/clean/kindled-ash-sheathed/walk/south",
+          "frames": [0, 1, 2, 3, 4, 5]
+        },
+        "SE": {
+          "src": "art/clean/kindled-ash-sheathed/walk/south-west",
+          "frames": [0, 1, 2, 3, 4, 5],
+          "flipX": true
+        },
+        "E": {
+          "src": "art/clean/kindled-ash-sheathed/walk/west",
+          "frames": [0, 1, 2, 3, 4, 5],
+          "flipX": true
+        },
+        "NE": {
+          "src": "art/clean/kindled-ash-sheathed/walk/north-west",
+          "frames": [0, 1, 2, 3, 4, 5],
+          "flipX": true
+        },
+        "N": {
+          "src": "art/clean/kindled-ash-sheathed/walk/north",
+          "frames": [0, 1, 2, 3, 4, 5]
+        },
+        "NW": {
+          "src": "art/clean/kindled-ash-sheathed/walk/north-west",
+          "frames": [0, 1, 2, 3, 4, 5]
+        },
+        "W": {
+          "src": "art/clean/kindled-ash-sheathed/walk/west",
+          "frames": [0, 1, 2, 3, 4, 5]
+        },
+        "SW": {
+          "src": "art/clean/kindled-ash-sheathed/walk/south-west",
+          "frames": [0, 1, 2, 3, 4, 5]
+        }
+      }
+    },
+    "run": {
+      "ground": {
+        "ref": 8
+      },
+      "facings": {
+        "S": {
+          "src": "art/clean/kindled-ash-sheathed/run/south",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7]
+        },
+        "SE": {
+          "src": "art/clean/kindled-ash-sheathed/run/south-west",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+          "flipX": true
+        },
+        "E": {
+          "src": "art/clean/kindled-ash-sheathed/run/west",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+          "flipX": true
+        },
+        "NE": {
+          "src": "art/clean/kindled-ash-sheathed/run/north-west",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+          "flipX": true
+        },
+        "N": {
+          "src": "art/clean/kindled-ash-sheathed/run/north",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7]
+        },
+        "NW": {
+          "src": "art/clean/kindled-ash-sheathed/run/north-west",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7]
+        },
+        "W": {
+          "src": "art/clean/kindled-ash-sheathed/run/west",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7]
+        },
+        "SW": {
+          "src": "art/clean/kindled-ash-sheathed/run/south-west",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7]
+        }
+      }
+    },
+    "run_start": {
+      "ground": {
+        "ref": 2
+      },
+      "facings": {
+        "S": {
+          "src": "art/clean/kindled-ash-sheathed/run_start/south",
+          "frames": [0, 1]
+        },
+        "SE": {
+          "src": "art/clean/kindled-ash-sheathed/run_start/south-west",
+          "frames": [0, 1],
+          "flipX": true
+        },
+        "E": {
+          "src": "art/clean/kindled-ash-sheathed/run_start/west",
+          "frames": [0, 1],
+          "flipX": true
+        },
+        "NE": {
+          "src": "art/clean/kindled-ash-sheathed/run_start/north-west",
+          "frames": [0, 1],
+          "flipX": true
+        },
+        "N": {
+          "src": "art/clean/kindled-ash-sheathed/run_start/north",
+          "frames": [0, 1]
+        },
+        "NW": {
+          "src": "art/clean/kindled-ash-sheathed/run_start/north-west",
+          "frames": [0, 1]
+        },
+        "W": {
+          "src": "art/clean/kindled-ash-sheathed/run_start/west",
+          "frames": [0, 1]
+        },
+        "SW": {
+          "src": "art/clean/kindled-ash-sheathed/run_start/south-west",
+          "frames": [0, 1]
+        }
+      }
+    },
+    "run_stop": {
+      "ground": {
+        "ref": 2
+      },
+      "facings": {
+        "S": {
+          "src": "art/clean/kindled-ash-sheathed/run_stop/south",
+          "frames": [0, 1]
+        },
+        "SE": {
+          "src": "art/clean/kindled-ash-sheathed/run_stop/south-west",
+          "frames": [0, 1],
+          "flipX": true
+        },
+        "E": {
+          "src": "art/clean/kindled-ash-sheathed/run_stop/west",
+          "frames": [0, 1],
+          "flipX": true
+        },
+        "NE": {
+          "src": "art/clean/kindled-ash-sheathed/run_stop/north-west",
+          "frames": [0, 1],
+          "flipX": true
+        },
+        "N": {
+          "src": "art/clean/kindled-ash-sheathed/run_stop/north",
+          "frames": [0, 1]
+        },
+        "NW": {
+          "src": "art/clean/kindled-ash-sheathed/run_stop/north-west",
+          "frames": [0, 1]
+        },
+        "W": {
+          "src": "art/clean/kindled-ash-sheathed/run_stop/west",
+          "frames": [0, 1]
+        },
+        "SW": {
+          "src": "art/clean/kindled-ash-sheathed/run_stop/south-west",
+          "frames": [0, 1]
+        }
+      }
+    }
+  },
+  "skin": {
+    "add": {
+      "idle_SE_0": [
+        [48, 40],
+        [49, 41],
+        [50, 42],
+        [51, 43]
+      ],
+      "idle_SE_1": [
+        [48, 39],
+        [49, 40],
+        [50, 41],
+        [51, 42]
+      ],
+      "idle_NE_0": [
+        [57, 28]
+      ],
+      "idle_NE_1": [
+        [56, 28],
+        [57, 33]
+      ],
+      "idle_NW_0": [
+        [38, 28]
+      ],
+      "idle_NW_1": [
+        [39, 28],
+        [38, 33]
+      ],
+      "idle_SW_0": [
+        [47, 40],
+        [46, 41],
+        [45, 42],
+        [43, 43]
+      ],
+      "idle_SW_1": [
+        [47, 39],
+        [46, 40],
+        [45, 41],
+        [43, 42]
+      ],
+      "walk_SE_4": [
+        [43, 53]
+      ],
+      "walk_E_1": [
+        [56, 46]
+      ],
+      "walk_NE_0": [
+        [56, 28],
+        [57, 33]
+      ],
+      "walk_NE_1": [
+        [55, 28],
+        [56, 33]
+      ],
+      "walk_NE_2": [
+        [55, 28],
+        [56, 33]
+      ],
+      "walk_NE_3": [
+        [55, 28],
+        [56, 33]
+      ],
+      "walk_NE_4": [
+        [56, 27],
+        [57, 32]
+      ],
+      "walk_NE_5": [
+        [56, 28],
+        [57, 33]
+      ],
+      "walk_NW_0": [
+        [39, 28],
+        [38, 33]
+      ],
+      "walk_NW_1": [
+        [40, 28],
+        [39, 33]
+      ],
+      "walk_NW_2": [
+        [40, 28],
+        [39, 33]
+      ],
+      "walk_NW_3": [
+        [40, 28],
+        [39, 33]
+      ],
+      "walk_NW_4": [
+        [39, 27],
+        [38, 32]
+      ],
+      "walk_NW_5": [
+        [39, 28],
+        [38, 33]
+      ],
+      "walk_W_1": [
+        [39, 46]
+      ],
+      "walk_SW_4": [
+        [52, 53]
+      ],
+      "run_S_0": [
+        [34, 50]
+      ],
+      "run_S_1": [
+        [55, 48],
+        [56, 50]
+      ],
+      "run_S_3": [
+        [38, 41],
+        [60, 52]
+      ],
+      "run_S_4": [
+        [37, 41],
+        [44, 41],
+        [63, 50]
+      ],
+      "run_S_5": [
+        [42, 48],
+        [41, 50]
+      ],
+      "run_S_7": [
+        [36, 52]
+      ],
+      "run_SE_1": [
+        [59, 44]
+      ],
+      "run_SE_3": [
+        [55, 44],
+        [51, 47]
+      ],
+      "run_SE_4": [
+        [53, 46]
+      ],
+      "run_SE_5": [
+        [55, 44]
+      ],
+      "run_E_0": [
+        [58, 31],
+        [60, 44]
+      ],
+      "run_E_1": [
+        [57, 31],
+        [59, 43]
+      ],
+      "run_E_2": [
+        [60, 44]
+      ],
+      "run_E_3": [
+        [48, 53]
+      ],
+      "run_E_4": [
+        [58, 31]
+      ],
+      "run_E_6": [
+        [57, 31]
+      ],
+      "run_E_7": [
+        [58, 31]
+      ],
+      "run_NE_2": [
+        [40, 55]
+      ],
+      "run_NE_5": [
+        [62, 40]
+      ],
+      "run_NE_6": [
+        [60, 31]
+      ],
+      "run_NW_2": [
+        [55, 55]
+      ],
+      "run_NW_5": [
+        [31, 40]
+      ],
+      "run_NW_6": [
+        [35, 31]
+      ],
+      "run_W_0": [
+        [37, 31],
+        [35, 44]
+      ],
+      "run_W_1": [
+        [38, 31],
+        [35, 43]
+      ],
+      "run_W_2": [
+        [35, 44]
+      ],
+      "run_W_3": [
+        [47, 53]
+      ],
+      "run_W_4": [
+        [37, 31]
+      ],
+      "run_W_6": [
+        [38, 31]
+      ],
+      "run_W_7": [
+        [37, 31]
+      ],
+      "run_SW_1": [
+        [35, 44]
+      ],
+      "run_SW_3": [
+        [40, 44],
+        [44, 47]
+      ],
+      "run_SW_4": [
+        [42, 46]
+      ],
+      "run_SW_5": [
+        [40, 44]
+      ],
+      "run_start_S_1": [
+        [36, 52]
+      ],
+      "run_start_SE_0": [
+        [50, 40],
+        [49, 41],
+        [52, 43]
+      ],
+      "run_start_E_0": [
+        [54, 42]
+      ],
+      "run_start_E_1": [
+        [58, 31]
+      ],
+      "run_start_NE_0": [
+        [58, 29]
+      ],
+      "run_start_NW_0": [
+        [37, 29]
+      ],
+      "run_start_W_0": [
+        [41, 42]
+      ],
+      "run_start_W_1": [
+        [37, 31]
+      ],
+      "run_start_SW_0": [
+        [42, 40],
+        [46, 41],
+        [42, 43]
+      ],
+      "run_stop_S_0": [
+        [34, 50]
+      ],
+      "run_stop_SE_1": [
+        [49, 40],
+        [48, 41],
+        [51, 43]
+      ],
+      "run_stop_E_0": [
+        [58, 31],
+        [60, 44]
+      ],
+      "run_stop_E_1": [
+        [53, 42]
+      ],
+      "run_stop_NE_1": [
+        [57, 29]
+      ],
+      "run_stop_NW_1": [
+        [38, 29]
+      ],
+      "run_stop_W_0": [
+        [37, 31],
+        [35, 44]
+      ],
+      "run_stop_W_1": [
+        [42, 42]
+      ],
+      "run_stop_SW_1": [
+        [43, 40],
+        [47, 41],
+        [43, 43]
+      ]
+    }
+  }
+}

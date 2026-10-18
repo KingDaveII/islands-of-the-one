@@ -26,9 +26,9 @@ The engine, the §6 test and the G1.2 pipeline read these numbers from `packages
 
 | Kind | Cell | Origin (the line under the soles) | The 64×64 canvas sits at |
 |---|---|---|---|
-| Kindled player sheets (`kindled-<rem>`) | 96×80 | (48, 64) | (16, 10), so canvas row 53 is cell row 63 |
+| Kindled player sheets (`kindled-<rem>` and `kindled-<rem>-sheathed`) | 96×80 | (48, 64) | (16, 10), so canvas row 53 is cell row 63 |
 | Every other sheet (Husks and other enemies, NPCs, props) | 64×64 | (32, 54) | (0, 0) |
-| Tall props (`PROP_CELLS`, M2 Task 3c; the first is `prop-twisted-tree`) | 96×128 (ART on #82; 64×96 at first) | (48, 118), the line under the trunk | (16, 64), so canvas row 53 is cell row 117; the crown overhangs upwards and to the sides (the tree stands 2.5 times the Kindled's height, about 10 px past its 2 × 2 footprint a side) |
+| Tall props (`PROP_CELLS`, M2 Task 3c: `prop-twisted-tree` and `prop-twisted-tree-2`) | 96×128 (ART on #82; 64×96 at first) | (48, 118), the line under the trunk | (16, 64), so canvas row 53 is cell row 117; the crown overhangs upwards and to the sides (the tree stands 2.5 times the Kindled's height, about 10 px past its 2 × 2 footprint a side) |
 | Room tiles (`tiles-<set>`, G1.5e) | 32×32 per piece; doors 64×32 (`door_n`) or 32×64 (`door_w`, `door_e`) | none: a piece's top left sits on its cell's | no canvas: a piece is its own size, on one 16 sim px cell ("Tiles", §10) |
 
 - The Kindled's extra room is for actions: the heavy thrust, the Haul throw and the death fall. SS-01 measured
@@ -67,8 +67,9 @@ art pipeline hold sheets to.
 **Milestones (G1.2c).** Each row's `milestone` is the milestone that first uses it, and `REQUIRED_MILESTONE`
 (`"M1"`) is the one a finished sheet is complete for: it carries every row at or before it, and later rows are
 optional. An optional animation that is there is still complete (every facing, the right frame count). Only the
-Kindled's `carry_idle`, `carry_walk` and `sit` are M2 (the Milestone column below); every other row of every
-table is M1. M2 Task 9, or whichever task first uses carry or sit, moves `REQUIRED_MILESTONE` to `"M2"`.
+sheathed sheet's rows are M2 (the Milestone column below); every other row of every table is M1. M2 Task 9, or
+whichever task first uses carry or sit, moves `REQUIRED_MILESTONE` to `"M2"`. A table may also mark a row
+`required` whatever its milestone: the sheathed sheet's five roaming rows are its finished-sheet rule.
 
 **Awaiting art (G1.5c).** A row can be in the contract before ART has drawn it. `ANIMS_AWAITING_ART`
 (`packages/shared/src/sprites.ts`) lists those rows: empty from kindled-ash's `run` (#46) to the M1 polish, which put
@@ -108,10 +109,28 @@ Frame rates are per animation; `hold` means the last frame stays until the state
 | `haul_slide` | 2 | 12 | yes | 8 | M1 | the heavy branch: the player dragged, cloak streaming back |
 | `hit` | 2 | — | hold last | 4 | M1 | 0 = the flinch (the first 100 ms of the stun, alone on an armored hit), 1 = the stagger held to the end of the hurt stun; the engine flashes it #FFFFFF (the only pure white) |
 | `death` | 6 | 8 | no | 4 | M1 | the fall, then the freckles go out one by one on the last three frames |
+
+This is the combat sheet, `kindled-<rem>`: encounters only.
+
+### Kindled, sheathed (`kindled-<rem>-sheathed`, ART 2026-10-18)
+
+The Kindled outside combat, with the blade put away under the cloak and not drawn (David's playtest of the
+holding: no blade in hand outside combat). The same cell, origin, 8 facings, palette block and skin mask as the
+combat sheet; ART makes it from the combat sheet's own frames by script, so the two sheets match when the holding
+and an encounter swap between them: W, SW, NW and N with the blade erased and the empty hand closed (the Haul's
+method); E, SE and NE are those mirrored (without the blade the figure has no handedness); S takes its left half
+below the chin from the frame half a cycle on, mirrored.
+Its own table, `KINDLED_SHEATHED_ANIMS`; a finished sheathed sheet carries the five roaming rows (`required`).
+It exists because the combat sheet is nearly full: 2048 × 2048 holds 525 cells and `kindled-ash` uses 456.
+
+| Animation | Frames | FPS | Loop | Facings | Milestone | Notes |
+|---|---|---|---|---|---|---|
+| `idle`, `walk`, `run`, `run_start`, `run_stop` | 2, 6, 8, 2, 2 | 2, 10, 16, 20, 20 | as the combat rows | 8 | M2, required | the same counts, rates and playback as the combat sheet's rows of the same name; no `run_back` (backpedalling is combat only) |
 | `carry_idle`, `carry_walk` | 2, 6 | 2, 10 | yes | 4 | M2 | both arms round the Glowing Shell (hour two) |
 | `sit` | 1 | — | hold | 2 (S, E) | M2 | the ebb, by the post |
 
-M2 adds the station animations (`chop`, `hoe`, `fish`, `knead`: 4 frames, 8 fps, 2 facings) on the same sheet.
+M2 adds the station animations (`chop`, `hoe`, `fish`, `knead`: 4 frames, 8 fps, 2 facings) here too. The
+holding draws the Kindled from its sheathed sheet (`PLAYER_SHEATHED_SHEET`, `kindled-ash-sheathed`, ART #87); encounters keep the combat sheet.
 
 ### Peeling
 
@@ -352,7 +371,7 @@ The v2 checks also run on a small fixture sheet with a mask (`packages/shared/te
 
 1. `kindled-ash` (the first-hour default) with idle, walk, dodge, light_1–3, heavy_*, haul_*, hit, death — this unblocks M1 task 3.
 2. `husk-peeling`, `husk-nutshell`.
-3. `kindled-clay`, `-tide`, `-wing` (same frames, outfit redrawn), then carry and sit.
+3. `kindled-clay`, `-tide`, `-wing` (same frames, outfit redrawn), each with its sheathed sheet, then carry and sit.
 
 ## 8. Engine (how the sheets load and animate)
 

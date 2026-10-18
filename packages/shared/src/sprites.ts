@@ -2,6 +2,7 @@ import palette from '../data/palette.json' with { type: 'json' };
 import huskNutshell from '../assets/sprites/husk-nutshell.json' with { type: 'json' };
 import huskPeeling from '../assets/sprites/husk-peeling.json' with { type: 'json' };
 import kindledAsh from '../assets/sprites/kindled-ash.json' with { type: 'json' };
+import kindledAshSheathed from '../assets/sprites/kindled-ash-sheathed.json' with { type: 'json' };
 import propChest from '../assets/sprites/prop-chest.json' with { type: 'json' };
 import propHoldingStore from '../assets/sprites/prop-holding-store.json' with { type: 'json' };
 import propKeshRock from '../assets/sprites/prop-kesh-rock.json' with { type: 'json' };
@@ -78,8 +79,10 @@ export const SPRITE_CELLS = {
  * not in a recipe: `spriteSheetSpec` returns it, so the pipeline places frames
  * on it and the sheet test checks it.
  */
-export const PROP_CELLS: Readonly<Record<'twisted-tree', SpriteCellSpec>> = {
+export const PROP_CELLS: Readonly<Record<'twisted-tree' | 'twisted-tree-2', SpriteCellSpec>> = {
   'twisted-tree': spriteCellSpec(96, 128, 118),
+  // The second tree (ART 2026-10-18: a forked crown, from the holding job's candidate 2) on the same cell.
+  'twisted-tree-2': spriteCellSpec(96, 128, 118),
 };
 
 /** The tall prop cell (`PROP_CELLS`): 96×128, origin (48, 118). */
@@ -174,7 +177,8 @@ export interface SpriteSheet {
 }
 
 /**
- * The sheets the client loads: the Kindled, the two Husks, the chest
+ * The sheets the client loads: the Kindled (its combat sheet and its sheathed
+ * sheet, the holding's), the two Husks, the chest
  * (`CHEST_SHEET`), the holding's station props (`STATION_SHEETS`, M2 Task
  * 3b and 3c) and Kesh's needle of rock off its shore (`KESH_ROCK_SHEET`, 3c).
  * The sheet test runs on every sheet on disk and checks that each name here
@@ -183,6 +187,7 @@ export interface SpriteSheet {
  */
 export const SPRITE_SHEET_NAMES = [
   'kindled-ash',
+  'kindled-ash-sheathed',
   'husk-peeling',
   'husk-nutshell',
   'prop-chest',
@@ -197,6 +202,7 @@ export type SpriteSheetName = (typeof SPRITE_SHEET_NAMES)[number];
 /** Every animated sheet the client loads, by name (the texture key the engine uses). */
 export const spriteSheets: Readonly<Record<SpriteSheetName, SpriteSheet>> = {
   'kindled-ash': kindledAsh,
+  'kindled-ash-sheathed': kindledAshSheathed,
   'husk-peeling': huskPeeling,
   'husk-nutshell': huskNutshell,
   'prop-chest': propChest,
@@ -264,12 +270,14 @@ export function isAwaitingArt(row: Pick<SpriteAnimSpec, 'name'>): boolean {
 }
 
 /**
- * Whether a table row must be in a finished sheet: its milestone is at or
- * before `REQUIRED_MILESTONE` and it isn't waiting for ART.
+ * Whether a table row must be in a finished sheet: it isn't waiting for ART,
+ * and it is `required` by its table (the sheathed sheet's own rule) or its
+ * milestone is at or before `REQUIRED_MILESTONE`.
  */
-export function isRequiredAnim(row: Pick<SpriteAnimSpec, 'milestone' | 'name'>): boolean {
+export function isRequiredAnim(row: Pick<SpriteAnimSpec, 'milestone' | 'name' | 'required'>): boolean {
+  if (isAwaitingArt(row)) return false;
   return (
-    !isAwaitingArt(row) && SPRITE_MILESTONES.indexOf(row.milestone) <= SPRITE_MILESTONES.indexOf(REQUIRED_MILESTONE)
+    row.required === true || SPRITE_MILESTONES.indexOf(row.milestone) <= SPRITE_MILESTONES.indexOf(REQUIRED_MILESTONE)
   );
 }
 
@@ -290,6 +298,12 @@ export interface SpriteAnimSpec {
   facings: readonly SpriteFacing[];
   /** The milestone that first uses it; a finished sheet may leave out rows after `REQUIRED_MILESTONE`. */
   milestone: SpriteMilestone;
+  /**
+   * Every finished sheet of this table carries the row, whatever its
+   * milestone: the sheathed sheet's own finished-sheet rule (ART,
+   * 2026-10-18), complete with its five roaming rows.
+   */
+  required?: true;
   /**
    * Props only: the recipe gives this row's frame count, within the range, and
    * its rate, like a prop's `idle` (`PROP_IDLE`). In a table (`PROP_TABLES`)
@@ -315,15 +329,15 @@ const spec = (
 const NO_FACINGS: readonly SpriteFacing[] = [];
 
 /**
- * The Kindled animations of every `kindled-<remembrance>` sheet, per facing.
- * Carry and sit are M2's (nothing uses them before), so a finished sheet may
- * leave them out until `REQUIRED_MILESTONE` reaches M2. `run` is M1's (the
- * Kindled always runs in encounters) and required like the rest. The run
- * transitions (`run_start`, `run_stop`: 2 frames at 20 fps, played once by
- * time, 100 ms) and `run_back` (4 frames by distance, one cycle per
- * `anim.backCyclePx`; its 12 fps is nominal, for tools and previews where
- * nothing drives it by distance; ART's answer on #69) are M1 rows on `ANIMS_AWAITING_ART`
- * until ART's frames land (M1 polish, ART 2026-10-17).
+ * The Kindled animations of every `kindled-<remembrance>` combat sheet, per
+ * facing; everything outside combat is on the sheathed sheet
+ * (`KINDLED_SHEATHED_ANIMS`; carry and sit moved there, ART 2026-10-18).
+ * `run` is M1's (the Kindled always runs in encounters) and required like the
+ * rest. The run transitions (`run_start`, `run_stop`: 2 frames at 20 fps,
+ * played once by time, 100 ms) and `run_back` (4 frames by distance, one
+ * cycle per `anim.backCyclePx`; its 12 fps is nominal, for tools and previews
+ * where nothing drives it by distance; ART's answer on #69) landed in #72 and
+ * #74.
  */
 export const KINDLED_ANIMS: readonly SpriteAnimSpec[] = [
   spec('idle', 2, 2, true, false),
@@ -346,10 +360,49 @@ export const KINDLED_ANIMS: readonly SpriteAnimSpec[] = [
   spec('haul_slide', 2, 12, true, false),
   spec('hit', 2, 0, false, true, SPRITE_FACINGS_4),
   spec('death', 6, 8, false, true, SPRITE_FACINGS_4),
+];
+
+/** A row every finished sheet of its table carries (`required`), M2's. */
+const requiredSpec = (name: string, frames: number, fps: number, loop: boolean): SpriteAnimSpec => ({
+  ...spec(name, frames, fps, loop, false, SPRITE_FACINGS, 'M2'),
+  required: true,
+});
+
+/**
+ * The Kindled outside combat, `kindled-<remembrance>-sheathed` (ART,
+ * 2026-10-18): the blade put away under the cloak, not drawn. The same cell,
+ * origin, 8 facings, palette block and skin mask as the combat sheet; ART
+ * erases the blade from the combat sheet's own frames, so the two match frame
+ * for frame. Its five roaming rows have the same counts, rates and playback
+ * as `KINDLED_ANIMS`' and are its finished-sheet rule (`required`); no
+ * `run_back` (backpedalling is combat only). Carry and sit live here (M2,
+ * optional until `REQUIRED_MILESTONE` is M2), and the M2 station animations
+ * join them. The combat sheet keeps combat only: 2048 × 2048 holds 525 cells
+ * and kindled-ash uses 456.
+ */
+export const KINDLED_SHEATHED_ANIMS: readonly SpriteAnimSpec[] = [
+  requiredSpec('idle', 2, 2, true),
+  requiredSpec('walk', 6, 10, true),
+  requiredSpec('run', 8, 16, true),
+  requiredSpec('run_start', 2, 20, false),
+  requiredSpec('run_stop', 2, 20, false),
   spec('carry_idle', 2, 2, true, false, SPRITE_FACINGS_4, 'M2'),
   spec('carry_walk', 6, 10, true, false, SPRITE_FACINGS_4, 'M2'),
   spec('sit', 1, 0, false, true, SPRITE_FACINGS_2, 'M2'),
 ];
+
+/** The suffix of a Kindled's sheathed sheet: `kindled-ash` → `kindled-ash-sheathed`. */
+export const SHEATHED_SUFFIX = '-sheathed';
+
+/** The sheathed sheet of a Kindled combat sheet. */
+export function sheathedSheetName(combat: string): string {
+  return `${combat}${SHEATHED_SUFFIX}`;
+}
+
+/** Whether a sheet name is a Kindled's sheathed sheet. */
+export function isSheathedSheet(name: string): boolean {
+  return name.startsWith('kindled-') && name.endsWith(SHEATHED_SUFFIX) && name.length > 'kindled-'.length + SHEATHED_SUFFIX.length;
+}
 
 /**
  * Named points in a Kindled frame (sprites.md §5): `tip`, the hook's tip, and
@@ -499,7 +552,18 @@ export const SPARKGLASS_SHEET = 'prop-sparkglass';
  * (each with its fallback in the engine). The sheet test checks one like any
  * other sheet once it lands.
  */
-export const OPTIONAL_SPRITE_SHEETS: readonly string[] = [SPARKGLASS_SHEET];
+export const OPTIONAL_SPRITE_SHEETS: readonly string[] = [SPARKGLASS_SHEET, 'prop-twisted-tree-2'];
+
+/**
+ * The sheets a station's part may name instead of its kind's
+ * (`STATION_SHEETS`), by station kind: the second twisted tree (ART
+ * 2026-10-18; a second sheet, not a mirror, which would be lit from the top
+ * right, nor an `idle_1`, which would animate). Optional sheets: until one is
+ * on disk, the part draws its kind's sheet.
+ */
+export const STATION_PART_SHEETS: Readonly<Partial<Record<'post' | 'trees' | 'outcrop' | 'store' | 'rack', readonly string[]>>> = {
+  trees: ['prop-twisted-tree-2'],
+};
 
 /** The chest's animations, in table order: `closed` (looping), `opening` (once), `open` (held). */
 export const CHEST_ANIMS = ['closed', 'opening', 'open'] as const;
@@ -602,7 +666,7 @@ export function spriteSheetSpec(name: string): SpriteSheetSpec {
       return {
         kind,
         cell: SPRITE_CELLS.kindled,
-        anims: KINDLED_ANIMS,
+        anims: isSheathedSheet(name) ? KINDLED_SHEATHED_ANIMS : KINDLED_ANIMS,
         facings: true,
         palette: true,
       };

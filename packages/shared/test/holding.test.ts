@@ -21,6 +21,7 @@ import {
   rectGap,
   rectsTouch,
   roomTiles,
+  STATION_PART_SHEETS,
   STATION_TILE,
   STATIONS,
   stationDef,
@@ -313,6 +314,30 @@ describe('holding.json', () => {
     expect(shipped.kesh).toEqual({ rock: { col: 26, row: 20, cols: 2, rows: 2 }, talk: { col: 23, row: 19 } });
     expect(holdingStart(shipped)).toEqual({ col: 14, row: 15 });
     expect(() => holdingLayout('other')).toThrow('no holding layout other');
+  });
+
+  it('alternates the six trees between the two tree sheets (ART 2026-10-18), and refuses a part sheet its kind may not name', () => {
+    const trees = stationParts(shipped, 'twisted-trees');
+    expect(trees.map((p) => p.sheet ?? null)).toEqual([null, 'prop-twisted-tree-2', null, 'prop-twisted-tree-2', null, 'prop-twisted-tree-2']);
+    expect(STATION_PART_SHEETS).toEqual({ trees: ['prop-twisted-tree-2'] });
+    const r = validateHoldingData(
+      {
+        offlineCapHours: 48,
+        heartbeatMs: 30000,
+        layouts: [
+          {
+            ...shipped,
+            stations: shipped.stations.map((s) =>
+              s.id === 'writ-post' ? { ...s, parts: s.parts.map((p) => ({ ...p, sheet: 'prop-twisted-tree-2' })) } : s,
+            ),
+          },
+        ],
+      },
+      stations,
+    );
+    expect(r.ok ? [] : r.problems).toEqual([
+      'layouts[0] (first-holding): stations[0].parts[0].sheet: "prop-twisted-tree-2" is not a sheet a post part may name (none)',
+    ]);
   });
 
   it('is validated on load', () => {

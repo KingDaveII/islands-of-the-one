@@ -1,0 +1,15 @@
+{
+  "sheet": "prop-twisted-tree-2",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "notes": "ART: the holding job's tree candidate 2 (PR #82, a forked crown) on the tall 96x128 cell, recoloured by art/clean/holding/props.py; the holding alternates it with prop-twisted-tree.",
+  "anims": {
+    "idle": {
+      "src": "art/clean/prop-twisted-tree-2/idle",
+      "frames": [
+        0
+      ]
+    }
+  }
+}
