@@ -1,5 +1,6 @@
 import controllerGlyphs from '../assets/controller-glyphs.json' with { type: 'json' };
 import hookbladeFx from '../assets/hookblade-fx.json' with { type: 'json' };
+import itemIcons from '../assets/item-icons.json' with { type: 'json' };
 
 /**
  * Cell sheets: a 1× PNG plus a JSON contract listing named rectangles
@@ -58,6 +59,14 @@ export interface HookbladeFxSheet extends CellSheet {
 
 /** Hookblade FX: chain links, the Haul hook and the charge spark, with their anims. */
 export const hookbladeFxSheet: HookbladeFxSheet = hookbladeFx;
+
+/** An item-icon sheet: one 16 px cell per item, named by its id in data/items.json, drawn in its own colours. */
+export interface ItemIconsSheet extends CellSheet {
+  meta?: Partial<EngineSheetMeta>;
+}
+
+/** The M2 item icons (ART, #77): every item in items.json has a cell named by its id. */
+export const itemIconsSheet: ItemIconsSheet = itemIcons;
 
 /** The cell called `name`, or undefined. */
 export function sheetCellNamed(sheet: CellSheet, name: string): SheetCell | undefined {

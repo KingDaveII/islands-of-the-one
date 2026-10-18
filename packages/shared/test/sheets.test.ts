@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
+  itemIconsSheet,
+  ITEMS,
   controllerGlyphsSheet,
   ENGINE_SHEET_DEFAULTS,
   engineSheetMeta,
@@ -32,6 +34,7 @@ const SHEETS: [string, CellSheet & { meta?: { tinted?: boolean } }, (image: stri
     (image) => new URL(`../assets/${image}`, import.meta.url),
   ],
   ['hookblade-fx', hookbladeFxSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
+  ['item-icons', itemIconsSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
   ['hookblade-fixture', fixtureSheet, (image) => new URL(`./fixtures/${image}`, import.meta.url)],
 ];
 
@@ -210,5 +213,13 @@ describe('engine sheet meta (sprites.md "Engine sheets")', () => {
         'telegraph colours (only Husk telegraph frames may use them): #e0457b',
       ]);
     });
+  });
+});
+
+describe('the item icons (ART, #77)', () => {
+  it('has one 16 px cell per item in items.json, named by its id, and no other', () => {
+    expect(itemIconsSheet.cells.map((c) => c.name).sort()).toEqual(ITEMS.map((i) => i.id).sort());
+    for (const c of itemIconsSheet.cells) expect([c.name, c.w, c.h]).toEqual([c.name, 16, 16]);
+    expect(engineSheetMeta(itemIconsSheet).tinted).toBe(false);
   });
 });

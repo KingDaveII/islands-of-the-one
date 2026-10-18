@@ -43,7 +43,7 @@ import { keyboardBinding, keyCodeFor } from '../game/keyboard.js';
 import { Palette } from '../palette.js';
 import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
 import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
-import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
+import { ITEM_ICON_TEXTURE, preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { body, label, place, preloadFonts, registerFonts, type Text } from '../render/text.js';
 import { abilitySlot, divider, panel } from '../render/ui.js';
 import { UI_H, UI_W } from '../game/view.js';
@@ -51,6 +51,8 @@ import { menuCamera } from '../render/cameras.js';
 
 /** Cells are 24 px on a 26 px pitch; a pane is its panel, a title row and its grid. */
 const CELL = 24;
+/** ART's item icons are 16 px (#77). */
+const ICON = 16;
 const PITCH = 26;
 const PANE_PAD = 7;
 const GRID_Y = 18;
@@ -115,7 +117,7 @@ interface Press {
  * Every move is a POST /api/inventory/move; the screen redraws from the
  * answer, never ahead of it, and a refusal shows its reason in one line in
  * the header of the pane the move went to (blinks twice, holds, gone).
- * Only the pane the keys or the pad act on has a lit frame. Placeholder look (the panel style, initials for icons) until ART's M2 UI
+ * Only the pane the keys or the pad act on has a lit frame. Placeholder look (the panel style; ART's item icons since #77, initials only for an item without one) until ART's M2 UI
  * kit; nothing here can destroy an item.
  */
 export class InventoryScene extends Phaser.Scene {
@@ -132,6 +134,8 @@ export class InventoryScene extends Phaser.Scene {
   private pager!: HintRow;
   private tabTexts: Text[] = [];
   private cellTexts: Text[] = [];
+  /** ART's item icons in the cells (#77); the initials stand in for an item without one. */
+  private cellIcons: Phaser.GameObjects.Image[] = [];
   private tipTexts: Text[] = [];
   private itemHints: HintRow[] = [];
   private footer!: HintRow;
@@ -195,6 +199,7 @@ export class InventoryScene extends Phaser.Scene {
     this.refusal = null;
     this.loadError = '';
     this.cellTexts = [];
+    this.cellIcons = [];
     this.tipTexts = [];
     this.input.mouse?.disableContextMenu();
     const cx = UI_W / 2;
@@ -453,6 +458,8 @@ export class InventoryScene extends Phaser.Scene {
     );
     for (const t of this.cellTexts) t.destroy();
     this.cellTexts = [];
+    for (const icon of this.cellIcons) icon.destroy();
+    this.cellIcons = [];
     const drawCell = (pane: Pane, index: number, cell: Cell): void => {
       const at = this.cellAt(pane, index);
       if (!at) return;
@@ -472,8 +479,23 @@ export class InventoryScene extends Phaser.Scene {
         CELL - 4,
       );
       if (!cell) return;
+      // ART's 16 px icon centred in the cell's 20 px inside; the initials only for an item without one.
+      if (this.textures.get(ITEM_ICON_TEXTURE).has(cell.itemId))
+        this.cellIcons.push(
+          this.add
+            .image(
+              at.x + (CELL - ICON) / 2,
+              at.y + (CELL - ICON) / 2,
+              ITEM_ICON_TEXTURE,
+              cell.itemId,
+            )
+            .setOrigin(0, 0),
+        );
+      else
+        this.cellTexts.push(
+          place(label(this, 0, 0, initials(cell.itemId), Palette.uiInk), at.x + 3, at.y + 3),
+        );
       this.cellTexts.push(
-        place(label(this, 0, 0, initials(cell.itemId), Palette.uiInk), at.x + 3, at.y + 3),
         place(
           label(this, 0, 0, String(cell.quantity), Palette.spark),
           at.x + CELL - 2,
