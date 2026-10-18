@@ -80,11 +80,22 @@ export const SPRITE_CELLS = {
  * not in a recipe: `spriteSheetSpec` returns it, so the pipeline places frames
  * on it and the sheet test checks it.
  */
-export const PROP_CELLS: Readonly<Record<'twisted-tree' | 'twisted-tree-2', SpriteCellSpec>> = {
+export const PROP_CELLS: Readonly<Record<'twisted-tree' | 'twisted-tree-2' | PieceProp, SpriteCellSpec>> = {
   'twisted-tree': spriteCellSpec(96, 128, 118),
   // The second tree (ART 2026-10-18: a forked crown, from the holding job's candidate 2) on the same cell.
   'twisted-tree-2': spriteCellSpec(96, 128, 118),
+  // The field's upgrade pieces (M2 Task 6; ART on #102): a cell each, holding both facings, the origin at the bottom
+  // centre of the piece's footprint (as the holding's props stand on theirs).
+  // The clay channel, 1 × 4 tiles lengthwise and 4 × 1 turned: 136×136.
+  'clay-channel': spriteCellSpec(136, 136, 132),
+  // The seed jars, 2 × 1 across and 1 × 2 along, the jars rising about 20 px over the plank: 80×104.
+  'seed-jars': spriteCellSpec(80, 104, 96),
+  // The threshing floor, 3 × 3, the chaff rising about 24 px over its far edge: 112×128.
+  'threshing-floor': spriteCellSpec(112, 128, 120),
 };
+
+/** The field's upgrade pieces' props (M2 Task 6), by the name after `prop-`: each piece's id is its sheet's name. */
+export type PieceProp = 'clay-channel' | 'seed-jars' | 'threshing-floor';
 
 /** The tall prop cell (`PROP_CELLS`): 96×128, origin (48, 118). */
 export const TALL_PROP_CELL: SpriteCellSpec = PROP_CELLS['twisted-tree'];
@@ -568,6 +579,13 @@ export interface PropRecipeAnim {
 /** A prop (`prop-<name>`) without a table of its own has only `idle`, no facings, 1 to 8 frames at a rate its recipe gives. */
 export const PROP_IDLE: PropRecipeAnim = { name: 'idle', minFrames: 1, maxFrames: 8, defaultFps: 8 };
 
+/**
+ * A turnable piece's second facing (M2 Task 6; ART on #102): the piece turned 90°, a look of its own under the
+ * top-left light, 1 to 8 frames like `idle`. A piece turned 180° shows `idle` again and 270° shows `idle_turned`,
+ * never mirrored (the light stays top left).
+ */
+export const PROP_IDLE_TURNED: PropRecipeAnim = { name: 'idle_turned', minFrames: 1, maxFrames: 8, defaultFps: 8 };
+
 /** The chest's `closed`: like `idle`, capped at 2 frames (ART's clasp glint, about 2 fps); 1 frame is still, with no glint. */
 export const CHEST_CLOSED: PropRecipeAnim = { name: 'closed', minFrames: 1, maxFrames: 2, defaultFps: PROP_IDLE.defaultFps };
 
@@ -611,7 +629,39 @@ export const SPARKGLASS_SHEET = 'prop-sparkglass';
  * (each with its fallback in the engine). The sheet test checks one like any
  * other sheet once it lands.
  */
-export const OPTIONAL_SPRITE_SHEETS: readonly string[] = [SPARKGLASS_SHEET, 'prop-twisted-tree-2'];
+export const OPTIONAL_SPRITE_SHEETS: readonly string[] = [
+  SPARKGLASS_SHEET,
+  'prop-twisted-tree-2',
+  // The field's upgrade pieces (`PIECE_SHEETS`).
+  'prop-clay-channel',
+  'prop-seed-jars',
+  'prop-threshing-floor',
+];
+
+/**
+ * The field's upgrade pieces' sheets (M2 Task 6; ART on #102), by piece id: `prop-<piece id>`. Optional until ART's
+ * sheets land (the build mode draws its placeholders until then). Rows: `idle`, and `idle_turned` for a turnable
+ * piece (`PROP_TABLES`); a piece turned 90° or 270° shows `idle_turned` when its sheet has it, else `idle`
+ * (`pieceAnim`). Shadow: the seed jars stand up off the ground and take the prop rule's; the channel (sunk) and the
+ * floor (flat) take none (`PIECE_SHADOWS`).
+ */
+export const PIECE_SHEETS: Readonly<Record<PieceProp, string>> = {
+  'clay-channel': 'prop-clay-channel',
+  'seed-jars': 'prop-seed-jars',
+  'threshing-floor': 'prop-threshing-floor',
+};
+
+/** Which pieces cast the prop rule's grounding shadow (ART on #102). */
+export const PIECE_SHADOWS: Readonly<Record<PieceProp, boolean>> = {
+  'clay-channel': false,
+  'seed-jars': true,
+  'threshing-floor': false,
+};
+
+/** The row a piece shows at a rotation (0, 90, 180, 270): `idle_turned` at 90 and 270 when the sheet has it, else `idle`. */
+export function pieceAnim(rotation: number, hasTurned: boolean): 'idle' | 'idle_turned' {
+  return (rotation === 90 || rotation === 270) && hasTurned ? 'idle_turned' : 'idle';
+}
 
 /**
  * The sheets a station's part may name instead of its kind's
@@ -636,12 +686,16 @@ export type ChestAnim = (typeof CHEST_ANIMS)[number];
  * `open`, 1 frame held; the engine plays `opening` when `ChestState.opened`
  * turns true and shows `open` for a chest already open when it first sees it.
  */
-export const PROP_TABLES: Readonly<Record<'chest', readonly SpriteAnimSpec[]>> = {
+export const PROP_TABLES: Readonly<Record<'chest' | 'clay-channel' | 'seed-jars', readonly SpriteAnimSpec[]>> = {
   chest: [
     propAnimSpec(CHEST_CLOSED, CHEST_CLOSED.maxFrames),
     spec('opening', 4, 12, false, true, NO_FACINGS),
     spec('open', 1, 0, false, true, NO_FACINGS),
   ],
+  // The turnable pieces (M2 Task 6; ART on #102): `idle` lengthwise or across, `idle_turned` turned 90°, both from
+  // the recipe. The threshing floor is round and has no entry: `idle` alone, its chaff spiral looping.
+  'clay-channel': [propAnimSpec(PROP_IDLE, PROP_IDLE.maxFrames), propAnimSpec(PROP_IDLE_TURNED, PROP_IDLE_TURNED.maxFrames)],
+  'seed-jars': [propAnimSpec(PROP_IDLE, PROP_IDLE.maxFrames), propAnimSpec(PROP_IDLE_TURNED, PROP_IDLE_TURNED.maxFrames)],
 };
 
 /** The frame name of a prop animation's frame `n`: `closed_0`, `opening_3` (no facings). */
