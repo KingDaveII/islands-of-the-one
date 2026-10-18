@@ -1,5 +1,7 @@
 import {
   doorFrameName,
+  holdingData,
+  holdingTemplate,
   roomTemplates,
   roomTiles,
   TILE_DOOR_ANIMS,
@@ -84,6 +86,15 @@ const SCALE = 2;
 const GAP = 4;
 /** The space round and between the rooms in rooms.png, in px (1×). */
 export const ROOM_GAP = 16;
+
+/**
+ * What rooms.png draws: every room of rooms.json, then the holding's layouts
+ * (holding.json, M2 Task 3b), which the engine draws with the same rule.
+ */
+export const REVIEW_TEMPLATES: readonly TileTemplate[] = [
+  ...roomTemplates,
+  ...holdingData.layouts.map((l) => holdingTemplate(l)),
+];
 
 /** Steps 1–7 and 9 per frame, for every piece of a tiles recipe, in the contract's order. */
 export function buildTileFrames(
@@ -336,7 +347,7 @@ export interface RoomReport {
 }
 
 /**
- * rooms.png: every template of rooms.json drawn with `roomTiles` (the rule
+ * rooms.png: every template of rooms.json and the holding's layouts drawn with `roomTiles` (the rule
  * the engine uses) from the built pieces, at 1×, doors closed, one under the
  * other on hollow-deep. A piece the recipe doesn't build (a draft) draws as
  * `missingBox`. This is the image ART judges the set by.
@@ -344,7 +355,7 @@ export interface RoomReport {
 export function renderRooms(
   tiles: readonly BuiltTile[],
   weights: TileWeights,
-  templates: readonly TileTemplate[] = roomTemplates,
+  templates: readonly TileTemplate[] = REVIEW_TEMPLATES,
 ): { img: Img; rooms: RoomReport[] } {
   const byName = new Map(tiles.map((t) => [t.name, t.img]));
   const plans = templates.map((t) => ({ t, ...roomTiles(t, weights) }));
@@ -516,7 +527,7 @@ function tileMarkdown(r: TileReport): string {
   lines.push(
     '`contact.png` has every built piece at 2× on the floor (left) and the wall face (right): a row each for the floors, shades, faces, tops and corners, then a row per door animation.',
     '',
-    "`rooms.png` draws every room of rooms.json from these pieces with the engine's rule (`tileAt`, sprites.md \"Tiles\"), at 1×, doors closed, top to bottom" +
+    "`rooms.png` draws every room of rooms.json and the holding's layout (holding.json) from these pieces with the engine's rule (`tileAt`, sprites.md \"Tiles\"), at 1×, doors closed, top to bottom" +
       (r.missing.length ? '; a piece this recipe lacks draws as a hollow-deep box with a telegraph-pink cross' : '') +
       ':',
     '',

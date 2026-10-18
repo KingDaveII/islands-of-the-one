@@ -15,7 +15,7 @@ Kind tiles, outline other, 32×32 tiles, floor weights 6:3:2:1 (floor_0 to floor
 
 `contact.png` has every built piece at 2× on the floor (left) and the wall face (right): a row each for the floors, shades, faces, tops and corners, then a row per door animation.
 
-`rooms.png` draws every room of rooms.json from these pieces with the engine's rule (`tileAt`, sprites.md "Tiles"), at 1×, doors closed, top to bottom:
+`rooms.png` draws every room of rooms.json and the holding's layout (holding.json) from these pieces with the engine's rule (`tileAt`, sprites.md "Tiles"), at 1×, doors closed, top to bottom:
 
 | Room | Cells | At (px) | Pieces it needs that are missing |
 |---|---|---|---|
@@ -24,6 +24,7 @@ Kind tiles, outline other, 32×32 tiles, floor weights 6:3:2:1 (floor_0 to floor
 | Narrow Hollow | 40×10 | 16, 1232 | none |
 | Core Ring | 32×17 | 16, 1568 | none |
 | Spill | 32×14 | 16, 2128 | none |
+| first-holding | 28×20 | 16, 2592 | none |
 
 ## Pieces
 

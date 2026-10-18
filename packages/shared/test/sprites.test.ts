@@ -45,6 +45,9 @@ import {
   type SpriteSheet,
   caveTileSheet,
   CAVE_TILE_SHEET,
+  holdingTileSheet,
+  HOLDING_TILE_SHEET,
+  STATION_SHEETS,
   isTileSheetName,
   type TileSheet,
 } from '../src/index.js';
@@ -123,6 +126,14 @@ describe('the sheets on disk (packages/shared/assets/sprites)', () => {
     const disk = new Map(TILE_SHEETS);
     expect(disk.has(CAVE_TILE_SHEET), `${CAVE_TILE_SHEET} is not on disk`).toBe(true);
     expect(caveTileSheet).toEqual(disk.get(CAVE_TILE_SHEET));
+    // The holding's placeholder set (M2 Task 3b), the same way.
+    expect(disk.has(HOLDING_TILE_SHEET), `${HOLDING_TILE_SHEET} is not on disk`).toBe(true);
+    expect(holdingTileSheet).toEqual(disk.get(HOLDING_TILE_SHEET));
+    // The station props load with the characters (one frame each, no table).
+    for (const name of Object.values(STATION_SHEETS)) {
+      expect(SPRITE_SHEET_NAMES).toContain(name);
+      expect(spriteSheets[name].anims.idle?.frames).toEqual(['idle_0']);
+    }
   });
 
   it('are all v2 sheets built by the art pipeline: v1 sprite sheets are retired', () => {

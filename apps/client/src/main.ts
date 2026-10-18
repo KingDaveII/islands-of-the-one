@@ -18,6 +18,7 @@ import { AccountScene } from './scenes/AccountScene.js';
 import { ControlsScene } from './scenes/ControlsScene.js';
 import { CreationScene } from './scenes/CreationScene.js';
 import { GateScene } from './scenes/GateScene.js';
+import { HoldingScene } from './scenes/HoldingScene.js';
 import { InventoryScene } from './scenes/InventoryScene.js';
 import { ResultsScene } from './scenes/ResultsScene.js';
 import { StartScene } from './scenes/StartScene.js';
@@ -61,6 +62,7 @@ function startGame(): void {
       AccountScene,
       CreationScene,
       StartScene,
+      HoldingScene,
       GameScene,
       ResultsScene,
       ControlsScene,
@@ -118,6 +120,10 @@ function startGame(): void {
   const activeGame = (): GameScene | null => {
     const scene = game.scene.getScene('game') as GameScene | null;
     return scene && game.scene.isActive('game') ? scene : null;
+  };
+  const activeHolding = (): HoldingScene | null => {
+    const scene = game.scene.getScene('holding') as HoldingScene | null;
+    return scene && (game.scene.isActive('holding') || game.scene.isPaused('holding')) ? scene : null;
   };
   game.events.on(Phaser.Core.Events.POST_RENDER, () => {
     debug.update(activeGame(), game.loop.actualFps);
@@ -193,6 +199,16 @@ function startGame(): void {
     /** Draw the old hitbox shapes over the sprites (also toggled by F3 with the overlay). */
     setDebugShapes(on: boolean): void {
       debugFlags.shapes = on;
+    },
+    /** The holding scene (M2 Task 3b) as the playtests read it: the roam state, the pose, the server's answers, the panel; null outside it. */
+    holding() {
+      return activeHolding()?.snapshot() ?? null;
+    },
+    /** The holding scene itself (playtests: scripted roam input, the view frame). */
+    holdingScene: activeHolding,
+    /** The roam state's hash on the holding (the same inputs give the same hash). */
+    roamHash(): number | null {
+      return activeHolding()?.session.hash() ?? null;
     },
     /** The active device the hints and the reticle follow. */
     device(): Device {

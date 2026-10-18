@@ -43,7 +43,7 @@ Every item a Kindled holds is in exactly one place
 | `purse`              | currency only (`sealed-gin`) | the item's `stackLimit` (unlimited today). Takes no slot, never lost.                                                                                  |
 | `pack`               | everything but currency      | `packSlots` (20) slots in all; an item takes `ceil(quantity / slotSize(kind))` of them. What a Kindled carries abroad; death costs only this.          |
 | `store`              | everything but currency      | one stack per item, up to `storeLimit(kind)` (material 9,999) and the item's `stackLimit` (so Sparkglass is unlimited). Reachable only on the holding. |
-| `basket:<stationId>` | what that station makes      | none here; Task 3b decides what a basket holds. `stationId` is kebab-case.                                                                             |
+| `basket:<stationId>` | what that station makes      | none: what the 48 h rule produced waits there ([holding](holding.md)). `stationId` is a station of stations.json, kebab-case.                       |
 
 The numbers live in [`packages/shared/data/inventory.json`](../../packages/shared/data/inventory.json)
 (`packSlots`, `slotSize` by kind: material 50, Sparkglass 99, consumable 5, lore 1; `storeLimit` by
@@ -73,7 +73,9 @@ the item tables.
   may span several Kindleds (a trade); each (Kindled, item, place) appears at most once in it (merge
   the deltas; the same item in two places is two changes).
 - **reason**: one of `InventoryReason` in shared code: `grant`, `gather`, `harvest`, `feed-writ`,
-  `craft`, `trade`, `admin`, `move`.
+  `craft`, `trade`, `admin`, `move`. `gather` is a station's yield credited into its basket when the
+  holding settles ([holding.md](holding.md) §3): one row per settle, in the settle's transaction, with
+  the ref `act:<kindled>:<started_at>:<credited>-<new total>` so a stretch's cycles are paid once.
 - **ref** (optional, at most 200 characters): an idempotency key, e.g. `trade:<id>` or
   `harvest:<station>:<cycle>`. A change set with a ref already in the ledger is not applied again:
   `apply` answers `duplicate: true` with the ledger rows of the first time, even when the two calls
@@ -116,7 +118,7 @@ player can cause.
 another, so the ledger shows both sides. The inventory module also reads: `holdings(kindledId)`
 (every stack, quantity > 0, in items.json order then purse, pack, store, baskets by station),
 `view(kindledId)` (the same by place, the API's shape) and `ledger(kindledId)` (the rows, oldest
-first).
+first); both take a caller's transaction to read what it sees (the holding's take-all after its settle).
 
 ## Enforcing "nothing else touches item tables"
 
@@ -162,7 +164,8 @@ In [`packages/shared/src/api.ts`](../../packages/shared/src/api.ts), like the ro
 
 `purse`, `pack` and `store` are lists of `{ itemId, quantity }` (quantity > 0, items.json order);
 `baskets` is keyed by station id. A move is allowed between `pack` and `store` both ways, and from a
-`basket:*` to `store` ("take all" in Task 3b); nothing else moves by this route, and the purse is
+`basket:*` to `store` (the holding's take-all goes through the same change set, server-side, moving
+only what fits: [holding.md](holding.md) §3); nothing else moves by this route, and the purse is
 never a move target (`wrong-place`). The guard refuses unknown fields and non-positive or non-integer
 quantities; nothing is clamped silently. The store is reachable only on the holding:
 `canReachStore(kindled)` in `move.ts` returns true today, since M2 has no other place a Kindled can

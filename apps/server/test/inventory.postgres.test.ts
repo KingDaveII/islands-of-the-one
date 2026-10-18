@@ -1,7 +1,8 @@
 import { PACK_SLOTS, type Place } from '@iot/shared';
 import { sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createDb, type DbHandle } from '../src/db/client.js';
+import { openTestPostgres, type TestPostgres } from './postgres.js';
+import type { DbHandle } from '../src/db/client.js';
 import { accounts, kindled } from '../src/db/schema.js';
 import {
   createInventory,
@@ -36,23 +37,19 @@ const change = (kindledId: string, itemId: string, place: Place, delta: number) 
 });
 
 describe.runIf(url)('inventory.apply on Postgres', () => {
+  let db: TestPostgres;
   let handle: DbHandle;
   let inv: Inventory;
   let n = 0;
 
   beforeAll(async () => {
     if (!url) return;
-    if (!/test/i.test(new URL(url).pathname))
-      throw new Error(`refusing to wipe ${new URL(url).pathname}: its name must contain "test"`);
-    handle = await createDb({ url });
-    await handle.db.execute(sql`drop schema if exists drizzle cascade`);
-    await handle.db.execute(sql`drop schema if exists public cascade`);
-    await handle.db.execute(sql`create schema public`);
-    await handle.migrate();
+    db = await openTestPostgres(url);
+    handle = db.handle;
     inv = createInventory(handle.db);
   });
   afterAll(async () => {
-    await handle.close();
+    await db.release();
   });
 
   async function newKindled(): Promise<string> {

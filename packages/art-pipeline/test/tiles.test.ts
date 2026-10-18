@@ -15,7 +15,7 @@ import { decodePng } from '../src/png.js';
 import { parseRecipe } from '../src/recipe.js';
 import { POINT_MARK } from '../src/review.js';
 import { buildAndWrite, buildAny, checkAll } from '../src/sheets.js';
-import { ROOM_GAP, type TileBuildResult } from '../src/tiles.js';
+import { REVIEW_TEMPLATES, ROOM_GAP, type TileBuildResult } from '../src/tiles.js';
 import { C, tempRoot, writeImg, writeRecipe } from './helpers.js';
 
 /**
@@ -145,7 +145,7 @@ describe('a finished tiles recipe', () => {
       'packages/shared/assets/sprites/tiles-test.png',
     ]);
     expect(full.report.missing).toEqual([]);
-    expect(full.report.rooms.map((r) => r.name)).toEqual(roomTemplates.map((t) => t.name));
+    expect(full.report.rooms.map((r) => r.name)).toEqual([...roomTemplates.map((t) => t.name), 'first-holding']);
     const md = full.outputs.get('art/review/tiles-test/report.md')?.toString() ?? '';
     expect(md).toContain('# tiles-test\n');
     expect(md).toContain('| Shell Gallery | 32×19 | 16, 16 | none |');
@@ -157,12 +157,14 @@ describe('a finished tiles recipe', () => {
     const got = decodePng(bytes);
     // The same picture composed here from the fixture's own frames and roomTiles.
     const cols = (t: { tiles: readonly string[] }) => Math.max(...t.tiles.map((r) => r.length));
-    const w = ROOM_GAP * 2 + Math.max(...roomTemplates.map((t) => cols(t) * 32));
-    const h = roomTemplates.reduce((s, t) => s + t.tiles.length * 32 + ROOM_GAP, ROOM_GAP);
+    // Every room of rooms.json, then the holding's layout (M2 Task 3b).
+    const w = ROOM_GAP * 2 + Math.max(...REVIEW_TEMPLATES.map((t) => cols(t) * 32));
+    const h = REVIEW_TEMPLATES.reduce((s, t) => s + t.tiles.length * 32 + ROOM_GAP, ROOM_GAP);
+    expect(REVIEW_TEMPLATES.map((t) => t.name)).toEqual([...roomTemplates.map((t) => t.name), 'first-holding']);
     const want = blank(w, h);
     fillRect(want, 0, 0, w, h, C['hollow-deep']);
     let oy = ROOM_GAP;
-    for (const t of roomTemplates) {
+    for (const t of REVIEW_TEMPLATES) {
       const { draws, doors } = roomTiles(t, { floorWeights: [6, 3, 2, 1] });
       for (const d of draws) blit(want, piece(d.piece), ROOM_GAP + d.col * 32, oy + d.row * 32);
       for (const d of doors) blit(want, piece(doorFrameName(d.piece, 'closed', 0)), ROOM_GAP + d.col * 32, oy + d.row * 32);

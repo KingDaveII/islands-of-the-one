@@ -365,6 +365,13 @@
     "chestRadiusPx": 8,
     "chestOpenReachPx": 2
   },
+  "roam": {
+    "walkFactor": 0.7,
+    "runAfterMs": 1200,
+    "rampMs": 400,
+    "resetTurnDeg": 90,
+    "walkStickMax": 0.6
+  },
   "juice": {
     "shakeDurationMs": 120,
     "shakePerStrength": 0.0016,

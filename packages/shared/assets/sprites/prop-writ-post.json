@@ -1,0 +1,58 @@
+{
+  "frames": {
+    "idle_0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.84375
+      }
+    }
+  },
+  "meta": {
+    "image": "prop-writ-post.png",
+    "size": {
+      "w": 64,
+      "h": 64
+    },
+    "scale": "1",
+    "format": "RGBA8888",
+    "app": "iot-art-pipeline",
+    "version": "2",
+    "cell": {
+      "w": 64,
+      "h": 64
+    },
+    "origin": {
+      "x": 32,
+      "y": 54
+    },
+    "pixelScale": 1
+  },
+  "anims": {
+    "idle": {
+      "frames": [
+        "idle_0"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "hold": true
+    }
+  }
+}

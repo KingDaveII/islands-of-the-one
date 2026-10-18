@@ -1,0 +1,179 @@
+{
+  "sheet": "tiles-holding",
+  "kind": "tiles",
+  "outline": "other",
+  "draft": false,
+  "notes": "Placeholder by MAIN (tools/placeholder-holding.py); ART replaces the pixels through this recipe. The ground is a floor, the edge the face and top; the door pieces are plain blocks (the holding has no doors, but a finished sheet carries every piece).",
+  "floorWeights": [
+    6,
+    3,
+    2,
+    1
+  ],
+  "faceMidWeights": [
+    3,
+    1
+  ],
+  "topMidWeights": [
+    3,
+    1
+  ],
+  "pieces": {
+    "floor_0": {
+      "src": "art/clean/tiles-holding/floor_0.png"
+    },
+    "floor_1": {
+      "src": "art/clean/tiles-holding/floor_1.png"
+    },
+    "floor_2": {
+      "src": "art/clean/tiles-holding/floor_2.png"
+    },
+    "floor_3": {
+      "src": "art/clean/tiles-holding/floor_3.png"
+    },
+    "shade_n": {
+      "src": "art/clean/tiles-holding/shade_n.png"
+    },
+    "shade_w": {
+      "src": "art/clean/tiles-holding/shade_w.png"
+    },
+    "shade_e": {
+      "src": "art/clean/tiles-holding/shade_e.png"
+    },
+    "shade_nw": {
+      "src": "art/clean/tiles-holding/shade_nw.png"
+    },
+    "shade_ne": {
+      "src": "art/clean/tiles-holding/shade_ne.png"
+    },
+    "face_n": {
+      "src": "art/clean/tiles-holding/face_n.png"
+    },
+    "face_w": {
+      "src": "art/clean/tiles-holding/face_w.png"
+    },
+    "face_e": {
+      "src": "art/clean/tiles-holding/face_e.png"
+    },
+    "face_nw": {
+      "src": "art/clean/tiles-holding/face_nw.png"
+    },
+    "face_ne": {
+      "src": "art/clean/tiles-holding/face_ne.png"
+    },
+    "face_we": {
+      "src": "art/clean/tiles-holding/face_we.png"
+    },
+    "face_nwe": {
+      "src": "art/clean/tiles-holding/face_nwe.png"
+    },
+    "face_mid_0": {
+      "src": "art/clean/tiles-holding/face_mid_0.png"
+    },
+    "face_mid_1": {
+      "src": "art/clean/tiles-holding/face_mid_1.png"
+    },
+    "top_n": {
+      "src": "art/clean/tiles-holding/top_n.png"
+    },
+    "top_w": {
+      "src": "art/clean/tiles-holding/top_w.png"
+    },
+    "top_e": {
+      "src": "art/clean/tiles-holding/top_e.png"
+    },
+    "top_nw": {
+      "src": "art/clean/tiles-holding/top_nw.png"
+    },
+    "top_ne": {
+      "src": "art/clean/tiles-holding/top_ne.png"
+    },
+    "top_we": {
+      "src": "art/clean/tiles-holding/top_we.png"
+    },
+    "top_nwe": {
+      "src": "art/clean/tiles-holding/top_nwe.png"
+    },
+    "top_mid_0": {
+      "src": "art/clean/tiles-holding/top_mid_0.png"
+    },
+    "top_mid_1": {
+      "src": "art/clean/tiles-holding/top_mid_1.png"
+    },
+    "corner_nw": {
+      "src": "art/clean/tiles-holding/corner_nw.png"
+    },
+    "corner_ne": {
+      "src": "art/clean/tiles-holding/corner_ne.png"
+    },
+    "door_n_closed": {
+      "src": "art/clean/tiles-holding/door_n_closed",
+      "frames": [
+        0
+      ]
+    },
+    "door_n_opening": {
+      "src": "art/clean/tiles-holding/door_n_opening",
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "door_n_open": {
+      "src": "art/clean/tiles-holding/door_n_open",
+      "frames": [
+        0
+      ]
+    },
+    "door_w_closed": {
+      "src": "art/clean/tiles-holding/door_w_closed",
+      "frames": [
+        0
+      ]
+    },
+    "door_w_opening": {
+      "src": "art/clean/tiles-holding/door_w_opening",
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "door_w_open": {
+      "src": "art/clean/tiles-holding/door_w_open",
+      "frames": [
+        0
+      ]
+    },
+    "door_e_closed": {
+      "src": "art/clean/tiles-holding/door_e_closed",
+      "frames": [
+        0
+      ]
+    },
+    "door_e_opening": {
+      "src": "art/clean/tiles-holding/door_e_opening",
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "door_e_open": {
+      "src": "art/clean/tiles-holding/door_e_open",
+      "frames": [
+        0
+      ]
+    }
+  }
+}

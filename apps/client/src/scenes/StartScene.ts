@@ -142,17 +142,24 @@ export class StartScene extends Phaser.Scene {
       this.seedText = String(randomSeed());
     });
 
-    const start = button(this, cx - 40, seedY + 26, 'START RUN', true, () => {
-      this.startRun();
+    // The main action is the holding (M2 Task 3b); the M1 run stays as a secondary entry, the combat test bed,
+    // until boats reach encounters.
+    const holding = button(this, 0, seedY + 26, 'HOLDING', true, () => {
+      this.startHolding();
     });
-    this.tweens.add({ targets: start.container, alpha: 0.75, duration: 700, yoyo: true, repeat: -1 });
-    button(this, cx + 50, seedY + 26, 'CONTROLS', false, () => {
-      this.scene.start('controls');
+    holding.container.setX(Math.round(cx - holding.width / 2));
+    this.tweens.add({ targets: holding.container, alpha: 0.75, duration: 700, yoyo: true, repeat: -1 });
+    button(this, Math.round(cx + holding.width / 2) + 10, seedY + 26, 'START RUN', false, () => {
+      this.startRun();
     });
     const inventory = button(this, 0, seedY + 26, 'INVENTORY', false, () => {
       this.scene.start('inventory');
     });
-    inventory.container.setX(cx - 50 - inventory.width);
+    inventory.container.setX(Math.round(cx - holding.width / 2) - 10 - inventory.width);
+    const controls = button(this, 0, seedY + 46, 'CONTROLS', false, () => {
+      this.scene.start('controls');
+    });
+    controls.container.setX(Math.round(cx - controls.width / 2));
 
     // The build, bottom right, in the band between the buttons and the hint panel.
     buildLabel(this, HINT_PANEL_Y - 2);
@@ -186,7 +193,10 @@ export class StartScene extends Phaser.Scene {
     const inventoryKey = eventKeyFor(keyboardBinding('inventory')).toLowerCase();
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
-      if (e.key === 'Enter') this.startRun();
+      if (e.key === 'Enter') {
+        if (e.shiftKey) this.startRun();
+        else this.startHolding();
+      }
       else if (e.key === 'Escape') this.logOut();
       else if (e.key.toLowerCase() === controlsKey) this.scene.start('controls');
       else if (e.key.toLowerCase() === inventoryKey) this.scene.start('inventory');
@@ -233,7 +243,9 @@ export class StartScene extends Phaser.Scene {
         ],
         [
           ...menu(MENU_BUTTONS.confirm[0]),
-          word('start  ·'),
+          word('holding  ·'),
+          ...MENU_BUTTONS.confirm.slice(1).flatMap((b) => menu(b)),
+          word('run  ·'),
           ...menu(MENU_BUTTONS.controls),
           word('controls  ·'),
           ...menu(MENU_BUTTONS.inventory),
@@ -269,7 +281,7 @@ export class StartScene extends Phaser.Scene {
       ],
       [
         ...glyphs(['Enter'], 'keyboard'),
-        word('start  ·'),
+        word('holding  ·  Shift+Enter run  ·'),
         ...key('controls'),
         word('controls  ·'),
         ...key('inventory'),
@@ -355,6 +367,11 @@ export class StartScene extends Phaser.Scene {
     });
   }
 
+  /** The holding: the Kindled's home Shard (docs/design/holding.md). */
+  startHolding(): void {
+    this.scene.start('holding');
+  }
+
   startRun(): void {
     const seed = parseSeed(this.seedText || '0');
     const data: GameData = { seed, weapon: this.weapon };
@@ -371,7 +388,8 @@ export class StartScene extends Phaser.Scene {
     this.field.setText(this.seedText);
     this.caret.setX(Math.round(this.field.x + this.field.width + 1));
     const edges = padEdges(this.pad);
-    if (MENU_BUTTONS.confirm.some((b) => edges.includes(b))) this.startRun();
+    if (edges.includes(MENU_BUTTONS.confirm[0])) this.startHolding();
+    else if (MENU_BUTTONS.confirm.slice(1).some((b) => edges.includes(b))) this.startRun();
     else if (edges.includes(MENU_BUTTONS.controls)) this.scene.start('controls');
     else if (
       edges.includes(MENU_BUTTONS.inventory) ||

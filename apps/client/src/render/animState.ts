@@ -18,6 +18,7 @@ import {
   type HuskState,
   type Params,
   type PlayerState,
+  type RoamState,
   type RunState,
   type StrikePhase,
 } from '@iot/sim';
@@ -432,6 +433,60 @@ export function kindledPose(
     return transientPose(sheet, 'run_start', p.aim, clocks.runStartMs) ?? gaitPose(sheet, 'run', p.aim, tick, stride);
   }
   return transientPose(sheet, 'run_stop', p.aim, clocks.runStopMs) ?? kindledPoseOf(sheet, 'idle', p.aim, (a) => loopFrame(a, tick));
+}
+
+/**
+ * The run transitions' clocks on the holding (M2 Task 3b), the roam's
+ * counterpart of `GaitClock`: `run_start` when the walk breaks into the run
+ * (the roam's gait turning `run`), `run_stop` when the run ends (a stop or a
+ * drop back to the walk), both in sim ticks from the tick it happened; a
+ * turn of the 8-way facing ends either at once. Visual only, like the run's.
+ */
+export class RoamGaitClock {
+  private running = false;
+  private facing = -1;
+  private startTick = -1;
+  private stopTick = -1;
+
+  update(s: Pick<RoamState, 'tick' | 'gait' | 'facing'>): Pick<Clocks, 'runStartMs' | 'runStopMs'> {
+    const running = s.gait === 'run';
+    const facing = facingIndex(s.facing);
+    if (running && !this.running) {
+      this.startTick = s.tick;
+      this.stopTick = -1;
+    } else if (!running && this.running) {
+      this.stopTick = s.tick;
+      this.startTick = -1;
+    }
+    if (facing !== this.facing) {
+      this.startTick = -1;
+      this.stopTick = -1;
+    }
+    this.running = running;
+    this.facing = facing;
+    return {
+      runStartMs: this.startTick < 0 ? -1 : msOfTicks(s.tick - this.startTick),
+      runStopMs: this.stopTick < 0 ? -1 : msOfTicks(s.tick - this.stopTick),
+    };
+  }
+}
+
+/**
+ * The Kindled's pose on the holding, from the roam state (M2 Task 3b): `walk`
+ * by distance at `anim.walkCyclePx` while it walks, `run` at `anim.runCyclePx`
+ * once the roam's gait is `run`, `idle` standing, all facing the movement
+ * (the roam's facing, kept while still); `run_start` when the run begins and
+ * `run_stop` when it ends where the sheet has them (`clocks`, from
+ * `RoamGaitClock`; the rows await art, so kindled-ash shows neither yet).
+ * No backpedal: there is no aim to run away from.
+ */
+export function roamPose(s: RoamState, sheet: SpriteSheet, clocks: Pick<Clocks, 'runStartMs' | 'runStopMs'>, stride?: Stride): KindledPose {
+  const moving = isMoving(s);
+  const walking = stride ? { ...stride, backpedal: false } : undefined;
+  if (moving && s.gait === 'run')
+    return transientPose(sheet, 'run_start', s.facing, clocks.runStartMs) ?? gaitPose(sheet, 'run', s.facing, s.tick, walking);
+  if (moving) return transientPose(sheet, 'run_stop', s.facing, clocks.runStopMs) ?? gaitPose(sheet, 'walk', s.facing, s.tick, walking);
+  return transientPose(sheet, 'run_stop', s.facing, clocks.runStopMs) ?? kindledPoseOf(sheet, 'idle', s.facing, (a) => loopFrame(a, s.tick));
 }
 
 function heavyPose(s: RunState, p: PlayerState, P: Params, sheet: SpriteSheet): KindledPose {

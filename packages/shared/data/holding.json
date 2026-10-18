@@ -1,0 +1,43 @@
+{
+  "$comment": "The holding (docs/design/holding.md). offlineCapHours: the most time away a station keeps earning (GAME DESIGN, 48 h); heartbeatMs: how often the open holding scene calls GET /api/holding. layouts: tile templates in the rooms' style, legend: . ground, # the edge (solid; everything outside the template is solid too), W the Writ post, T the twisted trees, R the stone outcrop, P the start. stations: each with its id (stations.json), kind, tile rectangle and interact point (a ground tile beside it). plots: four 6 x 6 rectangles, data only until Task 5 names them. MAIN's first layout, drawn by hand; GAME DESIGN and ART revise it.",
+  "offlineCapHours": 48,
+  "heartbeatMs": 30000,
+  "layouts": [
+    {
+      "id": "first-holding",
+      "tiles": [
+        "############################",
+        "#..........................#",
+        "#..........................#",
+        "#..........................#",
+        "#..........................#",
+        "#..........................#",
+        "#..........................#",
+        "#..........................#",
+        "#..........................#",
+        "#..TT.........W.........RR.#",
+        "#..TT...................RR.#",
+        "#.............P............#",
+        "#..........................#",
+        "#..........................#",
+        "#..........................#",
+        "#..........................#",
+        "#..........................#",
+        "#..........................#",
+        "#..........................#",
+        "############################"
+      ],
+      "stations": [
+        { "id": "writ-post", "kind": "post", "rect": { "col": 14, "row": 9, "cols": 1, "rows": 1 }, "interact": { "col": 14, "row": 10 } },
+        { "id": "twisted-trees", "kind": "trees", "rect": { "col": 3, "row": 9, "cols": 2, "rows": 2 }, "interact": { "col": 5, "row": 10 } },
+        { "id": "stone-outcrop", "kind": "outcrop", "rect": { "col": 24, "row": 9, "cols": 2, "rows": 2 }, "interact": { "col": 23, "row": 10 } }
+      ],
+      "plots": [
+        { "col": 7, "row": 2, "cols": 6, "rows": 6 },
+        { "col": 16, "row": 2, "cols": 6, "rows": 6 },
+        { "col": 7, "row": 12, "cols": 6, "rows": 6 },
+        { "col": 16, "row": 12, "cols": 6, "rows": 6 }
+      ]
+    }
+  ]
+}

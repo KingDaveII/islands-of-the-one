@@ -89,10 +89,15 @@ export interface Inventory {
     reason: InventoryReason,
     options?: ApplyOptions,
   ): Promise<ApplyResult>;
-  /** Every stack a Kindled holds (quantity > 0), in items.json order, then purse, pack, store, baskets by station. */
-  holdings(kindledId: string): Promise<Holding[]>;
+  /**
+   * Every stack a Kindled holds (quantity > 0), in items.json order, then
+   * purse, pack, store, baskets by station. Inside a caller's transaction
+   * (`tx`) it reads what that transaction sees (a settle's credits before
+   * they commit; the holding's take-all).
+   */
+  holdings(kindledId: string, tx?: Transaction): Promise<Holding[]>;
   /** The same, by place: what GET /api/inventory answers. */
-  view(kindledId: string): Promise<InventoryResponse>;
+  view(kindledId: string, tx?: Transaction): Promise<InventoryResponse>;
   /** A Kindled's ledger rows, oldest first. */
   ledger(kindledId: string): Promise<LedgerEntry[]>;
 }
@@ -386,8 +391,8 @@ export function createInventory(db: Database, options: InventoryOptions = {}): I
     }
   }
 
-  async function holdings(kindledId: string): Promise<Holding[]> {
-    const rows = await db
+  async function holdings(kindledId: string, tx?: Transaction): Promise<Holding[]> {
+    const rows = await (tx ?? db)
       .select({ itemId: itemStacks.itemId, place: itemStacks.place, quantity: itemStacks.quantity })
       .from(itemStacks)
       .where(and(eq(itemStacks.kindledId, kindledId), gt(itemStacks.quantity, 0)));
@@ -403,9 +408,9 @@ export function createInventory(db: Database, options: InventoryOptions = {}): I
     apply,
     holdings,
 
-    async view(kindledId) {
+    async view(kindledId, tx) {
       const out: InventoryResponse = { purse: [], pack: [], store: [], baskets: {} };
-      for (const h of await holdings(kindledId)) {
+      for (const h of await holdings(kindledId, tx)) {
         const entry: InventoryEntry = { itemId: h.itemId, quantity: h.quantity };
         const station = basketStation(h.place);
         if (station !== undefined) (out.baskets[station] ??= []).push(entry);

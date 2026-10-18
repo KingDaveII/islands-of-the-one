@@ -95,6 +95,7 @@ describe('controls.json', () => {
       item1: 'Q',
       item2: 'F',
       interact: { calm: 'E' },
+      stopAction: { calm: 'X' },
       chartPeek: 'Tab',
       journal: 'J',
       inventory: 'I',
@@ -104,6 +105,10 @@ describe('controls.json', () => {
       debug: 'F3',
     });
     expect(bindingKeys(KEYBOARD.interact, 'combat')).toEqual([]);
+    // Stopping the holding's action (M2 Task 3b) is Calm only too: X, and a face button free in Calm on the pad.
+    expect(bindingKeys(KEYBOARD.stopAction, 'combat')).toEqual([]);
+    for (const preset of controlsData.presets)
+      expect(bindingKeys(preset.bindings.stopAction, 'calm'), preset.id).toEqual([preset.id === 'faces' ? 'Up' : 'Triangle']);
     expect(bindingKeys(KEYBOARD.dodge, 'combat')).toEqual(['Space']);
     expect(bindingKeys(KEYBOARD.dodge, 'calm')).toEqual(['Space']);
     // The middle mouse button first (the glyph the hints show), 1 as the alternate.

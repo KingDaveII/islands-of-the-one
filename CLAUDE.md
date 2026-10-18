@@ -16,6 +16,7 @@ Browser multiplayer game (idle / co-op / action MMORPG). pnpm monorepo, TypeScri
 |                        | `accounts.md` (the `/api` routes, session cookie, account and name rules).     |
 |                        | `inventory.md` (items, `inventory.apply`, the ledger, the `inv:grant` CLI).    |
 |                        | `art-pipeline.md` (recipes, the build steps, every failure message).           |
+|                        | `holding.md` (the layout, stations, the active action, settling, XP, `roam`).  |
 
 Workspace packages are consumed from source via the custom `source` export condition
 (tsconfig `customConditions`, Vite `resolve.conditions`, `tsx --conditions=source`), so
