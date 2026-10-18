@@ -397,6 +397,12 @@
     "tossMs": 600,
     "tossArcPx": 32
   },
+  "plots": {
+    "sealRingMs": 300,
+    "sealLetterMs": 70,
+    "sealSigilMs": 400,
+    "sealGroundMs": 200
+  },
   "view": {
     "widthPx": 960,
     "minWidthPx": 768,

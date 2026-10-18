@@ -3,6 +3,9 @@ import {
   isShoreGround,
   itemDef,
   PACK_SLOTS,
+  PLOT_TEXT,
+  plotKindDef,
+  plotLevel,
   SKILL_NAMES,
   stationDef,
   TILE_SIZE_PX,
@@ -11,15 +14,19 @@ import {
   type HoldingResponse,
   type HoldingTake,
   type InventoryResponse,
+  type LayoutPlot,
   type LayoutStation,
   type SkillView,
   type SpriteSheet,
+  type StationAction,
+  type StationCycle,
   type StationPart,
   type TileRect,
   type TileTemplate,
 } from '@iot/shared';
 import { displayable } from './drawable.js';
 import { packUsed } from './inventoryView.js';
+import { bonusLine, cycleRateLine, nextInLine, plotOf, sentenceLetters } from './plotView.js';
 
 /**
  * The holding scene's logic (docs/design/holding.md), pure so it is tested
@@ -63,9 +70,9 @@ export function xpFraction(view: SkillView): number {
   return span > 0 ? view.into / span : 0;
 }
 
-/** The icon placeholder for a station until ART draws icons: its name's initials ("Twisted trees" → "TT"). */
-export function stationInitials(stationId: string): string {
-  const name = stationDef(stationId)?.name ?? stationId.replaceAll('-', ' ');
+/** The icon placeholder for a station until ART draws icons: its name's initials ("Twisted trees" → "TT"; a field "F"). */
+export function stationInitials(stationId: string, r: Pick<HoldingResponse, 'plots'> | null = null): string {
+  const name = workplaceDef(stationId, r)?.name ?? stationId.replaceAll('-', ' ');
   return displayable(
     name
       .split(/[\s-]+/)
@@ -89,15 +96,28 @@ export interface ChipState {
   xp: number;
 }
 
+/** What a station id names in an answer: a station's definition, or a named plot's kind (null for an unnamed plot or an unknown id). */
+export function workplaceDef(
+  stationId: string,
+  r: Pick<HoldingResponse, 'plots'> | null,
+): { name: string; action: StationAction | null; cycle: StationCycle | null; plot: ReturnType<typeof plotOf> } | null {
+  const station = stationDef(stationId);
+  if (station) return { name: station.name, action: station.action, cycle: station.cycle, plot: undefined };
+  const plot = plotOf(r, stationId);
+  const kind = plot?.kind === null || plot?.kind === undefined ? undefined : plotKindDef(plot.kind);
+  if (!plot || !kind) return null;
+  return { name: kind.name, action: kind.action, cycle: kind.cycle, plot };
+}
+
 export function chipState(r: HoldingResponse | null, serverMs: number): ChipState | null {
   const activity = r?.activity;
   if (!r || !activity) return null;
-  const action = stationDef(activity.stationId)?.action;
+  const action = workplaceDef(activity.stationId, r)?.action;
   if (!action) return null;
   const view = r.skills[action.skill];
   return {
     stationId: activity.stationId,
-    initials: stationInitials(activity.stationId),
+    initials: stationInitials(activity.stationId, r),
     skill: `${SKILL_NAMES[action.skill].toUpperCase()} ${view.level}`,
     ring: cycleProgress(activity, serverMs),
     xp: xpFraction(view),
@@ -110,42 +130,82 @@ export function countOf(itemId: string, quantity: number): string {
   return `${quantity} ${name}${quantity === 1 ? '' : 's'}`;
 }
 
-/** The lines of the station panel. The post has none: Use opens the inventory with the store. */
+/** The station panel's buttons, in order. */
+export type StationButton = 'work' | 'take' | 'rename' | 'sow';
+
+/**
+ * The lines of the station panel (GAME DESIGN's screen, M2 Task 5 for the
+ * plots). The post has none: Use opens the inventory with the store. A field
+ * not sown yet shows only "Not sown yet." and SOW; a faded plot its faded
+ * line and no buttons.
+ */
 export interface StationLines {
   title: string;
-  /** "1 twisted log every 4 s". */
-  rate: string;
-  /** "Basket: 3 twisted logs", or "Basket: empty". */
-  basket: string;
+  /** A plot's sentence under its title (the letter sheet draws it), else null. */
+  letters: string | null;
+  /** "Level 1" for a plot, else null. */
+  level: string | null;
+  /** The active action's rate, "1 twisted log every 4 s"; null while a field isn't sown. */
+  rate: string | null;
+  /** The basket cycle's rate, "6 twisted logs every 2 h", or null for a station without one (or not sown). */
+  cycle: string | null;
+  /** ישן's "+3% for keeping its name" under the cycle's rate, or null. */
+  bonus: string | null;
+  /** "Basket: 3 twisted logs", or "Basket: empty"; null while a field isn't sown. */
+  basket: string | null;
+  /** "Next in 12 min", or "Resting while your Writ is dark."; null without a cycle, faded or not sown. */
+  next: string | null;
   /** "You: 1 twisted log every 4 s" while working here (the item's full name, GAME DESIGN 2026-10-18), else null. */
   you: string | null;
-  /** "Woodcutting 2 · 1099 XP to next". */
-  skill: string;
+  /** "Woodcutting 2 · 1099 XP to next"; null while a field isn't sown. */
+  skill: string | null;
+  /** "Not sown yet.", or the faded line; null otherwise. */
+  note: string | null;
   /** The first button: WORK HERE, or STOP WORKING while working here. */
   work: 'WORK HERE' | 'STOP WORKING';
   take: 'TAKE ALL';
   /** Whether the Kindled works here now. */
   working: boolean;
+  /** The buttons shown, in order: work, take (and rename for a plot); sow alone for a field not sown; none when faded. */
+  buttons: StationButton[];
 }
 
-export function stationLines(stationId: string, r: HoldingResponse | null): StationLines | null {
-  const station = stationDef(stationId);
-  const action = station?.action;
-  if (!station || !action) return null;
-  const seconds = action.cycleMs / 1000;
+export function stationLines(stationId: string, r: HoldingResponse | null, serverMs: number = r ? Date.parse(r.now) : 0): StationLines | null {
+  const place = workplaceDef(stationId, r);
+  const action = place?.action;
+  if (!place || !action) return null;
+  const plot = place.plot;
+  const layout = holdingLayout(r?.layoutId);
   const basket = r?.baskets[stationId] ?? [];
   const working = r?.activity?.stationId === stationId;
   const view = r?.skills[action.skill];
-  const rate = `${countOf(action.itemId, action.quantity)} every ${seconds} s`;
+  const rate = `${countOf(action.itemId, action.quantity)} every ${action.cycleMs / 1000} s`;
+  const title = displayable(place.name.toUpperCase());
+  const letters = plot ? sentenceLetters(plot.ground, plot.virtue) : null;
+  const level = plot ? `${PLOT_TEXT.LEVEL}${plotLevel()}` : null;
+  const basketLine = basket.length ? `Basket: ${basket.map((e) => countOf(e.itemId, e.quantity)).join(', ')}` : 'Basket: empty';
+  const skill = view ? `${SKILL_NAMES[action.skill]} ${view.level} · ${view.toNext} XP to next` : SKILL_NAMES[action.skill];
+  const base = { title, letters, level, work: working ? 'STOP WORKING' : 'WORK HERE', take: 'TAKE ALL', working } as const;
+  const empty = { rate: null, cycle: null, bonus: null, basket: null, next: null, you: null, skill: null };
+  // A faded plot: frozen with its basket, the one line, no buttons.
+  if (plot?.state === 'faded') return { ...base, ...empty, basket: basketLine, note: PLOT_TEXT.FADED_PANEL, buttons: [] };
+  // A field not sown yet: only the note and SOW (GAME DESIGN).
+  const kind = plot?.kind === null || plot?.kind === undefined ? undefined : plotKindDef(plot.kind);
+  if (plot && kind?.sow && plot.sownAt === null) return { ...base, ...empty, note: PLOT_TEXT.NOT_SOWN, buttons: ['sow'] };
+  const clock = r?.cycles[stationId];
+  const dark = r !== null && r.writ.chargeMs === 0;
+  const next = place.cycle && clock ? (dark ? PLOT_TEXT.RESTING : nextInLine(clock, serverMs)) : null;
   return {
-    title: displayable(station.name.toUpperCase()),
+    ...base,
     rate,
-    basket: basket.length ? `Basket: ${basket.map((e) => countOf(e.itemId, e.quantity)).join(', ')}` : 'Basket: empty',
+    cycle: place.cycle ? cycleRateLine(place.cycle, layout, stationId) : null,
+    bonus: plot && clock ? bonusLine(clock.bonusPermille) : null,
+    basket: basketLine,
+    next,
     you: working ? `You: ${rate}` : null,
-    skill: view ? `${SKILL_NAMES[action.skill]} ${view.level} · ${view.toNext} XP to next` : SKILL_NAMES[action.skill],
-    work: working ? 'STOP WORKING' : 'WORK HERE',
-    take: 'TAKE ALL',
-    working,
+    skill,
+    note: null,
+    buttons: plot ? ['work', 'take', 'rename'] : ['work', 'take'],
   };
 }
 
@@ -180,9 +240,15 @@ export function interactPoint(part: StationPart): { x: number; y: number } {
   };
 }
 
-/** A station and the part of it nearest the Kindled: any part's interact point works the station (the trees). */
+/**
+ * A station and the part of it nearest the Kindled: any part's interact point
+ * works the station (the trees); or a plot (M2 Task 5) and its station, once
+ * the island has a Name. `id` is what a request names.
+ */
 export interface NearStation {
-  station: LayoutStation;
+  id: string;
+  station: LayoutStation | null;
+  plot: LayoutPlot | null;
   part: StationPart;
 }
 
@@ -190,27 +256,31 @@ export interface NearStation {
  * The station part to prompt for: the one whose interact point is nearest
  * the Kindled (sim px) within `rangePx`, or null. The prompt's existing
  * rules: the nearest in reach, nothing when none is. A reserved spot (the
- * weapon rack until Task 8) offers no Use.
+ * weapon rack until Task 8) offers no Use; the plots offer theirs only once
+ * the island has a Name (`plots`).
  */
 export function nearestStationPart(
   x: number,
   y: number,
   rangePx: number,
   layout: HoldingLayout = holdingLayout(),
+  plots = false,
 ): NearStation | null {
-  let best: { near: NearStation; d: number } | null = null;
+  const found: { best: { near: NearStation; d: number } | null } = { best: null };
+  const consider = (near: NearStation): void => {
+    const p = interactPoint(near.part);
+    const d = Math.hypot(p.x - x, p.y - y);
+    if (d <= rangePx && (!found.best || d < found.best.d)) found.best = { near, d };
+  };
   for (const station of layout.stations) {
     if (station.reserved) continue;
-    for (const part of station.parts) {
-      const p = interactPoint(part);
-      const d = Math.hypot(p.x - x, p.y - y);
-      if (d <= rangePx && (!best || d < best.d)) best = { near: { station, part }, d };
-    }
+    for (const part of station.parts) consider({ id: station.id, station, plot: null, part });
   }
-  return best ? best.near : null;
+  if (plots) for (const plot of layout.plots) consider({ id: plot.id, station: null, plot, part: plot.station });
+  return found.best ? found.best.near : null;
 }
 
-/** The station to prompt for (`nearestStationPart`'s station), or null. */
+/** The station to prompt for (`nearestStationPart`'s station), or null (a plot counts as none here). */
 export function nearestStation(x: number, y: number, rangePx: number, layout: HoldingLayout = holdingLayout()): LayoutStation | null {
   return nearestStationPart(x, y, rangePx, layout)?.station ?? null;
 }

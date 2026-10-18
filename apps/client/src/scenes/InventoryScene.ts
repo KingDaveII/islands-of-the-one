@@ -23,6 +23,7 @@ import {
   litPane,
   maxScroll,
   moveFocus,
+  NO_WORDS_LINE,
   PACK_COLS,
   PACK_ROWS,
   packCells,
@@ -34,14 +35,21 @@ import {
   storeCells,
   TAB_LABELS,
   tooltipLines,
+  wordKindLine,
+  wordLine,
+  wordRows,
+  wordTooltipLines,
   type Cell,
   type Direction,
   type Focus,
   type InventoryTab,
+  type TooltipLines,
+  type WordRow,
 } from '../game/inventoryView.js';
 import { keyboardBinding, keyCodeFor } from '../game/keyboard.js';
 import { Palette } from '../palette.js';
 import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
+import { loadLetterSheet, plotLetters, type LetterSheet } from '../render/letters.js';
 import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
 import { ITEM_ICON_TEXTURE, preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { body, label, place, preloadFonts, registerFonts, type Text } from '../render/text.js';
@@ -75,6 +83,12 @@ const ITEM_SLOT_GAP = 44;
 const HEADER_ROW_Y = PANE_Y + 6;
 const TOOLTIP_W = 150;
 const TIP_DEPTH = 10;
+/** The Words tab (M2 Task 5): one panel over both panes' room, a row per known tile: its letters at 2 UI px per sheet px, then its lines. */
+const WORDS_X = PACK_X;
+const WORDS_W = STORE_X + STORE_W - PACK_X;
+const WORD_ROW_H = 22;
+const WORD_LETTERS_W = 80;
+const WORD_LETTER_SCALE = 2;
 /** A pointer that travels this far (UI px) before it is released is a drag, not a click. */
 const DRAG_PX = 6;
 /** A touch held this long before it is released moves one item instead of the stack. */
@@ -137,6 +151,13 @@ export class InventoryScene extends Phaser.Scene {
   /** ART's item icons in the cells (#77); the initials stand in for an item without one. */
   private cellIcons: Phaser.GameObjects.Image[] = [];
   private tipTexts: Text[] = [];
+  /** The Words tab: the known tiles from the holding's answer, their rows' texts, letters and zones, the hovered and the focused row. */
+  private words: WordRow[] = [];
+  private wordTexts: Text[] = [];
+  private wordLetters!: Phaser.GameObjects.Graphics;
+  private wordZones: Phaser.GameObjects.Zone[] = [];
+  private wordHover: number | null = null;
+  private wordFocus = 0;
   private itemHints: HintRow[] = [];
   private footer!: HintRow;
   private pad = { prev: [] as boolean[] };
@@ -158,6 +179,8 @@ export class InventoryScene extends Phaser.Scene {
   private stickDir: Direction | null = null;
   private stickNext = 0;
   private backTo: 'start' | 'holding' = 'start';
+  /** The Old Letters sheet's ink, once loaded (the Words tab's letters); kept across openings. */
+  private letterSheet: LetterSheet | null = null;
 
   constructor() {
     super('inventory');
@@ -201,10 +224,16 @@ export class InventoryScene extends Phaser.Scene {
     this.cellTexts = [];
     this.cellIcons = [];
     this.tipTexts = [];
+    this.words = [];
+    this.wordTexts = [];
+    this.wordZones = [];
+    this.wordHover = null;
+    this.wordFocus = 0;
     this.input.mouse?.disableContextMenu();
     const cx = UI_W / 2;
 
     this.g = this.add.graphics();
+    this.wordLetters = this.add.graphics();
     // The tooltip sits over everything else (the cells' texts are made after it).
     this.tip = this.add.graphics().setDepth(TIP_DEPTH);
     place(label(this, 0, 0, 'INVENTORY', Palette.uiInk, 16), cx, 6, 0.5);
@@ -329,6 +358,23 @@ export class InventoryScene extends Phaser.Scene {
       this.loaded = true;
       this.sync();
     });
+    // The known word tiles come with the holding (M2 Task 5); without one (no Kindled yet) the Words tab stays empty.
+    void api.holding().then((res) => {
+      if (!this.scene.isActive() || !res.ok) return;
+      this.words = wordRows(res.value.words);
+      this.sync();
+    });
+    if (!this.letterSheet)
+      void loadLetterSheet().then(
+        (sheet) => {
+          if (!this.scene.isActive()) return;
+          this.letterSheet = sheet;
+          this.sync();
+        },
+        (err: unknown) => {
+          console.warn(err);
+        },
+      );
   }
 
   /** The grid cell's top left for a pane and a cell index (the store's index counts from its first row), or null when it is off the grid. */
@@ -352,6 +398,7 @@ export class InventoryScene extends Phaser.Scene {
   private setTab(tab: InventoryTab): void {
     this.tab = tab;
     this.scrollRow = 0;
+    this.wordHover = null;
     this.sync();
   }
 
@@ -387,6 +434,15 @@ export class InventoryScene extends Phaser.Scene {
   private moveFocusBy(dir: Direction): void {
     this.hover = null;
     this.keyNav = true;
+    if (this.tab === 'words') {
+      // The Words tab is a list: up and down move along it.
+      this.wordHover = null;
+      const n = this.words.length;
+      if (dir === 'up') this.wordFocus = Math.max(0, this.wordFocus - 1);
+      else if (dir === 'down') this.wordFocus = Math.min(Math.max(0, n - 1), this.wordFocus + 1);
+      this.sync();
+      return;
+    }
     this.focus = moveFocus(this.focus, dir, STORE_COLS, this.cells.store.length);
     if (this.focus.pane === 'store')
       this.scrollRow = scrollToShow(this.scrollRow, this.focus.index, STORE_COLS, STORE_ROWS);
@@ -437,8 +493,21 @@ export class InventoryScene extends Phaser.Scene {
 
     const g = this.g;
     g.clear();
+    for (const t of this.cellTexts) t.destroy();
+    this.cellTexts = [];
+    for (const icon of this.cellIcons) icon.destroy();
+    this.cellIcons = [];
     // Only the pane the keys or the pad act on has the lit rim; the other keeps the plain frame.
     const showFocus = deviceStore.get() === 'gamepad' || this.keyNav;
+    if (this.tab === 'words') {
+      this.syncWords(showFocus);
+      this.pager.setVisible(false);
+      this.refusalText.setVisible(false);
+      this.drawItemSlots();
+      this.syncTip();
+      return;
+    }
+    this.clearWords();
     const lit = litPane(this.focus, showFocus);
     panel(
       g,
@@ -456,10 +525,6 @@ export class InventoryScene extends Phaser.Scene {
       PANE_H,
       lit === 'store' ? { rim: Palette.uiFocus } : { plain: true },
     );
-    for (const t of this.cellTexts) t.destroy();
-    this.cellTexts = [];
-    for (const icon of this.cellIcons) icon.destroy();
-    this.cellIcons = [];
     const drawCell = (pane: Pane, index: number, cell: Cell): void => {
       const at = this.cellAt(pane, index);
       if (!at) return;
@@ -522,10 +587,14 @@ export class InventoryScene extends Phaser.Scene {
         ),
       );
     this.syncHeaderRows(max);
+    this.drawItemSlots();
+    this.syncTip();
+  }
 
-    // The two consumable slots: sunken and empty.
+  /** The two consumable slots: sunken and empty. */
+  private drawItemSlots(): void {
     CONSUMABLE_SLOTS.forEach((_action, i) => {
-      abilitySlot(g, ITEM_SLOT_X + i * ITEM_SLOT_GAP, ITEMS_Y, {
+      abilitySlot(this.g, ITEM_SLOT_X + i * ITEM_SLOT_GAP, ITEMS_Y, {
         icon: 'ration',
         cooldown: 0,
         locked: false,
@@ -534,7 +603,84 @@ export class InventoryScene extends Phaser.Scene {
         empty: true,
       });
     });
-    this.syncTip();
+  }
+
+  /** The Words tab's row rectangle, or null past the list. */
+  private wordRowAt(index: number): { x: number; y: number; w: number; h: number } | null {
+    if (index < 0 || index >= this.words.length) return null;
+    return {
+      x: WORDS_X + PANE_PAD,
+      y: PANE_Y + GRID_Y + index * WORD_ROW_H,
+      w: WORDS_W - 2 * PANE_PAD,
+      h: WORD_ROW_H - 2,
+    };
+  }
+
+  private clearWords(): void {
+    for (const t of this.wordTexts) t.destroy();
+    this.wordTexts = [];
+    for (const z of this.wordZones) z.destroy();
+    this.wordZones = [];
+    this.wordLetters.clear();
+  }
+
+  /**
+   * The Words tab (M2 Task 5): every known tile in one panel, a row each with its letters (the sheet's ink,
+   * once loaded), "say · meaning" and "Slot · Element"; the hovered or focused row is lit and shows the card in
+   * the tooltip. Word tiles are not items: nothing here moves.
+   */
+  private syncWords(showFocus: boolean): void {
+    this.clearWords();
+    const g = this.g;
+    const rows = Math.max(1, this.words.length);
+    const h = GRID_Y + rows * WORD_ROW_H + PANE_PAD;
+    panel(g, WORDS_X, PANE_Y, WORDS_W, h, showFocus ? { rim: Palette.uiFocus } : { plain: true });
+    this.wordTexts.push(
+      place(
+        label(this, 0, 0, `WORDS ${this.words.length}`, Palette.uiInk),
+        WORDS_X + PANE_PAD,
+        HEADER_ROW_Y,
+      ),
+    );
+    if (this.words.length === 0) {
+      this.wordTexts.push(
+        body(this, WORDS_X + PANE_PAD, PANE_Y + GRID_Y + 2, NO_WORDS_LINE, Palette.uiInkMuted),
+      );
+      return;
+    }
+    this.wordFocus = Math.min(this.wordFocus, this.words.length - 1);
+    this.words.forEach((row, i) => {
+      const r = this.wordRowAt(i);
+      if (!r) return;
+      const lit = (showFocus && this.wordFocus === i) || this.wordHover === i;
+      g.fillStyle(lit ? Palette.uiFocus : Palette.uiBevel, 1).fillRect(r.x, r.y, r.w, r.h);
+      g.fillStyle(Palette.uiPanel, 1).fillRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+      if (this.letterSheet)
+        plotLetters(this.wordLetters, this.letterSheet, row.letters, r.x + 4, r.y + 2, {
+          scale: WORD_LETTER_SCALE,
+        });
+      this.wordTexts.push(
+        place(body(this, 0, 0, wordLine(row), Palette.uiInk), r.x + WORD_LETTERS_W, r.y + 2),
+      );
+      this.wordTexts.push(
+        place(
+          body(this, 0, 0, wordKindLine(row), Palette.uiInkMuted),
+          r.x + WORD_LETTERS_W,
+          r.y + 11,
+        ),
+      );
+      const z = this.add.zone(r.x, r.y, r.w, r.h).setOrigin(0, 0).setInteractive();
+      z.on('pointerover', () => {
+        this.wordHover = i;
+        this.keyNav = false;
+        this.sync();
+      });
+      z.on('pointerout', () => {
+        if (this.wordHover === i) this.wordHover = null;
+        this.sync();
+      });
+      this.wordZones.push(z);
+    });
   }
 
   /**
@@ -570,7 +716,17 @@ export class InventoryScene extends Phaser.Scene {
     for (const t of this.tipTexts) t.destroy();
     this.tipTexts = [];
     this.tip.clear();
-    const at = this.hover ?? (deviceStore.get() === 'gamepad' || this.keyNav ? this.focus : null);
+    const showFocus = deviceStore.get() === 'gamepad' || this.keyNav;
+    if (this.tab === 'words') {
+      // The card of the hovered or the focused row, beside the pointer's row, to the right of the lines.
+      const i = this.wordHover ?? (showFocus ? this.wordFocus : null);
+      const row = i === null ? undefined : this.words[i];
+      const r = i === null ? null : this.wordRowAt(i);
+      if (!row || !r) return;
+      this.drawTip(wordTooltipLines(row), { x: r.x + r.w - TOOLTIP_W - 4, y: r.y + r.h + 2 });
+      return;
+    }
+    const at = this.hover ?? (showFocus ? this.focus : null);
     const cell = at ? this.cells[at.pane][at.index] : null;
     if (!at || !cell) return;
     const pos = this.cellAt(at.pane, at.index);
@@ -581,6 +737,12 @@ export class InventoryScene extends Phaser.Scene {
       )?.quantity ?? 0;
     const lines = tooltipLines(cell.itemId, inPane, at.pane);
     const x = pos.x + CELL + 4 + TOOLTIP_W <= UI_W - 4 ? pos.x + CELL + 4 : pos.x - 4 - TOOLTIP_W;
+    this.drawTip(lines, { x, y: pos.y });
+  }
+
+  /** The tooltip's panel and lines, its top left near `pos` (kept on the grid). */
+  private drawTip(lines: TooltipLines, pos: { x: number; y: number }): void {
+    const x = Math.max(2, Math.min(UI_W - 2 - TOOLTIP_W, pos.x));
     const inner = TOOLTIP_W - 2 * PANE_PAD;
     const name = label(this, 0, 0, lines.name.toUpperCase(), Palette.uiInk);
     const kind = body(this, 0, 0, lines.kind, Palette.uiInkMuted);

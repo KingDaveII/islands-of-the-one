@@ -116,6 +116,17 @@ export const Palette = {
   writEmber: T.sparkEmber,
   /** A full Writ (GAME DESIGN's "clear gold"; ART 2026-10-18): choir-gold, apart from ember and the amber marks. */
   writGold: T.choirGold,
+  // The plots (M2 Task 5), placeholders until ART draws them: the seal ring in the Ground's element colour (earth:
+  // sleeper-ochre), the sigil's faint grid, an unnamed plot's dotted outline, a faded plot's dim seal, the signpost.
+  sealEarth: T.sleeperOchre,
+  plotGrid: T.hollowDusk,
+  plotOutline: T.hollowDusk,
+  plotFaded: T.hollowDusk,
+  signpostWood: T.hollowBelow,
+  signpostPlaque: T.sleeperSoil,
+  /** Kesh's clay tile (the word toss), a placeholder sprite in two tokens. */
+  clayTile: T.sleeperSoil,
+  clayTileEdge: T.sleeperOchre,
   rarity: [T.hollowLavender, T.hollowLight, T.sparkAmber, T.sparkEmber, T.choirFlameDeep],
 } as const;
 

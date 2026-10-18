@@ -25,6 +25,8 @@ import { pickupFrameAt } from './pickupSprites.js';
 import { shadowEllipse } from './pixels.js';
 import { propShadowSizes, type ShadowSize } from './propShadow.js';
 import { HOLDING_SHEET, TileRoom } from './roomTiles.js';
+import { ITEM_ICON_TEXTURE } from './sheets.js';
+import { Palette } from '../palette.js';
 import { snapToArt } from './scale.js';
 import { animKey, optionalSheet, texturePixels, toneTextureKey } from './spriteSheets.js';
 import { StrideMeter } from './stride.js';
@@ -37,6 +39,9 @@ function sheetData(name: string): SpriteSheet | undefined {
 }
 
 
+/** The seeds Kesh throws, drawn from their item icon (kesh.json names the item; the icon sheet has a cell per item). */
+const SEEDS_ITEM = 'grey-seeds';
+
 /** The Kindled's grounding shadow, world px (readability.md §2). */
 const SHADOW_W = 20;
 const SHADOW_H = 6;
@@ -44,14 +49,23 @@ const SHADOW_H = 6;
 /** Kesh's rows (sprites.md §4 "Old Kesh"): `fish` loops by default, `talk` while his line is open, `toss` once, then `fish`. */
 export type KeshRow = 'fish' | 'talk' | 'toss';
 
+/** What Kesh throws (kesh.json `toss`): a sliver from `prop-sparkglass`, the clay tile (a placeholder texture), the seeds' item icon. */
+export type TossKind = 'sliver' | 'word' | 'seeds';
+
 /** The thrown thing in the air: from the hand to the feet over `tossMs`, drawn from its own sprite. */
 interface Flight {
   image: Phaser.GameObjects.Image;
+  kind: TossKind;
   from: { x: number; y: number };
   to: { x: number; y: number };
   startMs: number;
   onLand: () => void;
 }
+
+/** The clay tile's placeholder texture (M2 Task 5): a small rectangle in two tokens, drawn once as a sprite texture. */
+export const CLAY_TILE_TEXTURE = 'clay-tile';
+const CLAY_TILE_W = 10;
+const CLAY_TILE_H = 7;
 
 /** A prop standing in the world: a station part's, or Kesh's rock; its image's origin is the line under its base. */
 interface Prop {
@@ -220,24 +234,57 @@ export class HoldingWorld {
     return this.keshRow === 'toss' || this.flight !== null;
   }
 
+  /** The clay tile's texture, made on first use: a `clayTile` face with a `clayTileEdge` 1 px rim and the player outline. */
+  private clayTileTexture(): string | null {
+    if (this.scene.textures.exists(CLAY_TILE_TEXTURE)) return CLAY_TILE_TEXTURE;
+    const canvas = this.scene.textures.createCanvas(CLAY_TILE_TEXTURE, CLAY_TILE_W + 2, CLAY_TILE_H + 2);
+    const ctx = canvas?.getContext();
+    if (!canvas || !ctx) return null;
+    const hex = (c: number): string => `#${c.toString(16).padStart(6, '0')}`;
+    ctx.fillStyle = hex(Palette.playerOutline);
+    ctx.fillRect(0, 0, CLAY_TILE_W + 2, CLAY_TILE_H + 2);
+    ctx.fillStyle = hex(Palette.clayTileEdge);
+    ctx.fillRect(1, 1, CLAY_TILE_W, CLAY_TILE_H);
+    ctx.fillStyle = hex(Palette.clayTile);
+    ctx.fillRect(2, 2, CLAY_TILE_W - 2, CLAY_TILE_H - 2);
+    canvas.refresh();
+    return CLAY_TILE_TEXTURE;
+  }
+
+  /** The texture and frame a toss flies as, or null when the client lacks it (the flight is then skipped). */
+  private tossTexture(kind: TossKind): { key: string; frame: string | undefined } | null {
+    switch (kind) {
+      case 'sliver':
+        return optionalSheet(SPARKGLASS_SHEET) && this.scene.textures.exists(SPARKGLASS_SHEET) ? { key: SPARKGLASS_SHEET, frame: 'idle_0' } : null;
+      case 'word': {
+        const key = this.clayTileTexture();
+        return key ? { key, frame: undefined } : null;
+      }
+      case 'seeds':
+        return this.scene.textures.exists(ITEM_ICON_TEXTURE) && this.scene.textures.get(ITEM_ICON_TEXTURE).has(SEEDS_ITEM) ? { key: ITEM_ICON_TEXTURE, frame: SEEDS_ITEM } : null;
+    }
+  }
+
   /**
    * Launches the thrown thing from the release frame's `hand` point to the
-   * Kindled's feet (sim px) in the arc from tuning, drawn from
-   * `prop-sparkglass`'s `idle` when that sheet is loaded; `onLand` fires
-   * where it lands. Without the sheet the flight is skipped and `onLand`
-   * fires at once.
+   * Kindled's feet (sim px) in the arc from tuning: a sliver from
+   * `prop-sparkglass`'s `idle`, the clay tile from its placeholder texture,
+   * the seeds from their 16 px item icon (M2 Task 5); `onLand` fires where it
+   * lands. Without the texture the flight is skipped and `onLand` fires at
+   * once.
    */
-  launchToss(feet: { x: number; y: number }, onLand: () => void): void {
+  launchToss(feet: { x: number; y: number }, onLand: () => void, kind: TossKind = 'sliver'): void {
     const from = tossReleasePoint(this.keshSheet, { x: this.kesh.x, y: this.kesh.y });
     const to = { x: snapToArt(feet.x), y: snapToArt(feet.y + PLAYER_FEET) };
-    if (!from || !optionalSheet(SPARKGLASS_SHEET) || !this.scene.textures.exists(SPARKGLASS_SHEET)) {
+    const texture = from ? this.tossTexture(kind) : null;
+    if (!from || !texture) {
       onLand();
       return;
     }
     this.flight?.image.destroy();
-    const image = this.scene.add.image(from.x, from.y, SPARKGLASS_SHEET, 'idle_0').setDepth(DEPTH.fx);
+    const image = this.scene.add.image(from.x, from.y, texture.key, texture.frame).setDepth(DEPTH.fx);
     this.layer.add(image);
-    this.flight = { image, from, to, startMs: this.scene.time.now, onLand };
+    this.flight = { image, kind, from, to, startMs: this.scene.time.now, onLand };
   }
 
   /** Where the prompt stands over Kesh (world px): above his head. */
@@ -245,9 +292,13 @@ export class HoldingWorld {
     return { x: this.kesh.x, y: this.kesh.y - this.keshTop - 2 };
   }
 
-  /** Kesh's row and frame this frame, and the thrown thing's place while it flies (playtests). */
-  keshState(): { row: KeshRow; frame: string; flight: { x: number; y: number } | null } {
-    return { row: this.keshRow, frame: this.kesh.frame.name, flight: this.flight ? { x: this.flight.image.x, y: this.flight.image.y } : null };
+  /** Kesh's row and frame this frame, and the thrown thing's place and kind while it flies (playtests). */
+  keshState(): { row: KeshRow; frame: string; flight: { x: number; y: number; kind: TossKind } | null } {
+    return {
+      row: this.keshRow,
+      frame: this.kesh.frame.name,
+      flight: this.flight ? { x: this.flight.image.x, y: this.flight.image.y, kind: this.flight.kind } : null,
+    };
   }
 
   /** The release and the flight, each frame: the thing leaves the hand on the release frame, then flies for `tossMs`. */
@@ -262,7 +313,7 @@ export class HoldingWorld {
     if (!f) return;
     const { tossMs, tossArcPx } = this.keshTuning();
     const t = (this.scene.time.now - f.startMs) / Math.max(1, tossMs);
-    const sheet = optionalSheet(SPARKGLASS_SHEET);
+    const sheet = f.kind === 'sliver' ? optionalSheet(SPARKGLASS_SHEET) : undefined;
     if (sheet) f.image.setFrame(pickupFrameAt(sheet, this.scene.time.now));
     const p = tossPoint(f.from, f.to, t, tossArcPx);
     f.image.setPosition(p.x, p.y);

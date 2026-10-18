@@ -50,9 +50,29 @@ const working: HoldingResponse = {
     farming: { xp: 0, level: 1, into: 0, toNext: 40 },
   },
   writ: toWritView(pressedWrit(T0), T0 + 13_000),
-  kesh: { firstGiven: false, due: 'first', nextTideAt: new Date(T0 + 6 * 3_600_000).toISOString() },
+  kesh: { firstGiven: false, due: 'first', nextTideAt: new Date(T0 + 6 * 3_600_000).toISOString(), wordDue: false, seedsDue: false },
+  words: [],
+  plots: holdingLayout().plots.map((p) => ({ id: p.id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, level: 1, state: 'lit' as const })),
+  cycles: { 'twisted-trees': { cycleMs: 7_200_000, cycledUntil: iso(0), bonusPermille: 0 } },
 };
 const idle: HoldingResponse = { ...working, activity: null };
+/** The same holding with plot-1 a sown field, plot-2 named but not sown, plot-3 a field with ישן on a faded line. */
+const fields: HoldingResponse = {
+  ...idle,
+  baskets: { ...idle.baskets, 'plot-1': [{ itemId: 'pale-grain', quantity: 12 }], 'plot-2': [], 'plot-3': [{ itemId: 'pale-grain', quantity: 2 }], 'plot-4': [] },
+  skills: { ...idle.skills, farming: { xp: 60, level: 2, into: 20, toNext: 1083 } },
+  plots: [
+    { id: 'plot-1', ground: 'adamah', virtue: null, namedAt: iso(0), virtueSetAt: null, sownAt: iso(0), kind: 'field', level: 1, state: 'lit' },
+    { id: 'plot-2', ground: 'adamah', virtue: null, namedAt: iso(0), virtueSetAt: null, sownAt: null, kind: 'field', level: 1, state: 'lit' },
+    { id: 'plot-3', ground: 'adamah', virtue: 'yashan', namedAt: iso(0), virtueSetAt: iso(0), sownAt: iso(0), kind: 'field', level: 1, state: 'faded' },
+    { id: 'plot-4', ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, level: 1, state: 'lit' },
+  ],
+  cycles: {
+    'twisted-trees': { cycleMs: 7_200_000, cycledUntil: iso(0), bonusPermille: 0 },
+    'plot-1': { cycleMs: 900_000, cycledUntil: iso(0), bonusPermille: 0 },
+    'plot-3': { cycleMs: 900_000, cycledUntil: iso(0), bonusPermille: 30 },
+  },
+};
 
 describe('the server clock and the cycle ring', () => {
   it('keeps the offset between the server and the client, and reads the server time from it', () => {
@@ -106,33 +126,125 @@ describe('the station panel', () => {
   it('names the station, its rate, the basket, the skill, and the buttons; "You:" with the item\'s full name only while working here', () => {
     expect(stationLines('twisted-trees', working)).toEqual({
       title: 'TWISTED TREES',
+      letters: null,
+      level: null,
       rate: '1 twisted log every 4 s',
+      // The trees' trickle (Task 5): six trees, one log each every 2 h, and the next in 1 h 47 min at 13 s.
+      cycle: '6 twisted logs every 2 h',
+      bonus: null,
       basket: 'Basket: 3 twisted logs',
+      next: 'Next in 2 h 0 min',
       you: 'You: 1 twisted log every 4 s',
       skill: 'Woodcutting 2 · 1099 XP to next',
+      note: null,
       work: 'STOP WORKING',
       take: 'TAKE ALL',
       working: true,
+      buttons: ['work', 'take'],
     });
+    expect(stationLines('twisted-trees', working, T0 + 13 * 60_000)?.next).toBe('Next in 1 h 47 min');
     expect(stationLines('stone-outcrop', working)).toEqual({
       title: 'STONE OUTCROP',
+      letters: null,
+      level: null,
       rate: '1 black stone every 6 s',
+      cycle: null,
+      bonus: null,
       basket: 'Basket: empty',
+      next: null,
       you: null,
       skill: 'Mining 1 · 40 XP to next',
+      note: null,
       work: 'WORK HERE',
       take: 'TAKE ALL',
       working: false,
+      buttons: ['work', 'take'],
     });
     expect(stationLines('twisted-trees', null)?.skill).toBe('Woodcutting');
+    expect(stationLines('twisted-trees', null)?.next).toBeNull();
     // The post and the store have no panel: Use opens the inventory with the store pane; the reserved rack has none either.
     expect(stationLines('writ-post', working)).toBeNull();
     expect(stationLines('holding-store', working)).toBeNull();
     expect(stationLines('weapon-rack', working)).toBeNull();
     expect(stationLines('field', working)).toBeNull();
+    // An unnamed plot has no panel of this kind (Use opens the plot sentence panel).
+    expect(stationLines('plot-1', working)).toBeNull();
+    expect(stationLines('plot-1', null)).toBeNull();
     expect(countOf('twisted-log', 1)).toBe('1 twisted log');
     expect(countOf('black-stone', 12)).toBe('12 black stones');
     expect(pluralName('twisted-log')).toBe('twisted logs');
+  });
+
+  it("a field's panel (Task 5): the sentence, the level, both rates, the basket, \"Next in …\" and RENAME; not sown: the note and SOW; faded: the line and no buttons", () => {
+    const now = T0 + 3 * 60_000;
+    expect(stationLines('plot-1', fields, now)).toEqual({
+      title: 'FIELD',
+      letters: 'אדמה',
+      level: 'Level 1',
+      rate: '1 pale grain every 20 s',
+      cycle: '1 pale grain every 15 min',
+      bonus: null,
+      basket: 'Basket: 12 pale grains',
+      next: 'Next in 12 min',
+      you: null,
+      skill: 'Farming 2 · 1083 XP to next',
+      note: null,
+      work: 'WORK HERE',
+      take: 'TAKE ALL',
+      working: false,
+      buttons: ['work', 'take', 'rename'],
+    });
+    expect(stationLines('plot-1', { ...fields, activity: { stationId: 'plot-1', startedAt: iso(0), cycleMs: 20_000 } }, now)).toMatchObject({
+      you: 'You: 1 pale grain every 20 s',
+      work: 'STOP WORKING',
+      working: true,
+    });
+    // Dark: "Resting" in place of "Next in …".
+    const dark = { ...fields, writ: toWritView(pressedWrit(T0 - 60 * 3_600_000), T0) };
+    expect(stationLines('plot-1', dark, now)?.next).toBe('Resting while your Writ is dark.');
+    expect(stationLines('twisted-trees', dark, now)?.next).toBe('Resting while your Writ is dark.');
+    // Not sown: only the note and SOW.
+    expect(stationLines('plot-2', fields, now)).toEqual({
+      title: 'FIELD',
+      letters: 'אדמה',
+      level: 'Level 1',
+      rate: null,
+      cycle: null,
+      bonus: null,
+      basket: null,
+      next: null,
+      you: null,
+      skill: null,
+      note: 'Not sown yet.',
+      work: 'WORK HERE',
+      take: 'TAKE ALL',
+      working: false,
+      buttons: ['sow'],
+    });
+    // Faded, with ישן: the sentence with its divider, the faded line, the basket kept, no buttons.
+    expect(stationLines('plot-3', fields, now)).toEqual({
+      title: 'FIELD',
+      letters: 'אדמה · ישן',
+      level: 'Level 1',
+      rate: null,
+      cycle: null,
+      bonus: null,
+      basket: 'Basket: 2 pale grains',
+      next: null,
+      you: null,
+      skill: null,
+      note: "Faded into the haze with your Writ's first line. Feed your Writ and it will remember.",
+      work: 'WORK HERE',
+      take: 'TAKE ALL',
+      working: false,
+      buttons: [],
+    });
+    // Lit again with the bonus: the +3% line under the cycle's rate.
+    const lit = { ...fields, plots: fields.plots.map((p) => (p.id === 'plot-3' ? { ...p, state: 'lit' as const } : p)) };
+    expect(stationLines('plot-3', lit, now)).toMatchObject({ bonus: '+3% for keeping its name', next: 'Next in 12 min', buttons: ['work', 'take', 'rename'] });
+    // The chip at a field: the kind's initial and Farming.
+    expect(chipState({ ...fields, activity: { stationId: 'plot-1', startedAt: iso(0), cycleMs: 20_000 } }, T0 + 5000)).toMatchObject({ initials: 'F', skill: 'FARMING 2', ring: 0.25 });
+    expect(stationInitials('plot-1', fields)).toBe('F');
   });
 
   it("floats what a take-all moved as \"+3\" and keeps GAME DESIGN's full-store line as the one panel line; an empty basket says nothing", () => {
@@ -162,12 +274,12 @@ describe('the prompt and the props', () => {
 
   it('prompts for the nearest station part whose interact point is in reach, by the sim distance; any tree works the trees', () => {
     expect(interactPoint(tree0)).toEqual({ x: 104, y: 56 });
-    expect(nearestStationPart(104, 56, 40, layout)).toEqual({ station: trees, part: tree0 });
+    expect(nearestStationPart(104, 56, 40, layout)).toEqual({ id: 'twisted-trees', station: trees, plot: null, part: tree0 });
     expect(nearestStation(104 + 39, 56, 40, layout)?.id).toBe('twisted-trees');
     expect(nearestStation(104 + 41, 56, 40, layout)).toBeNull();
     // The fourth tree, by the start's row: the same station, another part.
     expect(interactPoint(tree3)).toEqual({ x: 104, y: 248 });
-    expect(nearestStationPart(104, 248, 40, layout)).toEqual({ station: trees, part: tree3 });
+    expect(nearestStationPart(104, 248, 40, layout)).toEqual({ id: 'twisted-trees', station: trees, plot: null, part: tree3 });
     // Between the post's interact point (14, 14) and the start: the post is nearest.
     expect(nearestStation(232, 236, 40, layout)?.id).toBe('writ-post');
     // The store's interact point (12, 14) and the outcrop's (22, 14).
@@ -178,6 +290,13 @@ describe('the prompt and the props', () => {
     expect(nearestStation(264, 216, 40, layout)?.id).toBe('writ-post');
     expect(nearestStation(264, 216, 10, layout)).toBeNull();
     expect(nearestStation(0, 0, 40, layout)).toBeNull();
+    // The plots (Task 5) prompt at their signposts' interact points, only once the island has a Name (`plots` true).
+    const plot1 = layout.plots[0];
+    if (!plot1) throw new Error('no plot');
+    expect(interactPoint(plot1.station)).toEqual({ x: 9.5 * 16, y: 10.5 * 16 });
+    expect(nearestStationPart(152, 168, 40, layout)).toBeNull();
+    expect(nearestStationPart(152, 168, 40, layout, true)).toEqual({ id: 'plot-1', station: null, plot: plot1, part: plot1.station });
+    expect(nearestStation(152, 168, 40, layout)).toBeNull();
   });
 
   it("stands a prop on the bottom centre of its part's rectangle, and finds the part nearest a point", () => {
