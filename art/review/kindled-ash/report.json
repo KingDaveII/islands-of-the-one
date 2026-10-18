@@ -3544,8 +3544,8 @@
       "frames": 4,
       "held": [],
       "seam": {
-        "lastToFirst": 470,
-        "meanInCycle": 619.33,
+        "lastToFirst": 469,
+        "meanInCycle": 617.67,
         "flag": false
       }
     },
@@ -6323,6 +6323,7 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 8,
+      "mirrored": true,
       "masked": 0
     },
     {
@@ -6335,6 +6336,7 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 14,
+      "mirrored": true,
       "masked": 0
     },
     {
@@ -6347,6 +6349,7 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 11,
+      "mirrored": true,
       "masked": 1
     },
     {
@@ -6359,6 +6362,7 @@
       "shift": -1,
       "outlineGaps": 0,
       "colours": 7,
+      "mirrored": true,
       "masked": 0
     },
     {

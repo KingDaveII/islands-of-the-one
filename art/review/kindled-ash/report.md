@@ -73,7 +73,7 @@ Rows, top to bottom: idle_S, idle_SE, idle_E, idle_NE, idle_N, idle_NW, idle_W, 
 | run_stop_SW | 2 |  |  |  |
 | run_back_S | 4 | 632 / 714.67 |  |  |
 | run_back_SE | 4 | 659 / 649.33 |  |  |
-| run_back_E | 4 | 470 / 619.33 |  |  |
+| run_back_E | 4 | 469 / 617.67 |  |  |
 | run_back_NE | 4 | 296 / 354.67 |  |  |
 | run_back_N | 4 | 314 / 411.33 |  |  |
 | run_back_NW | 4 | 489 / 510.67 |  |  |
@@ -366,10 +366,10 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 | run_back_NE_1 | `art/raw/run-back-kindled-ash/run_back/north-east 1` | 22 | 7 | -1 | 14, 7 | 1 | 13 **flag** | 11 |
 | run_back_NE_2 | `art/raw/run-back-kindled-ash/run_back/north-east 6` | 17 | 6.15 | -1 | 14, 7 | 0 | 11 | 14 |
 | run_back_NE_3 | `art/raw/run-back-kindled-ash/run_back/north-east 3` | 27 | 7 | -1 | 14, 7 | 0 | 14 **flag** | 11 |
-| run_back_N_0 | `art/raw/run-back-kindled-ash/run_back/north 2` | 11 | 7.43 | -1 | 14, 7 | 0 | 8 | 0 |
-| run_back_N_1 | `art/raw/run-back-kindled-ash/run_back/north 4` | 38 | 6.43 | -1 | 14, 7 | 0 | 14 **flag** | 0 |
-| run_back_N_2 | `art/raw/run-back-kindled-ash/run_back/north 6` | 32 | 6.43 | -1 | 14, 7 | 1 | 11 | 1 |
-| run_back_N_3 | `art/raw/run-back-kindled-ash/run_back/north 1` | 10 | 7.28 | -1 | 14, 7 | 0 | 7 | 0 |
+| run_back_N_0 | mirrored from `art/raw/run-back-kindled-ash/run_back/north 2` | 11 | 7.43 | -1 | 14, 7 | 0 | 8 | 0 |
+| run_back_N_1 | mirrored from `art/raw/run-back-kindled-ash/run_back/north 4` | 38 | 6.43 | -1 | 14, 7 | 0 | 14 **flag** | 0 |
+| run_back_N_2 | mirrored from `art/raw/run-back-kindled-ash/run_back/north 6` | 32 | 6.43 | -1 | 14, 7 | 1 | 11 | 1 |
+| run_back_N_3 | mirrored from `art/raw/run-back-kindled-ash/run_back/north 1` | 10 | 7.28 | -1 | 14, 7 | 0 | 7 | 0 |
 | run_back_NW_0 | `art/raw/run-back-kindled-ash/run_back/north-west 4` | 22 | 5.47 | -1 | 14, 7 | 0 | 10 | 19 |
 | run_back_NW_1 | `art/raw/run-back-kindled-ash/run_back/north-west 1` | 17 | 5.08 | -1 | 14, 7 | 0 | 11 | 13 |
 | run_back_NW_2 | `art/raw/run-back-kindled-ash/run_back/north-west 6` | 14 | 5.74 | -1 | 14, 7 | 1 | 10 | 15 |
