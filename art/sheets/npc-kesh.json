@@ -1,0 +1,63 @@
+{
+  "sheet": "npc-kesh",
+  "kind": "npc",
+  "outline": "other",
+  "draft": false,
+  "notes": "Old Kesh seated on his rock, fishing (M2 Task 4b; MAIN #92). From the kesh job's raw frames (PR #90) by art/clean/npc-kesh/kesh.py: fish = raw fish 1-4, talk = raw talk 1-2, toss = raw toss 3-6 with fish 1's dangling legs; river-dark clay, patched sailcloth tunic, three amber freckles, a hand-drawn fishing line. Drawn at prop-kesh-rock's world point: the sources are already in the 96 x 128 cell, sitting on the seat the same script cuts into the rock's tip; each animation's ground reference (its last source frame) is one pixel on the soles row, so nothing moves.",
+  "anims": {
+    "fish": {
+      "src": "art/clean/npc-kesh/fish",
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "ground": {
+        "ref": 4
+      }
+    },
+    "talk": {
+      "src": "art/clean/npc-kesh/talk",
+      "frames": [
+        0,
+        1
+      ],
+      "ground": {
+        "ref": 2
+      }
+    },
+    "toss": {
+      "src": "art/clean/npc-kesh/toss",
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "ground": {
+        "ref": 4
+      }
+    }
+  },
+  "points": {
+    "hand": {
+      "toss_0": [
+        25,
+        89
+      ],
+      "toss_1": [
+        21,
+        87
+      ],
+      "toss_2": [
+        16,
+        79
+      ],
+      "toss_3": [
+        51,
+        83
+      ]
+    }
+  }
+}

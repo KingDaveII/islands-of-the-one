@@ -1,0 +1,328 @@
+{
+  "frames": {
+    "fish_0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.921875
+      }
+    },
+    "fish_1": {
+      "frame": {
+        "x": 96,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.921875
+      }
+    },
+    "fish_2": {
+      "frame": {
+        "x": 192,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.921875
+      }
+    },
+    "fish_3": {
+      "frame": {
+        "x": 288,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.921875
+      }
+    },
+    "talk_0": {
+      "frame": {
+        "x": 384,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.921875
+      }
+    },
+    "talk_1": {
+      "frame": {
+        "x": 480,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.921875
+      }
+    },
+    "toss_0": {
+      "frame": {
+        "x": 576,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.921875
+      },
+      "points": {
+        "hand": [
+          25,
+          89
+        ]
+      }
+    },
+    "toss_1": {
+      "frame": {
+        "x": 672,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.921875
+      },
+      "points": {
+        "hand": [
+          21,
+          87
+        ]
+      }
+    },
+    "toss_2": {
+      "frame": {
+        "x": 768,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.921875
+      },
+      "points": {
+        "hand": [
+          16,
+          79
+        ]
+      }
+    },
+    "toss_3": {
+      "frame": {
+        "x": 864,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.921875
+      },
+      "points": {
+        "hand": [
+          51,
+          83
+        ]
+      }
+    }
+  },
+  "meta": {
+    "image": "npc-kesh.png",
+    "size": {
+      "w": 960,
+      "h": 128
+    },
+    "scale": "1",
+    "format": "RGBA8888",
+    "app": "iot-art-pipeline",
+    "version": "2",
+    "cell": {
+      "w": 96,
+      "h": 128
+    },
+    "origin": {
+      "x": 48,
+      "y": 118
+    },
+    "facings": [
+      "S",
+      "SE",
+      "E",
+      "NE",
+      "N",
+      "NW",
+      "W",
+      "SW"
+    ],
+    "pixelScale": 1
+  },
+  "anims": {
+    "fish": {
+      "frames": [
+        "fish_0",
+        "fish_1",
+        "fish_2",
+        "fish_3"
+      ],
+      "frameRate": 4,
+      "repeat": -1
+    },
+    "talk": {
+      "frames": [
+        "talk_0",
+        "talk_1"
+      ],
+      "frameRate": 3,
+      "repeat": -1
+    },
+    "toss": {
+      "frames": [
+        "toss_0",
+        "toss_1",
+        "toss_2",
+        "toss_3"
+      ],
+      "frameRate": 10,
+      "repeat": 0
+    }
+  }
+}

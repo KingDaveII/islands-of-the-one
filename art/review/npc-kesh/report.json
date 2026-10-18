@@ -1,0 +1,252 @@
+{
+  "sheet": "npc-kesh",
+  "kind": "npc",
+  "outline": "other",
+  "draft": false,
+  "cell": {
+    "w": 96,
+    "h": 128
+  },
+  "origin": {
+    "x": 48,
+    "y": 118
+  },
+  "rows": [
+    "fish",
+    "talk",
+    "toss"
+  ],
+  "totals": {
+    "frames": 10,
+    "offPalette": 0,
+    "maxDeltaE": 0,
+    "outlineGaps": 851
+  },
+  "flags": {
+    "seam": [
+      "fish"
+    ],
+    "bob": [],
+    "held": [],
+    "colours": []
+  },
+  "missing": [
+    "idle (all facings)",
+    "walk (all facings)"
+  ],
+  "optional": [
+    "idle (M3)",
+    "walk (M3)"
+  ],
+  "skinProblems": [],
+  "missingPoints": [],
+  "remap": [],
+  "staleRemap": [],
+  "snappedColours": 0,
+  "snapped": [],
+  "anims": [
+    {
+      "key": "fish",
+      "frames": 4,
+      "held": [],
+      "seam": {
+        "lastToFirst": 287,
+        "meanInCycle": 146.67,
+        "flag": true
+      }
+    },
+    {
+      "key": "talk",
+      "frames": 2,
+      "held": [],
+      "seam": {
+        "lastToFirst": 650,
+        "meanInCycle": 650,
+        "flag": false
+      }
+    },
+    {
+      "key": "toss",
+      "frames": 4,
+      "held": []
+    }
+  ],
+  "frames": [
+    {
+      "name": "fish_0",
+      "source": "art/clean/npc-kesh/fish 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -32,
+      "outlineGaps": 85,
+      "colours": 10,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "fish_1",
+      "source": "art/clean/npc-kesh/fish 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -32,
+      "outlineGaps": 81,
+      "colours": 10,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "fish_2",
+      "source": "art/clean/npc-kesh/fish 2",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -32,
+      "outlineGaps": 84,
+      "colours": 9,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "fish_3",
+      "source": "art/clean/npc-kesh/fish 3",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -32,
+      "outlineGaps": 85,
+      "colours": 10,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "talk_0",
+      "source": "art/clean/npc-kesh/talk 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -32,
+      "outlineGaps": 86,
+      "colours": 10,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "talk_1",
+      "source": "art/clean/npc-kesh/talk 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -32,
+      "outlineGaps": 87,
+      "colours": 10,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "toss_0",
+      "source": "art/clean/npc-kesh/toss 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -32,
+      "outlineGaps": 91,
+      "colours": 10,
+      "interiorDreamNight": 0,
+      "points": {
+        "hand": {
+          "at": [
+            25,
+            89
+          ],
+          "source": [
+            25,
+            89
+          ]
+        }
+      }
+    },
+    {
+      "name": "toss_1",
+      "source": "art/clean/npc-kesh/toss 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -32,
+      "outlineGaps": 84,
+      "colours": 11,
+      "interiorDreamNight": 0,
+      "points": {
+        "hand": {
+          "at": [
+            21,
+            87
+          ],
+          "source": [
+            21,
+            87
+          ]
+        }
+      }
+    },
+    {
+      "name": "toss_2",
+      "source": "art/clean/npc-kesh/toss 2",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -32,
+      "outlineGaps": 83,
+      "colours": 10,
+      "interiorDreamNight": 0,
+      "points": {
+        "hand": {
+          "at": [
+            16,
+            79
+          ],
+          "source": [
+            16,
+            79
+          ]
+        }
+      }
+    },
+    {
+      "name": "toss_3",
+      "source": "art/clean/npc-kesh/toss 3",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -32,
+      "outlineGaps": 85,
+      "colours": 10,
+      "interiorDreamNight": 0,
+      "points": {
+        "hand": {
+          "at": [
+            51,
+            83
+          ],
+          "source": [
+            51,
+            83
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": [
+    "art/review/npc-kesh/contact.png",
+    "art/review/npc-kesh/points.png",
+    "art/review/npc-kesh/report.json",
+    "art/review/npc-kesh/report.md",
+    "packages/shared/assets/sprites/npc-kesh.json",
+    "packages/shared/assets/sprites/npc-kesh.png"
+  ]
+}

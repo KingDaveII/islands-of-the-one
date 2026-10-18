@@ -24,7 +24,7 @@ Rows, top to bottom: idle.
 
 | Anim | Frames | Seam (last→first / mean) | Bob (tops above the soles) | Held |
 |---|---|---|---|---|
-| idle | 1 |  | 51 (range 0) |  |
+| idle | 1 |  | 35 (range 0) |  |
 
 ## Frames
 
