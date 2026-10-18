@@ -3,6 +3,8 @@ import huskNutshell from '../assets/sprites/husk-nutshell.json' with { type: 'js
 import huskPeeling from '../assets/sprites/husk-peeling.json' with { type: 'json' };
 import kindledAsh from '../assets/sprites/kindled-ash.json' with { type: 'json' };
 import propChest from '../assets/sprites/prop-chest.json' with { type: 'json' };
+import propHoldingStore from '../assets/sprites/prop-holding-store.json' with { type: 'json' };
+import propKeshRock from '../assets/sprites/prop-kesh-rock.json' with { type: 'json' };
 import propStoneOutcrop from '../assets/sprites/prop-stone-outcrop.json' with { type: 'json' };
 import propTwistedTree from '../assets/sprites/prop-twisted-tree.json' with { type: 'json' };
 import propWritPost from '../assets/sprites/prop-writ-post.json' with { type: 'json' };
@@ -62,6 +64,23 @@ export const SPRITE_CELLS = {
   kindled: spriteCellSpec(96, 80, 64),
   other: spriteCellSpec(64, 64, 54),
 } as const;
+
+/**
+ * Props that need more room than the 64×64 prop cell (sprites.md §2, ART
+ * 2026-10-18), by the name after `prop-`: a tall prop's canopy overhangs
+ * upwards, so it gets a 64×96 cell with the origin at (32, 86), the line under
+ * the trunk (the canvas at (0, 32): canvas row 53 is cell row 85). The
+ * ground-line sort (G1.5h) puts the Kindled behind it; collision stays the
+ * layout's footprint. The first is the holding's twisted tree. Declared here,
+ * not in a recipe: `spriteSheetSpec` returns it, so the pipeline places frames
+ * on it and the sheet test checks it.
+ */
+export const PROP_CELLS: Readonly<Record<'twisted-tree', SpriteCellSpec>> = {
+  'twisted-tree': spriteCellSpec(64, 96, 86),
+};
+
+/** The tall prop cell (`PROP_CELLS`): 64×96, origin (32, 86). */
+export const TALL_PROP_CELL: SpriteCellSpec = PROP_CELLS['twisted-tree'];
 
 /**
  * A tile sheet's cell (tiles.ts): one 32×32 world px tile, its origin at the
@@ -153,10 +172,11 @@ export interface SpriteSheet {
 
 /**
  * The sheets the client loads: the Kindled, the two Husks, the chest
- * (`CHEST_SHEET`) and the holding's three station props (`STATION_SHEETS`,
- * M2 Task 3b). The sheet test runs on every sheet on disk and checks that
- * each name here is one of them; a sheet on disk (an NPC's, say) joins this
- * list when the client starts using it. Tile sheets load apart (tiles.ts).
+ * (`CHEST_SHEET`), the holding's station props (`STATION_SHEETS`, M2 Task
+ * 3b and 3c) and Kesh's needle of rock off its shore (`KESH_ROCK_SHEET`, 3c).
+ * The sheet test runs on every sheet on disk and checks that each name here
+ * is one of them; a sheet on disk (an NPC's, say) joins this list when the
+ * client starts using it. Tile sheets load apart (tiles.ts).
  */
 export const SPRITE_SHEET_NAMES = [
   'kindled-ash',
@@ -166,6 +186,8 @@ export const SPRITE_SHEET_NAMES = [
   'prop-writ-post',
   'prop-twisted-tree',
   'prop-stone-outcrop',
+  'prop-holding-store',
+  'prop-kesh-rock',
 ] as const;
 export type SpriteSheetName = (typeof SPRITE_SHEET_NAMES)[number];
 
@@ -178,18 +200,26 @@ export const spriteSheets: Readonly<Record<SpriteSheetName, SpriteSheet>> = {
   'prop-writ-post': propWritPost,
   'prop-twisted-tree': propTwistedTree,
   'prop-stone-outcrop': propStoneOutcrop,
+  'prop-holding-store': propHoldingStore,
+  'prop-kesh-rock': propKeshRock,
 };
 
 /**
  * The holding's station props (docs/design/holding.md), by station kind: a
  * prop without a table each, `idle` alone, one frame (MAIN's placeholders
  * through the pipeline; ART replaces the pixels without an engine change).
+ * The twisted tree stands on the tall cell (`PROP_CELLS`). A kind with no
+ * entry (the reserved weapon rack, Task 8) draws no prop.
  */
-export const STATION_SHEETS: Readonly<Record<'post' | 'trees' | 'outcrop', SpriteSheetName>> = {
+export const STATION_SHEETS: Readonly<Partial<Record<'post' | 'trees' | 'outcrop' | 'store' | 'rack', SpriteSheetName>>> = {
   post: 'prop-writ-post',
   trees: 'prop-twisted-tree',
   outcrop: 'prop-stone-outcrop',
+  store: 'prop-holding-store',
 };
+
+/** Kesh's needle of rock (M2 Task 3c): a solid prop in the void off the holding's south-east shore, `idle` alone; MAIN's placeholder. */
+export const KESH_ROCK_SHEET: SpriteSheetName = 'prop-kesh-rock';
 
 /** Kindled facings in sheet order. */
 export const SPRITE_FACINGS = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'] as const;
@@ -540,7 +570,7 @@ export type SpriteKind = (typeof SPRITE_KINDS)[number];
 /** What a sheet's name decides (sprites.md §2–§4). */
 export interface SpriteSheetSpec {
   kind: SpriteKind;
-  /** The v2 cell, origin and canvas position; for tiles, one 32×32 tile with its origin at the top left. */
+  /** The v2 cell, origin and canvas position: the Kindled's, a tall prop's (`PROP_CELLS`), or the 64×64 cell; for tiles, one 32×32 tile with its origin at the top left. */
   cell: SpriteCellSpec;
   /**
    * The animations a finished sheet carries, or null when its count is the
@@ -583,7 +613,8 @@ export function spriteSheetSpec(name: string): SpriteSheetSpec {
     case 'prop': {
       const prop = name.slice('prop-'.length);
       const anims = Object.hasOwn(PROP_TABLES, prop) ? PROP_TABLES[prop as keyof typeof PROP_TABLES] : null;
-      return { kind, cell: SPRITE_CELLS.other, anims, facings: false, palette: false };
+      const cell = Object.hasOwn(PROP_CELLS, prop) ? PROP_CELLS[prop as keyof typeof PROP_CELLS] : SPRITE_CELLS.other;
+      return { kind, cell, anims, facings: false, palette: false };
     }
     case 'tiles':
       return { kind, cell: TILE_CELL, anims: TILE_DOOR_ANIMS, facings: false, palette: false };
@@ -600,7 +631,7 @@ export function isKindledSheet(name: string): boolean {
 /** The contract's version: every sprite sheet is "2"; the sheet test rejects a v1 sheet (M1's, drawn at 2×, retired in G1.5g). */
 export const SPRITE_SHEET_VERSION = '2';
 
-/** The v2 cell spec of a sheet by its name: the Kindled's, or every other kind's (`spriteSheetSpec`). */
+/** The v2 cell spec of a sheet by its name: the Kindled's, a tall prop's, or every other kind's (`spriteSheetSpec`). */
 export function spriteCellSpecFor(name: string): SpriteCellSpec {
   return spriteSheetSpec(name).cell;
 }

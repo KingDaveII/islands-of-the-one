@@ -4,9 +4,9 @@ import {
   PROP_IDLE,
   SPRITE_CANVAS,
   type PropAnimGiven,
-  SPRITE_CELLS,
   SPRITE_FACINGS,
   SPRITE_KINDS,
+  spriteCellSpecFor,
   spriteSheetSpec,
   type SpriteAnimSpec,
   type SpriteCellSpec,
@@ -36,13 +36,14 @@ export function kindOfName(sheet: string): Kind | null {
   }
 }
 
-export function cellFor(kind: Kind): SpriteCellSpec {
-  return kind === 'kindled' ? SPRITE_CELLS.kindled : SPRITE_CELLS.other;
+/** The cell of a sheet, by its name (`spriteCellSpecFor`): the Kindled's 96×80, a tall prop's 64×96 (`PROP_CELLS`), else 64×64. */
+export function cellFor(sheet: string): SpriteCellSpec {
+  return spriteCellSpecFor(sheet);
 }
 
 /** The cell row the soles go on: the row above the origin. */
-export function solesRow(kind: Kind): number {
-  return cellFor(kind).origin.y - 1;
+export function solesRow(sheet: string): number {
+  return cellFor(sheet).origin.y - 1;
 }
 
 /** Whether frames of this kind are named per facing (`walk_S_0`) or not (`idle_0`). */

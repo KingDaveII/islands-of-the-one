@@ -117,8 +117,11 @@ file fails the build with a message naming the field.
 | `fixes` | Pixel fixes, per output frame name (`walk_S_1`, or `idle_3` without facings), in that frame's **source** pixels (after any downscale and any `flipX`): `[x, y, "#rrggbb"]` sets a whitelist colour (telegraph colours too in a `telegraph*` frame), `[x, y, null]` makes it transparent. |
 | `remap` | Colour rules applied before the snap (step 4), in order: generator greys to the right ramp. See "Remap". |
 | `skin.add`, `skin.remove` | Kindled only, per output frame name, in source pixels (after any downscale and any `flipX`): lists of pixels `[x, y]` or rectangles `[[x0, y0], [x1, y1]]` (corners included). See step 10. |
+| `rule` | Tiles only, optional: `"cave"` (default) or `"shore"`, the rule that draws the set and so the pieces it carries (see "Tiles"). |
+| `doors` | Tiles only, optional: `true` (default) or `false`; a doorless set lists no door piece and refuses any (see "Tiles"). |
 | `floorWeights` | Tiles only: the weights of `floor_0` … `floor_3`, four positive integers, written to the sheet's `tiles` block (see "Tiles"). |
-| `faceMidWeights`, `topMidWeights` | Tiles only, optional: the weights of `face_mid_0` / `face_mid_1` and of `top_mid_0` / `top_mid_1`, two positive integers each, written to the sheet when given; absent means an even pick (see "Tiles"). |
+| `faceMidWeights`, `topMidWeights` | Cave tiles only, optional: the weights of `face_mid_0` / `face_mid_1` and of `top_mid_0` / `top_mid_1`, two positive integers each, written to the sheet when given; absent means an even pick (see "Tiles"). |
+| `dropMidWeights` | Shore tiles only, optional: the weights of `drop_mid_0` / `drop_mid_1`, the same way. |
 | `pieces` | Tiles only, in place of `anims`: the pieces by name, each `{ "src": …, "frames": [i] }` (see "Tiles"). |
 | `points` | Kindled only: named points (`sprites.md` §5), keyed by point name, then by output frame name, `[x, y]` in that frame's **source** pixels (after any downscale and any `flipX`), like `fixes`. See "Points". |
 
@@ -205,8 +208,8 @@ Kindled sheet carries them. `run_back` came off with the backwards-run job (#74)
 | `kindled-` | `kindled` | 96×80 | per animation (8, 4 or 2) | `KINDLED_ANIMS` | yes |
 | `husk-` | `husk` | 64×64 | none | the Husk's own in `HUSK_TABLES` (`peeling`, `nutshell`); a Husk without one builds only as a draft | no |
 | `npc-` | `npc` | 64×64 | all 8 | `NPC_ANIMS`: `idle` 2 frames at 2 fps, `walk` 6 at 10, both looping | no |
-| `prop-` | `prop` | 64×64 | none | the prop's own in `PROP_TABLES` when it has one (`chest`: `closed` 1–2 frames at the recipe's `fps`, `opening` 4 at 12, `open` 1 held; a finished sheet carries all three, a draft any subset); else `idle` only, 1–8 frames, at the recipe's `fps` (default 8), looping with more than one frame | no |
-| `tiles-` | `tiles` | each piece its own size: 32×32, doors 64×32 or 32×64 | none | the pieces and door animations of `packages/shared/src/tiles.ts` (`sprites.md` §10), listed under `pieces` | no |
+| `prop-` | `prop` | 64×64, or the tall prop cell 64×96 with the origin at (32, 86) for a prop in `PROP_CELLS` (`prop-twisted-tree`; `sprites.md` §2) | none | the prop's own in `PROP_TABLES` when it has one (`chest`: `closed` 1–2 frames at the recipe's `fps`, `opening` 4 at 12, `open` 1 held; a finished sheet carries all three, a draft any subset); else `idle` only, 1–8 frames, at the recipe's `fps` (default 8), looping with more than one frame | no |
+| `tiles-` | `tiles` | each piece its own size: 32×32, doors 64×32 or 32×64 | none | the pieces of the set's rule (`cave` or `shore`) and, with doors, the door animations of `packages/shared/src/tiles.ts` (`sprites.md` §10), listed under `pieces` | no |
 
 Husk `telegraph*` frames may carry the two telegraph colours (they are pre-tinted); every other frame may not.
 
@@ -220,13 +223,15 @@ Frame names are `<anim>_<FACING>_<n>` with facings and `<anim>_<n>` without; `n`
 `frames` list from 0, whatever the source indices are.
 
 A pick that is too tall is trimmed by whole rows by you, into `art/clean/`, before it reaches a recipe;
-the pipeline never does it. The same goes for a stubby blade or anything else that needs drawing.
+the pipeline never does it. The same goes for a stubby blade or anything else that needs drawing. A tall prop is
+the exception by design: its cell is taller (`PROP_CELLS`, declared in shared code, not in the recipe), and a
+source up to 64×96 is placed on it like any other frame, its lowest opaque row on cell row 85, centred on x 32.
 
 ### Tiles
 
 A `tiles-<set>` recipe (G1.5e) builds a tile sheet (`sprites.md` §10): it lists pieces rather than animations,
-with the weights the sheet carries (`floorWeights`, and optionally `faceMidWeights` and `topMidWeights`, G1.5f),
-and always `"outline": "other"`.
+declares its set (`rule`, `doors`; M2 Task 3c), with the weights the sheet carries (`floorWeights`, and optionally
+the mid weights of its rule), and always `"outline": "other"`.
 
 ```json
 {
@@ -244,11 +249,36 @@ and always `"outline": "other"`.
 }
 ```
 
-- **Pieces.** Every static piece (`floor_0` … `floor_3`, `shade_*`, `face_*`, `top_*`, `corner_nw`,
-  `corner_ne`) is one frame: `src` and, optionally, `"frames": [i]` (default `[0]`). Each door animation
-  (`door_n_closed`, `door_n_opening`, `door_n_open`, the same for `door_w` and `door_e`) lists its source
-  frames in order: 1, 6 and 1. A piece may set `"despeckle": true`. `downscale` and `flipX` are not piece
-  fields: nothing is scaled or mirrored.
+```json
+{
+  "sheet": "tiles-holding",
+  "kind": "tiles",
+  "outline": "other",
+  "draft": false,
+  "rule": "shore",
+  "doors": false,
+  "floorWeights": [6, 3, 2, 1],
+  "dropMidWeights": [3, 1],
+  "pieces": {
+    "floor_0": { "src": "art/clean/tiles-holding/floor_0.png" },
+    "drop_mid_0": { "src": "art/clean/tiles-holding/drop_mid_0.png" },
+    "lip_n": { "src": "art/clean/tiles-holding/lip_n.png" }
+  }
+}
+```
+
+- **The set.** `rule` is `"cave"` (default: walls rising from the floor, the rooms of `rooms.json`) or `"shore"`
+  (an island's edge dropping into the Hollow, the holding). `doors` is `true` (default) or `false`. Together they
+  decide the pieces a finished sheet carries and nothing else may be listed: a shore recipe refuses a cave piece
+  (`pieces.shade_n is not a piece of the shore rule`), a cave recipe a shore piece, and a doorless recipe any door
+  piece (`pieces.door_n_closed is a door piece, but this set has no doors ("doors": false)`). The wall weights are
+  the cave's and `dropMidWeights` the shore's; the other rule's weights are refused.
+- **Pieces.** Every static piece of the rule is one frame: `src` and, optionally, `"frames": [i]` (default `[0]`).
+  The cave's: `floor_0` … `floor_3`, `shade_*`, `face_*`, `top_*`, `corner_nw`, `corner_ne`. The shore's: the
+  floors, `drop_mid_0`, `drop_mid_1`, `drop_w`, `drop_e`, `drop_we`, `drop_corner_w`, `drop_corner_e`, `lip_n`,
+  `lip_w`, `lip_e`, `lip_nw`, `lip_ne`. With doors, each door animation (`door_n_closed`, `door_n_opening`,
+  `door_n_open`, the same for `door_w` and `door_e`) lists its source frames in order: 1, 6 and 1. A piece may set
+  `"despeckle": true`. `downscale` and `flipX` are not piece fields: nothing is scaled or mirrored.
 - **Frame names.** A static piece's frame is its own name (`floor_0`); a door's are `<anim>_<n>`
   (`door_n_opening_3`). `fixes` and `remap`'s `frames` take these; `remap`'s `anims` takes piece names.
 - **The steps** are the props': read, `fixes`, `remap`, the reserved-colour check, the snap, the outline by role,
@@ -258,24 +288,31 @@ and always `"outline": "other"`.
   - **The outline is drawn only against transparency inside the piece.** A piece's border is where it meets the
     next piece, not an edge: an opaque pixel on the border is neither recoloured nor an outline gap.
   - No skin mask, no ground, no bob or seam checks.
-  - **Opacity.** `floor_*`, `face_*`, `top_*` and every door frame must be fully opaque; shades and corners may
-    be transparent.
-- **Weights.** `floorWeights` (four positive integers) is required; `faceMidWeights` and `topMidWeights` (two
-  positive integers each, for `*_mid_0` and `*_mid_1`) are optional and written to the sheet's `tiles` block only
-  when given; absent, the engine and `rooms.png` pick the two plain variants evenly. `tiles-cave` uses `[3, 1]`
-  for both, so the spare plain face and top show about a quarter of the time instead of reading as a pattern.
+  - **Opacity**, per piece (`TileOpacity` in `packages/shared/src/tiles.ts`). Cave: `floor_*`, `face_*`, `top_*`
+    and every door frame must be fully opaque; shades and corners may be transparent. Shore: the floors are fully
+    opaque; `drop_mid_*`, `drop_w`, `drop_e` and `drop_we` must be opaque in their top row, where they meet the
+    floor above (their dither into hollow-deep below may end in transparent rows); the two outer corners and the
+    lips may be transparent anywhere.
+- **Weights.** `floorWeights` (four positive integers) is required. The mid weights (two positive integers each,
+  for `*_mid_0` and `*_mid_1`) are optional and written to the sheet's `tiles` block only when given; absent, the
+  engine and `rooms.png` pick the two plain variants evenly. `tiles-cave` uses `[3, 1]` for both wall weights, so
+  the spare plain face and top show about a quarter of the time instead of reading as a pattern; `tiles-holding`
+  uses `[3, 1]` for the drops.
 - **Packing.** In the contract's order, left to right in rows of at most 256 px, each row as tall as its tallest
   frame; door frames stay whole, never split into cells. The JSON is `sprites.md` §10: named frames, the door
-  `anims`, `meta` (`version` "2", `pixelScale` 1, `app` `"iot-art-pipeline"`) and the `tiles` block.
-- **Finished and draft.** A finished recipe carries every piece and every door frame. A draft may hold any subset;
-  its report lists what's missing, and so does `rooms.png`.
+  `anims` (none without doors), `meta` (`version` "2", `pixelScale` 1, `app` `"iot-art-pipeline"`) and the `tiles`
+  block, with `rule` and `doors` written only when they are not the defaults.
+- **Finished and draft.** A finished recipe carries every piece of its rule and, with doors, every door frame. A
+  draft may hold any subset; its report lists what's missing, and so does `rooms.png`.
 - **Review.** `contact.png`: every built piece at 2× on the floor #D9D2E9 (left) and the wall face #5B5478
-  (right), a row each for the floors, shades, faces, tops and corners, then a row per door animation.
-  **`rooms.png`: every template of `rooms.json` drawn with `tileAt` and the built pieces, at 1×, doors closed**,
-  one under the other on hollow-deep, 16 px apart. In a draft a missing piece draws as a hollow-deep box with a
-  1 px telegraph-pink cross corner to corner (a review image never ships, so the pink is fine). `report.md` and
-  `report.json` list the pieces (source, size, off-palette pixels, ΔE, outline gaps, colours, holes), what's
-  missing, each room with the pieces it needed that are missing, the remap rules and the snapped colours.
+  (right), a row each for the floors, shades, faces, tops and corners (a shore set: floors, drops, lips), then a
+  row per door animation. **`rooms.png`: every template of the set's rule drawn with `tileAt` and the built pieces,
+  at 1×, doors closed**, one under the other on hollow-deep, 16 px apart: a cave set draws the rooms of
+  `rooms.json` (a doorless cave set only those without a door, so none today), a shore set the holding's layouts
+  of `holding.json`. In a draft a missing piece draws as a hollow-deep box with a 1 px telegraph-pink cross corner
+  to corner (a review image never ships, so the pink is fine). `report.md` and `report.json` list the set, the
+  pieces (source, size, off-palette pixels, ΔE, outline gaps, colours, holes), what's missing, each room with the
+  pieces it needed that are missing, the remap rules and the snapped colours.
 
 ## The steps, per frame, in order
 
@@ -446,7 +483,11 @@ unless the message says otherwise; read failures give the file's own.
 | `points.<p>.<f> names "<f>", which is not a frame this recipe builds` | Use an output frame name (`heavy_charge_S_0`). |
 | `points.<p>.<f> is on <anim>, which carries no <p> point (<p> goes on …)` | `tip` goes on `heavy_charge`, `hand` on the four `haul_*` animations; only on Kindled sheets. |
 | `points.<p>.<f> must be [x, y], whole pixels in the frame's source` | Two whole numbers from 0. |
-| `anims is not a recipe field` (a tiles recipe) / `floorWeights is not a recipe field` (any other) | A tiles recipe has `pieces` and `floorWeights` in place of `anims`, `skin` and `points`. |
+| `anims is not a recipe field` (a tiles recipe) / `floorWeights is not a recipe field` (any other) | A tiles recipe has `pieces`, `floorWeights` and its set (`rule`, `doors`) in place of `anims`, `skin` and `points`. |
+| `rule must be one of cave, shore` / `doors must be true or false` | Tiles: the set's rule and doors (sprites.md §10). |
+| `faceMidWeights is for the cave rule (face_mid_0 and face_mid_1), and this set's rule is shore` (and `topMidWeights`; `dropMidWeights is for the shore rule …` on a cave set) | Tiles: each rule has its own mid weights; drop the other's. |
+| `pieces.<p> is a door piece, but this set has no doors ("doors": false)` | Tiles: a doorless set carries no door piece; remove it, or set `"doors": true`. |
+| `pieces.<p> is not a piece of the <rule> rule` | Tiles: the piece belongs to the other rule (`sprites.md` §10 lists each rule's). |
 | `floorWeights must be four positive integers (the weights of floor_0 … floor_3)` | One whole number above 0 per floor piece. |
 | `faceMidWeights must be two positive integers (the weights of face_mid_0 and face_mid_1)` / `topMidWeights …` | Two whole numbers above 0, or leave the field out for an even pick. |
 | `pieces must be an object with at least one piece` | Add a piece. |
@@ -484,8 +525,10 @@ unless the message says otherwise; read failures give the file's own.
 | `<sheet>: no masked pixel is <hex>; every swap key needs some skin in it` | The sheet test needs both skin colours under the mask somewhere. Check the skin is still in the clay ramp after the snap. |
 | `<sheet>: <n> frames of <w>×<h> need a <W>×<H> sheet; the most is 2048×2048` | Too many frames for one sheet; ask MAIN to split it. |
 | `<frame> (<src> frame <n>): the source is <w>×<h>, but <piece> is <W>×<H>; a piece's source must be its exact size (nothing is scaled or shifted)` | Tiles: crop or redraw the piece to its size in `art/clean/`. |
-| `<sheet>: <piece> is missing (a finished tile sheet carries every piece and door frame)` / `<sheet>: <piece> has <n> frames; the contract says <m>` | Tiles: add it, or keep `"draft": true` (a draft reports it). |
+| `<sheet>: <piece> is missing (a finished tile sheet carries every piece of its rule[ and every door frame])` / `<sheet>: <piece> has <n> frames; the contract says <m>` | Tiles: add it, or keep `"draft": true` (a draft reports it). |
 | `<sheet>: <frame> has <n> transparent pixels, the first at (x, y); floor, face, top and door pieces are fully opaque` | Tiles: fill the holes (`fixes`, or the cleaned file). In a draft this is reported, not failed. |
+| `<sheet>: <frame> has <n> transparent pixels in its top row, the first at (x, y); a drop is opaque at the top, where it meets the floor above (its dither below may be transparent)` | Shore tiles: fill the drop's top row; the rows below may dither out. |
+| `holding.json: <layout>: the void cell at (c, r) is a one-cell notch (ground at NW and NE but not N); no shore piece draws it` / `holding.json: <layout>: has D cells at …, but the tile set has no doors (doors: false)` | A shore set's `rooms.png` draws the holding's layouts: the layout breaks the shore rule's constraints (the layout validator refuses it too). |
 | `rooms.json: <template>: the D cells at (c, r) … are not a pair; …` / `… are a south door; …` / `… are not in the north, west or east border wall, …` | A room template has a door no piece can draw (the shared test over `rooms.json` fails too). Ask MAIN: a new template needs its door piece in the contract first. |
 
 ### Checking

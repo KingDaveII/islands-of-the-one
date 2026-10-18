@@ -3,7 +3,7 @@
   "kind": "prop",
   "outline": "other",
   "draft": false,
-  "notes": "Placeholder by MAIN (tools/placeholder-holding.py); ART replaces the pixels through this recipe.",
+  "notes": "Placeholder by MAIN (tools/placeholder-holding.py); ART replaces the pixels through this recipe in the holding art job.",
   "anims": {
     "idle": {
       "src": "art/clean/prop-stone-outcrop/idle",

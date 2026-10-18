@@ -117,7 +117,7 @@ export function buildFrames(
   const reader = new SourceReader(root);
   const file = `art/sheets/${recipe.sheet}.json`;
   const remapCounts: RemapCounts = recipe.remap.map(() => new Map<string, number>());
-  const spec = cellFor(recipe.kind);
+  const spec = cellFor(recipe.sheet);
   const fixes = new Map<string, [number, number, string | null][]>();
   for (const f of recipe.fixes) fixes.set(f.frame, [...(fixes.get(f.frame) ?? []), ...f.pixels]);
   const anims: BuiltAnim[] = [];
@@ -272,7 +272,7 @@ export function pack(
   recipe: Recipe,
   anims: readonly BuiltAnim[],
 ): { sheet: Img; mask: Img | null; rects: Map<string, { x: number; y: number }> } {
-  const { cell } = cellFor(recipe.kind);
+  const { cell } = cellFor(recipe.sheet);
   const frames = anims.flatMap((a) => a.frames);
   const cols = Math.max(1, Math.min(frames.length, Math.floor(MAX_SHEET / cell.w)));
   const rows = Math.ceil(frames.length / cols);
@@ -301,7 +301,7 @@ export function sheetJson(
   size: { w: number; h: number },
   rects: ReadonlyMap<string, { x: number; y: number }>,
 ): string {
-  const { cell, origin } = cellFor(recipe.kind);
+  const { cell, origin } = cellFor(recipe.sheet);
   const anchor = { x: origin.x / cell.w, y: origin.y / cell.h };
   const frames: Record<string, unknown> = {};
   for (const f of anims.flatMap((a) => a.frames)) {

@@ -1,9 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
+  holdingTemplate,
+  holdingLayout,
   roomTemplates,
   roomTiles,
   doorFrameName,
+  SHORE_STATIC_PIECES,
   TILE_FRAMES,
   TILE_RECIPE_PIECES,
   type TileSheet,
@@ -15,7 +18,7 @@ import { decodePng } from '../src/png.js';
 import { parseRecipe } from '../src/recipe.js';
 import { POINT_MARK } from '../src/review.js';
 import { buildAndWrite, buildAny, checkAll } from '../src/sheets.js';
-import { REVIEW_TEMPLATES, ROOM_GAP, type TileBuildResult } from '../src/tiles.js';
+import { renderRooms, REVIEW_TEMPLATES, reviewTemplatesFor, ROOM_GAP, type TileBuildResult } from '../src/tiles.js';
 import { C, tempRoot, writeImg, writeRecipe } from './helpers.js';
 
 /**
@@ -86,6 +89,7 @@ function failure(fn: () => unknown): readonly string[] {
 }
 
 const root = fixtureRoot();
+const root2 = root;
 const full = build(root, recipe());
 
 describe('a finished tiles recipe', () => {
@@ -145,7 +149,10 @@ describe('a finished tiles recipe', () => {
       'packages/shared/assets/sprites/tiles-test.png',
     ]);
     expect(full.report.missing).toEqual([]);
-    expect(full.report.rooms.map((r) => r.name)).toEqual([...roomTemplates.map((t) => t.name), 'first-holding']);
+    // A cave set draws the rooms of rooms.json; the holding's layouts belong to the shore sets.
+    expect(full.report.rooms.map((r) => r.name)).toEqual(roomTemplates.map((t) => t.name));
+    expect(full.report.rule).toBeUndefined();
+    expect(full.report.doors).toBeUndefined();
     const md = full.outputs.get('art/review/tiles-test/report.md')?.toString() ?? '';
     expect(md).toContain('# tiles-test\n');
     expect(md).toContain('| Shell Gallery | 32×19 | 16, 16 | none |');
@@ -157,10 +164,14 @@ describe('a finished tiles recipe', () => {
     const got = decodePng(bytes);
     // The same picture composed here from the fixture's own frames and roomTiles.
     const cols = (t: { tiles: readonly string[] }) => Math.max(...t.tiles.map((r) => r.length));
-    // Every room of rooms.json, then the holding's layout (M2 Task 3b).
+    // Every room of rooms.json (a cave set; the holding's layouts are the shore sets', M2 Task 3c).
     const w = ROOM_GAP * 2 + Math.max(...REVIEW_TEMPLATES.map((t) => cols(t) * 32));
     const h = REVIEW_TEMPLATES.reduce((s, t) => s + t.tiles.length * 32 + ROOM_GAP, ROOM_GAP);
-    expect(REVIEW_TEMPLATES.map((t) => t.name)).toEqual([...roomTemplates.map((t) => t.name), 'first-holding']);
+    expect(REVIEW_TEMPLATES.map((t) => t.name)).toEqual(roomTemplates.map((t) => t.name));
+    expect(reviewTemplatesFor({ rule: 'cave', doors: true })).toEqual(REVIEW_TEMPLATES);
+    expect(reviewTemplatesFor({ rule: 'shore', doors: false }).map((t) => t.name)).toEqual(['first-holding']);
+    // Every room of rooms.json has a door, so a doorless cave set draws none of them.
+    expect(reviewTemplatesFor({ rule: 'cave', doors: false })).toEqual([]);
     const want = blank(w, h);
     fillRect(want, 0, 0, w, h, C['hollow-deep']);
     let oy = ROOM_GAP;
@@ -267,7 +278,7 @@ describe('the tiles steps', () => {
     delete pieces.corner_ne;
     pieces.door_e_opening = { src: 'art/clean/tiles-test/door_e_opening', frames: [0, 1, 2] };
     expect(failure(() => build(root, recipe({ pieces })))).toEqual([
-      'tiles-test: corner_ne is missing (a finished tile sheet carries every piece and door frame)',
+      'tiles-test: corner_ne is missing (a finished tile sheet carries every piece of its rule and every door frame)',
       'tiles-test: door_e_opening has 3 frames; the contract says 6',
     ]);
     const r = fixtureRoot();
@@ -404,5 +415,149 @@ describe('the tiles recipe guard', () => {
       'art/sheets/tiles-test.json: fixes[0].frame names "door_n_opening_6", which is not a frame this recipe builds',
       'art/sheets/tiles-test.json: remap[0].facings is only for kinds with facings (kindled, npc)',
     ]);
+  });
+});
+
+/** A repo holding a shore set under art/clean/tiles-shore: flat floors, drops opaque for 20 rows then dithered to transparent, lips as a 2 px band. */
+function shoreRoot(): string {
+  const root = tempRoot();
+  for (const p of SHORE_STATIC_PIECES) {
+    const img = blank(32, 32);
+    if (p.name.startsWith('floor_')) fillRect(img, 0, 0, 32, 32, C['hollow-lavender']);
+    else if (p.name.startsWith('drop_corner')) {
+      for (let y = 0; y < 20; y++) fillRect(img, p.name.endsWith('_w') ? 32 - y - 1 : 0, y, y + 1, 1, C['hollow-below']);
+    } else if (p.name.startsWith('drop_')) {
+      fillRect(img, 0, 0, 32, 1, C['hollow-light']);
+      fillRect(img, 0, 1, 32, 19, C['hollow-below']);
+      for (let y = 20; y < 32; y++) for (let x = (y % 2); x < 32; x += 2) setPixel(img, x, y, C['hollow-deep']);
+    } else if (p.name === 'lip_n') fillRect(img, 0, 0, 32, 2, C['hollow-light']);
+    else if (p.name === 'lip_w') fillRect(img, 0, 0, 2, 32, C['hollow-light']);
+    else if (p.name === 'lip_e') fillRect(img, 30, 0, 2, 32, C['hollow-light']);
+    else fillRect(img, p.name === 'lip_nw' ? 0 : 29, 0, 3, 3, C['hollow-light']);
+    writeImg(root, `art/clean/tiles-shore/${p.name}.png`, img);
+  }
+  return root;
+}
+
+const shorePieces = (): Record<string, unknown> =>
+  Object.fromEntries(SHORE_STATIC_PIECES.map((p) => [p.name, { src: `art/clean/tiles-shore/${p.name}.png` }]));
+
+const shoreRecipe = (extra: Record<string, unknown> = {}) => ({
+  sheet: 'tiles-shore',
+  kind: 'tiles',
+  outline: 'other',
+  draft: false,
+  rule: 'shore',
+  doors: false,
+  floorWeights: [6, 3, 2, 1],
+  dropMidWeights: [3, 1],
+  pieces: shorePieces(),
+  ...extra,
+});
+
+describe('a shore set without doors (M2 Task 3c)', () => {
+  const root = shoreRoot();
+  const built = build(root, shoreRecipe());
+  const sheetJson = built.outputs.get('packages/shared/assets/sprites/tiles-shore.json');
+  const sheetPng = built.outputs.get('packages/shared/assets/sprites/tiles-shore.png');
+
+  it("writes the shore's 16 pieces, no door frames or animations, and the rule, doors and dropMidWeights in the tiles block", () => {
+    if (!sheetJson || !sheetPng) throw new Error('no sheet');
+    const sheet = JSON.parse(sheetJson.toString()) as TileSheet;
+    const png = decodePng(sheetPng);
+    expect(tileSheetProblems('tiles-shore', sheet, { width: png.w, height: png.h, rgba: png.data })).toEqual([]);
+    expect(Object.keys(sheet.frames)).toEqual(SHORE_STATIC_PIECES.map((p) => p.name));
+    expect(sheet.anims).toEqual({});
+    expect(sheet.tiles).toEqual({ tileSize: 32, floorWeights: [6, 3, 2, 1], rule: 'shore', doors: false, dropMidWeights: [3, 1] });
+    expect(sheet.meta.size).toEqual({ w: 256, h: 64 });
+    expect(built.report).toMatchObject({ rule: 'shore', doors: false, dropMidWeights: [3, 1], missing: [], opacity: [] });
+    const md = built.outputs.get('art/review/tiles-shore/report.md')?.toString() ?? '';
+    expect(md).toContain('the shore rule, no doors');
+    expect(md).toContain('plain drop 3:1 (drop_mid_0 to drop_mid_1)');
+    expect(md).toContain("`rooms.png` draws the holding's layouts (holding.json)");
+  });
+
+  it("draws rooms.png from the holding's layouts alone, with the shore rule: the island's drops under it, the void transparent... on hollow-deep", () => {
+    expect(built.report.rooms.map((r) => r.name)).toEqual(['first-holding']);
+    const got = decodePng(built.outputs.get('art/review/tiles-shore/rooms.png') ?? Buffer.alloc(0));
+    const layout = holdingLayout();
+    const t = holdingTemplate(layout);
+    const cols = Math.max(...t.tiles.map((r) => r.length));
+    expect([got.w, got.h]).toEqual([ROOM_GAP * 2 + cols * 32, ROOM_GAP * 2 + t.tiles.length * 32]);
+    const { draws, doors, problems } = roomTiles(t, { floorWeights: [6, 3, 2, 1], rule: 'shore', doors: false, dropMidWeights: [3, 1] });
+    expect(problems).toEqual([]);
+    expect(doors).toEqual([]);
+    const want = blank(got.w, got.h);
+    fillRect(want, 0, 0, got.w, got.h, C['hollow-deep']);
+    const img = new Map(built.tiles.map((x) => [x.name, x.img]));
+    for (const d of draws) {
+      const piece = img.get(d.piece);
+      if (!piece) throw new Error(d.piece);
+      blit(want, piece, ROOM_GAP + d.col * 32, ROOM_GAP + d.row * 32);
+    }
+    expect(sameImg(got, want)).toBe(true);
+    // Under the landing (14, 22): the drop's lit top row; the void far from ground: the background.
+    expect(hexAt(got, ROOM_GAP + 14 * 32 + 3, ROOM_GAP + 23 * 32)).toBe(C['hollow-light']);
+    expect(hexAt(got, ROOM_GAP + 2, ROOM_GAP + 2)).toBe(C['hollow-deep']);
+  });
+
+  it('writes contact.png with a row each for the floors, drops and lips, and no door rows', () => {
+    const contact = decodePng(built.outputs.get('art/review/tiles-shore/contact.png') ?? Buffer.alloc(0));
+    // Three rows of 2× tiles (64 px) with 4 px gaps, top and bottom.
+    expect(contact.h).toBe(4 + 3 * (64 + 4));
+  });
+
+  it('refuses a door piece, a cave piece and the cave weights on a shore recipe, and a shore piece on a cave recipe', () => {
+    const pieces = { ...shorePieces(), door_n_closed: { src: 'art/clean/tiles-shore/floor_0.png', frames: [0] }, shade_n: { src: 'art/clean/tiles-shore/lip_n.png' } };
+    expect(failure(() => parseRecipe(shoreRecipe({ pieces, faceMidWeights: [3, 1] }), 'art/sheets/tiles-shore.json', root))).toEqual([
+      'art/sheets/tiles-shore.json: faceMidWeights is for the cave rule (face_mid_0 and face_mid_1), and this set\'s rule is shore',
+      'art/sheets/tiles-shore.json: pieces.door_n_closed is a door piece, but this set has no doors ("doors": false)',
+      'art/sheets/tiles-shore.json: pieces.shade_n is not a piece of the shore rule',
+    ]);
+    expect(failure(() => parseRecipe(shoreRecipe({ rule: 'beach', doors: 'no' }), 'art/sheets/tiles-shore.json', root))).toEqual(
+      expect.arrayContaining(['art/sheets/tiles-shore.json: rule must be one of cave, shore', 'art/sheets/tiles-shore.json: doors must be true or false']),
+    );
+    const cavePieces = { ...allPieces(), lip_n: { src: 'art/clean/tiles-test/shade_n.png' } };
+    expect(failure(() => parseRecipe(recipe({ pieces: cavePieces, dropMidWeights: [3, 1] }), 'art/sheets/tiles-test.json', fixtureRoot()))).toEqual([
+      'art/sheets/tiles-test.json: dropMidWeights is for the shore rule (drop_mid_0 and drop_mid_1), and this set\'s rule is cave',
+      'art/sheets/tiles-test.json: pieces.lip_n is not a piece of the cave rule',
+    ]);
+  });
+
+  it("fails a finished shore recipe missing a piece, and a drop with a hole in its top row, but not one lower down or a corner's", () => {
+    const pieces = shorePieces();
+    delete pieces.lip_ne;
+    expect(failure(() => build(root, shoreRecipe({ pieces })))).toEqual([
+      'tiles-shore: lip_ne is missing (a finished tile sheet carries every piece of its rule)',
+    ]);
+    const r = shoreRoot();
+    const holed = blank(32, 32);
+    fillRect(holed, 0, 0, 32, 20, C['hollow-below']);
+    setPixel(holed, 7, 0, null);
+    writeImg(r, 'art/clean/tiles-shore/drop_e.png', holed);
+    expect(failure(() => build(r, shoreRecipe()))).toEqual([
+      'tiles-shore: drop_e has 1 transparent pixels in its top row, the first at (7, 0); a drop is opaque at the top, where it meets the floor above (its dither below may be transparent)',
+    ]);
+    const low = blank(32, 32);
+    fillRect(low, 0, 0, 32, 20, C['hollow-below']);
+    setPixel(low, 7, 10, null);
+    writeImg(r, 'art/clean/tiles-shore/drop_e.png', low);
+    writeImg(r, 'art/clean/tiles-shore/drop_corner_w.png', blank(32, 32));
+    expect(failure(() => build(r, shoreRecipe()))).toEqual([]);
+  });
+
+  it('refuses a doorless cave set on the rooms of rooms.json (every room has a door), and a D in a template drawn with a doorless set', () => {
+    // A cave set without doors builds (its rooms.png is empty of rooms), carrying no door piece.
+    const pieces = Object.fromEntries(Object.entries(allPieces()).filter(([k]) => !k.startsWith('door_')));
+    const doorless = build(root2, recipe({ doors: false, pieces }));
+    expect(doorless.report.rooms).toEqual([]);
+    const sheet = JSON.parse(doorless.outputs.get('packages/shared/assets/sprites/tiles-test.json')?.toString() ?? '{}') as TileSheet;
+    expect(sheet.tiles).toEqual({ tileSize: 32, floorWeights: [6, 3, 2, 1], doors: false });
+    expect(sheet.anims).toEqual({});
+    expect(Object.keys(sheet.frames).length).toBe(29);
+    // The template check names a template with a D drawn with such a set.
+    const gate = { name: 'Gate', tiles: ['##DD##', '#....#', '######'] };
+    expect(roomTiles(gate, sheet.tiles).problems).toEqual(['Gate: has D cells at (2, 0) (3, 0), but the tile set has no doors (doors: false)']);
+    expect(() => renderRooms(doorless.tiles, sheet.tiles, [gate])).toThrow(/rooms\.json: Gate: has D cells/);
   });
 });

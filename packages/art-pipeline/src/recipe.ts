@@ -1,16 +1,24 @@
 import { existsSync, statSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import {
+  isDoorPieceName,
   isFloorWeights,
   isMidWeights,
   isKindledPoint,
+  isTileRule,
   KINDLED_POINT_ANIMS,
   KINDLED_POINTS,
   spritePointsFor,
-  TILE_RECIPE_PIECES,
+  staticTilePiece,
+  TILE_RULES,
+  TILE_SET_DEFAULT,
+  tileRecipePiecesFor,
+  tileSetOf,
   type KindledPoint,
   type PropAnimGiven,
   type SpriteAnimSpec,
+  type TileRule,
+  type TileSetSpec,
 } from '@iot/shared';
 import {
   animKey,
@@ -70,15 +78,26 @@ export interface TileSource extends FrameSource {
   despeckle?: boolean;
 }
 
-/** What a tiles recipe (kind `tiles`) has in place of `anims`: the weights and the pieces, by name. */
+/** What a tiles recipe (kind `tiles`) has in place of `anims`: the set's rule and doors, the weights and the pieces, by name. */
 export interface TilesRecipe {
+  /** `cave` (the default) or `shore`: which rule draws the set, and so which pieces it carries (sprites.md "Tiles"). */
+  rule: TileRule;
+  /** Whether the set carries door pieces (default true); a doorless set lists none and refuses any. */
+  doors: boolean;
   /** The weights of floor_0 … floor_3, four positive integers, written to the sheet's `tiles` block. */
   floorWeights: number[];
-  /** The weights of face_mid_0 and face_mid_1, two positive integers, written to the sheet when given (absent: an even pick). */
+  /** Cave only: the weights of face_mid_0 and face_mid_1, two positive integers, written to the sheet when given (absent: an even pick). */
   faceMidWeights?: number[];
   /** The same for top_mid_0 and top_mid_1. */
   topMidWeights?: number[];
+  /** Shore only: the same for drop_mid_0 and drop_mid_1. */
+  dropMidWeights?: number[];
   pieces: Record<string, TileSource>;
+}
+
+/** The set a tiles recipe declares (`TileSetSpec`). */
+export function recipeTileSet(recipe: Pick<Recipe, 'tiles'>): TileSetSpec {
+  return recipe.tiles ? { rule: recipe.tiles.rule, doors: recipe.tiles.doors } : TILE_SET_DEFAULT;
 }
 
 /** A pixel `[x, y]` or a rectangle `[[x0, y0], [x1, y1]]` (both corners included), in the source frame's pixels. */
@@ -172,7 +191,9 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
     'outline',
     'draft',
     'notes',
-    ...(tilesRecipe ? ['floorWeights', 'faceMidWeights', 'topMidWeights', 'pieces'] : ['anims', 'skin', 'points']),
+    ...(tilesRecipe
+      ? ['rule', 'doors', 'floorWeights', 'faceMidWeights', 'topMidWeights', 'dropMidWeights', 'pieces']
+      : ['anims', 'skin', 'points']),
     'fixes',
     'remap',
   ]);
@@ -436,38 +457,49 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
 }
 
 /**
- * A tiles recipe's `floorWeights`, its optional `faceMidWeights` and
- * `topMidWeights` (two positive integers each) and `pieces`: every piece
- * named in the contract (`TILE_RECIPE_PIECES`), with a `src`, its `frames` (a
- * static piece one, default [0]; a door animation its frames in order, at
- * most the contract's count) and an optional `despeckle`. Nothing is scaled
- * or mirrored, so `downscale` and `flipX` are not piece fields.
+ * A tiles recipe's `rule` (cave or shore, default cave) and `doors` (default
+ * true), its `floorWeights`, its optional mid weights (two positive integers
+ * each: `faceMidWeights` and `topMidWeights` on a cave set, `dropMidWeights`
+ * on a shore set) and `pieces`: every piece of its rule (`tileRecipePiecesFor`),
+ * with a `src`, its `frames` (a static piece one, default [0]; a door
+ * animation its frames in order, at most the contract's count) and an
+ * optional `despeckle`; a doorless set refuses any door piece, and a set
+ * refuses the other rule's pieces. Nothing is scaled or mirrored, so
+ * `downscale` and `flipX` are not piece fields.
  */
 function parseTiles(
   json: Record<string, Json>,
   root: string,
   bad: (p: string, m: string) => void,
 ): TilesRecipe {
-  const out: TilesRecipe = { floorWeights: [], pieces: {} };
+  if (json.rule !== undefined && !isTileRule(json.rule)) bad('rule', `must be one of ${TILE_RULES.join(', ')}`);
+  if (json.doors !== undefined && typeof json.doors !== 'boolean') bad('doors', 'must be true or false');
+  const set = tileSetOf(json);
+  const out: TilesRecipe = { rule: set.rule, doors: set.doors, floorWeights: [], pieces: {} };
   if (!isFloorWeights(json.floorWeights))
     bad('floorWeights', 'must be four positive integers (the weights of floor_0 … floor_3)');
   else out.floorWeights = [...json.floorWeights];
-  for (const k of ['faceMidWeights', 'topMidWeights'] as const) {
+  for (const k of ['faceMidWeights', 'topMidWeights', 'dropMidWeights'] as const) {
     const v = json[k];
     if (v === undefined) continue;
-    const piece = k === 'faceMidWeights' ? 'face_mid' : 'top_mid';
+    const piece = { faceMidWeights: 'face_mid', topMidWeights: 'top_mid', dropMidWeights: 'drop_mid' }[k];
+    const of: TileRule = k === 'dropMidWeights' ? 'shore' : 'cave';
     if (!isMidWeights(v)) bad(k, `must be two positive integers (the weights of ${piece}_0 and ${piece}_1)`);
+    else if (set.rule !== of) bad(k, `is for the ${of} rule (${piece}_0 and ${piece}_1), and this set's rule is ${set.rule}`);
     else out[k] = [...v];
   }
   if (!isObj(json.pieces) || Object.keys(json.pieces).length === 0) {
     bad('pieces', 'must be an object with at least one piece');
     return out;
   }
+  const allowed = tileRecipePiecesFor(set);
   for (const [name, v] of Object.entries(json.pieces)) {
     const path = `pieces.${name}`;
-    const spec = TILE_RECIPE_PIECES.find((p) => p.name === name);
+    const spec = allowed.find((p) => p.name === name);
     if (!spec) {
-      bad(path, `is not a tile piece (${TILE_RECIPE_PIECES.map((p) => p.name).join(', ')})`);
+      if (isDoorPieceName(name) && !set.doors) bad(path, 'is a door piece, but this set has no doors ("doors": false)');
+      else if (staticTilePiece(name)) bad(path, `is not a piece of the ${set.rule} rule`);
+      else bad(path, `is not a tile piece (${allowed.map((p) => p.name).join(', ')})`);
       continue;
     }
     if (!isObj(v)) {

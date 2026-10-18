@@ -5,11 +5,11 @@
   "draft": false,
   "cell": {
     "w": 64,
-    "h": 64
+    "h": 96
   },
   "origin": {
     "x": 32,
-    "y": 54
+    "y": 86
   },
   "rows": [
     "idle"
@@ -41,7 +41,7 @@
       "held": [],
       "bob": {
         "tops": [
-          43
+          81
         ],
         "range": 0,
         "flag": false
@@ -56,7 +56,7 @@
       "maxDeltaE": 0,
       "dx": 0,
       "dy": -1,
-      "shift": -1,
+      "shift": -17,
       "outlineGaps": 0,
       "colours": 7,
       "interiorDreamNight": 0

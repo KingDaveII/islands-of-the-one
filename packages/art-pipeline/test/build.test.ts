@@ -983,6 +983,38 @@ describe('a finished Husk, NPC and prop sheet', () => {
     });
   });
 
+  it('a tall prop (prop-twisted-tree) builds on the 64×96 cell with the origin at (32, 86): its base on cell row 85, the canopy above (M2 Task 3c)', () => {
+    // A 64×96 source: a trunk from row 50 to 85 and a wide crown from row 6; the crown would not fit a 64×64 cell.
+    const r = tempRoot();
+    const tree = blank(64, 96);
+    rect(tree, 28, 50, 8, 36, C['unwritten-tar']);
+    rect(tree, 10, 6, 44, 40, C['wheel-patina']);
+    writeImg(r, 'art/clean/tree.png', tree);
+    const json = {
+      sheet: 'prop-twisted-tree',
+      kind: 'prop',
+      outline: 'other',
+      draft: false,
+      anims: { idle: { src: 'art/clean/tree.png', frames: [0] } },
+    };
+    const built = build(r, json);
+    const sheet = JSON.parse(built.outputs.get('packages/shared/assets/sprites/prop-twisted-tree.json')?.toString() ?? '{}') as SpriteSheet;
+    expect(sheet.meta.cell).toEqual({ w: 64, h: 96 });
+    expect(sheet.meta.origin).toEqual({ x: 32, y: 86 });
+    expect(sheet.meta.size).toEqual({ w: 64, h: 96 });
+    expect(sheet.frames.idle_0?.frame).toEqual({ x: 0, y: 0, w: 64, h: 96 });
+    expect(sheet.frames.idle_0?.anchor).toEqual({ x: 0.5, y: 86 / 96 });
+    const png = decodePng(built.outputs.get('packages/shared/assets/sprites/prop-twisted-tree.png') ?? Buffer.alloc(0));
+    expect(v2Problems('prop-twisted-tree', sheet, { width: png.w, height: png.h, rgba: png.data }, null)).toEqual([]);
+    // The lowest opaque row (the trunk's base) sits on cell row 85; the crown keeps its row 6 (the outline recolours edge pixels, it adds none).
+    const rows = Array.from({ length: 96 }, (_, y) => Array.from({ length: 64 }, (_, x) => opaqueAt(png, x, y)).some(Boolean));
+    expect(rows.lastIndexOf(true)).toBe(85);
+    expect(rows.indexOf(true)).toBe(6);
+    expect(built.anims[0]?.frames[0]?.cell.h).toBe(96);
+    // The same source under another prop's name does not fit the 64×64 cell: nothing is cropped, so it fails.
+    expect(problemsOf(() => build(r, { ...json, sheet: 'prop-jar' }))[0]).toMatch(/^idle_0: placed at \(0, -32\) in the 64×64 cell, source pixels .* would fall outside it/);
+  });
+
   it('a prop with more than 8 frames fails', () => {
     const json = {
       sheet: 'prop-jar',
