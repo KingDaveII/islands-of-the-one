@@ -118,28 +118,32 @@ export function isDrawable(text: string): boolean {
 export const NAME_NOT_DRAWABLE =
   'Use letters the game can draw for now: A–Z and accented Latin letters.';
 
-/** Why a Kindled name was refused (NAME_NOT_DRAWABLE for 'not-drawable', NAME_REFUSED otherwise). */
-export type KindledNameRejection =
+/** Why a typed name was refused (NAME_NOT_DRAWABLE for 'not-drawable', NAME_REFUSED otherwise). */
+export type TypedNameRejection =
   'not-text' | 'length' | 'characters' | 'not-drawable' | 'no-letter' | 'unsafe';
+export type KindledNameRejection = TypedNameRejection;
 
-export type KindledNameValidation =
-  { ok: true; name: string } | { ok: false; reason: KindledNameRejection; message: string };
+export type TypedNameValidation =
+  { ok: true; name: string } | { ok: false; reason: TypedNameRejection; message: string };
+export type KindledNameValidation = TypedNameValidation;
 
-const refuse = (reason: KindledNameRejection): KindledNameValidation => ({
+const refuse = (reason: TypedNameRejection): TypedNameValidation => ({
   ok: false,
   reason,
   message: NAME_REFUSED,
 });
 
 /**
- * A Kindled name: text normalized (normalizeKindledName), no control or
- * format characters, only characters the game can draw (DRAWABLE_CHARS:
- * A-Z and accented Latin letters for now; the book's "any language" waits
- * for more glyphs), 2-24 grapheme clusters, at least one letter, at most a
- * few combining marks per cluster, and nothing the safe-letters filter
- * rejects.
+ * A typed name, a Kindled's or the island's (M2 Task 4a): text normalized
+ * (normalizeKindledName), no control or format characters, only characters
+ * the game can draw (DRAWABLE_CHARS: A-Z and accented Latin letters for now;
+ * the book's "any language" waits for more glyphs), 2-24 grapheme clusters,
+ * at least one letter, at most a few combining marks per cluster, and
+ * nothing the safe-letters filter rejects (not strict: the typed text may
+ * contain yod-he; the island's letters are checked strict by validateIslandName).
  */
-export function validateKindledName(input: unknown): KindledNameValidation {
+export function validateTypedName(input: unknown): TypedNameValidation {
+
   if (typeof input !== 'string') return refuse('not-text');
   const rules = creation.name;
   // Bound the work before normalizing anything.
@@ -158,3 +162,6 @@ export function validateKindledName(input: unknown): KindledNameValidation {
   if (!/\p{L}/u.test(name)) return refuse('no-letter');
   return { ok: true, name };
 }
+
+/** A Kindled name: the typed-name rules above. */
+export const validateKindledName: (input: unknown) => KindledNameValidation = validateTypedName;

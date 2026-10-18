@@ -36,6 +36,13 @@
       "when": 1792257456179,
       "tag": "0004_holding_activity_skill_xp",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792318148113,
+      "tag": "0005_writs",
+      "breakpoints": true
     }
   ]
 }

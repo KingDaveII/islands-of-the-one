@@ -1,3 +1,4 @@
+import { HOUR_MS } from '@iot/shared';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { openTestPostgres, type TestPostgres } from './postgres.js';
 import type { DbHandle } from '../src/db/client.js';
@@ -87,6 +88,44 @@ describe.runIf(url)('the holding settle on Postgres', () => {
     const inStore = view.store.find((e) => e.itemId === 'twisted-log')?.quantity ?? 0;
     expect(inBasket + inStore).toBe(10);
     expect(inStore).toBeGreaterThanOrEqual(5);
+    await expectChains(k);
+  });
+
+  it('two feeds racing on one Writ never overfill it, and the totals hold', async () => {
+    const k = await newKindled();
+    await holding.name(k, 'Black Rock', at(0));
+    await inv.apply(
+      [
+        { kindledId: k, itemId: 'wild-sliver', place: 'store', delta: 4 },
+        { kindledId: k, itemId: 'wild-sliver', place: 'pack', delta: 4 },
+      ],
+      'admin',
+    );
+    // Eight racers each feeding two slivers on a Writ pressed to 48 h: 48 + 96 = 144 h, so exactly one
+    // two-sliver feed lands (the rest refuse: full), and no feed is counted without its items.
+    const results = await race(8, () => holding.feed(k, 'wild-sliver', 2, at(0)));
+    const landed = results.filter((r) => r.ok);
+    expect(landed).toHaveLength(1);
+    expect(results.filter((r) => !r.ok).every((r) => !r.ok && r.error === 'full')).toBe(true);
+    const r = landed[0];
+    if (!r?.ok) throw new Error('no answer');
+    expect(r.value.writ.chargeMs).toBe(144 * HOUR_MS);
+    const view = await inv.view(k);
+    const inStore = view.store.find((e) => e.itemId === 'wild-sliver')?.quantity ?? 0;
+    const inPack = view.pack.find((e) => e.itemId === 'wild-sliver')?.quantity ?? 0;
+    expect(inStore + inPack).toBe(6);
+    expect(inStore).toBe(2); // the store first
+    const feeds = (await inv.ledger(k)).filter((e) => e.reason === 'feed-writ');
+    expect(feeds.reduce((s, e) => s + e.delta, 0)).toBe(-2);
+    await expectChains(k);
+    // Two days on, 96 h left: racing single slivers and Fills, exactly one sliver lands (144 h again).
+    const more = await race(RACERS, (i) => (i % 2 === 0 ? holding.feed(k, 'wild-sliver', 1, at(48 * HOUR_MS)) : holding.fill(k, at(48 * HOUR_MS))));
+    expect(more.filter((x) => x.ok)).toHaveLength(1);
+    const final = await holding.view(k, at(48 * HOUR_MS));
+    if (!final.ok) throw new Error(final.message);
+    expect(final.value.writ.chargeMs).toBe(144 * HOUR_MS);
+    const after = await inv.view(k);
+    expect((after.store.find((e) => e.itemId === 'wild-sliver')?.quantity ?? 0) + (after.pack.find((e) => e.itemId === 'wild-sliver')?.quantity ?? 0)).toBe(5);
     await expectChains(k);
   });
 });
