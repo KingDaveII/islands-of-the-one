@@ -52,7 +52,7 @@ const working: HoldingResponse = {
   writ: toWritView(pressedWrit(T0), T0 + 13_000),
   kesh: { firstGiven: false, due: 'first', nextTideAt: new Date(T0 + 6 * 3_600_000).toISOString(), wordDue: false, seedsDue: false },
   words: [],
-  plots: holdingLayout().plots.map((p) => ({ id: p.id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, level: 1, state: 'lit' as const })),
+  plots: holdingLayout().plots.map((p) => ({ id: p.id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, pieces: [], level: 1, state: 'lit' as const })),
   cycles: { 'twisted-trees': { cycleMs: 7_200_000, cycledUntil: iso(0), bonusPermille: 0 } },
 };
 const idle: HoldingResponse = { ...working, activity: null };
@@ -62,10 +62,10 @@ const fields: HoldingResponse = {
   baskets: { ...idle.baskets, 'plot-1': [{ itemId: 'pale-grain', quantity: 12 }], 'plot-2': [], 'plot-3': [{ itemId: 'pale-grain', quantity: 2 }], 'plot-4': [] },
   skills: { ...idle.skills, farming: { xp: 60, level: 2, into: 20, toNext: 1083 } },
   plots: [
-    { id: 'plot-1', ground: 'adamah', virtue: null, namedAt: iso(0), virtueSetAt: null, sownAt: iso(0), kind: 'field', level: 1, state: 'lit' },
-    { id: 'plot-2', ground: 'adamah', virtue: null, namedAt: iso(0), virtueSetAt: null, sownAt: null, kind: 'field', level: 1, state: 'lit' },
-    { id: 'plot-3', ground: 'adamah', virtue: 'yashan', namedAt: iso(0), virtueSetAt: iso(0), sownAt: iso(0), kind: 'field', level: 1, state: 'faded' },
-    { id: 'plot-4', ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, level: 1, state: 'lit' },
+    { id: 'plot-1', ground: 'adamah', virtue: null, namedAt: iso(0), virtueSetAt: null, sownAt: iso(0), kind: 'field', pieces: [], level: 1, state: 'lit' },
+    { id: 'plot-2', ground: 'adamah', virtue: null, namedAt: iso(0), virtueSetAt: null, sownAt: null, kind: 'field', pieces: [], level: 1, state: 'lit' },
+    { id: 'plot-3', ground: 'adamah', virtue: 'yashan', namedAt: iso(0), virtueSetAt: iso(0), sownAt: iso(0), kind: 'field', pieces: [], level: 1, state: 'faded' },
+    { id: 'plot-4', ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, pieces: [], level: 1, state: 'lit' },
   ],
   cycles: {
     'twisted-trees': { cycleMs: 7_200_000, cycledUntil: iso(0), bonusPermille: 0 },
@@ -181,8 +181,8 @@ describe('the station panel', () => {
       title: 'FIELD',
       letters: 'אדמה',
       level: 'Level 1',
-      rate: '1 pale grain every 20 s',
-      cycle: '1 pale grain every 15 min',
+      rate: 'By hand: 1 pale grain every 20 s',
+      cycle: 'By itself: 1 pale grain every 15 min',
       bonus: null,
       basket: 'Basket: 12 pale grains',
       next: 'Next in 12 min',
@@ -192,8 +192,24 @@ describe('the station panel', () => {
       work: 'WORK HERE',
       take: 'TAKE ALL',
       working: false,
-      buttons: ['work', 'take', 'rename'],
+      buttons: ['work', 'take', 'build', 'rename'],
     });
+    // With a piece standing (M2 Task 6): the real level, the real cycle from the clock ("By itself"), "By hand" unchanged.
+    const channel = { pieceId: 'clay-channel', col: 7, row: 7, rotation: 0 as const };
+    const built: HoldingResponse = {
+      ...fields,
+      plots: fields.plots.map((p) => (p.id === 'plot-1' ? { ...p, pieces: [channel], level: 2 } : p)),
+      cycles: { ...fields.cycles, 'plot-1': { cycleMs: 720_000, cycledUntil: iso(0), bonusPermille: 0 } },
+    };
+    expect(stationLines('plot-1', built, now)).toMatchObject({
+      level: 'Level 2',
+      rate: 'By hand: 1 pale grain every 20 s',
+      cycle: 'By itself: 1 pale grain every 12 min',
+      next: 'Next in 9 min',
+      buttons: ['work', 'take', 'build', 'rename'],
+    });
+    // Without a clock in the answer, the length comes from the pieces themselves.
+    expect(stationLines('plot-1', { ...built, cycles: {} }, now)?.cycle).toBe('By itself: 1 pale grain every 12 min');
     expect(stationLines('plot-1', { ...fields, activity: { stationId: 'plot-1', startedAt: iso(0), cycleMs: 20_000 } }, now)).toMatchObject({
       you: 'You: 1 pale grain every 20 s',
       work: 'STOP WORKING',
@@ -241,7 +257,7 @@ describe('the station panel', () => {
     });
     // Lit again with the bonus: the +3% line under the cycle's rate.
     const lit = { ...fields, plots: fields.plots.map((p) => (p.id === 'plot-3' ? { ...p, state: 'lit' as const } : p)) };
-    expect(stationLines('plot-3', lit, now)).toMatchObject({ bonus: '+3% for keeping its name', next: 'Next in 12 min', buttons: ['work', 'take', 'rename'] });
+    expect(stationLines('plot-3', lit, now)).toMatchObject({ bonus: '+3% for keeping its name', next: 'Next in 12 min', buttons: ['work', 'take', 'build', 'rename'] });
     // The chip at a field: the kind's initial and Farming.
     expect(chipState({ ...fields, activity: { stationId: 'plot-1', startedAt: iso(0), cycleMs: 20_000 } }, T0 + 5000)).toMatchObject({ initials: 'F', skill: 'FARMING 2', ring: 0.25 });
     expect(stationInitials('plot-1', fields)).toBe('F');

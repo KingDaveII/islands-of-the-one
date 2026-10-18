@@ -1,4 +1,6 @@
 import {
+  BUILD_TEXT,
+  cycleLengthMs,
   holdingLayout,
   isShoreGround,
   itemDef,
@@ -131,7 +133,7 @@ export function countOf(itemId: string, quantity: number): string {
 }
 
 /** The station panel's buttons, in order. */
-export type StationButton = 'work' | 'take' | 'rename' | 'sow';
+export type StationButton = 'work' | 'take' | 'rename' | 'sow' | 'build';
 
 /**
  * The lines of the station panel (GAME DESIGN's screen, M2 Task 5 for the
@@ -143,11 +145,11 @@ export interface StationLines {
   title: string;
   /** A plot's sentence under its title (the letter sheet draws it), else null. */
   letters: string | null;
-  /** "Level 1" for a plot, else null. */
+  /** "Level 2" for a plot (1 plus its pieces, M2 Task 6), else null. */
   level: string | null;
-  /** The active action's rate, "1 twisted log every 4 s"; null while a field isn't sown. */
+  /** The active action's rate, "1 twisted log every 4 s"; a plot's "By hand: 1 pale grain every 20 s" (GAME DESIGN); null while a field isn't sown. */
   rate: string | null;
-  /** The basket cycle's rate, "6 twisted logs every 2 h", or null for a station without one (or not sown). */
+  /** The basket cycle's rate at its real speed, "6 twisted logs every 2 h"; a plot's "By itself: 1 pale grain every 12 min"; null without one (or not sown). */
   cycle: string | null;
   /** ישן's "+3% for keeping its name" under the cycle's rate, or null. */
   bonus: string | null;
@@ -166,7 +168,7 @@ export interface StationLines {
   take: 'TAKE ALL';
   /** Whether the Kindled works here now. */
   working: boolean;
-  /** The buttons shown, in order: work, take (and rename for a plot); sow alone for a field not sown; none when faded. */
+  /** The buttons shown, in order: work, take (and build, rename for a plot); sow alone for a field not sown; none when faded. */
   buttons: StationButton[];
 }
 
@@ -182,7 +184,7 @@ export function stationLines(stationId: string, r: HoldingResponse | null, serve
   const rate = `${countOf(action.itemId, action.quantity)} every ${action.cycleMs / 1000} s`;
   const title = displayable(place.name.toUpperCase());
   const letters = plot ? sentenceLetters(plot.ground, plot.virtue) : null;
-  const level = plot ? `${PLOT_TEXT.LEVEL}${plotLevel()}` : null;
+  const level = plot ? `${PLOT_TEXT.LEVEL}${plotLevel(plot.pieces)}` : null;
   const basketLine = basket.length ? `Basket: ${basket.map((e) => countOf(e.itemId, e.quantity)).join(', ')}` : 'Basket: empty';
   const skill = view ? `${SKILL_NAMES[action.skill]} ${view.level} · ${view.toNext} XP to next` : SKILL_NAMES[action.skill];
   const base = { title, letters, level, work: working ? 'STOP WORKING' : 'WORK HERE', take: 'TAKE ALL', working } as const;
@@ -195,17 +197,20 @@ export function stationLines(stationId: string, r: HoldingResponse | null, serve
   const clock = r?.cycles[stationId];
   const dark = r !== null && r.writ.chargeMs === 0;
   const next = place.cycle && clock ? (dark ? PLOT_TEXT.RESTING : nextInLine(clock, serverMs)) : null;
+  // A plot's cycle runs at the speed its pieces give (M2 Task 6): the real length, from the clock when it is known.
+  const realCycle = place.cycle ? { ...place.cycle, cycleMs: clock?.cycleMs ?? cycleLengthMs(place.cycle, plot?.pieces ?? []) } : null;
+  const cycleLine = realCycle ? cycleRateLine(realCycle, layout, stationId) : null;
   return {
     ...base,
-    rate,
-    cycle: place.cycle ? cycleRateLine(place.cycle, layout, stationId) : null,
+    rate: plot ? `${BUILD_TEXT.BY_HAND}${rate}` : rate,
+    cycle: plot && cycleLine ? `${BUILD_TEXT.BY_ITSELF}${cycleLine}` : cycleLine,
     bonus: plot && clock ? bonusLine(clock.bonusPermille) : null,
     basket: basketLine,
     next,
     you: working ? `You: ${rate}` : null,
     skill,
     note: null,
-    buttons: plot ? ['work', 'take', 'rename'] : ['work', 'take'],
+    buttons: plot ? ['work', 'take', 'build', 'rename'] : ['work', 'take'],
   };
 }
 

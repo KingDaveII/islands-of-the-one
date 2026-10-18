@@ -27,6 +27,7 @@ import {
   type WordElement,
   type WordSlot,
 } from '@iot/shared';
+import { piecesLine } from './buildView.js';
 import { displayable } from './drawable.js';
 
 /**
@@ -125,7 +126,7 @@ export interface PlotPanelLines {
   previewTip: string | null;
 }
 
-export function plotPanelLines(plot: Pick<PlotView, 'ground' | 'virtue'>, picked: Picked): PlotPanelLines {
+export function plotPanelLines(plot: Pick<PlotView, 'ground' | 'virtue' | 'pieces'>, picked: Picked): PlotPanelLines {
   const renaming = plot.ground !== null;
   const ground = picked.ground === null ? undefined : wordDef(picked.ground);
   const virtue = picked.virtue === null ? undefined : wordDef(picked.virtue);
@@ -137,8 +138,8 @@ export function plotPanelLines(plot: Pick<PlotView, 'ground' | 'virtue'>, picked
     costTip: renaming ? PLOT_TEXT.COST_RENAME_TIP : null,
     builds: ground ? effectLine(ground) : null,
     effect: virtue ? effectLine(virtue) : null,
-    level: `${PLOT_TEXT.LEVEL}${plotLevel()}`,
-    pieces: PLOT_TEXT.PIECES_NONE,
+    level: `${PLOT_TEXT.LEVEL}${plotLevel(plot.pieces)}`,
+    pieces: piecesLine(plot.pieces),
     letters: sentenceLetters(picked.ground, picked.virtue),
     confirmEnabled: changed && ground !== undefined,
     previewTip: ground ? PLOT_TEXT.FIELD_TIP : null,

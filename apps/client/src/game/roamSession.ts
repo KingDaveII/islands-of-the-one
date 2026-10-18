@@ -1,4 +1,4 @@
-import { holdingLayout, holdingRoomTiles, holdingStart, type HoldingLayout } from '@iot/shared';
+import { holdingLayout, holdingRoomTiles, holdingStart, type HoldingLayout, type TilePoint } from '@iot/shared';
 import {
   createRoam,
   decodeInput,
@@ -62,15 +62,16 @@ export class RoamSession {
   }
 
   /**
-   * The named plots' signposts become pillars (M2 Task 5): the room is rebuilt
+   * The named plots' signposts become pillars (M2 Task 5), and so do the
+   * tiles of the pieces standing in them (M2 Task 6): the room is rebuilt
    * from the layout with those tiles solid, in place, so the Kindled keeps its
    * position. Nothing happens when the set hasn't changed.
    */
-  setSolidPlots(plotIds: readonly string[]): void {
-    const key = [...plotIds].sort().join(',');
+  setSolidPlots(plotIds: readonly string[], pieceTiles: readonly TilePoint[] = []): void {
+    const key = `${[...plotIds].sort().join(',')}|${pieceTiles.map((t) => `${t.col}:${t.row}`).sort().join(',')}`;
     if (key === this.solidPlots) return;
     this.solidPlots = key;
-    this.roam.state.room = roomFromTemplate(0, { name: this.layout.id, tiles: holdingRoomTiles(this.layout, plotIds) });
+    this.roam.state.room = roomFromTemplate(0, { name: this.layout.id, tiles: holdingRoomTiles(this.layout, plotIds, pieceTiles) });
   }
 
   /** Advance by real time. Returns how many ticks ran. */
