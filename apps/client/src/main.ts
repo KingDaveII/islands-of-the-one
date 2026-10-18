@@ -24,6 +24,7 @@ import { ResultsScene } from './scenes/ResultsScene.js';
 import { StartScene } from './scenes/StartScene.js';
 import { TestScene } from './scenes/TestScene.js';
 import { buildStore } from './game/build.js';
+import { tuningStore } from './game/tuningStore.js';
 import { debugFlags } from './ui/debugFlags.js';
 import { DebugOverlay } from './ui/debugOverlay.js';
 import { TuningPanel } from './ui/tuningPanel.js';
@@ -220,6 +221,8 @@ function startGame(): void {
     },
     panel,
     debug,
+    /** The live tuning (playtests set a value, say a slower toss for a screenshot, as the F2 panel would). */
+    tuning: tuningStore,
   };
   (window as unknown as { __iot: typeof hooks }).__iot = hooks;
 }

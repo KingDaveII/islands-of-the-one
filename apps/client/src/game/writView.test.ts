@@ -46,7 +46,7 @@ const at = (h: number): number => T0 + h * HOUR_MS;
 const H = HOUR_MS;
 
 const named = (emptyAt: number, now: number, certified = false): WritView =>
-  toWritView({ name: 'Black Rock', letters: 'בלק רוק', certified, emptyAt, lineCount: 1 }, now);
+  toWritView({ name: 'Black Rock', letters: 'בלק רוק', certified, emptyAt, lineCount: 1, fedAt: null }, now);
 
 const inventory: InventoryResponse = {
   purse: [{ itemId: 'sealed-gin', quantity: 5 }],

@@ -262,3 +262,73 @@ export function purseGin(inventory: InventoryResponse | null): number {
 
 /** The word next to the interact glyph over a station. */
 export const USE_LABEL = 'USE';
+
+/** The Talk spot's centre (sim px): where Talk across the water stands. */
+export function talkSpot(layout: HoldingLayout = holdingLayout()): { x: number; y: number } {
+  return { x: (layout.kesh.talk.col + 0.5) * TILE_SIZE_PX, y: (layout.kesh.talk.row + 0.5) * TILE_SIZE_PX };
+}
+
+/**
+ * Whether the Kindled (sim px) is within reach of Kesh's Talk spot, the same
+ * reach the stations use (M2 Task 4b): the prompt shows TALK and Use opens
+ * the talk box. A station part nearer than the spot keeps its prompt.
+ */
+export function nearKesh(x: number, y: number, rangePx: number, layout: HoldingLayout = holdingLayout()): boolean {
+  const spot = talkSpot(layout);
+  const d = Math.hypot(spot.x - x, spot.y - y);
+  if (d > rangePx) return false;
+  const station = nearestStationPart(x, y, rangePx, layout);
+  if (!station) return true;
+  const p = interactPoint(station.part);
+  return d <= Math.hypot(p.x - x, p.y - y);
+}
+
+/** A rectangle in UI px. */
+export interface UiRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** The holding HUD's spacing (render/holdingHud.ts draws by these): the inset from the view's edge, the panels' padding, the action chip. */
+export const HUD_INSET = 8;
+export const HUD_PAD = 4;
+export const HUD_CHIP_W = 122;
+export const HUD_CHIP_H = 26;
+
+/** The measured widths (UI px) of the HUD's texts: the purse's number, the pack's label, and the Writ block's Name, letters and chip words. */
+export interface HudWidths {
+  gin: number;
+  pack: number;
+  /** Null before the island is named. */
+  name: number | null;
+  letters: number;
+  chip: number;
+}
+
+/** The HUD's four panels' rectangles for a view frame (UI px): the Writ block, the purse, the action chip and the pack button. Pure. */
+export function hudRects(frame: UiRect, widths: HudWidths): { writ: UiRect; purse: UiRect; chip: UiRect; pack: UiRect } {
+  const L = frame.x;
+  const T = frame.y;
+  const R = frame.x + frame.w;
+  const B = frame.y + frame.h;
+  const purseW = HUD_PAD + 10 + 3 + Math.max(widths.gin, 8) + HUD_PAD;
+  const purseH = HUD_PAD + 10 + HUD_PAD;
+  const writW = HUD_PAD + Math.max(widths.name ?? 0, widths.letters, widths.chip, 24) + HUD_PAD;
+  const writH = HUD_PAD + (widths.name !== null ? 10 + 8 + 3 : 0) + 8 + HUD_PAD;
+  const packW = HUD_PAD + widths.pack + HUD_PAD;
+  const packH = HUD_PAD + 8 + HUD_PAD;
+  const cx = Math.round(L + frame.w / 2);
+  return {
+    writ: { x: L + HUD_INSET, y: T + HUD_INSET, w: writW, h: writH },
+    purse: { x: R - HUD_INSET - purseW, y: T + HUD_INSET, w: purseW, h: purseH },
+    chip: { x: cx - HUD_CHIP_W / 2, y: B - HUD_INSET - HUD_CHIP_H, w: HUD_CHIP_W, h: HUD_CHIP_H },
+    pack: { x: R - HUD_INSET - packW, y: B - HUD_INSET - packH, w: packW, h: packH },
+  };
+}
+
+/** Whether two rectangles overlap (touching edges don't count). */
+export function rectsOverlap(a: UiRect, b: UiRect): boolean {
+  return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+}

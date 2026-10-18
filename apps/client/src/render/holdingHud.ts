@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { shapeLetters } from '@iot/shared';
 import type { Rect as ViewRect } from '../game/view.js';
-import type { ChipState } from '../game/holdingView.js';
+import { HUD_CHIP_H, HUD_CHIP_W, HUD_PAD, hudRects, type ChipState } from '../game/holdingView.js';
 import type { WritChip } from '../game/writView.js';
 import { Palette } from '../palette.js';
 import { plotLetters, type LetterSheet } from './letters.js';
@@ -10,12 +10,11 @@ import { plot } from './pixels.js';
 import { body, label, place, type Text } from './text.js';
 import { icon, panel } from './ui.js';
 
-/** HUD inset from the world view's edge and panel padding (UI px). */
-const INSET = 8;
-const PAD = 4;
+/** HUD inset from the world view's edge and panel padding (UI px): the pure layout in game/holdingView.ts (`hudRects`) owns them. */
+const PAD = HUD_PAD;
 const ICON = 16;
-const CHIP_W = 122;
-const CHIP_H = 26;
+const CHIP_W = HUD_CHIP_W;
+const CHIP_H = HUD_CHIP_H;
 const RING_R = 7;
 const XP_W = 66;
 const XP_H = 2;
@@ -116,28 +115,31 @@ export class HoldingHud {
   draw(chip: ChipState | null, packFill: string, gin: number, writ: WritHud | null, sheet: LetterSheet | null): void {
     const g = this.g;
     g.clear();
-    const { x: L, y: T } = this.frame;
-    const R = this.frame.x + this.frame.w;
-    const B = this.frame.y + this.frame.h;
-
-    // Top right: the purse.
     if (this.gin.text !== String(gin)) this.gin.setText(String(gin));
-    const trW = PAD + 10 + 3 + Math.max(this.gin.width, 8) + PAD;
-    const trH = PAD + 10 + PAD;
-    panel(g, R - INSET - trW, T + INSET, trW, trH, { plain: true });
-    icon(g, 'spark', R - INSET - trW + PAD, T + INSET + PAD, 10, Palette.spark);
-    place(this.gin, R - INSET - trW + PAD + 13, T + INSET + PAD + 1);
-
-    // Top left: the island's Name, its letters, the Writ chip.
-    this.drawWrit(L + INSET, T + INSET, writ, sheet);
-
-    // Bottom right: the pack button.
     const packText = `PACK ${packFill}`;
     if (this.pack.text !== packText) this.pack.setText(packText);
-    const brW = PAD + this.pack.width + PAD;
-    const brH = PAD + 8 + PAD;
-    const brX = R - INSET - brW;
-    const brY = B - INSET - brH;
+    if (writ?.name && this.name.text !== writ.name.typed) this.name.setText(writ.name.typed);
+    if (writ && writ.chip.text !== null && this.writWords.text !== writ.chip.text) this.writWords.setText(writ.chip.text);
+    // The four panels' rectangles from the measured texts: the same pure math the framing test runs (holdingView.ts).
+    const rects = hudRects(this.frame, {
+      gin: Math.round(this.gin.width),
+      pack: Math.round(this.pack.width),
+      name: writ?.name ? Math.round(this.name.width) : null,
+      letters: writ?.name ? shapeLetters(writ.name.letters).width : 0,
+      chip: writ ? (writ.chip.text !== null ? Math.round(this.writWords.width) : shapeLetters(writ.chip.letters ?? '').width) : 0,
+    });
+
+    // Top right: the purse.
+    const purse = rects.purse;
+    panel(g, purse.x, purse.y, purse.w, purse.h, { plain: true });
+    icon(g, 'spark', purse.x + PAD, purse.y + PAD, 10, Palette.spark);
+    place(this.gin, purse.x + PAD + 13, purse.y + PAD + 1);
+
+    // Top left: the island's Name, its letters, the Writ chip.
+    this.drawWrit(rects.writ, writ, sheet);
+
+    // Bottom right: the pack button.
+    const { x: brX, y: brY, w: brW, h: brH } = rects.pack;
     panel(g, brX, brY, brW, brH, { plain: true });
     place(this.pack, brX + PAD, brY + PAD);
     this.packRect = { x: brX, y: brY, w: brW, h: brH };
@@ -152,9 +154,7 @@ export class HoldingHud {
       if (this.chipZone.input) this.chipZone.disableInteractive();
       return;
     }
-    const cx = Math.round(L + this.frame.w / 2);
-    const x = cx - CHIP_W / 2;
-    const y = B - INSET - CHIP_H;
+    const { x, y } = rects.chip;
     panel(g, x, y, CHIP_W, CHIP_H, { plain: true });
     this.chipRect = { x, y, w: CHIP_W, h: CHIP_H };
     if (!this.chipZone.input) this.chipZone.setInteractive({ useHandCursor: true });
@@ -191,8 +191,9 @@ export class HoldingHud {
    * the chip alone. The tooltip (the exact time) shows while the pointer is
    * over it.
    */
-  private drawWrit(x: number, y: number, writ: WritHud | null, sheet: LetterSheet | null): void {
+  private drawWrit(rect: ViewRect, writ: WritHud | null, sheet: LetterSheet | null): void {
     const g = this.g;
+    const { x, y, w, h } = rect;
     if (!writ) {
       this.name.setVisible(false);
       this.writWords.setVisible(false);
@@ -202,18 +203,9 @@ export class HoldingHud {
     }
     const { name, chip } = writ;
     const chipColor = chip.ember ? Palette.writEmber : Palette.uiInk;
-    if (chip.text !== null) {
-      if (this.writWords.text !== chip.text) this.writWords.setText(chip.text);
-      this.writWords.setTint(chipColor).setVisible(true);
-    } else this.writWords.setVisible(false);
-    if (name) {
-      if (this.name.text !== name.typed) this.name.setText(name.typed);
-      this.name.setVisible(true);
-    } else this.name.setVisible(false);
-    const lettersW = name ? shapeLetters(name.letters).width : 0;
-    const chipW = chip.text !== null ? Math.round(this.writWords.width) : shapeLetters(chip.letters ?? '').width;
-    const w = PAD + Math.max(name ? Math.round(this.name.width) : 0, lettersW, chipW, 24) + PAD;
-    const h = PAD + (name ? 10 + 8 + 3 : 0) + 8 + PAD;
+    if (chip.text !== null) this.writWords.setTint(chipColor).setVisible(true);
+    else this.writWords.setVisible(false);
+    this.name.setVisible(name !== null);
     panel(g, x, y, w, h, { plain: true });
     let ly = y + PAD;
     if (name) {

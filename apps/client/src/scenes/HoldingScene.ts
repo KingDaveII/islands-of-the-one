@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import {
+  HOLDING_CAMERA_MARGIN_TILES,
   HOLDING_HEARTBEAT_MS,
   holdingLayout,
   type ClayTone,
@@ -18,6 +19,7 @@ import {
   clockOffset,
   cyclesDone,
   nearestStationPart,
+  nearKesh,
   packFill,
   purseGin,
   serverTime,
@@ -29,6 +31,7 @@ import {
   type StationLines,
 } from '../game/holdingView.js';
 import { REFUSAL_LIFE_MS, refusalVisible } from '../game/inventoryView.js';
+import { KeshTalk, keshSpeaking, TALK_LABEL, type TalkContext, type TalkFlow } from '../game/keshTalk.js';
 import { derive, hudName, writChip } from '../game/writView.js';
 import { keyboardKeys, keyCodeFor } from '../game/keyboard.js';
 import { RoamSession } from '../game/roamSession.js';
@@ -51,6 +54,7 @@ import { preloadSpriteSheets, registerSpriteSheets } from '../render/spriteSheet
 import { blinkOut, body, label, place, preloadFonts, registerFonts, shadowed, type Shadowed, type Text } from '../render/text.js';
 import { divider, panel } from '../render/ui.js';
 import { NameScreen } from '../ui/nameScreen.js';
+import { TalkBox } from '../ui/talkBox.js';
 import { WritPanel } from '../ui/writPanel.js';
 import type { InventoryData } from './InventoryScene.js';
 
@@ -61,12 +65,13 @@ const PANEL_PAD = 8;
 const FLOAT_MS = 700;
 const FLOAT_RISE = 10;
 const FLOAT_BLINK_MS = 200;
+/** How far over the Kindled's position (world px) a float over them starts: clear of the head. */
+const FLOAT_OVER_KINDLED = 40;
 
 interface Floater {
   text: Shadowed;
-  stationId: string;
-  /** Where the Kindled stood when it rose: the floater stays over the station's part nearest there (the trees). */
-  near: { x: number; y: number };
+  /** Where it floats (sim px) each frame: over a station's part, or where Kesh's sliver landed. */
+  at: () => { x: number; y: number } | null;
   life: number;
 }
 
@@ -93,6 +98,11 @@ interface StationPanel {
  * the holding store opens the inventory with the store pane; Use on a tree
  * or the outcrop opens the station panel. Stopping is on the chip and in the
  * panel ("Stop working"); there is no stop binding (GAME DESIGN 2026-10-18).
+ * Across the water from Kesh (M2 Task 4b) the prompt reads TALK and Use
+ * opens the talk box (ui/talkBox.ts, its flow in game/keshTalk.ts); his
+ * lines also play after the island is named and after the first feeding,
+ * and a line that tosses asks the server for the sliver (the count comes
+ * from its answer; the flight is cosmetic).
  */
 export class HoldingScene extends Phaser.Scene {
   session!: RoamSession;
@@ -123,6 +133,13 @@ export class HoldingScene extends Phaser.Scene {
   /** The Writ panel and the Name screen (M2 Task 4a), one at a time, over the post. */
   private writPanel: WritPanel | null = null;
   private nameScreen: NameScreen | null = null;
+  /** The talk box (M2 Task 4b): Kesh's lines, one at a time, and the menu of topics. */
+  private readonly talk = new KeshTalk();
+  private talkBox: TalkBox | null = null;
+  /** What follows once the box closes (the Writ panel after the naming lines). */
+  private afterTalk: (() => void) | null = null;
+  /** The step whose toss was asked of the server, so a line asks once. */
+  private tossAsked: unknown = null;
   /** The Old Letters sheet's ink, once loaded (the Name screen, the Writ panel and the HUD draw from it). */
   private letterSheet: LetterSheet | null = null;
   private floaters: Floater[] = [];
@@ -159,6 +176,10 @@ export class HoldingScene extends Phaser.Scene {
     this.panel = null;
     this.writPanel = null;
     this.nameScreen = null;
+    this.talkBox = null;
+    this.afterTalk = null;
+    this.tossAsked = null;
+    this.talk.close();
     this.floaters = [];
     this.lastCycles = -1;
     this.lastError = '';
@@ -179,7 +200,7 @@ export class HoldingScene extends Phaser.Scene {
     const layout = holdingLayout();
     this.session = new RoamSession(this.controls, layout);
     const tone: ClayTone = accountStore.current?.kindled?.clayTone ?? 'clay-grey-ochre';
-    this.world = new HoldingWorld(this, this.worldLayer, layout, () => tuningStore.get().anim, tone);
+    this.world = new HoldingWorld(this, this.worldLayer, layout, () => tuningStore.get().anim, tone, () => tuningStore.get().kesh);
     this.hud = new HoldingHud(
       this,
       this.hudLayer,
@@ -219,14 +240,21 @@ export class HoldingScene extends Phaser.Scene {
       this.back();
     });
     kb?.on('keydown-ENTER', () => {
-      if (this.writPanel) {
+      if (this.talkBox) {
+        this.keyNav = true;
+        this.talkAdvance();
+      } else if (this.writPanel) {
         this.keyNav = true;
         this.writPanel.press();
       } else this.pressFocused();
     });
     for (const key of ['LEFT', 'RIGHT', 'TAB'])
       kb?.on(`keydown-${key}`, () => {
-        if (this.writPanel) {
+        if (this.talkBox) {
+          this.keyNav = true;
+          if (key === 'TAB') this.talk.moveFocus(1);
+          this.syncTalk();
+        } else if (this.writPanel) {
           this.keyNav = true;
           if (key === 'TAB') this.writPanel.moveFocus(1);
           else this.writPanel.moveSide(key === 'LEFT' ? -1 : 1);
@@ -234,13 +262,24 @@ export class HoldingScene extends Phaser.Scene {
       });
     for (const key of ['UP', 'DOWN'])
       kb?.on(`keydown-${key}`, () => {
+        if (this.talkBox) {
+          this.keyNav = true;
+          this.talk.moveFocus(key === 'UP' ? -1 : 1);
+          this.syncTalk();
+          return;
+        }
         if (!this.writPanel) return;
         this.keyNav = true;
         this.writPanel.moveFocus(key === 'UP' ? -1 : 1);
       });
 
-    // A tap on the world is Use (interact is E, Cross or a tap); taps on the HUD's zones are theirs.
+    // A tap on the world is Use (interact is E, Cross or a tap); taps on the HUD's zones are theirs. While the
+    // talk box shows a line, a click or tap anywhere advances it (the menu's rows take their own presses).
     this.input.on('pointerdown', (p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => {
+      if (this.talkBox) {
+        if (over.length === 0 && this.talk.step.kind === 'line') this.talkAdvance();
+        return;
+      }
       if (p.wasTouch && over.length === 0) this.use();
     });
     const offDevice = deviceStore.subscribe(() => {
@@ -260,6 +299,7 @@ export class HoldingScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.alive = false;
       offDevice();
+      this.closeTalk();
       this.closeNameScreen();
       this.closeWritPanel();
       this.controls.dispose();
@@ -392,15 +432,28 @@ export class HoldingScene extends Phaser.Scene {
     return nearestStationPart(p.x, p.y, tuningStore.get().juice.promptRangePx, this.session.layout);
   }
 
-  /** Use: the post opens the Writ panel (the Name screen first, unnamed); the store opens the inventory with the store pane; a tree or the outcrop opens its panel. */
+  /**
+   * Use: the post opens the Writ panel (the Name screen first, unnamed); the store opens the inventory with the
+   * store pane; a tree or the outcrop opens its panel; the Talk spot across the water from Kesh opens the talk box,
+   * and while it is open Use advances it.
+   */
   private use(): void {
     if (this.nameScreen) return;
+    if (this.talkBox) {
+      this.talkAdvance();
+      return;
+    }
     if (this.writPanel) {
       this.closeWritPanel();
       return;
     }
     if (this.panel) {
       this.closePanel();
+      return;
+    }
+    const p = this.session.position();
+    if (nearKesh(p.x, p.y, tuningStore.get().juice.promptRangePx, this.session.layout)) {
+      this.openTalk('talk');
       return;
     }
     const near = this.near();
@@ -517,6 +570,7 @@ export class HoldingScene extends Phaser.Scene {
   private feedWrit(body: Parameters<typeof api.writFeed>[0]): void {
     if (this.busy) return;
     this.busy = true;
+    const fedBefore = this.response?.writ.fedAt ?? null;
     void api.writFeed(body).then((res) => {
       if (!this.alive) return;
       this.busy = false;
@@ -531,20 +585,133 @@ export class HoldingScene extends Phaser.Scene {
           this.syncWritPanel();
         }
       });
-      this.afterFeeding();
+      this.afterFeeding(fedBefore);
     });
   }
 
   /**
-   * The seams for 4b (Kesh, LORE's lines after naming and feeding, the tide):
-   * called once the server has accepted a Name, and once a feed has landed.
+   * Once the server has accepted a Name, after 4a's flare: Kesh's line across
+   * the water, the Narrator, the hint (LORE), then the Writ panel opens.
    */
   private afterNaming(): void {
-    // 4b: Kesh's line across the water, the Narrator, the hint.
+    this.openTalk('afterNaming', () => {
+      this.openWritPanel();
+    });
   }
 
-  private afterFeeding(): void {
-    // 4b: the once-per-tide sliver, the tide clock.
+  /** Once a feed has landed: the first time (`writ.fedAt` went from null to set), Kesh's line (LORE). */
+  private afterFeeding(fedBefore: string | null): void {
+    if (fedBefore === null && this.response?.writ.fedAt !== null) this.openTalk('afterFirstFeeding');
+  }
+
+  // --- Kesh (M2 Task 4b) ----------------------------------------------------
+
+  /** What the server last said about Kesh, as the flow reads it. */
+  private talkContext(): TalkContext {
+    const kesh = this.response?.kesh;
+    return { firstGiven: kesh?.firstGiven ?? true, due: kesh?.due ?? null };
+  }
+
+  /** Opens the talk box on a flow; the Kindled stands still while it is open, the world keeps running. */
+  private openTalk(flow: TalkFlow, after?: () => void): void {
+    this.closePanel();
+    if (this.talkBox) this.closeTalk();
+    this.afterTalk = after ?? null;
+    this.session.held = true;
+    this.talkBox = new TalkBox(
+      {
+        scene: this,
+        layer: this.hudLayer,
+        frame: () => this.frame,
+        showFocus: () => this.showFocus(),
+        hint: () => hintItems(this.controls.hint('interact')),
+        choose: (i) => {
+          this.talk.setFocus(i);
+          this.talkAdvance();
+        },
+        hover: (i) => {
+          this.talk.setFocus(i);
+          this.syncTalk();
+        },
+      },
+      this.talk.topics,
+    );
+    this.talk.start(flow, this.talkContext());
+    this.syncTalk();
+  }
+
+  /** Confirm: the next line, the menu, or the end; from the menu, the focused topic. */
+  private talkAdvance(): void {
+    if (!this.talkBox) return;
+    // A toss in flight holds the line until the server has answered, so the count never runs ahead of it.
+    if (this.talk.step.kind === 'line' && this.talk.step.line.toss !== undefined && this.busy) return;
+    this.talk.advance(this.talkContext());
+    this.syncTalk();
+  }
+
+  /** The box shows the step; a toss line asks the server once and plays Kesh's throw; Kesh talks while his line is open. */
+  private syncTalk(): void {
+    const box = this.talkBox;
+    if (!box) return;
+    const step = this.talk.step;
+    if (step.kind === 'closed') {
+      this.closeTalk();
+      return;
+    }
+    box.show(step);
+    if (step.kind === 'line' && step.line.toss !== undefined && this.tossAsked !== step) {
+      this.tossAsked = step;
+      this.askSliver();
+    }
+  }
+
+  /**
+   * The toss: Kesh's `toss` plays at once and POST /api/kesh/sliver is sent; the sliver leaves his hand on the
+   * release frame once the server has given it, flies to the Kindled's feet and lands with a "+1" (render only:
+   * the pack's count comes from the answer). A refusal ("Pack full.") is the box's note, and nothing flies.
+   */
+  private askSliver(): void {
+    if (this.busy) return;
+    this.busy = true;
+    let given = false;
+    let released = false;
+    const launch = (): void => {
+      if (!given || !released || !this.alive) return;
+      const feet = this.session.position();
+      this.world.launchToss(feet, () => {
+        this.float('+1', () => feet);
+      });
+    };
+    this.world.toss(() => {
+      released = true;
+      launch();
+    });
+    void api.keshSliver().then((res) => {
+      if (!this.alive) return;
+      this.busy = false;
+      if (!res.ok) {
+        this.talkBox?.setNote(res.message);
+        return;
+      }
+      if (!this.take(res)) return;
+      given = true;
+      launch();
+      void api.inventory().then((inv) => {
+        if (this.alive && inv.ok) this.inventory = inv.value;
+      });
+    });
+  }
+
+  private closeTalk(): void {
+    if (!this.talkBox) return;
+    this.talkBox.destroy();
+    this.talkBox = null;
+    this.talk.close();
+    this.tossAsked = null;
+    this.session.held = this.panel !== null || this.writPanel !== null || this.nameScreen !== null;
+    const after = this.afterTalk;
+    this.afterTalk = null;
+    after?.();
   }
 
   /** The Writ block of the HUD: the Name and the chip, re-derived at the server's clock between heartbeats. */
@@ -563,10 +730,14 @@ export class HoldingScene extends Phaser.Scene {
     this.scene.pause();
   }
 
-  /** Esc / Circle: close the Name screen or a panel, else back to the start screen. */
+  /** Esc / Circle: close the Name screen, the talk box or a panel, else back to the start screen. */
   private back(): void {
     if (this.nameScreen) {
       this.closeNameScreen();
+      return;
+    }
+    if (this.talkBox) {
+      this.closeTalk();
       return;
     }
     if (this.writPanel) {
@@ -718,8 +889,11 @@ export class HoldingScene extends Phaser.Scene {
     const ty = worldPx(p.y) - view.h / 2;
     const roomW = worldPx(s.room.cols * TILE_PX);
     const roomH = worldPx(s.room.rows * TILE_PX);
-    const cx = clampScroll(tx, roomW, view.w, 0, 0);
-    const cy = clampScroll(ty, roomH, view.h, 0, 0);
+    // The camera may scroll `cameraMarginTiles` into the void past every edge, so the HUD's corner panels never
+    // cover the shore or Kesh's rock (M2 Task 4b; the margin is data, holding.json).
+    const margin = worldPx(HOLDING_CAMERA_MARGIN_TILES * TILE_PX);
+    const cx = clampScroll(tx, roomW, view.w, margin, margin);
+    const cy = clampScroll(ty, roomH, view.h, margin, margin);
     const k = snap ? 1 : j.cameraLerp;
     this.camX += (cx - this.camX) * k;
     this.camY += (cy - this.camY) * k;
@@ -727,27 +901,45 @@ export class HoldingScene extends Phaser.Scene {
     this.cameras.main.setScroll(this.scroll.x, this.scroll.y);
   }
 
+  /** The prompt's verb this frame: TALK across the water from Kesh, USE over a station, or nothing (playtests). */
+  promptLabel = '';
+
   private updatePrompt(): void {
-    const near = this.panel || this.writPanel || this.nameScreen ? null : this.near();
-    if (!near) {
+    const open = this.panel !== null || this.writPanel !== null || this.nameScreen !== null || this.talkBox !== null;
+    const p = this.session.position();
+    const talk = !open && nearKesh(p.x, p.y, tuningStore.get().juice.promptRangePx, this.session.layout);
+    const near = open || talk ? null : this.near();
+    if (!near && !talk) {
       this.prompt.setVisible(false);
+      this.promptLabel = '';
       return;
     }
-    const top = this.world.propTop(near.station.id, this.session.position());
+    const top = talk ? this.world.keshPrompt() : near ? this.world.propTop(near.station.id, p) : null;
     const at = top ? { x: simPx(top.x), y: simPx(top.y) } : { x: 0, y: 0 };
     const ui = this.toUi(at.x, at.y);
+    this.promptLabel = talk ? TALK_LABEL : USE_LABEL;
     this.prompt
-      .setItems([...hintItems(this.controls.hint('interact')), { text: USE_LABEL }])
+      .setItems([...hintItems(this.controls.hint('interact')), { text: this.promptLabel }])
       .place(ui.x, ui.y, 0.5, 1)
       .setVisible(true);
   }
 
-  /** A float over a station: "+1" as a cycle completes, "+3" as a take-all moves a basket; over the part nearest the Kindled. */
-  private float(text: string, stationId: string): void {
+  /**
+   * A float: "+1" as a cycle completes and "+3" as a take-all moves a basket, over the station's part nearest the
+   * Kindled; "+1" where Kesh's sliver lands. `at` gives the place (sim px) each frame.
+   */
+  private float(text: string, at: string | (() => { x: number; y: number } | null)): void {
     const t = shadowed(label(this, 0, 0, text, Palette.spark));
     t.setDepth(DEPTH.floaters);
     this.hudLayer.add(t);
-    this.floaters.push({ text: t, stationId, near: this.session.position(), life: FLOAT_MS });
+    if (typeof at === 'string') {
+      const near = this.session.position();
+      this.floaters.push({ text: t, at: () => this.world.propTop(at, near), life: FLOAT_MS });
+    } else {
+      const feet = at();
+      // Over the Kindled who picked it up, as the station floats rise over their props (the sliver lands at the feet).
+      this.floaters.push({ text: t, at: () => (feet ? { x: worldPx(feet.x), y: worldPx(feet.y) - FLOAT_OVER_KINDLED } : null), life: FLOAT_MS });
+    }
   }
 
   /** A "+1" over the station as each cycle completes: predicted from the ring, render only; the counts come from the server. */
@@ -764,7 +956,7 @@ export class HoldingScene extends Phaser.Scene {
         f.text.destroy(true);
         return false;
       }
-      const top = this.world.propTop(f.stationId, f.near);
+      const top = f.at();
       if (top) {
         const rise = FLOAT_RISE * (1 - f.life / FLOAT_MS);
         const ui = this.toUi(simPx(top.x), simPx(top.y));
@@ -807,6 +999,13 @@ export class HoldingScene extends Phaser.Scene {
     /** The HUD's Writ block (UI px), for the tooltip hover. */
     writRect: ViewRect;
     lettersLoaded: boolean;
+    /** Kesh (M2 Task 4b): the prompt's verb, the talk box, his row and frame, the thrown thing in the air. */
+    promptLabel: string;
+    talk: ReturnType<TalkBox['snapshot']> | null;
+    talkRect: ViewRect | null;
+    kesh: ReturnType<HoldingWorld['keshState']>;
+    /** The camera's scroll (world px). */
+    scroll: { x: number; y: number };
   } {
     const s = this.session.state;
     return {
@@ -826,6 +1025,11 @@ export class HoldingScene extends Phaser.Scene {
       writTip: this.hud.writTipVisible,
       writRect: this.hud.writRect,
       lettersLoaded: this.letterSheet !== null,
+      promptLabel: this.promptLabel,
+      talk: this.talkBox?.snapshot() ?? null,
+      talkRect: this.talkBox?.rect() ?? null,
+      kesh: this.world.keshState(),
+      scroll: { ...this.scroll },
     };
   }
 
@@ -834,6 +1038,7 @@ export class HoldingScene extends Phaser.Scene {
     this.session.update(delta);
     if (this.session.pressed & Button.Interact) this.use();
     this.followCamera(refit || this.session.state.tick <= 1);
+    this.world.setKeshTalking(this.talkBox !== null && keshSpeaking(this.talk.step));
     this.world.draw(this.session.state, this.session.position());
     this.hud.draw(chipState(this.response, this.serverNow()), packFill(this.inventory), purseGin(this.inventory), this.writHud(), this.letterSheet);
     this.updatePrompt();
@@ -844,17 +1049,30 @@ export class HoldingScene extends Phaser.Scene {
       if (this.nameScreen.done) {
         this.closeNameScreen();
         this.afterNaming();
-        this.openWritPanel();
       }
     }
     this.writPanel?.update(this.serverNow());
+    this.talkBox?.layout();
 
     // The pad: Circle backs out, the D-pad moves the panel's focus, Cross presses it (Cross is also interact in
     // Calm, which `use` handles through the roam's input while no panel is open). No stop binding: the chip and the panel.
     const edges = padEdges(this.pad);
     const preset = controlsStore.get();
     if (edges.includes(MENU_BUTTONS.back)) this.back();
-    else if (this.writPanel) {
+    else if (this.talkBox) {
+      const axes = connectedPad()?.axes ?? [];
+      const sy = Math.abs(axes[1] ?? 0) > 0.5 ? Math.sign(axes[1] ?? 0) : 0;
+      const pushedY = sy !== 0 && sy !== this.stick.y ? sy : 0;
+      this.stick = { x: 0, y: sy };
+      if (edges.includes(MENU_BUTTONS.up) || pushedY < 0) {
+        this.talk.moveFocus(-1);
+        this.syncTalk();
+      } else if (edges.includes(MENU_BUTTONS.down) || pushedY > 0) {
+        this.talk.moveFocus(1);
+        this.syncTalk();
+      } else if (edges.includes(MENU_BUTTONS.confirm[0]) && !buttonsFor(preset, 'interact', 'calm').includes(MENU_BUTTONS.confirm[0])) this.talkAdvance();
+      else if (MENU_BUTTONS.confirm.slice(1).some((b) => edges.includes(b))) this.talkAdvance();
+    } else if (this.writPanel) {
       const p = this.writPanel;
       // The left stick moves the focus like the D-pad: once per push past the deadzone.
       const axes = connectedPad()?.axes ?? [];

@@ -97,6 +97,8 @@ export const Palette = {
   uiFocus: T.sparkAmber,
   /** Refusals and errors in body text on a panel (choir-flame on ui-panel). */
   uiError: T.choirFlame,
+  /** A hint line in the talk box (M2 Task 4b): no speaker, lit like a prompt, until ART's kit sets the hint style. */
+  talkHint: T.sparkAmber,
   healthFill: T.hollowLight,
   healthShade: T.hollowLavender,
   healthLoss: T.sparkEmber,
