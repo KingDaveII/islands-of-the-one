@@ -391,8 +391,14 @@ export class PlotPanel {
       row.name.setTint(focused ? Palette.uiFocus : i === pickedAt ? Palette.spark : Palette.uiInk);
       place(row.marker, x + PAD, ly + 4);
       place(row.name, x + PAD + 8, ly + 4);
+      // The tile's letters after its name; its effect right-aligned, only while the row has room for it
+      // (the preview under the rows shows the picked tile's effect in full).
+      const lettersX = x + PAD + 8 + Math.round(row.name.width) + 6;
+      const letters = this.choices[i]?.letters ?? '';
+      const lettersW = letters === '' ? 0 : shapeLetters(letters).width;
+      row.letters.setPosition(lettersX, ly + 1);
       place(row.effect, x + w - PAD, ly + 4, 1);
-      row.letters.setPosition(x + w - PAD - 2, ly + 1);
+      row.effect.setVisible(lettersX + lettersW + 6 + Math.round(row.effect.width) <= x + w - PAD);
       ly += ROW + 8;
     });
     ly += 4;
@@ -466,9 +472,8 @@ export class PlotPanel {
         const c = this.choices[i];
         row.letters.clear();
         if (!c || c.letters === '') return;
-        // A tile's letters at 1 UI px per sheet px, right-aligned in the row, before its effect.
-        const r = plotLetters(row.letters, sheet, c.letters, 0, 0, { scale: 1 });
-        row.letters.setX(Math.round(row.effect.x - 6 - r.width));
+        // A tile's letters at 1 UI px per sheet px, after its name.
+        plotLetters(row.letters, sheet, c.letters, 0, 0, { scale: 1 });
       });
     }
     // The sigil, drawn live: the faint grid, the line through the chambers, the circle and the bar.

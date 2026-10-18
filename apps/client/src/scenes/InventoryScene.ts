@@ -139,6 +139,7 @@ export class InventoryScene extends Phaser.Scene {
   private tip!: Phaser.GameObjects.Graphics;
   private header!: Text;
   private packTitle!: Text;
+  private storeTitle!: Text;
   /** The refusal line in a pane header (one text, moved to the pane it is for). */
   private refusalText!: Text;
   private refusal: Refusal | null = null;
@@ -239,7 +240,11 @@ export class InventoryScene extends Phaser.Scene {
     place(label(this, 0, 0, 'INVENTORY', Palette.uiInk, 16), cx, 6, 0.5);
     this.header = label(this, 0, 0, '', Palette.uiInk);
     this.packTitle = label(this, PACK_X + PANE_PAD, PANE_Y + 6, 'PACK', Palette.uiInk);
-    place(label(this, 0, 0, 'STORE', Palette.uiInk), STORE_X + PANE_PAD, HEADER_ROW_Y);
+    this.storeTitle = place(
+      label(this, 0, 0, 'STORE', Palette.uiInk),
+      STORE_X + PANE_PAD,
+      HEADER_ROW_Y,
+    );
     this.refusalText = body(this, 0, 0, '', Palette.uiInk).setVisible(false);
     this.pager = new HintRow(this, { wordColor: Palette.uiInkMuted });
 
@@ -499,6 +504,8 @@ export class InventoryScene extends Phaser.Scene {
     this.cellIcons = [];
     // Only the pane the keys or the pad act on has the lit rim; the other keeps the plain frame.
     const showFocus = deviceStore.get() === 'gamepad' || this.keyNav;
+    this.packTitle.setVisible(this.tab !== 'words');
+    this.storeTitle.setVisible(this.tab !== 'words');
     if (this.tab === 'words') {
       this.syncWords(showFocus);
       this.pager.setVisible(false);

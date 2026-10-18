@@ -1095,7 +1095,8 @@ export class HoldingScene extends Phaser.Scene {
       body(this, 0, 0, '', Palette.uiInkMuted),
       body(this, 0, 0, '', Palette.spark),
       body(this, 0, 0, '', Palette.uiInkMuted),
-      body(this, 0, 0, '', Palette.uiInk),
+      // The note (a faded plot's line) wraps to the panel's width.
+      body(this, 0, 0, '', Palette.uiInk, PANEL_W - 2 * PANEL_PAD),
     ];
     const result = body(this, 0, 0, '', Palette.uiInk).setVisible(false);
     const p: StationPanel = {
@@ -1227,8 +1228,11 @@ export class HoldingScene extends Phaser.Scene {
     const letters = p.lines?.letters ?? null;
     const lettersH = letters ? 8 * LETTER_SCALE + 3 : 0;
     const rows = p.rows.filter((t) => t.visible);
+    // A row is 11 px, a wrapped note as tall as its lines.
+    const rowH = (t: Text): number => Math.max(11, Math.round(t.height) + 3);
+    const rowsH = rows.reduce((n, t) => n + rowH(t), 0);
     const buttonsH = p.buttons.length > 0 ? 6 + 1 + 6 + 15 : 0;
-    const h = PANEL_PAD + 10 + 2 + lettersH + rows.length * 11 + buttonsH + 4 + 11 + PANEL_PAD;
+    const h = PANEL_PAD + 10 + 2 + lettersH + rowsH + buttonsH + 4 + 11 + PANEL_PAD;
     const y = Math.round(this.frame.y + this.frame.h / 2 - h / 2);
     p.g.clear();
     p.face.clear();
@@ -1243,7 +1247,7 @@ export class HoldingScene extends Phaser.Scene {
     }
     for (const t of rows) {
       place(t, x + PANEL_PAD, ly);
-      ly += 11;
+      ly += rowH(t);
     }
     if (p.buttons.length > 0) {
       ly += 6;
@@ -1328,7 +1332,9 @@ export class HoldingScene extends Phaser.Scene {
   }
 
   private updatePrompt(): void {
+    // No prompt while a panel or the talk box is open, nor over the seal scene.
     const open =
+      this.plots.sealing !== null ||
       this.panel !== null ||
       this.writPanel !== null ||
       this.nameScreen !== null ||
