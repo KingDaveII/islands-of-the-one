@@ -169,7 +169,30 @@ holding draws the Kindled from its sheathed sheet (`PLAYER_SHEATHED_SHEET`, `kin
 | `walk` | 6 | 10 | yes | 8 |
 
 - No palette block and no mask: each NPC is generated in its own clay tone, so nothing is swapped.
-- More NPC animations come later, per NPC, as data.
+- An NPC may have its own table and cell instead (`NPC_TABLES`, `NPC_CELLS`, by the name after `npc-`).
+
+#### Old Kesh (`npc-kesh`, M2 Task 4b, ART 2026-10-18)
+
+Kesh sits on his needle of rock (`prop-kesh-rock`) off the holding's south-east shore, fishing into the Hollow,
+and the player talks to him across the water. Two sheets: the rock stays a prop (solid, no shadow); Kesh is his
+own NPC sheet, because he animates on his own and leaves the rock in hour two.
+
+- **Cell:** the tall cell, 96×128 with the origin at (48, 118), the rock's world point. The engine draws him at the
+  rock's position, one depth step above it, with no shadow; ART draws him seated on the summit inside his cell,
+  so no seat offset lives in data. His standing rows, later, stand with their soles on the origin as usual.
+- **Seated rows, one facing each** (south-east, out over the Hollow), keyed and named without a facing like a
+  prop's (`fish_0`), and required on a finished sheet:
+
+| Name | Frames | fps | Playback | What it shows |
+|---|---|---|---|---|
+| `fish` | 4 | 4 | loop | the rod tip bobbing, the line swaying into the Hollow |
+| `talk` | 2 | 3 | loop while the dialogue is open | speaking: mouth and beard moving |
+| `toss` | 4 | 10 | once, then back to `fish` | the throw; `hand` on every frame, released on `toss_2` (`KESH_TOSS_RELEASE_FRAME`) |
+| `idle`, `walk` | 2, 6 | 2, 10 | loop | standing, 8 facings; optional until M3 (hour two, off the rock) |
+
+- **The toss:** the engine flies the thrown thing in an arc from the `hand` point of `toss_2` to the player at the
+  Talk spot, drawn with that thing's own sprite.
+- River-dark clay in his own tone, so no palette block and no mask; outline "other".
 
 ### Props (`prop-<name>`, G1.2b)
 
@@ -278,7 +301,8 @@ The contract's version, the only one the engine loads (`SPRITE_SHEET_VERSION`); 
   "heavy_charge_S_2": { "frame": { "x": 0, "y": 0, "w": 96, "h": 80 }, "...": "...", "points": { "tip": [31, 42] } }
   ```
 
-  The names and where they go are in `packages/shared/src/sprites.ts` (`KINDLED_POINTS`, `KINDLED_POINT_ANIMS`):
+  The names and where they go are in `packages/shared/src/sprites.ts` (`KINDLED_POINTS`, `KINDLED_POINT_ANIMS`;
+  for NPCs, `NPC_POINT_ANIMS`: Kesh's `hand` on `toss`, §4):
 
   | Point | What | Required on every frame and facing of |
   |---|---|---|

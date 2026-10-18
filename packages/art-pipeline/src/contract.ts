@@ -87,6 +87,15 @@ export function facingsFor(sheet: string, anim: string): readonly Facing[] {
   return spec.anims?.find((a) => a.name === anim)?.facings ?? SPRITE_FACINGS;
 }
 
+/**
+ * Whether one animation of a recipe is drawn per facing: its kind has facings
+ * and its row lists some. A row with no facings on a sheet that has them (Kesh's
+ * seated rows) is one strip, named like a prop's (`fish_0`).
+ */
+export function animHasFacings(kind: Kind, sheet: string, anim: string): boolean {
+  return hasFacings(kind) && facingsFor(sheet, anim).length > 0;
+}
+
 /** The table row of one animation of a sheet, if the contract has it. */
 export function animRow(sheet: string, anim: string, prop: PropGiven | null = null): SpriteAnimSpec | undefined {
   return sheetTable(sheet, prop)?.find((a) => a.name === anim);

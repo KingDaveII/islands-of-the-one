@@ -83,7 +83,7 @@ function keepPointsOfAnims(json: Record<string, unknown>): Record<string, unknow
       p,
       Object.fromEntries(
         Object.entries(frames).filter(([f]) =>
-          anims.some((a) => new RegExp(`^${a}_[A-Z]+_\\d+$`).test(f)),
+          anims.some((a) => new RegExp(`^${a}(_[A-Z]+)?_\\d+$`).test(f)),
         ),
       ),
     ]),
@@ -958,6 +958,41 @@ describe('a finished Husk, NPC and prop sheet', () => {
       'npc-test: walk_S is missing (a finished sheet carries every animation and facing)',
     );
     expect(p).toHaveLength(15);
+  });
+
+  it("Kesh (M2 Task 4b): npc-kesh on the tall cell, three seated rows without a facing, hand on every toss frame", () => {
+    const strip = (n: number): Record<string, unknown> => ({ src: 'art/clean/plain.png', frames: Array.from({ length: n }, () => 0) });
+    const hand = Object.fromEntries([0, 1, 2, 3].map((i) => [`toss_${i}`, [24, 33]]));
+    const json = {
+      sheet: 'npc-kesh',
+      kind: 'npc',
+      outline: 'other',
+      draft: false,
+      anims: { fish: strip(4), talk: strip(2), toss: strip(4) },
+      points: { hand },
+    };
+    const r = finished(json);
+    expect(r.problems).toEqual([]);
+    expect(r.sheet.meta.cell).toEqual({ w: 96, h: 128 });
+    expect(r.sheet.meta.origin).toEqual({ x: 48, y: 118 });
+    expect(r.sheet.anims).toEqual({
+      fish: { frames: ['fish_0', 'fish_1', 'fish_2', 'fish_3'], frameRate: 4, repeat: -1 },
+      talk: { frames: ['talk_0', 'talk_1'], frameRate: 3, repeat: -1 },
+      toss: { frames: ['toss_0', 'toss_1', 'toss_2', 'toss_3'], frameRate: 10, repeat: 0 },
+    });
+    for (let i = 0; i < 4; i++) expect(r.sheet.frames[`toss_${i}`]?.points?.hand, `toss_${i}`).toBeDefined();
+    expect(r.sheet.frames.fish_0?.points).toBeUndefined();
+    // A seated row is one strip: a facings block is refused, and so is a toss without its hand.
+    expect(problemsOf(() => build(root, { ...json, anims: { ...json.anims, fish: { facings: { SE: strip(4) } } } }))[0]).toMatch(
+      /anims\.fish/,
+    );
+    expect(problemsOf(() => build(root, { ...json, points: {} }))).toEqual(
+      [0, 1, 2, 3].map((i) => `npc-kesh: toss_${i} has no hand point (points.hand.toss_${i})`),
+    );
+    // Without a seated row it is not finished; his standing rows are optional until M3.
+    expect(problemsOf(() => build(root, { ...json, anims: { fish: strip(4), toss: strip(4) } }))).toEqual([
+      'npc-kesh: talk is missing (a finished sheet carries every animation and facing)',
+    ]);
   });
 
   it('a prop: idle only, its frame rate from the recipe (default 8), looping with more than one frame', () => {

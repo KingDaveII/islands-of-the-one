@@ -11,6 +11,7 @@ import {
   animNames,
   cellFor,
   defaultGround,
+  animHasFacings,
   facingsFor,
   frameName,
   hasFacings,
@@ -104,7 +105,7 @@ function orderedAnims(recipe: Recipe): string[] {
 function orderedFacings(recipe: Recipe, anim: string): (Facing | null)[] {
   const a = recipe.anims[anim];
   if (!a) return [];
-  if (!hasFacings(recipe.kind)) return a.source ? [null] : [];
+  if (!animHasFacings(recipe.kind, recipe.sheet, anim)) return a.source ? [null] : [];
   const order = facingsFor(recipe.sheet, anim);
   return SPRITE_FACINGS.filter((f) => order.includes(f) && a.facings?.[f]);
 }
@@ -244,7 +245,7 @@ export function completenessProblems(recipe: Recipe, anims: readonly BuiltAnim[]
   const problems: string[] = [];
   const built = new Map(anims.map((a) => [a.key, a.frames.length]));
   for (const row of table) {
-    const keys = (hasFacings(recipe.kind) ? row.facings : [null]).map((f) => animKey(row.name, f));
+    const keys = (hasFacings(recipe.kind) && row.facings.length > 0 ? row.facings : [null]).map((f) => animKey(row.name, f));
     const required = isRequiredAnim(row);
     if (!required && keys.every((k) => !built.has(k))) continue;
     for (const key of keys) {

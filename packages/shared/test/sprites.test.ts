@@ -2,6 +2,11 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
   CLAY_TONES,
+  KESH_TOSS_RELEASE_FRAME,
+  NPC_CELLS,
+  NPC_POINT_ANIMS,
+  NPC_TABLES,
+  pointAnimsFor,
   isSheathedSheet,
   KINDLED_SHEATHED_ANIMS,
   sheathedSheetName,
@@ -854,6 +859,40 @@ describe('optional animations (milestones)', () => {
     );
   const sheetWith = (anims: SpriteSheet['anims']): SpriteSheet => ({ ...fixtureSheet, anims });
   const m1 = KINDLED_ANIMS.filter(isRequiredAnim);
+
+  it("gives Kesh (npc-kesh, M2 Task 4b) the tall cell and his own table: three seated rows without a facing, required; standing rows optional until M3", () => {
+    const spec = spriteSheetSpec('npc-kesh');
+    expect(spec.cell).toEqual(spriteCellSpec(96, 128, 118));
+    expect(NPC_CELLS.kesh).toEqual(TALL_PROP_CELL);
+    expect(spec.anims).toBe(NPC_TABLES.kesh);
+    expect(spec.facings).toBe(true);
+    expect(spec.palette).toBe(false);
+    const rows = NPC_TABLES.kesh ?? [];
+    expect(rows.map((a) => [a.name, a.frames, a.fps, a.loop, a.facings.length, isRequiredAnim(a)])).toEqual([
+      ['fish', 4, 4, true, 0, true],
+      ['talk', 2, 3, true, 0, true],
+      ['toss', 4, 10, false, 0, true],
+      ['idle', 2, 2, true, 8, false],
+      ['walk', 6, 10, true, 8, false],
+    ]);
+    // Seated rows are keyed and named without a facing, like a prop's.
+    const seatedAnims = Object.fromEntries(
+      rows
+        .filter((a) => a.facings.length === 0)
+        .map((a) => [a.name, { frames: Array.from({ length: a.frames }, (_, n) => `${a.name}_${n}`), frameRate: a.fps, repeat: a.loop ? -1 : 0 }]),
+    );
+    expect(tableProblems('npc-kesh', sheetWith(seatedAnims), rows)).toEqual([]);
+    const noTalk = Object.fromEntries(Object.entries(seatedAnims).filter(([k]) => k !== 'talk'));
+    expect(tableProblems('npc-kesh', sheetWith(noTalk), rows)).toEqual(['talk is missing']);
+    // His hand on every toss frame; nothing else carries a point; other NPCs carry none.
+    expect(spritePointsFor('npc-kesh', 'toss')).toEqual(['hand']);
+    expect(spritePointsFor('npc-kesh', 'fish')).toEqual([]);
+    expect(spritePointsFor('npc-tally', 'toss')).toEqual([]);
+    expect(pointAnimsFor('npc-kesh', 'hand')).toEqual(['toss']);
+    expect(pointAnimsFor('kindled-ash', 'tip')).toEqual(['heavy_charge']);
+    expect(KESH_TOSS_RELEASE_FRAME).toBe(2);
+    expect(NPC_POINT_ANIMS).toEqual({ kesh: { hand: ['toss'] } });
+  });
 
   it('keeps the combat sheet M1 and required whole (nothing awaits art); carry and sit live on the sheathed sheet', () => {
     expect(REQUIRED_MILESTONE).toBe('M1');

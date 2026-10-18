@@ -123,7 +123,7 @@ export function tableProblems(name: string, sheet: SpriteSheet, table: readonly 
   const facings = spriteSheetSpec(name).facings;
   const keys: string[] = [];
   for (const a of table) {
-    const rowKeys = (facings ? a.facings : [null]).map((f) => [f, f ? kindledAnimKey(a.name, f) : a.name] as const);
+    const rowKeys = (facings && a.facings.length > 0 ? a.facings : [null]).map((f) => [f, f ? kindledAnimKey(a.name, f) : a.name] as const);
     const required = isRequiredAnim(a);
     if (!required && rowKeys.every(([, key]) => !sheet.anims[key])) continue;
     for (const [facing, key] of rowKeys) {

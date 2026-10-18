@@ -154,7 +154,8 @@ the W, SW and NW tumbles). A facing entry, or a facing-less animation's source, 
 Where the engine attaches the Hookblade's effects: `tip` (the hook's tip, the charge spark) on every frame and
 facing of `heavy_charge`, `hand` (the hand the Haul chain leaves from) on every frame and facing of `haul_throw`,
 `haul_pull`, `haul_slide` and `haul_recover` (`KINDLED_POINTS`, `KINDLED_POINT_ANIMS` in
-`packages/shared/src/sprites.ts`). Nothing else may carry a point.
+`packages/shared/src/sprites.ts`). On `npc-kesh`, `hand` (where a thrown thing leaves his hand) goes on every
+frame of `toss` (`NPC_POINT_ANIMS`). Nothing else may carry a point.
 
 ```json
 "points": {
@@ -207,7 +208,7 @@ Kindled sheet carries them. `run_back` came off with the backwards-run job (#74)
 |---|---|---|---|---|---|
 | `kindled-` | `kindled` | 96×80 | per animation (8, 4 or 2) | `KINDLED_ANIMS` | yes |
 | `husk-` | `husk` | 64×64 | none | the Husk's own in `HUSK_TABLES` (`peeling`, `nutshell`); a Husk without one builds only as a draft | no |
-| `npc-` | `npc` | 64×64 | all 8 | `NPC_ANIMS`: `idle` 2 frames at 2 fps, `walk` 6 at 10, both looping | no |
+| `npc-` | `npc` | 64×64, or its own (`NPC_CELLS`: `npc-kesh` on the tall 96×128 cell) | all 8, except rows without facings (Kesh's seated rows: one strip each, `src` and `frames` on the animation, as a prop's) | `NPC_ANIMS`: `idle` 2 frames at 2 fps, `walk` 6 at 10, both looping; or its own (`NPC_TABLES`: Kesh's `fish`, `talk`, `toss`, sprites.md §4) | no |
 | `prop-` | `prop` | 64×64, or the tall prop cell 96×128 with the origin at (48, 118) for a prop in `PROP_CELLS` (`prop-twisted-tree`; `sprites.md` §2) | none | the prop's own in `PROP_TABLES` when it has one (`chest`: `closed` 1–2 frames at the recipe's `fps`, `opening` 4 at 12, `open` 1 held; a finished sheet carries all three, a draft any subset); else `idle` only, 1–8 frames, at the recipe's `fps` (default 8), looping with more than one frame | no |
 | `tiles-` | `tiles` | each piece its own size: 32×32, doors 64×32 or 32×64 | none | the pieces of the set's rule (`cave` or `shore`) and, with doors, the door animations of `packages/shared/src/tiles.ts` (`sprites.md` §10), listed under `pieces` | no |
 
@@ -481,7 +482,7 @@ unless the message says otherwise; read failures give the file's own.
 | `points must map point names to frames: …` / `points.<p> must map output frame names to [x, y]` | Shape: `{ "tip": { "<frame>": [x, y] } }`. |
 | `points.<p> is not a point name (tip, hand)` | Use `tip` or `hand` (`sprites.md` §5). |
 | `points.<p>.<f> names "<f>", which is not a frame this recipe builds` | Use an output frame name (`heavy_charge_S_0`). |
-| `points.<p>.<f> is on <anim>, which carries no <p> point (<p> goes on …)` | `tip` goes on `heavy_charge`, `hand` on the four `haul_*` animations; only on Kindled sheets. |
+| `points.<p>.<f> is on <anim>, which carries no <p> point (on <sheet>, <p> goes on …)` | On a Kindled sheet `tip` goes on `heavy_charge` and `hand` on the four `haul_*` animations; on `npc-kesh` `hand` goes on `toss` (`NPC_POINT_ANIMS`); other sheets carry none. |
 | `points.<p>.<f> must be [x, y], whole pixels in the frame's source` | Two whole numbers from 0. |
 | `anims is not a recipe field` (a tiles recipe) / `floorWeights is not a recipe field` (any other) | A tiles recipe has `pieces`, `floorWeights` and its set (`rule`, `doors`) in place of `anims`, `skin` and `points`. |
 | `rule must be one of cave, shore` / `doors must be true or false` | Tiles: the set's rule and doors (sprites.md §10). |
