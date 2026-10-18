@@ -2,11 +2,12 @@
 
 The Kindled's home Shard (M2 Task 3b): where a player lands after logging in, walks around, works
 the twisted trees or the stone outcrop, takes a station's basket into the store and moves things
-between the store and the pack, names the island and feeds its Writ (M2 Task 4a, §9). Numbers live in
+between the store and the pack, names the island and feeds its Writ (M2 Task 4a, §9), names and builds up
+its plots (§11, §12). Numbers live in
 [`packages/shared/data/holding.json`](../../packages/shared/data/holding.json),
 [`stations.json`](../../packages/shared/data/stations.json), [`skills.json`](../../packages/shared/data/skills.json),
-[`writ.json`](../../packages/shared/data/writ.json) and the `roam` block of
-[`tuning.json`](../../packages/shared/data/tuning.json), never in code. Terms:
+[`writ.json`](../../packages/shared/data/writ.json), [`pieces.json`](../../packages/shared/data/pieces.json) and the `roam`
+and `plots` blocks of [`tuning.json`](../../packages/shared/data/tuning.json), never in code. Terms:
 [`glossary.md`](glossary.md); items and the baskets: [`inventory.md`](inventory.md); how it is
 drawn: [`readability.md`](readability.md); the sheets: [`sprites.md`](sprites.md); the Old Letters and
 how a Name is heard: [`letters.md`](letters.md).
@@ -181,8 +182,10 @@ cycle (`apps/server/src/holding/cycles.ts`):
 
 1. `end = min(now, lastSeen + offlineCapHours, writ.emptyAt)`: no cycle runs while the Writ is dark, and none
    past the cap. A faded plot's end is clamped at its line's `fadesAt` too, so a relight never pays dark time.
-2. `n = floor((end − cycled_until) / cycleMs)`, never negative; `cycleMs` is the station's `cycleMs` × its speed
-   factor (`cycleLengthMs`, 1 today; Task 6's pieces raise it).
+2. `n = floor((end − cycled_until) / cycleMs)`, never negative; `cycleMs` is the station's real length,
+   `cycleLengthMs(cycle, pieces)`: its `cycleMs` over the speed its standing pieces give (§12; the field's 15 min is
+   12 with one piece, 10 with two). A settle pays at the speed the pieces had; a build after it leaves
+   `cycled_until` where it stands, so the partial cycle carries on at the new speed.
 3. Credit the n cycles' yield into `basket:<station>` through `inventory.apply`, reason `harvest`, ref
    `cycle:<kindled>:<station>:<from ms>-<to ms>`, so a stretch pays once. There is no XP. ישן's bonus (§11)
    multiplies the quantity in permille with a carry kept in `carry_permille`, all integers.
@@ -234,6 +237,9 @@ routes ([`accounts.md`](accounts.md)): the Kindled comes from the session cookie
 | `POST /api/kesh/seeds`    | `{}`            | `200` the same · `400` bad-request · `409` not-due / pack-full · `401` · `404` (§11)     |
 | `POST /api/plots/name`    | `{ plotId, ground, virtue }` | `200` the same · `400` bad-request / unknown-plot / unknown-word / wrong-slot / no-ground / sentence-refused · `409` unnamed / faded / unchanged / insufficient · `401` · `404` (§11) |
 | `POST /api/plots/sow`     | `{ plotId }`    | `200` the same · `400` bad-request / unknown-plot · `409` unnamed-plot / faded / already-sown / insufficient · `401` · `404` (§11) |
+| `POST /api/plots/build`   | `{ plotId, pieceId, col, row, rotation }` | `200` the same · `400` bad-request / unknown-plot / unknown-piece / blocked · `409` unnamed-plot / faded / already-built / needs-line / needs-skill / limit / insufficient · `401` · `404` (§12) |
+| `POST /api/plots/move`    | `{ plotId, pieceId, col, row, rotation }` | `200` the same · `400` bad-request / unknown-plot / blocked · `409` unnamed-plot / faded / not-built · `401` · `404` (§12) |
+| `POST /api/plots/take-down` | `{ plotId, pieceId }` | `200` the same · `400` bad-request / unknown-plot · `409` unnamed-plot / faded / not-built / store-full · `401` · `404` (§12) |
 
 `POST /api/holding/work` and `/take` take a named plot's id as a station id too: an unnamed plot is
 `unnamed-plot` (409), an unsown field `not-sown` (409), a faded plot `faded` (409).
@@ -243,12 +249,13 @@ too) as lists of `{ itemId, quantity }`; the `activity` (`stationId`, `startedAt
 server's `now`; `skills`, each with its XP, level, XP into the level and XP to the next; the
 `writ` (`WritView`, §9) and `kesh` (`KeshView`, §10, with `wordDue` and `seedsDue`); `words`, the known word
 ids; `plots`, one `PlotView` per layout plot (`id`, `ground`, `virtue`, `namedAt`, `virtueSetAt`, `sownAt`,
-`kind` (null while unnamed), `level` (1 until Task 6), `state` `lit` | `dark` | `faded` from the plot's Writ
+`kind` (null while unnamed), `pieces` (the pieces standing in it, `{ pieceId, col, row, rotation }`, §12),
+`level` (1 plus the distinct pieces), `state` `lit` | `dark` | `faded` from the plot's Writ
 line); and `cycles`, by station id for every station with a running cycle, `{ cycleMs, cycledUntil,
-bonusPermille }`, so the client draws "Next in 12 min" between heartbeats (§11). A take answer adds `take`: the station, what `moved` into the store and what
+bonusPermille }` (`cycleMs` the real length, §12), so the client draws "Next in 12 min" between heartbeats (§11). A take answer adds `take`: the station, what `moved` into the store and what
 was `left` in the basket. Every route settles first, refuses unknown fields and stations, and answers
 the same shape as GET. The Writ's routes are in §9; the shape change made `PROTOCOL_VERSION` 3,
-`kesh` with the Writ's `fedAt` (4b) made it 4, and the plots (Task 5) 5.
+`kesh` with the Writ's `fedAt` (4b) made it 4, the plots (Task 5) 5, and the pieces (Task 6) 6.
 
 **The heartbeat:** while the holding scene is open the client calls `GET /api/holding` every
 `heartbeatMs` (30 s) and after each interaction (work, stop, take, opening a station panel, coming
@@ -323,8 +330,9 @@ with the inventory's blink-and-hold timing when it applies. Toasts proper are Ta
   written there; a rim-band's fitting, scribing a line and renaming (the panel shows line 2's needs
   greyed).
 - **Task 5, plots and their baskets' cycles:** done (§11).
-- **Task 6, build mode:** the layout stays pure data; a plot's `level` is 1 + its pieces (`plotLevel`), and a
-  cycle's length is `cycleMs` × the station's speed factor (`cycleSpeedPermille`, 1000 today), both one function.
+- **Task 6, build mode:** done (§12). What stays for later: the pieces of the lumber camp, the quarry and the forge
+  wait for their Ground words (their names and cards are in `pieces.json` already, unavailable); a piece's real
+  effect replaces GAME DESIGN's placeholder when they are worked out; the toasts (Task 7) replace the footer line.
 - **Task 8, the weapon rack:** the reserved `weapon-rack` spot by the post gets its prop and its Use.
 - **Boats:** the `landing` on the south shore.
 - **Task 7, sleep, the away card and toasts:** the settle already reports what a stretch credited
@@ -354,6 +362,7 @@ depths). Shots: `docs/screenshots/m2-3b/`.
 `tools/screenshots-m2-4a.mjs` is the Writ's run (§9); shots: `docs/screenshots/m2-4a/`.
 `tools/screenshots-m2-4b.mjs` is Kesh's (§10); shots: `docs/screenshots/m2-4b/`.
 `tools/screenshots-m2-5.mjs` is the plots' (§11); shots: `docs/screenshots/m2-5/`.
+`tools/screenshots-m2-6.mjs` is build mode's (§12); shots: `docs/screenshots/m2-6/`.
 
 ## 9. The Writ
 
@@ -688,15 +697,16 @@ Virtue on the left, labelled); the known tiles that fit the selected slot with t
 and effect ("You don't know any Ground words yet." / "… Virtue words yet." when none; "None" leaves the Virtue
 empty); the preview with the sigil drawn live, "Builds: Field", the Virtue's effect "+1% yield for each day it
 keeps its name, up to +20%", and LORE's Field tooltip (§14.3; its two-word line once a Virtue is picked); the cost line "First naming: free" / "Renaming: 1
-sealed gin" (tooltip "A name is paid for."); "Level 1" and "Pieces: none" for Task 6; CONFIRM, greyed while the
+sealed gin" (tooltip "A name is paid for."); the level ("Level 2", 1 plus the pieces standing, §12) and the pieces
+by name ("Pieces: Clay channel, Seed jars", or LORE's "Pieces: none yet"); CONFIRM, greyed while the
 sentence is unchanged or has no Ground; a refusal in one line. Inputs as the Writ panel's. **The field's
 station panel** (`stationLines`): until sown, only "Not sown yet." and SOW (without a seed, "You don't have
-that many."); once sown, "FIELD" with the sentence's letters, "Level 1", "By itself: 1 pale grain every 15 min"
-(the cycle; with ישן, "+3% for keeping its name" under it, the bonus so far), "By hand: 1 pale grain every 20 s"
-(the highlighted "You: 1 pale grain every 20 s" in its place while working here), the basket count, "Next in 12
-min" (`nextInLine`, rounded up to the minute; "Resting while your Writ is dark." while dark), Farming's level and
-XP to the next, and
-WORK HERE / STOP WORKING, TAKE ALL, RENAME; faded, "Faded into the haze with your Writ's first line. Feed your
+that many."); once sown, "FIELD" with the sentence's letters, "Level 2" (the real level), "By itself: 1 pale grain
+every 12 min" (the cycle at its real length, §12; with ישן, "+3% for keeping its name" under it, the bonus so far),
+"By hand: 1 pale grain every 20 s" (the action, which the pieces never speed; the highlighted "You: 1 pale grain
+every 20 s" in its place while working here), the basket count, "Next in 12 min" (`nextInLine`, rounded up to the
+minute; "Resting while your Writ is dark." while dark), Farming's level and XP to the next, and WORK HERE / STOP
+WORKING, TAKE ALL, BUILD HERE (§12), RENAME; faded, "Faded into the haze with your Writ's first line. Feed your
 Writ and it will remember." and no buttons. **Kesh's tosses** (§10): the `word` toss flies a placeholder clay
 tile (`clayTile`, a small rectangle drawn as a sprite texture) and lands showing the word's letters from the
 letter sheet for a float's time; the `seeds` toss flies the `grey-seeds` item icon and floats "+4". **The
@@ -718,3 +728,109 @@ racing on one plot charge at most once); `apps/client/src/game/plotView.test.ts`
 field's lines lit, dark and faded; "Next in …"), `keshTalk.test.ts` (the flows with `wordDue` and `seedsDue`)
 and `inventoryView.test.ts` (the Words tab). `tools/screenshots-m2-5.mjs` runs it end to end; shots:
 `docs/screenshots/m2-5/`.
+
+## 12. Build mode
+
+Upgrade pieces (M2 Task 6; GAME DESIGN's "Building upgrades", David 2026-10-15, Valheim's workbench the model: "A
+station is upgraded by building pieces around it, as physical objects in the world, not by pressing a button";
+LORE §16.8 named them; both answered MAIN's questions on 2026-10-18). A named plot is its 6 × 6 square with the
+signpost at the centre; pieces stand inside it, and the station's level is 1 plus the distinct pieces standing
+(each kind counts once). Pieces speed only the station's own cycle, never the hands.
+
+**The data** is [`packages/shared/data/pieces.json`](../../packages/shared/data/pieces.json), validated on load
+(`validatePiecesData`, `packages/shared/src/pieces.ts`): `piecesPerLine` (2: GAME DESIGN's "two pieces per station
+per Writ line") and the pieces, each with its permanent kebab-case `id` (stored in `plot_pieces`), `stationKind`
+(a plot kind of stations.json), LORE's `name` and `card` word for word ("A card says what a piece is, never what it
+does"), `cost` (items and counts, taken from the store), `footprint` (`{ cols, rows }` in tiles before rotation;
+90 and 270 swap them), `skill` (`{ skill, level }` or null), `writLine` (the line needed) and `effect` (GAME DESIGN's
+placeholder, `cycle-speed` +250 permille, additive). The field's three:
+
+| id                | name            | cost                             | footprint | skill | Writ line |
+| ----------------- | --------------- | -------------------------------- | --------- | ----- | --------- |
+| `clay-channel`    | Clay channel    | 300 `twisted-log`, 150 `black-stone` | 1 × 4 | none  | 1         |
+| `seed-jars`       | Seed jars       | 200 `twisted-log`, 40 `pale-grain`   | 2 × 1 | none  | 1         |
+| `threshing-floor` | Threshing floor | 400 `black-stone`, 150 `twisted-log` | 3 × 3 | none  | 2         |
+
+The threshing floor needs Writ line 2, which nobody has in M2, so it always shows locked with what it needs. The
+lumber camp's, the quarry's and the forge's pieces (chopping block, drying rack, saw-horse; hoist, sorting sieve,
+stone sledge; anvil, quench trough, pot bellows) are in the file with LORE's cards and `"available": false`: no
+cost, no footprint, and the build route refuses them as `unknown-piece`, until their Ground words come. Every name,
+card and line of build mode passes `DRAWABLE_CHARS` and the banned-names test (`packages/shared/test/pieces.test.ts`).
+
+**The rules** are shared and pure (`packages/shared/src/pieces.ts`), so the server and the ghost agree:
+`plotLevel(pieces)` is 1 + the distinct kinds; `cycleSpeedPermille(pieces)` 1000 + the standing pieces' effects,
+each kind once; `cycleLengthMs(cycle, pieces)` = `round(cycleMs × 1000 / speed)` (the field: 15, 12, 10 min);
+`pieceLimit(writLines)` = `piecesPerLine` × the Kindled's Writ lines (2 in M2); each kind stands **once per plot**
+(GAME DESIGN: "a second clay channel would add nothing to the level"). `placementProblems(layout, plot, pieces,
+candidate)` lists why a footprint (its top-left tile and a rotation of 0, 90, 180 or 270) can't stand there, in
+the order the refusal names them: `outside` (not wholly inside the plot's square), `on-signpost` (over the
+signpost's tile or its interact tile), `overlaps` (over another piece of the plot; the candidate's own kind, if one
+stands, is the piece being moved and doesn't block itself), `blocks-signpost` (GAME DESIGN's rule, 2026-10-18:
+"there must always be a walkable way from the plot's edge to the signpost": a flood fill inside the plot with the
+signpost, every standing piece and the candidate solid, from every free edge tile that has walkable ground
+outside it, must reach the signpost's interact tile). An empty list means it fits; the ghost is green exactly then.
+
+**The server** (`apps/server/src/holding/pieces.ts`). The pieces are the `plot_pieces` table (the Kindled, `plot_id`
+and `piece_id` as primary key; `col`, `row`, `rotation`, `built_at`; cascade; migration 0008, expand-only), locked
+with the plots' rows on every holding request and touched only by the holding module. Three routes, each a holding
+request (the locks, the settle, then the act; every answer the holding):
+
+- `POST /api/plots/build` `{ plotId, pieceId, col, row, rotation }` refuses, in order: `unknown-plot` (400),
+  `unnamed-plot`, `faded` (409); `unknown-piece` (400: not in pieces.json, not available, or not this plot's kind);
+  `already-built` (409); `needs-line` (409, "Needs Writ line 2."); `needs-skill` (409, "Needs Farming 5."); `limit`
+  (409, "This plot can take no more pieces until your Writ has another line."); `blocked` (400: LORE's "That doesn't
+  fit there.", then the first reason in MAIN's placeholder words); `insufficient` (409, "Not enough in the store.":
+  the pack doesn't count, GAME DESIGN's "the materials leave the store"). The cost leaves the store through
+  `inventory.apply` with reason `build` ([inventory.md](inventory.md)).
+- `POST /api/plots/move` `{ plotId, pieceId, col, row, rotation }` is free: `unknown-plot`, `unnamed-plot`, `faded`,
+  `not-built` (409), `blocked`.
+- `POST /api/plots/take-down` `{ plotId, pieceId }` puts every material back into the store (reason `build`, positive
+  deltas), or refuses whole as `store-full` (409) with the take-all's line ("Store: twisted logs full.") when a stack
+  doesn't fit, the piece staying up: nothing is ever destroyed. Also `unknown-plot`, `unnamed-plot`, `faded`, `not-built`.
+
+A change to a plot's pieces is an act after the settle: the settle pays the cycles up to now at the old speed and
+leaves `cycled_until` where it stands, so the partial cycle carries on at the new speed (§3). A faded plot keeps
+its pieces, frozen with it, and refuses all three as `faded`. A rename that changes the Ground (only the rule in
+M2) takes every piece down with its refund in the rename's transaction, which may overfill the store
+(`overfillStore`). The playtest CLI `pnpm --filter @iot/server plots:pieces <username> <plotId> [--clear]` lists a
+plot's pieces; `--clear` takes them all down with their refunds (overfilling if it must), as a holding request.
+`plots[]` in the holding answer carries `pieces` and the real `level`; `cycles[...]`'s `cycleMs` is the real length;
+`PROTOCOL_VERSION` is 6. The race (two builds for the last free slot stand one and pay one cost) runs on Postgres.
+
+**The client.** BUILD HERE in a sown, unfaded field's panel opens **build mode** (`apps/client/src/ui/buildMode.ts`;
+its logic, pure and tested, in `game/buildView.ts`; the pieces, the ghost and the building moment in
+`render/pieces.ts`): the camera stays on the plot and its ring is drawn on the ground; the side list on the right
+heads "Field, level 2" (LORE: a comma, keeping the dot for the plot sentence's divider) and "Pieces 1/2", then a
+row per piece the station can take, each with a placeholder picture (its footprint as tiles, with its initials),
+its name, its materials by display name against the store ("Twisted log 340/300", a short one in the warning
+token), what it needs ("Needs Writ line 2", "Needs Farming 5") and its effect line apart from the card ("+25% work
+speed"); LORE's card is the row's tooltip. Picking a row makes a **ghost** of the footprint follow the pointer (on
+a pad, a tile cursor moved by the D-pad or the left stick; on touch, a tap places it), snapped to the tile grid and
+centred on it: ART's tints (#102), `wheel-patina` where `placementProblems` is empty and `choir-flame-deep` where
+it isn't (and over the Kindled's own tile, which only the client knows), drawn as a 50 % checkerboard over the
+piece's pixels and a 1 px outline round its tiles, never an alpha fade and never a signal colour. **Rotate** is the
+`rotate` action of `controls.json` (R; Triangle in Calm on Triggers and Left-stick; unbound on Faces, where Triangle
+is heavy, [controls.md](controls.md)), and a TURN button beside the ghost on touch. **Confirm** (LMB, Enter, Cross;
+a second tap on the same tile) sends the route; **cancel** (RMB, Esc, Circle) drops the ghost, a second cancel leaves
+build mode. When the answer lands, **the building moment** plays on the new piece, whole frames timed by
+`tuning.json` `plots.buildMs` (400): a few dust pixels round its base for the first quarter, then the box rising from
+its base row by row; nothing draws before the answer. **Standing pieces** are placeholder props (a footprint-sized
+box in `pieceFace` with a shaded front, a 1 px outline and the piece's initials as a word over the world), y-sorted
+with the bodies by their base, dim like the ground when the plot is faded; their tiles are pillars in the roam
+(`setSolidPlots(plotIds, pieceTiles)`). In build mode a standing piece selected (a click on it; the cursor on it
+and Cross) offers **MOVE** (it becomes the ghost; confirming sends `move`) and **TAKE DOWN** (sends `take-down`;
+the refund's total floats over the signpost, "+450", as a take-all's). A refusal is one line in the list's footer,
+with the inventory's blink-and-hold timing, until the toasts of Task 7. The field's panel shows the real level and
+the real cycle ("By itself: 1 pale grain every 12 min"); the plot sentence panel lists the pieces by name (§11).
+
+**Tests:** `packages/shared/test/pieces.test.ts` (the validator, LORE's cards, the level and the speed at 0, 1 and 2
+pieces, the limit, every placement reason at each rotation, a moved piece not blocking itself, two pieces walling
+the signpost off, the wire), `controls.test.ts` (rotate); `apps/server/test/pieces.test.ts` on PGlite (every
+refusal in order, the cost and the refund with their ledger rows, the pack not counting, `limit` at 2,
+`needs-line` for the floor, move free and blocked, `store-full` refusing whole, `faded` on all three, the trickle
+either side of a build, the level and the pieces in the answer, a Ground-changing rename's refund, the CLI, the
+routes' guards and codes), `holding.test.ts` (migration 0008) and `holding.postgres.test.ts` (the race);
+`apps/client/src/game/buildView.test.ts` (the list's lines and locked states, the header, the ghost's colour and
+rotation, the cursor, the building moment's phases, the roam's pillars), `holdingView.test.ts` (the panel's level,
+lines and BUILD HERE), `plotView.test.ts` (the pieces line), `render/glyphCells.test.ts` (the R key cap).
+`tools/screenshots-m2-6.mjs` runs it end to end; shots: `docs/screenshots/m2-6/`.

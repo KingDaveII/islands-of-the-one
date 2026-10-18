@@ -7,6 +7,7 @@ export {
   ONLINE_GRACE_MS,
   settleMath,
   settleRef,
+  type ClearResult,
   type Holding,
   type HoldingError,
   type HoldingResult,
@@ -42,6 +43,25 @@ export {
   type Workplace,
   type WorkplaceLookup,
 } from './plots.js';
+export {
+  buildPieceIn,
+  costChanges,
+  kindledOfUsername,
+  listPieces,
+  lockPieces,
+  movePieceIn,
+  parsePiecesArgs,
+  PIECES_USAGE,
+  piecesOfPlot,
+  refundChanges,
+  standingOf,
+  takeDownAllIn,
+  takeDownPieceIn,
+  type PieceError,
+  type PieceResult,
+  type PiecesArgs,
+  type PiecesListResult,
+} from './pieces.js';
 export {
   forgetWord,
   grantWord,

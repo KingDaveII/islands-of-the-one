@@ -43,8 +43,9 @@ const adamah = wordDef('adamah') as WordDef;
 const yashan = wordDef('yashan') as WordDef;
 const layout = holdingLayout();
 const plot1 = layout.plots[0] as LayoutPlot;
-const unnamed = { ground: null, virtue: null };
-const named = { ground: 'adamah', virtue: null };
+const unnamed = { ground: null, virtue: null, pieces: [] };
+const named = { ground: 'adamah', virtue: null, pieces: [] };
+const channel = { pieceId: 'clay-channel', col: 7, row: 7, rotation: 0 as const };
 
 describe('the sentence', () => {
   it("shows the Ground's letters, the divider and the Virtue's; its sigil and its element follow the Ground", () => {
@@ -85,7 +86,7 @@ describe('the plot sentence panel', () => {
       builds: null,
       effect: null,
       level: 'Level 1',
-      pieces: 'Pieces: none',
+      pieces: 'Pieces: none yet',
       letters: '',
       confirmEnabled: false,
       previewTip: null,
@@ -101,7 +102,9 @@ describe('the plot sentence panel', () => {
       effect: PLOT_TEXT.YIELD_PER_DAY_EFFECT,
       previewTip: PLOT_TEXT.FIELD_TIP_VIRTUE,
     });
-    expect(plotPanelLines({ ground: 'adamah', virtue: 'yashan' }, named)).toMatchObject({ confirmEnabled: true, effect: null });
+    expect(plotPanelLines({ ground: 'adamah', virtue: 'yashan', pieces: [] }, named)).toMatchObject({ confirmEnabled: true, effect: null });
+    // The pieces standing (M2 Task 6): the level from them and their names, comma-separated.
+    expect(plotPanelLines({ ...named, pieces: [channel, { ...channel, pieceId: 'seed-jars' }] }, named)).toMatchObject({ level: 'Level 3', pieces: 'Pieces: Clay channel, Seed jars' });
   });
 });
 
@@ -139,7 +142,7 @@ describe('the seal scene', () => {
   const t = defaultTuning.plots;
 
   it('runs the ring, then each letter, then the sigil, then the ground, about a second in all (tuning.json plots)', () => {
-    expect(t).toEqual({ sealRingMs: 300, sealLetterMs: 70, sealSigilMs: 400, sealGroundMs: 200 });
+    expect(t).toEqual({ sealRingMs: 300, sealLetterMs: 70, sealSigilMs: 400, sealGroundMs: 200, buildMs: 400 });
     expect(sealDurationMs(t, 4)).toBe(300 + 280 + 400 + 200);
     expect(sealPhase(t, 0, 4, 4)).toEqual({ ring: 0, letters: 0, sigil: 0, ground: 0, done: false });
     expect(sealPhase(t, 150, 4, 4)).toMatchObject({ ring: 0.5, letters: 0, sigil: 0 });
@@ -196,7 +199,7 @@ describe('the plots in the world', () => {
     expect(sigilSegmentsLeft(4, line('faded'), 0, 1000)).toBe(0);
     expect(plotAtWorld(7 * 32 + 10, 7 * 32 + 10)?.id).toBe('plot-1');
     expect(plotAtWorld(0, 0)).toBeUndefined();
-    expect(namedPlotIds({ plots: [{ id: 'plot-1', ground: 'adamah', virtue: null, namedAt: iso(0), virtueSetAt: null, sownAt: null, kind: 'field', level: 1, state: 'lit' }] })).toEqual(['plot-1']);
+    expect(namedPlotIds({ plots: [{ id: 'plot-1', ground: 'adamah', virtue: null, namedAt: iso(0), virtueSetAt: null, sownAt: null, kind: 'field', pieces: [], level: 1, state: 'lit' }] })).toEqual(['plot-1']);
     expect(namedPlotIds(null)).toEqual([]);
   });
 });

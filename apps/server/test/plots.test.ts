@@ -204,6 +204,7 @@ describe('naming a plot', () => {
       virtueSetAt: null,
       sownAt: null,
       kind: 'field',
+      pieces: [],
       level: 1,
       state: 'lit',
     });

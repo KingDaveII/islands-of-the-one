@@ -157,6 +157,8 @@ export const InventoryReason = {
   NamePlot: 'name-plot',
   /** A new field sown: the seed it takes, once, before it cycles or can be worked. */
   Sow: 'sow',
+  /** A piece built in a plot (docs/design/holding.md "Build mode"): its cost from the store; a take-down's refund, positive, back into it. */
+  Build: 'build',
 } as const;
 export type InventoryReason = (typeof InventoryReason)[keyof typeof InventoryReason];
 

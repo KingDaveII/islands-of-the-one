@@ -21,7 +21,8 @@ export type KeshTuning = TuningData['kesh'];
 /**
  * The seal scene (M2 Task 5): the ring drawing itself round the plot, each
  * letter appearing, the sigil tracing from its circle to its bar, the ground
- * turning; whole frames, about a second in all. Presentation only.
+ * turning; whole frames, about a second in all; and the building moment (M2
+ * Task 6, `buildMs`): the dust, then the piece rising row by row. Presentation only.
  */
 export type PlotsTuning = TuningData['plots'];
 

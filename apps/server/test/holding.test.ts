@@ -20,7 +20,7 @@ import type { InjectOptions, LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp, type App } from '../src/app.js';
 import { createDb, type DbHandle } from '../src/db/client.js';
-import { accounts, basketCycles, holdingActivity, keshGifts, kindled, knownWords, plots, skillXp, writs } from '../src/db/schema.js';
+import { accounts, basketCycles, holdingActivity, keshGifts, kindled, knownWords, plotPieces, plots, skillXp, writs } from '../src/db/schema.js';
 import {
   createHolding,
   feedChanges,
@@ -95,8 +95,9 @@ afterAll(async () => {
   await handle.close();
 });
 
-describe('migrations 0004, 0005, 0006 and 0007', () => {
-  it('create holding_activity, skill_xp, writs, kesh_gifts, known_words, plots and basket_cycles, empty', async () => {
+describe('migrations 0004, 0005, 0006, 0007 and 0008', () => {
+  it('create holding_activity, skill_xp, writs, kesh_gifts, known_words, plots, basket_cycles and plot_pieces, empty', async () => {
+    await expect(handle.db.select().from(plotPieces).limit(1)).resolves.toEqual([]);
     await expect(handle.db.select().from(holdingActivity).limit(1)).resolves.toEqual([]);
     await expect(handle.db.select().from(skillXp).limit(1)).resolves.toEqual([]);
     await expect(handle.db.select().from(writs).limit(1)).resolves.toEqual([]);
@@ -126,7 +127,7 @@ describe('the settle', () => {
     const k = await newKindled();
     const r = value(await holding.view(k, at(0)));
     expect(isHoldingResponse(r)).toBe(true);
-    const unnamedPlot = (id: string) => ({ id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, level: 1, state: 'lit' });
+    const unnamedPlot = (id: string) => ({ id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, pieces: [], level: 1, state: 'lit' });
     expect(r).toEqual({
       layoutId: HOLDING_LAYOUT_ID,
       baskets: { 'writ-post': [], 'holding-store': [], 'weapon-rack': [], 'twisted-trees': [], 'stone-outcrop': [], 'plot-1': [], 'plot-2': [], 'plot-3': [], 'plot-4': [] },

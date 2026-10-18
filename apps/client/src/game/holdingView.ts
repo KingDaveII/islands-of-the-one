@@ -1,4 +1,6 @@
 import {
+  BUILD_TEXT,
+  cycleLengthMs,
   holdingLayout,
   isShoreGround,
   itemDef,
@@ -131,7 +133,7 @@ export function countOf(itemId: string, quantity: number): string {
 }
 
 /** The station panel's buttons, in order. */
-export type StationButton = 'work' | 'take' | 'rename' | 'sow';
+export type StationButton = 'work' | 'take' | 'rename' | 'sow' | 'build';
 
 /**
  * The lines of the station panel (GAME DESIGN's screen, M2 Task 5 for the
@@ -143,14 +145,18 @@ export interface StationLines {
   title: string;
   /** A plot's sentence under its title (the letter sheet draws it), else null. */
   letters: string | null;
-  /** "Level 1" for a plot, else null. */
+  /** "Level 2" for a plot (1 plus its pieces, M2 Task 6), else null. */
   level: string | null;
   /**
-   * "By hand: 1 twisted log every 4 s", what working it gives; null while working here (the line becomes `you`, so
-   * there are never three rate lines) and while a field isn't sown (GAME DESIGN 2026-10-18).
+   * "By hand: 1 twisted log every 4 s", what working it gives (the pieces never speed the hands); null while working
+   * here (the line becomes `you`, so there are never three rate lines) and while a field isn't sown (GAME DESIGN
+   * 2026-10-18).
    */
   rate: string | null;
-  /** "By itself: 1 twisted log every 20 min", the basket cycle; null for a station without one (the outcrop) or not sown. */
+  /**
+   * "By itself: 1 twisted log every 20 min", the basket cycle at its real length (a plot's pieces speed it, M2 Task 6:
+   * "By itself: 1 pale grain every 12 min"); null for a station without one (the outcrop) or not sown.
+   */
   cycle: string | null;
   /** ישן's "+3% for keeping its name" under the cycle's rate, or null. */
   bonus: string | null;
@@ -169,13 +175,13 @@ export interface StationLines {
   take: 'TAKE ALL';
   /** Whether the Kindled works here now. */
   working: boolean;
-  /** The buttons shown, in order: work, take (and rename for a plot); sow alone for a field not sown; none when faded. */
+  /** The buttons shown, in order: work, take (and build, rename for a plot); sow alone for a field not sown; none when faded. */
   buttons: StationButton[];
 }
 
-/** The station panel's two rate labels (GAME DESIGN 2026-10-18): the cycle, and what working it gives. */
-export const BY_ITSELF = 'By itself: ';
-export const BY_HAND = 'By hand: ';
+/** The station panel's two rate labels (GAME DESIGN 2026-10-18): the cycle, and what working it gives (the lines live in BUILD_TEXT). */
+export const BY_ITSELF: string = BUILD_TEXT.BY_ITSELF;
+export const BY_HAND: string = BUILD_TEXT.BY_HAND;
 
 export function stationLines(stationId: string, r: HoldingResponse | null, serverMs: number = r ? Date.parse(r.now) : 0): StationLines | null {
   const place = workplaceDef(stationId, r);
@@ -188,7 +194,7 @@ export function stationLines(stationId: string, r: HoldingResponse | null, serve
   const rate = `${countOf(action.itemId, action.quantity)} every ${action.cycleMs / 1000} s`;
   const title = displayable(place.name.toUpperCase());
   const letters = plot ? sentenceLetters(plot.ground, plot.virtue) : null;
-  const level = plot ? `${PLOT_TEXT.LEVEL}${plotLevel()}` : null;
+  const level = plot ? `${PLOT_TEXT.LEVEL}${plotLevel(plot.pieces)}` : null;
   const basketLine = basket.length ? `Basket: ${basket.map((e) => countOf(e.itemId, e.quantity)).join(', ')}` : 'Basket: empty';
   const skill = view ? `${SKILL_NAMES[action.skill]} ${view.level} · ${view.toNext} XP to next` : SKILL_NAMES[action.skill];
   const base = { title, letters, level, work: working ? 'STOP WORKING' : 'WORK HERE', take: 'TAKE ALL', working } as const;
@@ -201,17 +207,20 @@ export function stationLines(stationId: string, r: HoldingResponse | null, serve
   const clock = r?.cycles[stationId];
   const dark = r !== null && r.writ.chargeMs === 0;
   const next = place.cycle && clock ? (dark ? PLOT_TEXT.RESTING : nextInLine(clock, serverMs)) : null;
+  // A plot's cycle runs at the speed its pieces give (M2 Task 6): the real length, from the clock when it is known.
+  const realCycle = place.cycle ? { ...place.cycle, cycleMs: clock?.cycleMs ?? cycleLengthMs(place.cycle, plot?.pieces ?? []) } : null;
+  const cycleLine = realCycle ? cycleRateLine(realCycle) : null;
   return {
     ...base,
     rate: working ? null : `${BY_HAND}${rate}`,
-    cycle: place.cycle ? `${BY_ITSELF}${cycleRateLine(place.cycle)}` : null,
+    cycle: cycleLine === null ? null : `${BY_ITSELF}${cycleLine}`,
     bonus: plot && clock ? bonusLine(clock.bonusPermille) : null,
     basket: basketLine,
     next,
     you: working ? `You: ${rate}` : null,
     skill,
     note: null,
-    buttons: plot ? ['work', 'take', 'rename'] : ['work', 'take'],
+    buttons: plot ? ['work', 'take', 'build', 'rename'] : ['work', 'take'],
   };
 }
 

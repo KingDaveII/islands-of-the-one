@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   creditCycles,
   cycleBonuses,
-  cycleLengthMs,
-  cycleSpeedPermille,
   DAY_MS,
   daysKept,
   DRAWABLE_CHARS,
@@ -12,7 +10,6 @@ import {
   lettersFromPositions,
   nextCycleInMs,
   PLOT_TEXT,
-  plotLevel,
   plotLine,
   plotSentence,
   plotSentenceSafe,
@@ -32,7 +29,7 @@ import { BANNED } from './banned.js';
  * Ground × Virtue sentence through the plot-sentence filter with the refused
  * pairs pinned, every player-facing line drawable, the plots' Writ line,
  * ישן's bonus at 0, 1, 19, 20 and 30 days and the carry across many cycles
- * adding up exactly, and Task 6's seams.
+ * adding up exactly.
  */
 const adamah = wordDef('adamah') as WordDef;
 const yashan = wordDef('yashan') as WordDef;
@@ -81,13 +78,7 @@ describe('the plots and their Writ line', () => {
     expect(plotLine(2, 2)).toBe(2);
   });
 
-  it("Task 6's seams: the speed factor is 1, a cycle's length is its cycleMs, a plot's level 1 without pieces", () => {
-    expect(cycleSpeedPermille()).toBe(1000);
-    expect(cycleSpeedPermille(3)).toBe(1000);
-    expect(cycleLengthMs({ cycleMs: 900_000 })).toBe(900_000);
-    expect(cycleLengthMs({ cycleMs: 900_000 }, 2)).toBe(900_000);
-    expect(plotLevel()).toBe(1);
-    expect(plotLevel(2)).toBe(3);
+  it('the rename cost', () => {
     expect(RENAME_COST_GIN).toBe(1);
     expect(RENAME_COST_ITEM).toBe('sealed-gin');
   });

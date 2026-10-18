@@ -17,6 +17,7 @@ export * from './holding.js';
 export * from './words.js';
 export * from './sigil.js';
 export * from './plots.js';
+export * from './pieces.js';
 
 export * from './writ-data.js';
 export * from './hear-name.js';

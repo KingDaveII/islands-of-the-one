@@ -30,6 +30,7 @@ export const Tokens = {
   sleeperSoil: hex('sleeper-soil'),
   unwrittenTar: hex('unwritten-tar'),
   unwrittenSail: hex('unwritten-sail'),
+  wheelPatina: hex('wheel-patina'),
   huskShell: hex('husk-shell'),
   huskCore: hex('husk-core'),
   choirFlame: hex('choir-flame'),
@@ -124,6 +125,18 @@ export const Palette = {
   plotFaded: T.hollowDusk,
   signpostWood: T.hollowBelow,
   signpostPlaque: T.sleeperSoil,
+  // Build mode (M2 Task 6). The ghost's tints are ART's (#102): wheel-patina where the piece fits, choir-flame-deep where
+  // it doesn't, drawn as a 50 % checkerboard over the piece's pixels and a 1 px outline round its tiles, never an alpha
+  // fade; never the reserved signal colours. The pieces themselves are placeholders until ART draws them.
+  ghostFits: T.wheelPatina,
+  ghostBlocked: T.choirFlameDeep,
+  pieceFace: T.unwrittenSail,
+  pieceShade: T.unwrittenTar,
+  buildDust: T.hollowDusk,
+  /** The build plot's ring on the ground while build mode is open. */
+  buildRing: T.sparkAmber,
+  /** A short material in the side list (the warning token). */
+  uiWarning: T.sparkEmber,
   /** Kesh's clay tile (the word toss), a placeholder sprite in two tokens. */
   clayTile: T.sleeperSoil,
   clayTileEdge: T.sleeperOchre,

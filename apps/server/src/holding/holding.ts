@@ -19,6 +19,8 @@ import {
   type HoldingResponse,
   type HoldingTake,
   type InventoryEntry,
+  type PlotPieceRequest,
+  type PlotTakeDownRequest,
   type Skill,
   type SkillView,
   type StationCycleView,
@@ -35,12 +37,14 @@ import {
   writs,
   type HoldingActivityRow,
   type KindledRow,
+  type PlotPieceRow,
   type PlotRow,
   type WritRow,
 } from '../db/schema.js';
 import type { Inventory } from '../inventory/index.js';
 import { cyclingStations, settleCycles } from './cycles.js';
 import { giveSeeds, giveSliver, giveWord, keshViewOf, knowsKeshWord, type GiftContext } from './kesh.js';
+import { buildPieceIn, lockPieces, movePieceIn, piecesOfPlot, takeDownAllIn, takeDownPieceIn } from './pieces.js';
 import {
   cycleView,
   lockPlots,
@@ -72,7 +76,10 @@ import { feedable, feedChanges, lockWrit, WRIT_ALREADY_NAMED, WRIT_INSUFFICIENT,
  * too, under the same lock; so do the plots (M2 Task 5, plots.ts): a named
  * plot is a station of its Ground's kind with the plot's id, the basket
  * cycles (cycles.ts) settle after the active action, and the holding-wide
- * last heartbeat lives on the Writ row.
+ * last heartbeat lives on the Writ row. Build mode (M2 Task 6, pieces.ts):
+ * the piece rows are locked with the plots', the cycles run at the speed the
+ * pieces give, and building, moving and taking down are acts after the
+ * settle.
  */
 
 /**
@@ -129,7 +136,15 @@ export type HoldingError =
   | 'sentence-refused'
   | 'unnamed-plot'
   | 'not-sown'
-  | 'already-sown';
+  | 'already-sown'
+  | 'unknown-piece'
+  | 'already-built'
+  | 'needs-line'
+  | 'needs-skill'
+  | 'limit'
+  | 'blocked'
+  | 'not-built'
+  | 'store-full';
 
 export type HoldingResult =
   | { ok: true; value: HoldingResponse }
@@ -160,9 +175,20 @@ export interface Holding {
   namePlot(kindledId: string, args: NamePlotArgs, now: Date): Promise<HoldingResult>;
   /** Settle, then sow a named field with its seed (M2 Task 5). */
   sowPlot(kindledId: string, plotId: string, now: Date): Promise<HoldingResult>;
+  /** Settle, then build a piece in a named plot, its cost from the store (M2 Task 6). */
+  buildPiece(kindledId: string, args: PlotPieceRequest, now: Date): Promise<HoldingResult>;
+  /** Settle, then move a standing piece, free. */
+  movePiece(kindledId: string, args: PlotPieceRequest, now: Date): Promise<HoldingResult>;
+  /** Settle, then take a standing piece down, every material back into the store (refused whole when it doesn't fit). */
+  takeDownPiece(kindledId: string, args: PlotTakeDownRequest, now: Date): Promise<HoldingResult>;
+  /** Settle, then take every piece of a plot down with its refund, which may overfill the store (the playtest CLI). */
+  clearPieces(kindledId: string, plotId: string, now: Date): Promise<ClearResult>;
   /** Settle alone (tests and the API's inventory routes). */
   settle(kindledId: string, now: Date): Promise<void>;
 }
+
+/** What `plots:pieces --clear` did: the refund given, per item. */
+export type ClearResult = { ok: true; value: { refund: InventoryEntry[] } } | { ok: false; error: HoldingError; message: string };
 
 /** What a settle credited: the cycles paid this time, and whether the clock restarted after a capped stretch. */
 export interface Settlement {
@@ -205,6 +231,8 @@ interface Locked {
   k: KindledRow;
   w: WritRow;
   plots: PlotRow[];
+  /** The pieces standing in the plots (M2 Task 6), locked with them. */
+  pieces: PlotPieceRow[];
 }
 
 export function createHolding(db: Database, inventory: Inventory): Holding {
@@ -285,13 +313,14 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
    * row and the plot rows locked, the active action, then the basket cycles
    * from the holding-wide last heartbeat, which is then refreshed.
    */
-  async function settleAll(tx: Transaction, k: KindledRow, now: Date): Promise<{ w: WritRow; plots: PlotRow[] }> {
+  async function settleAll(tx: Transaction, k: KindledRow, now: Date): Promise<{ w: WritRow; plots: PlotRow[]; pieces: PlotPieceRow[] }> {
     const w = await lockWrit(tx, k.id, now);
     const rows = await lockPlots(tx, k.id);
+    const pieces = await lockPieces(tx, k.id);
     await settleIn(tx, k, w, rows, now);
-    await settleCycles(tx, inventory, k.id, layout, writStored(w), rows, w.lastSeenAt, now);
+    await settleCycles(tx, inventory, k.id, layout, writStored(w), rows, w.lastSeenAt, now, pieces);
     await tx.update(writs).set({ lastSeenAt: now }).where(eq(writs.kindledId, k.id));
-    return { w, plots: rows };
+    return { w, plots: rows, pieces };
   }
 
   /** What Kesh's gifts need to know about the Kindled, read inside the transaction. */
@@ -308,6 +337,7 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
     const [w] = await tx.select().from(writs).where(eq(writs.kindledId, k.id));
     if (!w) throw new Error(`writ: no row for Kindled ${k.id}`);
     const rows = await lockPlots(tx, k.id);
+    const pieceRows = await lockPieces(tx, k.id);
     const [row] = await tx.select().from(holdingActivity).where(eq(holdingActivity.kindledId, k.id));
     const found = row ? workplaceOf(layout, row.stationId, rows) : null;
     const action = found?.ok ? found.place.action : null;
@@ -324,13 +354,13 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
     const stored = writStored(w);
     const clocks = await tx.select().from(basketCycles).where(eq(basketCycles.kindledId, k.id));
     const cycles: Record<string, StationCycleView> = {};
-    for (const station of cyclingStations(layout, rows)) {
+    for (const station of cyclingStations(layout, rows, pieceRows)) {
       const clock = clocks.find((c) => c.stationId === station.stationId);
       if (!clock) continue;
       const plotRow = rows.find((r) => r.plotId === station.stationId);
       const index = layout.plots.findIndex((p) => p.id === station.stationId);
       const bonus = plotRow && index >= 0 ? plotBonusPermille(plotRow, index, stored, now.getTime()) : 0;
-      cycles[station.stationId] = cycleView(station.cycle, clock, bonus);
+      cycles[station.stationId] = cycleView(station.cycle, clock, bonus, station.pieces);
     }
     const out: HoldingResponse = {
       layoutId: layout.id,
@@ -341,7 +371,7 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
       writ: toWritView(stored, now.getTime()),
       kesh: keshViewOf(gifts ?? { firstSliverAt: null, lastTide: null, seedsGivenAt: null }, now, await giftContext(tx, k, w, rows)),
       words: await knownWordIds(tx, k.id),
-      plots: plotViews(layout, rows, stored, now.getTime()),
+      plots: plotViews(layout, rows, pieceRows, stored, now.getTime()),
       cycles,
     };
     if (take) out.take = take;
@@ -357,8 +387,8 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
     return db.transaction(async (tx) => {
       const k = await lockKindled(tx, kindledId);
       if (!k) return { ok: false, error: 'unknown-kindled', message: 'No such Kindled.' };
-      const { w, plots } = await settleAll(tx, k, now);
-      const result = await body({ tx, k, w, plots });
+      const { w, plots, pieces } = await settleAll(tx, k, now);
+      const result = await body({ tx, k, w, plots, pieces });
       if (result && 'refused' in result) return result.refused;
       return { ok: true, value: await answer(tx, k, now, result) };
     });
@@ -508,9 +538,40 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
 
     // A plot's sentence (docs/design/holding.md "Plots"): plots.ts holds the refusals in the brief's order.
     namePlot: (kindledId, args, now) =>
-      request(kindledId, now, async ({ tx, k, w, plots }) => {
-        const named = await namePlotIn(tx, inventory, k.id, writStored(w), layout, plots, args, now);
+      request(kindledId, now, async ({ tx, k, w, plots, pieces }) => {
+        const named = await namePlotIn(tx, inventory, k.id, writStored(w), layout, plots, args, now, pieces);
         return named.ok ? undefined : refuse(named.error, named.message);
+      }),
+
+    // Build mode (docs/design/holding.md "Build mode", M2 Task 6): pieces.ts holds the refusals in the brief's order; a
+    // change to a plot's pieces is an act after the settle, so the partial cycle carries on at the new speed.
+    buildPiece: (kindledId, args, now) =>
+      request(kindledId, now, async ({ tx, k, w, plots, pieces }) => {
+        const built = await buildPieceIn(tx, inventory, k.id, writStored(w), layout, plots, pieces, args, now);
+        return built.ok ? undefined : refuse(built.error, built.message);
+      }),
+
+    movePiece: (kindledId, args, now) =>
+      request(kindledId, now, async ({ tx, k, w, plots, pieces }) => {
+        const moved = await movePieceIn(tx, k.id, writStored(w), layout, plots, pieces, args, now);
+        return moved.ok ? undefined : refuse(moved.error, moved.message);
+      }),
+
+    takeDownPiece: (kindledId, args, now) =>
+      request(kindledId, now, async ({ tx, k, w, plots, pieces }) => {
+        const down = await takeDownPieceIn(tx, inventory, k.id, writStored(w), layout, plots, pieces, args, now);
+        return down.ok ? undefined : refuse(down.error, down.message);
+      }),
+
+    clearPieces: async (kindledId, plotId, now) =>
+      db.transaction(async (tx) => {
+        const k = await lockKindled(tx, kindledId);
+        if (!k) return { ok: false, error: 'unknown-kindled', message: 'No such Kindled.' };
+        const { pieces } = await settleAll(tx, k, now);
+        if (!layout.plots.some((p) => p.id === plotId)) return { ok: false, error: 'unknown-plot', message: PLOT_TEXT.UNKNOWN_PLOT };
+        if (piecesOfPlot(pieces, plotId).length === 0) return { ok: true, value: { refund: [] } };
+        const refund = await takeDownAllIn(tx, inventory, k.id, plotId, pieces);
+        return { ok: true, value: { refund: refund.map((r) => ({ itemId: r.itemId, quantity: r.delta })) } };
       }),
 
     sowPlot: (kindledId, plotId, now) =>

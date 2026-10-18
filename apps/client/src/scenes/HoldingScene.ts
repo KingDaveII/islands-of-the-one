@@ -1,20 +1,42 @@
 import Phaser from 'phaser';
 import {
+  BUILD_TEXT,
   HOLDING_CAMERA_MARGIN_TILES,
   HOLDING_HEARTBEAT_MS,
   holdingLayout,
   keshData,
+  layoutPlot,
   PLOT_TEXT,
+  plotKindDef,
   shapeLetters,
+  TILE_SIZE_PX,
   wordDef,
   type ClayTone,
   type HoldingResponse,
   type InventoryResponse,
+  type LayoutPlot,
   type PlotView,
+  type TilePoint,
 } from '@iot/shared';
 import { Button, TILE_PX } from '@iot/sim';
 import { accountStore, api } from '../api.js';
 import { deviceStore } from '../game/activeDevice.js';
+import {
+  buildHeader,
+  cursorStart,
+  ghostAt,
+  ghostFit,
+  pieceAt,
+  pieceRows,
+  pieceWorldRect,
+  plotPieceTiles,
+  refundFloat,
+  rotateGhost,
+  stepCursor,
+  tileOfSim,
+  tileOfWorld,
+  type Ghost,
+} from '../game/buildView.js';
 import { Controls } from '../game/controls.js';
 import { controlsStore } from '../game/controlsStore.js';
 import { buttonsFor, connectedPad, MENU_BUTTONS, padEdges, padEdgeState } from '../game/gamepad.js';
@@ -69,6 +91,7 @@ import { loadLetterSheet, plotLetters, type LetterSheet } from '../render/letter
 import { uiToCss } from '../render/cameras.js';
 import { HoldingWorld, type TossKind } from '../render/holdingWorld.js';
 import { menuCursor } from '../render/menus.js';
+import { PiecesLayer } from '../render/pieces.js';
 import { PlotsLayer } from '../render/plots.js';
 import { HOLDING_SHEET, preloadTileSheet } from '../render/roomTiles.js';
 import { simPx, worldPx } from '../render/scale.js';
@@ -86,6 +109,7 @@ import {
   type Text,
 } from '../render/text.js';
 import { divider, panel } from '../render/ui.js';
+import { BuildMode } from '../ui/buildMode.js';
 import { NameScreen } from '../ui/nameScreen.js';
 import { PlotPanel } from '../ui/plotPanel.js';
 import { TalkBox } from '../ui/talkBox.js';
@@ -167,12 +191,19 @@ interface StationPanel {
  * the plot sentence panel (ui/plotPanel.ts), a named plot the station panel
  * of its kind (SOW until it is sown; RENAME opens the sentence panel again);
  * a naming's answer plays the seal scene, and the first one Kesh's seeds.
+ * Build mode (M2 Task 6, ui/buildMode.ts, render/pieces.ts): BUILD HERE in
+ * a field's panel opens it; a piece picked from the side list becomes a
+ * ghost on the pointer (or the pad's tile cursor), green where it fits, R or
+ * Triangle turns it, Confirm sends the build, and the building moment plays
+ * on the server's answer; a standing piece selected offers MOVE and TAKE
+ * DOWN. Positions are the client's; every count comes from the server.
  */
 export class HoldingScene extends Phaser.Scene {
   session!: RoamSession;
   controls!: Controls;
   world!: HoldingWorld;
   private plots!: PlotsLayer;
+  private pieces!: PiecesLayer;
   private hud!: HoldingHud;
   private worldLayer!: Phaser.GameObjects.Layer;
   private hudLayer!: Phaser.GameObjects.Layer;
@@ -203,6 +234,14 @@ export class HoldingScene extends Phaser.Scene {
   private plotPanelFor: string | null = null;
   /** What follows the seal scene (Kesh's seeds after the first naming). */
   private afterSeal: (() => void) | null = null;
+  /** Build mode (M2 Task 6): the side list, the plot it is open on, the ghost, the pad's tile cursor and the selected standing piece. */
+  private build: BuildMode | null = null;
+  private buildPlot: LayoutPlot | null = null;
+  private ghost: Ghost | null = null;
+  private cursor: TilePoint = { col: 0, row: 0 };
+  private selectedPiece: string | null = null;
+  /** The last tile a touch tap put the ghost on: a second tap there confirms. */
+  private tapTile: TilePoint | null = null;
   /** The cycles each clock had landed when last looked, for the "+1" floats over the signposts and the trees. */
   private lastLanded: Record<string, number> = {};
   /** The talk box (M2 Task 4b): Kesh's lines, one at a time, and the menu of topics. */
@@ -254,6 +293,11 @@ export class HoldingScene extends Phaser.Scene {
     this.plotPanel = null;
     this.plotPanelFor = null;
     this.afterSeal = null;
+    this.build = null;
+    this.buildPlot = null;
+    this.ghost = null;
+    this.selectedPiece = null;
+    this.tapTile = null;
     this.lastLanded = {};
     this.talkBox = null;
     this.afterTalk = null;
@@ -291,6 +335,7 @@ export class HoldingScene extends Phaser.Scene {
     );
     this.plots = new PlotsLayer(this, this.worldLayer, layout, () => tuningStore.get().plots);
     this.plots.setSheet(this.letterSheet);
+    this.pieces = new PiecesLayer(this, this.worldLayer, this.hudLayer, layout, () => tuningStore.get().plots, (x, y) => this.worldToUi(x, y));
     this.hud = new HoldingHud(
       this,
       this.hudLayer,
@@ -334,10 +379,18 @@ export class HoldingScene extends Phaser.Scene {
     bind(keyboardKeys('menu'), () => {
       this.back();
     });
+    // R turns the ghost (the `rotate` binding, M2 Task 6).
+    bind(keyboardKeys('rotate'), () => {
+      this.turnGhost();
+    });
     kb?.on('keydown-ENTER', () => {
       if (this.talkBox) {
         this.keyNav = true;
         this.talkAdvance();
+      } else if (this.build) {
+        this.keyNav = true;
+        if (this.ghost) this.confirmGhost();
+        else this.build.press();
       } else if (this.writPanel) {
         this.keyNav = true;
         this.writPanel.press();
@@ -352,6 +405,9 @@ export class HoldingScene extends Phaser.Scene {
           this.keyNav = true;
           if (key === 'TAB') this.talk.moveFocus(1);
           this.syncTalk();
+        } else if (this.build) {
+          this.keyNav = true;
+          if (key === 'TAB') this.build.moveFocus(1);
         } else if (this.writPanel) {
           this.keyNav = true;
           if (key === 'TAB') this.writPanel.moveFocus(1);
@@ -370,6 +426,11 @@ export class HoldingScene extends Phaser.Scene {
           this.syncTalk();
           return;
         }
+        if (this.build) {
+          this.keyNav = true;
+          this.build.moveFocus(key === 'UP' ? -1 : 1);
+          return;
+        }
         if (this.writPanel) {
           this.keyNav = true;
           this.writPanel.moveFocus(key === 'UP' ? -1 : 1);
@@ -386,6 +447,10 @@ export class HoldingScene extends Phaser.Scene {
       (p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => {
         if (this.talkBox) {
           if (over.length === 0 && this.talk.step.kind === 'line') this.talkAdvance();
+          return;
+        }
+        if (this.build) {
+          if (over.length === 0) this.buildPointer(p);
           return;
         }
         if (p.wasTouch && over.length === 0) this.use();
@@ -412,6 +477,8 @@ export class HoldingScene extends Phaser.Scene {
       this.closeNameScreen();
       this.closeWritPanel();
       this.closePlotPanel();
+      this.closeBuild();
+      this.pieces.destroy();
       this.plots.destroy();
       this.controls.dispose();
       this.heartbeat?.remove();
@@ -499,10 +566,13 @@ export class HoldingScene extends Phaser.Scene {
     this.lastError = '';
     // The plots (M2 Task 5): drawn once the island has a Name; a named plot's signpost is a pillar for the roam.
     this.plots.sync(res.value.plots, res.value.writ.name !== null, res.value.writ);
-    this.session.setSolidPlots(namedPlotIds(res.value));
+    // The pieces standing in the plots (M2 Task 6): drawn, and pillars for the roam with the signposts.
+    this.pieces.sync(res.value.plots);
+    this.session.setSolidPlots(namedPlotIds(res.value), plotPieceTiles(res.value.plots));
     this.syncPanel();
     this.syncWritPanel();
     this.syncPlotPanel();
+    this.syncBuild();
     return true;
   }
 
@@ -637,6 +707,7 @@ export class HoldingScene extends Phaser.Scene {
       this.closePlotPanel();
       return;
     }
+    if (this.build) return;
     if (this.panel) {
       this.closePanel();
       return;
@@ -879,7 +950,8 @@ export class HoldingScene extends Phaser.Scene {
       this.writPanel !== null ||
       this.nameScreen !== null ||
       this.talkBox !== null ||
-      this.plotPanel !== null;
+      this.plotPanel !== null ||
+      this.build !== null;
     const pointer = this.input.activePointer;
     const w = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
     const plot =
@@ -914,6 +986,257 @@ export class HoldingScene extends Phaser.Scene {
   /** Whether the seal's tooltip shows (playtests). */
   get plotTipVisible(): boolean {
     return this.plotTip.visible;
+  }
+
+  // --- Build mode (M2 Task 6) ----------------------------------------------------
+
+  /** BUILD HERE on a field's panel: the side list on the right, the plot's ring on the ground, the camera on the plot. */
+  private openBuild(plotId: string): void {
+    const plot = layoutPlot(this.session.layout, plotId);
+    const view = plotOf(this.response, plotId);
+    if (!plot || !view || view.ground === null || this.build) return;
+    this.closePanel();
+    this.closeWritPanel();
+    this.closePlotPanel();
+    this.buildPlot = plot;
+    this.ghost = null;
+    this.selectedPiece = null;
+    this.tapTile = null;
+    this.cursor = cursorStart(plot);
+    this.session.held = true;
+    this.build = new BuildMode({
+      scene: this,
+      layer: this.hudLayer,
+      frame: () => this.frame,
+      showFocus: () => this.showFocus(),
+      pick: (pieceId) => {
+        this.pickPiece(pieceId);
+      },
+      move: () => {
+        this.moveSelected();
+      },
+      takeDown: () => {
+        this.takeDownSelected();
+      },
+      turn: () => {
+        this.turnGhost();
+      },
+    });
+    this.pieces.setBuildPlot(plot);
+    this.syncBuild();
+    this.refresh();
+  }
+
+  private closeBuild(): void {
+    if (!this.build) return;
+    this.build.destroy();
+    this.build = null;
+    this.buildPlot = null;
+    this.ghost = null;
+    this.selectedPiece = null;
+    this.tapTile = null;
+    this.pieces.setBuildPlot(null);
+    this.session.held = this.panel !== null || this.writPanel !== null || this.nameScreen !== null || this.plotPanel !== null;
+  }
+
+  /** The side list from the latest answers: the plot's kind, its pieces against the limit, the store's holdings, the Writ's lines. */
+  private syncBuild(): void {
+    const b = this.build;
+    const plot = this.buildPlot;
+    const r = this.response;
+    if (!b || !plot || !r) return;
+    const view = plotOf(r, plot.id);
+    const kind = view?.kind === null || view?.kind === undefined ? undefined : plotKindDef(view.kind);
+    // The plot lost its name (or faded) under us: build mode closes.
+    if (!view || !kind || view.state === 'faded') {
+      this.closeBuild();
+      return;
+    }
+    if (this.selectedPiece && !view.pieces.some((p) => p.pieceId === this.selectedPiece)) this.selectedPiece = null;
+    b.sync(buildHeader(view, kind.name, r.writ.lineCount), pieceRows(kind.id, view, this.inventory, r.writ.lineCount, r.skills), this.selectedPiece);
+  }
+
+  /** A row of the list picked: its ghost follows the pointer (or the cursor) from here on. */
+  private pickPiece(pieceId: string): void {
+    const plot = this.buildPlot;
+    if (!plot) return;
+    this.selectedPiece = null;
+    this.tapTile = null;
+    this.ghost = ghostAt({ pieceId, col: 0, row: 0, rotation: 0, moving: false }, this.ghostTile());
+    this.syncBuild();
+  }
+
+  /** A standing piece selected (a click on it, or the cursor on it and Cross): MOVE and TAKE DOWN in the list. */
+  private selectStanding(pieceId: string): void {
+    this.ghost = null;
+    this.selectedPiece = pieceId;
+    this.syncBuild();
+    this.build?.focusButtons();
+  }
+
+  /** MOVE: the selected piece becomes the ghost, from where it stands. */
+  private moveSelected(): void {
+    const plot = this.buildPlot;
+    const id = this.selectedPiece;
+    const standing = plot && id ? this.pieces.piecesIn(plot.id).find((p) => p.pieceId === id) : undefined;
+    if (!standing) return;
+    this.ghost = { ...standing, moving: true };
+    this.tapTile = null;
+    this.cursor = { col: standing.col, row: standing.row };
+  }
+
+  /** The ghost dropped (or the selection cleared); build mode stays open. */
+  private dropGhost(): void {
+    this.ghost = null;
+    this.selectedPiece = null;
+    this.tapTile = null;
+    this.syncBuild();
+  }
+
+  private turnGhost(): void {
+    if (this.ghost) this.ghost = rotateGhost(this.ghost);
+  }
+
+  /** The tile the ghost follows: the pad's cursor in pad mode, the last touch tap, else the pointer's tile through the world camera. */
+  private ghostTile(): TilePoint {
+    if (deviceStore.get() === 'gamepad') return this.cursor;
+    if (this.tapTile) return this.tapTile;
+    const pointer = this.input.activePointer;
+    const w = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+    return tileOfWorld(w.x, w.y);
+  }
+
+  /** Every frame: the ghost under the pointer or the cursor, its colour from the shared placement rule and the Kindled's tile. */
+  private updateGhost(): void {
+    const plot = this.buildPlot;
+    if (!plot || !this.build) {
+      this.pieces.setGhost(null);
+      return;
+    }
+    if (this.ghost) {
+      const moved = ghostAt(this.ghost, this.ghostTile());
+      this.ghost = { ...moved, rotation: this.ghost.rotation };
+      const kindled = this.session.position();
+      const fit = ghostFit(this.session.layout, plot, this.pieces.piecesIn(plot.id), this.ghost, tileOfSim(kindled.x, kindled.y));
+      this.pieces.setGhost(this.ghost, fit.fits);
+      const rect = pieceWorldRect({ pieceId: this.ghost.pieceId, col: this.ghost.col, row: this.ghost.row, rotation: this.ghost.rotation });
+      this.build.setGhostUi(rect ? this.worldToUi(rect.x + rect.w, rect.y - 10) : null);
+    } else {
+      this.pieces.setGhost(null);
+      this.build.setGhostUi(null);
+    }
+  }
+
+  /** Confirm (LMB, Enter, Cross): the build or the move, at the ghost's place; the server's answer decides. */
+  private confirmGhost(): void {
+    const ghost = this.ghost;
+    const plot = this.buildPlot;
+    if (!ghost || !plot || this.busy) return;
+    const args = { plotId: plot.id, pieceId: ghost.pieceId, col: ghost.col, row: ghost.row, rotation: ghost.rotation };
+    const moving = ghost.moving;
+    this.request(
+      () => (moving ? api.plotsMove(args) : api.plotsBuild(args)),
+      () => {
+        this.ghost = null;
+        this.selectedPiece = null;
+        this.tapTile = null;
+        // The building moment plays on the new piece once the answer has landed, never before.
+        if (!moving) this.pieces.startBuild(plot.id, ghost.pieceId);
+        this.syncBuild();
+        void api.inventory().then((inv) => {
+          if (this.alive && inv.ok) {
+            this.inventory = inv.value;
+            this.syncBuild();
+          }
+        });
+      },
+      (message) => {
+        this.build?.setResult(message);
+      },
+    );
+  }
+
+  /** TAKE DOWN: the refund floats over the signpost as a take-all's; a refusal is the footer's line. */
+  private takeDownSelected(): void {
+    const plot = this.buildPlot;
+    const pieceId = this.selectedPiece;
+    if (!plot || !pieceId || this.busy) return;
+    this.request(
+      () => api.plotsTakeDown({ plotId: plot.id, pieceId }),
+      () => {
+        const text = refundFloat(pieceId);
+        if (text) this.float(text, plot.id);
+        this.ghost = null;
+        this.selectedPiece = null;
+        this.syncBuild();
+        void api.inventory().then((inv) => {
+          if (this.alive && inv.ok) {
+            this.inventory = inv.value;
+            this.syncBuild();
+          }
+        });
+      },
+      (message) => {
+        this.build?.setResult(message);
+      },
+    );
+  }
+
+  /** A click or tap on the world in build mode: LMB confirms the ghost or selects a standing piece; RMB cancels; a tap places, a second tap there confirms. */
+  private buildPointer(p: Phaser.Input.Pointer): void {
+    const plot = this.buildPlot;
+    if (!plot) return;
+    if (p.rightButtonDown()) {
+      this.back();
+      return;
+    }
+    const w = this.cameras.main.getWorldPoint(p.x, p.y);
+    const tile = tileOfWorld(w.x, w.y);
+    if (this.ghost) {
+      if (p.wasTouch) {
+        const same = this.tapTile !== null && this.tapTile.col === tile.col && this.tapTile.row === tile.row;
+        this.tapTile = tile;
+        this.ghost = ghostAt(this.ghost, tile);
+        if (!same) return;
+      }
+      this.confirmGhost();
+      return;
+    }
+    const standing = pieceAt(this.pieces.piecesIn(plot.id), tile);
+    if (standing) this.selectStanding(standing.pieceId);
+  }
+
+  /** The pad in build mode: the D-pad or the stick moves the cursor (the list's focus while no ghost is up), Cross confirms or picks, Triangle turns. */
+  private buildPad(edges: number[], preset: ReturnType<typeof controlsStore.get>, confirmed: () => boolean): void {
+    const b = this.build;
+    const plot = this.buildPlot;
+    if (!b || !plot) return;
+    const axes = connectedPad()?.axes ?? [];
+    const sx = Math.abs(axes[0] ?? 0) > 0.5 ? Math.sign(axes[0] ?? 0) : 0;
+    const sy = Math.abs(axes[1] ?? 0) > 0.5 ? Math.sign(axes[1] ?? 0) : 0;
+    const pushedX = sx !== 0 && sx !== this.stick.x ? sx : 0;
+    const pushedY = sy !== 0 && sy !== this.stick.y ? sy : 0;
+    this.stick = { x: sx, y: sy };
+    const dx = edges.includes(MENU_BUTTONS.right) || pushedX > 0 ? 1 : edges.includes(MENU_BUTTONS.left) || pushedX < 0 ? -1 : 0;
+    const dy = edges.includes(MENU_BUTTONS.down) || pushedY > 0 ? 1 : edges.includes(MENU_BUTTONS.up) || pushedY < 0 ? -1 : 0;
+    if (buttonsFor(preset, 'rotate', 'calm').some((i) => edges.includes(i))) {
+      this.turnGhost();
+      return;
+    }
+    if (this.ghost) {
+      if (dx !== 0 || dy !== 0) this.cursor = stepCursor(this.cursor, dx, dy, plot);
+      else if (confirmed()) this.confirmGhost();
+      return;
+    }
+    // No ghost: Up and Down move the list's focus, Left and Right the cursor; Cross selects the piece under the cursor, else presses the focus.
+    if (dy !== 0 && b.focusOnRow) b.moveFocus(dy);
+    else if (dy !== 0 && !b.focusOnRow) b.moveFocus(dy);
+    else if (dx !== 0) this.cursor = stepCursor(this.cursor, dx, 0, plot);
+    else if (confirmed()) {
+      const standing = pieceAt(this.pieces.piecesIn(plot.id), this.cursor);
+      if (standing) this.selectStanding(standing.pieceId);
+      else b.press();
+    }
   }
 
   // --- Kesh (M2 Task 4b) ----------------------------------------------------
@@ -1058,6 +1381,7 @@ export class HoldingScene extends Phaser.Scene {
     if (this.panel) this.closePanel();
     if (this.writPanel) this.closeWritPanel();
     if (this.plotPanel) this.closePlotPanel();
+    if (this.build) this.closeBuild();
     const data: InventoryData = { back: 'holding' };
     this.scene.launch('inventory', data);
     this.scene.pause();
@@ -1079,6 +1403,12 @@ export class HoldingScene extends Phaser.Scene {
     }
     if (this.plotPanel) {
       this.closePlotPanel();
+      return;
+    }
+    if (this.build) {
+      // Cancel drops the ghost (or the selection); a second cancel leaves build mode.
+      if (this.ghost || this.selectedPiece) this.dropGhost();
+      else this.closeBuild();
       return;
     }
     if (this.panel) {
@@ -1143,7 +1473,7 @@ export class HoldingScene extends Phaser.Scene {
     p.result.destroy();
     for (const b of p.buttons) b.button.container.destroy(true);
     this.panel = null;
-    this.session.held = false;
+    this.session.held = this.build !== null;
   }
 
   /** A panel button's word, and what it does. */
@@ -1183,6 +1513,14 @@ export class HoldingScene extends Phaser.Scene {
           primary: true,
           press: () => {
             this.sow(p.id);
+          },
+        };
+      case 'build':
+        return {
+          word: BUILD_TEXT.BUILD_HERE,
+          primary: false,
+          press: () => {
+            this.openBuild(p.id);
           },
         };
     }
@@ -1311,8 +1649,12 @@ export class HoldingScene extends Phaser.Scene {
     const view = this.worldFit;
     const p = this.session.position();
     const s = this.session.state;
-    const tx = worldPx(p.x) - view.w / 2;
-    const ty = worldPx(p.y) - view.h / 2;
+    // In build mode the camera stays on the plot (its centre), not the Kindled.
+    const target = this.buildPlot
+      ? { x: (this.buildPlot.rect.col + this.buildPlot.rect.cols / 2) * TILE_SIZE_PX, y: (this.buildPlot.rect.row + this.buildPlot.rect.rows / 2) * TILE_SIZE_PX }
+      : p;
+    const tx = worldPx(target.x) - view.w / 2;
+    const ty = worldPx(target.y) - view.h / 2;
     const roomW = worldPx(s.room.cols * TILE_PX);
     const roomH = worldPx(s.room.rows * TILE_PX);
     // The camera may scroll `cameraMarginTiles` into the void past every edge, so the HUD's corner panels never
@@ -1352,7 +1694,8 @@ export class HoldingScene extends Phaser.Scene {
       this.writPanel !== null ||
       this.nameScreen !== null ||
       this.talkBox !== null ||
-      this.plotPanel !== null;
+      this.plotPanel !== null ||
+      this.build !== null;
     const p = this.session.position();
     const talk =
       !open && nearKesh(p.x, p.y, tuningStore.get().juice.promptRangePx, this.session.layout);
@@ -1499,6 +1842,10 @@ export class HoldingScene extends Phaser.Scene {
     sealing: string | null;
     plotPanel: ReturnType<PlotPanel['snapshot']> | null;
     plotTip: boolean;
+    /** Build mode (M2 Task 6): the side list, the pieces as drawn with the ghost and the building moment, the ghost's placement. */
+    build: ReturnType<BuildMode['snapshot']> | null;
+    pieces: ReturnType<PiecesLayer['snapshot']>;
+    ghost: Ghost | null;
   } {
     const s = this.session.state;
     return {
@@ -1528,6 +1875,9 @@ export class HoldingScene extends Phaser.Scene {
       sealing: this.plots.sealing,
       plotPanel: this.plotPanel?.snapshot() ?? null,
       plotTip: this.plotTipVisible,
+      build: this.build?.snapshot() ?? null,
+      pieces: this.pieces.snapshot(),
+      ghost: this.ghost,
     };
   }
 
@@ -1539,6 +1889,8 @@ export class HoldingScene extends Phaser.Scene {
     this.world.setKeshTalking(this.talkBox !== null && keshSpeaking(this.talk.step));
     this.world.draw(this.session.state, this.session.position());
     this.plots.update(this.time.now, this.serverNow());
+    this.pieces.update(this.time.now);
+    this.updateGhost();
     if (this.afterSeal && this.plots.sealing === null) {
       const next = this.afterSeal;
       this.afterSeal = null;
@@ -1566,6 +1918,7 @@ export class HoldingScene extends Phaser.Scene {
     }
     this.writPanel?.update(this.serverNow());
     this.plotPanel?.update();
+    this.build?.update();
     this.talkBox?.layout();
     // A plot's panel shows "Next in …" from the clock: refresh its lines once a minute.
     if (
@@ -1583,6 +1936,7 @@ export class HoldingScene extends Phaser.Scene {
         !buttonsFor(preset, 'interact', 'calm').includes(MENU_BUTTONS.confirm[0])) ||
       MENU_BUTTONS.confirm.slice(1).some((b) => edges.includes(b));
     if (edges.includes(MENU_BUTTONS.back)) this.back();
+    else if (this.build) this.buildPad(edges, preset, confirmed);
     else if (this.talkBox) {
       const axes = connectedPad()?.axes ?? [];
       const sy = Math.abs(axes[1] ?? 0) > 0.5 ? Math.sign(axes[1] ?? 0) : 0;

@@ -18,7 +18,9 @@ import {
   type KindledView,
   type MeResponse,
   type PlotNameRequest,
+  type PlotPieceRequest,
   type PlotSowRequest,
+  type PlotTakeDownRequest,
   type WritFeedRequest,
   type WritNameRequest,
 } from '@iot/shared';
@@ -103,6 +105,12 @@ export interface Api {
   plotsName(body: PlotNameRequest): Promise<ApiResult<HoldingResponse>>;
   /** Sow a named field with its seed (M2 Task 5). `unknown-plot`, `unnamed-plot`, `faded`, `already-sown`, `insufficient`. */
   plotsSow(body: PlotSowRequest): Promise<ApiResult<HoldingResponse>>;
+  /** Build a piece in a named plot (M2 Task 6). `unknown-plot`, `unnamed-plot`, `faded`, `unknown-piece`, `already-built`, `needs-line`, `needs-skill`, `limit`, `blocked`, `insufficient`. */
+  plotsBuild(body: PlotPieceRequest): Promise<ApiResult<HoldingResponse>>;
+  /** Move a standing piece, free. `unknown-plot`, `unnamed-plot`, `faded`, `not-built`, `blocked`. */
+  plotsMove(body: PlotPieceRequest): Promise<ApiResult<HoldingResponse>>;
+  /** Take a standing piece down, every material back into the store. `unknown-plot`, `unnamed-plot`, `faded`, `not-built`, `store-full`. */
+  plotsTakeDown(body: PlotTakeDownRequest): Promise<ApiResult<HoldingResponse>>;
 }
 
 export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)): Api {
@@ -129,6 +137,9 @@ export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)):
     keshSeeds: () => request(fetchFn, ApiRoute.KeshSeeds, 'POST', {}, isHoldingResponse),
     plotsName: (body) => request(fetchFn, ApiRoute.PlotsName, 'POST', body, isHoldingResponse),
     plotsSow: (body) => request(fetchFn, ApiRoute.PlotsSow, 'POST', body, isHoldingResponse),
+    plotsBuild: (body) => request(fetchFn, ApiRoute.PlotsBuild, 'POST', body, isHoldingResponse),
+    plotsMove: (body) => request(fetchFn, ApiRoute.PlotsMove, 'POST', body, isHoldingResponse),
+    plotsTakeDown: (body) => request(fetchFn, ApiRoute.PlotsTakeDown, 'POST', body, isHoldingResponse),
   };
 }
 

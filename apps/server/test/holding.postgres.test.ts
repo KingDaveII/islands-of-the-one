@@ -15,7 +15,8 @@ import { createInventory, type Inventory } from '../src/inventory/index.js';
  * take-all racing a settle keeps the basket's totals; feeds racing on one
  * Writ never overfill it; two POST /api/kesh/sliver racing give exactly one
  * sliver (M2 Task 4b); settles racing on a sown field credit each cycle once
- * and names racing on one plot charge at most once (M2 Task 5). Needs TEST_DATABASE_URL like
+ * and names racing on one plot charge at most once (M2 Task 5); two builds racing for the last free
+ * slot on one plot stand one and pay one cost (M2 Task 6). Needs TEST_DATABASE_URL like
  * inventory.postgres.test.ts (CI provides one).
  */
 const url = process.env.TEST_DATABASE_URL;
@@ -171,6 +172,42 @@ describe.runIf(url)('the holding settle on Postgres', () => {
     const view = await inv.view(k);
     expect(view.purse).toEqual([]);
     expect((await inv.ledger(k)).filter((e) => e.reason === 'name-plot')).toHaveLength(1);
+    await expectChains(k);
+  });
+
+  it('two builds racing for the last free slot on one plot: exactly one stands and only one cost is paid (M2 Task 6)', async () => {
+    const k = await newKindled();
+    const [account] = await handle.db.select({ username: accounts.username }).from(accounts).innerJoin(kindled, eq(kindled.accountId, accounts.id)).where(eq(kindled.id, k));
+    if (!account) throw new Error('no account');
+    await setWrit(handle.db, { username: account.username, chargeHours: 1000 }, at(0));
+    await holding.name(k, 'Ash', at(0));
+    await learnWord(handle.db, k, 'adamah', at(0));
+    await inv.apply(
+      [
+        { kindledId: k, itemId: 'grey-seeds', place: 'pack', delta: 1 },
+        { kindledId: k, itemId: 'twisted-log', place: 'store', delta: 10 * 300 + 200 },
+        { kindledId: k, itemId: 'black-stone', place: 'store', delta: 10 * 150 },
+        { kindledId: k, itemId: 'pale-grain', place: 'store', delta: 40 },
+      ],
+      'admin',
+    );
+    await holding.namePlot(k, { plotId: 'plot-1', ground: 'adamah', virtue: null }, at(0));
+    await holding.sowPlot(k, 'plot-1', at(0));
+    // One piece standing: one slot left (two per Writ line). Sixteen racers each want it for the jars: exactly one lands,
+    // the rest find it standing (each kind stands once, judged before the limit), and only one cost in all is paid.
+    const first = await holding.buildPiece(k, { plotId: 'plot-1', pieceId: 'clay-channel', col: 7, row: 7, rotation: 0 }, at(0));
+    expect(first.ok).toBe(true);
+    const results = await race(RACERS, () => holding.buildPiece(k, { plotId: 'plot-1', pieceId: 'seed-jars', col: 11, row: 12, rotation: 0 }, at(1000)));
+    expect(results.filter((r) => r.ok)).toHaveLength(1);
+    expect(results.map((r) => (r.ok ? 'ok' : r.error)).filter((e) => e !== 'ok')).toEqual(Array<string>(RACERS - 1).fill('already-built'));
+    const final = await holding.view(k, at(2000));
+    if (!final.ok) throw new Error(final.message);
+    expect(final.value.plots[0]?.pieces.map((p) => p.pieceId).sort()).toEqual(['clay-channel', 'seed-jars']);
+    expect(final.value.plots[0]?.level).toBe(3);
+    const view = await inv.view(k);
+    expect(view.store.find((e) => e.itemId === 'twisted-log')?.quantity).toBe(10 * 300 + 200 - 300 - 200);
+    expect(view.store.find((e) => e.itemId === 'pale-grain')).toBeUndefined();
+    expect((await inv.ledger(k)).filter((e) => e.reason === 'build')).toHaveLength(4);
     await expectChains(k);
   });
 

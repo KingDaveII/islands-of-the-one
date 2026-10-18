@@ -1,5 +1,6 @@
 import { isClayTone, isRemembrance, type Remembrance } from './accounts.js';
 import { isHoldingStationId, isPlotId } from './holding.js';
+import { isPieceRotation, type PieceRotation } from './pieces.js';
 import { isPlace, isStationId, type Place } from './places.js';
 import { isSkill, type Skill } from './skills.js';
 import type { ClayTone } from './sprites.js';
@@ -31,6 +32,9 @@ export const ApiRoute = {
   KeshSeeds: '/api/kesh/seeds',
   PlotsName: '/api/plots/name',
   PlotsSow: '/api/plots/sow',
+  PlotsBuild: '/api/plots/build',
+  PlotsMove: '/api/plots/move',
+  PlotsTakeDown: '/api/plots/take-down',
 } as const;
 export type ApiRoute = (typeof ApiRoute)[keyof typeof ApiRoute];
 
@@ -92,6 +96,15 @@ export const ApiErrorCode = {
   UnnamedPlot: 'unnamed-plot',
   NotSown: 'not-sown',
   AlreadySown: 'already-sown',
+  // Build mode (docs/design/holding.md "Build mode", M2 Task 6).
+  UnknownPiece: 'unknown-piece',
+  AlreadyBuilt: 'already-built',
+  NeedsLine: 'needs-line',
+  NeedsSkill: 'needs-skill',
+  Limit: 'limit',
+  Blocked: 'blocked',
+  NotBuilt: 'not-built',
+  StoreFull: 'store-full',
 } as const;
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
 
@@ -260,12 +273,21 @@ export interface KeshView {
   seedsDue: boolean;
 }
 
+/** A piece standing in a plot (M2 Task 6): its kind (pieces.json), its footprint's top-left tile and its rotation. */
+export interface PlotPieceView {
+  pieceId: string;
+  col: number;
+  row: number;
+  rotation: PieceRotation;
+}
+
 /**
  * A plot in the holding answer (M2 Task 5), one per layout plot in order:
  * its sentence (`ground` and `virtue` word ids, null while unnamed or without
  * a Virtue), when it was named and when its Virtue was last set (ISO 8601),
- * the kind its Ground builds (null while unnamed), its level (1 plus the
- * pieces standing in it: 1 until Task 6) and its state from its Writ line.
+ * the kind its Ground builds (null while unnamed), the pieces standing in it
+ * (M2 Task 6; none while unnamed), its level (1 plus the distinct pieces) and
+ * its state from its Writ line.
  */
 export interface PlotView {
   id: string;
@@ -276,6 +298,7 @@ export interface PlotView {
   /** When the plot was sown (ISO 8601); null until then, and for a kind that needs no sowing. */
   sownAt: string | null;
   kind: string | null;
+  pieces: PlotPieceView[];
   level: number;
   state: WritLineState;
 }
@@ -358,6 +381,36 @@ export interface PlotNameRequest {
  */
 export interface PlotSowRequest {
   plotId: string;
+}
+
+/**
+ * POST /api/plots/build and POST /api/plots/move, `{ plotId, pieceId, col,
+ * row, rotation }` (M2 Task 6): build a piece of pieces.json in a named plot
+ * at a tile and rotation (its cost leaves the store), or move one standing
+ * there for free. Build answers the holding, or `unknown-plot`,
+ * `unnamed-plot`, `faded`, `unknown-piece`, `already-built`, `needs-line`,
+ * `needs-skill`, `limit`, `blocked` or `insufficient`; move the same, or
+ * `unknown-plot`, `unnamed-plot`, `faded`, `not-built` or `blocked`.
+ */
+export interface PlotPieceRequest {
+  plotId: string;
+  pieceId: string;
+  col: number;
+  row: number;
+  rotation: PieceRotation;
+}
+export type PlotBuildRequest = PlotPieceRequest;
+export type PlotMoveRequest = PlotPieceRequest;
+
+/**
+ * POST /api/plots/take-down, `{ plotId, pieceId }` (M2 Task 6): takes a
+ * standing piece down and puts every material back into the store, or
+ * refuses whole with `store-full` when the refund doesn't fit. Also
+ * `unknown-plot`, `unnamed-plot`, `faded`, `not-built`.
+ */
+export interface PlotTakeDownRequest {
+  plotId: string;
+  pieceId: string;
 }
 
 /** POST /api/writ/name: the island's Name as typed; the server hears its letters. Once only in M2 (`already-named` after). */
@@ -576,11 +629,23 @@ export function isKeshView(value: unknown): value is KeshView {
 
 const isStringOrNull = (value: unknown): value is string | null => value === null || typeof value === 'string';
 
-/** A plot on the wire: its id one of the layout's, its name's parts and times consistent (unnamed: no Ground, no kind, no times). */
+/** A piece on the wire: its kind (judged by the client against pieces.json), its tile and one of the four rotations. */
+export function isPlotPieceView(value: unknown): value is PlotPieceView {
+  return (
+    isObject(value) &&
+    hasOnly(value, ['pieceId', 'col', 'row', 'rotation']) &&
+    typeof value.pieceId === 'string' &&
+    isNonNegativeInt(value.col) &&
+    isNonNegativeInt(value.row) &&
+    isPieceRotation(value.rotation)
+  );
+}
+
+/** A plot on the wire: its id one of the layout's, its name's parts and times consistent (unnamed: no Ground, no kind, no times, no pieces). */
 export function isPlotView(value: unknown): value is PlotView {
   return (
     isObject(value) &&
-    hasOnly(value, ['id', 'ground', 'virtue', 'namedAt', 'virtueSetAt', 'sownAt', 'kind', 'level', 'state']) &&
+    hasOnly(value, ['id', 'ground', 'virtue', 'namedAt', 'virtueSetAt', 'sownAt', 'kind', 'pieces', 'level', 'state']) &&
     isPlotId(value.id) &&
     isStringOrNull(value.ground) &&
     isStringOrNull(value.virtue) &&
@@ -593,6 +658,9 @@ export function isPlotView(value: unknown): value is PlotView {
     (value.ground === null) === (value.kind === null) &&
     (value.ground !== null || value.virtue === null) &&
     (value.virtue === null) === (value.virtueSetAt === null) &&
+    Array.isArray(value.pieces) &&
+    value.pieces.every(isPlotPieceView) &&
+    (value.ground !== null || value.pieces.length === 0) &&
     isPositiveInt(value.level) &&
     isWritLineState(value.state)
   );
@@ -650,6 +718,24 @@ export function isKeshSliverRequest(value: unknown): value is KeshSliverRequest 
 
 /** The body of POST /api/kesh/word and /seeds: an empty object; any field is refused. */
 export const isKeshGiftRequest: (value: unknown) => value is KeshGiftRequest = isKeshSliverRequest;
+
+/** The body of POST /api/plots/build and /move: exactly { plotId, pieceId, col, row, rotation }; the plot, the piece and the place are judged by the route. */
+export function isPlotPieceRequest(value: unknown): value is PlotPieceRequest {
+  return (
+    isObject(value) &&
+    hasOnly(value, ['plotId', 'pieceId', 'col', 'row', 'rotation']) &&
+    typeof value.plotId === 'string' &&
+    typeof value.pieceId === 'string' &&
+    isNonNegativeInt(value.col) &&
+    isNonNegativeInt(value.row) &&
+    isPieceRotation(value.rotation)
+  );
+}
+
+/** The body of POST /api/plots/take-down: exactly { plotId, pieceId }. */
+export function isPlotTakeDownRequest(value: unknown): value is PlotTakeDownRequest {
+  return isObject(value) && hasOnly(value, ['plotId', 'pieceId']) && typeof value.plotId === 'string' && typeof value.pieceId === 'string';
+}
 
 /** The body of POST /api/plots/sow: exactly { plotId }. */
 export function isPlotSowRequest(value: unknown): value is PlotSowRequest {

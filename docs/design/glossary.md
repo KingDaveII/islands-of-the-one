@@ -105,6 +105,9 @@ The Kindled's home Shard ([`holding.md`](holding.md)).
 | sigil          | The sentence's letters as one line through the chambers of Saturn's square.                               | `sigilPath`, `sigil.json`                    |
 | field          | What אדמה builds: sown once with grey seeds, then farmed and trickling pale grain.                         | plot kind `field`                            |
 | signpost       | The 1 × 1 station at a plot's centre: its Use point, a pillar once named.                                  | `LayoutPlot.station`                         |
+| piece          | An upgrade piece: a physical object built inside a plot that raises its station's level (clay channel, seed jars, threshing floor). | `piece`; ids in `pieces.json`, table `plot_pieces` |
+| build mode     | Use a station → BUILD HERE: the side list of pieces, the ghost that follows the pointer, MOVE and TAKE DOWN. | `buildMode`, `ui/buildMode.ts`               |
+| ghost          | A piece's footprint following the pointer in build mode, green where it fits and red where it doesn't.    | `ghost`, `placementProblems`                 |
 | basket cycle   | The trickle: a station's or plot's basket filling on its own while the Writ is lit; no XP.                | `cycle`, table `basket_cycles`, reason `harvest` |
 | active action  | The one station a Kindled works at a time; it keeps going offline up to the cap.                          | `activity`, table `holding_activity`         |
 | settle         | Computing what the active action produced since it was last asked.                                        | `settle`                                     |

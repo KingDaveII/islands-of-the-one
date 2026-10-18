@@ -74,7 +74,7 @@ the item tables.
   may span several Kindleds (a trade); each (Kindled, item, place) appears at most once in it (merge
   the deltas; the same item in two places is two changes).
 - **reason**: one of `InventoryReason` in shared code: `grant`, `gather`, `harvest`, `feed-writ`,
-  `craft`, `trade`, `admin`, `move`, `gift`, `name-plot`, `sow`. `gather` is a station's yield credited into its basket when the
+  `craft`, `trade`, `admin`, `move`, `gift`, `name-plot`, `sow`, `build`. `gather` is a station's yield credited into its basket when the
   holding settles ([holding.md](holding.md) §3): one row per settle, in the settle's transaction, with
   the ref `act:<kindled>:<started_at>:<credited>-<new total>` so a stretch's cycles are paid once.
   `gift` is what an NPC gives: Kesh's first sliver and the tide's, one `wild-sliver` into the pack
@@ -82,7 +82,13 @@ the item tables.
   `harvest` is a basket cycle's yield credited into its basket when the holding settles (§3's trickle), with
   the ref `cycle:<kindled>:<station>:<from ms>-<to ms>` so a stretch pays once. `name-plot` is the sealed
   gin a plot's rename costs, from the purse; `sow` the seed a new field takes, from the store first, then
-  the pack (§11).
+  the pack (§11). `build` is an upgrade piece's cost leaving the store when it is built, and the same
+  materials coming back (positive deltas) when it is taken down ([holding.md](holding.md) §12); a
+  take-down whose refund doesn't fit the store is refused whole.
+- **overfillStore** (optional): lets the store's stacks go past their limits for this set, the purse and
+  the pack keeping theirs. Only for a refund that must land whatever the store holds: every piece of a
+  plot taken down by a Ground-changing rename or the `plots:pieces --clear` CLI (nothing is ever
+  destroyed). No route takes it.
 - **ref** (optional, at most 200 characters): an idempotency key, e.g. `trade:<id>` or
   `harvest:<station>:<cycle>`. A change set with a ref already in the ledger is not applied again:
   `apply` answers `duplicate: true` with the ledger rows of the first time, even when the two calls

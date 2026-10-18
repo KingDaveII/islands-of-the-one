@@ -1,4 +1,3 @@
-import type { StationCycle } from './holding.js';
 import { PLOT_DIVIDER } from './letters.js';
 import { isSafe, type SafeResult } from './safe-letters.js';
 import { writData } from './writ-data.js';
@@ -101,25 +100,6 @@ export function cycleBonuses(
   return Array.from({ length: n }, (_, i) => yieldBonusPermille(effect, virtueSetAt, pausedMs, from + (i + 1) * cycleMs));
 }
 
-/**
- * Task 6's seam: a station's speed in permille of the base, 1000 today
- * (each piece standing in the plot adds +25% in Task 6).
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Task 6 reads the pieces
-export function cycleSpeedPermille(_pieces = 0): number {
-  return 1000;
-}
-
-/** A basket cycle's length: `cycleMs` over the station's speed factor (1 today). */
-export function cycleLengthMs(cycle: Pick<StationCycle, 'cycleMs'>, pieces = 0): number {
-  return Math.round((cycle.cycleMs * 1000) / cycleSpeedPermille(pieces));
-}
-
-/** A plot's level: 1 plus the pieces standing in it (none until Task 6). */
-export function plotLevel(pieces = 0): number {
-  return 1 + pieces;
-}
-
 /** How long until the next cycle lands, from when the clock stood (`cycledUntil`) and the server's clock; never negative. */
 export function nextCycleInMs(cycledUntil: number, cycleMs: number, nowMs: number): number {
   const elapsed = nowMs - cycledUntil;
@@ -184,7 +164,7 @@ export const PLOT_TEXT = {
   /** The tooltip on the renaming cost (LORE). */
   COST_RENAME_TIP: 'A name is paid for.',
   LEVEL: 'Level ',
-  PIECES_NONE: 'Pieces: none',
+  /** "Pieces: none yet" and the pieces' names are BUILD_TEXT's (M2 Task 6). */
   CONFIRM: 'CONFIRM',
   RENAME: 'RENAME',
   SOW: 'SOW',

@@ -216,6 +216,32 @@ export const basketCycles = pgTable(
   (t) => [primaryKey({ columns: [t.kindledId, t.stationId] })],
 );
 
+/**
+ * The upgrade pieces standing in a Kindled's plots (docs/design/holding.md
+ * "Build mode", M2 Task 6): one row per Kindled, plot and piece kind (each
+ * kind stands once per plot), by the layout's plot id and the piece id of
+ * pieces.json, with the footprint's top-left tile and its rotation (0, 90,
+ * 180 or 270) and when it was built. Written only by the holding module
+ * under the Kindled's lock: built, moved and taken down by the build routes,
+ * taken down by a Ground-changing rename and by the `plots:pieces --clear`
+ * CLI. Migration 0008, expand-only.
+ */
+export const plotPieces = pgTable(
+  'plot_pieces',
+  {
+    kindledId: uuid('kindled_id')
+      .notNull()
+      .references(() => kindled.id, { onDelete: 'cascade' }),
+    plotId: text('plot_id').notNull(),
+    pieceId: text('piece_id').notNull(),
+    col: integer('col').notNull(),
+    row: integer('row').notNull(),
+    rotation: integer('rotation').notNull().default(0),
+    builtAt: timestamp('built_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.kindledId, t.plotId, t.pieceId] })],
+);
+
 export type Account = typeof accounts.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type KindledRow = typeof kindled.$inferSelect;
@@ -226,3 +252,4 @@ export type KeshGiftRow = typeof keshGifts.$inferSelect;
 export type KnownWordRow = typeof knownWords.$inferSelect;
 export type PlotRow = typeof plots.$inferSelect;
 export type BasketCycleRow = typeof basketCycles.$inferSelect;
+export type PlotPieceRow = typeof plotPieces.$inferSelect;

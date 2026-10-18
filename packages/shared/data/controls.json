@@ -19,6 +19,9 @@
         "interact": {
           "calm": "Cross"
         },
+        "rotate": {
+          "calm": "Triangle"
+        },
         "chartPeek": "Circle",
         "journal": "Down",
         "inventory": "Touchpad",
@@ -56,6 +59,7 @@
         "interact": {
           "calm": "Cross"
         },
+        "rotate": {},
         "chartPeek": "R3",
         "journal": "Down",
         "inventory": "Touchpad",
@@ -81,6 +85,9 @@
         "interact": {
           "calm": "Cross"
         },
+        "rotate": {
+          "calm": "Triangle"
+        },
         "chartPeek": "Circle",
         "journal": "Down",
         "inventory": "Touchpad",
@@ -104,6 +111,7 @@
     "interact": {
       "calm": "E"
     },
+    "rotate": "R",
     "chartPeek": "Tab",
     "journal": "J",
     "inventory": "I",

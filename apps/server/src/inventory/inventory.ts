@@ -76,6 +76,14 @@ export interface ApplyOptions {
   ref?: string;
   /** Run inside this transaction (as a savepoint) instead of one of its own. */
   tx?: Transaction;
+  /**
+   * Let the store's stacks go past their limits: a refund that must land
+   * whatever the store holds (every piece of a plot taken down by a
+   * Ground-changing rename or the playtest CLI; docs/design/holding.md
+   * "Build mode": nothing is ever destroyed). The purse and the pack keep
+   * their limits.
+   */
+  overfillStore?: boolean;
 }
 
 /** A malformed call (unknown item, place or reason, a zero delta…): a bug in the caller, not a refusal. */
@@ -194,7 +202,7 @@ export function createInventory(db: Database, options: InventoryOptions = {}): I
   async function apply(
     input: readonly ItemChange[],
     reason: InventoryReason,
-    { ref, tx: outer }: ApplyOptions = {},
+    { ref, tx: outer, overfillStore = false }: ApplyOptions = {},
   ): Promise<ApplyResult> {
     const changes = validate(input, reason, ref);
     const misplaced = wrongPlace(changes);
@@ -306,7 +314,7 @@ export function createInventory(db: Database, options: InventoryOptions = {}): I
           const limit =
             c.place === 'purse'
               ? (def?.stackLimit ?? MAX_QUANTITY)
-              : c.place === 'store'
+              : c.place === 'store' && !overfillStore
                 ? Math.min(def?.stackLimit ?? MAX_QUANTITY, storeLimitOf(c.itemId))
                 : MAX_QUANTITY;
           if (balance > limit)
