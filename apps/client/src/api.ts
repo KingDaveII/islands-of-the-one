@@ -17,6 +17,8 @@ import {
   type InventoryResponse,
   type KindledView,
   type MeResponse,
+  type PlotNameRequest,
+  type PlotSowRequest,
   type WritFeedRequest,
   type WritNameRequest,
 } from '@iot/shared';
@@ -93,6 +95,14 @@ export interface Api {
   writFeed(body: WritFeedRequest): Promise<ApiResult<HoldingResponse>>;
   /** Ask Kesh for the sliver that is due (his first, else this tide's): one wild sliver into the pack. `not-due`, `pack-full`. */
   keshSliver(): Promise<ApiResult<HoldingResponse>>;
+  /** Ask Kesh for his word tile (once the island has a Name, while the word isn't known). `not-due`. */
+  keshWord(): Promise<ApiResult<HoldingResponse>>;
+  /** Ask Kesh for his seeds (once a plot has been named, once): into the pack. `not-due`, `pack-full`. */
+  keshSeeds(): Promise<ApiResult<HoldingResponse>>;
+  /** Name a plot with a plot sentence (M2 Task 5). `unknown-plot`, `unnamed`, `faded`, `unknown-word`, `wrong-slot`, `no-ground`, `unchanged`, `sentence-refused`, `insufficient`. */
+  plotsName(body: PlotNameRequest): Promise<ApiResult<HoldingResponse>>;
+  /** Sow a named field with its seed (M2 Task 5). `unknown-plot`, `unnamed-plot`, `faded`, `already-sown`, `insufficient`. */
+  plotsSow(body: PlotSowRequest): Promise<ApiResult<HoldingResponse>>;
 }
 
 export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)): Api {
@@ -115,6 +125,10 @@ export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)):
     writName: (body) => request(fetchFn, ApiRoute.WritName, 'POST', body, isHoldingResponse),
     writFeed: (body) => request(fetchFn, ApiRoute.WritFeed, 'POST', body, isHoldingResponse),
     keshSliver: () => request(fetchFn, ApiRoute.KeshSliver, 'POST', {}, isHoldingResponse),
+    keshWord: () => request(fetchFn, ApiRoute.KeshWord, 'POST', {}, isHoldingResponse),
+    keshSeeds: () => request(fetchFn, ApiRoute.KeshSeeds, 'POST', {}, isHoldingResponse),
+    plotsName: (body) => request(fetchFn, ApiRoute.PlotsName, 'POST', body, isHoldingResponse),
+    plotsSow: (body) => request(fetchFn, ApiRoute.PlotsSow, 'POST', body, isHoldingResponse),
   };
 }
 

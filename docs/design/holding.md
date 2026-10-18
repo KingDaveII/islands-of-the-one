@@ -37,8 +37,11 @@ ring of plots, the trees within reach of the post and the free ground north all 
   (23, 13)) on the east side within 10. The start is at (14, 15).
 - **`reserved`:** a spot kept for a later task. The weapon rack (Task 8) is reserved: its tiles are plain ground,
   it draws no prop and offers no Use, and stations.json gives it no action.
-- **Plots:** four 6 × 6 rectangles (`PLOT_SIZE`) in a loose ring around the post with paths between them, data
-  only; Task 5 names them. They never touch each other, the post or the store.
+- **Plots:** four 6 × 6 rectangles (`PLOT_SIZE`) in a loose ring around the post with paths between them. Each
+  has a permanent `id` (`plot-1` … `plot-4`, in order; the basket is `basket:<id>` in the ledger, so ids are
+  never renamed) and a `station`: a 1 × 1 `rect` at the plot's centre ((col + 2, row + 2), the signpost, a
+  pillar in the roam template once the plot is named) and its `interact` point just south of it. They never
+  touch each other, the post or the store. The plots in order belong to Writ line 1, `linePlots` per line (§11).
 - **`landing`:** where the boat ties up later, a ground tile on the south shore ((14, 22)); no prop or action yet.
 - **`kesh`:** Kesh's needle of rock, `rock`, a 2 × 2 of void a stone's throw off the south-east shore ((26, 20)),
   drawn as the solid prop `prop-kesh-rock` (unwalkable: its tiles are void), and `talk`, the ground tile Talk across
@@ -52,7 +55,8 @@ ring of plots, the trees within reach of the post and the free ground north all 
   to a station; there is one Writ post, within `CENTRE_SLACK` (2) of the island's centre; the store and the rack
   within `NEAR_POST` (3) tiles of it, every tree (west of it) and the outcrop (east of it) within `FAR_POST` (10),
   measured between nearest cells (`rectGap`); the plots are 6 × 6 on ground, overlap no station and touch neither
-  each other, the post nor the store (`rectsTouch`, diagonals included); the landing is ground with void south of
+  each other, the post nor the store (`rectsTouch`, diagonals included), their ids unique and kebab-case, each
+  station rect and interact point inside its plot, the interact point ground and reachable from the start; the landing is ground with void south of
   it, south of the post and reachable; the rock is void with at least one cell of void between it and the island
   and within 6 of it, south and east of the post, its Talk spot reachable ground within 4 of it; a plot's worth of
   plain ground lies north of the post, clear of every plot and station; there is exactly one start, on ground.
@@ -70,8 +74,9 @@ and `prop-holding-store` (`STATION_SHEETS`; a reserved spot has none; a part may
 `sheet` in `holding.json`, from `STATION_PART_SHEETS`: every other tree is `prop-twisted-tree-2`, ART's forked
 crown on the same tall cell, drawn once it is on disk and `prop-twisted-tree` until then), and Kesh's rock from `prop-kesh-rock`
 (`KESH_ROCK_SHEET`), each playing its `idle` (one frame, but the Writ post's two at 2 fps: its tablet's marks pulse), standing on the bottom centre of its tile rectangle with a grounding
-shadow by the prop rule (none for a prop standing in the void, Kesh's rock: `standsOnGround`), y-sorted with the Kindled by the line it stands on. `holdingRoomTiles` is the layout as
-the sim walks it: every station tile a pillar (`o`), a reserved spot ground, the rock's tiles already void. All
+shadow by the prop rule (none for a prop standing in the void, Kesh's rock: `standsOnGround`), y-sorted with the Kindled by the line it stands on. `holdingRoomTiles(layout, solidPlots)` is the layout as
+the sim walks it: every station tile a pillar (`o`), a reserved spot ground, the rock's tiles already void, and a
+named plot's signpost tile a pillar too (the scene passes the named plots' ids). All
 six sheets are ART's (the holding at B, #84), built through the recipes in `art/sheets/` from `art/clean/`;
 they replaced MAIN's placeholders without an engine change, and the placeholder script is retired. The pipeline's `rooms.png`
 for a shore set draws the holding's layout alone (the cave sets draw the rooms of rooms.json).
@@ -115,16 +120,24 @@ ART #87), with the same tone swap; encounters keep the combat sheet.
 
 [`stations.json`](../../packages/shared/data/stations.json), validated on load:
 
-| station         | kind    | action          | yields            | cycle | skill       | XP per cycle |
-| --------------- | ------- | --------------- | ----------------- | ----- | ----------- | ------------ |
-| `writ-post`     | post    | none: Use opens the Writ panel (the Name screen first, unnamed; §9) | n/a   | n/a   | n/a         | n/a          |
-| `holding-store` | store   | none: Use opens the inventory with the store pane | n/a | n/a | n/a | n/a |
-| `weapon-rack`   | rack    | none: a reserved spot until Task 8 | n/a | n/a | n/a | n/a |
-| `twisted-trees` | trees   | a dead branch   | 1 `twisted-log`   | 4 s   | Woodcutting | 4            |
-| `stone-outcrop` | outcrop | surface stone   | 1 `black-stone`   | 6 s   | Mining      | 6            |
+| station         | kind    | action          | yields            | cycle | skill       | XP per cycle | basket cycle (the trickle) |
+| --------------- | ------- | --------------- | ----------------- | ----- | ----------- | ------------ | -------------------------- |
+| `writ-post`     | post    | none: Use opens the Writ panel (the Name screen first, unnamed; §9) | n/a   | n/a   | n/a         | n/a          | none |
+| `holding-store` | store   | none: Use opens the inventory with the store pane | n/a | n/a | n/a | n/a | none |
+| `weapon-rack`   | rack    | none: a reserved spot until Task 8 | n/a | n/a | n/a | n/a | none |
+| `twisted-trees` | trees   | a dead branch   | 1 `twisted-log`   | 4 s   | Woodcutting | 4            | 1 `twisted-log` every 2 h per tree (`perPart`: six trees, 6 logs every 2 h) |
+| `stone-outcrop` | outcrop | surface stone   | 1 `black-stone`   | 6 s   | Mining      | 6            | none: stone never comes by itself (GAME DESIGN) |
+
+And the **plot kinds** (`plotKinds`), what a Ground word builds on a plot (§11); a named plot is a station of
+its kind whose id is the plot's (`plot-1` …, basket `basket:plot-1`):
+
+| plot kind | action  | yields          | cycle | skill   | XP per cycle | basket cycle                | sown with       |
+| --------- | ------- | --------------- | ----- | ------- | ------------ | --------------------------- | --------------- |
+| `field`   | farming | 1 `pale-grain`  | 20 s  | Farming | 20           | 1 `pale-grain` every 15 min | 1 `grey-seeds`  |
 
 A living branch ("mixed dead and living branches"), regrowth and the quarry's layers come later, with their
-items. The six trees are one station: any tree's interact point works it, and they share one basket.
+items. The six trees are one station: any tree's interact point works it, and they share one basket. A `cycle`
+is optional on any station or plot kind (`itemId`, `quantity`, `cycleMs`, `perPart`), validated like the action.
 
 **One active action per Kindled**, in the `holding_activity` table (the Kindled as primary key, the
 station, `started_at`, `credited_cycles`, `last_seen_at`; migration 0004, expand-only). Starting work
@@ -152,7 +165,30 @@ the moment the Writ went dark, `min(cap, emptyAt − lastSeenAt)`, and never les
 keep working at full rate and XP while dark (GAME DESIGN: "Dark means idling stops, not that the
 player is locked out"). The Writ row is locked in the settle's transaction with the rest.
 
-**Baskets** have no limit in this task: what the 48 h rule produced waits there.
+**Baskets** have no limit: what the 48 h rule produced waits there.
+
+**The trickle: basket cycles** (M2 Task 5; GAME DESIGN's "one mechanism", "while the Writ is lit", "basket cycles
+earn no XP"). Besides the active action, every station or plot with a `cycle` pays its yield into its basket on
+its own while the Writ is lit, whether or not the Kindled is working anywhere. The state is the `basket_cycles`
+table (the Kindled and the station as primary key, cascade; `cycled_until`, `carry_permille`; migration 0007,
+expand-only): a row is created with `cycled_until` = now for a field when it is sown, and for the trees on the
+Kindled's first settle after this shipped (nothing is paid for the time before). The holding-wide **last seen**
+is `writs.last_seen_at` (the activity's `last_seen_at` goes with a stop; this one doesn't), refreshed by every
+holding request. Settling, in the same transaction and locks as the active action, for every station with a
+cycle (`apps/server/src/holding/cycles.ts`):
+
+1. `end = min(now, lastSeen + offlineCapHours, writ.emptyAt)`: no cycle runs while the Writ is dark, and none
+   past the cap. A faded plot's end is clamped at its line's `fadesAt` too, so a relight never pays dark time.
+2. `n = floor((end − cycled_until) / cycleMs)`, never negative; `cycleMs` is the station's `cycleMs` × its speed
+   factor (`cycleLengthMs`, 1 today; Task 6's pieces raise it).
+3. Credit the n cycles' yield into `basket:<station>` through `inventory.apply`, reason `harvest`, ref
+   `cycle:<kindled>:<station>:<from ms>-<to ms>`, so a stretch pays once. There is no XP. ישן's bonus (§11)
+   multiplies the quantity in permille with a carry kept in `carry_permille`, all integers.
+4. `cycled_until += n × cycleMs`; when `end < now` (the Writ went dark, or the cap bit), `cycled_until = now`:
+   the lost time and the partial cycle are never paid later, like the active action's lost time.
+
+"192 for a field" is what 48 h of the field's cycle makes under the cap, not a stored number. The away hook
+(§5) moves every `cycled_until` and the last seen back too.
 
 **Take all** (Use on a station → Take all) moves the basket into the store **moving only what fits**
 (GAME DESIGN 2026-10-17): when a store stack is full the rest stays in the basket and the panel's one line
@@ -168,16 +204,15 @@ GAME DESIGN's curve, in [`packages/shared/src/skills.ts`](../../packages/shared/
 
 - Skills have no level cap. The XP to go from level L to L + 1 is
   `round(40 + 12,300 × (1.08^L − 1.08))`; level 2 is at 40 XP.
-- XP per action is the action's base time in seconds (4 at the trees, 6 at the outcrop). Basket cycles
-  from plots (Task 5) earn none.
+- XP per action is the action's base time in seconds (4 at the trees, 6 at the outcrop, 20 at a field).
+  Basket cycles (§3's trickle) earn none.
 - The table is generated, not computed at runtime: `tools/skills-table.mjs` writes `skills.json`, the
   cumulative XP of each level from 1 to 200 (level 10 at 46,689, level 20 at 298,935, level 200 at
   743,985,697,074). `skillProgress(xp)` reads it and runs the same formula past it (`xpToNext`).
   `packages/shared/test/skills.test.ts` recomputes every entry from the formula, integer-exact, pins
   those values and checks the level at the edges, 200 and 250 included.
 - `skill_xp` (Kindled, skill, XP as bigint) is written only in the settle transaction. XP is not an
-  item, so it is not in the item ledger. The skills of M2: Woodcutting, Mining, Farming (no station
-  until Task 5).
+  item, so it is not in the item ledger. The skills of M2: Woodcutting, Mining, Farming (the fields, §11).
 
 ## 5. The API
 
@@ -193,22 +228,34 @@ routes ([`accounts.md`](accounts.md)): the Kindled comes from the session cookie
 | `POST /api/writ/name`     | `{ name }`      | `200` the same · `400` bad-request / name-refused · `409` already-named · `401` · `404` |
 | `POST /api/writ/feed`     | `{ itemId, count }` or `{ fill: true }` | `200` the same · `400` bad-request / not-sparkglass · `409` unnamed / insufficient / full / too-much · `401` · `404` |
 | `POST /api/kesh/sliver`   | `{}`            | `200` the same · `400` bad-request · `409` not-due / pack-full · `401` · `404` (§10)     |
+| `POST /api/kesh/word`     | `{}`            | `200` the same · `400` bad-request · `409` not-due · `401` · `404` (§11)                 |
+| `POST /api/kesh/seeds`    | `{}`            | `200` the same · `400` bad-request · `409` not-due / pack-full · `401` · `404` (§11)     |
+| `POST /api/plots/name`    | `{ plotId, ground, virtue }` | `200` the same · `400` bad-request / unknown-plot / unknown-word / wrong-slot / no-ground / sentence-refused · `409` unnamed / faded / unchanged / insufficient · `401` · `404` (§11) |
+| `POST /api/plots/sow`     | `{ plotId }`    | `200` the same · `400` bad-request / unknown-plot · `409` unnamed-plot / faded / already-sown / insufficient · `401` · `404` (§11) |
 
-`HoldingResponse`: the layout id; `baskets` by station id (every station of the layout listed) as
-lists of `{ itemId, quantity }`; the `activity` (`stationId`, `startedAt`, `cycleMs`) or null; the
-server's `now`; `skills`, each with its XP, level, XP into the level and XP to the next; and the
-`writ` (`WritView`, §9) and `kesh` (`KeshView`, §10). A take answer adds `take`: the station, what `moved` into the store and what
+`POST /api/holding/work` and `/take` take a named plot's id as a station id too: an unnamed plot is
+`unnamed-plot` (409), an unsown field `not-sown` (409), a faded plot `faded` (409).
+
+`HoldingResponse`: the layout id; `baskets` by station id (every station of the layout listed, the plots'
+too) as lists of `{ itemId, quantity }`; the `activity` (`stationId`, `startedAt`, `cycleMs`) or null; the
+server's `now`; `skills`, each with its XP, level, XP into the level and XP to the next; the
+`writ` (`WritView`, §9) and `kesh` (`KeshView`, §10, with `wordDue` and `seedsDue`); `words`, the known word
+ids; `plots`, one `PlotView` per layout plot (`id`, `ground`, `virtue`, `namedAt`, `virtueSetAt`, `sownAt`,
+`kind` (null while unnamed), `level` (1 until Task 6), `state` `lit` | `dark` | `faded` from the plot's Writ
+line); and `cycles`, by station id for every station with a running cycle, `{ cycleMs, cycledUntil,
+bonusPermille }`, so the client draws "Next in 12 min" between heartbeats (§11). A take answer adds `take`: the station, what `moved` into the store and what
 was `left` in the basket. Every route settles first, refuses unknown fields and stations, and answers
-the same shape as GET. The Writ's routes are in §9; the shape change made `PROTOCOL_VERSION` 3, and
-`kesh` with the Writ's `fedAt` (4b) made it 4.
+the same shape as GET. The Writ's routes are in §9; the shape change made `PROTOCOL_VERSION` 3,
+`kesh` with the Writ's `fedAt` (4b) made it 4, and the plots (Task 5) 5.
 
 **The heartbeat:** while the holding scene is open the client calls `GET /api/holding` every
 `heartbeatMs` (30 s) and after each interaction (work, stop, take, opening a station panel, coming
 back from the inventory), so `last_seen_at` stays fresh and the counts stay true.
 
 **The away hook** (playtests only): `pnpm --filter @iot/server holding:away <username> <hours>` moves
-the active action's `started_at` and `last_seen_at` back that far, as if the Kindled had been away;
-the next request settles the stretch as offline time, up to the cap.
+the active action's `started_at` and `last_seen_at`, the holding-wide last seen and every basket cycle's
+`cycled_until` back that far, as if the Kindled had been away; the next request settles the stretch as
+offline time, up to the cap.
 
 ## 6. The client
 
@@ -220,7 +267,8 @@ runs do. In the world: the island (`HoldingWorld`, `render/holdingWorld.ts`, the
 background), a prop per station part with shadows by the prop rule and Kesh's rock without one, the Kindled walking by
 `roam` (`RoamSession`, `game/roamSession.ts`, 60 Hz from the controls' input, interpolated for drawing), and
 the interact prompt (the interact glyph and USE) over the nearest station part whose interact point is
-within `juice.promptRangePx` (`nearestStationPart`; a reserved spot is never prompted). The camera follows
+within `juice.promptRangePx` (`nearestStationPart`; a reserved spot is never prompted; the plots count once
+the island has a Name), and the plots (`PlotsLayer`, `render/plots.ts`; §11). The camera follows
 the Kindled and stops at the layout's edges.
 
 **The HUD** (`render/holdingHud.ts`, placeholder panels until ART's kit):
@@ -242,7 +290,8 @@ the Kindled and stops at the layout's edges.
   is named the chip shows alone.
 - **Over the station, a "+1"** as each cycle completes, predicted from the ring (`cyclesDone`), render
   only; the counts come from the server. A take-all floats what moved the same way ("+3"), over the
-  station's part nearest the Kindled.
+  station's part nearest the Kindled. A basket cycle landing while watching floats its yield the same way
+  (`cyclesLanded`, from `cycles`): "+1" over a field's signpost, "+6" over the tree nearest the Kindled.
 - **The camera margin** (4b): the camera follows the Kindled and may scroll `cameraMarginTiles` (6, `holding.json`)
   into the void past every edge of the layout (`clampScroll`'s `near` and `far` on both axes), so the HUD's corner
   panels never cover the shore or Kesh's rock: the PACK chip covered the rock in a 1440 × 810 window before it, the
@@ -254,23 +303,25 @@ the Kindled and stops at the layout's edges.
 backs out, all from `controls.json`): Use on the Writ post opens the Writ panel, or the Name screen first
 while the island has no Name (§9); Use on the holding store opens the inventory with the store pane;
 Use on a tree or the outcrop opens a small station panel
-(`stationLines`): the name, "1 twisted log every 4 s", the basket count, "You: 1 twisted log every 4 s"
+(`stationLines`): the name, "1 twisted log every 4 s", the basket cycle's rate ("6 twisted logs every 2 h")
+and "Next in 1 h 59 min" (or "Resting while your Writ is dark."), the basket count, "You: 1 twisted log every 4 s"
 while working here (the item's full name on both lines), the skill's level and XP to the next, and the
-buttons WORK HERE (STOP WORKING while working here) and TAKE ALL. After Take all what moved floats over the
+buttons WORK HERE (STOP WORKING while working here) and TAKE ALL. Use on a plot: the plot sentence panel
+while unnamed, its field's panel once named (§11). After Take all what moved floats over the
 station ("+3", `takeFloat`); "Store: twisted logs full." (`takeResultLine`) is the one panel line, shown
 with the inventory's blink-and-hold timing when it applies. Toasts proper are Task 7.
 
 ## 7. Seams for later tasks
 
-- **Task 4b, Kesh and the tide:** done (§10). What stays for later: Kesh's word tile (אדמה) and the seeds
-  are Task 5's, the codex entries come with the codex, odd catches with voyages; the once-per-tide sliver
-  goes away in M3 (`m2Scaffold`).
+- **Task 4b, Kesh and the tide:** done (§10), and his word tile and seeds (§11). What stays for later: the
+  codex entries come with the codex, odd catches with voyages; the once-per-tide sliver and "One a tide."
+  go away in M3 (`m2Scaffold`).
 - **The Wet House (M4):** `graceHoursUncertified` in writ.json (48 today) drops to 24; `certified` is
   written there; a rim-band's fitting, scribing a line and renaming (the panel shows line 2's needs
   greyed).
-- **Task 5, plots and their baskets' cycles:** the plot rectangles in `holding.json`; `stations.json`
-  gains the plot stations; basket cycles earn no XP.
-- **Task 6, build mode:** the layout stays pure data.
+- **Task 5, plots and their baskets' cycles:** done (§11).
+- **Task 6, build mode:** the layout stays pure data; a plot's `level` is 1 + its pieces (`plotLevel`), and a
+  cycle's length is `cycleMs` × the station's speed factor (`cycleSpeedPermille`, 1000 today), both one function.
 - **Task 8, the weapon rack:** the reserved `weapon-rack` spot by the post gets its prop and its Use.
 - **Boats:** the `landing` on the south shore.
 - **Task 7, sleep, the away card and toasts:** the settle already reports what a stretch credited
@@ -299,6 +350,7 @@ Hollow at the landing, the north edge's lip, and the Kindled behind the tall tre
 depths). Shots: `docs/screenshots/m2-3b/`.
 `tools/screenshots-m2-4a.mjs` is the Writ's run (§9); shots: `docs/screenshots/m2-4a/`.
 `tools/screenshots-m2-4b.mjs` is Kesh's (§10); shots: `docs/screenshots/m2-4b/`.
+`tools/screenshots-m2-5.mjs` is the plots' (§11); shots: `docs/screenshots/m2-5/`.
 
 ## 9. The Writ
 
@@ -318,7 +370,7 @@ The island's tablet (M2 Task 4a; GAME DESIGN's "The Writ and erosion", "M2 numbe
 | `graceHoursUncertified` | 48                                                                | The same, uncertified; 48 until the Wet House opens (M4), whose task sets it to 24 |
 | `lineFadeHours`         | 24                                                                | After the grace, one line fades each such stretch, outermost first       |
 | `lineLetters`           | 12                                                                | Letters a Writ line holds (the lean hand, letters.md "Hearing a Name")   |
-| `linePlots`             | 4                                                                 | Plots each line tethers (a count in M2; Task 5 makes the plots)          |
+| `linePlots`             | 4                                                                 | Plots each line tethers (the layout's plots in order; §11)              |
 
 **The stored state** (the `writs` table, one row per Kindled, cascade; migration 0005, expand-only; only the
 holding module touches it): the island's `name` as typed and its `letters` (null until named), `certified`
@@ -442,15 +494,19 @@ the menu's focus, the pointer hovers and clicks a row.
 **The lines** live in [`packages/shared/data/kesh.json`](../../packages/shared/data/kesh.json), validated on
 load (`validateKeshData`), LORE's and GAME DESIGN's word for word; every line passes `DRAWABLE_CHARS`, and a
 character the fonts lack fails the test by name instead of changing the text. A line is
-`{ who: kesh | narrator | hint, text }`, optionally with a `toss` (`sliver`: the thrown thing leaves his hand
-on that line) and an `only` (`first-sliver`: shown only while his first sliver hasn't been given). Stage
+`{ who: kesh | narrator | hint, text }`, optionally with a `toss` (`sliver`, `word` or `seeds`: the thrown
+thing leaves his hand on that line), an `only` (`first-sliver`: shown only while his first sliver hasn't been
+given; `tide-taken`: only while the first has been given and the tide's isn't due, "One a tide. I'm a
+fisherman, not a Pillar.") and `m2Scaffold` (the two tide lines go with M3's voyages). Stage
 directions in parentheses and LORE's speech marks are part of the text and are drawn. The flows:
-`afterNaming` plays from `afterNaming()` once the server has accepted the Name, after 4a's flare, and the
-Writ panel opens when it closes; `afterFirstFeeding` plays from `afterFeeding()` the first time a feed lands
+`afterNaming` plays from `afterNaming()` once the server has accepted the Name, after 4a's flare, ending with
+his clay tile's toss (§11), and the Writ panel opens when it closes; `afterFirstPlot` plays after the seal
+scene of a plot's first naming while the seeds are due (§11); `afterFirstFeeding` plays from `afterFeeding()` the first time a feed lands
 (`writ.fedAt` went from null to set in the feed's answer), over the open Writ panel; the Sparkglass topic
 carries the first-sliver step (the flick with its toss, then the hint "Touch Sparkglass to your Writ to feed
-it.") while `firstGiven` is false; `tideSliver` is the tide's line. **When a sliver is due** (`kesh.due`),
-Talk first plays the due toss (the first sliver's two lines, or the tide's one), then the menu.
+it.") while `firstGiven` is false; `tideSliver` is the tide's line. **When a gift is due** (`kesh.wordDue`, `kesh.seedsDue`, `kesh.due`),
+Talk first plays the due toss (the tile's line, then the seeds' flow, then the first sliver's two lines or the
+tide's one), then the menu.
 
 **The toss.** On a line with a `toss` the scene plays `toss` and sends `POST /api/kesh/sliver` once. When
 `toss` reaches `toss_2` (`KESH_TOSS_RELEASE_FRAME`) and the server has given the sliver, the thrown thing
@@ -493,8 +549,9 @@ days. `nextFullOfTide(date)` is for the client and the tests. A skipped tide is 
 on load, read by the server and the client) turns the tide's sliver on; it goes away in M3 when caves and
 wrecks give glass.
 
-**The playtest CLI:** `pnpm --filter @iot/server kesh:reset <username>` clears both columns through the
-holding module, so a playtest can see the first sliver again; the grant CLI keeps working beside it.
+**The playtest CLI:** `pnpm --filter @iot/server kesh:reset <username>` clears all four columns (the sliver's
+two and the gifts' `word_given_at` and `seeds_given_at`) through the holding module, so a playtest can see
+the first sliver, the tile and the seeds again; the grant CLI keeps working beside it.
 
 **Tests:** `packages/shared/test/kesh.test.ts` (the validator, every line in `DRAWABLE_CHARS` and free of
 the banned names, LORE's lines in place; `scaffold.json`), `tide.test.ts` (`tide.json`, `tideIndex` and
@@ -509,3 +566,144 @@ before the menu, Close at any step), `render/keshToss.test.ts` (the release fram
 `hand` point, whole-pixel flight), `render/keshFraming.test.ts` (the camera margin, above) and
 `game/holdingView.test.ts` (`nearKesh`, `hudRects`). `tools/screenshots-m2-4b.mjs` runs it end to end;
 shots: `docs/screenshots/m2-4b/`.
+
+## 11. Plots
+
+The four plots round the post (§1), named with plot sentences and worked as fields (M2 Task 5; GAME DESIGN's
+"Plots and plot sentences", "The trickle"; LORE §4.5 "Plot sentences", "Drawing a sigil", §14.3's tooltips;
+LORE's and GAME DESIGN's answers of 2026-10-18). Plots appear only once the island has a Name (LORE §14.3).
+
+**Word tiles** are knowledge, not items: no slot, no ledger. The lexicon is
+[`packages/shared/data/words.json`](../../packages/shared/data/words.json), validated on load
+(`validateWordsData`): M2's two words only (the rest of LORE's 30 come with the tasks that give them effects).
+Each has its `id` (the transliteration in kebab-case, stored in the database, never renamed), `letters` (base
+Old Letters as the Writ stores them; `shapeLetters` adds the final forms), `say`, `meaning`, `slot` (`ground` |
+`virtue`), `element` (`earth` | `water` | `fire` | `air`), LORE's `card` text, and for a Ground the plot kind it
+`builds`, for a Virtue its `effect`:
+
+| id       | letters | say    | meaning       | slot   | element | builds / effect                                                   |
+| -------- | ------- | ------ | ------------- | ------ | ------- | ----------------------------------------------------------------- |
+| `adamah` | אדמה    | adamah | tilled ground | ground | earth   | builds `field`                                                    |
+| `yashan` | ישן     | yashan | old           | virtue | earth   | `yield-per-day`: +10‰ a day the plot keeps its name, up to +200‰ |
+
+Each tile's letters pass the strict filter on their own, checked when the file loads. What a Kindled knows is
+the `known_words` table (the Kindled and `word_id` as primary key, `learned_at`; cascade; migration 0007,
+expand-only; only the holding module writes it), answered as `words`. **Kesh gives the first word** (`gifts` in
+`kesh.json`: `adamah`): `POST /api/kesh/word`, `{}`, once the island has a Name and the Kindled doesn't know it
+(`not-due` otherwise), recorded in `kesh_gifts.word_given_at`; `afterNaming` ends with his toss line, and a
+Kindled who named the island before this shipped gets the tile on their next Talk. Nothing in M2 gives ישן
+(Tabita trades it in M4): the playtest CLIs `pnpm --filter @iot/server words:grant <username> <wordId>` and
+`words:forget <username> <wordId>` do.
+
+**A plot sentence** is a Ground tile and, optionally, a Virtue tile, written Ground then Virtue with the
+**divider** (·) between them (`plotSentence`, `PLOT_DIVIDER`; letters.md §1): אדמה · ישן. The Ground decides
+the building ("without a Ground the plot cannot be built on"); the Virtue asks something of it. **The filter
+rule** differs from a Name's (LORE: "A plot sentence is not a Name, and it isn't cut as one"): each tile passes
+the strict filter alone (above), and the whole sentence, read across the divider and in both orders (Ground
+then Virtue, Virtue then Ground), passes the ordinary filter when it is confirmed, so the banned name and
+title can never be put together from tiles; "the divider closes the door", so yod and he may meet across it
+and אדמה · ישן is sealed as it stands. One shared function, `plotSentenceSafe(ground, virtue)` in
+`packages/shared/src/plots.ts`, says why. Names keep the strict rule unchanged (letters.md §2).
+
+**Naming** (`POST /api/plots/name`, `{ plotId, ground, virtue }`, `virtue` may be null) runs as a holding request
+(the Kindled's lock, the Writ's, the plots' rows, then the settle, then the act; `apps/server/src/holding/plots.ts`).
+In order it refuses `unknown-plot` (400), `unnamed` (409: the island has no Name), `faded` (409: the plot's line
+has faded), `unknown-word` (400: not in words.json, or not known), `wrong-slot` (400), `no-ground` (400),
+`unchanged` (409: the same sentence), `sentence-refused` (400: the filter above, which no M2 pair trips;
+"Those words won't hold together. Try another pair.") and `insufficient` (409: a rename without the gin, "You
+don't have that many."). The **first naming is free**; any later change (another Virtue, filling an empty
+Virtue, clearing it) costs 1 `sealed-gin` from the purse through `inventory.apply` with reason `name-plot`
+("A name is paid for."). The row is the `plots` table (the Kindled and `plot_id` as primary key; `ground`,
+`virtue`, `named_at`, `virtue_set_at`, `virtue_paused_ms`, `sown_at`; cascade; migration 0007, expand-only);
+an unnamed plot has no row. A named plot is a station of its kind (the field) with the plot's id, its basket
+`basket:plot-n` belonging to the plot, not its kind, so a rename never loses what it holds; a rename that
+changes the Ground clears the sowing (M2 has one Ground, so this is only the rule).
+
+**Sowing** (GAME DESIGN: "A new field is sown once before it cycles or can be worked"): `POST /api/plots/sow`,
+`{ plotId }`, takes the kind's `sow` item (1 `grey-seeds`) through `inventory.apply` from the store first, then
+the pack, reason `sow`, sets `sown_at` and starts the plot's cycle clock (`cycled_until` = now). It refuses
+`unknown-plot` (400), `unnamed-plot`, `faded`, `already-sown` and `insufficient` (409). Before it the plot has no
+cycle and can't be worked (`not-sown`); from then on it reseeds itself for as long as it keeps its Ground,
+through fading too. **Kesh's seeds**: `POST /api/kesh/seeds`, `{}`, gives the 4 seeds (`gifts.seeds`, one for
+each plot line 1 tethers) into the pack with reason `gift` once a plot has been named and they haven't been
+given (`not-due` otherwise; `pack-full` keeps them due), recorded in `kesh_gifts.seeds_given_at`; the client
+plays `afterFirstPlot` after the first naming's seal scene while `seedsDue`. GAME DESIGN's note places the
+seeds "after the pressing"; the beat and Kesh's line only make sense once a plot has a name, so they sit after
+the first naming.
+
+**Working a field** is the active action of §3 at the plot's id: 1 pale grain every 20 s into `basket:plot-n`
+with Farming XP; `work` and `take` at an unnamed plot answer `unnamed-plot`, at an unsown field `not-sown`, at a
+faded plot `faded`. In the grace (dark, not faded) take and work are allowed: "Dark means idling stops, not that
+the player is locked out". A faded plot is frozen with its basket and contents; a stretch of work at a plot that
+can no longer be worked ends at the settle.
+
+**ישן's yield** raises only the plot's basket cycle (§3's trickle), never the hands ("the words work on the plot,
+the hands are the player's"). Each cycle's bonus is `min(maxPermille, permillePerDay × whole days the name has
+been kept by that cycle's end)` (`yieldBonusPermille`, `cycleBonuses`); the credit is
+`floor((carry + quantity × (1000 + bonus)) / 1000)` with the remainder kept in `carry_permille` (`creditCycles`),
+all integers. **Days kept** count from `virtue_set_at` less `virtue_paused_ms`, the time the plot spent faded:
+the count runs on through the grace and pauses while faded; when a feed relights a faded line, each of its
+plots' faded span (from the line's `fadesAt` to the relight) is added in that transaction
+(`pauseFadedPlots`), and while faded the shown bonus holds still. The count restarts (`virtue_set_at` = now,
+`virtue_paused_ms` = 0) on any change to either tile; confirming the same sentence is `unchanged` and costs
+nothing.
+
+**Sigils** (`packages/shared/src/sigil.ts`, pure; LORE §4.5 "Drawing a sigil"; the square in
+[`sigil.json`](../../packages/shared/data/sigil.json), Saturn's 3 × 3 as Agrippa prints it, `[[4, 9, 2], [3, 5,
+7], [8, 1, 6]]`, validated on load). `sigilPath(letters)` reduces each letter to its root 1–9 (aleph 1 … tet 9,
+yod 10 → 1 … qof 100 → 1; a final form counts as its base letter, so final nun is 5; the values 500–900 are
+never used), finds each root's chamber on the square, and returns the cells in order with the marks as data,
+not pixels: `start` (a small circle at the sentence's first letter), `end` (a bar at its last), `loop` (a
+repeated letter), `hook` (two different letters in the same chamber). A sentence is one unbroken line through
+both words in writing order, Ground then Virtue; the divider has no number and doesn't break it. The line's
+style by element (`sigilStyle`: earth heavy and straight, water a long wave, fire jagged, air thin and broken)
+is passed through; only earth is drawn in M2.
+
+**The client.** Plots draw on the world camera (`render/plots.ts`, placeholders in palette tokens until ART's
+kit; every look is listed under "Questions for ART" in the task's PR): nothing before the Name; an unnamed plot
+as a faint dotted outline (`plotOutline`) with the USE prompt at its interact point and LORE's tooltip "Ground,
+but not yet ground for anything. Give it a word."; a named plot with its ground inside (a whole-pixel dither,
+`plotGrid`, under the props and the Kindled), its **seal** (the ring round the plot in the Ground's element
+colour, `sealEarth`; the sentence's letters from the letter sheet along the top of the ring with the divider
+between the words and at the ring's other join; the sigil at the centre over a faint 3 × 3 grid) and its
+signpost (`signpostWood`, `signpostPlaque`; a pillar in the roam, `setSolidPlots`); a faded plot dim with no
+sigil (`plotFaded`). Hovering a named plot shows LORE's seal tooltip. **The seal scene** plays from a naming's
+answer, never ahead of it (`startSeal`; `sealPhase` in `game/plotView.ts`, timed by `tuning.json` `plots`:
+`sealRingMs` 300, `sealLetterMs` 70 a letter, `sealSigilMs` 400, `sealGroundMs` 200): the ring draws itself
+round the plot, the letters appear one by one, the sigil traces from its circle to its bar, then the ground
+turns; whole frames, about a second, the prompt hidden meanwhile. **The plot sentence panel**
+(`ui/plotPanel.ts`, its logic in `game/plotView.ts`) opens on Use at an unnamed plot and on RENAME in a field's
+panel: "Name this plot" / "Rename this plot"; the ring with two slots right to left (Ground on the right,
+Virtue on the left, labelled); the known tiles that fit the selected slot with their letters, `say`, meaning
+and effect ("You don't know any Ground words yet." / "… Virtue words yet." when none; "None" leaves the Virtue
+empty); the preview with the sigil drawn live, "Builds: Field", the Virtue's effect "+1% yield for each day it
+keeps its name, up to +20%", and LORE's Field tooltip; the cost line "First naming: free" / "Renaming: 1
+sealed gin" (tooltip "A name is paid for."); "Level 1" and "Pieces: none" for Task 6; CONFIRM, greyed while the
+sentence is unchanged or has no Ground; a refusal in one line. Inputs as the Writ panel's. **The field's
+station panel** (`stationLines`): until sown, only "Not sown yet." and SOW (without a seed, "You don't have
+that many."); once sown, "FIELD" with the sentence's letters, "Level 1", "1 pale grain every 20 s" (the
+action), "1 pale grain every 15 min" (the cycle; with ישן, "+3% for keeping its name" under it, the bonus so
+far), the basket count, "Next in 12 min" (`nextInLine`, rounded up to the minute; "Resting while your Writ is
+dark." while dark), "You: 1 pale grain every 20 s" while working here, Farming's level and XP to the next, and
+WORK HERE / STOP WORKING, TAKE ALL, RENAME; faded, "Faded into the haze with your Writ's first line. Feed your
+Writ and it will remember." and no buttons. **Kesh's tosses** (§10): the `word` toss flies a placeholder clay
+tile (`clayTile`, a small rectangle drawn as a sprite texture) and lands showing the word's letters from the
+letter sheet for a float's time; the `seeds` toss flies the `grey-seeds` item icon and floats "+4". **The
+Words tab** of the inventory ([inventory.md](inventory.md)) lists every known tile.
+
+**Tests:** `packages/shared/test/words.test.ts` (the validator, every tile through the strict filter, the
+lines in `DRAWABLE_CHARS`), `sigil.test.ts` (the square, roots and final forms, אדמה's cells and its hook, a
+loop, אדמה then ישן as one line), `plots.test.ts` (`plotSentenceSafe` on every pair and on constructed pairs
+from position fixtures, the strict refusal of the same letters as a Name, ישן's bonus at 0, 1, 19, 20 and 30
+days with a faded span paused out, the carry adding up exactly over 192 cycles, the panel's lines),
+`holding.test.ts` (the plot kinds and cycles, the layout's plot stations with a failing case for each rule),
+`kesh.test.ts` and `letters.test.ts` (the divider); `apps/server/test/plots.test.ts` on PGlite (the word and
+the seeds, every naming refusal, the free first naming and the paid rename with its ledger reason, sowing
+from the store then the pack, work and take at a field, the trickle: 15 min gives 1, 48 h gives 192 and no
+more, dark mid-stretch, the relight's fresh clock, three days online, no XP, the ref paying once, the trees'
+6 logs every 2 h and nothing for the outcrop, ישן's bonus with the faded span at a relight, `holding:away`,
+the CLIs, migration 0007) and `holding.postgres.test.ts` (settles racing credit each cycle once; two names
+racing on one plot charge at most once); `apps/client/src/game/plotView.test.ts`, `holdingView.test.ts` (the
+field's lines lit, dark and faded; "Next in …"), `keshTalk.test.ts` (the flows with `wordDue` and `seedsDue`)
+and `inventoryView.test.ts` (the Words tab). `tools/screenshots-m2-5.mjs` runs it end to end; shots:
+`docs/screenshots/m2-5/`.

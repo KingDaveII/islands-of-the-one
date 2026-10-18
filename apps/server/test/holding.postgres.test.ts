@@ -5,7 +5,7 @@ import { openTestPostgres, type TestPostgres } from './postgres.js';
 import type { DbHandle } from '../src/db/client.js';
 import { eq } from 'drizzle-orm';
 import { accounts, kindled } from '../src/db/schema.js';
-import { createHolding, type Holding } from '../src/holding/index.js';
+import { createHolding, learnWord, setWrit, type Holding } from '../src/holding/index.js';
 import { createInventory, type Inventory } from '../src/inventory/index.js';
 
 /**
@@ -14,7 +14,8 @@ import { createInventory, type Inventory } from '../src/inventory/index.js';
  * many settles racing for the same Kindled credit each cycle once, and a
  * take-all racing a settle keeps the basket's totals; feeds racing on one
  * Writ never overfill it; two POST /api/kesh/sliver racing give exactly one
- * sliver (M2 Task 4b). Needs TEST_DATABASE_URL like
+ * sliver (M2 Task 4b); settles racing on a sown field credit each cycle once
+ * and names racing on one plot charge at most once (M2 Task 5). Needs TEST_DATABASE_URL like
  * inventory.postgres.test.ts (CI provides one).
  */
 const url = process.env.TEST_DATABASE_URL;
@@ -130,6 +131,46 @@ describe.runIf(url)('the holding settle on Postgres', () => {
     expect(final.value.writ.chargeMs).toBe(144 * HOUR_MS);
     const after = await inv.view(k);
     expect((after.store.find((e) => e.itemId === 'wild-sliver')?.quantity ?? 0) + (after.pack.find((e) => e.itemId === 'wild-sliver')?.quantity ?? 0)).toBe(5);
+    await expectChains(k);
+  });
+
+  it('settles racing on a sown field credit each cycle once, and names racing on one plot charge at most once (M2 Task 5)', async () => {
+    const k = await newKindled();
+    const [account] = await handle.db.select({ username: accounts.username }).from(accounts).innerJoin(kindled, eq(kindled.accountId, accounts.id)).where(eq(kindled.id, k));
+    if (!account) throw new Error('no account');
+    await setWrit(handle.db, { username: account.username, chargeHours: 1000 }, at(0));
+    await holding.name(k, 'Ash', at(0));
+    await learnWord(handle.db, k, 'adamah', at(0));
+    await learnWord(handle.db, k, 'yashan', at(0));
+    await inv.apply(
+      [
+        { kindledId: k, itemId: 'grey-seeds', place: 'pack', delta: 1 },
+        { kindledId: k, itemId: 'sealed-gin', place: 'purse', delta: 1 },
+      ],
+      'admin',
+    );
+    await holding.namePlot(k, { plotId: 'plot-1', ground: 'adamah', virtue: null }, at(0));
+    await holding.sowPlot(k, 'plot-1', at(0));
+    // Sixteen settles at 2 h: eight cycles of the field (15 min) and one of the trees (6 logs), each paid once.
+    const results = await race(RACERS, () => holding.view(k, at(2 * HOUR_MS)));
+    expect(results.every((r) => r.ok)).toBe(true);
+    const first = results[0];
+    if (!first?.ok) throw new Error('no answer');
+    expect(first.value.baskets['plot-1']).toEqual([{ itemId: 'pale-grain', quantity: 8 }]);
+    expect(first.value.baskets['twisted-trees']).toEqual([{ itemId: 'twisted-log', quantity: 6 }]);
+    const harvests = (await inv.ledger(k)).filter((e) => e.reason === 'harvest');
+    expect(harvests.map((e) => [e.place, e.delta]).sort()).toEqual([
+      ['basket:plot-1', 8],
+      ['basket:twisted-trees', 6],
+    ]);
+    await expectChains(k);
+    // Sixteen renames to the same new sentence with one gin: exactly one lands and is charged, the rest are unchanged.
+    const renames = await race(RACERS, () => holding.namePlot(k, { plotId: 'plot-1', ground: 'adamah', virtue: 'yashan' }, at(2 * HOUR_MS)));
+    expect(renames.filter((r) => r.ok)).toHaveLength(1);
+    expect(renames.map((r) => (r.ok ? 'ok' : r.error)).filter((e) => e !== 'ok')).toEqual(Array<string>(RACERS - 1).fill('unchanged'));
+    const view = await inv.view(k);
+    expect(view.purse).toEqual([]);
+    expect((await inv.ledger(k)).filter((e) => e.reason === 'name-plot')).toHaveLength(1);
     await expectChains(k);
   });
 

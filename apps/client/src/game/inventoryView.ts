@@ -8,6 +8,8 @@ import {
   type InventoryResponse,
   type ItemKind,
   type PackSlot,
+  type WordDef,
+  wordDef,
 } from '@iot/shared';
 import { displayable } from './drawable.js';
 
@@ -20,8 +22,15 @@ import { displayable } from './drawable.js';
  * and sends the moves; it decides nothing about items itself.
  */
 
-/** The tabs, in order: everything, then one kind each. The Words tab comes with Task 5. */
-export const INVENTORY_TABS = ['all', 'material', 'sparkglass', 'consumable', 'lore'] as const;
+/** The tabs, in order: everything, then one kind each, then the known word tiles (M2 Task 5; tiles are not items). */
+export const INVENTORY_TABS = [
+  'all',
+  'material',
+  'sparkglass',
+  'consumable',
+  'lore',
+  'words',
+] as const;
 export type InventoryTab = (typeof INVENTORY_TABS)[number];
 
 export const TAB_LABELS: Readonly<Record<InventoryTab, string>> = {
@@ -30,6 +39,7 @@ export const TAB_LABELS: Readonly<Record<InventoryTab, string>> = {
   sparkglass: 'SPARKGLASS',
   consumable: 'CONSUMABLES',
   lore: 'LORE',
+  words: 'WORDS',
 };
 
 /** The kind line's first word. */
@@ -57,10 +67,75 @@ export const EMPTY_INVENTORY: InventoryResponse = { purse: [], pack: [], store: 
 /** The kind of an item id (an id this build doesn't know counts as a material, the plainest kind). */
 const kindOf = (itemId: string): ItemKind => itemDef(itemId)?.kind ?? 'material';
 
-/** The entries a tab shows. */
+/** The entries a tab shows: the Words tab shows no items (its tiles come from the holding's `words`). */
 export function filterTab(entries: readonly InventoryEntry[], tab: InventoryTab): InventoryEntry[] {
+  if (tab === 'words') return [];
   return tab === 'all' ? [...entries] : entries.filter((e) => kindOf(e.itemId) === tab);
 }
+
+/** One row of the Words tab: a known tile with its letters, how it is said, its meaning, its slot and element, and LORE's card. */
+export interface WordRow {
+  wordId: string;
+  letters: string;
+  say: string;
+  meaning: string;
+  slot: WordDef['slot'];
+  element: WordDef['element'];
+  card: string;
+}
+
+/** The slot's and the element's words on a row ("Ground · Earth"). */
+export const WORD_SLOT_NAMES: Readonly<Record<WordDef['slot'], string>> = {
+  ground: 'Ground',
+  virtue: 'Virtue',
+};
+export const WORD_ELEMENT_NAMES: Readonly<Record<WordDef['element'], string>> = {
+  earth: 'Earth',
+  water: 'Water',
+  fire: 'Fire',
+  air: 'Air',
+};
+
+/** The Words tab's rows from the holding's known words, in the server's order (as learned); an id this build doesn't know is skipped. */
+export function wordRows(words: readonly string[]): WordRow[] {
+  return words.flatMap((id) => {
+    const def = wordDef(id);
+    return def
+      ? [
+          {
+            wordId: def.id,
+            letters: def.letters,
+            say: def.say,
+            meaning: def.meaning,
+            slot: def.slot,
+            element: def.element,
+            card: def.card,
+          },
+        ]
+      : [];
+  });
+}
+
+/** A row's text lines: "adamah · tilled ground" and "Ground · Earth". */
+export function wordLine(row: WordRow): string {
+  return displayable(`${row.say} · ${row.meaning}`);
+}
+export function wordKindLine(row: WordRow): string {
+  return `${WORD_SLOT_NAMES[row.slot]} · ${WORD_ELEMENT_NAMES[row.element]}`;
+}
+
+/** The tooltip over a word row: the tile's say, its slot and element, LORE's card text, and that it is a word, not an item. */
+export function wordTooltipLines(row: WordRow): TooltipLines {
+  return {
+    name: displayable(row.say),
+    kind: wordKindLine(row),
+    text: displayable(row.card),
+    count: 'A word, not an item.',
+  };
+}
+
+/** The Words tab while no word is known (MAIN placeholder line). */
+export const NO_WORDS_LINE = 'No words yet.';
 
 /**
  * The pack's cells, always PACK_SLOTS of them: the pack's stacks split into

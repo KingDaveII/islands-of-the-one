@@ -4,6 +4,7 @@ import {
   decodeInput,
   hashRoamState,
   NO_INPUT,
+  roomFromTemplate,
   stepRoam,
   SUB,
   TICK_HZ,
@@ -39,6 +40,8 @@ export class RoamSession {
   speed = 1;
   /** While the station panel is open the Kindled stands still: the controls are read but the roam gets no movement. */
   held = false;
+  /** The named plots whose signposts are pillars in the room (M2 Task 5), as last set. */
+  private solidPlots = '';
 
   constructor(
     private readonly controls: Controls,
@@ -56,6 +59,18 @@ export class RoamSession {
 
   get state(): RoamState {
     return this.roam.state;
+  }
+
+  /**
+   * The named plots' signposts become pillars (M2 Task 5): the room is rebuilt
+   * from the layout with those tiles solid, in place, so the Kindled keeps its
+   * position. Nothing happens when the set hasn't changed.
+   */
+  setSolidPlots(plotIds: readonly string[]): void {
+    const key = [...plotIds].sort().join(',');
+    if (key === this.solidPlots) return;
+    this.solidPlots = key;
+    this.roam.state.room = roomFromTemplate(0, { name: this.layout.id, tiles: holdingRoomTiles(this.layout, plotIds) });
   }
 
   /** Advance by real time. Returns how many ticks ran. */

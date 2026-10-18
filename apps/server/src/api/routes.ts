@@ -8,7 +8,10 @@ import {
   isCreateKindledRequest,
   isHoldingStationRequest,
   isInventoryMoveRequest,
+  isKeshGiftRequest,
   isKeshSliverRequest,
+  isPlotNameRequest,
+  isPlotSowRequest,
   isLoginRequest,
   isRegisterRequest,
   isRemembrance,
@@ -372,6 +375,27 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
         return fail(reply, 409, ApiErrorCode.NotDue, result.message);
       case 'pack-full':
         return fail(reply, 409, ApiErrorCode.PackFull, result.message);
+      // Plots and plot sentences (docs/design/holding.md "Plots", M2 Task 5).
+      case 'unknown-plot':
+        return fail(reply, 400, ApiErrorCode.UnknownPlot, result.message);
+      case 'faded':
+        return fail(reply, 409, ApiErrorCode.Faded, result.message);
+      case 'unknown-word':
+        return fail(reply, 400, ApiErrorCode.UnknownWord, result.message);
+      case 'wrong-slot':
+        return fail(reply, 400, ApiErrorCode.WrongSlot, result.message);
+      case 'no-ground':
+        return fail(reply, 400, ApiErrorCode.NoGround, result.message);
+      case 'unchanged':
+        return fail(reply, 409, ApiErrorCode.Unchanged, result.message);
+      case 'sentence-refused':
+        return fail(reply, 400, ApiErrorCode.SentenceRefused, result.message);
+      case 'unnamed-plot':
+        return fail(reply, 409, ApiErrorCode.UnnamedPlot, result.message);
+      case 'not-sown':
+        return fail(reply, 409, ApiErrorCode.NotSown, result.message);
+      case 'already-sown':
+        return fail(reply, 409, ApiErrorCode.AlreadySown, result.message);
     }
   };
 
@@ -445,5 +469,45 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
     if (!isKeshSliverRequest(req.body))
       return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
     return holdingReply(reply, await holding.keshSliver(k.id, now()));
+  });
+
+  // Kesh's gifts of Task 5: `{}` asks for the word tile (once the island has a Name, while the word isn't known) or the
+  // seeds (once a plot has been named, once; a full pack keeps them due). The guard refuses any field.
+  for (const [route, gift] of [
+    [ApiRoute.KeshWord, 'word'],
+    [ApiRoute.KeshSeeds, 'seeds'],
+  ] as const) {
+    app.post(path(route), { bodyLimit: BODY_LIMIT }, async (req, reply) => {
+      const account = await signedIn(req, reply);
+      if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
+      const k = await findKindled(account.id);
+      if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+      if (!isKeshGiftRequest(req.body))
+        return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
+      return holdingReply(reply, gift === 'word' ? await holding.keshWord(k.id, now()) : await holding.keshSeeds(k.id, now()));
+    });
+  }
+
+  // Plots (docs/design/holding.md "Plots", M2 Task 5): a plot sentence, and sowing a new field. Both run as holding
+  // requests; the words and the plot are judged under the Kindled's lock; every answer is the holding.
+  app.post(path(ApiRoute.PlotsName), { bodyLimit: BODY_LIMIT }, async (req, reply) => {
+    const account = await signedIn(req, reply);
+    if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
+    const k = await findKindled(account.id);
+    if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+    if (!isPlotNameRequest(req.body))
+      return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
+    const { plotId, ground, virtue } = req.body;
+    return holdingReply(reply, await holding.namePlot(k.id, { plotId, ground, virtue }, now()));
+  });
+
+  app.post(path(ApiRoute.PlotsSow), { bodyLimit: BODY_LIMIT }, async (req, reply) => {
+    const account = await signedIn(req, reply);
+    if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
+    const k = await findKindled(account.id);
+    if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+    if (!isPlotSowRequest(req.body))
+      return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
+    return holdingReply(reply, await holding.sowPlot(k.id, req.body.plotId, now()));
   });
 }

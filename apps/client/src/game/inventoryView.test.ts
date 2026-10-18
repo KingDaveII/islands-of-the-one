@@ -23,6 +23,10 @@ import {
   storeCells,
   TAB_LABELS,
   tooltipLines,
+  wordKindLine,
+  wordLine,
+  wordRows,
+  wordTooltipLines,
 } from './inventoryView.js';
 
 const inventory: InventoryResponse = {
@@ -42,14 +46,22 @@ const inventory: InventoryResponse = {
 };
 
 describe('the inventory screen layout', () => {
-  it('has the tabs in order, the Words tab left for Task 5', () => {
-    expect(INVENTORY_TABS).toEqual(['all', 'material', 'sparkglass', 'consumable', 'lore']);
+  it('has the tabs in order, the Words tab last (M2 Task 5)', () => {
+    expect(INVENTORY_TABS).toEqual([
+      'all',
+      'material',
+      'sparkglass',
+      'consumable',
+      'lore',
+      'words',
+    ]);
     expect(Object.values(TAB_LABELS)).toEqual([
       'ALL',
       'MATERIALS',
       'SPARKGLASS',
       'CONSUMABLES',
       'LORE',
+      'WORDS',
     ]);
     expect(PACK_COLS * PACK_ROWS).toBe(PACK_SLOTS);
     expect([PACK_COLS, PACK_ROWS]).toEqual([5, 4]);
@@ -263,5 +275,45 @@ describe('the inventory screen layout', () => {
     // The visible steps are whole: the function answers only true or false.
     for (let t = 0; t < REFUSAL_LIFE_MS + 100; t += 7)
       expect(typeof refusalVisible(t)).toBe('boolean');
+  });
+});
+
+describe('the Words tab (M2 Task 5)', () => {
+  it('shows no items, and one row per known tile with its letters, say, meaning, slot and element, in the order learned', () => {
+    expect(filterTab(inventory.store, 'words')).toEqual([]);
+    expect(packCells(inventory, 'words').every((c) => c === null)).toBe(true);
+    expect(storeCells(inventory, 'words')).toEqual([]);
+    expect(wordRows([])).toEqual([]);
+    expect(wordRows(['yashan', 'adamah', 'not-a-word'])).toEqual([
+      {
+        wordId: 'yashan',
+        letters: 'ישן',
+        say: 'yashan',
+        meaning: 'old',
+        slot: 'virtue',
+        element: 'earth',
+        card: '"Old." A Virtue. Things that keep their name a long time grow richer. Earth.',
+      },
+      {
+        wordId: 'adamah',
+        letters: 'אדמה',
+        say: 'adamah',
+        meaning: 'tilled ground',
+        slot: 'ground',
+        element: 'earth',
+        card: '"Tilled ground." Ground that\'s ready to be worked. Earth.',
+      },
+    ]);
+    const [adamah] = wordRows(['adamah']);
+    if (!adamah) throw new Error('adamah');
+    expect(wordLine(adamah)).toBe('adamah · tilled ground');
+    expect(wordKindLine(adamah)).toBe('Ground · Earth');
+    // The tooltip carries LORE's card, word for word.
+    expect(wordTooltipLines(adamah)).toEqual({
+      name: 'adamah',
+      kind: 'Ground · Earth',
+      text: '"Tilled ground." Ground that\'s ready to be worked. Earth.',
+      count: 'A word, not an item.',
+    });
   });
 });

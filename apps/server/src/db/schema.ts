@@ -108,6 +108,10 @@ export const skillXp = pgTable(
  * the background. `fed_at` (M2 Task 4b, migration 0006, expand-only) is
  * when the Writ was first fed, null until then: the client plays Kesh's
  * after-first-feeding line once, when it goes from null to set.
+ * `last_seen_at` (M2 Task 5, migration 0007, expand-only) is the
+ * holding-wide last heartbeat the basket cycles settle by: every holding
+ * request refreshes it, and unlike the activity row's it survives a stop.
+ * Null for a Kindled that hasn't been seen since this shipped.
  */
 export const writs = pgTable('writs', {
   kindledId: uuid('kindled_id')
@@ -120,6 +124,7 @@ export const writs = pgTable('writs', {
   lines: integer('lines').notNull().default(1),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   fedAt: timestamp('fed_at', { withTimezone: true }),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
 });
 
 /**
@@ -129,7 +134,9 @@ export const writs = pgTable('writs', {
  * last tide whose sliver was given (null until one was; the once-per-tide
  * sliver is M2's scaffolding, `m2Scaffold`). The row is created under the
  * Kindled's lock on the first request that needs it. Migration 0006,
- * expand-only.
+ * expand-only. `word_given_at` and `seeds_given_at` (M2 Task 5, migration
+ * 0007): when his word tile (after the Name) and his seeds (after the first
+ * plot is named) were given, null until then.
  */
 export const keshGifts = pgTable('kesh_gifts', {
   kindledId: uuid('kindled_id')
@@ -137,7 +144,77 @@ export const keshGifts = pgTable('kesh_gifts', {
     .references(() => kindled.id, { onDelete: 'cascade' }),
   firstSliverAt: timestamp('first_sliver_at', { withTimezone: true }),
   lastTide: integer('last_tide'),
+  wordGivenAt: timestamp('word_given_at', { withTimezone: true }),
+  seedsGivenAt: timestamp('seeds_given_at', { withTimezone: true }),
 });
+
+/**
+ * The word tiles a Kindled knows (docs/design/holding.md "Plots", M2 Task
+ * 5): knowledge, not items (no slot, no ledger). One row per Kindled and
+ * word id of words.json, written only by the holding module (Kesh's gift,
+ * the words:grant and words:forget CLIs). Migration 0007, expand-only.
+ */
+export const knownWords = pgTable(
+  'known_words',
+  {
+    kindledId: uuid('kindled_id')
+      .notNull()
+      .references(() => kindled.id, { onDelete: 'cascade' }),
+    wordId: text('word_id').notNull(),
+    learnedAt: timestamp('learned_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.kindledId, t.wordId] })],
+);
+
+/**
+ * A plot's sentence (docs/design/holding.md "Plots", M2 Task 5): one row per
+ * named plot (an unnamed plot has none), by the layout's plot id. The
+ * Ground's and the Virtue's word ids (the Virtue null without one), when the
+ * plot was first named, when its Virtue was last set (any change to either
+ * tile restarts the count), how long the plot spent faded while it had its
+ * Virtue (`virtue_paused_ms`, added at a relight: the count pauses while
+ * faded) and when it was sown (null until then). Written only by the
+ * holding module under the Kindled's lock. Migration 0007, expand-only.
+ */
+export const plots = pgTable(
+  'plots',
+  {
+    kindledId: uuid('kindled_id')
+      .notNull()
+      .references(() => kindled.id, { onDelete: 'cascade' }),
+    plotId: text('plot_id').notNull(),
+    ground: text('ground').notNull(),
+    virtue: text('virtue'),
+    namedAt: timestamp('named_at', { withTimezone: true }).notNull(),
+    virtueSetAt: timestamp('virtue_set_at', { withTimezone: true }),
+    virtuePausedMs: bigint('virtue_paused_ms', { mode: 'number' }).notNull().default(0),
+    sownAt: timestamp('sown_at', { withTimezone: true }),
+  },
+  (t) => [primaryKey({ columns: [t.kindledId, t.plotId] })],
+);
+
+/**
+ * A station's basket cycle clock (docs/design/holding.md "Plots", M2 Task
+ * 5): one row per Kindled and station with a cycle (a sown field by its plot
+ * id, the twisted trees), created when the station comes into being with
+ * `cycled_until` = then. `cycled_until` is how far the cycles have been paid
+ * (moved on by whole cycles at every settle, or to now when the Writ went
+ * dark or the cap bit, the lost time never paid); `carry_permille` the
+ * Virtue's remainder under one item. Written only by the holding module in
+ * the settle's transaction. Migration 0007, expand-only.
+ */
+export const basketCycles = pgTable(
+  'basket_cycles',
+  {
+    kindledId: uuid('kindled_id')
+      .notNull()
+      .references(() => kindled.id, { onDelete: 'cascade' }),
+    stationId: text('station_id').notNull(),
+    cycledUntil: timestamp('cycled_until', { withTimezone: true }).notNull(),
+    carryPermille: integer('carry_permille').notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.kindledId, t.stationId] })],
+);
 
 export type Account = typeof accounts.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
@@ -146,3 +223,6 @@ export type HoldingActivityRow = typeof holdingActivity.$inferSelect;
 export type SkillXpRow = typeof skillXp.$inferSelect;
 export type WritRow = typeof writs.$inferSelect;
 export type KeshGiftRow = typeof keshGifts.$inferSelect;
+export type KnownWordRow = typeof knownWords.$inferSelect;
+export type PlotRow = typeof plots.$inferSelect;
+export type BasketCycleRow = typeof basketCycles.$inferSelect;

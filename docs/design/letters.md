@@ -15,6 +15,10 @@ call it. Terms: [`glossary.md`](glossary.md); colors: [`readability.md`](readabi
   both joins of the plot seal's ring. It is not a letter: it is not in `chars`, and the filter and
   `letterPositions` never see it. Between two words it takes the word space's place, a `gap` either
   side, so the dot sits in the middle of the 3 px space; it is tinted like the letters around it.
+  In code it is `PLOT_DIVIDER` (the JSON's `char`, which `shapeLetters` treats as a word break) with
+  `DIVIDER_CELL`, `DIVIDER_WIDTH` and `DIVIDER_ROW`; `shapeLetters` answers the `dividers` it placed
+  (`x`, `cell`, `width`, centred in the word space) and the client's `rasterize` stamps the cell: the one
+  place the glyph is drawn from, so ART's sheet replaced MAIN's one-pixel placeholder with no other change.
 - Glyphs are **white on transparent** (tint them for states), start at **column 0** of their cell,
   and `widths` gives each one's ink width (2–6 px; proportional).
 - **Rows 0–1 ascender** (lamed), **2–6 body** (5 rows), **7 descender** (qof and the descending
@@ -73,6 +77,14 @@ in its place; see the glossary's banned names), in these forms:
   lowercase, J/Y → I, V/W → U, K → C, letters only.
 - **Strict mode** also rejects the letter pair **yod-he** anywhere, in either order. Generated and
   player-chosen Names use it.
+- **The divider, and plot sentences** (LORE 2026-10-18: "A plot sentence is not a Name, and it isn't cut
+  as one"): a plot sentence ([holding.md](holding.md) §11) is two word tiles with the divider between
+  them. Each tile passes the **strict** filter on its own (checked when `words.json` loads); the whole
+  sentence, read across the divider and in both orders (Ground then Virtue, Virtue then Ground), passes
+  the **ordinary** filter when it is confirmed, so the banned name and title can never be put together
+  from tiles. "The divider closes the door": yod and he may meet across it, so אדמה · ישן is sealed as it
+  stands. The rule is one function, `plotSentenceSafe(ground, virtue)` in `packages/shared/src/plots.ts`;
+  Names keep the strict rule, and the same letters typed as a Name are still refused.
 - The **offensive-word hook** sits behind the same function (lists empty for now).
 
 The banned runs live in one data file, `packages/shared/data/safe-letters.json`, as **alphabet
@@ -141,3 +153,16 @@ in both. `packages/shared/test/hear-name.test.ts` holds LORE's worked examples (
 Maya מיא, Hyacinth חיסינת, Black Rock בלק רוק, Morningstar Rest מורננגסטר רסט in the lean hand…),
 the doors and the filter over thousands of generated names, the lean hand, the single letter and
 typed Old Letters.
+
+## 5. Sigils
+
+A sealed plot sentence is drawn as a **sigil** (LORE §4.5 "Drawing a sigil"; `packages/shared/src/sigil.ts`,
+pure, the square in `packages/shared/data/sigil.json`): each letter reduced to its root 1–9 (aleph 1 … tet
+9, yod 10 → 1 … qof 100 → 1; a final form counts as its base letter; the values 500–900 are never used),
+each root found in its chamber on Saturn's 3 × 3 square as Agrippa prints it (`[[4, 9, 2], [3, 5, 7],
+[8, 1, 6]]`), and one unbroken line drawn through them in writing order, Ground then Virtue: a small
+circle where the sentence begins, a bar where it ends, a loop for a repeated letter, a short hook for two
+different letters in the same chamber. The divider has no number and doesn't break the line. `sigilPath`
+answers the cells and marks as data; the line's style by element (earth heavy and straight, water a long
+wave, fire jagged, air thin and broken) is passed through, earth alone drawn in M2. See
+[holding.md](holding.md) §11.

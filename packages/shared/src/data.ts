@@ -18,6 +18,12 @@ export type JuiceTuning = TuningData['juice'];
 export type AnimTuning = TuningData['anim'];
 /** Kesh's toss (M2 Task 4b): how long the thrown thing flies and how high its arc is (world px). Presentation only. */
 export type KeshTuning = TuningData['kesh'];
+/**
+ * The seal scene (M2 Task 5): the ring drawing itself round the plot, each
+ * letter appearing, the sigil tracing from its circle to its bar, the ground
+ * turning; whole frames, about a second in all. Presentation only.
+ */
+export type PlotsTuning = TuningData['plots'];
 
 export const roomTemplates = rooms.templates;
 /** One hand-made room of rooms.json: its name and its rows of legend characters. */

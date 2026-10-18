@@ -1,5 +1,7 @@
 import keshJson from '../data/kesh.json' with { type: 'json' };
 import { isDrawable } from './accounts.js';
+import { isItemId } from './items.js';
+import { isWordId } from './words.js';
 
 /**
  * Old Kesh's lines (data/kesh.json, docs/design/holding.md "Kesh", M2 Task
@@ -14,12 +16,20 @@ import { isDrawable } from './accounts.js';
 export const KESH_SPEAKERS = ['kesh', 'narrator', 'hint'] as const;
 export type KeshSpeaker = (typeof KESH_SPEAKERS)[number];
 
-/** What a line throws: a wild sliver, from Kesh's hand on `KESH_TOSS_RELEASE_FRAME`. */
-export const KESH_TOSSES = ['sliver'] as const;
+/**
+ * What a line throws, from Kesh's hand on `KESH_TOSS_RELEASE_FRAME`: a wild
+ * sliver; the clay tile of `gifts.word` (Task 5, after the Name); the seeds
+ * of `gifts.seeds` (after the first plot is named).
+ */
+export const KESH_TOSSES = ['sliver', 'word', 'seeds'] as const;
 export type KeshToss = (typeof KESH_TOSSES)[number];
 
-/** When a line is shown at all: `first-sliver` only while Kesh's first sliver hasn't been given. */
-export const KESH_LINE_CONDITIONS = ['first-sliver'] as const;
+/**
+ * When a line is shown at all: `first-sliver` only while Kesh's first sliver
+ * hasn't been given; `tide-taken` only while it has and the tide's isn't due
+ * (asked again the same tide: "One a tide.").
+ */
+export const KESH_LINE_CONDITIONS = ['first-sliver', 'tide-taken'] as const;
 export type KeshLineCondition = (typeof KESH_LINE_CONDITIONS)[number];
 
 export interface KeshLine {
@@ -28,6 +38,8 @@ export interface KeshLine {
   /** The thrown thing leaves his hand on this line (the server is asked for it; the flight is cosmetic). */
   toss?: KeshToss;
   only?: KeshLineCondition;
+  /** M2's scaffolding (the tide lines): goes when M3 brings voyages. */
+  m2Scaffold?: true;
 }
 
 export interface KeshTopic {
@@ -37,8 +49,19 @@ export interface KeshTopic {
   lines: KeshLine[];
 }
 
+/** Kesh's gifts (Task 5): the word tile he tosses after the Name, and the seeds after the first plot is named. */
+export interface KeshGifts {
+  /** A word id of words.json. */
+  word: string;
+  seeds: { itemId: string; quantity: number };
+}
+
 export interface KeshData {
+  gifts: KeshGifts;
+  /** After the Name: his line, the Narrator, the hint, then the tile's toss (`toss: "word"`). */
   afterNaming: KeshLine[];
+  /** After a plot's first naming lands: the seeds' toss, the hint, the Narrator. */
+  afterFirstPlot: KeshLine[];
   afterFirstFeeding: KeshLine[];
   /** The talk box's menu, in order; "Goodbye" last. */
   topics: KeshTopic[];
@@ -51,7 +74,7 @@ export const KESH_GOODBYE_TOPIC = 'goodbye';
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 const KEBAB = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
-const FLOWS = ['afterNaming', 'afterFirstFeeding', 'tideSliver'] as const;
+const FLOWS = ['afterNaming', 'afterFirstPlot', 'afterFirstFeeding', 'tideSliver'] as const;
 
 function parseLines(value: unknown, at: string, problems: string[]): KeshLine[] {
   if (!Array.isArray(value) || value.length === 0) {
@@ -65,9 +88,10 @@ function parseLines(value: unknown, at: string, problems: string[]): KeshLine[] 
       problems.push(`${here}: not an object`);
       return;
     }
-    const extra = Object.keys(entry).filter((k) => !['who', 'text', 'toss', 'only'].includes(k));
+    const extra = Object.keys(entry).filter((k) => !['who', 'text', 'toss', 'only', 'm2Scaffold'].includes(k));
     if (extra.length > 0) problems.push(`${here}: unknown field(s) ${extra.join(', ')}`);
-    const { who, text, toss, only } = entry;
+    const { who, text, toss, only, m2Scaffold } = entry;
+    if (m2Scaffold !== undefined && m2Scaffold !== true) problems.push(`${here}: m2Scaffold must be true when present`);
     if (typeof who !== 'string' || !(KESH_SPEAKERS as readonly string[]).includes(who))
       problems.push(`${here}: who must be one of ${KESH_SPEAKERS.join(', ')}`);
     if (typeof text !== 'string' || text.trim() === '') problems.push(`${here}: text must be a non-empty string`);
@@ -83,6 +107,7 @@ function parseLines(value: unknown, at: string, problems: string[]): KeshLine[] 
     const line: KeshLine = { who: who as KeshSpeaker, text: text as string };
     if (toss !== undefined) line.toss = toss as KeshToss;
     if (only !== undefined) line.only = only as KeshLineCondition;
+    if (m2Scaffold === true) line.m2Scaffold = true;
     lines.push(line);
   });
   return lines;
@@ -92,7 +117,7 @@ function parseLines(value: unknown, at: string, problems: string[]): KeshLine[] 
 export function validateKeshData(data: unknown): { ok: true; data: KeshData } | { ok: false; problems: string[] } {
   if (!isObject(data)) return { ok: false, problems: ['expected an object'] };
   const problems: string[] = [];
-  const extra = Object.keys(data).filter((k) => !['$comment', ...FLOWS, 'topics'].includes(k));
+  const extra = Object.keys(data).filter((k) => !['$comment', 'gifts', ...FLOWS, 'topics'].includes(k));
   if (extra.length > 0) problems.push(`unknown field(s) ${extra.join(', ')}`);
   const flows = {} as Record<(typeof FLOWS)[number], KeshLine[]>;
   for (const flow of FLOWS) flows[flow] = parseLines(data[flow], flow, problems);
@@ -120,12 +145,32 @@ export function validateKeshData(data: unknown): { ok: true; data: KeshData } | 
     if (topics.length > 0 && topics[topics.length - 1]?.id !== KESH_GOODBYE_TOPIC)
       problems.push(`topics: the last topic must be ${KESH_GOODBYE_TOPIC}`);
   }
-  // The flows that give a sliver carry exactly one toss; the others none.
-  const tosses = (lines: KeshLine[]): number => lines.filter((l) => l.toss !== undefined).length;
-  if (flows.tideSliver.length > 0 && tosses(flows.tideSliver) !== 1) problems.push('tideSliver must carry exactly one toss');
-  if (tosses(flows.afterNaming) > 0 || tosses(flows.afterFirstFeeding) > 0) problems.push('afterNaming and afterFirstFeeding carry no toss');
+  // The gifts: the word a tile of words.json, the seeds an item and a count.
+  let gifts: KeshGifts = { word: '', seeds: { itemId: '', quantity: 0 } };
+  const g = data.gifts;
+  if (!isObject(g)) problems.push('gifts must be { word, seeds: { itemId, quantity } }');
+  else {
+    const more = Object.keys(g).filter((k) => !['word', 'seeds'].includes(k));
+    if (more.length > 0) problems.push(`gifts: unknown field(s) ${more.join(', ')}`);
+    if (!isWordId(g.word)) problems.push('gifts.word must be a word of words.json');
+    const seeds = g.seeds;
+    if (!isObject(seeds) || !isItemId(seeds.itemId) || typeof seeds.quantity !== 'number' || !Number.isSafeInteger(seeds.quantity) || seeds.quantity <= 0)
+      problems.push('gifts.seeds must be { itemId (items.json), quantity (a positive integer) }');
+    else if (typeof g.word === 'string') gifts = { word: g.word, seeds: { itemId: seeds.itemId, quantity: seeds.quantity } };
+  }
+  // Each flow that gives something carries exactly one toss, of its kind; the feeding line none.
+  const tosses = (lines: KeshLine[], kind: KeshToss): number => lines.filter((l) => l.toss === kind).length;
+  const anyToss = (lines: KeshLine[]): number => lines.filter((l) => l.toss !== undefined).length;
+  if (flows.tideSliver.length > 0 && (tosses(flows.tideSliver, 'sliver') !== 1 || anyToss(flows.tideSliver) !== 1))
+    problems.push('tideSliver must carry exactly one toss, a sliver');
+  if (flows.afterNaming.length > 0 && (tosses(flows.afterNaming, 'word') !== 1 || anyToss(flows.afterNaming) !== 1))
+    problems.push('afterNaming must carry exactly one toss, the word');
+  if (flows.afterFirstPlot.length > 0 && (tosses(flows.afterFirstPlot, 'seeds') !== 1 || anyToss(flows.afterFirstPlot) !== 1))
+    problems.push('afterFirstPlot must carry exactly one toss, the seeds');
+  if (anyToss(flows.afterFirstFeeding) > 0) problems.push('afterFirstFeeding carries no toss');
+  for (const t of topics) if (t.lines.some((l) => l.toss !== undefined && l.toss !== 'sliver')) problems.push(`topics (${t.id}): a topic tosses slivers only`);
   if (problems.length > 0) return { ok: false, problems };
-  return { ok: true, data: { ...flows, topics } };
+  return { ok: true, data: { gifts, ...flows, topics } };
 }
 
 function loadKeshData(): KeshData {
@@ -141,7 +186,21 @@ export function firstSliverLines(data: KeshData = keshData): KeshLine[] {
   return data.topics.flatMap((t) => t.lines.filter((l) => l.only === 'first-sliver'));
 }
 
-/** A topic's lines as they play: the `first-sliver` lines only while the first sliver hasn't been given. */
-export function topicLines(topic: KeshTopic, firstGiven: boolean): KeshLine[] {
-  return topic.lines.filter((l) => l.only !== 'first-sliver' || !firstGiven);
+/**
+ * A topic's lines as they play: the `first-sliver` lines only while the first
+ * sliver hasn't been given; the `tide-taken` line only while it has and the
+ * tide's isn't due (`tideDue` false).
+ */
+export function topicLines(topic: KeshTopic, firstGiven: boolean, tideDue = false): KeshLine[] {
+  return topic.lines.filter((l) => (l.only === 'first-sliver' ? !firstGiven : l.only === 'tide-taken' ? firstGiven && !tideDue : true));
+}
+
+/** The lines marked M2 scaffolding (the tide's), which go with M3. */
+export function scaffoldLines(data: KeshData = keshData): KeshLine[] {
+  return [...data.tideSliver, ...data.topics.flatMap((t) => t.lines)].filter((l) => l.m2Scaffold === true);
+}
+
+/** The tile's line: the `word` toss of `afterNaming`, played alone when the tile is due at Talk (a Kindled who named the island before Task 5). */
+export function wordTossLines(data: KeshData = keshData): KeshLine[] {
+  return data.afterNaming.filter((l) => l.toss === 'word');
 }

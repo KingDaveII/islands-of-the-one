@@ -14,6 +14,9 @@ export * from './places.js';
 export * from './rooms.js';
 export * from './skills.js';
 export * from './holding.js';
+export * from './words.js';
+export * from './sigil.js';
+export * from './plots.js';
 
 export * from './writ-data.js';
 export * from './hear-name.js';

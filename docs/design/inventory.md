@@ -28,7 +28,8 @@ The M2 items: **sealed gin** (`sealed-gin`, the currency unit); Sparkglass as **
 stays) and **deep glass** (`deep-glass`); the materials **twisted log** (Woodcutting), **black
 stone** and **streaked stone** (Mining), **grey seeds** and **pale grain** (Farming). Currency and
 Sparkglass are unlimited; materials stop at 9,999. There are no consumable or lore items yet.
-Plot-sentence word tiles are not items.
+Plot-sentence word tiles are not items: they are knowledge, the `known_words` table ([holding.md](holding.md)
+§11), shown on the inventory's Words tab.
 
 Quantities are whole numbers stored as `bigint` and read as JS numbers, so no balance or delta goes
 past `MAX_QUANTITY` (2^53 − 1), which is also the limit of an "unlimited" item.
@@ -73,11 +74,15 @@ the item tables.
   may span several Kindleds (a trade); each (Kindled, item, place) appears at most once in it (merge
   the deltas; the same item in two places is two changes).
 - **reason**: one of `InventoryReason` in shared code: `grant`, `gather`, `harvest`, `feed-writ`,
-  `craft`, `trade`, `admin`, `move`, `gift`. `gather` is a station's yield credited into its basket when the
+  `craft`, `trade`, `admin`, `move`, `gift`, `name-plot`, `sow`. `gather` is a station's yield credited into its basket when the
   holding settles ([holding.md](holding.md) §3): one row per settle, in the settle's transaction, with
   the ref `act:<kindled>:<started_at>:<credited>-<new total>` so a stretch's cycles are paid once.
   `gift` is what an NPC gives: Kesh's first sliver and the tide's, one `wild-sliver` into the pack
-  ([holding.md](holding.md) §10), in the holding request's transaction.
+  ([holding.md](holding.md) §10), and his four `grey-seeds` (§11), in the holding request's transaction.
+  `harvest` is a basket cycle's yield credited into its basket when the holding settles (§3's trickle), with
+  the ref `cycle:<kindled>:<station>:<from ms>-<to ms>` so a stretch pays once. `name-plot` is the sealed
+  gin a plot's rename costs, from the purse; `sow` the seed a new field takes, from the store first, then
+  the pack (§11).
 - **ref** (optional, at most 200 characters): an idempotency key, e.g. `trade:<id>` or
   `harvest:<station>:<cycle>`. A change set with a ref already in the ledger is not applied again:
   `apply` answers `duplicate: true` with the ledger rows of the first time, even when the two calls
@@ -213,8 +218,10 @@ initials for an item the sheet lacks.
   grid of the same cells (the store's stacks split a pack slot's worth each, so a cell always fits one
   slot). The mouse wheel scrolls it; the focus scrolls it too.
 - **Tabs** filter both panes: all, materials, Sparkglass, consumables, lore objects (empty kinds show
-  empty). The Words tab comes with word tiles in Task 5. A tab hides the other kinds' pack slots but
-  they still take their room.
+  empty), and **Words** (M2 Task 5): one panel in the panes' room, a row per known tile with its letters
+  from the letter sheet, "adamah · tilled ground" and "Ground · Earth", the hovered or focused row lit, LORE's
+  card text in its tooltip ("A word, not an item."); nothing moves from it. A tab hides the other kinds' pack
+  slots but they still take their room.
 - **The header** shows the purse (gin) and the Sparkglass totals across the pack and the store: wild
   slivers, humming glass, deep glass.
 - **The two consumable slots** (Q / F, the `item1` and `item2` bindings) sit under the pack, empty,

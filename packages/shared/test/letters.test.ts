@@ -5,6 +5,11 @@ import {
   lettersFromPositions,
   oldLettersSheet as sheet,
   positionsFromText,
+  DIVIDER_CELL,
+  DIVIDER_ROW,
+  DIVIDER_WIDTH,
+  PLOT_DIVIDER,
+  SHEET_CELLS,
   shapeLetters,
   sheetCell,
 } from '../src/index.js';
@@ -64,7 +69,35 @@ describe('shapeLetters', () => {
     const two = shapeLetters(`${a}ָ  ${a}\n`);
     expect(two.glyphs).toHaveLength(2);
     expect(two.width).toBe(one.width * 2 + sheet.space);
-    expect(shapeLetters('abc ')).toEqual({ width: 0, height: 8, glyphs: [] });
-    expect(shapeLetters('')).toEqual({ width: 0, height: 8, glyphs: [] });
+    expect(shapeLetters('abc ')).toEqual({ width: 0, height: 8, glyphs: [], dividers: [] });
+    expect(shapeLetters('')).toEqual({ width: 0, height: 8, glyphs: [], dividers: [] });
+    expect(two.dividers).toEqual([]);
+  });
+
+  it("places a plot sentence's divider, ART's cell after the letters, centred in the word space (LORE; ART #99)", () => {
+    expect(PLOT_DIVIDER).toBe('·');
+    expect(DIVIDER_ROW).toBe(4);
+    expect(DIVIDER_CELL).toBe(sheet.chars.length);
+    expect(DIVIDER_WIDTH).toBe(1);
+    expect(SHEET_CELLS).toBe(28);
+    const a = lettersFromPositions([0]);
+    const plain = shapeLetters(`${a} ${a}`);
+    const divided = shapeLetters(`${a} ${PLOT_DIVIDER} ${a}`);
+    // The divider takes no room: the same width and glyphs as the plain two words.
+    expect(divided.width).toBe(plain.width);
+    expect(divided.glyphs).toEqual(plain.glyphs);
+    // Its pixel sits in the space between the words: right of the second word's glyph, left of the first's.
+    const [first, second] = divided.glyphs;
+    if (!first || !second) throw new Error('two glyphs');
+    expect(divided.dividers).toEqual([{ x: second.x + second.width + Math.floor((sheet.space - 1) / 2), cell: DIVIDER_CELL, width: 1 }]);
+    expect((divided.dividers[0]?.x ?? 0) + 1).toBeLessThanOrEqual(first.x);
+    // Without spaces around it, the same; alone or at an end, nothing; two dividers, two pixels.
+    expect(shapeLetters(`${a}${PLOT_DIVIDER}${a}`).dividers).toEqual(divided.dividers);
+    expect(shapeLetters(`${PLOT_DIVIDER}${a}`).dividers).toEqual([]);
+    expect(shapeLetters(`${a}${PLOT_DIVIDER}`).dividers).toEqual([]);
+    expect(shapeLetters(PLOT_DIVIDER)).toEqual({ width: 0, height: 8, glyphs: [], dividers: [] });
+    expect(shapeLetters(`${a}${PLOT_DIVIDER}${a}${PLOT_DIVIDER}${a}`).dividers).toHaveLength(2);
+    // The filter never sees it.
+    expect(positionsFromText(`${a} ${PLOT_DIVIDER} ${a}`)).toEqual([0, 0]);
   });
 });

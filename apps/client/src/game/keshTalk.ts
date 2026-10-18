@@ -1,16 +1,18 @@
-import { firstSliverLines, keshData, KESH_GOODBYE_TOPIC, topicLines, type KeshData, type KeshDue, type KeshLine, type KeshTopic } from '@iot/shared';
+import { firstSliverLines, keshData, KESH_GOODBYE_TOPIC, topicLines, wordTossLines, type KeshData, type KeshDue, type KeshLine, type KeshTopic } from '@iot/shared';
 
 /**
  * The talk box's flow (docs/design/holding.md "Kesh", M2 Task 4b), pure so
  * it is tested in node: which line shows, the menu of topics and what each
- * press does. Talk across the water plays the due toss first (the first
- * sliver's lines, or the tide's), then the menu; a topic plays its lines
+ * press does. Talk across the water plays what is due first, in order: the
+ * word tile's line (M2 Task 5), the seeds' flow, the due sliver's lines (the
+ * first sliver's, or the tide's); then the menu. A topic plays its lines
  * (the Sparkglass topic's first-sliver step only while the first sliver
- * hasn't been given) and comes back to the menu; Goodbye plays its lines
- * and closes. `afterNaming` and `afterFirstFeeding` play their lines and
- * close. Confirm advances, Close ends it at any step. The lines are
+ * hasn't been given, and "One a tide." once it has while the tide's isn't
+ * due) and comes back to the menu; Goodbye plays its lines and closes.
+ * `afterNaming`, `afterFirstPlot` and `afterFirstFeeding` play their lines
+ * and close. Confirm advances, Close ends it at any step. The lines are
  * data/kesh.json, word for word; the scene (ui/talkBox.ts) draws the step
- * and asks the server for the sliver on a toss line.
+ * and asks the server for the thrown thing on a toss line.
  */
 
 /** The interact prompt's verb across the water from Kesh (beside the stations' USE). */
@@ -18,12 +20,24 @@ export const TALK_LABEL = 'TALK';
 /** The speaker shown over Kesh's lines; the Narrator and a hint show none. */
 export const KESH_NAME = 'Kesh';
 
-export type TalkFlow = 'talk' | 'afterNaming' | 'afterFirstFeeding';
+export type TalkFlow = 'talk' | 'afterNaming' | 'afterFirstPlot' | 'afterFirstFeeding';
 
-/** What the server says about Kesh, as the flow needs it. */
+/** What the server says about Kesh, as the flow needs it: the slivers, and his gifts of Task 5. */
 export interface TalkContext {
   firstGiven: boolean;
   due: KeshDue | null;
+  wordDue: boolean;
+  seedsDue: boolean;
+}
+
+/** The runs of lines Talk plays before the menu, in order: the tile, the seeds, the sliver. */
+export function dueRuns(ctx: TalkContext, data: KeshData = keshData): KeshLine[][] {
+  const runs: KeshLine[][] = [];
+  if (ctx.wordDue) runs.push(wordTossLines(data));
+  if (ctx.seedsDue) runs.push(data.afterFirstPlot);
+  if (ctx.due === 'first') runs.push(firstSliverLines(data));
+  else if (ctx.due === 'tide') runs.push(data.tideSliver);
+  return runs.filter((r) => r.length > 0);
 }
 
 export type TalkStep =
@@ -40,6 +54,8 @@ export class KeshTalk {
   private lines: KeshLine[] = [];
   private at = 0;
   private after: After = 'closed';
+  /** The runs still to play before `after` (Talk's due gifts, in order). */
+  private queue: KeshLine[][] = [];
   private focus = 0;
   step: TalkStep = { kind: 'closed' };
 
@@ -55,18 +71,22 @@ export class KeshTalk {
     return this.step.kind !== 'closed';
   }
 
-  /** Opens the box on a flow: Talk plays the due toss, then the menu; the two moments play their lines and close. */
+  /** Opens the box on a flow: Talk plays what is due (the tile, the seeds, the sliver), then the menu; the moments play their lines and close. */
   start(flow: TalkFlow, ctx: TalkContext): TalkStep {
     this.focus = 0;
+    this.queue = [];
     switch (flow) {
       case 'afterNaming':
         return this.run(this.data.afterNaming, 'closed');
+      case 'afterFirstPlot':
+        return this.run(this.data.afterFirstPlot, 'closed');
       case 'afterFirstFeeding':
         return this.run(this.data.afterFirstFeeding, 'closed');
-      case 'talk':
-        if (ctx.due === 'first') return this.run(firstSliverLines(this.data), 'menu');
-        if (ctx.due === 'tide') return this.run(this.data.tideSliver, 'menu');
-        return this.menu();
+      case 'talk': {
+        const [first, ...rest] = dueRuns(ctx, this.data);
+        this.queue = rest;
+        return first ? this.run(first, 'menu') : this.menu();
+      }
     }
   }
 
@@ -77,10 +97,13 @@ export class KeshTalk {
         return this.step;
       case 'menu':
         return this.choose(this.step.focus, ctx);
-      case 'line':
+      case 'line': {
         this.at++;
         if (this.at < this.lines.length) return this.show();
+        const next = this.queue.shift();
+        if (next) return this.run(next, this.after);
         return this.after === 'menu' ? this.menu() : this.close();
+      }
     }
   }
 
@@ -89,7 +112,7 @@ export class KeshTalk {
     const topic = this.data.topics[index];
     if (this.step.kind !== 'menu' || !topic) return this.step;
     this.focus = index;
-    return this.run(topicLines(topic, ctx.firstGiven), topic.id === KESH_GOODBYE_TOPIC ? 'closed' : 'menu');
+    return this.run(topicLines(topic, ctx.firstGiven, ctx.due === 'tide'), topic.id === KESH_GOODBYE_TOPIC ? 'closed' : 'menu');
   }
 
   /** The menu's focus, wrapping. */
@@ -112,6 +135,7 @@ export class KeshTalk {
   close(): TalkStep {
     this.lines = [];
     this.at = 0;
+    this.queue = [];
     this.step = { kind: 'closed' };
     return this.step;
   }

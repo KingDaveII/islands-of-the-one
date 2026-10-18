@@ -20,7 +20,7 @@ import type { InjectOptions, LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp, type App } from '../src/app.js';
 import { createDb, type DbHandle } from '../src/db/client.js';
-import { accounts, holdingActivity, keshGifts, kindled, skillXp, writs } from '../src/db/schema.js';
+import { accounts, basketCycles, holdingActivity, keshGifts, kindled, knownWords, plots, skillXp, writs } from '../src/db/schema.js';
 import {
   createHolding,
   feedChanges,
@@ -95,12 +95,15 @@ afterAll(async () => {
   await handle.close();
 });
 
-describe('migrations 0004, 0005 and 0006', () => {
-  it('create holding_activity, skill_xp, writs and kesh_gifts, empty', async () => {
+describe('migrations 0004, 0005, 0006 and 0007', () => {
+  it('create holding_activity, skill_xp, writs, kesh_gifts, known_words, plots and basket_cycles, empty', async () => {
     await expect(handle.db.select().from(holdingActivity).limit(1)).resolves.toEqual([]);
     await expect(handle.db.select().from(skillXp).limit(1)).resolves.toEqual([]);
     await expect(handle.db.select().from(writs).limit(1)).resolves.toEqual([]);
     await expect(handle.db.select().from(keshGifts).limit(1)).resolves.toEqual([]);
+    await expect(handle.db.select().from(knownWords).limit(1)).resolves.toEqual([]);
+    await expect(handle.db.select().from(plots).limit(1)).resolves.toEqual([]);
+    await expect(handle.db.select().from(basketCycles).limit(1)).resolves.toEqual([]);
   });
 
   it('an existing Kindled gets its Writ pressed on its first holding request: two days of charge', async () => {
@@ -110,7 +113,7 @@ describe('migrations 0004, 0005 and 0006', () => {
     expect(r.writ).toEqual(toWritView(pressedWrit(T0), T0));
     expect(r.writ).toMatchObject({ state: 'lit', words: 'about two days', emptyAt: at(48 * HOUR).toISOString() });
     const [row] = await handle.db.select().from(writs).where(eq(writs.kindledId, k));
-    expect(row).toMatchObject({ kindledId: k, name: null, letters: null, certified: false, emptyAt: at(48 * HOUR), lines: 1, createdAt: at(0), fedAt: null });
+    expect(row).toMatchObject({ kindledId: k, name: null, letters: null, certified: false, emptyAt: at(48 * HOUR), lines: 1, createdAt: at(0), fedAt: null, lastSeenAt: at(0) });
     // Once only: the next request finds it, draining from the pressing; never fed, it goes dark after two days.
     expect(value(await holding.view(k, at(30 * HOUR))).writ.state).toBe('flickering');
     expect(value(await holding.view(k, at(49 * HOUR))).writ).toMatchObject({ state: 'dark', emptyAt: at(48 * HOUR).toISOString() });
@@ -123,9 +126,10 @@ describe('the settle', () => {
     const k = await newKindled();
     const r = value(await holding.view(k, at(0)));
     expect(isHoldingResponse(r)).toBe(true);
+    const unnamedPlot = (id: string) => ({ id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, level: 1, state: 'lit' });
     expect(r).toEqual({
       layoutId: HOLDING_LAYOUT_ID,
-      baskets: { 'writ-post': [], 'holding-store': [], 'weapon-rack': [], 'twisted-trees': [], 'stone-outcrop': [] },
+      baskets: { 'writ-post': [], 'holding-store': [], 'weapon-rack': [], 'twisted-trees': [], 'stone-outcrop': [], 'plot-1': [], 'plot-2': [], 'plot-3': [], 'plot-4': [] },
       activity: null,
       now: at(0).toISOString(),
       skills: {
@@ -134,7 +138,11 @@ describe('the settle', () => {
         farming: { xp: 0, level: 1, into: 0, toNext: 40 },
       },
       writ: toWritView(pressedWrit(T0), T0),
-      kesh: { firstGiven: false, due: 'first', nextTideAt: at(6 * HOUR).toISOString() },
+      kesh: { firstGiven: false, due: 'first', nextTideAt: at(6 * HOUR).toISOString(), wordDue: false, seedsDue: false },
+      words: [],
+      plots: ['plot-1', 'plot-2', 'plot-3', 'plot-4'].map(unnamedPlot),
+      // The trees' cycle clock starts at the first settle (Task 5): nothing is paid for the time before it.
+      cycles: { 'twisted-trees': { cycleMs: 2 * HOUR, cycledUntil: at(0).toISOString(), bonusPermille: 0 } },
     });
   });
 
@@ -273,12 +281,29 @@ describe('the away hook', () => {
     expect(parseAwayArgs(['awayone', '-1'])).toMatchObject({ ok: false });
     expect(await moveAway(handle.db, { username: 'nobody', hours: 1 })).toEqual({ ok: false, message: 'no Kindled for username nobody' });
     const moved = await moveAway(handle.db, { username: 'awayone', hours: 60 });
-    expect(moved).toMatchObject({ ok: true, stationId: 'twisted-trees', startedAt: at(-60 * HOUR), lastSeenAt: at(-60 * HOUR) });
+    // The active action, the holding-wide last seen and the trees' cycle clock all move (Task 5).
+    expect(moved).toEqual({
+      ok: true,
+      activity: { stationId: 'twisted-trees', startedAt: at(-60 * HOUR), lastSeenAt: at(-60 * HOUR) },
+      lastSeenAt: at(-60 * HOUR),
+      cycles: { 'twisted-trees': at(-60 * HOUR) },
+    });
     const r = value(await holding.view(k, at(0)));
-    expect(basket(r, 'twisted-trees', 'twisted-log')).toBe(OFFLINE_CAP_MS / 4000);
+    // 48 h of the action's cycles, and 24 of the trees' trickle (6 logs each).
+    expect(basket(r, 'twisted-trees', 'twisted-log')).toBe(OFFLINE_CAP_MS / 4000 + 24 * 6);
     expect(r.activity?.startedAt).toBe(at(0).toISOString());
+    expect(r.cycles['twisted-trees']?.cycledUntil).toBe(at(0).toISOString());
     await holding.stop(k, at(0));
-    expect(await moveAway(handle.db, { username: 'awayone', hours: 1 })).toEqual({ ok: false, message: 'awayone is not working a station' });
+    // Idle, the hook still moves the holding-wide clocks, so the trickle can be playtested without an action.
+    expect(await moveAway(handle.db, { username: 'awayone', hours: 1 })).toEqual({
+      ok: true,
+      activity: null,
+      lastSeenAt: at(-HOUR),
+      cycles: { 'twisted-trees': at(-HOUR) },
+    });
+    // A Kindled never on the holding has nothing to move.
+    await newKindled('awaynever');
+    expect(await moveAway(handle.db, { username: 'awaynever', hours: 1 })).toEqual({ ok: false, message: 'awaynever has not been on the holding yet' });
   });
 });
 
@@ -303,9 +328,11 @@ describe('the settle and the Writ', () => {
     // Pressed at 0: empty at 48 h.
     expect(value(await holding.view(k, at(0))).writ).toMatchObject({ state: 'lit', emptyAt: at(48 * HOUR).toISOString(), words: 'about two days' });
     await holding.work(k, 'twisted-trees', at(0));
-    // Away 60 h: the Writ went dark at 48 h, so only 48 h of cycles pay (the cap would have paid the same here)...
+    // Away 60 h: the Writ went dark at 48 h, so only 48 h of cycles pay (the cap would have paid the same here); the
+    // trees' own trickle (Task 5) adds 24 cycles of 6 logs for the same 48 h...
+    const TREES = 24 * 6;
     const away = value(await holding.view(k, at(60 * HOUR)));
-    expect(basket(away, 'twisted-trees', 'twisted-log')).toBe((48 * HOUR) / 4000);
+    expect(basket(away, 'twisted-trees', 'twisted-log')).toBe((48 * HOUR) / 4000 + TREES);
     expect(away.writ.state).toBe('dark');
     expect(away.activity?.startedAt).toBe(at(60 * HOUR).toISOString());
     // ...and a shorter stretch shows the dark moment itself: lit for 10 h of a 30 h absence pays 10 h.
@@ -313,22 +340,23 @@ describe('the settle and the Writ', () => {
     await holding.view(k2, at(0));
     await holding.name(k2, 'Tide', at(0));
     await holding.work(k2, 'twisted-trees', at(38 * HOUR));
+    // (k2's trickle: 19 cycles paid at the 38 h settle, 5 more up to the dark moment: 24 again.)
     const crossed = value(await holding.view(k2, at(68 * HOUR)));
-    expect(basket(crossed, 'twisted-trees', 'twisted-log')).toBe((10 * HOUR) / 4000);
+    expect(basket(crossed, 'twisted-trees', 'twisted-log')).toBe((10 * HOUR) / 4000 + TREES);
     expect(crossed.writ).toMatchObject({ state: 'dark', darkSince: at(48 * HOUR).toISOString() });
     // Nothing more while away and dark: the clock restarted at the last request, and a dark stretch earns only
     // the online grace past its heartbeat (60 s, fifteen cycles), never the twelve hours...
     const still = value(await holding.view(k2, at(80 * HOUR)));
-    expect(basket(still, 'twisted-trees', 'twisted-log')).toBe((10 * HOUR) / 4000 + 15);
+    expect(basket(still, 'twisted-trees', 'twisted-log')).toBe((10 * HOUR) / 4000 + TREES + 15);
     // ...but heartbeat-covered online time pays at full rate: 30 s later, seven more cycles.
     const online = value(await holding.view(k2, at(80 * HOUR + 30_000)));
-    expect(basket(online, 'twisted-trees', 'twisted-log')).toBe((10 * HOUR) / 4000 + 15 + 7);
+    expect(basket(online, 'twisted-trees', 'twisted-log')).toBe((10 * HOUR) / 4000 + TREES + 15 + 7);
     expect(online.skills.woodcutting.xp).toBe(((10 * HOUR) / 4000 + 15 + 7) * 4);
     // Fading, the same: hands work online (the grace, then every heartbeat), nothing unattended.
     const fading = value(await holding.view(k2, at(200 * HOUR)));
     expect(fading.writ.state).toBe('fading');
-    expect(basket(fading, 'twisted-trees', 'twisted-log')).toBe((10 * HOUR) / 4000 + 15 + 7 + 15);
-    expect(basket(value(await holding.view(k2, at(200 * HOUR + 4000))), 'twisted-trees', 'twisted-log')).toBe((10 * HOUR) / 4000 + 15 + 7 + 15 + 1);
+    expect(basket(fading, 'twisted-trees', 'twisted-log')).toBe((10 * HOUR) / 4000 + TREES + 15 + 7 + 15);
+    expect(basket(value(await holding.view(k2, at(200 * HOUR + 4000))), 'twisted-trees', 'twisted-log')).toBe((10 * HOUR) / 4000 + TREES + 15 + 7 + 15 + 1);
   });
 });
 
@@ -494,13 +522,13 @@ describe("Kesh's slivers", () => {
 
   it('the first sliver: once, into the pack, ledger reason gift; then not-due with the scaffold off', async () => {
     const k = await newKindled();
-    expect(value(await holding.view(k, at(0))).kesh).toEqual({ firstGiven: false, due: 'first', nextTideAt: at(FULL).toISOString() });
+    expect(value(await holding.view(k, at(0))).kesh).toEqual({ firstGiven: false, due: 'first', nextTideAt: at(FULL).toISOString(), wordDue: false, seedsDue: false });
     const r = value(await holding.keshSliver(k, at(0)));
     expect(r.kesh).toMatchObject({ firstGiven: true });
     expect(await pack(k)).toBe(1);
     expect((await gifts(k)).map((e) => [e.itemId, e.place, e.delta, e.balanceAfter])).toEqual([['wild-sliver', 'pack', 1, 1]]);
     const [row] = await handle.db.select().from(keshGifts).where(eq(keshGifts.kindledId, k));
-    expect(row).toEqual({ kindledId: k, firstSliverAt: at(0), lastTide: null });
+    expect(row).toEqual({ kindledId: k, firstSliverAt: at(0), lastTide: null, wordGivenAt: null, seedsGivenAt: null });
     // Never a second first; with the scaffold off nothing else is due either.
     expect(keshDue({ firstSliverAt: at(0), lastTide: null }, at(0), false)).toBeNull();
     expect(keshDue({ firstSliverAt: null, lastTide: null }, at(0), false)).toBe('first');
@@ -514,18 +542,18 @@ describe("Kesh's slivers", () => {
     const k = await newKindled();
     // The first and the tide's on the same day.
     value(await holding.keshSliver(k, at(0)));
-    expect(value(await holding.view(k, at(0))).kesh).toEqual({ firstGiven: true, due: 'tide', nextTideAt: at(FULL).toISOString() });
+    expect(value(await holding.view(k, at(0))).kesh).toEqual({ firstGiven: true, due: 'tide', nextTideAt: at(FULL).toISOString(), wordDue: false, seedsDue: false });
     const tide = value(await holding.keshSliver(k, at(HOUR)));
-    expect(tide.kesh).toEqual({ firstGiven: true, due: null, nextTideAt: at(FULL).toISOString() });
+    expect(tide.kesh).toEqual({ firstGiven: true, due: null, nextTideAt: at(FULL).toISOString(), wordDue: false, seedsDue: false });
     expect(await pack(k)).toBe(2);
     const [row] = await handle.db.select().from(keshGifts).where(eq(keshGifts.kindledId, k));
-    expect(row).toEqual({ kindledId: k, firstSliverAt: at(0), lastTide: tideIndex(at(HOUR)) });
+    expect(row).toEqual({ kindledId: k, firstSliverAt: at(0), lastTide: tideIndex(at(HOUR)), wordGivenAt: null, seedsGivenAt: null });
     // Not due again this tide, right up to the full.
     expect(await holding.keshSliver(k, at(2 * HOUR))).toEqual({ ok: false, error: 'not-due', message: KESH_NOT_DUE });
     expect(await holding.keshSliver(k, at(FULL - 1000))).toEqual({ ok: false, error: 'not-due', message: KESH_NOT_DUE });
     expect(await pack(k)).toBe(2);
     // The next tide begins at the full: one more, and the next full moves a day on.
-    expect(value(await holding.view(k, at(FULL))).kesh).toEqual({ firstGiven: true, due: 'tide', nextTideAt: at(FULL + 24 * HOUR).toISOString() });
+    expect(value(await holding.view(k, at(FULL))).kesh).toEqual({ firstGiven: true, due: 'tide', nextTideAt: at(FULL + 24 * HOUR).toISOString(), wordDue: false, seedsDue: false });
     expect(value(await holding.keshSliver(k, at(FULL))).kesh.due).toBeNull();
     expect(await pack(k)).toBe(3);
     expect(await holding.keshSliver(k, at(FULL + 23 * HOUR))).toMatchObject({ ok: false, error: 'not-due' });
@@ -534,9 +562,16 @@ describe("Kesh's slivers", () => {
     expect(await holding.keshSliver(k, at(FULL + 3 * 24 * HOUR + HOUR))).toMatchObject({ ok: false, error: 'not-due' });
     expect(await pack(k)).toBe(4);
     expect(await gifts(k)).toHaveLength(4);
-    expect(keshViewOf({ firstSliverAt: at(0), lastTide: tideIndex(at(0)) }, at(0))).toEqual({ firstGiven: true, due: null, nextTideAt: nextFullOfTide(at(0)).toISOString() });
-    expect(keshViewOf({ firstSliverAt: at(0), lastTide: tideIndex(at(0)) }, at(0), false)).toMatchObject({ due: null });
-    expect(keshViewOf({ firstSliverAt: at(0), lastTide: tideIndex(at(0)) - 1 }, at(0))).toMatchObject({ due: 'tide' });
+    const none = { named: false, knowsWord: false, plotNamed: false };
+    expect(keshViewOf({ firstSliverAt: at(0), lastTide: tideIndex(at(0)), seedsGivenAt: null }, at(0), none)).toEqual({
+      firstGiven: true,
+      due: null,
+      nextTideAt: nextFullOfTide(at(0)).toISOString(),
+      wordDue: false,
+      seedsDue: false,
+    });
+    expect(keshViewOf({ firstSliverAt: at(0), lastTide: tideIndex(at(0)), seedsGivenAt: null }, at(0), none, false)).toMatchObject({ due: null });
+    expect(keshViewOf({ firstSliverAt: at(0), lastTide: tideIndex(at(0)) - 1, seedsGivenAt: null }, at(0), none)).toMatchObject({ due: 'tide' });
   });
 
   it('a full pack refuses with pack-full and the sliver stays due', async () => {
@@ -547,7 +582,7 @@ describe("Kesh's slivers", () => {
     expect(value(await holding.view(k, at(0))).kesh).toMatchObject({ firstGiven: false, due: 'first' });
     expect(await gifts(k)).toEqual([]);
     const [row] = await handle.db.select().from(keshGifts).where(eq(keshGifts.kindledId, k));
-    expect(row).toEqual({ kindledId: k, firstSliverAt: null, lastTide: null });
+    expect(row).toEqual({ kindledId: k, firstSliverAt: null, lastTide: null, wordGivenAt: null, seedsGivenAt: null });
     // Room again (a slot freed): given.
     await inv.apply([{ kindledId: k, itemId: 'black-stone', place: 'pack', delta: -50 }], 'admin');
     expect(value(await holding.keshSliver(k, at(0))).kesh).toMatchObject({ firstGiven: true, due: 'tide' });
@@ -564,13 +599,13 @@ describe("Kesh's slivers", () => {
     expect(parseKeshResetArgs(['keshreset', 'more'])).toMatchObject({ ok: false });
     expect(parseKeshResetArgs(['no spaces allowed'])).toMatchObject({ ok: false });
     expect(await resetKesh(handle.db, 'nobody')).toEqual({ ok: false, message: 'no Kindled for username nobody' });
-    expect(await resetKesh(handle.db, 'KeshReset')).toEqual({ ok: true, row: { kindledId: k, firstSliverAt: null, lastTide: null } });
+    expect(await resetKesh(handle.db, 'KeshReset')).toEqual({ ok: true, row: { kindledId: k, firstSliverAt: null, lastTide: null, wordGivenAt: null, seedsGivenAt: null } });
     expect(value(await holding.view(k, at(0))).kesh).toMatchObject({ firstGiven: false, due: 'first' });
     expect(value(await holding.keshSliver(k, at(0))).kesh).toMatchObject({ firstGiven: true, due: 'tide' });
     expect(await pack(k)).toBe(3);
     // A Kindled with no row yet: the reset makes one.
     const fresh = await newKindled('keshfresh');
-    expect(await resetKesh(handle.db, 'keshfresh')).toEqual({ ok: true, row: { kindledId: fresh, firstSliverAt: null, lastTide: null } });
+    expect(await resetKesh(handle.db, 'keshfresh')).toEqual({ ok: true, row: { kindledId: fresh, firstSliverAt: null, lastTide: null, wordGivenAt: null, seedsGivenAt: null } });
   });
 
   it('fed_at is set by the first feed only', async () => {
@@ -721,7 +756,7 @@ describe('the holding API', () => {
     for (const bad of [{ sliver: 1 }, { due: 'first' }, []])
       expect((await call(ApiRoute.KeshSliver, { body: bad })).json(), JSON.stringify(bad)).toMatchObject({ error: 'bad-request' });
     const before = (await call(ApiRoute.Holding, { method: 'GET' })).json<HoldingResponse>();
-    expect(before.kesh).toEqual({ firstGiven: false, due: 'first', nextTideAt: nextFullOfTide(clock.t).toISOString() });
+    expect(before.kesh).toEqual({ firstGiven: false, due: 'first', nextTideAt: nextFullOfTide(clock.t).toISOString(), wordDue: true, seedsDue: false });
     const first = await call(ApiRoute.KeshSliver, { body: {} });
     expect(first.statusCode).toBe(200);
     const body = first.json<HoldingResponse>();

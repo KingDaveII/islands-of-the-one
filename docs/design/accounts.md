@@ -24,6 +24,10 @@ code. Routes are under `/api` (Caddy routes it to the server in staging; Vite pr
 | `POST /api/writ/name`      | `{ name }` (needs a session)                         | `200` the holding · `400` name-refused · `409` already-named ([holding](holding.md) §9)                     |
 | `POST /api/writ/feed`      | `{ itemId, count }` or `{ fill: true }`              | `200` the holding · `400` not-sparkglass · `409` unnamed / insufficient / full / too-much ([holding](holding.md) §9) |
 | `POST /api/kesh/sliver`    | `{}` (needs a session)                               | `200` the holding · `409` not-due / pack-full ([holding](holding.md) §10)                                   |
+| `POST /api/kesh/word`      | `{}` (needs a session)                               | `200` the holding · `409` not-due ([holding](holding.md) §11)                                               |
+| `POST /api/kesh/seeds`     | `{}` (needs a session)                               | `200` the holding · `409` not-due / pack-full ([holding](holding.md) §11)                                   |
+| `POST /api/plots/name`     | `{ plotId, ground, virtue }` (needs a session)       | `200` the holding · `400` unknown-plot / unknown-word / wrong-slot / no-ground / sentence-refused · `409` unnamed / faded / unchanged / insufficient ([holding](holding.md) §11) |
+| `POST /api/plots/sow`      | `{ plotId }` (needs a session)                       | `200` the holding · `400` unknown-plot · `409` unnamed-plot / faded / already-sown / insufficient ([holding](holding.md) §11) |
 
 Errors are `{ error, message }`: `error` a code from `ApiErrorCode`, `message` the player-facing
 line. Every body goes through a shared guard (unknown fields refused), then the validators; malformed

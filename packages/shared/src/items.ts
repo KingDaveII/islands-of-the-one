@@ -151,8 +151,12 @@ export const InventoryReason = {
   Admin: 'admin',
   /** Between two of one Kindled's places: one set with -n from one and +n to the other. */
   Move: 'move',
-  /** A gift from an NPC: Kesh's first sliver and the tide's (docs/design/holding.md "Kesh"). */
+  /** A gift from an NPC: Kesh's first sliver and the tide's, his seeds (docs/design/holding.md "Kesh"). */
   Gift: 'gift',
+  /** A plot renamed (docs/design/holding.md "Plots"): the gin a change of its sentence costs. The first naming is free. */
+  NamePlot: 'name-plot',
+  /** A new field sown: the seed it takes, once, before it cycles or can be worked. */
+  Sow: 'sow',
 } as const;
 export type InventoryReason = (typeof InventoryReason)[keyof typeof InventoryReason];
 

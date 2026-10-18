@@ -1,8 +1,9 @@
-import { InventoryReason, M2_SCAFFOLD, nextFullOfTide, tideIndex, validateUsername, type KeshDue, type KeshView } from '@iot/shared';
+import { InventoryReason, keshData, M2_SCAFFOLD, nextFullOfTide, tideIndex, validateUsername, type KeshDue, type KeshView } from '@iot/shared';
 import { eq, sql } from 'drizzle-orm';
 import type { Database, Transaction } from '../db/client.js';
 import { accounts, keshGifts, kindled, type KeshGiftRow } from '../db/schema.js';
 import type { Inventory } from '../inventory/index.js';
+import { knowsWord, learnWord } from './words.js';
 
 /**
  * Kesh's slivers (docs/design/holding.md "Kesh", M2 Task 4b; GAME DESIGN:
@@ -47,9 +48,41 @@ export function keshDue(row: Pick<KeshGiftRow, 'firstSliverAt' | 'lastTide'>, no
   return null;
 }
 
-/** Kesh in the holding answer: what has been given, what is due, when the next tide begins. */
-export function keshViewOf(row: Pick<KeshGiftRow, 'firstSliverAt' | 'lastTide'>, now: Date, scaffold: boolean = M2_SCAFFOLD): KeshView {
-  return { firstGiven: row.firstSliverAt !== null, due: keshDue(row, now, scaffold), nextTideAt: nextFullOfTide(now).toISOString() };
+/**
+ * What Kesh's gifts of Task 5 need to know: whether the island has a Name
+ * and the Kindled knows his word (the tile is due after the Name, while it
+ * doesn't), and whether a plot has been named (the seeds are due then).
+ */
+export interface GiftContext {
+  named: boolean;
+  knowsWord: boolean;
+  plotNamed: boolean;
+}
+
+/** Whether the word tile is due: the island has a Name and the Kindled doesn't know the word yet (a tile given by the CLI counts as known). */
+export function wordDue(ctx: Pick<GiftContext, 'named' | 'knowsWord'>): boolean {
+  return ctx.named && !ctx.knowsWord;
+}
+
+/** Whether the seeds are due: a plot has been named and they haven't been given. */
+export function seedsDue(row: Pick<KeshGiftRow, 'seedsGivenAt'>, ctx: Pick<GiftContext, 'plotNamed'>): boolean {
+  return ctx.plotNamed && row.seedsGivenAt === null;
+}
+
+/** Kesh in the holding answer: what has been given, what is due (the sliver, the tile, the seeds), when the next tide begins. */
+export function keshViewOf(
+  row: Pick<KeshGiftRow, 'firstSliverAt' | 'lastTide' | 'seedsGivenAt'>,
+  now: Date,
+  ctx: GiftContext,
+  scaffold: boolean = M2_SCAFFOLD,
+): KeshView {
+  return {
+    firstGiven: row.firstSliverAt !== null,
+    due: keshDue(row, now, scaffold),
+    nextTideAt: nextFullOfTide(now).toISOString(),
+    wordDue: wordDue(ctx),
+    seedsDue: seedsDue(row, ctx),
+  };
 }
 
 export type GiveResult = { ok: true; due: KeshDue } | { ok: false; error: 'not-due' | 'pack-full'; message: string };
@@ -81,7 +114,46 @@ export async function giveSliver(
   return { ok: true, due };
 }
 
-/** The playtest reset (`kesh:reset <username>`): clears both columns, so the first sliver can be seen again. */
+export type GiftResult = { ok: true } | { ok: false; error: 'not-due' | 'pack-full'; message: string };
+
+/**
+ * Gives the word tile (Task 5), under the Kindled's lock: `gifts.word` of
+ * kesh.json into `known_words`, once the island has a Name and while the
+ * Kindled doesn't know it; `word_given_at` is set. Otherwise `not-due`.
+ */
+export async function giveWord(tx: Transaction, kindledId: string, ctx: Pick<GiftContext, 'named' | 'knowsWord'>, now: Date): Promise<GiftResult> {
+  await lockGifts(tx, kindledId);
+  if (!wordDue(ctx)) return { ok: false, error: 'not-due', message: KESH_NOT_DUE };
+  await learnWord(tx, kindledId, keshData.gifts.word, now);
+  await tx.update(keshGifts).set({ wordGivenAt: now }).where(eq(keshGifts.kindledId, kindledId));
+  return { ok: true };
+}
+
+/**
+ * Gives the seeds (Task 5), under the Kindled's lock: `gifts.seeds` of
+ * kesh.json into the pack through `inventory.apply` (reason `gift`), once a
+ * plot has been named and once; `seeds_given_at` is set. A full pack refuses
+ * with `pack-full` and changes nothing, so they stay due.
+ */
+export async function giveSeeds(tx: Transaction, inventory: Inventory, kindledId: string, ctx: Pick<GiftContext, 'plotNamed'>, now: Date): Promise<GiftResult> {
+  const row = await lockGifts(tx, kindledId);
+  if (!seedsDue(row, ctx)) return { ok: false, error: 'not-due', message: KESH_NOT_DUE };
+  const { itemId, quantity } = keshData.gifts.seeds;
+  const given = await inventory.apply([{ kindledId, itemId, place: KESH_GIFT_PLACE, delta: quantity }], InventoryReason.Gift, { tx });
+  if (!given.ok) {
+    if (given.error === 'pack-full') return { ok: false, error: 'pack-full', message: KESH_PACK_FULL };
+    throw new Error(`kesh: ${given.message}`);
+  }
+  await tx.update(keshGifts).set({ seedsGivenAt: now }).where(eq(keshGifts.kindledId, kindledId));
+  return { ok: true };
+}
+
+/** Whether the Kindled knows Kesh's word, for the gift context. */
+export function knowsKeshWord(tx: Transaction, kindledId: string): Promise<boolean> {
+  return knowsWord(tx, kindledId, keshData.gifts.word);
+}
+
+/** The playtest reset (`kesh:reset <username>`): clears every gift column (the slivers', the tile's and the seeds'), so the first sliver can be seen again. */
 export const KESH_RESET_USAGE = 'usage: kesh:reset <username>';
 
 export function parseKeshResetArgs(argv: readonly string[]): { ok: true; username: string } | { ok: false; message: string } {
@@ -103,10 +175,11 @@ export async function resetKesh(db: Database, username: string): Promise<KeshRes
     .where(eq(sql`lower(${accounts.username})`, username.toLowerCase()))
     .limit(1);
   if (!k) return { ok: false, message: `no Kindled for username ${username}` };
+  const cleared = { firstSliverAt: null, lastTide: null, wordGivenAt: null, seedsGivenAt: null };
   const [row] = await db
     .insert(keshGifts)
-    .values({ kindledId: k.kindledId, firstSliverAt: null, lastTide: null })
-    .onConflictDoUpdate({ target: keshGifts.kindledId, set: { firstSliverAt: null, lastTide: null } })
+    .values({ kindledId: k.kindledId, ...cleared })
+    .onConflictDoUpdate({ target: keshGifts.kindledId, set: cleared })
     .returning();
   if (!row) throw new Error('kesh_gifts upsert returned nothing');
   return { ok: true, row };

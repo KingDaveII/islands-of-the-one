@@ -1,4 +1,4 @@
-import { lettersFromPositions, oldLettersSheet as sheet, sheetCell } from '@iot/shared';
+import { DIVIDER_CELL, DIVIDER_ROW, lettersFromPositions, oldLettersSheet as sheet, PLOT_DIVIDER, SHEET_CELLS, sheetCell } from '@iot/shared';
 import { describe, expect, it } from 'vitest';
 import { css } from '../palette.js';
 import {
@@ -10,9 +10,9 @@ import {
   type LetterSheet,
 } from './letters.js';
 
-/** A stand-in sheet: every glyph is a solid block of its ink width over the body rows. */
+/** A stand-in sheet: every glyph is a solid block of its ink width over the body rows; the divider's cell its one dot. */
 function blockSheet(): LetterSheet {
-  const width = sheet.cell * sheet.chars.length;
+  const width = sheet.cell * SHEET_CELLS;
   const rgba = new Uint8Array(width * sheet.height * 4);
   const top = sheet.bodyRows[0] ?? 0;
   const bottom = sheet.bodyRows[1] ?? 0;
@@ -21,6 +21,7 @@ function blockSheet(): LetterSheet {
       for (let x = 0; x < w; x++) rgba[(y * width + cell * sheet.cell + x) * 4 + 3] = 255;
     }
   }
+  rgba[(DIVIDER_ROW * width + DIVIDER_CELL * sheet.cell) * 4 + 3] = 255;
   return sheetFromPixels(rgba, width, sheet.height);
 }
 
@@ -32,8 +33,8 @@ const tav = 'ת';
 
 describe('sheetFromPixels', () => {
   it('reads alpha into an ink mask and checks the sheet size', () => {
-    expect(ink.ink.reduce((a, b) => a + b, 0)).toBe(sheet.widths.reduce((a, b) => a + b, 0) * 5);
-    expect(() => sheetFromPixels(new Uint8Array(16), 2, 2)).toThrow(/expected 189x8/);
+    expect(ink.ink.reduce((a, b) => a + b, 0)).toBe(sheet.widths.reduce((a, b) => a + b, 0) * 5 + 1);
+    expect(() => sheetFromPixels(new Uint8Array(16), 2, 2)).toThrow(/expected 196x8/);
   });
 });
 
@@ -66,6 +67,21 @@ describe('rasterize', () => {
     expect(new Set(ember.px.filter((v) => v !== 0))).toEqual(
       new Set([1 + LETTER_STATES.indexOf('ember')]),
     );
+  });
+
+  it("stamps a plot sentence's divider from ART's cell, one dot on its row in the default state, centred in the word space", () => {
+    const r = rasterize(ink, `${alef} ${PLOT_DIVIDER} ${mem}`, { state: 'ember' });
+    const plain = rasterize(ink, `${alef} ${mem}`, { state: 'ember' });
+    expect(r.width).toBe(plain.width);
+    const d = r.shape.dividers[0];
+    if (!d) throw new Error('no divider placed');
+    const code = 1 + LETTER_STATES.indexOf('ember');
+    expect(r.px[DIVIDER_ROW * r.width + d.x]).toBe(code);
+    expect(plain.px[DIVIDER_ROW * plain.width + d.x]).toBe(0);
+    // Only that one pixel differs from the plain two words.
+    let differ = 0;
+    for (let i = 0; i < r.px.length; i++) if (r.px[i] !== plain.px[i]) differ++;
+    expect(differ).toBe(1);
   });
 
   it('uses the final form at the end of a word', () => {

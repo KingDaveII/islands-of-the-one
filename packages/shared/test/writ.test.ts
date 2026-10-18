@@ -346,7 +346,10 @@ describe('the wire', () => {
         farming: { xp: 0, level: 1, into: 0, toNext: 40 },
       },
       writ: toWritView(pressedWrit(T0), T0),
-      kesh: { firstGiven: false, due: 'first', nextTideAt: new Date(T0).toISOString() },
+      kesh: { firstGiven: false, due: 'first', nextTideAt: new Date(T0).toISOString(), wordDue: false, seedsDue: false },
+      words: [],
+      plots: [],
+      cycles: {},
     };
     expect(isHoldingResponse(response)).toBe(true);
     expect(isHoldingResponse({ ...response, writ: undefined })).toBe(false);

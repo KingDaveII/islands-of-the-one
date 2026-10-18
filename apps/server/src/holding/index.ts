@@ -12,11 +12,53 @@ export {
   type HoldingResult,
   type Settlement,
 } from './holding.js';
-export { moveAway, parseAwayArgs, type AwayArgs } from './away.js';
+export { moveAway, parseAwayArgs, type AwayArgs, type AwayResult } from './away.js';
+export {
+  cycleEnd,
+  cycleMath,
+  cycleRef,
+  cyclingStations,
+  lockCycle,
+  settleCycles,
+  type CycleSettlement,
+  type CyclingStation,
+} from './cycles.js';
+export {
+  cycleView,
+  lockPlots,
+  namePlotIn,
+  pauseFadedPlots,
+  plotBonusPermille,
+  plotEffect,
+  plotKindOf,
+  plotState,
+  plotViews,
+  plotWritLine,
+  sowPlotIn,
+  workplaceOf,
+  type NamePlotArgs,
+  type PlotError,
+  type PlotResult,
+  type Workplace,
+  type WorkplaceLookup,
+} from './plots.js';
+export {
+  forgetWord,
+  grantWord,
+  knownWordIds,
+  knowsWord,
+  learnWord,
+  parseWordsArgs,
+  WORDS_USAGE,
+  type WordsArgs,
+  type WordsResult,
+} from './words.js';
 export { feedChanges, feedPlaces, feedable, lockWrit, writStored, WRIT_ALREADY_NAMED, WRIT_INSUFFICIENT, WRIT_UNNAMED } from './writ.js';
 export { parseWritSetArgs, setWrit, WRIT_SET_USAGE, type WritSetArgs, type WritSetResult } from './writ-set.js';
 export {
+  giveSeeds,
   giveSliver,
+  giveWord,
   KESH_GIFT_ITEM,
   KESH_GIFT_PLACE,
   KESH_NOT_DUE,
@@ -27,6 +69,10 @@ export {
   lockGifts,
   parseKeshResetArgs,
   resetKesh,
+  seedsDue,
+  wordDue,
+  type GiftContext,
+  type GiftResult,
   type GiveResult,
   type KeshResetResult,
 } from './kesh.js';

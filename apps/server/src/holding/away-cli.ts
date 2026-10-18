@@ -5,9 +5,10 @@ import { moveAway, parseAwayArgs } from './away.js';
 /**
  * pnpm --filter @iot/server holding:away <username> <hours>
  *
- * Moves the Kindled's active action back `hours` (its start and its last
- * heartbeat), as if it had been away that long: the next holding request
- * settles it as offline time, up to the cap. Uses DATABASE_URL (or
+ * Moves the Kindled's clocks back `hours` (the active action's start and its
+ * last heartbeat, the holding-wide last heartbeat and every basket cycle's
+ * clock), as if it had been away that long: the next holding request settles
+ * the stretch as offline time, up to the cap. Uses DATABASE_URL (or
  * PGLITE_DIR), the same database as the dev server; never an in-memory PGlite
  * the server holds. Prints the moved times, or why it was refused, with a
  * non-zero exit code.
@@ -26,8 +27,12 @@ async function main(argv: string[]): Promise<number> {
       console.error(result.message);
       return 1;
     }
+    const a = result.activity;
     console.log(
-      `${parsed.args.username}: ${result.stationId} now started ${result.startedAt.toISOString()}, last seen ${result.lastSeenAt.toISOString()}`,
+      `${parsed.args.username}: ${a ? `${a.stationId} now started ${a.startedAt.toISOString()}, ` : 'no active action; '}last seen ${result.lastSeenAt?.toISOString() ?? 'never'}` +
+        Object.entries(result.cycles)
+          .map(([station, until]) => `, ${station} cycled until ${until.toISOString()}`)
+          .join(''),
     );
     return 0;
   } finally {

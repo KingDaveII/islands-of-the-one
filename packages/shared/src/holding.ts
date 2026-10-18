@@ -98,11 +98,24 @@ export interface KeshRock {
   talk: TilePoint;
 }
 
+/**
+ * A plot (Task 5): its permanent id (the basket is `basket:<id>`, in the
+ * ledger), its `PLOT_SIZE` square and its station, the 1 × 1 at its centre
+ * the signpost stands on once the plot is named (a pillar for the sim then)
+ * with the interact point just south of it. The layout's plots in order
+ * belong to Writ line 1, `linePlots` per line (`plotLine`).
+ */
+export interface LayoutPlot {
+  id: string;
+  rect: TileRect;
+  station: StationPart;
+}
+
 export interface HoldingLayout {
   id: string;
   tiles: string[];
   stations: LayoutStation[];
-  plots: TileRect[];
+  plots: LayoutPlot[];
   /** Where the boat ties up later, a ground tile on the south shore; no prop or action yet. */
   landing: TilePoint;
   kesh: KeshRock;
@@ -121,12 +134,44 @@ export interface StationAction {
   xp: number;
 }
 
+/**
+ * A basket cycle (Task 5): the passive trickle a station makes on its own
+ * while the Writ has charge, `quantity` of an item into its basket every
+ * `cycleMs`, no XP (GAME DESIGN's "one mechanism"). Optional on any station
+ * or plot kind; today only the field has one.
+ */
+export interface StationCycle {
+  itemId: string;
+  quantity: number;
+  cycleMs: number;
+  /** The yield is multiplied by the station's part count in the layout (the trees: one log per tree). */
+  perPart: boolean;
+}
+
+/** What a new plot of a kind is sown with, once, before it cycles or can be worked (the field: 1 grey seed). */
+export interface PlotSowing {
+  itemId: string;
+  quantity: number;
+}
+
 export interface StationDef {
   id: string;
   kind: StationKind;
   name: string;
   /** Null for the post and the store (Use opens the inventory with the store pane) and the rack (reserved). */
   action: StationAction | null;
+  /** The basket cycle, or null (no station has one today). */
+  cycle: StationCycle | null;
+}
+
+/** What a Ground word builds on a plot (Task 5): a named plot is a station of this kind with the plot's id. */
+export interface PlotKindDef {
+  id: string;
+  name: string;
+  action: StationAction;
+  cycle: StationCycle | null;
+  /** What sows a new plot of this kind, or null for a kind that needs no sowing. */
+  sow: PlotSowing | null;
 }
 
 /** The kinds with no action: Use opens the inventory (post, store), or nothing yet (rack). */
@@ -188,24 +233,89 @@ export function rectsTouch(a: TileRect, b: TileRect): boolean {
 
 const pointRect = (p: TilePoint): TileRect => ({ col: p.col, row: p.row, cols: 1, rows: 1 });
 
-/** Check stations.json-shaped data; every problem is listed. */
+/** An action block of stations.json: the yield, the cycle, the skill and the XP (the cycle's seconds). */
+function parseAction(action: unknown, where: string, problems: string[]): StationAction | null {
+  if (!isObject(action)) {
+    problems.push(`${where}: action must be an object`);
+    return null;
+  }
+  const before = problems.length;
+  const keys = ['name', 'itemId', 'quantity', 'cycleMs', 'skill', 'xp'];
+  const more = Object.keys(action).filter((k) => !keys.includes(k));
+  if (more.length > 0) problems.push(`${where}: action has unknown field(s) ${more.join(', ')}`);
+  const a = action;
+  if (typeof a.name !== 'string' || a.name.trim() === '' || !isDrawable(a.name))
+    problems.push(`${where}: action.name must be text the game can draw`);
+  if (!isItemId(a.itemId)) problems.push(`${where}: action.itemId must be an item of items.json`);
+  if (!isCount(a.quantity)) problems.push(`${where}: action.quantity must be a positive integer`);
+  if (!isCount(a.cycleMs)) problems.push(`${where}: action.cycleMs must be a positive integer`);
+  if (!isSkill(a.skill)) problems.push(`${where}: action.skill must be a skill`);
+  if (!isIndex(a.xp)) problems.push(`${where}: action.xp must be a whole number`);
+  else if (isCount(a.cycleMs) && a.xp !== a.cycleMs / 1000)
+    problems.push(`${where}: action.xp is ${a.xp}; the curve gives the cycle's seconds, ${a.cycleMs / 1000}`);
+  if (problems.length > before) return null;
+  return {
+    name: a.name as string,
+    itemId: a.itemId as string,
+    quantity: a.quantity as number,
+    cycleMs: a.cycleMs as number,
+    skill: a.skill as Skill,
+    xp: a.xp as number,
+  };
+}
+
+/** A cycle block of stations.json: the item, the quantity and the cycle, positive whole numbers. */
+function parseCycle(cycle: unknown, where: string, problems: string[]): StationCycle | null {
+  if (!isObject(cycle)) {
+    problems.push(`${where}: cycle must be an object`);
+    return null;
+  }
+  const before = problems.length;
+  const more = Object.keys(cycle).filter((k) => !['itemId', 'quantity', 'cycleMs', 'perPart'].includes(k));
+  if (more.length > 0) problems.push(`${where}: cycle has unknown field(s) ${more.join(', ')}`);
+  if (!isItemId(cycle.itemId)) problems.push(`${where}: cycle.itemId must be an item of items.json`);
+  if (!isCount(cycle.quantity)) problems.push(`${where}: cycle.quantity must be a positive integer`);
+  if (!isCount(cycle.cycleMs)) problems.push(`${where}: cycle.cycleMs must be a positive integer`);
+  if (cycle.perPart !== undefined && typeof cycle.perPart !== 'boolean') problems.push(`${where}: cycle.perPart must be a boolean when present`);
+  if (problems.length > before) return null;
+  return { itemId: cycle.itemId as string, quantity: cycle.quantity as number, cycleMs: cycle.cycleMs as number, perPart: cycle.perPart === true };
+}
+
+/** A sow block of a plot kind: the item and the count, positive whole numbers. */
+function parseSow(sow: unknown, where: string, problems: string[]): PlotSowing | null {
+  if (!isObject(sow)) {
+    problems.push(`${where}: sow must be an object`);
+    return null;
+  }
+  const before = problems.length;
+  const more = Object.keys(sow).filter((k) => !['itemId', 'quantity'].includes(k));
+  if (more.length > 0) problems.push(`${where}: sow has unknown field(s) ${more.join(', ')}`);
+  if (!isItemId(sow.itemId)) problems.push(`${where}: sow.itemId must be an item of items.json`);
+  if (!isCount(sow.quantity)) problems.push(`${where}: sow.quantity must be a positive integer`);
+  if (problems.length > before) return null;
+  return { itemId: sow.itemId as string, quantity: sow.quantity as number };
+}
+
+/** Check stations.json-shaped data (the stations and the plot kinds); every problem is listed. */
 export function validateStationsData(
   data: unknown,
-): { ok: true; stations: StationDef[] } | { ok: false; problems: string[] } {
+): { ok: true; stations: StationDef[]; plotKinds: PlotKindDef[] } | { ok: false; problems: string[] } {
   if (!isObject(data) || !Array.isArray(data.stations))
     return { ok: false, problems: ['expected { stations: [...] }'] };
   const problems: string[] = [];
   const stations: StationDef[] = [];
   const seen = new Set<string>();
+  const extraTop = Object.keys(data).filter((k) => !['$comment', 'stations', 'plotKinds'].includes(k));
+  if (extraTop.length > 0) problems.push(`unknown field(s) ${extraTop.join(', ')}`);
   data.stations.forEach((entry: unknown, i) => {
     const at = `stations[${i}]`;
     if (!isObject(entry)) {
       problems.push(`${at}: not an object`);
       return;
     }
-    const extra = Object.keys(entry).filter((k) => !['id', 'kind', 'name', 'action'].includes(k));
+    const extra = Object.keys(entry).filter((k) => !['id', 'kind', 'name', 'action', 'cycle'].includes(k));
     if (extra.length > 0) problems.push(`${at}: unknown field(s) ${extra.join(', ')}`);
-    const { id, kind, name, action } = entry;
+    const { id, kind, name, action, cycle } = entry;
     if (!isStationId(id)) {
       problems.push(`${at}: id must be kebab-case (it names the basket)`);
       return;
@@ -216,40 +326,46 @@ export function validateStationsData(
     if (!isKind(kind)) problems.push(`${where}: kind must be one of ${STATION_KINDS.join(', ')}`);
     if (typeof name !== 'string' || name.trim() === '' || !isDrawable(name))
       problems.push(`${where}: name must be non-empty text the game can draw`);
-    let parsed: StationAction | null = null;
-    if (action !== undefined) {
-      if (!isObject(action)) problems.push(`${where}: action must be an object`);
-      else {
-        const keys = ['name', 'itemId', 'quantity', 'cycleMs', 'skill', 'xp'];
-        const more = Object.keys(action).filter((k) => !keys.includes(k));
-        if (more.length > 0) problems.push(`${where}: action has unknown field(s) ${more.join(', ')}`);
-        const a = action;
-        if (typeof a.name !== 'string' || a.name.trim() === '' || !isDrawable(a.name))
-          problems.push(`${where}: action.name must be text the game can draw`);
-        if (!isItemId(a.itemId)) problems.push(`${where}: action.itemId must be an item of items.json`);
-        if (!isCount(a.quantity)) problems.push(`${where}: action.quantity must be a positive integer`);
-        if (!isCount(a.cycleMs)) problems.push(`${where}: action.cycleMs must be a positive integer`);
-        if (!isSkill(a.skill)) problems.push(`${where}: action.skill must be a skill`);
-        if (!isIndex(a.xp)) problems.push(`${where}: action.xp must be a whole number`);
-        else if (isCount(a.cycleMs) && a.xp !== a.cycleMs / 1000)
-          problems.push(`${where}: action.xp is ${a.xp}; the curve gives the cycle's seconds, ${a.cycleMs / 1000}`);
-        if (problems.length === 0)
-          parsed = {
-            name: a.name as string,
-            itemId: a.itemId as string,
-            quantity: a.quantity as number,
-            cycleMs: a.cycleMs as number,
-            skill: a.skill as Skill,
-            xp: a.xp as number,
-          };
-      }
-    }
+    const parsed = action === undefined ? null : parseAction(action, where, problems);
+    const parsedCycle = cycle === undefined ? null : parseCycle(cycle, where, problems);
     if (isKind(kind) && ACTIONLESS_KINDS.includes(kind) && action !== undefined) problems.push(`${where}: the ${kind} has no action`);
     if (isKind(kind) && !ACTIONLESS_KINDS.includes(kind) && action === undefined) problems.push(`${where}: a ${kind} needs an action`);
+    if (isKind(kind) && ACTIONLESS_KINDS.includes(kind) && cycle !== undefined) problems.push(`${where}: the ${kind} has no cycle`);
     if (problems.length > 0) return;
-    stations.push({ id, kind: kind as StationKind, name: name as string, action: parsed });
+    stations.push({ id, kind: kind as StationKind, name: name as string, action: parsed, cycle: parsedCycle });
   });
-  return problems.length > 0 ? { ok: false, problems } : { ok: true, stations };
+  const plotKinds: PlotKindDef[] = [];
+  if (data.plotKinds !== undefined) {
+    if (!Array.isArray(data.plotKinds)) problems.push('plotKinds must be a list');
+    else
+      data.plotKinds.forEach((entry: unknown, i) => {
+        const at = `plotKinds[${i}]`;
+        if (!isObject(entry)) {
+          problems.push(`${at}: not an object`);
+          return;
+        }
+        const extra = Object.keys(entry).filter((k) => !['id', 'name', 'action', 'cycle', 'sow'].includes(k));
+        if (extra.length > 0) problems.push(`${at}: unknown field(s) ${extra.join(', ')}`);
+        const { id, name, action, cycle, sow } = entry;
+        if (!isStationId(id)) {
+          problems.push(`${at}: id must be kebab-case`);
+          return;
+        }
+        const where = `${at} (${id})`;
+        if (seen.has(id)) problems.push(`${where}: duplicate id (a station or another plot kind)`);
+        seen.add(id);
+        if (typeof name !== 'string' || name.trim() === '' || !isDrawable(name))
+          problems.push(`${where}: name must be non-empty text the game can draw`);
+        const before = problems.length;
+        const parsed = action === undefined ? null : parseAction(action, where, problems);
+        if (action === undefined) problems.push(`${where}: a plot kind needs an action`);
+        const parsedCycle = cycle === undefined ? null : parseCycle(cycle, where, problems);
+        const parsedSow = sow === undefined ? null : parseSow(sow, where, problems);
+        if (problems.length > before || !parsed) return;
+        plotKinds.push({ id, name: name as string, action: parsed, cycle: parsedCycle, sow: parsedSow });
+      });
+  }
+  return problems.length > 0 ? { ok: false, problems } : { ok: true, stations, plotKinds };
 }
 
 /**
@@ -419,10 +535,19 @@ export function holdingLayoutProblems(layout: HoldingLayout, stations: readonly 
     near('outcrop', D.FAR_POST, 'east');
   }
 
-  // The plots: on ground, overlapping no station, touching neither each other, the post nor the store.
+  // The plots: on ground, overlapping no station, touching neither each other, the post nor the store; ids
+  // unique and kebab-case (and no station's); the station's 1 × 1 and its interact point inside the plot, the
+  // interact point ground and reachable from the start (Task 5).
   const stores = (byKind.get('store') ?? []).flatMap((s) => s.parts.map((p) => p.rect));
-  layout.plots.forEach((plot, i) => {
+  const plotIds = new Set<string>();
+  const within = (inner: TileRect, outer: TileRect): boolean =>
+    inner.col >= outer.col && inner.row >= outer.row && inner.col + inner.cols <= outer.col + outer.cols && inner.row + inner.rows <= outer.row + outer.rows;
+  layout.plots.forEach(({ id, rect: plot, station }, i) => {
     const where = `${name}: plot ${i}`;
+    if (!isStationId(id)) problems.push(`${where}: id ${JSON.stringify(id)} must be kebab-case (it names the basket)`);
+    else if (plotIds.has(id)) problems.push(`${where}: id ${id} is listed twice`);
+    else if (ids.has(id)) problems.push(`${where}: id ${id} is a station's`);
+    plotIds.add(id);
     if (plot.cols !== PLOT_SIZE || plot.rows !== PLOT_SIZE)
       problems.push(`${where} is ${plot.cols} × ${plot.rows}, not ${PLOT_SIZE} × ${PLOT_SIZE}`);
     if (!inside(plot)) {
@@ -438,9 +563,15 @@ export function holdingLayoutProblems(layout: HoldingLayout, stations: readonly 
     if (stores.some((r) => rectsTouch(plot, r))) problems.push(`${where} touches the store`);
     layout.plots.forEach((other, j) => {
       if (j <= i) return;
-      if (rectsOverlap(plot, other)) problems.push(`${where} overlaps plot ${j}`);
-      else if (rectsTouch(plot, other)) problems.push(`${where} touches plot ${j}`);
+      if (rectsOverlap(plot, other.rect)) problems.push(`${where} overlaps plot ${j}`);
+      else if (rectsTouch(plot, other.rect)) problems.push(`${where} touches plot ${j}`);
     });
+    if (station.rect.cols !== 1 || station.rect.rows !== 1) problems.push(`${where}: its station is ${station.rect.cols} × ${station.rect.rows}, not 1 × 1`);
+    if (!within(station.rect, plot)) problems.push(`${where}: its station (${station.rect.col}, ${station.rect.row}) is not inside the plot`);
+    if (!within(pointRect(station.interact), plot)) problems.push(`${where}: its interact point ${cell(station.interact)} is not inside the plot`);
+    else if (!ground(station.interact.col, station.interact.row)) problems.push(`${where}: its interact point ${cell(station.interact)} is not ground`);
+    else if (!reachable(station.interact)) problems.push(`${where}: its interact point ${cell(station.interact)} can't be reached from the start`);
+    if (rectsOverlap(station.rect, pointRect(station.interact))) problems.push(`${where}: its interact point ${cell(station.interact)} is on its station`);
   });
 
   // The landing: ground on the south shore, south of the post.
@@ -475,7 +606,7 @@ export function holdingLayoutProblems(layout: HoldingLayout, stations: readonly 
 
   // Free ground on the north side: a plot's square of plain ground, wholly north of the post, clear of every plot and station.
   if (post) {
-    const taken = [...layout.plots, ...layout.stations.flatMap((s) => s.parts.map((p) => p.rect))];
+    const taken = [...layout.plots.map((p) => p.rect), ...layout.stations.flatMap((s) => s.parts.map((p) => p.rect))];
     let free = false;
     for (let r = 0; !free && r + PLOT_SIZE <= post.row; r++) {
       for (let c = 0; !free && c + PLOT_SIZE <= cols; c++) {
@@ -564,12 +695,27 @@ export function validateHoldingData(
           if (s.reserved === true) station.reserved = true;
           parsedStations.push(station);
         });
-      const parsedPlots: TileRect[] = [];
+      const parsedPlots: LayoutPlot[] = [];
       if (!Array.isArray(plots)) problems.push(`${at} (${id}): plots must be a list`);
       else
         plots.forEach((p: unknown, j) => {
-          const rect = parseRect(p, `${at} (${id}): plots[${j}]`, problems);
-          if (rect) parsedPlots.push(rect);
+          const pat = `${at} (${id}): plots[${j}]`;
+          if (!isObject(p) || typeof p.id !== 'string') {
+            problems.push(`${pat}: must be { id, rect, station: { rect, interact } }`);
+            return;
+          }
+          const pExtra = Object.keys(p).filter((k) => !['id', 'rect', 'station'].includes(k));
+          if (pExtra.length > 0) problems.push(`${pat}: unknown field(s) ${pExtra.join(', ')}`);
+          const rect = parseRect(p.rect, `${pat}.rect`, problems);
+          if (!isObject(p.station)) {
+            problems.push(`${pat}.station: must be { rect, interact }`);
+            return;
+          }
+          const sExtra = Object.keys(p.station).filter((k) => !['rect', 'interact'].includes(k));
+          if (sExtra.length > 0) problems.push(`${pat}.station: unknown field(s) ${sExtra.join(', ')}`);
+          const sRect = parseRect(p.station.rect, `${pat}.station.rect`, problems);
+          const interact = parsePoint(p.station.interact, `${pat}.station.interact`, problems);
+          if (rect && sRect && interact) parsedPlots.push({ id: p.id, rect, station: { rect: sRect, interact } });
         });
       const parsedLanding = parsePoint(landing, `${at} (${id}): landing`, problems);
       let parsedKesh: KeshRock | null = null;
@@ -606,22 +752,30 @@ export function validateHoldingData(
   };
 }
 
-function loadStations(): readonly StationDef[] {
+function loadStations(): { stations: readonly StationDef[]; plotKinds: readonly PlotKindDef[] } {
   const result = validateStationsData(stationsJson);
   if (!result.ok) throw new Error(`data/stations.json:\n${result.problems.join('\n')}`);
-  return result.stations;
+  return { stations: result.stations, plotKinds: result.plotKinds };
 }
 
+const LOADED = loadStations();
 /** Every station, in stations.json order. */
-export const STATIONS: readonly StationDef[] = loadStations();
+export const STATIONS: readonly StationDef[] = LOADED.stations;
+/** Every plot kind, in stations.json order (Task 5: the field). */
+export const PLOT_KINDS: readonly PlotKindDef[] = LOADED.plotKinds;
 const STATION_BY_ID: ReadonlyMap<string, StationDef> = new Map(STATIONS.map((s) => [s.id, s]));
+const PLOT_KIND_BY_ID: ReadonlyMap<string, PlotKindDef> = new Map(PLOT_KINDS.map((p) => [p.id, p]));
 
 export function stationDef(id: string): StationDef | undefined {
   return STATION_BY_ID.get(id);
 }
 
-export function isHoldingStationId(value: unknown): value is string {
-  return typeof value === 'string' && STATION_BY_ID.has(value);
+export function plotKindDef(id: string): PlotKindDef | undefined {
+  return PLOT_KIND_BY_ID.get(id);
+}
+
+export function isPlotKindId(value: unknown): value is string {
+  return typeof value === 'string' && PLOT_KIND_BY_ID.has(value);
 }
 
 function loadHolding(): HoldingData {
@@ -631,6 +785,18 @@ function loadHolding(): HoldingData {
 }
 
 export const holdingData: HoldingData = loadHolding();
+/** Every plot id of every layout: a named plot is a station with that id, and its basket is `basket:<id>`. */
+const PLOT_IDS: ReadonlySet<string> = new Set(holdingData.layouts.flatMap((l) => l.plots.map((p) => p.id)));
+
+/** A station id a holding request may name: a station of stations.json, or a plot of a layout (its station once named). */
+export function isHoldingStationId(value: unknown): value is string {
+  return typeof value === 'string' && (STATION_BY_ID.has(value) || PLOT_IDS.has(value));
+}
+
+/** Whether an id is a layout's plot (`plot-1` …). */
+export function isPlotId(value: unknown): value is string {
+  return typeof value === 'string' && PLOT_IDS.has(value);
+}
 /** The most time away a station keeps earning (data, never code). */
 export const OFFLINE_CAP_MS: number = holdingData.offlineCapHours * 60 * 60 * 1000;
 /** How often the open holding scene calls GET /api/holding. */
@@ -651,12 +817,19 @@ export function holdingTemplate(layout: HoldingLayout = holdingLayout()): TileTe
   return { name: layout.id, tiles: layout.tiles };
 }
 
-/** The layout as the sim walks it: every station tile a pillar (`o`), solid like the edge; a reserved spot stays ground. */
-export function holdingRoomTiles(layout: HoldingLayout = holdingLayout()): string[] {
-  return layout.tiles.map((row) =>
+/**
+ * The layout as the sim walks it: every station tile a pillar (`o`), solid
+ * like the edge; a reserved spot stays ground; the signposts of the named
+ * plots (`solidPlots`, by id) are pillars too, an unnamed plot's stays ground.
+ */
+export function holdingRoomTiles(layout: HoldingLayout = holdingLayout(), solidPlots: readonly string[] = []): string[] {
+  const posts = new Set(
+    layout.plots.filter((p) => solidPlots.includes(p.id)).map((p) => `${p.station.rect.col},${p.station.rect.row}`),
+  );
+  return layout.tiles.map((row, r) =>
     row
       .split('')
-      .map((ch) => (STATION_LETTERS.includes(ch) ? 'o' : ch))
+      .map((ch, c) => (STATION_LETTERS.includes(ch) || posts.has(`${c},${r}`) ? 'o' : ch))
       .join(''),
   );
 }
@@ -664,6 +837,21 @@ export function holdingRoomTiles(layout: HoldingLayout = holdingLayout()): strin
 /** A station's parts in a layout, by id (none for a station the layout lacks). */
 export function stationParts(layout: HoldingLayout, stationId: string): readonly StationPart[] {
   return layout.stations.find((s) => s.id === stationId)?.parts ?? [];
+}
+
+/** A cycle's yield per cycle at a station: its quantity, times the station's part count in the layout for a `perPart` cycle (the trees). */
+export function cycleYield(cycle: Pick<StationCycle, 'quantity' | 'perPart'>, layout: HoldingLayout, stationId: string): number {
+  return cycle.perPart ? cycle.quantity * Math.max(1, stationParts(layout, stationId).length) : cycle.quantity;
+}
+
+/** A layout's plot by id, or undefined. */
+export function layoutPlot(layout: HoldingLayout, plotId: string): LayoutPlot | undefined {
+  return layout.plots.find((p) => p.id === plotId);
+}
+
+/** A plot's index in its layout (what `plotLine` reads), or -1. */
+export function plotIndex(layout: HoldingLayout, plotId: string): number {
+  return layout.plots.findIndex((p) => p.id === plotId);
 }
 
 /** The start tile of a layout (its one `P`). */
