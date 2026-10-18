@@ -20,7 +20,7 @@
     "frames": 10,
     "offPalette": 0,
     "maxDeltaE": 0,
-    "outlineGaps": 851
+    "outlineGaps": 302
   },
   "flags": {
     "seam": [
@@ -60,8 +60,8 @@
       "frames": 2,
       "held": [],
       "seam": {
-        "lastToFirst": 650,
-        "meanInCycle": 650,
+        "lastToFirst": 629,
+        "meanInCycle": 629,
         "flag": false
       }
     },
@@ -80,8 +80,8 @@
       "dx": 0,
       "dy": 0,
       "shift": -32,
-      "outlineGaps": 85,
-      "colours": 10,
+      "outlineGaps": 31,
+      "colours": 11,
       "interiorDreamNight": 0
     },
     {
@@ -92,8 +92,8 @@
       "dx": 0,
       "dy": 0,
       "shift": -32,
-      "outlineGaps": 81,
-      "colours": 10,
+      "outlineGaps": 27,
+      "colours": 11,
       "interiorDreamNight": 0
     },
     {
@@ -104,8 +104,8 @@
       "dx": 0,
       "dy": 0,
       "shift": -32,
-      "outlineGaps": 84,
-      "colours": 9,
+      "outlineGaps": 30,
+      "colours": 10,
       "interiorDreamNight": 0
     },
     {
@@ -116,8 +116,8 @@
       "dx": 0,
       "dy": 0,
       "shift": -32,
-      "outlineGaps": 85,
-      "colours": 10,
+      "outlineGaps": 31,
+      "colours": 11,
       "interiorDreamNight": 0
     },
     {
@@ -128,8 +128,8 @@
       "dx": 0,
       "dy": 0,
       "shift": -32,
-      "outlineGaps": 86,
-      "colours": 10,
+      "outlineGaps": 32,
+      "colours": 11,
       "interiorDreamNight": 0
     },
     {
@@ -140,8 +140,8 @@
       "dx": 0,
       "dy": 0,
       "shift": -32,
-      "outlineGaps": 87,
-      "colours": 10,
+      "outlineGaps": 32,
+      "colours": 11,
       "interiorDreamNight": 0
     },
     {
@@ -152,8 +152,8 @@
       "dx": 0,
       "dy": 0,
       "shift": -32,
-      "outlineGaps": 91,
-      "colours": 10,
+      "outlineGaps": 31,
+      "colours": 11,
       "interiorDreamNight": 0,
       "points": {
         "hand": {
@@ -176,7 +176,7 @@
       "dx": 0,
       "dy": 0,
       "shift": -32,
-      "outlineGaps": 84,
+      "outlineGaps": 30,
       "colours": 11,
       "interiorDreamNight": 0,
       "points": {
@@ -200,8 +200,8 @@
       "dx": 0,
       "dy": 0,
       "shift": -32,
-      "outlineGaps": 83,
-      "colours": 10,
+      "outlineGaps": 28,
+      "colours": 11,
       "interiorDreamNight": 0,
       "points": {
         "hand": {
@@ -224,8 +224,8 @@
       "dx": 0,
       "dy": 0,
       "shift": -32,
-      "outlineGaps": 85,
-      "colours": 10,
+      "outlineGaps": 30,
+      "colours": 11,
       "interiorDreamNight": 0,
       "points": {
         "hand": {
