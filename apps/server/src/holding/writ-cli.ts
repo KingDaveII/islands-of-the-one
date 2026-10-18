@@ -29,7 +29,7 @@ async function main(argv: string[]): Promise<number> {
     }
     const view = toWritView(writStored(result.writ), now.getTime());
     console.log(
-      `${parsed.args.username}: Writ ${view.state}, ${view.words} (empty ${view.emptyAt ?? 'never fed'}, ${view.certified ? 'certified' : 'not certified'}, name ${view.name ?? 'none'})`,
+      `${parsed.args.username}: Writ ${view.state}, ${view.words} (empty ${view.emptyAt}, ${view.certified ? 'certified' : 'not certified'}, name ${view.name ?? 'none'})`,
     );
     return 0;
   } finally {

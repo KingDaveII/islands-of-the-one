@@ -271,7 +271,9 @@ function wordLetters(word: string): Cut[] {
 function closeDoors(words: Cut[][]): void {
   for (;;) {
     const flat: [number, number][] = [];
-    words.forEach((w, wi) => w.forEach((_, j) => flat.push([wi, j])));
+    words.forEach((w, wi) => {
+      w.forEach((_, j) => flat.push([wi, j]));
+    });
     let changed = false;
     for (let n = 0; n + 1 < flat.length && !changed; n++) {
       const [a, b] = flat[n] as [number, number];

@@ -71,7 +71,8 @@ export function validateWritData(data: unknown): { ok: true; data: WritData } | 
   if (!isObject(feeds) || Object.keys(feeds).length === 0) problems.push('feeds must be an object of slivers by item id');
   else
     for (const [id, worth] of Object.entries(feeds)) {
-      if (!isItemId(id)) problems.push(`feeds: unknown item ${id} (see items.json)`);
+      const known: boolean = isItemId(id);
+      if (!known) problems.push(`feeds: unknown item ${id} (see items.json)`);
       if (!isCount(worth)) problems.push(`feeds.${id} must be a positive integer (slivers)`);
     }
   if (isCount(data.sliverHours) && isCount(data.capacityHours) && data.capacityHours < data.sliverHours)

@@ -72,7 +72,7 @@ describe('writ.json', () => {
   });
 
   it('lists every problem', () => {
-    const { $comment: _c, ...base } = writJson;
+    const base = Object.fromEntries(Object.entries(writJson).filter(([k]) => k !== '$comment'));
     const bad = validateWritData({
       ...base,
       sliverHours: 0,
@@ -327,7 +327,6 @@ describe('the wire', () => {
       writ: toWritView(pressedWrit(T0), T0),
     };
     expect(isHoldingResponse(response)).toBe(true);
-    const { writ: _w, ...without } = response;
-    expect(isHoldingResponse(without)).toBe(false);
+    expect(isHoldingResponse({ ...response, writ: undefined })).toBe(false);
   });
 });

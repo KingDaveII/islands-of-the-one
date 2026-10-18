@@ -19,7 +19,7 @@ export function writStored(row: WritRow): WritStored {
     name: row.name,
     letters: row.letters,
     certified: row.certified,
-    emptyAt: row.emptyAt?.getTime() ?? null,
+    emptyAt: row.emptyAt.getTime(),
     lineCount: row.lines,
   };
 }

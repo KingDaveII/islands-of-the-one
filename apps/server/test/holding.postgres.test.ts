@@ -106,7 +106,7 @@ describe.runIf(url)('the holding settle on Postgres', () => {
     const results = await race(8, () => holding.feed(k, 'wild-sliver', 2, at(0)));
     const landed = results.filter((r) => r.ok);
     expect(landed).toHaveLength(1);
-    expect(results.filter((r) => !r.ok).every((r) => !r.ok && r.error === 'full')).toBe(true);
+    expect(results.every((r) => r.ok || r.error === 'full')).toBe(true);
     const r = landed[0];
     if (!r?.ok) throw new Error('no answer');
     expect(r.value.writ.chargeMs).toBe(144 * HOUR_MS);
