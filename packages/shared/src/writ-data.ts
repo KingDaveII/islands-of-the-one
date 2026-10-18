@@ -28,6 +28,13 @@ export interface WritData {
   lineLetters: number;
   /** Plots each line tethers. */
   linePlots: number;
+  /**
+   * The flicker's pattern while the Writ is low (ART on #91): ms of the outer
+   * letters lit, then dim, then lit… repeating; an even count, so the cycle
+   * ends dim and starts lit again. Uneven on purpose: a guttering lamp, not a
+   * steady blink (the combat telegraphs' language).
+   */
+  flickerPatternMs: readonly number[];
 }
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -47,6 +54,7 @@ const KEYS = [
   'lineFadeHours',
   'lineLetters',
   'linePlots',
+  'flickerPatternMs',
 ];
 
 /** Check writ.json-shaped data; every problem is listed, not just the first. */
@@ -81,6 +89,9 @@ export function validateWritData(data: unknown): { ok: true; data: WritData } | 
     problems.push('lowHours must be under capacityHours');
   if (isCount(data.pressChargeHours) && isCount(data.capacityHours) && data.pressChargeHours > data.capacityHours)
     problems.push('pressChargeHours must not exceed capacityHours');
+  const pattern = data.flickerPatternMs;
+  if (!Array.isArray(pattern) || pattern.length < 2 || pattern.length % 2 !== 0 || !pattern.every(isCount))
+    problems.push('flickerPatternMs must be an even-length list of positive integers (ms lit, ms dim, …)');
   if (problems.length > 0) return { ok: false, problems };
   return {
     ok: true,
@@ -95,6 +106,7 @@ export function validateWritData(data: unknown): { ok: true; data: WritData } | 
       lineFadeHours: data.lineFadeHours as number,
       lineLetters: data.lineLetters as number,
       linePlots: data.linePlots as number,
+      flickerPatternMs: pattern as number[],
     },
   };
 }

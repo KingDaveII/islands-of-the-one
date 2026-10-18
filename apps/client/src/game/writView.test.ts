@@ -1,4 +1,4 @@
-import { HOUR_MS, pressedWrit, toWritView, WRIT_FULL, WRIT_TOO_MUCH_EVER, WRIT_TOO_MUCH_NOW, type InventoryResponse, type WritView } from '@iot/shared';
+import { HOUR_MS, pressedWrit, toWritView, WRIT_FULL, WRIT_TOO_MUCH_EVER, WRIT_TOO_MUCH_NOW, writData, type InventoryResponse, type WritView } from '@iot/shared';
 import { describe, expect, it } from 'vitest';
 import {
   chargeLines,
@@ -108,10 +108,22 @@ describe('the face', () => {
       emet: ['dim', 'ember', 'dim'],
       name: ['dim', 'ember', 'ember', 'ember', 'ember', 'dim'],
     });
-    expect(flickerBeat(0)).toBe(false);
-    expect(flickerBeat(499)).toBe(false);
-    expect(flickerBeat(500)).toBe(true);
-    expect(flickerBeat(1000)).toBe(false);
+    // writ.json's flickerPatternMs (ART on #91): lit 600, dim 140, lit 260, dim 140, repeating every 1140 ms.
+    expect(writData.flickerPatternMs).toEqual([600, 140, 260, 140]);
+    expect([0, 599, 600, 739, 740, 999, 1000, 1139, 1140, 1740].map((ms) => flickerBeat(ms))).toEqual([
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+    ]);
+    expect(flickerBeat(5, [10, 10])).toBe(false);
+    expect(flickerBeat(15, [10, 10])).toBe(true);
   });
 
   it('dark: the aleph dark so the Writ reads מת, the Name dim; fading: the Name dark once line 1 faded', () => {

@@ -380,7 +380,7 @@ frames, no alpha), then the panel opens. Esc or Circle closes the screen unnamed
 
 **The Writ panel** (`apps/client/src/ui/writPanel.ts`; its logic in `game/writView.ts`): the face, אמת and
 the Name from the letter sheet (`plotLetters`), each letter in a state: lit; flickering, ember with the
-outer letters (the first and last of each line) switching between ember and dim on a fixed beat; dark and
+outer letters (the first and last of each line) switching between ember and dim on `writ.json`'s `flickerPatternMs` (ART on #91: lit 600 ms, dim 140, lit 260, dim 140, repeating; a guttering lamp, not the steady blink of the combat telegraphs); dark and
 fading, the aleph dark so the Writ reads מת and the Name line dim while dark, then dark once line 1 has
 faded. A Name wider than the face after the lean hand widens the face, never the letters. Then the rim
 ("not certified: the Wet House in Malkhut", or "certified"), the charge in words with the exact time as a
