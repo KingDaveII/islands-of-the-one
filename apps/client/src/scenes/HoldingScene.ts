@@ -871,7 +871,7 @@ export class HoldingScene extends Phaser.Scene {
     });
   }
 
-  /** The seal's tooltip (LORE): while the pointer is over a named plot and no panel is open. */
+  /** A plot's tooltip (LORE): the seal's over a named plot, the unnamed plot's line over one without a word, while no panel is open. */
   private updatePlotTip(): void {
     const open =
       this.panel !== null ||
@@ -886,10 +886,12 @@ export class HoldingScene extends Phaser.Scene {
         ? plotAtWorld(w.x, w.y, this.session.layout)
         : undefined;
     const view = plot ? plotOf(this.response, plot.id) : undefined;
-    const show = view !== undefined && view.ground !== null;
+    const show = view !== undefined;
     this.plotTipG.setVisible(show);
     this.plotTip.setVisible(show);
     if (!show) return;
+    // LORE's lines: the seal's over a named plot, the unnamed plot's over one without a word yet.
+    this.plotTip.setText(view.ground === null ? PLOT_TEXT.UNNAMED_PLOT_TIP : PLOT_TEXT.SEAL_TIP);
     const ui = this.worldToUi(w.x, w.y);
     const tw = Math.round(this.plotTip.width) + 8;
     const x = Math.round(Math.min(this.frame.x + this.frame.w - tw - 2, ui.x + 6));
