@@ -65,7 +65,7 @@ table is M1. M2 Task 9, or whichever task first uses carry or sit, moves `REQUIR
 
 **Awaiting art (G1.5c).** A row can be in the contract before ART has drawn it. `ANIMS_AWAITING_ART`
 (`packages/shared/src/sprites.ts`) lists those rows: empty from kindled-ash's `run` (#46) to the M1 polish, which put
-`run_start`, `run_stop` and `run_back` on it (ART 2026-10-17). While a row is on it, the sheet test and
+`run_start`, `run_stop` and `run_back` on it (ART 2026-10-17); the two transitions came off when ART's frames landed (#72), so `run_back` is the one left. While a row is on it, the sheet test and
 the art pipeline treat it as optional, whatever its milestone, but complete when present (every facing, the
 right frame count), and the engine plays its stand-in: `run` falls back to `walk` (§8), as it still does on a sheet without `run`;
 `run_back` to the run in reverse; `run_start` and `run_stop` to nothing, the run and idle switching directly. When ART's sheet lands
@@ -86,8 +86,8 @@ Frame rates are per animation; `hold` means the last frame stays until the state
 | `idle` | 2 | 2 | yes | 8 | M1 | a breath: one pixel of chest and hood |
 | `walk` | 6 | 10 | yes | 8 | M1 | the blade bobs with the hand; it plays by distance, one cycle per `anim.walkCyclePx` (64 world px, §8). In encounters the engine plays it only as `run`'s stand-in; walking for its own sake is M2's holding |
 | `run` | 8 | 16 | yes | 8 | M1 | the Kindled's movement in encounters, Combat and Calm alike (GAME DESIGN 2026-10-16); plays by distance, one cycle per `anim.runCyclePx` (96 world px, §8), so 12 world px a frame; the fps only matters where nothing drives it by distance. 8 frames because PixelLab's `running-8-frames` template draws 8, and dropping two would break the cycle's even timing. The recipe lists the frames starting at the first contact (a foot lands), so frame 0 is a contact. Required since #46 (off `ANIMS_AWAITING_ART`); while a row awaits art and a sheet lacks it, the engine plays `walk` at the run's cycle in its place |
-| `run_start` | 2 | 20 | no | 8 | M1 | the push-off, played once by time (100 ms) when the Kindled starts moving from idle, then `run` (or `run_back`) takes over at the run's current distance phase; visual only, the sim never waits for it (§8). On `ANIMS_AWAITING_ART` until ART's frames land (M1 polish, ART 2026-10-17); without it the run and idle switch directly |
-| `run_stop` | 2 | 20 | no | 8 | M1 | the settle, played once by time (100 ms) when it stops, then `idle`; the same rules as `run_start`. On `ANIMS_AWAITING_ART`; without it the run and idle switch directly |
+| `run_start` | 2 | 20 | no | 8 | M1 | the push-off, played once by time (100 ms) when the Kindled starts moving from idle, then `run` (or `run_back`) takes over at the run's current distance phase; visual only, the sim never waits for it (§8). ART's frames landed in #72 and the row is required (off `ANIMS_AWAITING_ART`); a sheet without it (a fixture) switches the run and idle directly |
+| `run_stop` | 2 | 20 | no | 8 | M1 | the settle, played once by time (100 ms) when it stops, then `idle`; the same rules as `run_start`. Required since #72, like `run_start` |
 | `run_back` | 4 | 12 | yes | 8 | M1 | the backpedal: the run away from the aim, played by distance, one cycle per `anim.backCyclePx` (48 world px, §8), so 12 world px a frame like `run`; the 12 fps is nominal, used only where nothing drives it by distance (tools, previews, a pose without a stride; ART's answer on #69). On `ANIMS_AWAITING_ART`; without it the engine plays `run` in reverse (G1.5h) |
 | `dodge` | 4 | 16 | no | 8 | M1 | 1 = crouch, 2–3 = the roll (body a 12×12 ball), 4 = recover; frame 2–3 are the perfect-dodge window art |
 | `light_1`, `light_2`, `light_3` | 3 each | 15 | no | 8 | M1 | wind-up, swing (the arc), recover; `light_3` ends lower |
