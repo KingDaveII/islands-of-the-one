@@ -73,9 +73,11 @@ the item tables.
   may span several Kindleds (a trade); each (Kindled, item, place) appears at most once in it (merge
   the deltas; the same item in two places is two changes).
 - **reason**: one of `InventoryReason` in shared code: `grant`, `gather`, `harvest`, `feed-writ`,
-  `craft`, `trade`, `admin`, `move`. `gather` is a station's yield credited into its basket when the
+  `craft`, `trade`, `admin`, `move`, `gift`. `gather` is a station's yield credited into its basket when the
   holding settles ([holding.md](holding.md) §3): one row per settle, in the settle's transaction, with
   the ref `act:<kindled>:<started_at>:<credited>-<new total>` so a stretch's cycles are paid once.
+  `gift` is what an NPC gives: Kesh's first sliver and the tide's, one `wild-sliver` into the pack
+  ([holding.md](holding.md) §10), in the holding request's transaction.
 - **ref** (optional, at most 200 characters): an idempotency key, e.g. `trade:<id>` or
   `harvest:<station>:<cycle>`. A change set with a ref already in the ledger is not applied again:
   `apply` answers `duplicate: true` with the ledger rows of the first time, even when the two calls

@@ -23,6 +23,7 @@ code. Routes are under `/api` (Caddy routes it to the server in staging; Vite pr
 | `GET /api/holding` and `POST /api/holding/*` | ([holding](holding.md) §5)         | the holding, settled                                                                                         |
 | `POST /api/writ/name`      | `{ name }` (needs a session)                         | `200` the holding · `400` name-refused · `409` already-named ([holding](holding.md) §9)                     |
 | `POST /api/writ/feed`      | `{ itemId, count }` or `{ fill: true }`              | `200` the holding · `400` not-sparkglass · `409` unnamed / insufficient / full / too-much ([holding](holding.md) §9) |
+| `POST /api/kesh/sliver`    | `{}` (needs a session)                               | `200` the holding · `409` not-due / pack-full ([holding](holding.md) §10)                                   |
 
 Errors are `{ error, message }`: `error` a code from `ApiErrorCode`, `message` the player-facing
 line. Every body goes through a shared guard (unknown fields refused), then the validators; malformed

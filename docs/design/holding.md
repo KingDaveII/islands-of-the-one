@@ -192,13 +192,15 @@ routes ([`accounts.md`](accounts.md)): the Kindled comes from the session cookie
 | `POST /api/holding/take`  | `{ stationId }` | `200` the same, with `take` · `400` bad-request / unknown-station · `401` · `404`       |
 | `POST /api/writ/name`     | `{ name }`      | `200` the same · `400` bad-request / name-refused · `409` already-named · `401` · `404` |
 | `POST /api/writ/feed`     | `{ itemId, count }` or `{ fill: true }` | `200` the same · `400` bad-request / not-sparkglass · `409` unnamed / insufficient / full / too-much · `401` · `404` |
+| `POST /api/kesh/sliver`   | `{}`            | `200` the same · `400` bad-request · `409` not-due / pack-full · `401` · `404` (§10)     |
 
 `HoldingResponse`: the layout id; `baskets` by station id (every station of the layout listed) as
 lists of `{ itemId, quantity }`; the `activity` (`stationId`, `startedAt`, `cycleMs`) or null; the
 server's `now`; `skills`, each with its XP, level, XP into the level and XP to the next; and the
-`writ` (`WritView`, §9). A take answer adds `take`: the station, what `moved` into the store and what
+`writ` (`WritView`, §9) and `kesh` (`KeshView`, §10). A take answer adds `take`: the station, what `moved` into the store and what
 was `left` in the basket. Every route settles first, refuses unknown fields and stations, and answers
-the same shape as GET. The Writ's routes are in §9; the shape change made `PROTOCOL_VERSION` 3.
+the same shape as GET. The Writ's routes are in §9; the shape change made `PROTOCOL_VERSION` 3, and
+`kesh` with the Writ's `fedAt` (4b) made it 4.
 
 **The heartbeat:** while the holding scene is open the client calls `GET /api/holding` every
 `heartbeatMs` (30 s) and after each interaction (work, stop, take, opening a station panel, coming
@@ -241,6 +243,12 @@ the Kindled and stops at the layout's edges.
 - **Over the station, a "+1"** as each cycle completes, predicted from the ring (`cyclesDone`), render
   only; the counts come from the server. A take-all floats what moved the same way ("+3"), over the
   station's part nearest the Kindled.
+- **The camera margin** (4b): the camera follows the Kindled and may scroll `cameraMarginTiles` (6, `holding.json`)
+  into the void past every edge of the layout (`clampScroll`'s `near` and `far` on both axes), so the HUD's corner
+  panels never cover the shore or Kesh's rock: the PACK chip covered the rock in a 1440 × 810 window before it, the
+  rock standing two tiles from the template's edge (ART). The four panels' rectangles are one pure function,
+  `hudRects` (`game/holdingView.ts`), that the HUD draws by and `render/keshFraming.test.ts` checks against the
+  rock's and Kesh's drawn rects at 1280 × 720, 1440 × 810 and 960 × 540.
 
 **Interacting** (interact is E, Cross or a tap; I or the Touchpad opens the inventory; Esc or Circle
 backs out, all from `controls.json`): Use on the Writ post opens the Writ panel, or the Name screen first
@@ -254,10 +262,9 @@ with the inventory's blink-and-hold timing when it applies. Toasts proper are Ta
 
 ## 7. Seams for later tasks
 
-- **Task 4b, Kesh and the tide:** `afterNaming()` and `afterFeeding()` in `HoldingScene` are the two
-  moments LORE's lines play (Kesh across the water, the Narrator, the hint) and the once-per-tide sliver
-  lands; Kesh's Talk spot (`kesh.talk`) across the water from the rock; the tide clock. Until then
-  playtests get Sparkglass from the grant CLI.
+- **Task 4b, Kesh and the tide:** done (§10). What stays for later: Kesh's word tile (אדמה) and the seeds
+  are Task 5's, the codex entries come with the codex, odd catches with voyages; the once-per-tide sliver
+  goes away in M3 (`m2Scaffold`).
 - **The Wet House (M4):** `graceHoursUncertified` in writ.json (48 today) drops to 24; `certified` is
   written there; a rim-band's fitting, scribing a line and renaming (the panel shows line 2's needs
   greyed).
@@ -291,6 +298,7 @@ the store for "Store: twisted logs full.", then walks the shore (3c): the south 
 Hollow at the landing, the north edge's lip, and the Kindled behind the tall tree's canopy (it checks the
 depths). Shots: `docs/screenshots/m2-3b/`.
 `tools/screenshots-m2-4a.mjs` is the Writ's run (§9); shots: `docs/screenshots/m2-4a/`.
+`tools/screenshots-m2-4b.mjs` is Kesh's (§10); shots: `docs/screenshots/m2-4b/`.
 
 ## 9. The Writ
 
@@ -406,3 +414,97 @@ guards and codes, `writ:set`) and `holding.postgres.test.ts` (feeds racing on on
 chip). `tools/screenshots-m2-4a.mjs` runs it end to end: the Name screen with the live tablet, a refused
 Name, the flare, the panel freshly pressed, a sliver fed with humming and deep glass greyed, flickering,
 dark and fading with the chip in each state and its tooltip, a relight, and "Full.".
+
+## 10. Kesh
+
+Old Kesh, across the water (M2 Task 4b; GAME DESIGN: M2 starts the player on the holding with no voyages, so
+its only Sparkglass is Kesh's; LORE §14.3 and his four topics). He sits on his needle of rock
+(`prop-kesh-rock`, §1) off the south-east shore, drawn from `npc-kesh` (`KESH_SHEET`, sprites.md §4 "Old Kesh")
+at the rock's world point one depth step above it, with no shadow and no tone swap (his clay is drawn in):
+`fish` loops by default, `talk` loops while a talk box shows his line, `toss` plays once at its rate and goes
+back to `fish` (then `talk` again while his line is still open). All three are facing-less rows.
+
+**Talking.** Standing on `kesh.talk` (or within `juice.promptRangePx` of it, the reach the stations use;
+a station part nearer than the spot keeps its own prompt, `nearKesh`) shows the interact prompt over his
+head with the verb **TALK** (`TALK_LABEL`, beside the stations' `USE_LABEL`). Use opens the **talk box**
+(`apps/client/src/ui/talkBox.ts`; its flow, pure and tested in node, in `game/keshTalk.ts`): a placeholder
+in the existing panel style at the bottom of the screen, clear of the HUD's corner chips, until ART's UI
+kit replaces the look. One line at a time: the speaker ("Kesh"; nothing for the Narrator or a hint) and
+the line, Kesh's in the UI ink, the Narrator's muted under a divider (readability.md §4), a hint in
+`talkHint` (spark-amber, a placeholder for ART's hint style). Confirm (Cross, click, tap, the interact key)
+advances; Circle or Esc closes it at any step. The world keeps running behind it; the Kindled doesn't move
+while it is open (`session.held`). At the top level the box offers the topics, in this order, then ends:
+**The Old Letters**, **Sparkglass**, **Where the crack points**, **Goodbye**; a topic plays its lines and
+comes back to the menu, Goodbye plays its lines and closes. The arrows, the D-pad or the left stick move
+the menu's focus, the pointer hovers and clicks a row.
+
+**The lines** live in [`packages/shared/data/kesh.json`](../../packages/shared/data/kesh.json), validated on
+load (`validateKeshData`), LORE's and GAME DESIGN's word for word; every line passes `DRAWABLE_CHARS`, and a
+character the fonts lack fails the test by name instead of changing the text. A line is
+`{ who: kesh | narrator | hint, text }`, optionally with a `toss` (`sliver`: the thrown thing leaves his hand
+on that line) and an `only` (`first-sliver`: shown only while his first sliver hasn't been given). Stage
+directions in parentheses and LORE's speech marks are part of the text and are drawn. The flows:
+`afterNaming` plays from `afterNaming()` once the server has accepted the Name, after 4a's flare, and the
+Writ panel opens when it closes; `afterFirstFeeding` plays from `afterFeeding()` the first time a feed lands
+(`writ.fedAt` went from null to set in the feed's answer), over the open Writ panel; the Sparkglass topic
+carries the first-sliver step (the flick with its toss, then the hint "Touch Sparkglass to your Writ to feed
+it.") while `firstGiven` is false; `tideSliver` is the tide's line. **When a sliver is due** (`kesh.due`),
+Talk first plays the due toss (the first sliver's two lines, or the tide's one), then the menu.
+
+**The toss.** On a line with a `toss` the scene plays `toss` and sends `POST /api/kesh/sliver` once. When
+`toss` reaches `toss_2` (`KESH_TOSS_RELEASE_FRAME`) and the server has given the sliver, the thrown thing
+leaves his hand: drawn from `prop-sparkglass`'s `idle`, it flies a whole-pixel arc (`render/keshToss.ts`)
+from that frame's `hand` point (mapped like the Hookblade's points: the anchor plus the point less the cell
+origin) to the Kindled's feet over `kesh.tossMs` (600) with the arc `kesh.tossArcPx` (20 world px) high,
+both in `tuning.json`, and "+1" floats where it lands, the cycles' float. The flight is cosmetic: the count
+comes from the server's answer, never from the animation. A refusal ("Pack full.") is the box's note line
+under his line, and nothing flies.
+
+**Slivers from Kesh (the server).** `POST /api/kesh/sliver`, `{}` (the guard refuses any field; the Kindled
+from the session cookie; a JSON body and a same-origin `Origin` like every mutating route) runs as a holding
+request, under the Kindled's lock after the settle (`apps/server/src/holding/kesh.ts`):
+
+1. if his first sliver hasn't been given, it is given and `first_sliver_at` is set;
+2. otherwise, if `m2Scaffold` is on and `last_tide` is not the current tide, one is given and `last_tide`
+   set to the tide's index;
+3. otherwise `not-due` (409).
+
+The sliver is one `wild-sliver` into the **pack** through `inventory.apply` with reason `gift`
+([inventory.md](inventory.md)). A full pack refuses with `pack-full` ("Pack full.", 409) and the sliver stays
+due. **The first sliver doesn't use up the tide's**: a player who gets the first today can get the tide's
+too (GAME DESIGN wants a Writ to go dark two days after the first sliver unless fed, and the tide's sliver
+is the M2 way to keep it fed). Every answer is the holding. The `kesh_gifts` table (the Kindled as primary
+key, cascade; `first_sliver_at`, `last_tide`; migration 0006, expand-only) is touched only by the holding
+module; the row is created under the lock on the first request that needs it. `GET /api/holding` gains
+`kesh`: `firstGiven`, `due` (`first`, `tide` or null) and `nextTideAt` (ISO, the next full of the tide);
+the client decides which flow to play from it. The Writ row gains `fed_at` (nullable, expand-only, the
+same migration), set by the first feed and answered as `writ.fedAt`.
+
+**The tide** is in [`packages/shared/data/tide.json`](../../packages/shared/data/tide.json): `fullOfTide`
+"20:00" and `timeZone` "Europe/Berlin" (GAME DESIGN: "The full of the tide is a fixed hour chosen for the
+server's players"), validated on load. `tideIndex(date)` numbers the tides: tide n begins at the full of
+the tide, and the index is the civil day, in that zone and counted from the epoch, on which the running
+tide began. It is computed with `Intl.DateTimeFormat` in the zone, so the full is 20:00 local on both sides
+of a daylight-saving change and a tide is 23 h (the March change) or 25 h (the October change) on those two
+days. `nextFullOfTide(date)` is for the client and the tests. A skipped tide is not paid later.
+
+**`m2Scaffold`** ([`packages/shared/data/scaffold.json`](../../packages/shared/data/scaffold.json), validated
+on load, read by the server and the client) turns the tide's sliver on; it goes away in M3 when caves and
+wrecks give glass.
+
+**The playtest CLI:** `pnpm --filter @iot/server kesh:reset <username>` clears both columns through the
+holding module, so a playtest can see the first sliver again; the grant CLI keeps working beside it.
+
+**Tests:** `packages/shared/test/kesh.test.ts` (the validator, every line in `DRAWABLE_CHARS` and free of
+the banned names, LORE's lines in place; `scaffold.json`), `tide.test.ts` (`tide.json`, `tideIndex` and
+`nextFullOfTide` at 19:59 and 20:00 local across both Berlin daylight-saving changes, the 23 h and 25 h
+tides, a skipped hour in another zone); `apps/server/test/holding.test.ts` (the first sliver once into the
+pack with the ledger reason, the tide's once per tide and again the next, never with the scaffold off, the
+first and the tide's on the same day, `not-due`, `pack-full` keeping it due, the route's guard and codes,
+`kesh` in the holding answer, `kesh:reset`, `fed_at` set once) and `holding.postgres.test.ts` (two
+`POST /api/kesh/sliver` racing give exactly one sliver); `apps/client/src/game/keshTalk.test.ts` (the flows
+as a state machine: the menu, each topic's steps, the first-sliver step present or absent, the due toss
+before the menu, Close at any step), `render/keshToss.test.ts` (the release frame, the arc's start at the
+`hand` point, whole-pixel flight), `render/keshFraming.test.ts` (the camera margin, above) and
+`game/holdingView.test.ts` (`nearKesh`, `hudRects`). `tools/screenshots-m2-4b.mjs` runs it end to end;
+shots: `docs/screenshots/m2-4b/`.
