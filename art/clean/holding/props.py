@@ -10,7 +10,7 @@ sources the prop recipes read (art/clean/prop-<name>/idle/frame-<n>.png). Whole-
 - twisted-tree-2: the job's candidate 2 (a forked crown), the same way, for alternate trees;
 - kesh-rock: 7 whole rows taken out of the shaft; its dark side lifted to hollow-below so it reads on the
   Hollow; its foot dithered out into the void over 8 rows, so it rises from nothing; its tip cut down to a
-  perch 10 px wide for Kesh to sit on (Task 4b; art/clean/npc-kesh/kesh.py seats him on it);
+  perch capped a little wider than the needle for Kesh to sit on (Task 4b; art/clean/npc-kesh/kesh.py seats him on it);
 - stone-outcrop, holding-store: the placed picks, recoloured.
 
     python3 art/clean/holding/props.py
@@ -132,22 +132,27 @@ def kesh_rock():
     return [out]
 
 
+PERCH_LIP = 4        # how far the perch's flat top reaches past the needle on each side
+
+
 def perch(po, w):
-    """Kesh's seat (Task 4b): the needle's tip cut off above row 25. Row 25 is the top's back edge, rows 26
-    and 27 the flat top in the light (hollow-lavender at the lit left, hollow-dusk), row 28 the lip where the
-    top turns into the face. Kesh hides most of it."""
+    """Kesh's seat (Task 4b): the needle's tip cut off above row 25 and capped with a flat stone a little
+    wider than the needle (PERCH_LIP each side), so its lit top shows beside him where he sits. Row 25 is
+    the top's back edge, rows 26-27 the top in the light (hollow-lavender, hollow-dusk at the far right),
+    row 28 its front lip, row 29 the cap's underside where it overhangs the needle."""
     for y in range(25):
         for x in range(w):
             po[x, y] = (0, 0, 0, 0)
     xs = [x for x in range(w) if po[x, 26][3]]
-    x0, x1 = min(xs), max(xs)
+    x0, x1 = min(xs) - PERCH_LIP, max(xs) + PERCH_LIP
     for x in range(x0, x1 + 1):
         inner = x0 < x < x1
         po[x, 25] = DEEP if inner else (0, 0, 0, 0)
         for y in (26, 27):
-            po[x, y] = rgb("hollow-lavender") if inner and x < x0 + 4 else (rgb("hollow-dusk") if inner else DEEP)
-        if inner:
-            po[x, 28] = DEEP
+            po[x, y] = (rgb("hollow-dusk") if x >= x1 - 2 else rgb("hollow-lavender")) if inner else DEEP
+        po[x, 28] = DEEP
+        if inner and (x < min(xs) or x > max(xs)):
+            po[x, 29] = DEEP
 
 
 def main():

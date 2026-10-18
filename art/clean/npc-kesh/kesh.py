@@ -47,7 +47,11 @@ BASE = {"line": (0x1E, 0x1C, 0x36), "dark": (0x5B, 0x51, 0x49), "cloth": (0x83, 
 ROWS = {"fish": [1, 2, 3, 4], "talk": [1, 2], "toss": [3, 4, 5, 6]}
 CELL_W, CELL_H, SOLES = 96, 128, 117
 ROCK_SHIFT = (16, 64)          # rock cell -> Kesh's cell
-PLACE = (7, 41)                # raw 76 x 76 canvas -> Kesh's cell: his seat (raw row 50) on the perch
+# raw 76 x 76 canvas -> Kesh's cell. Measured against the BUILT prop-kesh-rock (the prop grounds its lowest
+# pixel on the soles row, which lifts the clean frame 7 rows): the perch's lit top lands on cell rows 83-84,
+# beside his thighs (raw 49-51), his shins hang over the needle's face and his feet hang against its face below
+# the step where it widens (cell row 94), never standing on it.
+PLACE = (7, 34)
 HIP = 49                       # raw rows from here down are legs
 SWAY = {"fish": [0, 1, 1, 0], "talk": [0, 0], "toss": [0, 1, 1, 0]}
 LINE = 30                      # the line's length in px, the last 8 dithered
@@ -101,15 +105,54 @@ def strip(px):
                 del px[p]
 
 
-def legs_from(px, donor):
-    """Below the hip his legs are the donor's (fish 1: dangling); only the throwing hand, left of the body
-    at the hip, stays the frame's own."""
-    gone = lambda p: p[1] >= HIP and (p[0] >= 26 or p[1] >= HIP + 2)
-    for p in [p for p in px if gone(p)]:
+# His legs, drawn by hand (David's playtest, 2026-10-18: the generator's trousers read as one block and
+# the wraps vanished into the rock): two short thighs on the perch, narrower than it so its lit top shows
+# either side, the knees at its lip, two thin shins hanging down the needle's face with its light showing
+# between them, the feet in sailcloth wraps pointing south-east.
+# Lit on the left (watcher-stone), trousers watcher-iron, wraps unwritten-sail shaded sleeper-ochre, all
+# outlined. Raw pixels from (LEGS_X, HIP); '.' leaves the pixel as it is.
+LEGS_X = 30
+LEGS = [
+    ".....OSIIOSSIIO......",
+    ".....OSIIOSIIIO......",
+    ".....OSIIOSIIIO......",
+    ".....OSIO.OSIIO......",
+    ".....OSIO.OSIIO......",
+    ".....OSIO..OSIO......",
+    ".....OSIO..OSIO......",
+    ".....OSIO..OSIO......",
+    ".....OSIO..OSIO......",
+    ".....OSIO..OSIO......",
+    ".....OSIO..OSIO......",
+    ".....OSIO..OSIO......",
+    ".....OOOO..OOOO......",
+    ".....OWWwO.OWWwO.....",
+    ".....OWWWwO.OWWWwO...",
+    "......OOOOO..OOOOO...",
+]
+LEG_INK = {"O": "hollow-deep", "S": "watcher-stone", "I": "watcher-iron", "W": "unwritten-sail",
+           "w": "sleeper-ochre"}
+
+
+def clear_legs(px, donor=None):
+    """Everything the generator drew below the hip goes (in toss the squat as well), but the coat's hem at
+    his left and, in toss, the throwing hand; toss takes its hem from the donor (fish 1)."""
+    hem = lambda p: HIP <= p[1] < HIP + 3 and 26 <= p[0] < LEGS_X + 3
+    for p in [p for p in px if p[1] >= HIP and not (p[0] < 26 and p[1] < HIP + 3) and not hem(p)]:
         del px[p]
-    for p, c in donor.items():
-        if gone(p):
-            px[p] = c
+    if donor is not None:
+        for p in [p for p in px if hem(p)]:
+            del px[p]
+        for p, c in donor.items():
+            if hem(p):
+                px[p] = c
+
+
+def draw_legs(px):
+    for dy, row in enumerate(LEGS):
+        for dx, ch in enumerate(row):
+            if ch != ".":
+                px[(LEGS_X + dx, HIP + dy)] = rgb(LEG_INK[ch])
 
 
 def colour(px):
@@ -117,9 +160,9 @@ def colour(px):
     out = {}
     for (x, y), c in px.items():
         if c == "line":
-            col = rgb("watcher-iron") if y >= HIP else rgb("hollow-deep")
+            col = rgb("hollow-deep")
         elif c == "dark":
-            col = rgb("hollow-below") if y >= 56 else rgb("unwritten-tar")
+            col = rgb("unwritten-tar")
         elif c == "cloth":
             col = rgb("unwritten-tar") if y <= head_top + 12 else rgb("unwritten-sail")   # face lights: skin
         elif c == "hair_shade":
@@ -193,13 +236,14 @@ def main():
         for i, n in enumerate(raws):
             raw = load(anim, n)
             strip(raw)
+            clear_legs(raw, donor if anim == "toss" else None)
             if anim == "toss":
-                legs_from(raw, donor)
                 hx, hy = HAND[i]
                 points[f"toss_{i}"] = [hx + PLACE[0], hy + PLACE[1]]
             px = colour(raw)
             freckles(px, raw)
             patches(px)
+            draw_legs(px)
             img = Image.new("RGBA", (CELL_W, CELL_H), CLEAR)
             for (x, y), c in px.items():
                 img.putpixel((x + PLACE[0], y + PLACE[1]), c)
