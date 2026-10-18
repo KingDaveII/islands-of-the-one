@@ -100,11 +100,22 @@ export function flareDone(count: number, elapsedMs: number): boolean {
 
 // --- The Writ face -------------------------------------------------------------
 
-/** The flicker's fixed beat: the outer letters switch every half second. */
-export const FLICKER_BEAT_MS = 500;
-
-export function flickerBeat(ms: number): boolean {
-  return Math.floor(ms / FLICKER_BEAT_MS) % 2 === 1;
+/**
+ * Whether the flicker is in a dim step at `ms` (true = the outer letters dim):
+ * `writ.json`'s `flickerPatternMs`, ms lit, then dim, then lit…, repeating
+ * (ART on #91: an uneven, guttering rhythm, never the steady blink of the
+ * combat telegraphs).
+ */
+export function flickerBeat(ms: number, pattern: readonly number[] = writData.flickerPatternMs): boolean {
+  const cycle = pattern.reduce((a, b) => a + b, 0);
+  if (cycle <= 0) return false;
+  let t = ((Math.floor(ms) % cycle) + cycle) % cycle;
+  for (let i = 0; i < pattern.length; i++) {
+    const step = pattern[i] ?? 0;
+    if (t < step) return i % 2 === 1;
+    t -= step;
+  }
+  return false;
 }
 
 /** The letter states of one line of the face (the emet line or the Name's), by the Writ's state. */

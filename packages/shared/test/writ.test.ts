@@ -69,6 +69,7 @@ describe('writ.json', () => {
       lineFadeHours: 24,
       lineLetters: 12,
       linePlots: 4,
+      flickerPatternMs: [600, 140, 260, 140],
     });
   });
 
@@ -94,6 +95,9 @@ describe('writ.json', () => {
       ok: false,
       problems: ['capacityHours must hold at least one sliver', 'lowHours must be under capacityHours', 'pressChargeHours must not exceed capacityHours'],
     });
+    const flickerProblem = 'flickerPatternMs must be an even-length list of positive integers (ms lit, ms dim, …)';
+    for (const pattern of [[600, 140, 260], [600, 0], [], 'steady'])
+      expect(validateWritData({ ...base, flickerPatternMs: pattern }), JSON.stringify(pattern)).toEqual({ ok: false, problems: [flickerProblem] });
     expect(validateWritData(null)).toEqual({ ok: false, problems: ['expected an object'] });
     expect(validateWritData({ ...base, feeds: {} })).toMatchObject({ ok: false });
   });
