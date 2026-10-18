@@ -667,7 +667,7 @@ but not yet ground for anything. Give it a word."; a named plot with its ground 
 colour, `sealEarth`; the sentence's letters from the letter sheet along the top of the ring with the divider
 between the words and at the ring's other join; the sigil at the centre over a faint 3 × 3 grid) and its
 signpost (`signpostWood`, `signpostPlaque`; a pillar in the roam, `setSolidPlots`); a faded plot dim with no
-sigil (`plotFaded`). Hovering a named plot shows LORE's seal tooltip. **The seal scene** plays from a naming's
+sigil (`plotFaded`). Hovering a named plot shows LORE's seal tooltip (§14.3; its two-word line once the plot has a Virtue). **The seal scene** plays from a naming's
 answer, never ahead of it (`startSeal`; `sealPhase` in `game/plotView.ts`, timed by `tuning.json` `plots`:
 `sealRingMs` 300, `sealLetterMs` 70 a letter, `sealSigilMs` 400, `sealGroundMs` 200): the ring draws itself
 round the plot, the letters appear one by one, the sigil traces from its circle to its bar, then the ground
@@ -677,7 +677,7 @@ panel: "Name this plot" / "Rename this plot"; the ring with two slots right to l
 Virtue on the left, labelled); the known tiles that fit the selected slot with their letters, `say`, meaning
 and effect ("You don't know any Ground words yet." / "… Virtue words yet." when none; "None" leaves the Virtue
 empty); the preview with the sigil drawn live, "Builds: Field", the Virtue's effect "+1% yield for each day it
-keeps its name, up to +20%", and LORE's Field tooltip; the cost line "First naming: free" / "Renaming: 1
+keeps its name, up to +20%", and LORE's Field tooltip (§14.3; its two-word line once a Virtue is picked); the cost line "First naming: free" / "Renaming: 1
 sealed gin" (tooltip "A name is paid for."); "Level 1" and "Pieces: none" for Task 6; CONFIRM, greyed while the
 sentence is unchanged or has no Ground; a refusal in one line. Inputs as the Writ panel's. **The field's
 station panel** (`stationLines`): until sown, only "Not sown yet." and SOW (without a seed, "You don't have

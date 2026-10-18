@@ -891,7 +891,9 @@ export class HoldingScene extends Phaser.Scene {
     this.plotTip.setVisible(show);
     if (!show) return;
     // LORE's lines: the seal's over a named plot, the unnamed plot's over one without a word yet.
-    this.plotTip.setText(view.ground === null ? PLOT_TEXT.UNNAMED_PLOT_TIP : PLOT_TEXT.SEAL_TIP);
+    this.plotTip.setText(
+      view.ground === null ? PLOT_TEXT.UNNAMED_PLOT_TIP : view.virtue === null ? PLOT_TEXT.SEAL_TIP : PLOT_TEXT.SEAL_TIP_VIRTUE,
+    );
     const ui = this.worldToUi(w.x, w.y);
     const tw = Math.round(this.plotTip.width) + 8;
     const x = Math.round(Math.min(this.frame.x + this.frame.w - tw - 2, ui.x + 6));

@@ -185,11 +185,13 @@ export const PLOT_TEXT = {
   CONFIRM: 'CONFIRM',
   RENAME: 'RENAME',
   SOW: 'SOW',
-  // Tooltips. The unnamed plot's is LORE's (§14.3, word for word); the brief names LORE's Field and Plot seal
-  // tooltips (§14.3) without quoting them, so these two are MAIN's placeholders until LORE's text lands.
+  // Tooltips, LORE's word for word (§14.3): the unnamed plot's; the Field's and the Plot seal's for a Ground alone
+  // (the first plot sentence) and for a Ground and a Virtue (the second plot).
   UNNAMED_PLOT_TIP: 'Ground, but not yet ground for anything. Give it a word.',
-  FIELD_TIP: 'Tilled ground with a word on it. Grain comes up on its own while your Writ is lit.',
-  SEAL_TIP: 'The sentence the plot answers to, and its sigil.',
+  FIELD_TIP: "Tilled ground. Its name says it's for growing.",
+  FIELD_TIP_VIRTUE: 'Tilled ground, and old. The longer it keeps its name, the more it gives.',
+  SEAL_TIP: "The word that holds this plot, pressed round in a ring of earth-ochre. The line at the center is the word's sigil.",
+  SEAL_TIP_VIRTUE: 'Two words round the ring. The sigil at the center is both of them drawn as one line.',
   // The field's station panel (GAME DESIGN's screen, LORE's lines).
   /** "+3% for keeping its name", the figure being the bonus so far. */
   BONUS_LINE: (percent: number): string => `+${percent}% for keeping its name`,

@@ -121,7 +121,7 @@ export interface PlotPanelLines {
   letters: string;
   /** CONFIRM is greyed while the sentence is unchanged or has no Ground. */
   confirmEnabled: boolean;
-  /** The preview's tooltip: the Field's (LORE), once a Ground is picked. */
+  /** The preview's tooltip: the Field's (LORE §14.3), once a Ground is picked; its two-word line with a Virtue. */
   previewTip: string | null;
 }
 
@@ -141,7 +141,7 @@ export function plotPanelLines(plot: Pick<PlotView, 'ground' | 'virtue'>, picked
     pieces: PLOT_TEXT.PIECES_NONE,
     letters: sentenceLetters(picked.ground, picked.virtue),
     confirmEnabled: changed && ground !== undefined,
-    previewTip: ground ? PLOT_TEXT.FIELD_TIP : null,
+    previewTip: ground ? (virtue ? PLOT_TEXT.FIELD_TIP_VIRTUE : PLOT_TEXT.FIELD_TIP) : null,
   };
 }
 

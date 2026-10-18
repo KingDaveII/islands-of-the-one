@@ -91,7 +91,12 @@ describe('the plot sentence panel', () => {
     expect(plotPanelLines(unnamed, named)).toMatchObject({ builds: 'Builds: Field', letters: 'אדמה', confirmEnabled: true, previewTip: PLOT_TEXT.FIELD_TIP });
     // Renaming: the cost and its tooltip; the same sentence is greyed; a change is not.
     expect(plotPanelLines(named, named)).toMatchObject({ title: 'Rename this plot', renaming: true, cost: 'Renaming: 1 sealed gin', costTip: 'A name is paid for.', confirmEnabled: false });
-    expect(plotPanelLines(named, { ground: 'adamah', virtue: 'yashan' })).toMatchObject({ confirmEnabled: true, letters: 'אדמה · ישן', effect: PLOT_TEXT.YIELD_PER_DAY_EFFECT });
+    expect(plotPanelLines(named, { ground: 'adamah', virtue: 'yashan' })).toMatchObject({
+      confirmEnabled: true,
+      letters: 'אדמה · ישן',
+      effect: PLOT_TEXT.YIELD_PER_DAY_EFFECT,
+      previewTip: PLOT_TEXT.FIELD_TIP_VIRTUE,
+    });
     expect(plotPanelLines({ ground: 'adamah', virtue: 'yashan' }, named)).toMatchObject({ confirmEnabled: true, effect: null });
   });
 });
