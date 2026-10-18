@@ -220,9 +220,10 @@ export const REQUIRED_MILESTONE: SpriteMilestone = 'M1';
  * `run_stop` → none, the run and idle switch directly). When ART's sheet
  * lands with it, MAIN removes it here. Empty from kindled-ash's run (#46) to
  * the M1 polish (ART 2026-10-17), which added the run transitions and
- * `run_back`; `run_start` and `run_stop` came off when ART's frames landed (#72).
+ * `run_back`; `run_start` and `run_stop` came off when ART's frames landed (#72), `run_back`
+ * with the backwards-run job (#74). Empty again.
  */
-export const ANIMS_AWAITING_ART: readonly string[] = ['run_back'];
+export const ANIMS_AWAITING_ART: readonly string[] = [];
 
 /** Whether a table row is still waiting for ART (`ANIMS_AWAITING_ART`). */
 export function isAwaitingArt(row: Pick<SpriteAnimSpec, 'name'>): boolean {

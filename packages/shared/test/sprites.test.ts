@@ -822,14 +822,14 @@ describe('optional animations (milestones)', () => {
   const sheetWith = (anims: SpriteSheet['anims']): SpriteSheet => ({ ...fixtureSheet, anims });
   const m1 = KINDLED_ANIMS.filter(isRequiredAnim);
 
-  it('makes carry and sit M2 and everything else M1, and requires every M1 row but run_back, awaiting art', () => {
+  it('makes carry and sit M2 and everything else M1, and requires every M1 row (nothing awaits art)', () => {
     expect(REQUIRED_MILESTONE).toBe('M1');
     expect(KINDLED_ANIMS.filter((a) => a.milestone === 'M2').map((a) => a.name)).toEqual(['carry_idle', 'carry_walk', 'sit']);
-    // run_back (M1 polish, ART 2026-10-17) is an M1 row optional until ART's frames land; the transitions landed (#72).
-    expect(ANIMS_AWAITING_ART).toEqual(['run_back']);
+    // The run transitions (#72) and run_back (#74) landed, so every M1 row is required.
+    expect(ANIMS_AWAITING_ART).toEqual([]);
     expect(m1.map((a) => a.name)).toEqual(
       KINDLED_ANIMS.map((a) => a.name).filter(
-        (n) => !['carry_idle', 'carry_walk', 'sit', 'run_back'].includes(n),
+        (n) => !['carry_idle', 'carry_walk', 'sit'].includes(n),
       ),
     );
     for (const name of ANIMS_AWAITING_ART) {
@@ -881,27 +881,23 @@ describe('optional animations (milestones)', () => {
     );
   });
 
-  it('has the run transitions and run_back in the Kindled table (ART 2026-10-17): 8 facings, the transitions required, run_back optional until drawn', () => {
+  it('has the run transitions and run_back in the Kindled table (ART 2026-10-17): 8 facings, all required now that ART drew them', () => {
     const rows = KINDLED_ANIMS.filter((a) => ['run_start', 'run_stop', 'run_back'].includes(a.name));
     expect(rows.map((a) => [a.name, a.frames, a.fps, a.loop, a.hold, a.facings.length, a.milestone])).toEqual([
       ['run_start', 2, 20, false, false, 8, 'M1'],
       ['run_stop', 2, 20, false, false, 8, 'M1'],
       ['run_back', 4, 12, true, false, 8, 'M1'],
     ]);
-    // m1 now includes the transitions: a finished sheet passes without run_back, and with it; one facing of run_back alone fails.
-    expect(m1.map((a) => a.name)).toEqual(expect.arrayContaining(['run_start', 'run_stop']));
+    // m1 includes all three: a finished sheet passes with them; without run_start, or with a facing of run_back missing, it fails.
+    expect(m1.map((a) => a.name)).toEqual(expect.arrayContaining(['run_start', 'run_stop', 'run_back']));
     expect(tableProblems('kindled-test', sheetWith(animsOf(m1)), KINDLED_ANIMS)).toEqual([]);
-    const back = rows.filter((a) => a.name === 'run_back');
-    expect(tableProblems('kindled-test', sheetWith(animsOf([...m1, ...back])), KINDLED_ANIMS)).toEqual([]);
     const noStart = animsOf(m1.filter((a) => a.name !== 'run_start'));
     expect(tableProblems('kindled-test', sheetWith(noStart), KINDLED_ANIMS)).toEqual(
       SPRITE_FACINGS.map((f) => `run_start_${f} is missing`),
     );
-    const anims = animsOf([...m1, ...back]);
+    const anims = animsOf(m1);
     delete anims.run_back_SW;
-    expect(tableProblems('kindled-test', sheetWith(anims), KINDLED_ANIMS)).toEqual([
-      'run_back_SW is missing (run_back is awaiting art, but complete once present; required: M1)',
-    ]);
+    expect(tableProblems('kindled-test', sheetWith(anims), KINDLED_ANIMS)).toEqual(['run_back_SW is missing']);
   });
 
   it('fails animations outside the table', () => {
