@@ -1,5 +1,5 @@
 import { isClayTone, isRemembrance, type Remembrance } from './accounts.js';
-import { isHoldingStationId } from './holding.js';
+import { isHoldingStationId, isPlotId } from './holding.js';
 import { isPlace, isStationId, type Place } from './places.js';
 import { isSkill, type Skill } from './skills.js';
 import type { ClayTone } from './sprites.js';
@@ -27,6 +27,9 @@ export const ApiRoute = {
   WritName: '/api/writ/name',
   WritFeed: '/api/writ/feed',
   KeshSliver: '/api/kesh/sliver',
+  KeshWord: '/api/kesh/word',
+  KeshSeeds: '/api/kesh/seeds',
+  PlotsName: '/api/plots/name',
 } as const;
 export type ApiRoute = (typeof ApiRoute)[keyof typeof ApiRoute];
 
@@ -75,8 +78,17 @@ export const ApiErrorCode = {
   NotSparkglass: 'not-sparkglass',
   Full: 'full',
   TooMuch: 'too-much',
-  // Kesh's slivers (docs/design/holding.md "Kesh").
+  // Kesh's slivers and gifts (docs/design/holding.md "Kesh").
   NotDue: 'not-due',
+  // Plots and plot sentences (docs/design/holding.md "Plots", M2 Task 5).
+  UnknownPlot: 'unknown-plot',
+  Faded: 'faded',
+  UnknownWord: 'unknown-word',
+  WrongSlot: 'wrong-slot',
+  NoGround: 'no-ground',
+  Unchanged: 'unchanged',
+  SentenceRefused: 'sentence-refused',
+  UnnamedPlot: 'unnamed-plot',
 } as const;
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
 
@@ -231,12 +243,49 @@ export type KeshDue = (typeof KESH_DUE)[number];
  * Kesh in the holding answer (M2 Task 4b): whether his first sliver has been
  * given, which sliver is due now (`first`, `tide` while `m2Scaffold` is on
  * and this tide's hasn't been given, or null) and when the next tide begins
- * (ISO 8601). The client decides which flow to play from this.
+ * (ISO 8601); and his gifts (Task 5): whether the word tile is due (the
+ * island has a Name and the Kindled doesn't know the word yet) and whether
+ * the seeds are (a plot has been named and they haven't been given). The
+ * client decides which flow to play from this: a due gift plays first, the
+ * tile, then the seeds, then the sliver.
  */
 export interface KeshView {
   firstGiven: boolean;
   due: KeshDue | null;
   nextTideAt: string;
+  wordDue: boolean;
+  seedsDue: boolean;
+}
+
+/**
+ * A plot in the holding answer (M2 Task 5), one per layout plot in order:
+ * its sentence (`ground` and `virtue` word ids, null while unnamed or without
+ * a Virtue), when it was named and when its Virtue was last set (ISO 8601),
+ * the kind its Ground builds (null while unnamed), its level (1 plus the
+ * pieces standing in it: 1 until Task 6) and its state from its Writ line.
+ */
+export interface PlotView {
+  id: string;
+  ground: string | null;
+  virtue: string | null;
+  namedAt: string | null;
+  virtueSetAt: string | null;
+  kind: string | null;
+  level: number;
+  state: WritLineState;
+}
+
+/**
+ * A station's basket cycle in the holding answer (M2 Task 5), per station
+ * with a cycle (a named plot whose kind has one): its length, when its clock
+ * stood after the settle (ISO 8601; the next cycle lands `cycleMs` after it)
+ * and the Virtue's bonus in permille at `now`, so the client draws "Next in
+ * 12 min" between heartbeats.
+ */
+export interface StationCycleView {
+  cycleMs: number;
+  cycledUntil: string;
+  bonusPermille: number;
 }
 
 /**
@@ -249,12 +298,19 @@ export interface KeshView {
  */
 export interface HoldingResponse {
   layoutId: string;
+  /** By station id, every station of the layout and every plot (a plot's basket belongs to the plot, whatever its kind). */
   baskets: Record<string, InventoryEntry[]>;
   activity: HoldingActivity | null;
   now: string;
   skills: Record<Skill, SkillView>;
   writ: WritView;
   kesh: KeshView;
+  /** The word ids the Kindled knows (Task 5). */
+  words: string[];
+  /** One entry per layout plot, in order (Task 5). */
+  plots: PlotView[];
+  /** The basket cycles, by station id, for every station with a cycle (Task 5). */
+  cycles: Record<string, StationCycleView>;
   take?: HoldingTake;
 }
 
@@ -265,6 +321,29 @@ export interface HoldingResponse {
  * and the sliver stays due).
  */
 export type KeshSliverRequest = Record<string, never>;
+
+/**
+ * POST /api/kesh/word and POST /api/kesh/seeds, `{}` (M2 Task 5): asks Kesh
+ * for the word tile (given once the island has a Name, while the Kindled
+ * doesn't know the word) or the seeds (once a plot has been named, once; into
+ * the pack). Answers the holding, or `not-due`; the seeds `pack-full` too,
+ * and then stay due.
+ */
+export type KeshGiftRequest = Record<string, never>;
+
+/**
+ * POST /api/plots/name, `{ plotId, ground, virtue }` (M2 Task 5): names a
+ * plot with a plot sentence, the Ground's and the Virtue's word ids (the
+ * Virtue may be null; a Ground is needed, `no-ground`). Answers the holding,
+ * or `unknown-plot`, `unnamed`, `faded`, `unknown-word`, `wrong-slot`,
+ * `no-ground`, `unchanged`, `sentence-refused` or `insufficient` (a rename
+ * without the gin).
+ */
+export interface PlotNameRequest {
+  plotId: string;
+  ground: string | null;
+  virtue: string | null;
+}
 
 /** POST /api/writ/name: the island's Name as typed; the server hears its letters. Once only in M2 (`already-named` after). */
 export interface WritNameRequest {
@@ -471,17 +550,51 @@ export function isWritView(value: unknown): value is WritView {
 export function isKeshView(value: unknown): value is KeshView {
   return (
     isObject(value) &&
-    hasOnly(value, ['firstGiven', 'due', 'nextTideAt']) &&
+    hasOnly(value, ['firstGiven', 'due', 'nextTideAt', 'wordDue', 'seedsDue']) &&
     typeof value.firstGiven === 'boolean' &&
     (value.due === null || (typeof value.due === 'string' && (KESH_DUE as readonly string[]).includes(value.due))) &&
-    isIsoDate(value.nextTideAt)
+    isIsoDate(value.nextTideAt) &&
+    typeof value.wordDue === 'boolean' &&
+    typeof value.seedsDue === 'boolean'
+  );
+}
+
+const isStringOrNull = (value: unknown): value is string | null => value === null || typeof value === 'string';
+
+/** A plot on the wire: its id one of the layout's, its name's parts and times consistent (unnamed: no Ground, no kind, no times). */
+export function isPlotView(value: unknown): value is PlotView {
+  return (
+    isObject(value) &&
+    hasOnly(value, ['id', 'ground', 'virtue', 'namedAt', 'virtueSetAt', 'kind', 'level', 'state']) &&
+    isPlotId(value.id) &&
+    isStringOrNull(value.ground) &&
+    isStringOrNull(value.virtue) &&
+    isIsoOrNull(value.namedAt) &&
+    isIsoOrNull(value.virtueSetAt) &&
+    isStringOrNull(value.kind) &&
+    (value.ground === null) === (value.namedAt === null) &&
+    (value.ground === null) === (value.kind === null) &&
+    (value.ground !== null || value.virtue === null) &&
+    (value.virtue === null) === (value.virtueSetAt === null) &&
+    isPositiveInt(value.level) &&
+    isWritLineState(value.state)
+  );
+}
+
+export function isStationCycleView(value: unknown): value is StationCycleView {
+  return (
+    isObject(value) &&
+    hasOnly(value, ['cycleMs', 'cycledUntil', 'bonusPermille']) &&
+    isPositiveInt(value.cycleMs) &&
+    isIsoDate(value.cycledUntil) &&
+    isNonNegativeInt(value.bonusPermille)
   );
 }
 
 export function isHoldingResponse(value: unknown): value is HoldingResponse {
   return (
     isObject(value) &&
-    hasOnly(value, ['layoutId', 'baskets', 'activity', 'now', 'skills', 'writ', 'kesh', 'take']) &&
+    hasOnly(value, ['layoutId', 'baskets', 'activity', 'now', 'skills', 'writ', 'kesh', 'words', 'plots', 'cycles', 'take']) &&
     typeof value.layoutId === 'string' &&
     isObject(value.baskets) &&
     Object.entries(value.baskets).every(([k, v]) => isHoldingStationId(k) && isEntryList(v)) &&
@@ -491,6 +604,12 @@ export function isHoldingResponse(value: unknown): value is HoldingResponse {
     Object.entries(value.skills).every(([k, v]) => isSkill(k) && isSkillView(v)) &&
     isWritView(value.writ) &&
     isKeshView(value.kesh) &&
+    Array.isArray(value.words) &&
+    value.words.every((w) => typeof w === 'string') &&
+    Array.isArray(value.plots) &&
+    value.plots.every(isPlotView) &&
+    isObject(value.cycles) &&
+    Object.entries(value.cycles).every(([k, v]) => isHoldingStationId(k) && isStationCycleView(v)) &&
     (value.take === undefined || isHoldingTake(value.take))
   );
 }
@@ -510,6 +629,22 @@ export function isWritFeedRequest(value: unknown): value is WritFeedRequest {
 /** The body of POST /api/kesh/sliver: an empty object; any field is refused. */
 export function isKeshSliverRequest(value: unknown): value is KeshSliverRequest {
   return isObject(value) && Object.keys(value).length === 0;
+}
+
+/** The body of POST /api/kesh/word and /seeds: an empty object; any field is refused. */
+export const isKeshGiftRequest: (value: unknown) => value is KeshGiftRequest = isKeshSliverRequest;
+
+/** Shape only: the plot and the words are judged by the route. `ground` and `virtue` are word ids or null; nothing else. */
+export function isPlotNameRequest(value: unknown): value is PlotNameRequest {
+  return (
+    isObject(value) &&
+    hasOnly(value, ['plotId', 'ground', 'virtue']) &&
+    typeof value.plotId === 'string' &&
+    'ground' in value &&
+    isStringOrNull(value.ground) &&
+    'virtue' in value &&
+    isStringOrNull(value.virtue)
+  );
 }
 
 const ERROR_CODES = new Set<string>(Object.values(ApiErrorCode));

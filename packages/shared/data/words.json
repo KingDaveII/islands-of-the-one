@@ -1,0 +1,25 @@
+{
+  "$comment": "The lexicon of word tiles (docs/design/holding.md \"Plots\", M2 Task 5; LORE §4.5 and §14.3): M2's two words only, the rest of LORE's 30 come with the tasks that give them effects. id: the transliteration in kebab-case, permanent (stored in known_words and plots); letters: the base Old Letters as the Writ stores them (shapeLetters adds the final forms), every word through the safe-letters filter; say: how it is said; meaning: its gloss; slot: ground (what a plot is for; builds a plot kind) or virtue (asks something extra of it; has an effect); element: earth | water | fire | air (the seal's colour and the sigil's line style); card: LORE's card text, word for word. A Ground has builds (a plot kind of stations.json); a Virtue has effect: yield-per-day is +permillePerDay of the basket cycle's yield for every whole day the plot has kept its Virtue, up to maxPermille (GAME DESIGN: +1% a day up to +20%). Don't reword a card.",
+  "words": [
+    {
+      "id": "adamah",
+      "letters": "אדמה",
+      "say": "adamah",
+      "meaning": "tilled ground",
+      "slot": "ground",
+      "element": "earth",
+      "card": "\"Tilled ground.\" Ground that's ready to be worked. Earth.",
+      "builds": "field"
+    },
+    {
+      "id": "yashan",
+      "letters": "ישן",
+      "say": "yashan",
+      "meaning": "old",
+      "slot": "virtue",
+      "element": "earth",
+      "card": "\"Old.\" A Virtue. Things that keep their name a long time grow richer. Earth.",
+      "effect": { "kind": "yield-per-day", "permillePerDay": 10, "maxPermille": 200 }
+    }
+  ]
+}

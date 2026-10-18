@@ -7,6 +7,7 @@ import {
   topicLines,
   validateKeshData,
   validateScaffoldData,
+  wordTossLines,
   M2_SCAFFOLD,
   scaffoldData,
   type KeshLine,
@@ -23,6 +24,7 @@ import { BANNED } from './banned.js';
  */
 const allLines = (): KeshLine[] => [
   ...keshData.afterNaming,
+  ...keshData.afterFirstPlot,
   ...keshData.afterFirstFeeding,
   ...keshData.topics.flatMap((t) => t.lines),
   ...keshData.tideSliver,
@@ -45,7 +47,20 @@ describe('kesh.json', () => {
   });
 
   it("holds LORE's lines word for word: the first and the tide's slivers toss, the hints and the Narrator are placed", () => {
-    expect(keshData.afterNaming.map((l) => l.who)).toEqual(['kesh', 'narrator', 'hint']);
+    expect(keshData.afterNaming.map((l) => l.who)).toEqual(['kesh', 'narrator', 'hint', 'kesh']);
+    // Task 5: the tile's toss after the hint, the seeds' flow, and the gifts.
+    expect(keshData.afterNaming[3]).toEqual({
+      who: 'kesh',
+      text: '(tosses a clay tile across the water) "There. Your first word. Put it on a plot and the plot\'ll know it\'s for growing."',
+      toss: 'word',
+    });
+    expect(wordTossLines()).toEqual([keshData.afterNaming[3]]);
+    expect(keshData.afterFirstPlot).toEqual([
+      { who: 'kesh', text: '(throws a twist of cloth) "Now it knows it\'s for growing. Put those in. They\'ll come up while you\'re out."', toss: 'seeds' },
+      { who: 'hint', text: 'Set Farming as your action and the field keeps growing while you\'re away.' },
+      { who: 'narrator', text: "One word, little light, and the ground believes you. Remember how easy that was. It won't always be." },
+    ]);
+    expect(keshData.gifts).toEqual({ word: 'adamah', seeds: { itemId: 'grey-seeds', quantity: 10 } });
     expect(keshData.afterNaming[0]?.text).toBe(
       '(squints at the post) "Hm. That\'s what you\'re calling it?" (shrugs) "Doesn\'t matter. Whatever you call it, it\'s yours now. The Hollow doesn\'t care if it\'s pretty."',
     );
@@ -95,8 +110,8 @@ describe('kesh.json', () => {
         'afterNaming[0]: text must be a non-empty string',
         'afterNaming[2]: the fonts can\'t draw "✦" (don\'t change the text; flag it)',
         'afterNaming[2]: only must be one of first-sliver',
-        'afterNaming and afterFirstFeeding carry no toss',
-        'tideSliver must carry exactly one toss',
+        'afterNaming must carry exactly one toss, the word',
+        'tideSliver must carry exactly one toss, a sliver',
         'topics[0]: id must be kebab-case',
         'topics[0].lines[0]: only Kesh tosses',
         'topics[1]: title must be a non-empty string',
@@ -107,6 +122,23 @@ describe('kesh.json', () => {
       ]),
     );
     expect(validateKeshData(null)).toEqual({ ok: false, problems: ['expected an object'] });
+    // The gifts and the other flows' tosses (Task 5).
+    expect(validateKeshData({ ...base, gifts: { word: 'shalom', seeds: { itemId: 'grey-seeds', quantity: 0 }, more: 1 } })).toMatchObject({
+      ok: false,
+      problems: ['gifts: unknown field(s) more', 'gifts.word must be a word of words.json', 'gifts.seeds must be { itemId (items.json), quantity (a positive integer) }'],
+    });
+    expect(validateKeshData({ ...base, gifts: 'adamah' })).toMatchObject({ ok: false, problems: ['gifts must be { word, seeds: { itemId, quantity } }'] });
+    expect(validateKeshData({ ...base, afterFirstPlot: [{ who: 'kesh', text: 'x', toss: 'word' }] })).toMatchObject({
+      ok: false,
+      problems: ['afterFirstPlot must carry exactly one toss, the seeds'],
+    });
+    expect(validateKeshData({ ...base, afterFirstFeeding: [{ who: 'kesh', text: 'x', toss: 'seeds' }] })).toMatchObject({
+      ok: false,
+      problems: ['afterFirstFeeding carries no toss'],
+    });
+    expect(
+      validateKeshData({ ...base, topics: [{ id: 'goodbye', title: 'Goodbye', lines: [{ who: 'kesh', text: 'x', toss: 'word' }, { who: 'narrator', text: 'y' }] }] }),
+    ).toMatchObject({ ok: false, problems: ['topics (goodbye): a topic tosses slivers only'] });
     expect(validateKeshData({ ...base, topics: [] })).toMatchObject({ ok: false, problems: ['topics must be a non-empty list'] });
   });
 });

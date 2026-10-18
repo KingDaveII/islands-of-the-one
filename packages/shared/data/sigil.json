@@ -1,0 +1,8 @@
+{
+  "$comment": "The sigil square (docs/design/letters.md \"Sigils\", LORE §4.5 \"Drawing a sigil\"): the 3 x 3 of the nine chambers a plot sentence's letters are reduced to (aleph 1 ... tet 9, yod 10 -> 1 ... qof 100 -> 1), each root 1-9 once, as rows top to bottom. Today Saturn's square (Agrippa, LORE's reference); LORE has been asked to confirm it. sigilPath (src/sigil.ts) walks the sentence's letters through it.",
+  "square": [
+    [4, 9, 2],
+    [3, 5, 7],
+    [8, 1, 6]
+  ]
+}

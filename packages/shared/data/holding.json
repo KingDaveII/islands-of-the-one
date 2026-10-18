@@ -1,5 +1,5 @@
 {
-  "$comment": "The holding (docs/design/holding.md). offlineCapHours: the most time away a station keeps earning (GAME DESIGN, 48 h); heartbeatMs: how often the open holding scene calls GET /api/holding; cameraMarginTiles: how far past every edge of the layout the camera may scroll into the void, so the HUD's corner panels never cover the shore or Kesh's rock (Task 4b). layouts: tile templates in the rooms' style drawn with the shore rule, legend: . ground, # the edge (void, solid; everything outside the template is void too), W the Writ post, S the holding store, T a twisted tree, R the stone outcrop, P the start. stations: each with its id (stations.json), kind and parts (a tile rectangle and its interact point, a ground tile beside it; the trees have one part per tree and share one basket; a part's optional sheet draws it from another prop sheet its kind allows, STATION_PART_SHEETS: every other tree is prop-twisted-tree-2); reserved marks a spot kept for a later task (the weapon rack, Task 8: plain ground, no prop, no Use). plots: four 6 x 6 rectangles in a loose ring round the post, data only until Task 5 names them. landing: where the boat ties up later, on the south shore. kesh: Kesh's needle of rock off the south-east shore (a solid prop in the void) and the Talk spot across the water (Task 4). GAME DESIGN's starting layout (2026-10-18); holdingLayoutProblems checks every placement rule.",
+  "$comment": "The holding (docs/design/holding.md). offlineCapHours: the most time away a station keeps earning (GAME DESIGN, 48 h); heartbeatMs: how often the open holding scene calls GET /api/holding; cameraMarginTiles: how far past every edge of the layout the camera may scroll into the void, so the HUD's corner panels never cover the shore or Kesh's rock (Task 4b). layouts: tile templates in the rooms' style drawn with the shore rule, legend: . ground, # the edge (void, solid; everything outside the template is void too), W the Writ post, S the holding store, T a twisted tree, R the stone outcrop, P the start. stations: each with its id (stations.json), kind and parts (a tile rectangle and its interact point, a ground tile beside it; the trees have one part per tree and share one basket; a part's optional sheet draws it from another prop sheet its kind allows, STATION_PART_SHEETS: every other tree is prop-twisted-tree-2); reserved marks a spot kept for a later task (the weapon rack, Task 8: plain ground, no prop, no Use). plots: four 6 x 6 rectangles in a loose ring round the post (Task 5), each with a permanent id (the basket is basket:<id>, in the ledger), its rect and its station: a 1 x 1 rect at the plot's centre (the signpost, a pillar once the plot is named) and its interact point just south of it; the plots in order belong to Writ line 1, linePlots per line. landing: where the boat ties up later, on the south shore. kesh: Kesh's needle of rock off the south-east shore (a solid prop in the void) and the Talk spot across the water (Task 4). GAME DESIGN's starting layout (2026-10-18); holdingLayoutProblems checks every placement rule.",
   "offlineCapHours": 48,
   "heartbeatMs": 30000,
   "cameraMarginTiles": 6,
@@ -76,10 +76,10 @@
         }
       ],
       "plots": [
-        { "col": 7, "row": 7, "cols": 6, "rows": 6 },
-        { "col": 17, "row": 7, "cols": 6, "rows": 6 },
-        { "col": 7, "row": 16, "cols": 6, "rows": 6 },
-        { "col": 17, "row": 16, "cols": 6, "rows": 6 }
+        { "id": "plot-1", "rect": { "col": 7, "row": 7, "cols": 6, "rows": 6 }, "station": { "rect": { "col": 9, "row": 9, "cols": 1, "rows": 1 }, "interact": { "col": 9, "row": 10 } } },
+        { "id": "plot-2", "rect": { "col": 17, "row": 7, "cols": 6, "rows": 6 }, "station": { "rect": { "col": 19, "row": 9, "cols": 1, "rows": 1 }, "interact": { "col": 19, "row": 10 } } },
+        { "id": "plot-3", "rect": { "col": 7, "row": 16, "cols": 6, "rows": 6 }, "station": { "rect": { "col": 9, "row": 18, "cols": 1, "rows": 1 }, "interact": { "col": 9, "row": 19 } } },
+        { "id": "plot-4", "rect": { "col": 17, "row": 16, "cols": 6, "rows": 6 }, "station": { "rect": { "col": 19, "row": 18, "cols": 1, "rows": 1 }, "interact": { "col": 19, "row": 19 } } }
       ],
       "landing": { "col": 14, "row": 22 },
       "kesh": {

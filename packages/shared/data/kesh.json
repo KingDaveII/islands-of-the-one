@@ -1,9 +1,16 @@
 {
-  "$comment": "Old Kesh's lines (docs/design/holding.md \"Kesh\", M2 Task 4b): LORE's and GAME DESIGN's, word for word, validated on load (validateKeshData) and every character drawable by the pixel fonts. A line is { who: kesh | narrator | hint, text }, optionally with an action (toss: sliver, the sliver leaves his hand on that line) and only: first-sliver (shown only while his first sliver hasn't been given). Stage directions in parentheses are part of the line and are drawn; the inner quotes are LORE's speech marks and are drawn too. afterNaming plays once the server accepts the Name; afterFirstFeeding the first time a feed lands; the topics are the talk box's menu, in this order; tideSliver is the once-per-tide toss (m2Scaffold). Don't reword a line.",
+  "$comment": "Old Kesh's lines (docs/design/holding.md \"Kesh\", M2 Task 4b and 5): LORE's and GAME DESIGN's, word for word, validated on load (validateKeshData) and every character drawable by the pixel fonts. A line is { who: kesh | narrator | hint, text }, optionally with a toss (sliver: a wild sliver; word: the clay tile of gifts.word; seeds: gifts.seeds; the thrown thing leaves his hand on that line) and only: first-sliver (shown only while his first sliver hasn't been given). Stage directions in parentheses are part of the line and are drawn; the inner quotes are LORE's speech marks and are drawn too. gifts: the word tile Kesh tosses after the Name (a word id of words.json) and the seeds he throws after the first plot is named (an item and a quantity; a placeholder until GAME DESIGN answers). afterNaming plays once the server accepts the Name and ends with the tile's toss; afterFirstPlot plays when a plot's first naming lands, after the seal scene; afterFirstFeeding the first time a feed lands; the topics are the talk box's menu, in this order; tideSliver is the once-per-tide toss (m2Scaffold). Talk plays a due gift first: the tile line, then the seeds flow, then the sliver. The tosses' stage directions are LORE's narration turned into directions (proposed, sent to LORE). Don't reword a line.",
+  "gifts": { "word": "adamah", "seeds": { "itemId": "grey-seeds", "quantity": 10 } },
   "afterNaming": [
     { "who": "kesh", "text": "(squints at the post) \"Hm. That's what you're calling it?\" (shrugs) \"Doesn't matter. Whatever you call it, it's yours now. The Hollow doesn't care if it's pretty.\"" },
     { "who": "narrator", "text": "I've heard worse, little light. Someone once named theirs Rock." },
-    { "who": "hint", "text": "Your Writ keeps your island's name for two days even while you're away. After that it doesn't break. It only forgets, a line at a time, until you bring Sparkglass to make it remember." }
+    { "who": "hint", "text": "Your Writ keeps your island's name for two days even while you're away. After that it doesn't break. It only forgets, a line at a time, until you bring Sparkglass to make it remember." },
+    { "who": "kesh", "text": "(tosses a clay tile across the water) \"There. Your first word. Put it on a plot and the plot'll know it's for growing.\"", "toss": "word" }
+  ],
+  "afterFirstPlot": [
+    { "who": "kesh", "text": "(throws a twist of cloth) \"Now it knows it's for growing. Put those in. They'll come up while you're out.\"", "toss": "seeds" },
+    { "who": "hint", "text": "Set Farming as your action and the field keeps growing while you're away." },
+    { "who": "narrator", "text": "One word, little light, and the ground believes you. Remember how easy that was. It won't always be." }
   ],
   "afterFirstFeeding": [
     { "who": "kesh", "text": "\"There. Now it'll hold while you're gone. Two days, give or take. After that it starts forgetting the edges first.\"" }

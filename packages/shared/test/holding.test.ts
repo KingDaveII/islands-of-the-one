@@ -15,8 +15,18 @@ import {
   holdingTileSheet,
   isHoldingResponse,
   isHoldingStationId,
+  isPlotKindId,
+  PLOT_KINDS,
+  plotKindDef,
   isHoldingStationRequest,
+  isKeshGiftRequest,
   isKeshSliverRequest,
+  isPlotId,
+  isPlotNameRequest,
+  isPlotView,
+  isStationCycleView,
+  layoutPlot,
+  plotIndex,
   OFFLINE_CAP_MS,
   PLOT_SIZE,
   rectGap,
@@ -32,6 +42,7 @@ import {
   validateStationsData,
   type HoldingLayout,
   type HoldingResponse,
+  type LayoutPlot,
   type LayoutStation,
   type TilePoint,
   type TileRect,
@@ -107,6 +118,21 @@ describe('stations.json', () => {
     expect(isHoldingStationId('stone-outcrop')).toBe(true);
     expect(isHoldingStationId('holding-store')).toBe(true);
     expect(isHoldingStationId('field')).toBe(false);
+    // No station has a cycle today (GAME DESIGN gave the trees and the outcrop no number).
+    expect(STATIONS.every((s) => s.cycle === null)).toBe(true);
+  });
+
+  it("holds the field plot kind with GAME DESIGN's numbers: farming 1 pale grain every 20 s for 20 XP, a cycle of 1 every 15 min", () => {
+    expect(PLOT_KINDS.map((p) => p.id)).toEqual(['field']);
+    expect(plotKindDef('field')).toEqual({
+      id: 'field',
+      name: 'Field',
+      action: { name: 'farming', itemId: 'pale-grain', quantity: 1, cycleMs: 20_000, skill: 'farming', xp: 20 },
+      cycle: { itemId: 'pale-grain', quantity: 1, cycleMs: 900_000 },
+    });
+    expect(isPlotKindId('field')).toBe(true);
+    expect(isPlotKindId('plot-1')).toBe(false);
+    expect(plotKindDef('mill')).toBeUndefined();
   });
 
   it('is validated on load: ids, kinds, names, the action and its XP (the cycle in seconds)', () => {
@@ -135,6 +161,25 @@ describe('stations.json', () => {
     ]);
     expect(problems({ stations: [trees, trees] })).toEqual(['stations[1] (trees): duplicate id']);
     expect(problems({})).toEqual(['expected { stations: [...] }']);
+    // A cycle (Task 5): optional on a station or a plot kind, the item, the count and the length checked.
+    const field = plotKindDef('field');
+    expect(problems({ stations: [{ ...trees, cycle: { itemId: 'twisted-log', quantity: 1, cycleMs: 60_000 } }] })).toEqual([]);
+    expect(problems({ stations: [{ ...trees, cycle: { itemId: 'oak-log', quantity: 0, cycleMs: 1.5 } }] })).toEqual([
+      'stations[0] (trees): cycle.itemId must be an item of items.json',
+      'stations[0] (trees): cycle.quantity must be a positive integer',
+      'stations[0] (trees): cycle.cycleMs must be a positive integer',
+    ]);
+    expect(problems({ stations: [{ id: 'post', kind: 'post', name: 'Post', cycle: field?.cycle }] })).toEqual(['stations[0] (post): the post has no cycle']);
+    expect(problems({ stations: [trees], plotKinds: [field] })).toEqual([]);
+    expect(problems({ stations: [trees], plotKinds: [{ ...field, cycle: undefined }] })).toEqual([]);
+    expect(problems({ stations: [trees], plotKinds: [{ id: 'field', name: 'Field' }] })).toEqual(['plotKinds[0] (field): a plot kind needs an action']);
+    expect(problems({ stations: [trees], plotKinds: [{ ...field, id: 'trees' }] })).toEqual(['plotKinds[0] (trees): duplicate id (a station or another plot kind)']);
+    expect(problems({ stations: [trees], plotKinds: [{ ...field, action: { ...field?.action, xp: 1 } }] })).toEqual([
+      "plotKinds[0] (field): action.xp is 1; the curve gives the cycle's seconds, 20",
+    ]);
+    expect(problems({ stations: [trees], plotKinds: [{ ...field, extra: 1 }] })).toEqual(['plotKinds[0]: unknown field(s) extra']);
+    expect(problems({ stations: [trees], plotKinds: {} })).toEqual(['plotKinds must be a list']);
+    expect(problems({ stations: [trees], more: 1 })).toEqual(['unknown field(s) more']);
   });
 });
 
@@ -191,9 +236,16 @@ describe('the layout validator', () => {
     );
   });
 
+  /** A plot from its rectangle, its station at its centre as the shipped layout places them (Task 5). */
+  const plotAt = (rect: TileRect, i: number): LayoutPlot => ({
+    id: `plot-${i + 1}`,
+    rect,
+    station: { rect: { col: rect.col + 2, row: rect.row + 2, cols: 1, rows: 1 }, interact: { col: rect.col + 2, row: rect.row + 3 } },
+  });
+
   it('reports plots that are not 6 × 6, off the ground, overlapping a station, or touching each other, the post or the store', () => {
     expect(PLOT_SIZE).toBe(6);
-    const plots = (...list: TileRect[]): HoldingLayout => ({ ...shipped, plots: list });
+    const plots = (...list: TileRect[]): HoldingLayout => ({ ...shipped, plots: list.map(plotAt) });
     expect(problems(plots({ col: 7, row: 7, cols: 5, rows: 6 }))).toEqual(['first-holding: plot 0 is 5 × 6, not 6 × 6']);
     expect(problems(plots({ col: 3, row: 5, cols: 6, rows: 6 }))).toEqual(
       expect.arrayContaining(['first-holding: plot 0: tile (4, 6) is "T", not ground', 'first-holding: plot 0 overlaps station twisted-trees']),
@@ -206,6 +258,34 @@ describe('the layout validator', () => {
     );
     expect(problems(plots({ col: 7, row: 8, cols: 6, rows: 6 }))).toEqual(['first-holding: plot 0 touches the store']);
     expect(problems(plots({ col: 40, row: 7, cols: 6, rows: 6 }))).toEqual(['first-holding: plot 0 is outside the layout']);
+  });
+
+  it("reports a plot's id that is not kebab-case, repeated or a station's, and its station or interact point out of place (Task 5)", () => {
+    const first = shipped.plots[0];
+    if (!first) throw new Error('no plot');
+    const withPlot = (patch: Partial<LayoutPlot>): HoldingLayout => ({ ...shipped, plots: shipped.plots.map((p, i) => (i === 0 ? { ...p, ...patch } : p)) });
+    expect(problems(withPlot({ id: 'Plot One' }))).toEqual(['first-holding: plot 0: id "Plot One" must be kebab-case (it names the basket)']);
+    expect(problems(withPlot({ id: 'plot-2' }))).toEqual(['first-holding: plot 1: id plot-2 is listed twice']);
+    expect(problems(withPlot({ id: 'writ-post' }))).toEqual(["first-holding: plot 0: id writ-post is a station's"]);
+    expect(problems(withPlot({ station: { ...first.station, rect: { col: 9, row: 9, cols: 2, rows: 1 } } }))).toEqual([
+      'first-holding: plot 0: its station is 2 × 1, not 1 × 1',
+    ]);
+    expect(problems(withPlot({ station: { ...first.station, rect: { col: 13, row: 9, cols: 1, rows: 1 } } }))).toEqual([
+      'first-holding: plot 0: its station (13, 9) is not inside the plot',
+    ]);
+    expect(problems(withPlot({ station: { ...first.station, interact: { col: 9, row: 13 } } }))).toEqual([
+      'first-holding: plot 0: its interact point (9, 13) is not inside the plot',
+    ]);
+    expect(problems(withPlot({ station: { ...first.station, interact: { col: 9, row: 9 } } }))).toEqual([
+      'first-holding: plot 0: its interact point (9, 9) is on its station',
+    ]);
+    // The interact point walled in: not ground, or not reachable.
+    expect(problems(withCells({ '9,10': '#' }))).toEqual(
+      expect.arrayContaining(['first-holding: plot 0: its interact point (9, 10) is not ground', 'first-holding: plot 0: tile (9, 10) is "#", not ground']),
+    );
+    expect(problems(withCells({ '8,10': '#', '10,10': '#', '9,11': '#', '8,9': '#', '10,9': '#', '9,9': '#', '8,11': '#', '10,11': '#' }))).toEqual(
+      expect.arrayContaining(["first-holding: plot 0: its interact point (9, 10) can't be reached from the start"]),
+    );
   });
 
   it("checks GAME DESIGN's placement: the post at the centre, the store and rack within 3, the trees west and the outcrop east within 10", () => {
@@ -313,6 +393,18 @@ describe('holding.json', () => {
     expect(stationParts(shipped, 'writ-post')).toEqual([{ rect: { col: 14, row: 13, cols: 1, rows: 1 }, interact: { col: 14, row: 14 } }]);
     expect(stationParts(shipped, 'field')).toEqual([]);
     expect(shipped.plots).toHaveLength(4);
+    expect(shipped.plots.map((p) => [p.id, p.rect.col, p.rect.row, p.station.rect.col, p.station.rect.row, p.station.interact.col, p.station.interact.row])).toEqual([
+      ['plot-1', 7, 7, 9, 9, 9, 10],
+      ['plot-2', 17, 7, 19, 9, 19, 10],
+      ['plot-3', 7, 16, 9, 18, 9, 19],
+      ['plot-4', 17, 16, 19, 18, 19, 19],
+    ]);
+    expect(layoutPlot(shipped, 'plot-3')?.rect).toEqual({ col: 7, row: 16, cols: 6, rows: 6 });
+    expect(layoutPlot(shipped, 'field')).toBeUndefined();
+    expect(shipped.plots.map((p) => plotIndex(shipped, p.id))).toEqual([0, 1, 2, 3]);
+    expect(isPlotId('plot-4')).toBe(true);
+    expect(isPlotId('plot-5')).toBe(false);
+    expect(isHoldingStationId('plot-1')).toBe(true);
     expect(shipped.landing).toEqual({ col: 14, row: 22 });
     expect(shipped.kesh).toEqual({ rock: { col: 26, row: 20, cols: 2, rows: 2 }, talk: { col: 23, row: 19 } });
     expect(holdingStart(shipped)).toEqual({ col: 14, row: 15 });
@@ -384,6 +476,12 @@ describe('holding.json', () => {
     const sim = holdingRoomTiles(shipped);
     expect(shipped.tiles[14]).toBe('#...TT....SS...........RR...##');
     expect(sim[14]).toBe('#...oo....oo...........oo...##');
+    // A named plot's signpost is a pillar (Task 5); an unnamed plot's stays ground.
+    expect(sim[9]).toBe(shipped.tiles[9]);
+    const named = holdingRoomTiles(shipped, ['plot-1', 'plot-4']);
+    expect(named[9]).toBe('##.......o...................#');
+    expect(named[18]).toBe('##..oo.............o....######');
+    expect(named[14]).toBe(sim[14]);
     // The reserved rack's spot stays ground; a row without a letter is unchanged.
     expect(sim[13]).toBe('#.............o........oo....#');
     expect(sim[17]).toBe(shipped.tiles[17]);
@@ -419,7 +517,10 @@ describe('the holding API guards', () => {
       farming: { xp: 0, level: 1, into: 0, toNext: 40 },
     },
     writ: toWritView(pressedWrit(Date.parse('2026-10-17T12:00:00.000Z')), Date.parse('2026-10-17T12:00:13.000Z')),
-    kesh: { firstGiven: false, due: 'first', nextTideAt: '2026-10-17T18:00:00.000Z' },
+    kesh: { firstGiven: false, due: 'first', nextTideAt: '2026-10-17T18:00:00.000Z', wordDue: false, seedsDue: false },
+    words: [],
+    plots: shipped.plots.map((p) => ({ id: p.id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, kind: null, level: 1, state: 'lit' as const })),
+    cycles: {},
   };
 
   it('accept the holding answer, with or without a take, and refuse unknown fields, stations and skills', () => {
@@ -439,10 +540,49 @@ describe('the holding API guards', () => {
     expect(isHoldingResponse({ ...response, kesh: { ...response.kesh, due: 'second' } })).toBe(false);
     expect(isHoldingResponse({ ...response, kesh: { ...response.kesh, nextTideAt: 'tonight' } })).toBe(false);
     expect(isHoldingResponse({ ...response, kesh: { ...response.kesh, extra: 1 } })).toBe(false);
+    expect(isHoldingResponse({ ...response, kesh: { firstGiven: false, due: null, nextTideAt: response.kesh.nextTideAt } })).toBe(false);
+    // Task 5: the words, the plots and the cycles.
+    expect(isHoldingResponse({ ...response, words: ['adamah'] })).toBe(true);
+    expect(isHoldingResponse({ ...response, words: [1] })).toBe(false);
+    const named = { id: 'plot-1', ground: 'adamah', virtue: null, namedAt: response.now, virtueSetAt: null, kind: 'field', level: 1, state: 'lit' };
+    expect(isPlotView(named)).toBe(true);
+    expect(isPlotView({ ...named, virtue: 'yashan', virtueSetAt: response.now, state: 'dark' })).toBe(true);
+    expect(isPlotView({ ...named, virtue: 'yashan' })).toBe(false);
+    expect(isPlotView({ ...named, kind: null })).toBe(false);
+    expect(isPlotView({ ...named, ground: null, kind: null })).toBe(false);
+    expect(isPlotView({ ...named, id: 'plot-9' })).toBe(false);
+    expect(isPlotView({ ...named, level: 0 })).toBe(false);
+    expect(isPlotView({ ...named, state: 'lit', extra: 1 })).toBe(false);
+    expect(isHoldingResponse({ ...response, plots: [...response.plots, named] })).toBe(true);
+    expect(isHoldingResponse({ ...response, baskets: { ...response.baskets, 'plot-1': [] } })).toBe(true);
+    const cycle = { cycleMs: 900_000, cycledUntil: response.now, bonusPermille: 30 };
+    expect(isStationCycleView(cycle)).toBe(true);
+    expect(isStationCycleView({ ...cycle, bonusPermille: -1 })).toBe(false);
+    expect(isHoldingResponse({ ...response, cycles: { 'plot-1': cycle } })).toBe(true);
+    expect(isHoldingResponse({ ...response, cycles: { field: cycle } })).toBe(false);
+    const { words: _words, ...noWords } = response;
+    const { plots: _plots, ...noPlots } = response;
+    const { cycles: _cycles, ...noCycles } = response;
+    expect([_words, _plots, _cycles].length).toBe(3);
+    expect(isHoldingResponse(noWords)).toBe(false);
+    expect(isHoldingResponse(noPlots)).toBe(false);
+    expect(isHoldingResponse(noCycles)).toBe(false);
     expect(isKeshSliverRequest({})).toBe(true);
     expect(isKeshSliverRequest({ sliver: 1 })).toBe(false);
     expect(isKeshSliverRequest(null)).toBe(false);
     expect(isKeshSliverRequest([])).toBe(false);
+  });
+
+  it('accept a plot name request of exactly { plotId, ground, virtue }, the words or null', () => {
+    expect(isPlotNameRequest({ plotId: 'plot-1', ground: 'adamah', virtue: null })).toBe(true);
+    expect(isPlotNameRequest({ plotId: 'plot-1', ground: 'adamah', virtue: 'yashan' })).toBe(true);
+    expect(isPlotNameRequest({ plotId: 'plot-1', ground: null, virtue: 'yashan' })).toBe(true);
+    expect(isPlotNameRequest({ plotId: 'plot-1', ground: 'adamah' })).toBe(false);
+    expect(isPlotNameRequest({ plotId: 'plot-1', virtue: null })).toBe(false);
+    expect(isPlotNameRequest({ plotId: 1, ground: 'adamah', virtue: null })).toBe(false);
+    expect(isPlotNameRequest({ plotId: 'plot-1', ground: 'adamah', virtue: null, level: 2 })).toBe(false);
+    expect(isKeshGiftRequest({})).toBe(true);
+    expect(isKeshGiftRequest({ word: 'adamah' })).toBe(false);
   });
 
   it('accept a station request of exactly { stationId }', () => {
