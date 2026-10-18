@@ -47,7 +47,11 @@ BASE = {"line": (0x1E, 0x1C, 0x36), "dark": (0x5B, 0x51, 0x49), "cloth": (0x83, 
 ROWS = {"fish": [1, 2, 3, 4], "talk": [1, 2], "toss": [3, 4, 5, 6]}
 CELL_W, CELL_H, SOLES = 96, 128, 117
 ROCK_SHIFT = (16, 64)          # rock cell -> Kesh's cell
-PLACE = (7, 41)                # raw 76 x 76 canvas -> Kesh's cell: his seat (raw row 50) on the perch
+# raw 76 x 76 canvas -> Kesh's cell. Measured against the BUILT prop-kesh-rock (the prop grounds its lowest
+# pixel on the soles row, which lifts the clean frame 7 rows): the perch's lit top lands on cell rows 83-84,
+# beside his thighs (raw 49-51), his shins hang over the needle's face and his feet hang against its face below
+# the step where it widens (cell row 94), never standing on it.
+PLACE = (7, 34)
 HIP = 49                       # raw rows from here down are legs
 SWAY = {"fish": [0, 1, 1, 0], "talk": [0, 0], "toss": [0, 1, 1, 0]}
 LINE = 30                      # the line's length in px, the last 8 dithered
@@ -114,6 +118,10 @@ LEGS = [
     ".....OSIIOSIIIO......",
     ".....OSIO.OSIIO......",
     ".....OSIO.OSIIO......",
+    ".....OSIO..OSIO......",
+    ".....OSIO..OSIO......",
+    ".....OSIO..OSIO......",
+    ".....OSIO..OSIO......",
     ".....OSIO..OSIO......",
     ".....OSIO..OSIO......",
     ".....OSIO..OSIO......",
