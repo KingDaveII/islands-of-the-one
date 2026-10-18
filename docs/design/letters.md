@@ -8,8 +8,13 @@ call it. Terms: [`glossary.md`](glossary.md); colors: [`readability.md`](readabi
 
 `packages/shared/assets/old-letters-8px.png` with `old-letters.json` next to it.
 
-- **189 × 8 px**: one row of 27 cells, 7 px each, in the JSON's `chars` order: the 22 letters alef
-  to tav, then the five final forms (final kaf, mem, nun, pe, tsadi).
+- **196 × 8 px**: one row of 28 cells, 7 px each: the 27 in the JSON's `chars` order (the 22 letters
+  alef to tav, then the five final forms: final kaf, mem, nun, pe, tsadi), then the **divider**.
+- **The divider** (`divider` in the JSON: `char` `·`, `cell` 27, `width` 1, `row` 4; Lore §4.5,
+  ART 2026-10-18): a single dot at mid-height that stands between a plot sentence's two words and at
+  both joins of the plot seal's ring. It is not a letter: it is not in `chars`, and the filter and
+  `letterPositions` never see it. Between two words it takes the word space's place, a `gap` either
+  side, so the dot sits in the middle of the 3 px space; it is tinted like the letters around it.
 - Glyphs are **white on transparent** (tint them for states), start at **column 0** of their cell,
   and `widths` gives each one's ink width (2–6 px; proportional).
 - **Rows 0–1 ascender** (lamed), **2–6 body** (5 rows), **7 descender** (qof and the descending
@@ -20,7 +25,7 @@ call it. Terms: [`glossary.md`](glossary.md); colors: [`readability.md`](readabi
   replaces the PNG (same JSON) when it lands.
 
 `packages/shared/test/old-letters.test.ts` checks the PNG against the JSON (size, order, ink
-widths, column 0, white on transparent).
+widths, column 0, white on transparent, the divider's one dot).
 
 ### Drawing a string
 

@@ -25,8 +25,10 @@ describe('the Old Letters sheet', () => {
     expect(sheet.chars).toHaveLength(27);
     expect(new Set(sheet.chars).size).toBe(27);
     expect(sheet.widths).toHaveLength(27);
-    expect(png.width).toBe(sheet.cell * sheet.chars.length);
-    expect(png.width).toBe(189);
+    // the letters' cells, then the divider's (sheet.divider.cell)
+    expect(sheet.divider.cell).toBe(sheet.chars.length);
+    expect(png.width).toBe(sheet.cell * (sheet.chars.length + 1));
+    expect(png.width).toBe(196);
     expect(png.height).toBe(sheet.height);
     expect(png.height).toBe(8);
   });
@@ -75,5 +77,23 @@ describe('the Old Letters sheet', () => {
       }
       expect(ink, char).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('the divider', () => {
+  it('is one dot at mid-height in the cell after the letters (Lore §4.5)', () => {
+    const { cell, width, row, char } = sheet.divider;
+    expect(sheet.chars).not.toContain(char);
+    expect(width).toBe(1);
+    expect(row).toBeGreaterThanOrEqual(sheet.bodyRows[0] ?? 0);
+    expect(row).toBeLessThanOrEqual(sheet.bodyRows[1] ?? 0);
+    const ink: [number, number][] = [];
+    for (let y = 0; y < sheet.height; y++) {
+      for (let x = 0; x < sheet.cell; x++) {
+        if ((png.rgba[(y * png.width + cell * sheet.cell + x) * 4 + 3] ?? 0) > 127)
+          ink.push([x, y]);
+      }
+    }
+    expect(ink).toEqual([[0, row]]);
   });
 });

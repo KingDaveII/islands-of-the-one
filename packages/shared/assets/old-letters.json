@@ -1,5 +1,5 @@
 {
-  "$comment": "Old Letters sheet: one row of cells in `chars` order, each `cell` px wide and `height` px tall. Glyphs are white on transparent, start at column 0 of their cell, and `widths` gives each one's ink width. Rows 0-1 ascender, 2-6 body, 7 descender. Glyphs from the design system's Old Letters sheet (ART DIRECTION, 2026-10-12).",
+  "$comment": "Old Letters sheet: one row of cells in `chars` order, each `cell` px wide and `height` px tall. Glyphs are white on transparent, start at column 0 of their cell, and `widths` gives each one's ink width. Rows 0-1 ascender, 2-6 body, 7 descender. Glyphs from the design system's Old Letters sheet (ART DIRECTION, 2026-10-12). After the letters, one more cell holds the divider (Lore §4.5, ART 2026-10-18): a single dot at mid-height (row 4) between a plot sentence's two words and at both joins of the plot seal's ring. It is not a letter, so it is not in `chars`.",
   "image": "old-letters-8px.png",
   "cell": 7,
   "height": 8,
@@ -78,5 +78,11 @@
     "נ": "ן",
     "פ": "ף",
     "צ": "ץ"
+  },
+  "divider": {
+    "char": "·",
+    "cell": 27,
+    "width": 1,
+    "row": 4
   }
 }
