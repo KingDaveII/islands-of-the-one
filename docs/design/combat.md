@@ -59,8 +59,12 @@ renders state; it never decides an outcome.
   the aim follows the movement, so that player is never slowed.
 - The Kindled moves at `player.moveSpeed`: 100 sim px/s, 200 world px/s (GAME DESIGN 2026-10-16,
   down from 112). In an encounter, Combat and Calm alike, it always **runs** at that speed. Walking,
-  and the automatic walk-to-run, happen only outside encounters (M2's holding). The run and walk
-  cycles play by distance travelled ([`sprites.md`](sprites.md) §8).
+  and the automatic walk-to-run, happen only outside encounters: `packages/sim/src/roam.ts`, a sim
+  module of its own on the same acceleration, friction and wall collision, with the `roam` block of
+  tuning.json (the walk at `roam.walkFactor`, the run after `roam.runAfterMs`, the ramp, the reset on a
+  stop or a turn past `roam.resetTurnDeg`, a stick under `roam.walkStickMax` always walking); the
+  holding is its first user ([`holding.md`](holding.md) §2). It is not part of the combat run. The run
+  and walk cycles play by distance travelled ([`sprites.md`](sprites.md) §8).
 - Keyboard (WASD) gives 8 directions at full magnitude. The gamepad left stick is fully analog, with
   a deadzone and 7 magnitude steps.
 - Aim is independent of movement:
