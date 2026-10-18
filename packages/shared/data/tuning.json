@@ -401,7 +401,8 @@
     "sealRingMs": 300,
     "sealLetterMs": 70,
     "sealSigilMs": 400,
-    "sealGroundMs": 200
+    "sealGroundMs": 200,
+    "buildMs": 400
   },
   "view": {
     "widthPx": 960,

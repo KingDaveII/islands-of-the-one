@@ -95,6 +95,7 @@ describe('controls.json', () => {
       item1: 'Q',
       item2: 'F',
       interact: { calm: 'E' },
+      rotate: 'R',
       chartPeek: 'Tab',
       journal: 'J',
       inventory: 'I',
@@ -111,6 +112,21 @@ describe('controls.json', () => {
     expect(bindingKeys(KEYBOARD.dodge, 'calm')).toEqual(['Space']);
     // The middle mouse button first (the glyph the hints show), 1 as the alternate.
     expect(bindingKeys(KEYBOARD.ability1, 'combat')).toEqual(['MMB', '1']);
+  });
+
+  it('rotates a ghost with R on the keyboard and Triangle in Calm on the pad, where Triangle is free (M2 Task 6); Faces keeps it for heavy, so rotate is unbound there', () => {
+    expect(bindingKeysAll(KEYBOARD.rotate)).toEqual(['R']);
+    expect(bindingKeys(KEYBOARD.rotate, 'combat')).toEqual(['R']);
+    for (const id of ['triggers', 'left-stick']) {
+      const preset = controlsData.presets.find((p) => p.id === id);
+      const b: Record<string, ControlBinding> = preset?.bindings ?? {};
+      expect(bindingKeys(b.rotate, 'calm'), id).toEqual(['Triangle']);
+      expect(bindingKeys(b.rotate, 'combat'), id).toEqual([]);
+    }
+    const faces = controlsData.presets.find((p) => p.id === 'faces');
+    const b: Record<string, ControlBinding> = faces?.bindings ?? {};
+    expect(bindingKeysAll(b.rotate)).toEqual([]);
+    expect(bindingKeys(b.heavy, 'calm')).toContain('Triangle');
   });
 
   it('opens the inventory with I on the keyboard and the Touchpad on every pad preset (M2 Task 3a)', () => {

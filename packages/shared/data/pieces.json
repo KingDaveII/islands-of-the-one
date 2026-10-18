@@ -1,0 +1,138 @@
+{
+  "$comment": "Upgrade pieces (docs/design/holding.md \"Build mode\", M2 Task 6; GAME DESIGN's \"Building upgrades\", LORE §16.8). A station is upgraded by building pieces round it inside its plot; its level is 1 plus the distinct pieces standing. piecesPerLine: how many pieces a plot may hold per Writ line the Kindled has (GAME DESIGN: two per station per Writ line). Each piece: id (kebab-case, permanent: stored in plot_pieces); stationKind (a plot kind of stations.json for an available piece; a station that has no Ground word yet for the rest); name and card (LORE's, word for word; a card says what a piece is, never what it does); available (absent means true): false for the pieces of stations that don't exist yet, which have no cost and no footprint and can't be built; cost: items and counts taken from the store (the pack doesn't count); footprint: cols x rows in tiles before rotation (90 and 270 swap them); skill: the skill level needed, or null; writLine: the Writ line needed; effect: GAME DESIGN's placeholder, cycle-speed +250 permille, additive, on the station's own cycle only, never the hands. Don't reword a name or a card.",
+  "piecesPerLine": 2,
+  "pieces": [
+    {
+      "id": "clay-channel",
+      "stationKind": "field",
+      "name": "Clay channel",
+      "card": "Fired clay troughs laid between the furrows, the way the Kingdom waters its fields. Dew gathers in them overnight, from nowhere you can find.",
+      "cost": [
+        { "itemId": "twisted-log", "quantity": 300 },
+        { "itemId": "black-stone", "quantity": 150 }
+      ],
+      "footprint": { "cols": 1, "rows": 4 },
+      "skill": null,
+      "writLine": 1,
+      "effect": { "kind": "cycle-speed", "permille": 250 }
+    },
+    {
+      "id": "seed-jars",
+      "stationKind": "field",
+      "name": "Seed jars",
+      "card": "Squat grey jars, waxed shut and pressed with your thumb. Seed kept dry keeps its name.",
+      "cost": [
+        { "itemId": "twisted-log", "quantity": 200 },
+        { "itemId": "pale-grain", "quantity": 40 }
+      ],
+      "footprint": { "cols": 2, "rows": 1 },
+      "skill": null,
+      "writLine": 1,
+      "effect": { "kind": "cycle-speed", "permille": 250 }
+    },
+    {
+      "id": "threshing-floor",
+      "stationKind": "field",
+      "name": "Threshing floor",
+      "card": "A ring of flat stones beaten smooth, where grain is trodden out of the straw. The Scattered say the oldest temples stand on threshing floors, because that is where the wind came down to choose.",
+      "cost": [
+        { "itemId": "black-stone", "quantity": 400 },
+        { "itemId": "twisted-log", "quantity": 150 }
+      ],
+      "footprint": { "cols": 3, "rows": 3 },
+      "skill": null,
+      "writLine": 2,
+      "effect": { "kind": "cycle-speed", "permille": 250 }
+    },
+    {
+      "id": "chopping-block",
+      "stationKind": "lumber-camp",
+      "name": "Chopping block",
+      "card": "A stump too twisted to split, kept for splitting everything else on.",
+      "available": false,
+      "skill": null,
+      "writLine": 1,
+      "effect": { "kind": "cycle-speed", "permille": 250 }
+    },
+    {
+      "id": "drying-rack",
+      "stationKind": "lumber-camp",
+      "name": "Drying rack",
+      "card": "Logs stacked crosswise on a frame and left to the light. Twisted wood dries from the warm middle outwards.",
+      "available": false,
+      "skill": null,
+      "writLine": 1,
+      "effect": { "kind": "cycle-speed", "permille": 250 }
+    },
+    {
+      "id": "saw-horse",
+      "stationKind": "lumber-camp",
+      "name": "Saw-horse",
+      "card": "Two crossed legs and a beam, notched by every log that has been across it. It keeps a better count than you do.",
+      "available": false,
+      "skill": null,
+      "writLine": 1,
+      "effect": { "kind": "cycle-speed", "permille": 250 }
+    },
+    {
+      "id": "hoist",
+      "stationKind": "quarry",
+      "name": "Hoist",
+      "card": "A long pole on a post with a stone for a counterweight: the lever the Kingdom's gardeners use to lift water, lifting rock instead.",
+      "available": false,
+      "skill": null,
+      "writLine": 1,
+      "effect": { "kind": "cycle-speed", "permille": 250 }
+    },
+    {
+      "id": "sorting-sieve",
+      "stationKind": "quarry",
+      "name": "Sorting sieve",
+      "card": "A wide reed sieve for shaking grit from good stone. Now and then what stays in it is pale, and lighter than it should be.",
+      "available": false,
+      "skill": null,
+      "writLine": 1,
+      "effect": { "kind": "cycle-speed", "permille": 250 }
+    },
+    {
+      "id": "stone-sledge",
+      "stationKind": "quarry",
+      "name": "Stone sledge",
+      "card": "A runnered sledge for blocks too heavy to carry. The Concord says the Spire was raised this way, one sledge at a time.",
+      "available": false,
+      "skill": null,
+      "writLine": 1,
+      "effect": { "kind": "cycle-speed", "permille": 250 }
+    },
+    {
+      "id": "anvil",
+      "stationKind": "forge",
+      "name": "Anvil",
+      "card": "Black stone faced with dark metal that stays cold however long you strike it. Someone taught the first smiths this. The Concord would rather you didn't ask who.",
+      "available": false,
+      "skill": null,
+      "writLine": 1,
+      "effect": { "kind": "cycle-speed", "permille": 250 }
+    },
+    {
+      "id": "quench-trough",
+      "stationKind": "forge",
+      "name": "Quench trough",
+      "card": "A stone trough of water gone dark with scale. It hisses at hot iron, and at nothing else.",
+      "available": false,
+      "skill": null,
+      "writLine": 1,
+      "effect": { "kind": "cycle-speed", "permille": 250 }
+    },
+    {
+      "id": "pot-bellows",
+      "stationKind": "forge",
+      "name": "Pot bellows",
+      "card": "Two clay pots skinned with leather and worked by the feet: breath for a fire that has none of its own.",
+      "available": false,
+      "skill": null,
+      "writLine": 1,
+      "effect": { "kind": "cycle-speed", "permille": 250 }
+    }
+  ]
+}

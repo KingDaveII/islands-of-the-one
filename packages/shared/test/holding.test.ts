@@ -533,7 +533,7 @@ describe('the holding API guards', () => {
     writ: toWritView(pressedWrit(Date.parse('2026-10-17T12:00:00.000Z')), Date.parse('2026-10-17T12:00:13.000Z')),
     kesh: { firstGiven: false, due: 'first', nextTideAt: '2026-10-17T18:00:00.000Z', wordDue: false, seedsDue: false },
     words: [],
-    plots: shipped.plots.map((p) => ({ id: p.id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, level: 1, state: 'lit' as const })),
+    plots: shipped.plots.map((p) => ({ id: p.id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, pieces: [], level: 1, state: 'lit' as const })),
     cycles: {},
   };
 
@@ -558,7 +558,7 @@ describe('the holding API guards', () => {
     // Task 5: the words, the plots and the cycles.
     expect(isHoldingResponse({ ...response, words: ['adamah'] })).toBe(true);
     expect(isHoldingResponse({ ...response, words: [1] })).toBe(false);
-    const named = { id: 'plot-1', ground: 'adamah', virtue: null, namedAt: response.now, virtueSetAt: null, sownAt: null, kind: 'field', level: 1, state: 'lit' };
+    const named = { id: 'plot-1', ground: 'adamah', virtue: null, namedAt: response.now, virtueSetAt: null, sownAt: null, kind: 'field', pieces: [], level: 1, state: 'lit' };
     expect(isPlotView(named)).toBe(true);
     expect(isPlotView({ ...named, sownAt: response.now })).toBe(true);
     expect(isPlotView({ ...named, ground: null, kind: null, namedAt: null, sownAt: response.now })).toBe(false);

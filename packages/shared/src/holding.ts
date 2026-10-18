@@ -820,12 +820,19 @@ export function holdingTemplate(layout: HoldingLayout = holdingLayout()): TileTe
 /**
  * The layout as the sim walks it: every station tile a pillar (`o`), solid
  * like the edge; a reserved spot stays ground; the signposts of the named
- * plots (`solidPlots`, by id) are pillars too, an unnamed plot's stays ground.
+ * plots (`solidPlots`, by id) are pillars too, an unnamed plot's stays ground;
+ * and so is every tile of `solidTiles` (the pieces standing in the plots, M2
+ * Task 6).
  */
-export function holdingRoomTiles(layout: HoldingLayout = holdingLayout(), solidPlots: readonly string[] = []): string[] {
-  const posts = new Set(
-    layout.plots.filter((p) => solidPlots.includes(p.id)).map((p) => `${p.station.rect.col},${p.station.rect.row}`),
-  );
+export function holdingRoomTiles(
+  layout: HoldingLayout = holdingLayout(),
+  solidPlots: readonly string[] = [],
+  solidTiles: readonly TilePoint[] = [],
+): string[] {
+  const posts = new Set([
+    ...layout.plots.filter((p) => solidPlots.includes(p.id)).map((p) => `${p.station.rect.col},${p.station.rect.row}`),
+    ...solidTiles.map((t) => `${t.col},${t.row}`),
+  ]);
   return layout.tiles.map((row, r) =>
     row
       .split('')
