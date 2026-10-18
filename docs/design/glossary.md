@@ -95,7 +95,17 @@ The Kindled's home Shard ([`holding.md`](holding.md)).
 | Writ post      | The post the Writ hangs on, by the store.                                                                 | `writ-post`, kind `post`                     |
 | twisted trees  | The station that yields twisted logs (Woodcutting).                                                       | `twisted-trees`, kind `trees`                |
 | stone outcrop  | The station that yields black stone (Mining).                                                             | `stone-outcrop`, kind `outcrop`              |
-| plot           | One of the four 6 × 6 fields round the post; Task 5 names them.                                           | `plot`                                       |
+| plot           | One of the four 6 × 6 plots round the post, named with a plot sentence and worked as its kind (a field). | `plot`; ids `plot-1` … `plot-4`              |
+| plot sentence  | A Ground tile and, optionally, a Virtue tile with the divider between them: what a plot is named.         | `plotSentence`, `plotSentenceSafe`           |
+| word tile      | A clay tile with an Old Letters word on it; knowledge, not an item. Kesh gives the first.                 | `words.json`, table `known_words`            |
+| Ground         | The word tile that decides what a plot builds (אדמה builds a field).                                      | slot `ground`, `builds`                      |
+| Virtue         | The word tile that asks something of the plot (ישן: it grows richer the longer it keeps its name).        | slot `virtue`, `effect`                      |
+| divider        | The dot between a plot sentence's words, and at the seal ring's joins; not a letter.                      | `PLOT_DIVIDER` (·)                           |
+| seal           | The ring round a named plot with its sentence along the top and its sigil at the centre.                  | `render/plots.ts`, `sealEarth`               |
+| sigil          | The sentence's letters as one line through the chambers of Saturn's square.                               | `sigilPath`, `sigil.json`                    |
+| field          | What אדמה builds: sown once with grey seeds, then farmed and trickling pale grain.                         | plot kind `field`                            |
+| signpost       | The 1 × 1 station at a plot's centre: its Use point, a pillar once named.                                  | `LayoutPlot.station`                         |
+| basket cycle   | The trickle: a station's or plot's basket filling on its own while the Writ is lit; no XP.                | `cycle`, table `basket_cycles`, reason `harvest` |
 | active action  | The one station a Kindled works at a time; it keeps going offline up to the cap.                          | `activity`, table `holding_activity`         |
 | settle         | Computing what the active action produced since it was last asked.                                        | `settle`                                     |
 | skill          | Woodcutting, Mining, Farming; XP on GAME DESIGN's curve, no level cap.                                    | `skill`; `woodcutting`, `mining`, `farming`  |
