@@ -7,6 +7,7 @@ sources the prop recipes read (art/clean/prop-<name>/idle/frame-<n>.png). Whole-
 - writ-post: 9 whole rows taken out of the stone (above and below the tablet), so it stands about the
   player's height; idle frame 1 dims the tablet's amber marks to choir-gold (a slow pulse, 2 fps);
 - twisted-tree: kept at its generated size on the tall 96 x 128 cell, its trunk base centred on x 48;
+- twisted-tree-2: the job's candidate 2 (a forked crown), the same way, for alternate trees;
 - kesh-rock: 7 whole rows taken out of the shaft; its dark side lifted to hollow-below so it reads on the
   Hollow; its foot dithered out into the void over 8 rows, so it rises from nothing;
 - stone-outcrop, holding-store: the placed picks, recoloured.
@@ -78,6 +79,17 @@ def twisted_tree():
     return [out]
 
 
+def twisted_tree_2():
+    """The second tree (prop-twisted-tree-2, MAIN #86): the holding job's candidate 2, a forked crown, so
+    the six trees alternate two shapes without mirroring the light. 93 px wide: its trunk base sits 4 px
+    west of the cell's centre so the crown clears the cell's outer ring."""
+    im = Image.open(RAW / "twisted-tree/candidates/2.png").convert("RGBA")
+    im = recolour(im, {DN: DEEP, TAR: rgb("sleeper-ochre")})
+    out = Image.new("RGBA", (96, 128), (0, 0, 0, 0))
+    out.alpha_composite(im, (-16, 0))
+    return [out]
+
+
 def stone_outcrop():
     im = Image.open(RAW / "stone-outcrop/placed.png").convert("RGBA")
     return [recolour(im, {DN: DEEP, TAR: rgb("watcher-iron"), SAIL: rgb("watcher-stone"),
@@ -119,7 +131,7 @@ def kesh_rock():
 
 
 def main():
-    for name, frames in [("writ-post", writ_post()), ("twisted-tree", twisted_tree()),
+    for name, frames in [("writ-post", writ_post()), ("twisted-tree", twisted_tree()), ("twisted-tree-2", twisted_tree_2()),
                          ("stone-outcrop", stone_outcrop()), ("holding-store", holding_store()),
                          ("kesh-rock", kesh_rock())]:
         save(name, frames)
