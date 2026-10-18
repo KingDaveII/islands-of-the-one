@@ -370,7 +370,8 @@
     "runAfterMs": 1200,
     "rampMs": 400,
     "resetTurnDeg": 90,
-    "walkStickMax": 0.6
+    "walkStickMax": 0.6,
+    "dipGraceMs": 250
   },
   "juice": {
     "shakeDurationMs": 120,
