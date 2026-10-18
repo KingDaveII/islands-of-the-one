@@ -348,8 +348,8 @@ function missingAgainstTable(recipe: Recipe, anims: readonly BuiltAnim[]): strin
   if (!table) return [`no animation table for ${recipe.sheet} in the contract`];
   const built = new Map(anims.map((a) => [a.key, a.frames.length]));
   const out: string[] = [];
-  const facings = hasFacings(recipe.kind);
   for (const row of table) {
+    const facings = hasFacings(recipe.kind) && row.facings.length > 0;
     const keys = (facings ? row.facings : [null]).map((f) => animKey(row.name, f));
     const absent = keys.filter((k) => !built.has(k));
     if (absent.length === keys.length) out.push(facings ? `${row.name} (all facings)` : row.name);

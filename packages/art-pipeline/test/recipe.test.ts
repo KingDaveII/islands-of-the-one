@@ -383,12 +383,12 @@ describe('the recipe guard on points', () => {
     [
       'a tip on an animation that carries none',
       { tip: { haul_throw_E_0: [1, 1] } },
-      'points.tip.haul_throw_E_0 is on haul_throw, which carries no tip point (tip goes on heavy_charge)',
+      'points.tip.haul_throw_E_0 is on haul_throw, which carries no tip point (on kindled-test, tip goes on heavy_charge)',
     ],
     [
       'a hand on idle',
       { hand: { idle_S_0: [1, 1] } },
-      'points.hand.idle_S_0 is on idle, which carries no hand point (hand goes on haul_throw, haul_pull, haul_slide, haul_recover)',
+      'points.hand.idle_S_0 is on idle, which carries no hand point (on kindled-test, hand goes on haul_throw, haul_pull, haul_slide, haul_recover)',
     ],
     [
       'a point that is not [x, y]',
@@ -409,7 +409,7 @@ describe('the recipe guard on points', () => {
     expect(problems(withPoints(points))).toEqual([`art/sheets/kindled-test.json: ${message}`]);
   });
 
-  it('allows no point on a sheet that is not Kindled', () => {
+  it('allows no point on an NPC without an entry in NPC_POINT_ANIMS', () => {
     const npc = {
       sheet: 'npc-test',
       kind: 'npc',
@@ -419,8 +419,7 @@ describe('the recipe guard on points', () => {
       points: { hand: { idle_S_0: [1, 1] } },
     };
     expect(problems(npc, 'art/sheets/npc-test.json')).toEqual([
-      'art/sheets/npc-test.json: points.hand.idle_S_0 is on idle, which carries no hand point ' +
-        '(hand goes on haul_throw, haul_pull, haul_slide, haul_recover, Kindled sheets only)',
+      'art/sheets/npc-test.json: points.hand.idle_S_0 is on idle, which carries no hand point (on npc-test, hand goes on nothing)',
     ]);
   });
 });

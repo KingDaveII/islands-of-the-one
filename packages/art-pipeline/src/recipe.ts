@@ -6,7 +6,7 @@ import {
   isMidWeights,
   isKindledPoint,
   isTileRule,
-  KINDLED_POINT_ANIMS,
+  pointAnimsFor,
   KINDLED_POINTS,
   spritePointsFor,
   staticTilePiece,
@@ -26,6 +26,7 @@ import {
   recipeRatedAnims,
   sheetTable,
   type PropGiven,
+  animHasFacings,
   facingsFor,
   frameName,
   hasFacings,
@@ -160,8 +161,9 @@ export function recipeFrameNames(recipe: Pick<Recipe, 'kind' | 'anims' | 'tiles'
 
 /** An animation's sources as [facing, source] pairs (facing null for kinds without facings). */
 export function animSources(kind: Kind, anim: RecipeAnim): [Facing | null, FrameSource][] {
-  if (!hasFacings(kind)) return anim.source ? [[null, anim.source]] : [];
-  return Object.entries(anim.facings ?? {}).map(([f, s]) => [f as Facing, s]);
+  // A row without facings on a sheet with them (Kesh's seated rows) is parsed as one source, like a prop's.
+  if (!hasFacings(kind) || !anim.facings) return anim.source ? [[null, anim.source]] : [];
+  return Object.entries(anim.facings).map(([f, s]) => [f as Facing, s]);
 }
 
 /**
@@ -269,7 +271,7 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
           bad(`${path}.fps`, 'must be a whole number, 0 or more');
         else out.fps = a.fps;
       }
-      if (hasFacings(k)) {
+      if (animHasFacings(k, sheet, name)) {
         unknownKeys(path, a, ['ground', 'despeckle', 'facings']);
         if (!isObj(a.facings) || Object.keys(a.facings).length === 0) {
           bad(`${path}.facings`, 'must be an object with at least one facing');
@@ -436,8 +438,8 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
           if (!spritePointsFor(partial.sheet, anim).includes(point)) {
             bad(
               pp,
-              `is on ${anim}, which carries no ${point} point (${point} goes on ${KINDLED_POINT_ANIMS[point].join(', ')}` +
-                `${partial.kind === 'kindled' ? '' : ', Kindled sheets only'})`,
+              `is on ${anim}, which carries no ${point} point (on ${partial.sheet}, ${point} goes on ` +
+                `${pointAnimsFor(partial.sheet, point).join(', ') || 'nothing'})`,
             );
             continue;
           }

@@ -239,7 +239,7 @@ export const SPRITE_FACINGS_4: readonly SpriteFacing[] = ['S', 'E', 'N', 'W'];
 export const SPRITE_FACINGS_2: readonly SpriteFacing[] = ['S', 'E'];
 
 /** The milestones an animation table row can belong to, in order. */
-export const SPRITE_MILESTONES = ['M1', 'M2'] as const;
+export const SPRITE_MILESTONES = ['M1', 'M2', 'M3'] as const;
 export type SpriteMilestone = (typeof SPRITE_MILESTONES)[number];
 
 /**
@@ -423,12 +423,27 @@ export const KINDLED_POINT_ANIMS: Readonly<Record<KindledPoint, readonly string[
 };
 
 /**
- * The points every frame of an animation carries on a sheet: from
- * `KINDLED_POINT_ANIMS` for a Kindled sheet, none for any other kind.
+ * The same for NPCs, by the name after `npc-` (M2 Task 4b, ART 2026-10-18):
+ * Kesh's `hand` on every frame of `toss`, where the thrown thing leaves his
+ * hand (`KESH_TOSS_RELEASE_FRAME`). An NPC without an entry carries none.
  */
+export const NPC_POINT_ANIMS: Readonly<Record<string, Partial<Record<KindledPoint, readonly string[]>>>> = {
+  kesh: { hand: ['toss'] },
+};
+
+/** The `toss` frame on which the thrown thing leaves Kesh's hand (ART: `toss_2`); the engine flies it from that frame's `hand`. */
+export const KESH_TOSS_RELEASE_FRAME = 2;
+
+/** The animations a point goes on, on a sheet: `KINDLED_POINT_ANIMS` for a Kindled sheet, `NPC_POINT_ANIMS` for an NPC's, none otherwise. */
+export function pointAnimsFor(sheetName: string, point: KindledPoint): readonly string[] {
+  if (isKindledSheet(sheetName)) return KINDLED_POINT_ANIMS[point];
+  if (sheetName.startsWith('npc-')) return NPC_POINT_ANIMS[sheetName.slice('npc-'.length)]?.[point] ?? [];
+  return [];
+}
+
+/** The points every frame of an animation carries on a sheet (`pointAnimsFor`). */
 export function spritePointsFor(sheetName: string, anim: string): readonly KindledPoint[] {
-  if (!isKindledSheet(sheetName)) return [];
-  return KINDLED_POINTS.filter((p) => KINDLED_POINT_ANIMS[p].includes(anim));
+  return KINDLED_POINTS.filter((p) => pointAnimsFor(sheetName, p).includes(anim));
 }
 
 /** Whether a name is one of `KINDLED_POINTS`. */
@@ -492,6 +507,43 @@ export const HUSK_ANIMS: Readonly<Record<'peeling' | 'nutshell', readonly string
  * per NPC, as data.
  */
 export const NPC_ANIMS: readonly SpriteAnimSpec[] = [spec('idle', 2, 2, true, false), spec('walk', 6, 10, true, false)];
+
+/** A seated row of one facing, required on a finished sheet of its table (`required`). */
+const seated = (name: string, frames: number, fps: number, loop: boolean): SpriteAnimSpec => ({
+  ...spec(name, frames, fps, loop, false, NO_FACINGS, 'M2'),
+  required: true,
+});
+
+/**
+ * An NPC's own table instead of `NPC_ANIMS`, by the name after `npc-`. Old
+ * Kesh (M2 Task 4b, ART 2026-10-18) sits on his needle of rock: three seated
+ * rows of one facing (south-east, out over the Hollow), named without a
+ * facing like a prop's (`fish_0`), and required: `fish` (4 at 4 fps, looping),
+ * `talk` (2 at 3, looping while the dialogue is open) and `toss` (4 at 10,
+ * once, then back to `fish`; `hand` on every frame, `KESH_TOSS_RELEASE_FRAME`).
+ * His standing `idle` and `walk` in 8 facings are optional until hour two
+ * (M3), when he leaves the rock.
+ */
+export const NPC_TABLES: Readonly<Record<string, readonly SpriteAnimSpec[]>> = {
+  kesh: [
+    seated('fish', 4, 4, true),
+    seated('talk', 2, 3, true),
+    seated('toss', 4, 10, false),
+    spec('idle', 2, 2, true, false, SPRITE_FACINGS, 'M3'),
+    spec('walk', 6, 10, true, false, SPRITE_FACINGS, 'M3'),
+  ],
+};
+
+/**
+ * An NPC's own cell instead of the 64×64, by the name after `npc-`: Kesh is
+ * drawn on the tall cell (96×128, origin (48, 118)) at his rock's world point,
+ * one depth step above it, seated on its summit inside the cell, so no seat
+ * offset lives in data; his standing rows later stand with their soles on the
+ * origin as usual.
+ */
+export const NPC_CELLS: Readonly<Record<string, SpriteCellSpec>> = {
+  kesh: spriteCellSpec(96, 128, 118),
+};
 
 /**
  * An animation a prop draws at the recipe's frame count and rate (sprites.md
@@ -675,8 +727,12 @@ export function spriteSheetSpec(name: string): SpriteSheetSpec {
       const anims = husk === 'peeling' || husk === 'nutshell' ? HUSK_TABLES[husk] : null;
       return { kind, cell: SPRITE_CELLS.other, anims, facings: false, palette: false };
     }
-    case 'npc':
-      return { kind, cell: SPRITE_CELLS.other, anims: NPC_ANIMS, facings: true, palette: false };
+    case 'npc': {
+      const npc = name.slice('npc-'.length);
+      const anims = (Object.hasOwn(NPC_TABLES, npc) ? NPC_TABLES[npc] : undefined) ?? NPC_ANIMS;
+      const cell = (Object.hasOwn(NPC_CELLS, npc) ? NPC_CELLS[npc] : undefined) ?? SPRITE_CELLS.other;
+      return { kind, cell, anims, facings: true, palette: false };
+    }
     case 'prop': {
       const prop = name.slice('prop-'.length);
       const anims = Object.hasOwn(PROP_TABLES, prop) ? PROP_TABLES[prop as keyof typeof PROP_TABLES] : null;
