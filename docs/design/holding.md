@@ -45,7 +45,10 @@ station tile a pillar (`o`). All four sheets are MAIN's placeholders through the
 (`tools/placeholder-holding.py` writes the source PNGs into `art/clean/`, the recipes in `art/sheets/`
 say "placeholder by MAIN; ART replaces"); ART replaces the pixels through the recipes without an engine
 change. `tiles-holding` carries the same pieces as `tiles-cave`, the door frames as plain blocks: the
-holding has no doors, but a finished tile sheet carries every piece. The pipeline's `rooms.png` draws
+holding has no doors, but a finished tile sheet carries every piece. The face, top and door pieces and
+the three props carry their name's initials, so a wrong pick shows in a shot; the floors and the shade
+overlays carry only their flecks and dither, so the ground reads as ground while the four variants and
+the shades still show. The pipeline's `rooms.png` draws
 the holding's layout under the rooms of rooms.json for every tile set.
 
 ## 2. Roaming: walking outside encounters

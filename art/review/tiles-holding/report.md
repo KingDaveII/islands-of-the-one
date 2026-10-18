@@ -30,10 +30,10 @@ Kind tiles, outline other, 32×32 tiles, floor weights 6:3:2:1 (floor_0 to floor
 
 | Frame | Source | Size | Off-palette | Max ΔE | Outline gaps | Colours | Holes |
 |---|---|---|---|---|---|---|---|
-| floor_0 | `art/clean/tiles-holding/floor_0.png 0` | 32×32 | 0 | 0 | 0 | 3 |  |
-| floor_1 | `art/clean/tiles-holding/floor_1.png 0` | 32×32 | 0 | 0 | 0 | 3 |  |
-| floor_2 | `art/clean/tiles-holding/floor_2.png 0` | 32×32 | 0 | 0 | 0 | 3 |  |
-| floor_3 | `art/clean/tiles-holding/floor_3.png 0` | 32×32 | 0 | 0 | 0 | 3 |  |
+| floor_0 | `art/clean/tiles-holding/floor_0.png 0` | 32×32 | 0 | 0 | 0 | 2 |  |
+| floor_1 | `art/clean/tiles-holding/floor_1.png 0` | 32×32 | 0 | 0 | 0 | 2 |  |
+| floor_2 | `art/clean/tiles-holding/floor_2.png 0` | 32×32 | 0 | 0 | 0 | 2 |  |
+| floor_3 | `art/clean/tiles-holding/floor_3.png 0` | 32×32 | 0 | 0 | 0 | 2 |  |
 | shade_n | `art/clean/tiles-holding/shade_n.png 0` | 32×32 | 0 | 0 | 96 | 1 |  |
 | shade_w | `art/clean/tiles-holding/shade_w.png 0` | 32×32 | 0 | 0 | 96 | 1 |  |
 | shade_e | `art/clean/tiles-holding/shade_e.png 0` | 32×32 | 0 | 0 | 96 | 1 |  |

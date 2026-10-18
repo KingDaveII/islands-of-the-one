@@ -2,8 +2,10 @@
 """
 Placeholder source art for the holding (M2 Task 3b), written into art/clean/
 for the art pipeline to build like any other sheet: flat, clearly placeholder
-shapes in whitelist colours, each piece tagged with its name's initials. ART
-replaces the pixels through the recipes (art/sheets/tiles-holding.json,
+shapes in whitelist colours. The face, top and door pieces and the props carry
+their name's initials, so a wrong pick shows in a shot; the floors and the shade
+overlays carry none, only their flecks and dither, so the ground reads as ground
+while the variants and shades still show. ART replaces the pixels through the recipes (art/sheets/tiles-holding.json,
 prop-writ-post.json, prop-twisted-tree.json, prop-stone-outcrop.json) without
 an engine change; nothing here is final art.
 
@@ -102,7 +104,6 @@ def draw_static(name):
     label = initials(name)
     if name.startswith("floor"):
         floor(px, int(name[-1]))
-        text(px, 10, 24, label, INK)
     elif name == "shade_n":
         dither(px, 0, 0, TILE, 6, SHADE)
     elif name == "shade_w":
