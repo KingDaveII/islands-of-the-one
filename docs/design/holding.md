@@ -2,12 +2,14 @@
 
 The Kindled's home Shard (M2 Task 3b): where a player lands after logging in, walks around, works
 the twisted trees or the stone outcrop, takes a station's basket into the store and moves things
-between the store and the pack. Numbers live in
+between the store and the pack, names the island and feeds its Writ (M2 Task 4a, §9). Numbers live in
 [`packages/shared/data/holding.json`](../../packages/shared/data/holding.json),
-[`stations.json`](../../packages/shared/data/stations.json), [`skills.json`](../../packages/shared/data/skills.json)
-and the `roam` block of [`tuning.json`](../../packages/shared/data/tuning.json), never in code. Terms:
+[`stations.json`](../../packages/shared/data/stations.json), [`skills.json`](../../packages/shared/data/skills.json),
+[`writ.json`](../../packages/shared/data/writ.json) and the `roam` block of
+[`tuning.json`](../../packages/shared/data/tuning.json), never in code. Terms:
 [`glossary.md`](glossary.md); items and the baskets: [`inventory.md`](inventory.md); how it is
-drawn: [`readability.md`](readability.md); the sheets: [`sprites.md`](sprites.md).
+drawn: [`readability.md`](readability.md); the sheets: [`sprites.md`](sprites.md); the Old Letters and
+how a Name is heard: [`letters.md`](letters.md).
 
 ## 1. The layout: data, the starting holding
 
@@ -115,7 +117,7 @@ ART #87), with the same tone swap; encounters keep the combat sheet.
 
 | station         | kind    | action          | yields            | cycle | skill       | XP per cycle |
 | --------------- | ------- | --------------- | ----------------- | ----- | ----------- | ------------ |
-| `writ-post`     | post    | none: Use opens the inventory with the store pane (its Writ panel is Task 4) | n/a | n/a | n/a | n/a |
+| `writ-post`     | post    | none: Use opens the Writ panel (the Name screen first, unnamed; §9) | n/a   | n/a   | n/a         | n/a          |
 | `holding-store` | store   | none: Use opens the inventory with the store pane | n/a | n/a | n/a | n/a |
 | `weapon-rack`   | rack    | none: a reserved spot until Task 8 | n/a | n/a | n/a | n/a |
 | `twisted-trees` | trees   | a dead branch   | 1 `twisted-log`   | 4 s   | Woodcutting | 4            |
@@ -143,9 +145,12 @@ queue in one line) and the activity row locked `FOR UPDATE`:
 5. **Last seen:** `last_seen_at = now`.
 
 Online play keeps `last_seen_at` fresh (the heartbeat), so the cap only bites away from the game.
-A Writ that is dark (Task 4) stops offline earning: `offlineAllowed(kindled)` returns true today;
-when it is false the stretch's horizon is `ONLINE_GRACE_MS`, twice the heartbeat, so online play
-still never loses a partial cycle.
+**The Writ sets the horizon** (`offlineHorizonMs(writ, lastSeenAt, now)`, M2 Task 4a; §9): the full
+cap while the Writ is lit or flickering at `now`; otherwise the stretch earns unattended only until
+the moment the Writ went dark, `min(cap, emptyAt − lastSeenAt)`, and never less than
+`ONLINE_GRACE_MS`, twice the heartbeat, so online play still never loses a partial cycle and hands
+keep working at full rate and XP while dark (GAME DESIGN: "Dark means idling stops, not that the
+player is locked out"). The Writ row is locked in the settle's transaction with the rest.
 
 **Baskets** have no limit in this task: what the 48 h rule produced waits there.
 
@@ -185,12 +190,15 @@ routes ([`accounts.md`](accounts.md)): the Kindled comes from the session cookie
 | `POST /api/holding/work`  | `{ stationId }` | `200` the same · `400` bad-request / unknown-station / no-action (the post) · `401` · `404` |
 | `POST /api/holding/stop`  | `{}`            | `200` the same · `400` bad-request · `401` · `404`                                       |
 | `POST /api/holding/take`  | `{ stationId }` | `200` the same, with `take` · `400` bad-request / unknown-station · `401` · `404`       |
+| `POST /api/writ/name`     | `{ name }`      | `200` the same · `400` bad-request / name-refused · `409` already-named · `401` · `404` |
+| `POST /api/writ/feed`     | `{ itemId, count }` or `{ fill: true }` | `200` the same · `400` bad-request / not-sparkglass · `409` unnamed / insufficient / full / too-much · `401` · `404` |
 
 `HoldingResponse`: the layout id; `baskets` by station id (every station of the layout listed) as
 lists of `{ itemId, quantity }`; the `activity` (`stationId`, `startedAt`, `cycleMs`) or null; the
-server's `now`; and `skills`, each with its XP, level, XP into the level and XP to the next. A take
-answer adds `take`: the station, what `moved` into the store and what was `left` in the basket. Every
-route settles first, refuses unknown fields and stations, and answers the same shape as GET.
+server's `now`; `skills`, each with its XP, level, XP into the level and XP to the next; and the
+`writ` (`WritView`, §9). A take answer adds `take`: the station, what `moved` into the store and what
+was `left` in the basket. Every route settles first, refuses unknown fields and stations, and answers
+the same shape as GET. The Writ's routes are in §9; the shape change made `PROTOCOL_VERSION` 3.
 
 **The heartbeat:** while the holding scene is open the client calls `GET /api/holding` every
 `heartbeatMs` (30 s) and after each interaction (work, stop, take, opening a station panel, coming
@@ -226,13 +234,18 @@ the Kindled and stops at the layout's edges.
   (launched, the holding paused; Esc, Circle or I come back and refresh), with the store pane, since we
   are on the holding.
 - **Top right, the gin purse.**
+- **Top left, the island's Name and the Writ chip** (§9): the Name as typed (BitmapText) over its
+  letters (the letter sheet, lit), and the chip: the charge in words, ember under a day, מת from the
+  sheet when dark or fading, the exact time ("41 h 12 min") as its tooltip on hover. Before the island
+  is named the chip shows alone.
 - **Over the station, a "+1"** as each cycle completes, predicted from the ring (`cyclesDone`), render
   only; the counts come from the server. A take-all floats what moved the same way ("+3"), over the
   station's part nearest the Kindled.
 
 **Interacting** (interact is E, Cross or a tap; I or the Touchpad opens the inventory; Esc or Circle
-backs out, all from `controls.json`): Use on the Writ post or the holding store opens the inventory with
-the store pane (the post's Writ panel is Task 4); Use on a tree or the outcrop opens a small station panel
+backs out, all from `controls.json`): Use on the Writ post opens the Writ panel, or the Name screen first
+while the island has no Name (§9); Use on the holding store opens the inventory with the store pane;
+Use on a tree or the outcrop opens a small station panel
 (`stationLines`): the name, "1 twisted log every 4 s", the basket count, "You: 1 twisted log every 4 s"
 while working here (the item's full name on both lines), the skill's level and XP to the next, and the
 buttons WORK HERE (STOP WORKING while working here) and TAKE ALL. After Take all what moved floats over the
@@ -241,9 +254,13 @@ with the inventory's blink-and-hold timing when it applies. Toasts proper are Ta
 
 ## 7. Seams for later tasks
 
-- **Task 4, the Writ and the Name:** `offlineAllowed(kindled)` (a dark Writ stops offline earning);
-  the post's Use, which opens the Writ panel beside the store; Kesh's Talk spot (`kesh.talk`) across the
-  water from the rock.
+- **Task 4b, Kesh and the tide:** `afterNaming()` and `afterFeeding()` in `HoldingScene` are the two
+  moments LORE's lines play (Kesh across the water, the Narrator, the hint) and the once-per-tide sliver
+  lands; Kesh's Talk spot (`kesh.talk`) across the water from the rock; the tide clock. Until then
+  playtests get Sparkglass from the grant CLI.
+- **The Wet House (M4):** `graceHoursUncertified` in writ.json (48 today) drops to 24; `certified` is
+  written there; a rim-band's fitting, scribing a line and renaming (the panel shows line 2's needs
+  greyed).
 - **Task 5, plots and their baskets' cycles:** the plot rectangles in `holding.json`; `stations.json`
   gains the plot stations; basket cycles earn no XP.
 - **Task 6, build mode:** the layout stays pure data.
@@ -257,17 +274,130 @@ with the inventory's blink-and-hold timing when it applies. Toasts proper are Ta
 
 `packages/shared/test/holding.test.ts` (the layout rule and GAME DESIGN's placement checks, the stations
 table, a golden snapshot of every cell's pieces under the shore rule in `test/golden/first-holding.tiles.txt`
-so a layout edit shows as a readable diff, the API guards) and `skills.test.ts`; `packages/sim/test/roam.test.ts`
+so a layout edit shows as a readable diff, the API guards), `skills.test.ts`, `writ.test.ts` and
+`hear-name.test.ts` (§9); `packages/sim/test/roam.test.ts`
 (the dip grace among the rest); `apps/server/test/holding.test.ts` on PGlite (the
 settle math: a partial cycle, many cycles, exactly 48 h, 60 h away with the lost time never paid, a
 switch settling the old station, a stop; XP and level-ups; take-all moving only what fits; the API's
-guards and error codes; migration 0004; the away hook) and `holding.postgres.test.ts` on a real
+guards and error codes; migrations 0004 and 0005; the away hook; the Writ: the pressing, the horizon
+across the dark moment, naming, feeding, Fill, the relight, `writ:set`) and `holding.postgres.test.ts` on a real
 Postgres (settles racing for one Kindled credit each cycle once; a take-all racing a settle keeps the
-basket's totals); `apps/client/src/game/holdingView.test.ts` (the ring and XP bar values, the chip
-states, the station panel's lines) and `render/roamPose.test.ts`. `tools/screenshots-m2-3b.mjs` is the
+basket's totals; feeds racing on one Writ never overfill it); `apps/client/src/game/holdingView.test.ts` (the ring and XP bar values, the chip
+states, the station panel's lines), `writView.test.ts` (§9) and `render/roamPose.test.ts`. `tools/screenshots-m2-3b.mjs` is the
 end-to-end run: it logs in and lands on the holding, walks (a walk and a run), works the trees for a
 few cycles, takes all, opens the inventory and moves the logs to the pack, reloads and sees the counts
 kept, moves the action 60 h back with the away hook and checks the basket holds the cap's worth, fills
 the store for "Store: twisted logs full.", then walks the shore (3c): the south shore dropping into the
 Hollow at the landing, the north edge's lip, and the Kindled behind the tall tree's canopy (it checks the
 depths). Shots: `docs/screenshots/m2-3b/`.
+`tools/screenshots-m2-4a.mjs` is the Writ's run (§9); shots: `docs/screenshots/m2-4a/`.
+
+## 9. The Writ
+
+The island's tablet (M2 Task 4a; GAME DESIGN's "The Writ and erosion", "M2 numbers" and "M2 screens", LORE
+§4.2, §4.5 and §14.3; GAME DESIGN's answers of 2026-10-18). Numbers in
+[`packages/shared/data/writ.json`](../../packages/shared/data/writ.json), validated on load
+(`validateWritData`):
+
+| Key                     | Value                                                             | Meaning                                                                  |
+| ----------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `sliverHours`           | 48                                                                | One wild sliver's charge                                                 |
+| `capacityHours`         | 144                                                               | A full Writ (three slivers, "a full Writ holds six" days)                |
+| `feeds`                 | `wild-sliver` 1, `sealed-gin` 1, `glass-chip` 3, `deep-glass` 9   | Slivers' worth per item; only these can be fed                           |
+| `lowHours`              | 24                                                                | Under this the Writ flickers and the chip turns ember                    |
+| `pressChargeHours`      | 48                                                                | The charge a Writ is pressed with ("keeps its name two days")            |
+| `graceHoursCertified`   | 48                                                                | Dark, but the island still remembers itself                              |
+| `graceHoursUncertified` | 48                                                                | The same, uncertified; 48 until the Wet House opens (M4), whose task sets it to 24 |
+| `lineFadeHours`         | 24                                                                | After the grace, one line fades each such stretch, outermost first       |
+| `lineLetters`           | 12                                                                | Letters a Writ line holds (the lean hand, letters.md "Hearing a Name")   |
+| `linePlots`             | 4                                                                 | Plots each line tethers (a count in M2; Task 5 makes the plots)          |
+
+**The stored state** (the `writs` table, one row per Kindled, cascade; migration 0005, expand-only; only the
+holding module touches it): the island's `name` as typed and its `letters` (null until named), `certified`
+(false; nobody can be in M2), `empty_at` (when the charge runs out) and `lines` (1). **The pressing:** the row
+is created on the Kindled's first holding request with `pressChargeHours` of charge from then, so existing
+Kindled get one too; it drains normally from the pressing, and a Writ never fed goes dark after two days.
+There is no unfed state.
+
+**Everything else is derived** by one pure function, `writView(writ, now, data)` in
+[`packages/shared/src/writ.ts`](../../packages/shared/src/writ.ts), on the server at its `now` and on the
+client between heartbeats at its estimate of the server's clock (`writFromView` reads the stored state back
+from the answer):
+
+- **charge:** `max(0, emptyAt − now)`, in ms and in hours;
+- **state:** `lit` (charge at or above `lowHours`), `flickering` (above 0 and under it), `dark` (0, within the
+  grace; the Writ reads מת), `fading` (past the grace);
+- **darkSince:** `emptyAt`, once it is past; **graceEndsAt:** `emptyAt` plus the grace by certification;
+- **lines:** each with its plots and its state (`lit` while the Writ has charge, `dark` in the grace, `faded`
+  after). Line k fades at `graceEndsAt + (lineCount − k) × lineFadeHours`: the outermost line first, the
+  Name's line (1) last; with one line, the moment the grace ends (the start of the third day for a 48 h grace);
+- **words:** under `lowHours` "less than a day" (the ember chip's threshold); otherwise hours / 24 rounded to
+  the nearest whole day, spelled out: "about a day" (24–35 h), "about two days" (36–59 h), up to "about six
+  days". The exact time ("41 h 12 min", `exactTime`) is for tooltips.
+
+**Feeding** is one pure preview the client and the server share, `feedPreview(writ, itemId, count, now)`
+(and `fillPreview` for Fill): only items in `feeds`; a dark or fading Writ starts from now (`emptyAt = now +
+hours`), a lit or flickering one adds to `emptyAt`; **nothing is wasted:** a piece fits when charge + its
+hours ≤ `capacityHours`, no feed is ever partial, so a humming glass fits only an empty (dark or fading)
+Writ, where it relights it in one go, and deep glass never fits (it is for the Weighing and gear). The
+refusals, GAME DESIGN's lines: "Full." when the Writ is full (not even a sliver fits any more, `isFull`);
+"Too much for your Writ now" for a piece that doesn't fit now; "Too much for one Writ" for deep glass.
+**Fill feeds wild slivers only**, one at a time while the next one fits, of what the Kindled holds; gin is
+money, burned only when the player picks it and a count. Any feed relights a dark or fading Writ at once: on
+the server the lines are lit the moment the feed lands; the client animates them back.
+
+**On the server** (`apps/server/src/holding/`): every holding request locks the Kindled's row, then the Writ
+row (`lockWrit`, pressing it when there is none), settles with the Writ's horizon (§3), then acts.
+`POST /api/writ/name` `{ name }` names the island **once** in M2 (`already-named` after; renaming comes at
+the Wet House): the typed Name by the Kindled-name rules (`validateTypedName`: NFC, trimmed, drawable
+characters only for now, 2–24 grapheme clusters, a letter, the non-strict filter), then its letters by
+`hearName` (letters.md "Hearing a Name"), computed on the server and never taken from the client, checked
+by the strict filter; a refusal of either kind answers `name-refused` with `NAME_REFUSED`, except a Name the
+fonts can't draw, which keeps `NAME_NOT_DRAWABLE`. `POST /api/writ/feed` `{ itemId, count }` or
+`{ fill: true }` runs in the same transaction: the preview decides, the items go through `inventory.apply`
+(reason `feed-writ`) **from the store first, then the pack** (the pack is what goes abroad; currency from the
+purse), then `empty_at` is written; a refusal changes nothing. Its errors: `unnamed` (feeding waits for the
+Name), `not-sparkglass`, `insufficient`, `full` ("Full."), `too-much`. The guards refuse unknown fields and
+non-positive or non-integer counts; the Kindled comes from the session cookie only.
+
+**The playtest CLI:** `pnpm --filter @iot/server writ:set -- <username> [--charge-hours N] [--dark-hours N]
+[--certified on|off]` sets `empty_at` (N hours from now, or N hours ago) and `certified`, so a lit,
+flickering, dark or fading Writ can be seen without waiting days. Nothing in the game calls it.
+
+**The holding scene.** The post's Use opens the **Writ panel**; the first time, while the island has no
+Name, the **Name screen** (`apps/client/src/ui/nameScreen.ts`, LORE §14.3): "Name your island.", the body
+line, one DOM input (`formFields.ts`, so phones, IME and paste work; the keyboard plugin is off while it is
+open, so typing never walks or opens the inventory), the tablet drawn live as `hearName` hears the typed
+Name (אמת on the top line, the Name below, right to left, each new letter ember; the tooltip: "Cut as it
+sounds, not as it's spelled. The Writ only has to hear it."), and CONFIRM. The server's answer decides, a
+refusal shows its message in one line, and an accepted Name flares each letter ember and settles lit (whole
+frames, no alpha), then the panel opens. Esc or Circle closes the screen unnamed.
+
+**The Writ panel** (`apps/client/src/ui/writPanel.ts`; its logic in `game/writView.ts`): the face, אמת and
+the Name from the letter sheet (`plotLetters`), each letter in a state: lit; flickering, ember with the
+outer letters (the first and last of each line) switching between ember and dim on a fixed beat; dark and
+fading, the aleph dark so the Writ reads מת and the Name line dim while dark, then dark once line 1 has
+faded. A Name wider than the face after the lean hand widens the face, never the letters. Then the rim
+("not certified: the Wet House in Malkhut", or "certified"), the charge in words with the exact time as a
+tooltip, the state line ("Lit", "Flickering", "Dark since 3 h 12 min, grace ends in 44 h 48 min", "Line 1
+fading"; relative times in hours and minutes), "Line 1: tethers 4 plots · lit", "Line 2: certified, Writ
+clay, 20 gin" greyed, and the Sparkglass by kind with what the pack and the store hold (the purse for gin),
+a kind that doesn't fit now greyed with its line. The player picks a kind, sees the preview ("+1/3 charge,
+about two days"; "⅓" isn't in the fonts, so "1/3"), and feeds one (a count for gin) or fills (wild
+slivers); on a full Writ the preview reads "Full." and the buttons are disabled. The face redraws from the
+server's answer, never ahead of it; on a relight from dark or fading the aleph returns first, then each
+line one after another (`relightProgress`), whole frames. Inputs: mouse and touch on the rows and buttons;
+the arrows (D-pad or left stick) move through the kinds and the buttons, Left/Right change the gin count or
+the button, Enter (Cross) presses; Esc, Circle or the post's Use again closes it. Not in 4a: fitting a
+rim-band, scribing a line, renaming.
+
+**Tests:** `packages/shared/test/hear-name.test.ts` (LORE's table, the property test over thousands of
+generated names, the lean hand, the single letter, typed Old Letters, the validator) and `writ.test.ts`
+(the data, `writView` in every state and at its boundaries, the words, `feedPreview`, Fill, the wire);
+`apps/server/test/holding.test.ts` (the pressing on first use, the horizon across the dark moment, naming,
+feeding from the store then the pack with its ledger rows, every refusal, Fill, the relight, the routes'
+guards and codes, `writ:set`) and `holding.postgres.test.ts` (feeds racing on one Writ);
+`apps/client/src/game/writView.test.ts` (the tablet, the face's states, the panel's lines and choices, the
+chip). `tools/screenshots-m2-4a.mjs` runs it end to end: the Name screen with the live tablet, a refused
+Name, the flare, the panel freshly pressed, a sliver fed with humming and deep glass greyed, flickering,
+dark and fading with the chip in each state and its tooltip, a relight, and "Full.".

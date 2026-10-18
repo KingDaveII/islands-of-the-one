@@ -44,7 +44,7 @@ All other religious and mythological names, symbols and scripts are allowed.
 | Scriptorium of Washed Names | Always the full name in text.                                                                         | `scriptorium`                                 |
 | Works                       | Community projects; one is a Work.                                                                    | `work`                                        |
 | Old Letters                 | The Hebrew alphabet, used for Writ Names, route waymarks and Veils. Spec: [`letters.md`](letters.md). | `oldLetters`; one is a `letter`               |
-| Name                        | A Writ Name: 2–5 Old Letters. Always passes the safe-letters filter.                                  | `name`                                        |
+| Name                        | A Writ Name. The island's is heard from the typed Name ([`letters.md`](letters.md) §4); the sim's generated ones are 2–5 Old Letters. Always passes the safe-letters filter. | `name` |
 
 ## The Kindled and their things
 

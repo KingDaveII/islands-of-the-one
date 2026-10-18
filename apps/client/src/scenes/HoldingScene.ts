@@ -12,7 +12,7 @@ import { accountStore, api } from '../api.js';
 import { deviceStore } from '../game/activeDevice.js';
 import { Controls } from '../game/controls.js';
 import { controlsStore } from '../game/controlsStore.js';
-import { buttonsFor, MENU_BUTTONS, padEdges, padEdgeState } from '../game/gamepad.js';
+import { buttonsFor, connectedPad, MENU_BUTTONS, padEdges, padEdgeState } from '../game/gamepad.js';
 import {
   chipState,
   clockOffset,
@@ -111,6 +111,8 @@ export class HoldingScene extends Phaser.Scene {
   private camY = 0;
   private prompt!: HintRow;
   private pad = { prev: [] as boolean[] };
+  /** The left stick's last direction on the Writ panel (−1, 0, 1 per axis), so a push moves the focus once. */
+  private stick = { x: 0, y: 0 };
   /** The server's latest answers, and its clock against ours. */
   response: HoldingResponse | null = null;
   inventory: InventoryResponse | null = null;
@@ -123,8 +125,6 @@ export class HoldingScene extends Phaser.Scene {
   private nameScreen: NameScreen | null = null;
   /** The Old Letters sheet's ink, once loaded (the Name screen, the Writ panel and the HUD draw from it). */
   private letterSheet: LetterSheet | null = null;
-  /** A window keydown listener while the Name screen is open (the keyboard plugin is off then: the DOM input has the keys). */
-  private nameKeys: ((e: KeyboardEvent) => void) | null = null;
   private floaters: Floater[] = [];
   /** The cycles the ring had completed when last looked, for the "+1" prediction. */
   private lastCycles = -1;
@@ -330,7 +330,9 @@ export class HoldingScene extends Phaser.Scene {
       if (this.alive) this.take(res);
     });
     void api.inventory().then((res) => {
-      if (this.alive && res.ok) this.inventory = res.value;
+      if (!this.alive || !res.ok) return;
+      this.inventory = res.value;
+      this.syncWritPanel();
     });
   }
 
@@ -428,20 +430,11 @@ export class HoldingScene extends Phaser.Scene {
     this.closeWritPanel();
     if (this.nameScreen) return;
     this.session.held = true;
-    // The DOM input has the keyboard: the plugin's captures (WASD, E, I, Esc) would swallow the typing.
+    // The DOM input has the keyboard: the plugin's captures (WASD, E, I) would swallow the typing, so they
+    // stop preventing the default while the screen is open; the scene's handlers ignore Use and the
+    // inventory key meanwhile, the roam is held, and Esc still backs out through the menu key.
     const kb = this.input.keyboard;
-    if (kb) {
-      kb.enabled = false;
-      kb.manager.preventDefault = false;
-    }
-    this.nameKeys = (e: KeyboardEvent) => {
-      if (e.isComposing) return;
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        this.closeNameScreen();
-      }
-    };
-    window.addEventListener('keydown', this.nameKeys);
+    if (kb) kb.manager.preventDefault = false;
     this.nameScreen = new NameScreen({
       scene: this,
       layer: this.hudLayer,
@@ -458,12 +451,11 @@ export class HoldingScene extends Phaser.Scene {
     if (!this.nameScreen) return;
     this.nameScreen.destroy();
     this.nameScreen = null;
-    if (this.nameKeys) window.removeEventListener('keydown', this.nameKeys);
-    this.nameKeys = null;
     const kb = this.input.keyboard;
     if (kb) {
-      kb.enabled = true;
       kb.manager.preventDefault = true;
+      // Keys typed into the input were seen going down and up; none stays held.
+      kb.resetKeys();
     }
     this.session.held = false;
   }
@@ -812,6 +804,8 @@ export class HoldingScene extends Phaser.Scene {
     writPanel: ReturnType<WritPanel['snapshot']> | null;
     nameScreen: ReturnType<NameScreen['snapshot']> | null;
     writTip: boolean;
+    /** The HUD's Writ block (UI px), for the tooltip hover. */
+    writRect: ViewRect;
     lettersLoaded: boolean;
   } {
     const s = this.session.state;
@@ -830,6 +824,7 @@ export class HoldingScene extends Phaser.Scene {
       writPanel: this.writPanel?.snapshot() ?? null,
       nameScreen: this.nameScreen?.snapshot() ?? null,
       writTip: this.hud.writTipVisible,
+      writRect: this.hud.writRect,
       lettersLoaded: this.letterSheet !== null,
     };
   }
@@ -861,10 +856,17 @@ export class HoldingScene extends Phaser.Scene {
     if (edges.includes(MENU_BUTTONS.back)) this.back();
     else if (this.writPanel) {
       const p = this.writPanel;
-      if (edges.includes(MENU_BUTTONS.up)) p.moveFocus(-1);
-      else if (edges.includes(MENU_BUTTONS.down)) p.moveFocus(1);
-      else if (edges.includes(MENU_BUTTONS.left)) p.moveSide(-1);
-      else if (edges.includes(MENU_BUTTONS.right)) p.moveSide(1);
+      // The left stick moves the focus like the D-pad: once per push past the deadzone.
+      const axes = connectedPad()?.axes ?? [];
+      const sx = Math.abs(axes[0] ?? 0) > 0.5 ? Math.sign(axes[0] ?? 0) : 0;
+      const sy = Math.abs(axes[1] ?? 0) > 0.5 ? Math.sign(axes[1] ?? 0) : 0;
+      const pushedX = sx !== 0 && sx !== this.stick.x ? sx : 0;
+      const pushedY = sy !== 0 && sy !== this.stick.y ? sy : 0;
+      this.stick = { x: sx, y: sy };
+      if (edges.includes(MENU_BUTTONS.up) || pushedY < 0) p.moveFocus(-1);
+      else if (edges.includes(MENU_BUTTONS.down) || pushedY > 0) p.moveFocus(1);
+      else if (edges.includes(MENU_BUTTONS.left) || pushedX < 0) p.moveSide(-1);
+      else if (edges.includes(MENU_BUTTONS.right) || pushedX > 0) p.moveSide(1);
       else if (edges.includes(MENU_BUTTONS.confirm[0]) && !buttonsFor(preset, 'interact', 'calm').includes(MENU_BUTTONS.confirm[0])) p.press();
       else if (MENU_BUTTONS.confirm.slice(1).some((b) => edges.includes(b))) p.press();
     } else if (this.panel) {

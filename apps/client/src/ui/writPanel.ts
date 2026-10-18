@@ -88,6 +88,9 @@ export class WritPanel {
   private readonly chargeZone: Phaser.GameObjects.Zone;
   private feedButton: Button;
   private fillButton: Button;
+  /** The gin count's steppers (mouse and touch; the keys and the pad use Left/Right). */
+  private readonly less: Button;
+  private readonly more: Button;
   private feedLabel = '';
   private view: WritView | null = null;
   private inventory: InventoryResponse | null = null;
@@ -132,6 +135,12 @@ export class WritPanel {
     this.fillButton = button(scene, 0, 0, FILL, false, () => {
       this.pressFill();
     });
+    this.less = button(scene, 0, 0, '-', false, () => {
+      this.stepCount(-1);
+    });
+    this.more = button(scene, 0, 0, '+', false, () => {
+      this.stepCount(1);
+    });
     const objects: (Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Depth)[] = [
       this.g,
       this.face,
@@ -146,6 +155,8 @@ export class WritPanel {
       this.chargeZone,
       this.feedButton.container,
       this.fillButton.container,
+      this.less.container,
+      this.more.container,
       this.tipG,
       this.tip,
     ];
@@ -252,6 +263,8 @@ export class WritPanel {
       this.host.layer.add(this.feedButton.container);
     }
     this.countText.setText(wantCount ? `x ${this.count}` : '').setVisible(wantCount);
+    this.feedButton.setEnabled(this.feedOn);
+    this.fillButton.setEnabled(this.fillOn);
     this.placed = '';
   }
 
@@ -279,14 +292,18 @@ export class WritPanel {
     this.placed = '';
   }
 
+  /** The gin count, 1 to MAX_COUNT. */
+  private stepCount(delta: number): void {
+    const choice = this.current();
+    if (!choice || !takesCount(choice.itemId)) return;
+    this.count = Math.max(1, Math.min(MAX_COUNT, this.count + delta));
+    this.syncButtons();
+  }
+
   /** Left and right: the gin count on its row, the other button on a button. */
   moveSide(delta: number): void {
     if ('kind' in this.focus) {
-      const choice = this.current();
-      if (choice && takesCount(choice.itemId)) {
-        this.count = Math.max(1, Math.min(MAX_COUNT, this.count + delta));
-        this.syncButtons();
-      }
+      this.stepCount(delta);
       return;
     }
     this.focus = { button: this.focus.button === 'feed' ? 'fill' : 'feed' };
@@ -345,11 +362,13 @@ export class WritPanel {
       row.refusal.setVisible(visible);
       row.zone.setPosition(x + PAD, ly);
       if (!visible) return;
-      place(row.marker, x + 1, ly);
+      place(row.marker, x + PAD, ly);
       row.marker.setVisible(i === this.selected);
       const focused = this.host.showFocus() && 'kind' in this.focus && this.focus.kind === i;
-      row.name.setTint(focused ? Palette.uiFocus : this.choices[i]?.enabled ? Palette.uiInk : Palette.uiInkMuted);
-      place(row.name, x + PAD, ly);
+      row.name.setTint(
+        focused ? Palette.uiFocus : i === this.selected ? Palette.spark : this.choices[i]?.enabled ? Palette.uiInk : Palette.uiInkMuted,
+      );
+      place(row.name, x + PAD + 8, ly);
       const held = this.choices[i]?.refusal ? row.refusal : row.held;
       const other = this.choices[i]?.refusal ? row.held : row.refusal;
       other.setVisible(false);
@@ -362,8 +381,17 @@ export class WritPanel {
     this.feedButton.container.setPosition(x + PAD, ly);
     this.feedButton.setFocused(this.host.showFocus() && 'button' in this.focus && this.focus.button === 'feed');
     let bx = x + PAD + this.feedButton.width + 6;
-    place(this.countText, bx, ly + 4);
-    if (this.countText.visible) bx += Math.round(this.countText.width) + 8;
+    const counting = this.countText.visible;
+    this.less.container.setVisible(counting);
+    this.more.container.setVisible(counting);
+    if (counting) {
+      this.less.container.setPosition(bx, ly);
+      bx += this.less.width + 4;
+      place(this.countText, bx, ly + 4);
+      bx += Math.round(this.countText.width) + 4;
+      this.more.container.setPosition(bx, ly);
+      bx += this.more.width + 8;
+    }
     this.fillButton.container.setPosition(bx, ly);
     this.fillButton.setFocused(this.host.showFocus() && 'button' in this.focus && this.focus.button === 'fill');
     ly += 15 + 4;
@@ -414,7 +442,6 @@ export class WritPanel {
         this.resultAt = -1;
       } else this.result.setVisible(refusalVisible(elapsed));
     }
-    this.feedButton.container.setAlpha(1);
   }
 
   /** What the playtests read. */
@@ -458,5 +485,7 @@ export class WritPanel {
     for (const row of this.rows) for (const o of [row.name, row.held, row.refusal, row.marker, row.zone]) o.destroy();
     this.feedButton.container.destroy(true);
     this.fillButton.container.destroy(true);
+    this.less.container.destroy(true);
+    this.more.container.destroy(true);
   }
 }
