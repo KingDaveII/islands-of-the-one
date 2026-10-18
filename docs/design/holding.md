@@ -66,7 +66,7 @@ station part from `prop-writ-post`, `prop-twisted-tree` (on the tall 64 × 96 pr
 upwards: the Kindled standing north of a tree draws behind its crown by the ground-line sort), `prop-stone-outcrop`
 and `prop-holding-store` (`STATION_SHEETS`; a reserved spot has none), and Kesh's rock from `prop-kesh-rock`
 (`KESH_ROCK_SHEET`), each `idle`, one frame, standing on the bottom centre of its tile rectangle with a grounding
-shadow by the prop rule, y-sorted with the Kindled by the line it stands on. `holdingRoomTiles` is the layout as
+shadow by the prop rule (none for a prop standing in the void, Kesh's rock: `standsOnGround`), y-sorted with the Kindled by the line it stands on. `holdingRoomTiles` is the layout as
 the sim walks it: every station tile a pillar (`o`), a reserved spot ground, the rock's tiles already void. All
 six sheets are MAIN's placeholders through the pipeline (`tools/placeholder-holding.py` writes the source PNGs
 into `art/clean/`, the recipes in `art/sheets/` say "placeholder by MAIN; ART replaces" in the holding art job);
@@ -205,7 +205,7 @@ the next request settles the stretch as offline time, up to the cap.
 
 **The holding scene** (`apps/client/src/scenes/HoldingScene.ts`) runs on the world and UI cameras as
 runs do. In the world: the island (`HoldingWorld`, `render/holdingWorld.ts`, the shore set over the hollow
-background), a prop per station part and Kesh's rock with shadows by the prop rule, the Kindled walking by
+background), a prop per station part with shadows by the prop rule and Kesh's rock without one, the Kindled walking by
 `roam` (`RoamSession`, `game/roamSession.ts`, 60 Hz from the controls' input, interpolated for drawing), and
 the interact prompt (the interact glyph and USE) over the nearest station part whose interact point is
 within `juice.promptRangePx` (`nearestStationPart`; a reserved spot is never prompted). The camera follows

@@ -1,4 +1,4 @@
-import { holdingLayout, type HoldingResponse } from '@iot/shared';
+import { holdingLayout, holdingTemplate, type HoldingResponse } from '@iot/shared';
 import { describe, expect, it } from 'vitest';
 import {
   chipState,
@@ -13,6 +13,7 @@ import {
   packFill,
   pluralName,
   propBase,
+  standsOnGround,
   purseGin,
   serverTime,
   stationInitials,
@@ -182,5 +183,15 @@ describe('the prompt and the props', () => {
     expect(packFill({ purse: [{ itemId: 'sealed-gin', quantity: 120 }], pack: [{ itemId: 'black-stone', quantity: 120 }], store: [], baskets: {} })).toBe('3/20');
     expect(purseGin({ purse: [{ itemId: 'sealed-gin', quantity: 120 }], pack: [], store: [], baskets: {} })).toBe(120);
     expect(purseGin(null)).toBe(0);
+  });
+});
+
+describe('props in the void', () => {
+  it("draws a grounding shadow for every station's prop but not for Kesh's rock", () => {
+    const layout = holdingLayout();
+    const template = holdingTemplate(layout);
+    for (const station of layout.stations)
+      for (const part of station.parts) expect([station.id, standsOnGround(template, part.rect)]).toEqual([station.id, true]);
+    expect(standsOnGround(template, layout.kesh.rock)).toBe(false);
   });
 });
