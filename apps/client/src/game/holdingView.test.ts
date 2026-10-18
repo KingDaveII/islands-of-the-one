@@ -7,7 +7,9 @@ import {
   cycleProgress,
   cyclesDone,
   interactPoint,
+  nearestPart,
   nearestStation,
+  nearestStationPart,
   packFill,
   pluralName,
   propBase,
@@ -15,6 +17,7 @@ import {
   serverTime,
   stationInitials,
   stationLines,
+  takeFloat,
   takeResultLine,
   xpFraction,
 } from './holdingView.js';
@@ -28,7 +31,7 @@ const T0 = Date.parse('2026-10-17T12:00:00.000Z');
 const iso = (ms: number): string => new Date(T0 + ms).toISOString();
 const working: HoldingResponse = {
   layoutId: 'first-holding',
-  baskets: { 'writ-post': [], 'twisted-trees': [{ itemId: 'twisted-log', quantity: 3 }], 'stone-outcrop': [] },
+  baskets: { 'writ-post': [], 'holding-store': [], 'weapon-rack': [], 'twisted-trees': [{ itemId: 'twisted-log', quantity: 3 }], 'stone-outcrop': [] },
   activity: { stationId: 'twisted-trees', startedAt: iso(0), cycleMs: 4000 },
   now: iso(13_000),
   skills: {
@@ -88,14 +91,14 @@ describe('the active-action chip', () => {
 });
 
 describe('the station panel', () => {
-  it('names the station, its rate, the basket, the skill, and the buttons; "You:" only while working here', () => {
+  it('names the station, its rate, the basket, the skill, and the buttons; "You:" with the item\'s full name only while working here', () => {
     expect(stationLines('twisted-trees', working)).toEqual({
       title: 'TWISTED TREES',
       rate: '1 twisted log every 4 s',
       basket: 'Basket: 3 twisted logs',
-      you: 'You: 1 log every 4 s',
+      you: 'You: 1 twisted log every 4 s',
       skill: 'Woodcutting 2 · 1099 XP to next',
-      work: 'STOP',
+      work: 'STOP WORKING',
       take: 'TAKE ALL',
       working: true,
     });
@@ -110,21 +113,29 @@ describe('the station panel', () => {
       working: false,
     });
     expect(stationLines('twisted-trees', null)?.skill).toBe('Woodcutting');
-    // The post has no panel: Use opens the inventory with the store.
+    // The post and the store have no panel: Use opens the inventory with the store pane; the reserved rack has none either.
     expect(stationLines('writ-post', working)).toBeNull();
+    expect(stationLines('holding-store', working)).toBeNull();
+    expect(stationLines('weapon-rack', working)).toBeNull();
     expect(stationLines('field', working)).toBeNull();
     expect(countOf('twisted-log', 1)).toBe('1 twisted log');
     expect(countOf('black-stone', 12)).toBe('12 black stones');
     expect(pluralName('twisted-log')).toBe('twisted logs');
   });
 
-  it("gives the take-all line: GAME DESIGN's full-store line when something stayed, else what was taken", () => {
-    expect(takeResultLine({ stationId: 'twisted-trees', moved: [{ itemId: 'twisted-log', quantity: 4 }], left: [{ itemId: 'twisted-log', quantity: 6 }] })).toBe(
-      'Store: twisted logs full.',
-    );
+  it("floats what a take-all moved as \"+3\" and keeps GAME DESIGN's full-store line as the one panel line; an empty basket says nothing", () => {
+    const stuck = { stationId: 'twisted-trees', moved: [{ itemId: 'twisted-log', quantity: 4 }], left: [{ itemId: 'twisted-log', quantity: 6 }] };
+    expect(takeResultLine(stuck)).toBe('Store: twisted logs full.');
+    expect(takeFloat(stuck)).toBe('+4');
     expect(takeResultLine({ stationId: 'twisted-trees', moved: [], left: [{ itemId: 'twisted-log', quantity: 6 }] })).toBe('Store: twisted logs full.');
-    expect(takeResultLine({ stationId: 'twisted-trees', moved: [{ itemId: 'twisted-log', quantity: 3 }], left: [] })).toBe('Took 3 twisted logs.');
-    expect(takeResultLine({ stationId: 'stone-outcrop', moved: [], left: [] })).toBe('Nothing to take.');
+    expect(takeFloat({ stationId: 'twisted-trees', moved: [], left: [{ itemId: 'twisted-log', quantity: 6 }] })).toBeNull();
+    const taken = { stationId: 'twisted-trees', moved: [{ itemId: 'twisted-log', quantity: 3 }], left: [] };
+    expect(takeResultLine(taken)).toBeNull();
+    expect(takeFloat(taken)).toBe('+3');
+    // An empty basket: no line ("Basket: empty" is already on the panel) and no float.
+    expect(takeResultLine({ stationId: 'stone-outcrop', moved: [], left: [] })).toBeNull();
+    expect(takeFloat({ stationId: 'stone-outcrop', moved: [], left: [] })).toBeNull();
+    expect(takeFloat({ stationId: 'twisted-trees', moved: [{ itemId: 'twisted-log', quantity: 2 }, { itemId: 'black-stone', quantity: 5 }], left: [] })).toBe('+7');
   });
 });
 
@@ -132,21 +143,38 @@ describe('the prompt and the props', () => {
   const layout = holdingLayout();
   const trees = layout.stations.find((s) => s.id === 'twisted-trees');
   const post = layout.stations.find((s) => s.id === 'writ-post');
-  if (!trees || !post) throw new Error('no stations');
+  const rack = layout.stations.find((s) => s.id === 'weapon-rack');
+  if (!trees || !post || !rack) throw new Error('no stations');
+  const [tree0, , , tree3] = trees.parts;
+  if (!tree0 || !tree3) throw new Error('no tree parts');
 
-  it('prompts for the nearest station whose interact point is in reach, by the sim distance', () => {
-    expect(interactPoint(trees)).toEqual({ x: 88, y: 168 });
-    expect(nearestStation(88, 168, 40, layout)?.id).toBe('twisted-trees');
-    expect(nearestStation(88 + 39, 168, 40, layout)?.id).toBe('twisted-trees');
-    expect(nearestStation(88 + 41, 168, 40, layout)).toBeNull();
-    // Between the post (14, 10) and the start: the post is nearest.
-    expect(nearestStation(232, 180, 40, layout)?.id).toBe('writ-post');
+  it('prompts for the nearest station part whose interact point is in reach, by the sim distance; any tree works the trees', () => {
+    expect(interactPoint(tree0)).toEqual({ x: 104, y: 56 });
+    expect(nearestStationPart(104, 56, 40, layout)).toEqual({ station: trees, part: tree0 });
+    expect(nearestStation(104 + 39, 56, 40, layout)?.id).toBe('twisted-trees');
+    expect(nearestStation(104 + 41, 56, 40, layout)).toBeNull();
+    // The fourth tree, by the start's row: the same station, another part.
+    expect(interactPoint(tree3)).toEqual({ x: 104, y: 248 });
+    expect(nearestStationPart(104, 248, 40, layout)).toEqual({ station: trees, part: tree3 });
+    // Between the post's interact point (14, 14) and the start: the post is nearest.
+    expect(nearestStation(232, 236, 40, layout)?.id).toBe('writ-post');
+    // The store's interact point (12, 14) and the outcrop's (22, 14).
+    expect(nearestStation(200, 232, 40, layout)?.id).toBe('holding-store');
+    expect(nearestStation(360, 232, 40, layout)?.id).toBe('stone-outcrop');
+    // The reserved rack offers no Use: standing on its interact point (16, 13) prompts for the post beside it, or nothing in a short range.
+    expect(interactPoint(rack.parts[0] ?? tree0)).toEqual({ x: 264, y: 216 });
+    expect(nearestStation(264, 216, 40, layout)?.id).toBe('writ-post');
+    expect(nearestStation(264, 216, 10, layout)).toBeNull();
     expect(nearestStation(0, 0, 40, layout)).toBeNull();
   });
 
-  it("stands a prop on the bottom centre of its station's rectangle", () => {
-    expect(propBase(trees)).toEqual({ x: 64, y: 176 });
-    expect(propBase(post)).toEqual({ x: 232, y: 160 });
+  it("stands a prop on the bottom centre of its part's rectangle, and finds the part nearest a point", () => {
+    expect(propBase(tree0)).toEqual({ x: 80, y: 64 });
+    expect(propBase(tree3)).toEqual({ x: 80, y: 256 });
+    expect(propBase(post.parts[0] ?? tree0)).toEqual({ x: 232, y: 224 });
+    expect(nearestPart(trees, 80, 250)).toBe(tree3);
+    expect(nearestPart(trees, 100, 40)).toBe(tree0);
+    expect(nearestPart(post, 0, 0)).toBe(post.parts[0]);
   });
 
   it('fills the pack button and reads the purse from the inventory', () => {

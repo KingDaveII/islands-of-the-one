@@ -1,43 +1,90 @@
 {
-  "$comment": "The holding (docs/design/holding.md). offlineCapHours: the most time away a station keeps earning (GAME DESIGN, 48 h); heartbeatMs: how often the open holding scene calls GET /api/holding. layouts: tile templates in the rooms' style, legend: . ground, # the edge (solid; everything outside the template is solid too), W the Writ post, T the twisted trees, R the stone outcrop, P the start. stations: each with its id (stations.json), kind, tile rectangle and interact point (a ground tile beside it). plots: four 6 x 6 rectangles, data only until Task 5 names them. MAIN's first layout, drawn by hand; GAME DESIGN and ART revise it.",
+  "$comment": "The holding (docs/design/holding.md). offlineCapHours: the most time away a station keeps earning (GAME DESIGN, 48 h); heartbeatMs: how often the open holding scene calls GET /api/holding. layouts: tile templates in the rooms' style drawn with the shore rule, legend: . ground, # the edge (void, solid; everything outside the template is void too), W the Writ post, S the holding store, T a twisted tree, R the stone outcrop, P the start. stations: each with its id (stations.json), kind and parts (a tile rectangle and its interact point, a ground tile beside it; the trees have one part per tree and share one basket); reserved marks a spot kept for a later task (the weapon rack, Task 8: plain ground, no prop, no Use). plots: four 6 x 6 rectangles in a loose ring round the post, data only until Task 5 names them. landing: where the boat ties up later, on the south shore. kesh: Kesh's needle of rock off the south-east shore (a solid prop in the void) and the Talk spot across the water (Task 4). GAME DESIGN's starting layout (2026-10-18); holdingLayoutProblems checks every placement rule.",
   "offlineCapHours": 48,
   "heartbeatMs": 30000,
   "layouts": [
     {
       "id": "first-holding",
       "tiles": [
-        "############################",
-        "#..........................#",
-        "#..........................#",
-        "#..........................#",
-        "#..........................#",
-        "#..........................#",
-        "#..........................#",
-        "#..........................#",
-        "#..........................#",
-        "#..TT.........W.........RR.#",
-        "#..TT...................RR.#",
-        "#.............P............#",
-        "#..........................#",
-        "#..........................#",
-        "#..........................#",
-        "#..........................#",
-        "#..........................#",
-        "#..........................#",
-        "#..........................#",
-        "############################"
+        "##############################",
+        "####....................######",
+        "###.TT.....................###",
+        "##..TT......................##",
+        "##..........................##",
+        "#...........................##",
+        "#...TT.......................#",
+        "#...TT.......................#",
+        "#............................#",
+        "##...........................#",
+        "###.TT.......................#",
+        "#...TT.......................#",
+        "#............................#",
+        "#.............W........RR....#",
+        "#...TT....SS...........RR...##",
+        "#...TT........P.............##",
+        "#...........................##",
+        "#............................#",
+        "##..TT..................######",
+        "##..TT..................######",
+        "##......................######",
+        "####TT..................######",
+        "####TT..###.............######",
+        "##############################"
       ],
       "stations": [
-        { "id": "writ-post", "kind": "post", "rect": { "col": 14, "row": 9, "cols": 1, "rows": 1 }, "interact": { "col": 14, "row": 10 } },
-        { "id": "twisted-trees", "kind": "trees", "rect": { "col": 3, "row": 9, "cols": 2, "rows": 2 }, "interact": { "col": 5, "row": 10 } },
-        { "id": "stone-outcrop", "kind": "outcrop", "rect": { "col": 24, "row": 9, "cols": 2, "rows": 2 }, "interact": { "col": 23, "row": 10 } }
+        {
+          "id": "writ-post",
+          "kind": "post",
+          "parts": [
+            { "rect": { "col": 14, "row": 13, "cols": 1, "rows": 1 }, "interact": { "col": 14, "row": 14 } }
+          ]
+        },
+        {
+          "id": "holding-store",
+          "kind": "store",
+          "parts": [
+            { "rect": { "col": 10, "row": 14, "cols": 2, "rows": 1 }, "interact": { "col": 12, "row": 14 } }
+          ]
+        },
+        {
+          "id": "weapon-rack",
+          "kind": "rack",
+          "reserved": true,
+          "parts": [
+            { "rect": { "col": 17, "row": 13, "cols": 2, "rows": 1 }, "interact": { "col": 16, "row": 13 } }
+          ]
+        },
+        {
+          "id": "twisted-trees",
+          "kind": "trees",
+          "parts": [
+            { "rect": { "col": 4, "row": 2, "cols": 2, "rows": 2 }, "interact": { "col": 6, "row": 3 } },
+            { "rect": { "col": 4, "row": 6, "cols": 2, "rows": 2 }, "interact": { "col": 6, "row": 7 } },
+            { "rect": { "col": 4, "row": 10, "cols": 2, "rows": 2 }, "interact": { "col": 6, "row": 11 } },
+            { "rect": { "col": 4, "row": 14, "cols": 2, "rows": 2 }, "interact": { "col": 6, "row": 15 } },
+            { "rect": { "col": 4, "row": 18, "cols": 2, "rows": 2 }, "interact": { "col": 6, "row": 19 } },
+            { "rect": { "col": 4, "row": 21, "cols": 2, "rows": 2 }, "interact": { "col": 6, "row": 22 } }
+          ]
+        },
+        {
+          "id": "stone-outcrop",
+          "kind": "outcrop",
+          "parts": [
+            { "rect": { "col": 23, "row": 13, "cols": 2, "rows": 2 }, "interact": { "col": 22, "row": 14 } }
+          ]
+        }
       ],
       "plots": [
-        { "col": 7, "row": 2, "cols": 6, "rows": 6 },
-        { "col": 16, "row": 2, "cols": 6, "rows": 6 },
-        { "col": 7, "row": 12, "cols": 6, "rows": 6 },
-        { "col": 16, "row": 12, "cols": 6, "rows": 6 }
-      ]
+        { "col": 7, "row": 7, "cols": 6, "rows": 6 },
+        { "col": 17, "row": 7, "cols": 6, "rows": 6 },
+        { "col": 7, "row": 16, "cols": 6, "rows": 6 },
+        { "col": 17, "row": 16, "cols": 6, "rows": 6 }
+      ],
+      "landing": { "col": 14, "row": 22 },
+      "kesh": {
+        "rock": { "col": 26, "row": 20, "cols": 2, "rows": 2 },
+        "talk": { "col": 23, "row": 19 }
+      }
     }
   ]
 }

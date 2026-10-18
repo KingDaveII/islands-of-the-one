@@ -17,13 +17,15 @@ import {
   chipState,
   clockOffset,
   cyclesDone,
-  nearestStation,
+  nearestStationPart,
   packFill,
   purseGin,
   serverTime,
   stationLines,
+  takeFloat,
   takeResultLine,
   USE_LABEL,
+  type NearStation,
   type StationLines,
 } from '../game/holdingView.js';
 import { REFUSAL_LIFE_MS, refusalVisible } from '../game/inventoryView.js';
@@ -50,7 +52,7 @@ import type { InventoryData } from './InventoryScene.js';
 /** The station panel (UI px): a small panel over the view's centre with the station's lines and two buttons. */
 const PANEL_W = 176;
 const PANEL_PAD = 8;
-/** A "+1" floater rises this far over its life, and blinks out over the last 200 ms. */
+/** A "+1" (or a take-all's "+3") floater rises this far over its life, and blinks out over the last 200 ms. */
 const FLOAT_MS = 700;
 const FLOAT_RISE = 10;
 const FLOAT_BLINK_MS = 200;
@@ -58,6 +60,8 @@ const FLOAT_BLINK_MS = 200;
 interface Floater {
   text: Shadowed;
   stationId: string;
+  /** Where the Kindled stood when it rose: the floater stays over the station's part nearest there (the trees). */
+  near: { x: number; y: number };
   life: number;
 }
 
@@ -79,8 +83,10 @@ interface StationPanel {
  * station props and the Kindled, the HUD on the UI camera. The active
  * action lives on the server: the scene calls GET /api/holding every 30 s and
  * after each interaction (the heartbeat), and redraws from the answers;
- * nothing of value is decided here. Use on the Writ post opens the inventory
- * with the store; Use on a tree or the outcrop opens the station panel.
+ * nothing of value is decided here. Use on the Writ post or the holding store
+ * opens the inventory with the store pane; Use on a tree or the outcrop opens
+ * the station panel. Stopping is on the chip and in the panel ("Stop
+ * working"); there is no stop binding (GAME DESIGN 2026-10-18).
  */
 export class HoldingScene extends Phaser.Scene {
   session!: RoamSession;
@@ -173,8 +179,8 @@ export class HoldingScene extends Phaser.Scene {
     this.fitCameras();
     menuCursor(this);
 
-    // Keys from controls.json: the inventory opens the inventory, the menu key backs out (the panel first),
-    // the stop key stops the action; Enter presses the panel's focused button, the arrows and Tab move its focus.
+    // Keys from controls.json: the inventory opens the inventory, the menu key backs out (the panel first);
+    // Enter presses the panel's focused button, the arrows and Tab move its focus.
     const kb = this.input.keyboard;
     const bind = (keys: string[], fn: () => void): void => {
       for (const k of keys) {
@@ -187,9 +193,6 @@ export class HoldingScene extends Phaser.Scene {
     });
     bind(keyboardKeys('menu'), () => {
       this.back();
-    });
-    bind(keyboardKeys('stopAction', 'calm'), () => {
-      this.stop();
     });
     kb?.on('keydown-ENTER', () => {
       this.pressFocused();
@@ -306,22 +309,31 @@ export class HoldingScene extends Phaser.Scene {
     this.request(() => api.holdingWork({ stationId }));
   }
 
-  /** Stop the action: the chip, its key, or the panel's STOP. */
+  /** Stop the action: the chip, or the panel's STOP WORKING. */
   stop(): void {
     if (!this.response?.activity) return;
     this.request(() => api.holdingStop());
   }
 
-  /** Take all: what fits of the basket into the store; the result line shows on the panel. */
+  /**
+   * Take all: what fits of the basket into the store. What moved floats over
+   * the station as "+3", the float the cycles use; "Store: … full." is the
+   * one panel line, when it applies (GAME DESIGN 2026-10-18).
+   */
   takeAll(stationId: string): void {
     this.request(
       () => api.holdingTake({ stationId }),
       () => {
         const take = this.response?.take;
-        if (take && this.panel?.station.id === stationId) {
-          this.panel.result.setText(takeResultLine(take)).setVisible(true);
-          this.panel.resultAt = this.time.now;
-          this.placePanel(this.panel);
+        if (take) {
+          const text = takeFloat(take);
+          if (text) this.float(text, stationId);
+          const line = takeResultLine(take);
+          if (line && this.panel?.station.id === stationId) {
+            this.panel.result.setText(line).setVisible(true);
+            this.panel.resultAt = this.time.now;
+            this.placePanel(this.panel);
+          }
         }
         void api.inventory().then((res) => {
           if (this.alive && res.ok) this.inventory = res.value;
@@ -332,21 +344,22 @@ export class HoldingScene extends Phaser.Scene {
 
   // --- Interaction -------------------------------------------------------
 
-  /** The station in reach of the Kindled, if any (the prompt's rules and range). */
-  private near(): LayoutStation | null {
+  /** The station part in reach of the Kindled, if any (the prompt's rules and range; a reserved spot never is). */
+  private near(): NearStation | null {
     const p = this.session.position();
-    return nearestStation(p.x, p.y, tuningStore.get().juice.promptRangePx, this.session.layout);
+    return nearestStationPart(p.x, p.y, tuningStore.get().juice.promptRangePx, this.session.layout);
   }
 
-  /** Use: the post opens the inventory with the store; a tree or the outcrop opens its panel. */
+  /** Use: the post and the store open the inventory with the store pane; a tree or the outcrop opens its panel. */
   private use(): void {
     if (this.panel) {
       this.closePanel();
       return;
     }
-    const station = this.near();
-    if (!station) return;
-    if (station.kind === 'post') this.openInventory();
+    const near = this.near();
+    if (!near) return;
+    const { station } = near;
+    if (station.kind === 'post' || station.kind === 'store') this.openInventory();
     else this.openPanel(station);
   }
 
@@ -407,7 +420,7 @@ export class HoldingScene extends Phaser.Scene {
     this.session.held = false;
   }
 
-  /** The panel's lines from the latest answer; its first button reads WORK HERE or STOP. */
+  /** The panel's lines from the latest answer; its first button reads WORK HERE or STOP WORKING. */
   private syncPanel(): void {
     const p = this.panel;
     if (!p) return;
@@ -513,12 +526,12 @@ export class HoldingScene extends Phaser.Scene {
   }
 
   private updatePrompt(): void {
-    const station = this.panel ? null : this.near();
-    if (!station) {
+    const near = this.panel ? null : this.near();
+    if (!near) {
       this.prompt.setVisible(false);
       return;
     }
-    const top = this.world.propTop(station.id);
+    const top = this.world.propTop(near.station.id, this.session.position());
     const at = top ? { x: simPx(top.x), y: simPx(top.y) } : { x: 0, y: 0 };
     const ui = this.toUi(at.x, at.y);
     this.prompt
@@ -527,17 +540,20 @@ export class HoldingScene extends Phaser.Scene {
       .setVisible(true);
   }
 
+  /** A float over a station: "+1" as a cycle completes, "+3" as a take-all moves a basket; over the part nearest the Kindled. */
+  private float(text: string, stationId: string): void {
+    const t = shadowed(label(this, 0, 0, text, Palette.spark));
+    t.setDepth(DEPTH.floaters);
+    this.hudLayer.add(t);
+    this.floaters.push({ text: t, stationId, near: this.session.position(), life: FLOAT_MS });
+  }
+
   /** A "+1" over the station as each cycle completes: predicted from the ring, render only; the counts come from the server. */
   private updateFloaters(delta: number): void {
     const activity = this.response?.activity;
     if (activity) {
       const done = cyclesDone(activity, this.serverNow());
-      if (this.lastCycles >= 0 && done > this.lastCycles) {
-        const t = shadowed(label(this, 0, 0, '+1', Palette.spark));
-        t.setDepth(DEPTH.floaters);
-        this.hudLayer.add(t);
-        this.floaters.push({ text: t, stationId: activity.stationId, life: FLOAT_MS });
-      }
+      if (this.lastCycles >= 0 && done > this.lastCycles) this.float('+1', activity.stationId);
       this.lastCycles = done;
     }
     this.floaters = this.floaters.filter((f) => {
@@ -546,7 +562,7 @@ export class HoldingScene extends Phaser.Scene {
         f.text.destroy(true);
         return false;
       }
-      const top = this.world.propTop(f.stationId);
+      const top = this.world.propTop(f.stationId, f.near);
       if (top) {
         const rise = FLOAT_RISE * (1 - f.life / FLOAT_MS);
         const ui = this.toUi(simPx(top.x), simPx(top.y));
@@ -574,8 +590,13 @@ export class HoldingScene extends Phaser.Scene {
     response: HoldingResponse | null;
     panel: string | null;
     result: string;
+    /** The floaters alive this frame ("+1", "+3"). */
+    floats: string[];
     prompt: boolean;
     chip: ReturnType<typeof chipState>;
+    /** Every prop's sheet, frame and depth, and the Kindled's depth, for the draw-order checks. */
+    props: ReturnType<HoldingWorld['propFrames']>;
+    playerDepth: number;
   } {
     const s = this.session.state;
     return {
@@ -584,8 +605,11 @@ export class HoldingScene extends Phaser.Scene {
       response: this.response,
       panel: this.panel?.station.id ?? null,
       result: this.panel?.result.visible ? this.panel.result.text : '',
+      floats: this.floaters.map((f) => f.text.text),
       prompt: this.prompt.container.visible,
       chip: chipState(this.response, this.serverNow()),
+      props: this.world.propFrames(),
+      playerDepth: this.world.playerDepth(),
     };
   }
 
@@ -600,12 +624,11 @@ export class HoldingScene extends Phaser.Scene {
     this.updateFloaters(delta);
     this.updatePanelResult();
 
-    // The pad: Circle backs out, the stop binding stops, the D-pad moves the panel's focus, Cross presses it (Cross is
-    // also interact in Calm, which `use` handles through the roam's input while no panel is open).
+    // The pad: Circle backs out, the D-pad moves the panel's focus, Cross presses it (Cross is also interact in
+    // Calm, which `use` handles through the roam's input while no panel is open). No stop binding: the chip and the panel.
     const edges = padEdges(this.pad);
     const preset = controlsStore.get();
     if (edges.includes(MENU_BUTTONS.back)) this.back();
-    else if (buttonsFor(preset, 'stopAction', 'calm').some((b) => edges.includes(b))) this.stop();
     else if (this.panel) {
       if ([MENU_BUTTONS.left, MENU_BUTTONS.right, MENU_BUTTONS.up, MENU_BUTTONS.down].some((b) => edges.includes(b))) this.moveFocus(1);
       else if (edges.includes(MENU_BUTTONS.confirm[0]) && !buttonsFor(preset, 'interact', 'calm').includes(MENU_BUTTONS.confirm[0])) this.pressFocused();

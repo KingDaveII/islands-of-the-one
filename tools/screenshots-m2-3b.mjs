@@ -1,17 +1,20 @@
 #!/usr/bin/env node
 /**
- * M2 Task 3b end to end (docs/screenshots/m2-3b): the holding. A new account
- * and Kindled log in and land on the holding from the start screen; the
- * Kindled walks (a walk, then the automatic run), goes to the twisted trees,
- * uses them and works there for a few cycles (the chip with its ring, the
- * "+1" floaters), takes all, opens the inventory over the holding and moves
- * the logs to the pack, then reloads and sees the counts kept and the action
- * still running. Then the away hook (`pnpm --filter @iot/server holding:away`,
- * the same database as the dev server) moves the action 60 h back, and the
- * next request settles 48 h of it: the basket holds the cap's worth. Last,
- * the store filled with logs by the grant CLI gives "Store: twisted logs
- * full." on a take-all. Every count is checked through the API. Shots are
- * whole-page screenshots at 1280 × 720.
+ * M2 Task 3b end to end (docs/screenshots/m2-3b), re-shot for 3c: the
+ * holding. A new account and Kindled log in and land on the holding from the
+ * start screen; the Kindled walks (a walk, then the automatic run), goes to
+ * the nearest twisted tree, uses it and works there for a few cycles (the
+ * chip with its ring, the "+1" floaters), takes all (the "+2" float, no
+ * line), opens the inventory over the holding and moves the logs to the pack,
+ * then reloads and sees the counts kept and the action still running. Then
+ * the away hook (`pnpm --filter @iot/server holding:away`, the same database
+ * as the dev server) moves the action 60 h back, and the next request settles
+ * 48 h of it: the basket holds the cap's worth. Then the store filled with
+ * logs by the grant CLI gives "Store: twisted logs full." on a take-all.
+ * Last, the shore (3c): the south shore dropping into the Hollow at the
+ * landing, the north edge's lip, and the Kindled behind the tall tree's
+ * canopy. Every count is checked through the API. Shots are whole-page
+ * screenshots at 1280 × 720.
  *
  * Needs the dev stack running on Postgres (`pnpm dev` with DATABASE_URL set).
  *
@@ -19,7 +22,7 @@
  *   node tools/screenshots-m2-3b.mjs [outDir] [baseUrl]
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
@@ -163,6 +166,23 @@ const expectEq = (what, got, want) => {
   if (got !== want) throw new Error(`${what}: ${got}, expected ${want}`);
 };
 
+/** The layout's points the run walks to (sim px), from the data, so a layout edit moves the run with it. */
+const layout = await (async () => {
+  const data = JSON.parse(readFileSync(join(ROOT, 'packages/shared/data/holding.json'), 'utf8'));
+  return data.layouts[0];
+})();
+const centre = (p) => ({ x: (p.col + 0.5) * 16, y: (p.row + 0.5) * 16 });
+const station = (id) => layout.stations.find((s) => s.id === id);
+const start = (() => {
+  const r = layout.tiles.findIndex((row) => row.includes('P'));
+  return { col: layout.tiles[r].indexOf('P'), row: r };
+})();
+// The tree nearest the start, by its interact point.
+const treePart = station('twisted-trees').parts.reduce((best, p) =>
+  !best || Math.hypot(p.interact.col - start.col, p.interact.row - start.row) < Math.hypot(best.interact.col - start.col, best.interact.row - start.row) ? p : best, null);
+const treeUse = centre(treePart.interact);
+console.log(`the tree's interact point: (${treePart.interact.col}, ${treePart.interact.row}) = (${treeUse.x}, ${treeUse.y}) sim px`);
+
 await page.goto(BASE);
 await waitScene('account');
 // 1. The account and Kindled through the API (M2 Task 1 covers their screens), then the start screen's main action.
@@ -185,16 +205,16 @@ let h = await holding();
 expectEq('layout', h.response.layoutId, 'first-holding');
 expectEq('activity', h.response.activity, null);
 
-// 2. Walking: a walk, then the automatic run after 1.2 s of moving the same way.
+// 2. Walking: a walk, then the automatic run after 1.2 s of moving the same way. Measured in sim ticks (60 Hz), not
+// wall time: a headless browser on software GL runs the sim slower than real time when its frames are slow.
 console.log('walking:');
+const tick0 = (await holding()).state.tick;
 await page.keyboard.down('KeyD');
-await sleep(600);
-h = await holding();
+h = await until((x) => x.state.tick - tick0 >= 36, '0.6 s of walking');
 expectEq('gait after 0.6 s', h.state.gait, 'walk');
 console.log(`  walk: ${h.pose}`);
 await shot('03-walk');
-await sleep(1400);
-h = await holding();
+h = await until((x) => x.state.tick - tick0 >= 120, '2 s of moving');
 expectEq('gait after 2 s', h.state.gait, 'run');
 console.log(`  run: ${h.pose}`);
 await shot('04-run');
@@ -203,9 +223,9 @@ await sleep(300);
 h = await holding();
 expectEq('stopped', h.state.gait, 'walk');
 
-// 3. The trees: walk to their interact point, Use, Work here, a few cycles.
+// 3. The trees: walk to the nearest tree's interact point, Use, Work here, a few cycles.
 console.log('working the trees:');
-await walkTo(88, 168);
+await walkTo(treeUse.x, treeUse.y);
 await until((x) => x.prompt, 'the USE prompt');
 await shot('05-prompt');
 await page.keyboard.press('KeyE');
@@ -225,12 +245,13 @@ expectEq('basket after two cycles', r.baskets['twisted-trees'][0]?.quantity, 2);
 expectEq('woodcutting xp', r.skills.woodcutting.xp, 8);
 await shot('08-two-cycles');
 
-// 4. Take all.
+// 4. Take all: "+2" floats over the tree, the panel shows no line (GAME DESIGN 2026-10-18).
 await page.keyboard.press('KeyE');
 await until((x) => x.panel === 'twisted-trees', 'the station panel again');
 await clickButton('holding', 'TAKE ALL');
-h = await until((x) => x.result !== '', 'the take-all line');
-console.log(`  take all: "${h.result}"`);
+h = await until((x) => x.floats.some((f) => f.startsWith('+')), 'the take-all float');
+console.log(`  take all: float "${h.floats.join(' ')}", line "${h.result}"`);
+expectEq('no take-all line', h.result, '');
 await shot('09-take-all');
 r = await api('/api/inventory');
 const logsInStore = r.store.find((e) => e.itemId === 'twisted-log')?.quantity ?? 0;
@@ -281,7 +302,7 @@ const basket = r.baskets['twisted-trees'][0]?.quantity ?? 0;
 const cap = (48 * 3600) / 4;
 if (basket < cap || basket > cap + 20) throw new Error(`the basket after 60 h away: ${basket}, expected about ${cap}`);
 console.log(`  basket after 60 h away: ${basket} logs (the 48 h cap), xp ${r.skills.woodcutting.xp}, level ${r.skills.woodcutting.level}`);
-await walkTo(88, 168);
+await walkTo(treeUse.x, treeUse.y);
 await page.keyboard.press('KeyE');
 await until((x) => x.panel === 'twisted-trees' && x.response?.baskets['twisted-trees'][0]?.quantity >= basket, 'the panel with the away basket');
 await shot('13-away-basket');
@@ -295,5 +316,30 @@ console.log(`  take all with a full store: "${h.result}"`);
 await shot('14-store-full');
 r = await api('/api/inventory');
 expectEq('store full', r.store.find((e) => e.itemId === 'twisted-log')?.quantity, 9999);
+await page.keyboard.press('Escape');
+await until((x) => x.panel === null, 'the panel closed');
+
+// The shore (3c): the south shore at the landing, the north edge's lip, and the Kindled behind the tall tree.
+console.log('the shore:');
+const landing = centre(layout.landing);
+await walkTo(landing.x, landing.y);
+await shot('15-south-shore');
+// Up the path west of the post (the post itself stands in the start's column) to the north edge, row 1.
+const path = centre({ col: start.col - 1, row: start.row });
+await walkTo(path.x, path.y);
+const north = centre({ col: start.col - 1, row: 1 });
+await walkTo(north.x, north.y);
+h = await holding();
+if (Math.abs(h.state.y - north.y) > 8) throw new Error(`the Kindled did not reach the north edge: at (${h.state.x}, ${h.state.y}), wanted (${north.x}, ${north.y})`);
+await shot('16-north-lip');
+// North of the tree the run worked: its feet above the tree's base, so the canopy draws over it.
+const behind = centre({ col: treePart.rect.col + 1, row: treePart.rect.row - 1 });
+await walkTo(behind.x, behind.y - 2);
+h = await holding();
+const tree = h.props.find((p) => p.stationId === 'twisted-trees' && p.y === (treePart.rect.row + treePart.rect.rows) * 32);
+if (!tree) throw new Error('no prop for the tree');
+if (!(h.playerDepth < tree.depth)) throw new Error(`the Kindled (depth ${h.playerDepth}) is not behind the tree (depth ${tree.depth})`);
+console.log(`  behind the tree: Kindled depth ${h.playerDepth}, tree depth ${tree.depth}`);
+await shot('17-behind-tree');
 
 await browser.close();

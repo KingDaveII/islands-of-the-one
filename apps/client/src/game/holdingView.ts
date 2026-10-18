@@ -12,6 +12,7 @@ import {
   type InventoryResponse,
   type LayoutStation,
   type SkillView,
+  type StationPart,
 } from '@iot/shared';
 import { displayable } from './drawable.js';
 import { packUsed } from './inventoryView.js';
@@ -20,10 +21,10 @@ import { packUsed } from './inventoryView.js';
  * The holding scene's logic (docs/design/holding.md), pure so it is tested
  * in node: the server clock offset and the cycle ring drawn from it, the
  * cycles the client predicts for the "+1" floaters, the active-action chip's
- * state, the XP bar, the station panel's lines, the take-all result line,
- * the nearest station to prompt for and the pack button's fill. The scene
- * (scenes/HoldingScene.ts) draws these and sends the requests; the counts
- * only ever come from the server.
+ * state, the XP bar, the station panel's lines, the take-all float and its
+ * one panel line, the nearest station part to prompt for and the pack
+ * button's fill. The scene (scenes/HoldingScene.ts) draws these and sends
+ * the requests; the counts only ever come from the server.
  */
 
 /** The server's clock against the client's: `serverNow − clientNow` at the moment the answer arrived. */
@@ -112,12 +113,12 @@ export interface StationLines {
   rate: string;
   /** "Basket: 3 twisted logs", or "Basket: empty". */
   basket: string;
-  /** "You: 1 log every 4 s" while working here, else null. */
+  /** "You: 1 twisted log every 4 s" while working here (the item's full name, GAME DESIGN 2026-10-18), else null. */
   you: string | null;
   /** "Woodcutting 2 · 1099 XP to next". */
   skill: string;
-  /** The first button: WORK HERE, or STOP while working here. */
-  work: 'WORK HERE' | 'STOP';
+  /** The first button: WORK HERE, or STOP WORKING while working here. */
+  work: 'WORK HERE' | 'STOP WORKING';
   take: 'TAKE ALL';
   /** Whether the Kindled works here now. */
   working: boolean;
@@ -131,14 +132,14 @@ export function stationLines(stationId: string, r: HoldingResponse | null): Stat
   const basket = r?.baskets[stationId] ?? [];
   const working = r?.activity?.stationId === stationId;
   const view = r?.skills[action.skill];
-  const short = action.itemId.split('-').pop() ?? action.itemId;
+  const rate = `${countOf(action.itemId, action.quantity)} every ${seconds} s`;
   return {
     title: displayable(station.name.toUpperCase()),
-    rate: `${countOf(action.itemId, action.quantity)} every ${seconds} s`,
+    rate,
     basket: basket.length ? `Basket: ${basket.map((e) => countOf(e.itemId, e.quantity)).join(', ')}` : 'Basket: empty',
-    you: working ? `You: ${action.quantity} ${short}${action.quantity === 1 ? '' : 's'} every ${seconds} s` : null,
+    you: working ? `You: ${rate}` : null,
     skill: view ? `${SKILL_NAMES[action.skill]} ${view.level} · ${view.toNext} XP to next` : SKILL_NAMES[action.skill],
-    work: working ? 'STOP' : 'WORK HERE',
+    work: working ? 'STOP WORKING' : 'WORK HERE',
     take: 'TAKE ALL',
     working,
   };
@@ -150,50 +151,82 @@ export function pluralName(itemId: string): string {
 }
 
 /**
- * The one-line result after a take-all (GAME DESIGN 2026-10-17): "Store:
- * twisted logs full." when something stayed because the store's stack is
- * full; otherwise what was taken, or "Nothing to take." for an empty basket.
+ * The one panel line after a take-all (GAME DESIGN 2026-10-17, 2026-10-18):
+ * "Store: twisted logs full." when something stayed because the store's
+ * stack is full (the one line until toasts arrive in Task 7); otherwise
+ * none: what was taken floats over the station (`takeFloat`), and an empty
+ * basket's panel already reads "Basket: empty".
  */
-export function takeResultLine(take: HoldingTake): string {
+export function takeResultLine(take: HoldingTake): string | null {
   const stuck = take.left[0];
-  if (stuck) return `Store: ${pluralName(stuck.itemId)} full.`;
-  if (take.moved.length === 0) return 'Nothing to take.';
-  return `Took ${take.moved.map((e) => countOf(e.itemId, e.quantity)).join(', ')}.`;
+  return stuck ? `Store: ${pluralName(stuck.itemId)} full.` : null;
 }
 
-/** A station's interact point as sim px (the tile's centre). */
-export function interactPoint(station: LayoutStation): { x: number; y: number } {
+/** What floats over the station after a take-all, the same float the cycles use: "+3" for what moved, null when nothing did. */
+export function takeFloat(take: HoldingTake): string | null {
+  const moved = take.moved.reduce((s, e) => s + e.quantity, 0);
+  return moved > 0 ? `+${moved}` : null;
+}
+
+/** A station part's interact point as sim px (the tile's centre). */
+export function interactPoint(part: StationPart): { x: number; y: number } {
   return {
-    x: (station.interact.col + 0.5) * TILE_SIZE_PX,
-    y: (station.interact.row + 0.5) * TILE_SIZE_PX,
+    x: (part.interact.col + 0.5) * TILE_SIZE_PX,
+    y: (part.interact.row + 0.5) * TILE_SIZE_PX,
   };
 }
 
+/** A station and the part of it nearest the Kindled: any part's interact point works the station (the trees). */
+export interface NearStation {
+  station: LayoutStation;
+  part: StationPart;
+}
+
 /**
- * The station to prompt for: the one whose interact point is nearest the
- * Kindled (sim px) within `rangePx`, or null. The prompt's existing rules:
- * the nearest in reach, nothing when none is.
+ * The station part to prompt for: the one whose interact point is nearest
+ * the Kindled (sim px) within `rangePx`, or null. The prompt's existing
+ * rules: the nearest in reach, nothing when none is. A reserved spot (the
+ * weapon rack until Task 8) offers no Use.
  */
-export function nearestStation(
+export function nearestStationPart(
   x: number,
   y: number,
   rangePx: number,
   layout: HoldingLayout = holdingLayout(),
-): LayoutStation | null {
-  let best: { station: LayoutStation; d: number } | null = null;
+): NearStation | null {
+  let best: { near: NearStation; d: number } | null = null;
   for (const station of layout.stations) {
-    const p = interactPoint(station);
-    const d = Math.hypot(p.x - x, p.y - y);
-    if (d <= rangePx && (!best || d < best.d)) best = { station, d };
+    if (station.reserved) continue;
+    for (const part of station.parts) {
+      const p = interactPoint(part);
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d <= rangePx && (!best || d < best.d)) best = { near: { station, part }, d };
+    }
   }
-  return best ? best.station : null;
+  return best ? best.near : null;
 }
 
-/** Where a station's prop stands: the bottom centre of its tile rectangle, sim px (the sprite's origin, the line under its base). */
-export function propBase(station: LayoutStation): { x: number; y: number } {
+/** The station to prompt for (`nearestStationPart`'s station), or null. */
+export function nearestStation(x: number, y: number, rangePx: number, layout: HoldingLayout = holdingLayout()): LayoutStation | null {
+  return nearestStationPart(x, y, rangePx, layout)?.station ?? null;
+}
+
+/** The part of a station whose prop stands nearest a point (sim px): where its floats rise from; the first part when it has one. */
+export function nearestPart(station: LayoutStation, x: number, y: number): StationPart | null {
+  let best: { part: StationPart; d: number } | null = null;
+  for (const part of station.parts) {
+    const b = propBase(part);
+    const d = Math.hypot(b.x - x, b.y - y);
+    if (!best || d < best.d) best = { part, d };
+  }
+  return best ? best.part : null;
+}
+
+/** Where a prop stands: the bottom centre of its tile rectangle, sim px (the sprite's origin, the line under its base). */
+export function propBase(part: Pick<StationPart, 'rect'>): { x: number; y: number } {
   return {
-    x: (station.rect.col + station.rect.cols / 2) * TILE_SIZE_PX,
-    y: (station.rect.row + station.rect.rows) * TILE_SIZE_PX,
+    x: (part.rect.col + part.rect.cols / 2) * TILE_SIZE_PX,
+    y: (part.rect.row + part.rect.rows) * TILE_SIZE_PX,
   };
 }
 
