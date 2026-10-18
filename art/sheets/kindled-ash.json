@@ -116,6 +116,84 @@
         }
       }
     },
+    "run_start": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/clean/kindled-ash/run_start/south",
+          "frames": [0, 1]
+        },
+        "SE": {
+          "src": "art/clean/kindled-ash/run_start/south-east",
+          "frames": [0, 1]
+        },
+        "E": {
+          "src": "art/clean/kindled-ash/run_start/east",
+          "frames": [0, 1]
+        },
+        "NE": {
+          "src": "art/clean/kindled-ash/run_start/north-east",
+          "frames": [0, 1]
+        },
+        "N": {
+          "src": "art/clean/kindled-ash/run_start/north",
+          "frames": [0, 1]
+        },
+        "NW": {
+          "src": "art/clean/kindled-ash/run_start/north-west",
+          "frames": [0, 1]
+        },
+        "W": {
+          "src": "art/clean/kindled-ash/run_start/west",
+          "frames": [0, 1]
+        },
+        "SW": {
+          "src": "art/clean/kindled-ash/run_start/south-west",
+          "frames": [0, 1]
+        }
+      }
+    },
+    "run_stop": {
+      "ground": {
+        "ref": 1
+      },
+      "facings": {
+        "S": {
+          "src": "art/clean/kindled-ash/run_stop/south",
+          "frames": [0, 1]
+        },
+        "SE": {
+          "src": "art/clean/kindled-ash/run_stop/south-east",
+          "frames": [0, 1]
+        },
+        "E": {
+          "src": "art/clean/kindled-ash/run_stop/east",
+          "frames": [0, 1]
+        },
+        "NE": {
+          "src": "art/clean/kindled-ash/run_stop/north-east",
+          "frames": [0, 1]
+        },
+        "N": {
+          "src": "art/clean/kindled-ash/run_stop/north",
+          "frames": [0, 1]
+        },
+        "NW": {
+          "src": "art/clean/kindled-ash/run_stop/north-west",
+          "frames": [0, 1]
+        },
+        "W": {
+          "src": "art/clean/kindled-ash/run_stop/west",
+          "frames": [0, 1]
+        },
+        "SW": {
+          "src": "art/clean/kindled-ash/run_stop/south-west",
+          "frames": [0, 1]
+        }
+      }
+    },
     "run_back": {
       "facings": {
         "S": {
@@ -3196,6 +3274,34 @@
       "run_SE_1": [[51, 43]],
       "haul_pull_SE_1": [[55, 44]],
       "haul_pull_NE_0": [[39, 40]],
+      "run_start_NE_0": [[59, 34]],
+      "run_start_NE_1": [[60, 30]],
+      "run_start_NW_0": [[37, 29]],
+      "run_start_W_0": [[41, 42]],
+      "run_start_W_1": [[37, 31]],
+      "run_start_SW_0": [
+        [42, 40],
+        [46, 41],
+        [42, 43]
+      ],
+      "run_stop_S_0": [[34, 51]],
+      "run_stop_E_0": [
+        [62, 41],
+        [47, 49],
+        [46, 50]
+      ],
+      "run_stop_NE_1": [[58, 34]],
+      "run_stop_NW_1": [[38, 29]],
+      "run_stop_W_0": [
+        [37, 31],
+        [35, 44]
+      ],
+      "run_stop_W_1": [[42, 42]],
+      "run_stop_SW_1": [
+        [43, 40],
+        [47, 41],
+        [43, 43]
+      ],
       "run_back_E_3": [[35, 33]],
       "run_back_NE_0": [[42, 26]],
       "run_back_NE_1": [[42, 27]],
