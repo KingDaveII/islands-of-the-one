@@ -3,7 +3,7 @@
   "kind": "prop",
   "outline": "other",
   "draft": false,
-  "notes": "ART: the holding job's pick (PR #82) by art/clean/holding/props.py: 7 shaft rows out, the dark side lifted to hollow-below to read on the Hollow, the foot dithered out into the void.",
+  "notes": "ART: the holding job's pick (PR #82) by art/clean/holding/props.py: 7 shaft rows out, the dark side lifted to hollow-below to read on the Hollow, the foot dithered out into the void. Its tip cut down to a perch for Kesh (Task 4b), by the same script.",
   "anims": {
     "idle": {
       "src": "art/clean/prop-kesh-rock/idle",

@@ -9,7 +9,8 @@ sources the prop recipes read (art/clean/prop-<name>/idle/frame-<n>.png). Whole-
 - twisted-tree: kept at its generated size on the tall 96 x 128 cell, its trunk base centred on x 48;
 - twisted-tree-2: the job's candidate 2 (a forked crown), the same way, for alternate trees;
 - kesh-rock: 7 whole rows taken out of the shaft; its dark side lifted to hollow-below so it reads on the
-  Hollow; its foot dithered out into the void over 8 rows, so it rises from nothing;
+  Hollow; its foot dithered out into the void over 8 rows, so it rises from nothing; its tip cut down to a
+  perch 10 px wide for Kesh to sit on (Task 4b; art/clean/npc-kesh/kesh.py seats him on it);
 - stone-outcrop, holding-store: the placed picks, recoloured.
 
     python3 art/clean/holding/props.py
@@ -127,7 +128,26 @@ def kesh_rock():
         for x in range(w):
             if po[x, y][3] and (k >= 6 or (k >= 3 and (x + y) % 2) or (k >= 1 and (x + 2 * y) % 4 == 0)):
                 po[x, y] = (0, 0, 0, 0)
+    perch(po, w)
     return [out]
+
+
+def perch(po, w):
+    """Kesh's seat (Task 4b): the needle's tip cut off above row 25. Row 25 is the top's back edge, rows 26
+    and 27 the flat top in the light (hollow-lavender at the lit left, hollow-dusk), row 28 the lip where the
+    top turns into the face. Kesh hides most of it."""
+    for y in range(25):
+        for x in range(w):
+            po[x, y] = (0, 0, 0, 0)
+    xs = [x for x in range(w) if po[x, 26][3]]
+    x0, x1 = min(xs), max(xs)
+    for x in range(x0, x1 + 1):
+        inner = x0 < x < x1
+        po[x, 25] = DEEP if inner else (0, 0, 0, 0)
+        for y in (26, 27):
+            po[x, y] = rgb("hollow-lavender") if inner and x < x0 + 4 else (rgb("hollow-dusk") if inner else DEEP)
+        if inner:
+            po[x, 28] = DEEP
 
 
 def main():
