@@ -1,13 +1,16 @@
 import {
   doorFrameName,
+  doorlessProblems,
   holdingData,
   holdingTemplate,
   roomTemplates,
   roomTiles,
-  TILE_DOOR_ANIMS,
-  TILE_FRAMES,
-  TILE_RECIPE_PIECES,
   TILE_WORLD_PX,
+  tileDoorAnimsFor,
+  tileFramesFor,
+  tileRecipePiecesFor,
+  type TileOpacity,
+  type TileSetSpec,
   type TileSheetTiles,
   type TileTemplate,
   type TileWeights,
@@ -17,7 +20,7 @@ import { describeHex, FLOOR, HOLLOW_DEEP, WALL } from './colour.js';
 import { PipelineError } from './errors.js';
 import { blank, blit, fillRect, opaqueAt, setPixel, type Img } from './image.js';
 import { encodePng } from './png.js';
-import { tileFrameName, type Recipe } from './recipe.js';
+import { recipeTileSet, tileFrameName, type Recipe } from './recipe.js';
 import {
   applyRemap,
   appliesTo,
@@ -48,7 +51,11 @@ import { applyFixes, checkReserved, despeckle, outline, snap } from './steps.js'
  * exact size, and nothing is scaled or shifted. The outline is drawn only
  * against transparency inside the piece, since a piece's border is where it
  * meets the next. Door frames are packed whole. The review adds `rooms.png`,
- * every room of rooms.json drawn from the built pieces with `tileAt`.
+ * every template of the set's rule drawn from the built pieces with `tileAt`:
+ * the rooms of rooms.json for a cave set, the holding's layouts for a shore
+ * set. A recipe declares its set (`rule`, `doors`, M2 Task 3c): the pieces it
+ * must carry, the opacity each keeps and whether it has door animations all
+ * follow from it (`tileRecipePiecesFor`, `tileFramesFor`).
  */
 
 /** One built frame of a tile sheet: a static piece, or one frame of a door animation. */
@@ -65,7 +72,9 @@ export interface BuiltTile {
   outlineGaps: number;
   interiorDreamNight: number;
   despeckled: number | null;
-  /** In a piece that must be fully opaque: how many transparent pixels, and the first. */
+  /** How much of the piece must be opaque (tiles.ts `TileOpacity`). */
+  opacity: TileOpacity;
+  /** Transparent pixels where the piece must be opaque (everywhere, or its top row): how many, and the first. */
   holes: { count: number; first: [number, number] } | null;
 }
 
@@ -88,13 +97,18 @@ const GAP = 4;
 export const ROOM_GAP = 16;
 
 /**
- * What rooms.png draws: every room of rooms.json, then the holding's layouts
- * (holding.json, M2 Task 3b), which the engine draws with the same rule.
+ * What rooms.png draws for a set: the templates its rule draws. A cave set
+ * draws every room of rooms.json (a doorless cave set only those without a
+ * door); a shore set draws the holding's layouts (holding.json, M2 Task 3b),
+ * which the engine draws with the shore rule.
  */
-export const REVIEW_TEMPLATES: readonly TileTemplate[] = [
-  ...roomTemplates,
-  ...holdingData.layouts.map((l) => holdingTemplate(l)),
-];
+export function reviewTemplatesFor(set: TileSetSpec): readonly TileTemplate[] {
+  if (set.rule === 'shore') return holdingData.layouts.map((l) => holdingTemplate(l));
+  return set.doors ? roomTemplates : roomTemplates.filter((t) => doorlessProblems(t).length === 0);
+}
+
+/** What rooms.png draws for the default set, a cave with doors: every room of rooms.json. */
+export const REVIEW_TEMPLATES: readonly TileTemplate[] = reviewTemplatesFor({ rule: 'cave', doors: true });
 
 /** Steps 1–7 and 9 per frame, for every piece of a tiles recipe, in the contract's order. */
 export function buildTileFrames(
@@ -109,7 +123,7 @@ export function buildTileFrames(
   const pieces = recipe.tiles?.pieces ?? {};
   const tiles: BuiltTile[] = [];
   const sizes: string[] = [];
-  for (const piece of TILE_RECIPE_PIECES) {
+  for (const piece of tileRecipePiecesFor(recipeTileSet(recipe))) {
     const source = pieces[piece.name];
     if (!source) continue;
     source.frames.forEach((index, n) => {
@@ -146,8 +160,10 @@ export function buildTileFrames(
         despeckled = d.changed;
       }
       let holes: BuiltTile['holes'] = null;
-      if (piece.opaque) {
-        for (let y = 0; y < out.h; y++) {
+      if (piece.opacity !== 'none') {
+        // Every row for a fully opaque piece; the top row alone for one opaque at the top (a drop).
+        const rows = piece.opacity === 'full' ? out.h : 1;
+        for (let y = 0; y < rows; y++) {
           for (let x = 0; x < out.w; x++) {
             if (opaqueAt(out, x, y)) continue;
             holes ??= { count: 0, first: [x, y] };
@@ -167,6 +183,7 @@ export function buildTileFrames(
         outlineGaps: outlined.gaps,
         interiorDreamNight: outlined.interiorDreamNight,
         despeckled,
+        opacity: piece.opacity,
         holes,
       });
     });
@@ -175,47 +192,56 @@ export function buildTileFrames(
   return { tiles, remapCounts };
 }
 
-/** The pieces and door frames a recipe lacks against the contract, for a draft's report (by piece). */
-export function missingTiles(tiles: readonly BuiltTile[]): string[] {
+/** The pieces and door frames a recipe of a set lacks against the contract, for a draft's report (by piece). */
+export function missingTiles(tiles: readonly BuiltTile[], set: TileSetSpec): string[] {
   const built = new Map<string, number>();
   for (const t of tiles) built.set(t.piece, (built.get(t.piece) ?? 0) + 1);
-  return TILE_RECIPE_PIECES.flatMap((p) => {
+  return tileRecipePiecesFor(set).flatMap((p) => {
     const n = built.get(p.name);
     if (n === undefined) return [p.name];
     return n < p.frames ? [`${p.name}: ${n} of ${p.frames} frames`] : [];
   });
 }
 
-/** What a finished tile sheet is missing, as failures: every piece and every door frame. */
+/** What a finished tile sheet is missing, as failures: every piece of its rule and, with doors, every door frame. */
 export function tileCompletenessProblems(recipe: Recipe, tiles: readonly BuiltTile[]): string[] {
   const built = new Map<string, number>();
   for (const t of tiles) built.set(t.piece, (built.get(t.piece) ?? 0) + 1);
-  return TILE_RECIPE_PIECES.flatMap((p) => {
+  const set = recipeTileSet(recipe);
+  return tileRecipePiecesFor(set).flatMap((p) => {
     const n = built.get(p.name);
     if (n === undefined)
-      return [`${recipe.sheet}: ${p.name} is missing (a finished tile sheet carries every piece and door frame)`];
+      return [
+        `${recipe.sheet}: ${p.name} is missing (a finished tile sheet carries every piece of its rule${set.doors ? ' and every door frame' : ''})`,
+      ];
     return n !== p.frames ? [`${recipe.sheet}: ${p.name} has ${n} frames; the contract says ${p.frames}`] : [];
   });
 }
 
-/** The opacity rule as messages: floors, faces, tops and door frames are fully opaque. */
+/** The opacity rule as messages: floors, faces, tops and door frames are fully opaque; drops are opaque in their top row. */
 export function opacityProblems(recipe: Recipe, tiles: readonly BuiltTile[]): string[] {
   return tiles.flatMap((t) =>
     t.holes
       ? [
-          `${recipe.sheet}: ${t.name} has ${t.holes.count} transparent pixels, the first at (${t.holes.first.join(', ')}); ` +
-            'floor, face, top and door pieces are fully opaque',
+          t.opacity === 'top'
+            ? `${recipe.sheet}: ${t.name} has ${t.holes.count} transparent pixels in its top row, the first at (${t.holes.first.join(', ')}); ` +
+              'a drop is opaque at the top, where it meets the floor above (its dither below may be transparent)'
+            : `${recipe.sheet}: ${t.name} has ${t.holes.count} transparent pixels, the first at (${t.holes.first.join(', ')}); ` +
+              'floor, face, top and door pieces are fully opaque',
         ]
       : [],
   );
 }
 
 /** Shelf packing in the contract's order: left to right in rows of at most `TILE_ROW_W`, each as tall as its tallest frame; doors stay whole. */
-export function packTiles(tiles: readonly BuiltTile[]): {
+export function packTiles(
+  tiles: readonly BuiltTile[],
+  set: TileSetSpec,
+): {
   sheet: Img;
   rects: Map<string, { x: number; y: number; w: number; h: number }>;
 } {
-  const order = new Map(TILE_FRAMES.map((f, i) => [f.name, i]));
+  const order = new Map(tileFramesFor(set).map((f, i) => [f.name, i]));
   const sorted = [...tiles].sort((a, b) => (order.get(a.name) ?? 0) - (order.get(b.name) ?? 0));
   const rects = new Map<string, { x: number; y: number; w: number; h: number }>();
   let x = 0;
@@ -239,14 +265,15 @@ export function packTiles(tiles: readonly BuiltTile[]): {
   return { sheet, rects };
 }
 
-/** The tile sheet's JSON (sprites.md "Tiles"): named frames, the door anims, and the `tiles` block, keys in a fixed order. */
+/** The tile sheet's JSON (sprites.md "Tiles"): named frames, the door anims (with doors), and the `tiles` block, keys in a fixed order. */
 export function tileSheetJson(
   recipe: Recipe,
   size: { w: number; h: number },
   rects: ReadonlyMap<string, { x: number; y: number; w: number; h: number }>,
 ): string {
+  const set = recipeTileSet(recipe);
   const frames: Record<string, unknown> = {};
-  for (const f of TILE_FRAMES) {
+  for (const f of tileFramesFor(set)) {
     const r = rects.get(f.name);
     if (!r) continue;
     frames[f.name] = {
@@ -268,7 +295,7 @@ export function tileSheetJson(
     pixelScale: 1,
   };
   const anims: Record<string, unknown> = {};
-  for (const row of TILE_DOOR_ANIMS) {
+  for (const row of tileDoorAnimsFor(set)) {
     const names = Array.from({ length: row.frames }, (_, n) => `${row.name}_${n}`);
     if (!names.every((n) => rects.has(n))) continue;
     anims[row.name] = { frames: names, frameRate: row.fps, repeat: 0, hold: true };
@@ -276,28 +303,37 @@ export function tileSheetJson(
   return `${JSON.stringify({ frames, meta, anims, tiles: tilesBlock(recipe) }, null, 2)}\n`;
 }
 
-/** The sheet's `tiles` block (sprites.md "Tiles"): the tile size, `floorWeights`, and the mid weights the recipe gives. */
+/**
+ * The sheet's `tiles` block (sprites.md "Tiles"): the tile size, `floorWeights`,
+ * the mid weights the recipe gives, and its `rule` and `doors` when they are
+ * not the defaults (cave, true), so a cave set's block reads as before.
+ */
 export function tilesBlock(recipe: Recipe): TileSheetTiles {
   const out: TileSheetTiles = { tileSize: TILE_WORLD_PX, floorWeights: recipe.tiles?.floorWeights ?? [] };
+  const set = recipeTileSet(recipe);
+  if (set.rule !== 'cave') out.rule = set.rule;
+  if (!set.doors) out.doors = false;
   if (recipe.tiles?.faceMidWeights) out.faceMidWeights = recipe.tiles.faceMidWeights;
   if (recipe.tiles?.topMidWeights) out.topMidWeights = recipe.tiles.topMidWeights;
+  if (recipe.tiles?.dropMidWeights) out.dropMidWeights = recipe.tiles.dropMidWeights;
   return out;
 }
 
-/** The static pieces' rows of contact.png: floors, shades, faces, tops, corners. */
-const CONTACT_GROUPS = ['floor_', 'shade_', 'face_', 'top_', 'corner_'];
+/** The static pieces' rows of contact.png: floors, shades, faces, tops, corners (cave); floors, drops, lips (shore). */
+const CONTACT_GROUPS = ['floor_', 'shade_', 'face_', 'top_', 'corner_', 'drop_', 'lip_'];
 
 /**
  * contact.png: every built piece at 2× on the floor (left panel) and on the
  * wall face (right panel): a row each for the floors, shades, faces, tops and
- * corners, then a row per door animation, its frames in order.
+ * corners (a shore set: floors, drops, lips), then a row per door animation,
+ * its frames in order.
  */
-export function renderTileContact(tiles: readonly BuiltTile[]): Img {
-  const order = new Map(TILE_FRAMES.map((f, i) => [f.name, i]));
+export function renderTileContact(tiles: readonly BuiltTile[], set: TileSetSpec): Img {
+  const order = new Map(tileFramesFor(set).map((f, i) => [f.name, i]));
   const sorted = [...tiles].sort((a, b) => (order.get(a.name) ?? 0) - (order.get(b.name) ?? 0));
   const rows: BuiltTile[][] = [
     ...CONTACT_GROUPS.map((g) => sorted.filter((t) => t.piece.startsWith(g))),
-    ...TILE_DOOR_ANIMS.map((a) => sorted.filter((t) => t.piece === a.name)),
+    ...tileDoorAnimsFor(set).map((a) => sorted.filter((t) => t.piece === a.name)),
   ].filter((r) => r.length > 0);
   const rowW = (r: readonly BuiltTile[]) => r.reduce((s, t) => s + t.img.w * SCALE + GAP, GAP);
   const panelW = Math.max(GAP * 2, ...rows.map(rowW));
@@ -347,19 +383,22 @@ export interface RoomReport {
 }
 
 /**
- * rooms.png: every template of rooms.json and the holding's layouts drawn with `roomTiles` (the rule
- * the engine uses) from the built pieces, at 1×, doors closed, one under the
- * other on hollow-deep. A piece the recipe doesn't build (a draft) draws as
- * `missingBox`. This is the image ART judges the set by.
+ * rooms.png: every template of the set's rule (`reviewTemplatesFor`: the
+ * rooms of rooms.json for a cave set, the holding's layouts for a shore set)
+ * drawn with `roomTiles` (the rule the engine uses) from the built pieces, at
+ * 1×, doors closed, one under the other on hollow-deep. A piece the recipe
+ * doesn't build (a draft) draws as `missingBox`. This is the image ART judges
+ * the set by.
  */
 export function renderRooms(
   tiles: readonly BuiltTile[],
   weights: TileWeights,
-  templates: readonly TileTemplate[] = REVIEW_TEMPLATES,
+  templates: readonly TileTemplate[] = reviewTemplatesFor(tileSetOfWeights(weights)),
 ): { img: Img; rooms: RoomReport[] } {
   const byName = new Map(tiles.map((t) => [t.name, t.img]));
   const plans = templates.map((t) => ({ t, ...roomTiles(t, weights) }));
-  const problems = plans.flatMap((p) => p.problems.map((m) => `rooms.json: ${m}`));
+  const source = tileSetOfWeights(weights).rule === 'shore' ? 'holding.json' : 'rooms.json';
+  const problems = plans.flatMap((p) => p.problems.map((m) => `${source}: ${m}`));
   if (problems.length) throw new PipelineError(problems);
   const cols = (t: TileTemplate) => t.tiles.reduce((m, r) => Math.max(m, r.length), 0);
   const width = ROOM_GAP * 2 + Math.max(0, ...templates.map((t) => cols(t) * TILE_WORLD_PX));
@@ -390,7 +429,7 @@ export function renderRooms(
         d.rows * TILE_WORLD_PX,
       );
     }
-    const order = new Map(TILE_FRAMES.map((f, i) => [f.name, i]));
+    const order = new Map(tileFramesFor(tileSetOfWeights(weights)).map((f, i) => [f.name, i]));
     rooms.push({
       name: t.name,
       cols: cols(t),
@@ -417,6 +456,11 @@ export interface TileFrameReport {
   holes?: number;
 }
 
+/** The set a weights block (a sheet's `tiles` block) declares. */
+function tileSetOfWeights(weights: TileWeights): TileSetSpec {
+  return { rule: weights.rule === 'shore' ? 'shore' : 'cave', doors: weights.doors !== false };
+}
+
 /** report.json of a tiles recipe. */
 export interface TileReport {
   sheet: string;
@@ -424,10 +468,14 @@ export interface TileReport {
   outline: string;
   draft: boolean;
   tileSize: number;
+  /** The set's rule and doors, as the sheet's `tiles` block carries them: absent means cave, and doors. */
+  rule?: string;
+  doors?: boolean;
   floorWeights: number[];
-  /** The plain-wall weights, when the recipe gives them (absent: an even pick). */
+  /** The plain-wall weights (cave) or the plain-drop weights (shore), when the recipe gives them (absent: an even pick). */
   faceMidWeights?: number[];
   topMidWeights?: number[];
+  dropMidWeights?: number[];
   totals: { frames: number; offPalette: number; maxDeltaE: number; outlineGaps: number; masked?: number };
   /** Pieces and door frames the recipe lacks against the contract (a finished sheet fails on them). */
   missing: string[];
@@ -479,7 +527,7 @@ function tileReport(
       maxDeltaE: Math.max(0, ...frames.map((f) => f.maxDeltaE)),
       outlineGaps: frames.reduce((s, f) => s + f.outlineGaps, 0),
     },
-    missing: missingTiles(tiles),
+    missing: missingTiles(tiles, recipeTileSet(recipe)),
     opacity: opacityProblems(recipe, tiles),
     rooms,
     remap: recipe.remap.map((rule, i) => {
@@ -500,16 +548,20 @@ function tileMarkdown(r: TileReport): string {
   const list = (xs: string[]): string => (xs.length ? xs.join(', ') : 'none');
   const draftNote = (n: number): string =>
     n && r.draft ? ' (reported because this is a draft; a finished sheet fails on them)' : '';
+  const shore = r.rule === 'shore';
+  const doors = r.doors !== false;
   lines.push(`# ${r.sheet}${r.draft ? ' (draft)' : ''}`, '');
   lines.push(
     `Built by \`pnpm art:build ${r.sheet}\` from \`art/sheets/${r.sheet}.json\`; do not edit by hand (\`pnpm art:check\` rebuilds it).`,
-    `Kind tiles, outline ${r.outline}, ${r.tileSize}×${r.tileSize} tiles, floor weights ${r.floorWeights.join(':')} (floor_0 to floor_3), ` +
-      `plain face ${(r.faceMidWeights ?? [1, 1]).join(':')} and plain top ${(r.topMidWeights ?? [1, 1]).join(':')} (mid_0 to mid_1).` +
+    `Kind tiles, the ${shore ? 'shore' : 'cave'} rule${doors ? ' with doors' : ', no doors'}, outline ${r.outline}, ${r.tileSize}×${r.tileSize} tiles, floor weights ${r.floorWeights.join(':')} (floor_0 to floor_3), ` +
+      (shore
+        ? `plain drop ${(r.dropMidWeights ?? [1, 1]).join(':')} (drop_mid_0 to drop_mid_1).`
+        : `plain face ${(r.faceMidWeights ?? [1, 1]).join(':')} and plain top ${(r.topMidWeights ?? [1, 1]).join(':')} (mid_0 to mid_1).`) +
       (r.draft ? ' A draft writes this review only, never `packages/shared/assets`.' : ''),
     '',
   );
   lines.push('## Summary', '');
-  lines.push(`- Frames: ${r.totals.frames} (static pieces and door frames).`);
+  lines.push(`- Frames: ${r.totals.frames} (static pieces${doors ? ' and door frames' : ''}).`);
   lines.push(`- Off-palette pixels snapped: ${r.totals.offPalette} (largest ΔE ${r.totals.maxDeltaE}).`);
   lines.push(
     `- Outline gaps (edge pixels against the piece's own transparency, not in an outline colour; the border is no edge): ${r.totals.outlineGaps}.`,
@@ -525,9 +577,9 @@ function tileMarkdown(r: TileReport): string {
   lines.push('');
   lines.push('## Review images', '');
   lines.push(
-    '`contact.png` has every built piece at 2× on the floor (left) and the wall face (right): a row each for the floors, shades, faces, tops and corners, then a row per door animation.',
+    `\`contact.png\` has every built piece at 2× on the floor (left) and the wall face (right): a row each for the ${shore ? 'floors, drops and lips' : 'floors, shades, faces, tops and corners'}${doors ? ', then a row per door animation' : ''}.`,
     '',
-    "`rooms.png` draws every room of rooms.json and the holding's layout (holding.json) from these pieces with the engine's rule (`tileAt`, sprites.md \"Tiles\"), at 1×, doors closed, top to bottom" +
+    `\`rooms.png\` draws ${shore ? "the holding's layouts (holding.json)" : 'every room of rooms.json' + (doors ? '' : ' without a door')} from these pieces with the engine's ${shore ? 'shore' : 'cave'} rule (\`tileAt\`, sprites.md "Tiles"), at 1×${doors ? ', doors closed' : ''}, top to bottom` +
       (r.missing.length ? '; a piece this recipe lacks draws as a hollow-deep box with a telegraph-pink cross' : '') +
       ':',
     '',
@@ -613,10 +665,11 @@ export function buildTiles(recipe: Recipe, root: string): TileBuildResult {
     ];
     if (problems.length) throw new PipelineError(problems);
   }
+  const set = recipeTileSet(recipe);
   const rooms = renderRooms(tiles, tilesBlock(recipe));
   const outputs = new Map<string, Buffer>();
   if (!recipe.draft) {
-    const packed = packTiles(tiles);
+    const packed = packTiles(tiles, set);
     const base = `${ASSET_DIR}/${recipe.sheet}`;
     outputs.set(`${base}.png`, encodePng(packed.sheet));
     outputs.set(
@@ -625,7 +678,7 @@ export function buildTiles(recipe: Recipe, root: string): TileBuildResult {
     );
   }
   const review = `${REVIEW_DIR}/${recipe.sheet}`;
-  outputs.set(`${review}/contact.png`, encodePng(renderTileContact(tiles)));
+  outputs.set(`${review}/contact.png`, encodePng(renderTileContact(tiles, set)));
   outputs.set(`${review}/rooms.png`, encodePng(rooms.img));
   const report = tileReport(recipe, tiles, remapCounts, rooms.rooms, [
     ...outputs.keys(),

@@ -50,8 +50,8 @@ function viewBox(
   recipe: Recipe,
   anims: readonly BuiltAnim[],
 ): { x: number; y: number; w: number; h: number } {
-  const { cell } = cellFor(recipe.kind);
-  const soles = solesRow(recipe.kind);
+  const { cell } = cellFor(recipe.sheet);
+  const soles = solesRow(recipe.sheet);
   let x0 = cell.w;
   let y0 = soles;
   let x1 = 0;
@@ -115,7 +115,7 @@ function grid(
   const height = GAP + anims.length * (tileH + GAP);
   const out = blank(width, height);
   fillRect(out, 0, 0, width, height, HOLLOW_DEEP);
-  const solesY = (solesRow(recipe.kind) - box.y) * scale;
+  const solesY = (solesRow(recipe.sheet) - box.y) * scale;
   anims.forEach((a, row) => {
     const y = GAP + row * (tileH + GAP);
     panels.forEach((p, pi) => {
@@ -428,8 +428,8 @@ export function writeReport(
   remapCounts: RemapCounts,
   outputs: string[],
 ): { json: SheetReport; markdown: string } {
-  const spec = cellFor(recipe.kind);
-  const soles = solesRow(recipe.kind);
+  const spec = cellFor(recipe.sheet);
+  const soles = solesRow(recipe.sheet);
   const frames: FrameReport[] = anims.flatMap((a) =>
     a.frames.map((f) => {
       const r: FrameReport = {

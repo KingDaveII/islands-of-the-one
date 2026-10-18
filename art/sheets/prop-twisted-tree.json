@@ -3,7 +3,7 @@
   "kind": "prop",
   "outline": "other",
   "draft": false,
-  "notes": "Placeholder by MAIN (tools/placeholder-holding.py); ART replaces the pixels through this recipe.",
+  "notes": "Placeholder by MAIN (tools/placeholder-holding.py); ART replaces the pixels through this recipe in the holding art job. On the tall prop cell (64x96, origin (32, 86), PROP_CELLS in packages/shared/src/sprites.ts): the canopy overhangs upwards, the trunk's base on the sole row.",
   "anims": {
     "idle": {
       "src": "art/clean/prop-twisted-tree/idle",

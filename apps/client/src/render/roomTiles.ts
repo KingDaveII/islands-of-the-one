@@ -20,9 +20,12 @@ import { spritePngUrl } from './spriteSheets.js';
 
 /**
  * The room drawn from the tile sheet (docs/design/sprites.md "Tiles", G1.5e):
- * the static pieces `tileAt` picks, drawn once per room into a texture under
- * everything, and the doors as images over it, animated on the client clock
- * from the state's `doorOpen` (the client only renders it). A cell (c, r) is
+ * the static pieces `tileAt` picks by the sheet's rule (the cave's walls, or
+ * the shore's lips and drops for the holding, M2 Task 3c), drawn once per
+ * room into a texture under everything (a shore set's void stays
+ * transparent, so the hollow background shows through), and the doors as
+ * images over it, animated on the client clock from the state's `doorOpen`
+ * (the client only renders it; a doorless set places none). A cell (c, r) is
  * at world (c × 32, r × 32), no piece scaled (`pixelScale` 1).
  *
  * The sheet is ART's `tiles-cave` (`caveTileSheet`, bundled with the code like
@@ -34,7 +37,7 @@ import { spritePngUrl } from './spriteSheets.js';
 /** The tile sheet the room draws from: its texture key and its JSON contract. */
 export const TILE_SHEET: { key: string; sheet: TileSheet } = { key: CAVE_TILE_SHEET, sheet: caveTileSheet };
 
-/** The holding's tile sheet (M2 Task 3b): MAIN's placeholder `tiles-holding` until ART draws it; the same rule draws it. */
+/** The holding's tile sheet (M2 Task 3b): MAIN's placeholder `tiles-holding` until ART draws it; a shore set without doors (3c). */
 export const HOLDING_SHEET: { key: string; sheet: TileSheet } = { key: HOLDING_TILE_SHEET, sheet: holdingTileSheet };
 
 /** Loads a tile sheet as an atlas (its JSON is bundled with the code); the PNG must be next to it. The cave's by default. */

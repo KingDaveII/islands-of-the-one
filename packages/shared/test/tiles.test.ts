@@ -1,23 +1,38 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
+  CAVE_STATIC_PIECES,
   CORNER_PIECES,
   DOOR_PIECES,
+  DROP_PIECES,
   FACE_PIECES,
   FLOOR_PIECES,
+  holdingTileSheet,
   isFloorWeights,
   isMidWeights,
+  isTileRule,
+  LIP_PIECES,
   MID_WEIGHTS_DEFAULT,
   pickWeighted,
   roomTemplates,
   roomTiles,
+  SHORE_STATIC_PIECES,
+  shoreProblems,
   spriteSheetSpec,
   STATIC_TILE_PIECES,
   TILE_DOOR_ANIMS,
   TILE_FRAMES,
+  TILE_RECIPE_PIECES,
+  TILE_RULES,
+  TILE_SET_DEFAULT,
   tileAt,
+  tileDoorAnimsFor,
   tileDoors,
+  tileFramesFor,
   tileHash,
+  tileRecipePiecesFor,
+  tileRuleOf,
+  tileSetOf,
   TOP_PIECES,
   type TileSheet,
   type TileTemplate,
@@ -28,10 +43,13 @@ import { decodePng } from './png.js';
 import { tileSheetProblems } from './tileChecks.js';
 
 /**
- * The tile rule (packages/shared/src/tiles.ts, sprites.md "Tiles"): each
- * piece and overlay, the n-w-e naming, the hash and the weights, cells
- * outside the room and doors as solid; every door of rooms.json placeable;
- * and the sheet checks of §6 on the fixture and broken copies of it.
+ * The tile rules (packages/shared/src/tiles.ts, sprites.md "Tiles"): the
+ * cave's pieces and overlays, the n-w-e naming, the hash and the weights,
+ * cells outside the room and doors as solid, every door of rooms.json
+ * placeable; the shore rule's floors, lips, drops and corners, the notch it
+ * refuses and stations drawn as ground; sets with and without doors; and the
+ * sheet checks of §6 on the fixture, broken copies of it and the holding's
+ * shore set.
  */
 
 const W: TileWeights = { floorWeights: [6, 3, 2, 1] };
@@ -226,6 +244,200 @@ describe('tileAt', () => {
   });
 });
 
+const SHORE: TileWeights = { floorWeights: [6, 3, 2, 1], rule: 'shore' };
+const shoreAt = (t: TileTemplate, c: number, r: number) => tileAt(t, c, r, SHORE);
+const shoreBase = (t: TileTemplate, c: number, r: number) => shoreAt(t, c, r).base;
+
+describe('tileAt with the shore rule (ART 2026-10-18)', () => {
+  // 0123456
+  const island = room([
+    '#######', // 0
+    '#.....#', // 1
+    '#.....#', // 2
+    '##....#', // 3
+    '#..W..#', // 4
+    '#.....#', // 5
+    '#######', // 6
+  ]);
+
+  it('draws ground as a floor by the hash and floorWeights, with no shades, and stations as ground', () => {
+    for (const [c, r] of [
+      [1, 1],
+      [3, 2],
+      [2, 3],
+    ] as const)
+      expect(FLOOR_PIECES as readonly string[], `${c},${r}`).toContain(shoreBase(island, c, r));
+    expect(shoreAt(island, 3, 2)).toEqual({ base: shoreBase(island, 3, 2), overlays: [], door: null });
+    // The Writ post's W, a tree's T, the outcrop's R, the store's S, the start: ground for drawing.
+    const marks = room(['#######', '#WTRSP#', '#.....#', '#######']);
+    for (let c = 1; c <= 5; c++) {
+      expect(FLOOR_PIECES as readonly string[], `col ${c}`).toContain(shoreBase(marks, c, 1));
+      expect(shoreAt(marks, c, 1).overlays, `col ${c}`).toContain('lip_n');
+    }
+    // The pick is the cave's: the same floor as the cave rule gives the cell.
+    expect(shoreBase(island, 3, 2)).toBe(base(island, 3, 2));
+  });
+
+  it('stacks lip_n, lip_w and lip_e where that neighbour is void, in that order; no south lip', () => {
+    expect(shoreAt(island, 1, 1).overlays).toEqual(['lip_n', 'lip_w']);
+    expect(shoreAt(island, 5, 1).overlays).toEqual(['lip_n', 'lip_e']);
+    expect(shoreAt(island, 1, 5).overlays).toEqual(['lip_w']);
+    expect(shoreAt(island, 3, 5).overlays).toEqual([]);
+    expect(shoreAt(island, 3, 1).overlays).toEqual(['lip_n']);
+    expect(shoreAt(island, 2, 3).overlays).toEqual(['lip_w']);
+    const spit = room(['#####', '#.#.#', '#####']);
+    expect(shoreAt(spit, 1, 1).overlays).toEqual(['lip_n', 'lip_w', 'lip_e']);
+  });
+
+  it('adds lip_nw (lip_ne) where NW (NE) is void and N and W (E) are ground, stacked after the sides', () => {
+    // Under the bite at (1, 3): (2, 4) has void at NW, ground N and W.
+    expect(shoreAt(island, 2, 4).overlays).toEqual(['lip_nw']);
+    const notchE = room(['#####', '#..##', '#...#', '#####']);
+    expect(shoreAt(notchE, 2, 2).overlays).toEqual(['lip_ne']);
+    expect(shoreAt(notchE, 3, 2).overlays).toEqual(['lip_n', 'lip_e']);
+    // Both at once, with the side lips first.
+    const both = room(['#####', '##.##', '#...#', '#####']);
+    expect(shoreAt(both, 2, 2).overlays).toEqual(['lip_nw', 'lip_ne']);
+    expect(shoreAt(both, 1, 2).overlays).toEqual(['lip_n', 'lip_w']);
+    expect(shoreAt(both, 2, 1).overlays).toEqual(['lip_n', 'lip_w', 'lip_e']);
+  });
+
+  it('draws the drop under the island: drop_mid by dropMidWeights between drops, drop_w / drop_e at the ends, drop_we alone', () => {
+    // The south shore of the island: a drop under every ground cell of row 5.
+    expect(shoreBase(island, 1, 6)).toBe('drop_w');
+    expect(shoreBase(island, 5, 6)).toBe('drop_e');
+    for (const c of [2, 3, 4]) expect(shoreBase(island, c, 6), `col ${c}`).toMatch(/^drop_mid_[01]$/);
+    // Under the bite's ground (2, 2): the cell (1, 3) is void with ground north, its W outside the island (not a drop), its E ground.
+    expect(shoreBase(island, 1, 3)).toBe('drop_we');
+    // A one-cell island: a lone drop.
+    const lone = room(['###', '#.#', '###']);
+    expect(shoreAt(lone, 1, 1).overlays).toEqual(['lip_n', 'lip_w', 'lip_e']);
+    expect(shoreBase(lone, 1, 2)).toBe('drop_we');
+    // A two-cell island: the west end and the east end.
+    const pair = room(['####', '#..#', '####']);
+    expect([shoreBase(pair, 1, 2), shoreBase(pair, 2, 2)]).toEqual(['drop_w', 'drop_e']);
+    // The plain drops by the hash: a long shore shows both, weighted by dropMidWeights (default even).
+    const long = room(['#'.repeat(80), `#${'.'.repeat(78)}#`, '#'.repeat(80)], 'shore');
+    const drops = (w: TileWeights) => Array.from({ length: 76 }, (_, c) => String(tileAt(long, c + 2, 2, w).base));
+    expect([...new Set(drops(SHORE))].sort()).toEqual(['drop_mid_0', 'drop_mid_1']);
+    expect(drops(SHORE)).toEqual(Array.from({ length: 76 }, (_, c) => `drop_mid_${tileHash('shore', c + 2, 2, 3) & 1}`));
+    expect(drops(SHORE)).toEqual(drops({ ...SHORE, dropMidWeights: [1, 1] }));
+    const rare = drops({ ...SHORE, dropMidWeights: [3, 1] }).filter((d) => d.endsWith('_1')).length;
+    expect(rare).toBeGreaterThan(6);
+    expect(rare).toBeLessThan(32);
+    expect(drops({ ...SHORE, dropMidWeights: [1, 0] }).every((d) => d === 'drop_mid_0')).toBe(true);
+  });
+
+  it('turns the corners: drop_corner_w west of a run with ground at NE, drop_corner_e east of one with ground at NW, nothing elsewhere in the void', () => {
+    // Off the island's SW and SE corners, beside the drops' ends.
+    expect(shoreBase(island, 0, 6)).toBe('drop_corner_w');
+    expect(shoreBase(island, 6, 6)).toBe('drop_corner_e');
+    // West of the bite's one-cell drop (1, 3): the cell (0, 3) has ground at NE (1, 2) and the drop to its east.
+    expect(shoreBase(island, 0, 3)).toBe('drop_corner_w');
+    // Beside a straight west edge there is ground at NE but no run to turn round: nothing (not a column of corners).
+    expect(shoreAt(island, 0, 2)).toEqual({ base: null, overlays: [], door: null });
+    expect(shoreAt(island, 0, 5)).toEqual({ base: null, overlays: [], door: null });
+    expect(shoreAt(island, 6, 2)).toEqual({ base: null, overlays: [], door: null });
+    expect(shoreAt(island, 0, 4)).toEqual({ base: null, overlays: [], door: null });
+    // Empty void: the edge rows and columns away from any ground draw nothing.
+    expect(shoreAt(island, 0, 0)).toEqual({ base: null, overlays: [], door: null });
+    expect(shoreAt(island, 3, 0)).toEqual({ base: null, overlays: [], door: null });
+    expect(shoreAt(island, 0, 1)).toEqual({ base: null, overlays: [], door: null });
+    // Outside the template: nothing.
+    expect(shoreAt(island, -1, 6)).toEqual({ base: null, overlays: [], door: null });
+    expect(shoreAt(island, 3, 7)).toEqual({ base: null, overlays: [], door: null });
+  });
+
+  it('draws nothing at a one-cell notch (ground at NW and NE but not N) and refuses it by name', () => {
+    const notch = room(['#####', '#...#', '#.#.#', '#####'], 'Notched');
+    // (2, 3): void, N (2, 2) void (the hole's drop), NW (1, 2) and NE (3, 2) ground: both corners at once.
+    expect(shoreAt(notch, 2, 3)).toEqual({ base: null, overlays: [], door: null });
+    expect(shoreProblems(notch)).toEqual([
+      'Notched: the void cell at (2, 3) is a one-cell notch (ground at NW and NE but not N); no shore piece draws it',
+    ]);
+    expect(roomTiles(notch, { ...SHORE, doors: false }).problems).toEqual(shoreProblems(notch));
+    expect(shoreProblems(island)).toEqual([]);
+    // The hole (2, 2) is a drop_we under (2, 1), and its sides are lips.
+    expect(shoreBase(notch, 2, 2)).toBe('drop_we');
+    expect(shoreAt(notch, 1, 2).overlays).toEqual(['lip_w', 'lip_e']);
+  });
+
+  it('draws the whole island with roomTiles: floors under lips, drops and corners, nothing in the void, no doors', () => {
+    const { draws, doors, problems } = roomTiles(island, { ...SHORE, doors: false });
+    expect(problems).toEqual([]);
+    expect(doors).toEqual([]);
+    const names = new Set(SHORE_STATIC_PIECES.map((p) => p.name));
+    for (const d of draws) expect(names.has(d.piece), d.piece).toBe(true);
+    const at = (c: number, r: number) => draws.filter((d) => d.col === c && d.row === r).map((d) => d.piece);
+    expect(at(1, 1)).toEqual([expect.stringMatching(/^floor_[0-3]$/), 'lip_n', 'lip_w']);
+    expect(at(0, 6)).toEqual(['drop_corner_w']);
+    expect(at(0, 0)).toEqual([]);
+    expect(at(3, 4)).toEqual([expect.stringMatching(/^floor_[0-3]$/)]);
+  });
+});
+
+describe('sets: rules and doors', () => {
+  it('reads the rule and doors from a tiles block, cave with doors by default', () => {
+    expect(TILE_RULES).toEqual(['cave', 'shore']);
+    expect(TILE_SET_DEFAULT).toEqual({ rule: 'cave', doors: true });
+    expect(tileSetOf(undefined)).toEqual({ rule: 'cave', doors: true });
+    expect(tileSetOf({ rule: 'shore', doors: false })).toEqual({ rule: 'shore', doors: false });
+    expect(tileSetOf({ rule: 'beach' })).toEqual({ rule: 'cave', doors: true });
+    expect(isTileRule('shore')).toBe(true);
+    expect(isTileRule('beach')).toBe(false);
+    expect(tileRuleOf(W)).toBe('cave');
+    expect(tileRuleOf(SHORE)).toBe('shore');
+    expect(holdingTileSheet.tiles.rule).toBe('shore');
+    expect(holdingTileSheet.tiles.doors).toBe(false);
+    expect(holdingTileSheet.tiles.dropMidWeights).toEqual([3, 1]);
+  });
+
+  it("lists each rule's pieces: the cave's 29, the shore's 16 (floors, drops, lips), each with its opacity", () => {
+    expect(CAVE_STATIC_PIECES).toBe(STATIC_TILE_PIECES);
+    expect(SHORE_STATIC_PIECES.map((p) => p.name)).toEqual([...FLOOR_PIECES, ...DROP_PIECES, ...LIP_PIECES]);
+    expect(DROP_PIECES).toEqual(['drop_mid_0', 'drop_mid_1', 'drop_w', 'drop_e', 'drop_we', 'drop_corner_w', 'drop_corner_e']);
+    expect(LIP_PIECES).toEqual(['lip_n', 'lip_w', 'lip_e', 'lip_nw', 'lip_ne']);
+    expect(SHORE_STATIC_PIECES.length).toBe(16);
+    for (const p of SHORE_STATIC_PIECES) expect([p.w, p.h], p.name).toEqual([32, 32]);
+    const opacity = Object.fromEntries(SHORE_STATIC_PIECES.map((p) => [p.name, p.opacity]));
+    expect(opacity).toEqual({
+      floor_0: 'full', floor_1: 'full', floor_2: 'full', floor_3: 'full',
+      drop_mid_0: 'top', drop_mid_1: 'top', drop_w: 'top', drop_e: 'top', drop_we: 'top',
+      drop_corner_w: 'none', drop_corner_e: 'none',
+      lip_n: 'none', lip_w: 'none', lip_e: 'none', lip_nw: 'none', lip_ne: 'none',
+    });
+    expect(CAVE_STATIC_PIECES.filter((p) => p.opacity === 'full').map((p) => p.name)).toEqual([...FLOOR_PIECES, ...FACE_PIECES, ...TOP_PIECES]);
+    expect(CAVE_STATIC_PIECES.every((p) => p.opaque === (p.opacity === 'full'))).toBe(true);
+  });
+
+  it('gives a set its frames and recipe pieces: door frames and animations only with doors', () => {
+    expect(tileFramesFor(TILE_SET_DEFAULT)).toEqual(TILE_FRAMES);
+    expect(tileRecipePiecesFor(TILE_SET_DEFAULT)).toEqual(TILE_RECIPE_PIECES);
+    const shore = tileFramesFor({ rule: 'shore', doors: false });
+    expect(shore.map((f) => f.name)).toEqual(SHORE_STATIC_PIECES.map((p) => p.name));
+    expect(tileRecipePiecesFor({ rule: 'shore', doors: false }).map((p) => [p.name, p.frames])).toEqual(
+      SHORE_STATIC_PIECES.map((p) => [p.name, 1]),
+    );
+    expect(tileDoorAnimsFor({ rule: 'shore', doors: false })).toEqual([]);
+    expect(tileDoorAnimsFor({ rule: 'cave', doors: true })).toBe(TILE_DOOR_ANIMS);
+    // A doorless cave set: the static pieces alone; a shore set with doors: its pieces and the doors.
+    expect(tileFramesFor({ rule: 'cave', doors: false }).length).toBe(29);
+    expect(tileFramesFor({ rule: 'shore', doors: true }).length).toBe(16 + 3 * 8);
+  });
+
+  it('refuses a D in a template drawn with a doorless set, naming the template, and places none', () => {
+    const d = room(['##DD##', '#....#', '######'], 'Gate');
+    expect(roomTiles(d, W).problems).toEqual([]);
+    expect(roomTiles(d, W).doors.length).toBe(1);
+    const doorless = roomTiles(d, { ...W, doors: false });
+    expect(doorless.doors).toEqual([]);
+    expect(doorless.problems).toEqual(['Gate: has D cells at (2, 0) (3, 0), but the tile set has no doors (doors: false)']);
+    expect(roomTiles(room(['####', '#..#', '####'], 'Plain'), { ...W, doors: false }).problems).toEqual([]);
+    // Every room of rooms.json needs doors: none draws with a doorless set.
+    for (const t of roomTemplates) expect(roomTiles(t, { ...W, doors: false }).problems.length, t.name).toBe(1);
+  });
+});
+
 describe('doors (tileDoors)', () => {
   it('places every D pair of rooms.json', () => {
     for (const t of roomTemplates) {
@@ -409,6 +621,61 @@ describe('the tile sheet checks (§6) on test/fixtures/tiles-fixture', () => {
         `tiles.topMidWeights is ${JSON.stringify(w)}, not two positive integers`,
       ]);
     }
+  });
+
+  it("check a set by its rule and doors: the shore's pieces, no door frames or animations, dropMidWeights, the top-row opacity", () => {
+    // The fixture declared a shore set: every cave piece and door is foreign, every shore piece missing.
+    const s = clone();
+    s.tiles.rule = 'shore';
+    s.tiles.doors = false;
+    const problems = tileSheetProblems('tiles-fixture', s, FIXTURE_PNG);
+    expect(problems).toEqual(
+      expect.arrayContaining([
+        'drop_mid_0 is missing',
+        'lip_ne is missing',
+        'shade_n is not a piece of the shore rule',
+        'door_n_closed_0 is a door frame, but the set has no doors (tiles.doors false)',
+        'anims.door_n_opening is a door animation, but the set has no doors (tiles.doors false)',
+      ]),
+    );
+    expect(problems).not.toContain('floor_0 is missing');
+    // The weights of the other rule.
+    const w = clone();
+    w.tiles.dropMidWeights = [3, 1];
+    expect(tileSheetProblems('tiles-fixture', w, FIXTURE_PNG)).toEqual(["tiles.dropMidWeights is for the shore rule, and this set's rule is cave"]);
+    w.tiles.dropMidWeights = [3];
+    expect(tileSheetProblems('tiles-fixture', w, FIXTURE_PNG)).toEqual(['tiles.dropMidWeights is [3], not two positive integers']);
+    const r = clone();
+    r.tiles.rule = 'beach';
+    expect(tileSheetProblems('tiles-fixture', r, FIXTURE_PNG)).toEqual(['tiles.rule is "beach", not one of cave, shore']);
+    const d = clone();
+    (d.tiles as { doors?: unknown }).doors = 'no';
+    // A value that is not a boolean reads as the default (doors), so only the field is reported.
+    expect(tileSheetProblems('tiles-fixture', d, FIXTURE_PNG)).toEqual(['tiles.doors is "no", not true or false']);
+    // A cave set without doors: the door frames and animations are foreign.
+    const c = clone();
+    c.tiles.doors = false;
+    expect(tileSheetProblems('tiles-fixture', c, FIXTURE_PNG)).toEqual(
+      expect.arrayContaining(['door_w_open_0 is a door frame, but the set has no doors (tiles.doors false)', 'anims.door_e_closed is a door animation, but the set has no doors (tiles.doors false)']),
+    );
+    expect(tileSheetProblems('tiles-fixture', c, FIXTURE_PNG).filter((p) => p.includes('missing'))).toEqual([]);
+    // The shipped shore set passes, and a hole in a drop's top row fails it while one lower down does not.
+    const holding = holdingTileSheet;
+    const png = decodePng(readFileSync(new URL('../assets/sprites/tiles-holding.png', import.meta.url)));
+    expect(tileSheetProblems('tiles-holding', holding, png)).toEqual([]);
+    expect(Object.keys(holding.anims)).toEqual([]);
+    const drop = holding.frames.drop_w?.frame;
+    if (!drop) throw new Error('no drop_w');
+    const top = { ...png, rgba: png.rgba.slice() };
+    setPx(top, drop.x + 5, drop.y, [0, 0, 0, 0]);
+    expect(tileSheetProblems('tiles-holding', holding, top)).toEqual(['transparent pixels in the top row of pieces that must be opaque at the top: drop_w']);
+    const low = { ...png, rgba: png.rgba.slice() };
+    setPx(low, drop.x + 5, drop.y + 10, [0, 0, 0, 0]);
+    expect(tileSheetProblems('tiles-holding', holding, low)).toEqual([]);
+    const floor = holding.frames.floor_1?.frame;
+    if (!floor) throw new Error('no floor_1');
+    setPx(low, floor.x + 5, floor.y + 10, [0, 0, 0, 0]);
+    expect(tileSheetProblems('tiles-holding', holding, low)).toEqual(['transparent pixels in pieces that must be opaque: floor_1']);
   });
 
   it('fail an unknown frame and overlapping frames', () => {

@@ -1,25 +1,32 @@
 #!/usr/bin/env python3
 """
-Placeholder source art for the holding (M2 Task 3b), written into art/clean/
+Placeholder source art for the holding (M2 Task 3b, 3c), written into art/clean/
 for the art pipeline to build like any other sheet: flat, clearly placeholder
-shapes in whitelist colours. The face, top and door pieces and the props carry
-their name's initials, so a wrong pick shows in a shot; the floors and the shade
-overlays carry none, only their flecks and dither, so the ground reads as ground
-while the variants and shades still show. ART replaces the pixels through the recipes (art/sheets/tiles-holding.json,
-prop-writ-post.json, prop-twisted-tree.json, prop-stone-outcrop.json) without
+shapes in whitelist colours. The drops and lips and the props carry their
+name's initials, so a wrong pick shows in a shot; the floors carry none, only
+their flecks, so the ground reads as ground while the four variants still
+show. ART replaces the pixels through the recipes (art/sheets/tiles-holding.json,
+prop-writ-post.json, prop-twisted-tree.json, prop-stone-outcrop.json,
+prop-holding-store.json, prop-kesh-rock.json) in the holding art job without
 an engine change; nothing here is final art.
 
-- tiles-holding: the same piece names as tiles-cave (packages/shared/src/tiles.ts).
-  The ground is a floor, the island edge the face and top. The holding has no
-  doors, but a finished tile sheet carries every piece, so the door frames are
-  plain blocks.
-- prop-writ-post, prop-twisted-tree, prop-stone-outcrop: `idle`, one frame each,
-  on the 64x64 prop canvas with the base on row 53, outlined in hollow-deep.
+- tiles-holding: a shore set without doors (packages/shared/src/tiles.ts,
+  docs/design/sprites.md "Tiles"): the floors, the drops (the cliff hanging
+  below the island: a lit lip, a short rock face, then a dither into
+  hollow-deep that ends in transparent rows) and the lips (transparent
+  overlays: an outline and a lit rim on a ground cell beside the void).
+- prop-writ-post, prop-stone-outcrop, prop-holding-store, prop-kesh-rock:
+  `idle`, one frame each, on the 64x64 prop canvas with the base on row 53,
+  outlined in hollow-deep.
+- prop-twisted-tree: `idle`, one frame, on the tall prop cell (64x96, the
+  origin at (32, 86)): drawn 64x96 with the trunk's base on row 85, the
+  canopy overhanging upwards.
 
     python3 tools/placeholder-holding.py
-    pnpm art:build tiles-holding prop-writ-post prop-twisted-tree prop-stone-outcrop
+    pnpm art:build tiles-holding prop-writ-post prop-twisted-tree prop-stone-outcrop prop-holding-store prop-kesh-rock
 """
 import json
+import shutil
 from pathlib import Path
 
 from PIL import Image
@@ -27,24 +34,16 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 T = {k: v.lower() for k, v in json.loads((ROOT / "packages/shared/data/palette.json").read_text())["tokens"].items()}
 TILE = 32
-SIDES = ["n", "w", "e", "nw", "ne", "we", "nwe"]
-STATIC = (
-    [f"floor_{i}" for i in range(4)]
-    + ["shade_n", "shade_w", "shade_e", "shade_nw", "shade_ne"]
-    + [f"face_{s}" for s in SIDES]
-    + ["face_mid_0", "face_mid_1"]
-    + [f"top_{s}" for s in SIDES]
-    + ["top_mid_0", "top_mid_1"]
-    + ["corner_nw", "corner_ne"]
-)
-DOORS = [("door_n", 64, 32), ("door_w", 32, 64), ("door_e", 32, 64)]
-STATES = [("closed", 1), ("opening", 6), ("open", 1)]
+FLOORS = [f"floor_{i}" for i in range(4)]
+DROPS = ["drop_mid_0", "drop_mid_1", "drop_w", "drop_e", "drop_we", "drop_corner_w", "drop_corner_e"]
+LIPS = ["lip_n", "lip_w", "lip_e", "lip_nw", "lip_ne"]
 
 # A 3x5 font for the tags; '#' is ink.
 FONT = {
     "A": ["###", "#.#", "###", "#.#", "#.#"], "C": ["###", "#..", "#..", "#..", "###"],
     "D": ["##.", "#.#", "#.#", "#.#", "##."], "E": ["###", "#..", "##.", "#..", "###"],
     "F": ["###", "#..", "##.", "#..", "#.."], "H": ["#.#", "#.#", "###", "#.#", "#.#"],
+    "I": ["###", ".#.", ".#.", ".#.", "###"], "K": ["#.#", "#.#", "##.", "#.#", "#.#"],
     "L": ["#..", "#..", "#..", "#..", "###"], "M": ["#.#", "###", "###", "#.#", "#.#"],
     "N": ["##.", "#.#", "#.#", "#.#", "#.#"], "O": ["###", "#.#", "#.#", "#.#", "###"],
     "P": ["###", "#.#", "###", "#..", "#.."], "R": ["##.", "#.#", "##.", "#.#", "#.#"],
@@ -56,19 +55,18 @@ FONT = {
 }
 
 GROUND, FLECK = T["hollow-lavender"], T["hollow-light"]
-SHADE = T["hollow-dusk"]
-FACE, JOINT, LIP = T["hollow-below"], T["hollow-deep"], T["hollow-dusk"]
-TOP, PIT = T["hollow-deep"], T["hollow-below"]
+RIM, OUTLINE = T["hollow-light"], T["hollow-deep"]
+FACE, JOINT, DEEP = T["hollow-below"], T["hollow-dusk"], T["hollow-deep"]
 INK, PAPER = T["hollow-deep"], T["choir-paper"]
-OUTLINE = T["hollow-deep"]
 
 
-def text(px, x0, y0, s, colour):
+def text(px, x0, y0, s, colour, vertical=False):
     for i, ch in enumerate(s):
+        gx, gy = (x0, y0 + i * 6) if vertical else (x0 + i * 4, y0)
         for y, row in enumerate(FONT[ch]):
             for x, c in enumerate(row):
                 if c == "#":
-                    px[(x0 + i * 4 + x, y0 + y)] = colour
+                    px[(gx + x, gy + y)] = colour
 
 
 def fill(px, x0, y0, w, h, colour):
@@ -77,16 +75,18 @@ def fill(px, x0, y0, w, h, colour):
             px[(x, y)] = colour
 
 
-def dither(px, x0, y0, w, h, colour, phase=0):
+def dither(px, x0, y0, w, h, colour, every=2, phase=0):
+    """Every `every`-th pixel on the checkerboard, so a dither thins as `every` grows."""
     for y in range(y0, y0 + h):
         for x in range(x0, x0 + w):
-            if (x + y + phase) % 2 == 0:
+            if (x + y + phase) % every == 0:
                 px[(x, y)] = colour
 
 
 def initials(name):
+    """DRM0 for drop_mid_0, DRCW for drop_corner_w, LINW for lip_nw."""
     word, *rest = name.split("_")
-    return word[:2].upper() + "".join("M" if p == "mid" else p.upper() for p in rest)
+    return word[:2].upper() + "".join({"mid": "M", "corner": "C"}.get(p, p.upper()) for p in rest)
 
 
 def floor(px, variant):
@@ -99,74 +99,93 @@ def floor(px, variant):
         px[(x + 1, y)] = FLECK
 
 
-def draw_static(name):
+def cliff(px, x0, w, variant=0):
+    """Columns x0..x0+w of a drop: the lit lip (rows 0-2), a short rock face with joints, then the dither into hollow-deep ending in transparent rows."""
+    fill(px, x0, 0, w, 1, RIM)
+    fill(px, x0, 1, w, 2, JOINT)
+    fill(px, x0, 3, w, 12, FACE)
+    for y in (7, 11):
+        fill(px, x0, y, w, 1, JOINT)
+    if variant:
+        fill(px, x0 + w // 2, 8, 1, 6, JOINT)
+    fill(px, x0, 15, w, 4, DEEP)
+    dither(px, x0, 15, w, 4, FACE, 2)
+    fill(px, x0, 19, w, 5, DEEP)
+    dither(px, x0, 24, w, 4, DEEP, 2)
+    dither(px, x0, 28, w, 4, DEEP, 4)
+
+
+def draw_drop(name):
     px = {}
-    label = initials(name)
-    if name.startswith("floor"):
-        floor(px, int(name[-1]))
-    elif name == "shade_n":
-        dither(px, 0, 0, TILE, 6, SHADE)
-    elif name == "shade_w":
-        dither(px, 0, 0, 6, TILE, SHADE)
-    elif name == "shade_e":
-        dither(px, TILE - 6, 0, 6, TILE, SHADE)
-    elif name == "shade_nw":
-        dither(px, 0, 0, 6, 6, SHADE)
-    elif name == "shade_ne":
-        dither(px, TILE - 6, 0, 6, 6, SHADE)
-    elif name.startswith("face"):
-        # The edge's face: the cap on top, the cliff face below, a dark joint every 8 rows.
-        fill(px, 0, 0, TILE, 8, LIP)
-        fill(px, 0, 8, TILE, TILE - 8, FACE)
-        for y in (15, 23, 31):
-            fill(px, 0, y, TILE, 1, JOINT)
-        open_sides = name.split("_")[1]
-        if "n" in open_sides:
-            fill(px, 0, 0, TILE, 1, JOINT)
-        if "w" in open_sides:
-            fill(px, 0, 0, 1, TILE, JOINT)
-        if "e" in open_sides:
-            fill(px, TILE - 1, 0, 1, TILE, JOINT)
-        text(px, 2, 10, label, PAPER)
-    elif name.startswith("top"):
-        # The edge's top: the dark of the Hollow, with pits, and a lit rim on each open side.
-        fill(px, 0, 0, TILE, TILE, TOP)
-        for i in range(6):
-            x = (9 * i + 4) % 26 + 3
-            y = (13 * i + 6) % 24 + 4
-            fill(px, x, y, 2, 1, PIT)
-        if name == "top_mid_1":
-            fill(px, 12, 14, 8, 4, PIT)
-        open_sides = name.split("_")[1]
-        if "n" in open_sides:
-            fill(px, 0, 0, TILE, 2, LIP)
-        if "w" in open_sides:
-            fill(px, 0, 0, 2, TILE, LIP)
-        if "e" in open_sides:
-            fill(px, TILE - 2, 0, 2, TILE, LIP)
-        text(px, 2, 20, label, PAPER)
-    elif name.startswith("corner"):
-        x0 = 0 if name == "corner_nw" else TILE - 8
-        fill(px, x0, 0, 8, 8, LIP)
+    if name == "drop_corner_w":
+        # The cliff turning round the corner west of the run: a wedge from the NE corner, tapering down and left.
+        for y in range(0, 24):
+            x0 = max(0, 16 - y)
+            cliff_row(px, x0, TILE - x0, y)
+        dither(px, 8, 24, 24, 4, DEEP, 2)
+        dither(px, 12, 28, 20, 4, DEEP, 4)
+    elif name == "drop_corner_e":
+        for y in range(0, 24):
+            w = min(TILE, 16 + y)
+            cliff_row(px, 0, w, y)
+        dither(px, 0, 24, 24, 4, DEEP, 2)
+        dither(px, 0, 28, 20, 4, DEEP, 4)
+    else:
+        cliff(px, 0, TILE, 1 if name == "drop_mid_1" else 0)
+        sides = name.split("_")[1]
+        if "w" in sides:
+            fill(px, 0, 0, 1, 24, OUTLINE)
+        if "e" in sides:
+            fill(px, TILE - 1, 0, 1, 24, OUTLINE)
+    text(px, 2, 3 if not name.startswith("drop_corner") else 2, initials(name), PAPER)
     return px
 
 
-def draw_door(door, w, h, state, n):
-    # Plain placeholders: the holding has no doors; a finished sheet carries every piece.
+def cliff_row(px, x0, w, y):
+    """One row of a cliff (see `cliff`) over columns x0..x0+w."""
+    if y == 0:
+        fill(px, x0, y, w, 1, RIM)
+    elif y <= 2:
+        fill(px, x0, y, w, 1, JOINT)
+    elif y < 15:
+        fill(px, x0, y, w, 1, JOINT if y in (7, 11) else FACE)
+    elif y < 19:
+        fill(px, x0, y, w, 1, DEEP)
+        dither(px, x0, y, w, 1, FACE, 2)
+    else:
+        fill(px, x0, y, w, 1, DEEP)
+    if x0 > 0:
+        px[(x0, y)] = OUTLINE
+
+
+def draw_lip(name):
+    # An outline and a lit rim where the ground meets the void, over the floor; transparent elsewhere.
     px = {}
-    fill(px, 0, 0, w, h, FACE)
-    fill(px, 0, 0, w, 1, JOINT)
-    fill(px, 0, h - 1, w, 1, JOINT)
-    fill(px, 0, 0, 1, h, JOINT)
-    fill(px, w - 1, 0, 1, h, JOINT)
-    if state == "opening":
-        gap = 2 + 4 * n
-        fill(px, (w - gap) // 2, 1, gap, h - 2, GROUND) if w > h else fill(px, 1, (h - gap) // 2, w - 2, gap, GROUND)
-    elif state == "open":
-        fill(px, 1, 1, w - 2, h - 2, GROUND)
-    tag = {"closed": "C", "opening": f"O{n}", "open": "OP"}[state]
-    label = "D" + door[-1].upper() + tag
-    text(px, (w - (4 * len(label) - 1)) // 2, (h - 5) // 2, label, PAPER if state != "open" else INK)
+    label = initials(name)
+    if name == "lip_n":
+        fill(px, 0, 0, TILE, 1, OUTLINE)
+        fill(px, 0, 1, TILE, 2, RIM)
+        text(px, 2, 4, label, INK)
+    elif name == "lip_w":
+        fill(px, 0, 0, 1, TILE, OUTLINE)
+        fill(px, 1, 0, 2, TILE, RIM)
+        text(px, 4, 2, label, INK, vertical=True)
+    elif name == "lip_e":
+        fill(px, TILE - 1, 0, 1, TILE, OUTLINE)
+        fill(px, TILE - 3, 0, 2, TILE, RIM)
+        text(px, TILE - 7, 2, label, INK, vertical=True)
+    elif name == "lip_nw":
+        fill(px, 0, 0, 4, 1, OUTLINE)
+        fill(px, 0, 0, 1, 4, OUTLINE)
+        fill(px, 1, 1, 3, 2, RIM)
+        fill(px, 1, 1, 2, 3, RIM)
+        text(px, 5, 5, label, INK)
+    elif name == "lip_ne":
+        fill(px, TILE - 4, 0, 4, 1, OUTLINE)
+        fill(px, TILE - 1, 0, 1, 4, OUTLINE)
+        fill(px, TILE - 4, 1, 3, 2, RIM)
+        fill(px, TILE - 3, 1, 2, 3, RIM)
+        text(px, TILE - 20, 5, label, INK)
     return px
 
 
@@ -195,17 +214,22 @@ def writ_post():
 
 
 def twisted_tree():
-    # A canopy over a leaning trunk, 44 wide, the roots at the base.
+    # On the tall cell: a leaning trunk from row 46 to the base at row 85, roots either side, and a canopy
+    # from row 6 to 52 overhanging the trunk, so the Kindled standing behind it is hidden by the crown.
     px = {}
-    fill(px, 28, 30, 8, 24, T["unwritten-tar"])
-    fill(px, 28, 30, 2, 24, T["unwritten-sail"])
-    fill(px, 22, 50, 20, 4, T["unwritten-tar"])
-    fill(px, 14, 12, 36, 22, T["wheel-patina"])
-    fill(px, 10, 18, 44, 12, T["wheel-patina"])
-    fill(px, 14, 12, 36, 2, T["wheel-eye"])
-    fill(px, 10, 18, 4, 12, T["watcher-rain"])
-    fill(px, 14, 30, 36, 4, T["watcher-rain"])
-    text(px, 27, 19, "TT", PAPER)
+    fill(px, 28, 46, 8, 40, T["unwritten-tar"])
+    fill(px, 28, 46, 2, 40, T["unwritten-sail"])
+    fill(px, 24, 60, 4, 6, T["unwritten-tar"])
+    fill(px, 36, 68, 4, 6, T["unwritten-tar"])
+    fill(px, 20, 82, 24, 4, T["unwritten-tar"])
+    fill(px, 14, 18, 36, 34, T["wheel-patina"])
+    fill(px, 8, 26, 48, 16, T["wheel-patina"])
+    fill(px, 20, 6, 24, 14, T["wheel-patina"])
+    fill(px, 20, 6, 24, 2, T["wheel-eye"])
+    fill(px, 14, 18, 36, 2, T["wheel-eye"])
+    fill(px, 8, 26, 4, 16, T["watcher-rain"])
+    fill(px, 14, 48, 36, 4, T["watcher-rain"])
+    text(px, 27, 30, "TT", PAPER)
     return outlined(px)
 
 
@@ -223,6 +247,32 @@ def stone_outcrop():
     return outlined(px)
 
 
+def holding_store():
+    # A squat chest of planks, 40 wide, 24 tall, a lid and a brass band.
+    px = {}
+    fill(px, 12, 30, 40, 24, T["unwritten-tar"])
+    fill(px, 12, 30, 40, 6, T["unwritten-sail"])
+    fill(px, 12, 36, 40, 2, T["wheel-brass-dark"])
+    fill(px, 12, 50, 40, 4, T["wheel-brass-dark"])
+    fill(px, 30, 38, 4, 6, T["wheel-brass"])
+    text(px, 27, 42, "HS", PAPER)
+    return outlined(px)
+
+
+def kesh_rock():
+    # A needle of rock, 20 wide at the base and 6 at the tip, from row 4 to the base at 53.
+    px = {}
+    for y in range(4, 54):
+        w = 6 + (y - 4) * 14 // 49
+        fill(px, 32 - w // 2, y, w, 1, T["watcher-stone"])
+    for y in range(20, 54):
+        w = 2 + (y - 20) * 6 // 33
+        fill(px, 32 + 1, y, w, 1, T["watcher-iron"])
+    fill(px, 22, 50, 20, 4, T["watcher-iron"])
+    text(px, 27, 38, "KR", PAPER)
+    return outlined(px)
+
+
 def rgb(h):
     return tuple(int(h[i : i + 2], 16) for i in (1, 3, 5)) + (255,)
 
@@ -237,14 +287,25 @@ def save(path, w, h, px):
 
 def main():
     tiles = ROOT / "art/clean/tiles-holding"
-    for name in STATIC:
-        save(tiles / f"{name}.png", TILE, TILE, draw_static(name))
-    for door, w, h in DOORS:
-        for state, count in STATES:
-            for n in range(count):
-                save(tiles / f"{door}_{state}" / f"frame-{n}.png", w, h, draw_door(door, w, h, state, n))
-    for name, draw in (("prop-writ-post", writ_post), ("prop-twisted-tree", twisted_tree), ("prop-stone-outcrop", stone_outcrop)):
-        save(ROOT / "art/clean" / name / "idle" / "frame-0.png", 64, 64, draw())
+    # The set changed from the cave's pieces to the shore's (3c): start from an empty folder.
+    if tiles.exists():
+        shutil.rmtree(tiles)
+    for name in FLOORS:
+        px = {}
+        floor(px, int(name[-1]))
+        save(tiles / f"{name}.png", TILE, TILE, px)
+    for name in DROPS:
+        save(tiles / f"{name}.png", TILE, TILE, draw_drop(name))
+    for name in LIPS:
+        save(tiles / f"{name}.png", TILE, TILE, draw_lip(name))
+    for name, draw, h in (
+        ("prop-writ-post", writ_post, 64),
+        ("prop-twisted-tree", twisted_tree, 96),
+        ("prop-stone-outcrop", stone_outcrop, 64),
+        ("prop-holding-store", holding_store, 64),
+        ("prop-kesh-rock", kesh_rock, 64),
+    ):
+        save(ROOT / "art/clean" / name / "idle" / "frame-0.png", 64, h, draw())
 
 
 if __name__ == "__main__":

@@ -78,7 +78,7 @@ describe('the settle', () => {
     expect(isHoldingResponse(r)).toBe(true);
     expect(r).toEqual({
       layoutId: HOLDING_LAYOUT_ID,
-      baskets: { 'writ-post': [], 'twisted-trees': [], 'stone-outcrop': [] },
+      baskets: { 'writ-post': [], 'holding-store': [], 'weapon-rack': [], 'twisted-trees': [], 'stone-outcrop': [] },
       activity: null,
       now: at(0).toISOString(),
       skills: {

@@ -29,8 +29,10 @@ import type { Tuning } from './tuning.js';
  * `roam.resetTurnDeg`, ramping up to full speed over `roam.rampMs`. Stopping
  * or a sharp turn drops it back to a walk. A stick pushed less than
  * `roam.walkStickMax` always walks (the keyboard counts as a full push); there
- * is no run button. No combat, no backpedal: the facing follows the movement
- * direction and standing still keeps the last facing.
+ * is no run button. The run clock tolerates a wobbling thumb (GAME DESIGN
+ * 2026-10-18): a dip under the threshold shorter than `roam.dipGraceMs` does
+ * not reset it, a longer one does. No combat, no backpedal: the facing
+ * follows the movement direction and standing still keeps the last facing.
  *
  * Integers only, like the run: positions and velocities in sub-pixel units,
  * angles in 1/4096 turn, factors in permille, time in ticks; the input is the
@@ -51,6 +53,8 @@ export interface RoamTuning {
   resetTurnDeg: number;
   /** A stick pushed less than this (0..1 of its travel) always walks. */
   walkStickMax: number;
+  /** A dip under `walkStickMax` shorter than this keeps the run clock; a longer one resets it. */
+  dipGraceMs: number;
 }
 
 /** The compiled integer parameters of a roam. */
@@ -70,6 +74,8 @@ export interface RoamParams {
   resetTurn: number;
   /** The highest move magnitude (0..7) that always walks. */
   walkMagMax: number;
+  /** Ticks a dip under `walkMagMax` may last before it resets the run clock. */
+  dipGrace: number;
 }
 
 export type Gait = 'walk' | 'run';
@@ -88,6 +94,8 @@ export interface RoamState {
   moveMag: number;
   /** Ticks moving at a full push without a stop or a sharp turn (the run clock). */
   movingTicks: number;
+  /** Ticks of the current dip under the walk threshold (0 while pushing fully or standing); the clock survives one shorter than `dipGrace`. */
+  dipTicks: number;
   gait: Gait;
   room: RoomState;
 }
@@ -132,6 +140,7 @@ export function compileRoam(player: Tuning['player'], roam: RoamTuning): RoamPar
     resetTurn: Math.max(0, Math.min(HALF_TURN, degToAngle(roam.resetTurnDeg))),
     // A magnitude is 1..7 of the stick's live travel: below the threshold's share of the top it walks.
     walkMagMax: Math.max(0, Math.min(MOVE_MAG_MAX, Math.floor(toPermille(roam.walkStickMax) * MOVE_MAG_MAX / 1000))),
+    dipGrace: Math.max(0, msToTicks(roam.dipGraceMs)),
   };
 }
 
@@ -149,6 +158,7 @@ export function createRoam(config: RoamConfig): Roam {
     moveAngle: 0,
     moveMag: 0,
     movingTicks: 0,
+    dipTicks: 0,
     gait: 'walk',
     room,
   };
@@ -186,6 +196,7 @@ export function stepRoam(roam: Roam, packedInput: number): void {
   if (input.moveMag === 0) {
     // Stopping drops the run; the facing is kept.
     s.movingTicks = 0;
+    s.dipTicks = 0;
     s.gait = 'walk';
     brake(s, P.friction);
     moveBody(s.room, s, P.radius);
@@ -196,9 +207,16 @@ export function stepRoam(roam: Roam, packedInput: number): void {
   if (s.movingTicks > 0 && Math.abs(angleDiff(angle, s.moveAngle)) > P.resetTurn) s.movingTicks = 0;
   s.moveAngle = angle;
   s.facing = angle;
-  // A light push always walks: the clock only counts full pushes.
-  if (input.moveMag <= P.walkMagMax) s.movingTicks = 0;
-  else s.movingTicks++;
+  // A light push always walks: the clock only counts full pushes. A dip under the threshold shorter than the
+  // grace keeps the clock (a wobbling thumb); past it the clock resets and stays reset until a full push.
+  if (input.moveMag <= P.walkMagMax) {
+    s.dipTicks++;
+    if (s.dipTicks > P.dipGrace) s.movingTicks = 0;
+    else if (s.movingTicks > 0) s.movingTicks++;
+  } else {
+    s.dipTicks = 0;
+    s.movingTicks++;
+  }
   const factor = roamSpeedFactor(P, s.movingTicks);
   s.gait = s.movingTicks > P.runAfter ? 'run' : 'walk';
   const target = idiv(idiv(P.speed * input.moveMag, MOVE_MAG_MAX) * factor, 1000);

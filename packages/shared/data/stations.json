@@ -1,7 +1,9 @@
 {
-  "$comment": "The holding's stations (docs/design/holding.md). id: kebab-case, the basket is basket:<id>, stored in the ledger so never renamed; kind: post | trees | outcrop (the layout's legend letter); name: display name; action (none for the post): name, the yield (itemId, quantity per cycle), cycleMs, the skill it trains and the XP per cycle (GAME DESIGN's curve: the action's base time in seconds). The living branch, regrowth and the quarry's layers come later with their items.",
+  "$comment": "The holding's stations (docs/design/holding.md). id: kebab-case, the basket is basket:<id>, stored in the ledger so never renamed; kind: post | trees | outcrop | store | rack (the layout's legend letter; the rack has none, it is a reserved spot until Task 8); name: display name; action (none for the post, the store and the rack): name, the yield (itemId, quantity per cycle), cycleMs, the skill it trains and the XP per cycle (GAME DESIGN's curve: the action's base time in seconds). Use on the post or the store opens the inventory with the store pane (the post gets its Writ panel in Task 4). The living branch, regrowth and the quarry's layers come later with their items.",
   "stations": [
     { "id": "writ-post", "kind": "post", "name": "Writ post" },
+    { "id": "holding-store", "kind": "store", "name": "Holding store" },
+    { "id": "weapon-rack", "kind": "rack", "name": "Weapon rack" },
     {
       "id": "twisted-trees",
       "kind": "trees",

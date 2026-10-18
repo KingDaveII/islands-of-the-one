@@ -1,0 +1,15 @@
+{
+  "sheet": "prop-holding-store",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "notes": "Placeholder by MAIN (tools/placeholder-holding.py); ART replaces the pixels through this recipe in the holding art job. The holding store, its own station by the Writ post (M2 Task 3c).",
+  "anims": {
+    "idle": {
+      "src": "art/clean/prop-holding-store/idle",
+      "frames": [
+        0
+      ]
+    }
+  }
+}

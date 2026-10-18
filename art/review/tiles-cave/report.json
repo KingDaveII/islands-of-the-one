@@ -76,16 +76,6 @@
         2128
       ],
       "missing": []
-    },
-    {
-      "name": "first-holding",
-      "cols": 28,
-      "rows": 20,
-      "at": [
-        16,
-        2592
-      ],
-      "missing": []
     }
   ],
   "remap": [],

@@ -27,14 +27,21 @@ The engine, the §6 test and the G1.2 pipeline read these numbers from `packages
 | Kind | Cell | Origin (the line under the soles) | The 64×64 canvas sits at |
 |---|---|---|---|
 | Kindled player sheets (`kindled-<rem>`) | 96×80 | (48, 64) | (16, 10), so canvas row 53 is cell row 63 |
-| Every other sheet (Husks and other enemies, NPCs) | 64×64 | (32, 54) | (0, 0) |
+| Every other sheet (Husks and other enemies, NPCs, props) | 64×64 | (32, 54) | (0, 0) |
+| Tall props (`PROP_CELLS`, M2 Task 3c; the first is `prop-twisted-tree`) | 64×96 | (32, 86), the line under the trunk | (0, 32), so canvas row 53 is cell row 85; the canopy overhangs upwards |
 | Room tiles (`tiles-<set>`, G1.5e) | 32×32 per piece; doors 64×32 (`door_n`) or 32×64 (`door_w`, `door_e`) | none: a piece's top left sits on its cell's | no canvas: a piece is its own size, on one 16 sim px cell ("Tiles", §10) |
 
 - The Kindled's extra room is for actions: the heavy thrust, the Haul throw and the death fall. SS-01 measured
   the reach at most 34 px from the feet in any action (v3 draws actions on a 68×68 canvas, so ±34 is its
   limit), so 96 px (48 either side of the origin) holds it with room for the outer 1 px ring.
 - A future kind that needs more room declares a bigger cell (`spriteCellSpec(w, h, originY)`), with
-  the canvas centred horizontally and the soles on the row above the origin.
+  the canvas centred horizontally and the soles on the row above the origin. A **tall prop** (ART
+  2026-10-18) does this per prop, in shared code: `PROP_CELLS` in `packages/shared/src/sprites.ts`, keyed
+  by the name after `prop-`, not in the recipe. `spriteSheetSpec` returns the tall cell for those names,
+  so the pipeline places the frames on it (the source may be any size up to the cell; its lowest opaque
+  row lands on row 85) and the sheet test checks it. The ground-line sort (§8, G1.5h) puts the Kindled
+  behind the canopy when its feet are north of the trunk's base; the collision stays the layout's
+  footprint, and the shadow rule is unchanged. The Writ post and the stone outcrop keep the 64×64 cell.
 - Where a sprite stands does not come from the cell: the feet are 5 sim px below the body centre for
   the Kindled and a Husk's radius below for a Husk, ×2 in world px (`apps/client/src/render/feet.ts`).
 
@@ -156,7 +163,8 @@ A prop without an entry keeps the rule below: `idle` only.
 |---|---|---|---|---|
 | `idle` | 1–8, from the recipe | from the recipe, default 8 | yes with more than one frame; one frame holds | none |
 
-For flames and the like. No palette block and no mask. The cell is the 64×64 prop cell, origin (32, 54) (§2).
+For flames and the like. No palette block and no mask. The cell is the 64×64 prop cell, origin (32, 54) (§2),
+or the tall prop cell for a prop in `PROP_CELLS` (the twisted tree, 64×96, origin (32, 86)).
 
 A row's frame count and rate can come from the recipe within a range, like `idle` (`fromRecipe` on the row,
 `PropRecipeAnim`): the pipeline writes the recipe's count and `fps`, the sheet test takes the sheet's, and
@@ -325,14 +333,18 @@ tasks register NPC sheets as they use them). Every name must have a known kind (
 
 9. A tile sheet (`tiles-<set>`, §10; `tileSheetProblems` in `packages/shared/test/tileChecks.ts`) skips 1–8 and has
    its own checks: meta `version` "2", `pixelScale` 1 and `app` `"iot-art-pipeline"`, the PNG the size of
-   `meta.size`; every piece and door frame of `packages/shared/src/tiles.ts` present at its size (32×32, 64×32,
-   32×64), inside the PNG, on no other frame, and nothing else; each door's `_closed` (1 frame), `_opening`
+   `meta.size`; the set read from its `tiles` block (`rule` cave or shore, absent cave; `doors` a boolean, absent
+   true); every piece of its rule and, with doors, every door frame of `packages/shared/src/tiles.ts` present at
+   its size (32×32, 64×32, 32×64), inside the PNG, on no other frame, and nothing else (a doorless set carries no
+   door frame or animation, a set none of the other rule's pieces); each door's `_closed` (1 frame), `_opening`
    (6 frames at 12 fps) and `_open` (1 frame), played once and held; the `tiles` block, `tileSize` 32,
-   `floorWeights` four positive integers and, when present, `faceMidWeights` and `topMidWeights` two positive
-   integers each; only the whitelist's colours (no telegraph colours, never #FFFFFF or
-   #FFE7A3) and no soft alpha; `floor_*`, `face_*`, `top_*` and every door frame fully opaque. They run on every tile sheet on disk
-   (`tiles-cave`), and on `packages/shared/test/fixtures/tiles-fixture.*` (made by the `.py` beside it) and broken
-   copies of it.
+   `floorWeights` four positive integers and, when present, the mid weights of its rule (`faceMidWeights` and
+   `topMidWeights` on a cave set, `dropMidWeights` on a shore set) two positive integers each; only the
+   whitelist's colours (no telegraph colours, never #FFFFFF or #FFE7A3) and no soft alpha; each piece's opacity:
+   `floor_*`, `face_*`, `top_*` and every door frame fully opaque, `drop_mid_*`, `drop_w`, `drop_e` and `drop_we`
+   opaque in their top row. They run on every tile sheet on disk (`tiles-cave`, `tiles-holding`), and on
+   `packages/shared/test/fixtures/tiles-fixture.*` (made by the `.py` beside it) and broken copies of it, the
+   fixture declared a shore or doorless set among them.
 
 The v2 checks also run on a small fixture sheet with a mask (`packages/shared/test/fixtures/kindled-fixture.*`, made by the `.py` beside it; it doesn't ship), and on broken copies of it (a v1 copy among them), so the checks themselves are tested. The client tests its masked swap on the same fixture, and the point checks run on copies of it with `heavy_charge` and `haul_throw` frames. The chest's table runs the same way on `packages/shared/test/fixtures/prop-chest.*` (a 2-frame `closed`) and copies of it (a 1-frame `closed` passes, a 3-frame one fails, a finished chest without `opening` fails).
 
@@ -376,15 +388,31 @@ What `apps/client` does with a sheet (MAIN, M1 task 5). Nothing here is in the s
 
 Done: §4 carries the answers (Husk `spawn`, `haul_recover`, the 2-frame `hit`, the Nutshell's `walk` and `slam` in place of `roll`, `heavy_hold` through the hitstop as the engine already did), §8 describes the engine that plays them, and the lists in `packages/shared/src/sprites.ts` and `animState.ts` match (M1 task 7). The hand-drawn `kindled-ash`, `husk-peeling` and `husk-nutshell` sheets follow this contract.
 
-## 10. Tiles (G1.5e)
+## 10. Tiles (G1.5e, M2 Task 3c)
 
 The room is drawn from a tile sheet: named 32×32 world px pieces, one per room cell, chosen by a 4-neighbour rule
 (ART's design, B). Not a 16-tile corner set: a corner set can't draw a wall's front face, and on a dual grid its
 transitions straddle the sim's collision edges; named pieces sit exactly on the sim's 16 sim px cells. The names,
-sizes and the rule are in `packages/shared/src/tiles.ts`; `tileAt(template, col, row, weights)` is a pure
+sizes and the rules are in `packages/shared/src/tiles.ts`; `tileAt(template, col, row, weights)` is a pure
 function with no runtime dependencies (`weights` is the sheet's `tiles` block), so the engine and the art
-pipeline's review (`rooms.png`) draw a room the same way. The first sheet is `tiles-cave` (`packages/shared/assets/sprites/tiles-cave.png` + `.json`), made by
-ART through the pipeline's `tiles` kind ([`art-pipeline.md`](art-pipeline.md)).
+pipeline's review (`rooms.png`) draw a room the same way.
+
+**Two rules** (M2 Task 3c, ART 2026-10-18). A tile set declares its rule in its `tiles` block, `"rule": "cave" |
+"shore"`, defaulting to `"cave"`; `tileAt` dispatches on it. The **cave** rule draws walls rising from the floor: a
+solid cell with open ground to its south is a wall face. It suits the rooms of `rooms.json` (`tiles-cave`, ART's
+first sheet). For an island seen at a low ¾ angle it draws backwards (the north edge would show a cliff rising,
+the south edge the Hollow's dark tops), so an island uses the **shore** rule: the ground draws floors with lips
+where the void is beside it, and the void cell under a ground cell draws the drop, the cliff hanging below the
+island into the Hollow; every other void cell draws nothing, so the Hollow shows through. The holding's
+`tiles-holding` is a shore set. The two rules share the floors and the hash; each has its own pieces, and a set
+carries only its rule's (`staticTilePieces(rule)`, `tileFramesFor(set)`).
+
+**Doors are optional** per set (`"doors": true | false`, default true). A set with `"doors": false` carries no
+door piece: the sheet test and the pipeline require none and refuse any present, and a template with a `D`
+drawn with such a set fails, naming the template (`doorlessProblems`, through `roomTiles`). `tiles-cave` keeps
+its doors; `tiles-holding` has none.
+
+### The cave rule
 
 **Cells.** From the template legend (`rooms.json`): `#`, `o` and `D` are solid (a door counts as wall for its
 neighbours and draws its own piece), and so is every cell outside the room (and past a short row's end). Everything
@@ -408,27 +436,56 @@ loads with the door already open shows `_open`. No template has a south door: a 
 door, a single `D` or a longer run, a pair away from the border) fails the test over `rooms.json` with the
 template's name (`tileDoors`), so a new template that needs a new piece is caught early.
 
-**The sheet.** The JSON shape of the other sheets: named frames (`floor_0`, `door_n_opening_3`), each `frame`
+**The cave set's pieces:** the four floors, the five shades, the nine faces, the nine tops, the two corners
+(`CAVE_STATIC_PIECES`, 29) and, with doors, the three doors' 24 frames. `floor_*`, `face_*`, `top_*` and every door
+frame are fully opaque; shades and corners may be transparent.
+
+### The shore rule (ART 2026-10-18)
+
+**Ground and void.** Ground is every cell that isn't the island's edge or outside the template; the station letters
+of a holding layout (`W`, `T`, `R`, `S`, the start `P`) are ground for drawing, though solid for collision (the sim's
+collision doesn't change). Void is the edge (`#`) and everything outside.
+
+| Cell | Piece | Overlays, stacked in this order |
+|---|---|---|
+| ground | `floor_0` … `floor_3`, by the same hash and `floorWeights`; no shades on a shore set | the **lips**, each the outline and a lit rim with no face: `lip_n` where the void is north (the island's back edge, which simply ends), `lip_w` and `lip_e` where it is west or east, `lip_nw` where NW is void while N and W are ground (an inner corner), `lip_ne` the same way. No south lip: the drop below covers it |
+| void with ground directly north: a **drop**, the cliff hanging below the island | `drop_mid_0` or `drop_mid_1` where both the W and E neighbours are drops too, by the hash weighted by `dropMidWeights` (default `[1, 1]`; `tiles-holding` sets `[3, 1]`); `drop_w` where the cliff ends on its west side (the W neighbour isn't a drop), `drop_e` the same way, `drop_we` when both ends do (a one-cell drop) | none |
+| void with no ground north, west of a run's west end: an **outer corner** | `drop_corner_w` where NE is ground and the E neighbour is a drop, the cliff turning round the corner west of the run; `drop_corner_e` where NW is ground and the W neighbour is a drop. A void cell beside a straight west or east edge has ground at NE or NW too, but no run to turn round, and draws nothing | none |
+| void with ground at both NW and NE but not N | a one-cell notch the pieces can't draw: the layout validator refuses it, naming the cell (`shoreProblems`), so a layout never needs it; `tileAt` draws nothing there | |
+| every other void cell | nothing: the Hollow shows through (the room texture is transparent there, over the hollow background) | |
+
+**The shore set's pieces** (`SHORE_STATIC_PIECES`, 16): the four floors; the drops `drop_mid_0`, `drop_mid_1`,
+`drop_w`, `drop_e`, `drop_we`, `drop_corner_w`, `drop_corner_e`; the lips `lip_n`, `lip_w`, `lip_e`, `lip_nw`,
+`lip_ne`. **Opacity:** the floors are fully opaque; `drop_mid_*`, `drop_w`, `drop_e` and `drop_we` are opaque in
+their top row, where they meet the floor above, while the dither into hollow-deep below may end in transparent
+rows; the two outer corners have void to their north and may be transparent anywhere; the lips are transparent
+overlays. The pipeline and the sheet test check each piece's opacity (`TileOpacity` in `tiles.ts`).
+
+### The sheet
+
+The JSON shape of the other sheets: named frames (`floor_0`, `door_n_opening_3`), each `frame`
 its size, `anchor` (0, 0); door animations under `anims` (`door_n_opening`: its frames, `frameRate`, `repeat` 0,
-`hold`); `meta` with `"version": "2"` and `"pixelScale": 1`; and a `tiles` block:
+`hold`; none on a doorless set); `meta` with `"version": "2"` and `"pixelScale": 1`; and a `tiles` block:
 
 ```json
 "tiles": { "tileSize": 32, "floorWeights": [6, 3, 2, 1], "faceMidWeights": [3, 1], "topMidWeights": [3, 1] }
+"tiles": { "tileSize": 32, "floorWeights": [6, 3, 2, 1], "rule": "shore", "doors": false, "dropMidWeights": [3, 1] }
 ```
 
 `floorWeights` lives in the sheet, never in code, and so do `faceMidWeights` and `topMidWeights` (G1.5f, ART's
-answer to G1.5e: at 50/50 the spare plain face and top read as a pattern): two positive integers each, the
-weights of `*_mid_0` and `*_mid_1`, picked through the same hash and `pickWeighted` as the floors; absent means
-`[1, 1]`, the even pick, so a sheet without them draws as before. ART's `tiles-cave` uses `[3, 1]` for both.
-Colours: the 28-colour whitelist only, no telegraph colours,
-never #FFFFFF or #FFE7A3. `floor_*`, `face_*`, `top_*` and every door frame are fully opaque; shades and corners
-may be transparent. Checked by §6 item 9.
+answer to G1.5e: at 50/50 the spare plain face and top read as a pattern) and the shore's `dropMidWeights`: two
+positive integers each, the weights of `*_mid_0` and `*_mid_1`, picked through the same hash and `pickWeighted` as
+the floors; absent means `[1, 1]`, the even pick, so a sheet without them draws as before. ART's `tiles-cave` uses
+`[3, 1]` for both wall weights. `rule` and `doors` are written only when they are not the defaults (cave, true), so a
+cave set's block reads as before. Colours: the 28-colour whitelist only, no telegraph colours, never #FFFFFF or
+#FFE7A3. Checked by §6 item 9.
 
 **The engine** (`apps/client/src/render/roomTiles.ts`). The room's static pieces are drawn once per room into a texture on the world layer at `DEPTH.room`, a cell (c, r) at world (c × 32,
 r × 32), no piece scaled; the texture is made anew at each room's size and the last room's destroyed (resizing one leaves its GPU target at the first room's size and clips a larger room, G1.5i;
 `tools/screenshots-g15.mjs --room-changes` checks the texture after each change); the doors are images over it (`DEPTH.roomDoors`) whose frame comes from the state's
-`doorOpen` on the client clock (the client only renders it). Depth, camera clamping and the hollow margin around
-the room are unchanged. The sheet is bundled with the code (`caveTileSheet`) and its PNG loads with the sprite
+`doorOpen` on the client clock (the client only renders it; a doorless set places none). Depth, camera clamping and the hollow margin around
+the room are unchanged; a shore set's void draws nothing, so the hollow background shows through it. The sheets are bundled with the code (`caveTileSheet`, `holdingTileSheet`) and their PNGs load with the sprite
 sheets; a missing PNG is the same error as a missing sprite sheet's. There is no other room: M1's procedural room
-went with the v1 path (G1.5g). `tools/screenshots-g15.mjs --rooms` shoots the five M1 rooms from it
-(`docs/screenshots/g15g/`; `g15e/` has the earlier shots from the test fixture).
+went with the v1 path (G1.5g). `tools/screenshots-g15.mjs --rooms` shoots the five M1 rooms from the cave set
+(`docs/screenshots/g15g/`; `g15e/` has the earlier shots from the test fixture); `tools/screenshots-m2-3b.mjs` shoots
+the holding from the shore set (`docs/screenshots/m2-3b/`).

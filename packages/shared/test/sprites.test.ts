@@ -31,6 +31,10 @@ import {
   skinMaskName,
   SPRITE_CANVAS,
   SPRITE_CELLS,
+  PROP_CELLS,
+  TALL_PROP_CELL,
+  KESH_ROCK_SHEET,
+  spriteCellSpec,
   SPRITE_FACINGS,
   SPRITE_SHEET_NAMES,
   OPTIONAL_SPRITE_SHEETS,
@@ -129,11 +133,33 @@ describe('the sheets on disk (packages/shared/assets/sprites)', () => {
     // The holding's placeholder set (M2 Task 3b), the same way.
     expect(disk.has(HOLDING_TILE_SHEET), `${HOLDING_TILE_SHEET} is not on disk`).toBe(true);
     expect(holdingTileSheet).toEqual(disk.get(HOLDING_TILE_SHEET));
-    // The station props load with the characters (one frame each, no table).
-    for (const name of Object.values(STATION_SHEETS)) {
+    // The station props and Kesh's rock load with the characters (one frame each, no table).
+    for (const name of [...Object.values(STATION_SHEETS), KESH_ROCK_SHEET]) {
       expect(SPRITE_SHEET_NAMES).toContain(name);
       expect(spriteSheets[name].anims.idle?.frames).toEqual(['idle_0']);
     }
+    expect(STATION_SHEETS).toEqual({ post: 'prop-writ-post', trees: 'prop-twisted-tree', outcrop: 'prop-stone-outcrop', store: 'prop-holding-store' });
+  });
+
+  it('stand the twisted tree on the tall prop cell (64×96, origin (32, 86)); every other prop on the 64×64 cell (M2 Task 3c)', () => {
+    expect(TALL_PROP_CELL).toEqual(spriteCellSpec(64, 96, 86));
+    expect(TALL_PROP_CELL).toEqual({ cell: { w: 64, h: 96 }, origin: { x: 32, y: 86 }, canvasAt: { x: 0, y: 32 } });
+    expect(PROP_CELLS).toEqual({ 'twisted-tree': TALL_PROP_CELL });
+    expect(spriteSheetSpec('prop-twisted-tree').cell).toBe(TALL_PROP_CELL);
+    expect(spriteCellSpecFor('prop-twisted-tree')).toBe(TALL_PROP_CELL);
+    for (const name of ['prop-writ-post', 'prop-stone-outcrop', 'prop-holding-store', 'prop-kesh-rock', 'prop-chest', 'prop-sparkglass'])
+      expect(spriteSheetSpec(name).cell, name).toBe(SPRITE_CELLS.other);
+    // The shipped sheet is on it, and the v2 checks (the cell, the origin) run on it like any other.
+    const tree = spriteSheets['prop-twisted-tree'];
+    expect(tree.meta.cell).toEqual({ w: 64, h: 96 });
+    expect(tree.meta.origin).toEqual({ x: 32, y: 86 });
+    expect(tree.frames.idle_0?.anchor).toEqual({ x: 0.5, y: 86 / 96 });
+    const png = decodePng(readFileSync(assetUrl(tree.meta.image)));
+    expect(v2Problems('prop-twisted-tree', tree, png, null)).toEqual([]);
+    // A 64×64 sheet claiming the tree's name fails the cell check.
+    const short = spriteSheets['prop-writ-post'];
+    const shortPng = decodePng(readFileSync(assetUrl(short.meta.image)));
+    expect(v2Problems('prop-twisted-tree', short, shortPng, null)).toEqual(['cell 64×64, not 64×96', 'origin (32, 54), not (32, 86)']);
   });
 
   it('are all v2 sheets built by the art pipeline: v1 sprite sheets are retired', () => {

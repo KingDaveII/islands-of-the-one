@@ -1,7 +1,7 @@
 # prop-twisted-tree
 
 Built by `pnpm art:build prop-twisted-tree` from `art/sheets/prop-twisted-tree.json`; do not edit by hand (`pnpm art:check` rebuilds it).
-Kind prop, outline other, cell 64×64, origin (32, 54).
+Kind prop, outline other, cell 64×96, origin (32, 86).
 
 ## Summary
 
@@ -24,7 +24,7 @@ Rows, top to bottom: idle.
 
 | Anim | Frames | Seam (last→first / mean) | Bob (tops above the soles) | Held |
 |---|---|---|---|---|
-| idle | 1 |  | 43 (range 0) |  |
+| idle | 1 |  | 81 (range 0) |  |
 
 ## Frames
 
@@ -32,7 +32,7 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 
 | Frame | Source | Off-palette | Max ΔE | Shift | dx, dy | Outline gaps | Colours | Interior dream-night |
 |---|---|---|---|---|---|---|---|---|
-| idle_0 | `art/clean/prop-twisted-tree/idle 0` | 0 | 0 | -1 | 0, -1 | 0 | 7 | 0 |
+| idle_0 | `art/clean/prop-twisted-tree/idle 0` | 0 | 0 | -17 | 0, -1 | 0 | 7 | 0 |
 
 ## Off-palette colours the snap moved
 

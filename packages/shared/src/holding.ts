@@ -4,34 +4,60 @@ import { isDrawable } from './accounts.js';
 import { isItemId } from './items.js';
 import { isStationId } from './places.js';
 import { isSkill, type Skill } from './skills.js';
-import type { TileTemplate } from './tiles.js';
+import { shoreProblems, type TileTemplate } from './tiles.js';
 
 /**
  * The holding (docs/design/holding.md): the Kindled's home Shard. Its layout
  * is pure data (data/holding.json): a tile template in the rooms' style with
- * the stations' tile rectangles and interact points, and the four plot
- * rectangles Task 5 names. The stations' rules (data/stations.json): what
- * each makes, how often, which skill it trains. Both are validated on load
- * like items.json; `holdingLayoutProblems` is the layout rule the test and the
- * loader share. The server settles the active action from these numbers; the
- * client draws the layout with the room tile rule (`holdingTemplate`) and
- * walks it with the sim's `roam` (`holdingRoomTiles`).
+ * the stations' tile rectangles and interact points (a station may stand in
+ * several parts, like the trees), the four plot rectangles Task 5 names, the
+ * landing on the south shore and Kesh's rock off the south-east shore. The
+ * stations' rules (data/stations.json): what each makes, how often, which
+ * skill it trains. Both are validated on load like items.json;
+ * `holdingLayoutProblems` is the layout rule the test and the loader share,
+ * GAME DESIGN's placement rules for the starting holding included (M2 Task
+ * 3c). The server settles the active action from these numbers; the client
+ * draws the layout with the shore tile rule (`holdingTemplate`) and walks it
+ * with the sim's `roam` (`holdingRoomTiles`).
  */
 
-export const STATION_KINDS = ['post', 'trees', 'outcrop'] as const;
+/**
+ * The station kinds: the Writ post, the twisted trees, the stone outcrop, the
+ * holding store (its own station by the post, 3c; Use opens the inventory
+ * with the store pane) and the weapon rack (Task 8; a reserved spot today).
+ */
+export const STATION_KINDS = ['post', 'trees', 'outcrop', 'store', 'rack'] as const;
 export type StationKind = (typeof STATION_KINDS)[number];
 
-/** The layout legend: ground, the edge, one letter per station kind, the start. */
+/** The layout legend: ground, the edge, one letter per station kind that stands on the layout, the start. */
 export const HOLDING_GROUND = '.';
 export const HOLDING_EDGE = '#';
 export const HOLDING_START = 'P';
-export const STATION_TILE: Readonly<Record<StationKind, string>> = { post: 'W', trees: 'T', outcrop: 'R' };
+/** The letter a kind's tiles carry; a kind without one (the rack) only ever stands on a reserved spot of plain ground. */
+export const STATION_TILE: Readonly<Partial<Record<StationKind, string>>> = { post: 'W', trees: 'T', outcrop: 'R', store: 'S' };
 const STATION_LETTERS = Object.values(STATION_TILE).join('');
 /** The legend's solid characters: the edge and every station letter (the sim treats them as walls). */
 export const HOLDING_SOLID = `${HOLDING_EDGE}${STATION_LETTERS}`;
 
 /** A plot is this many tiles a side (GAME DESIGN's M2 numbers). */
 export const PLOT_SIZE = 6;
+
+/**
+ * GAME DESIGN's distances for the starting holding (2026-10-18), in tiles
+ * between the nearest cells (`rectGap`): the store and the weapon rack within
+ * `NEAR_POST` of the post, each tree and the outcrop within `FAR_POST`; the
+ * post within `CENTRE_SLACK` of the island's centre; Kesh's rock off the shore
+ * by at least `ROCK_OFF_SHORE` of void and within `ROCK_NEAR_SHORE` of ground,
+ * its Talk spot within `TALK_REACH` of it.
+ */
+export const HOLDING_DISTANCES = {
+  NEAR_POST: 3,
+  FAR_POST: 10,
+  CENTRE_SLACK: 2,
+  ROCK_OFF_SHORE: 1,
+  ROCK_NEAR_SHORE: 6,
+  TALK_REACH: 4,
+} as const;
 
 export interface TileRect {
   col: number;
@@ -45,12 +71,28 @@ export interface TilePoint {
   row: number;
 }
 
+/** One place a station stands: its tile rectangle and the ground tile beside it the interact prompt and the panel stand on. */
+export interface StationPart {
+  rect: TileRect;
+  interact: TilePoint;
+}
+
 export interface LayoutStation {
   id: string;
   kind: StationKind;
-  rect: TileRect;
-  /** The ground tile beside the station the interact prompt and the panel stand on. */
-  interact: TilePoint;
+  /** Where it stands, one part for most stations; the trees have one per tree, and any part's interact point works the station. */
+  parts: StationPart[];
+  /**
+   * A spot kept for a later task (the weapon rack, Task 8): its tiles are
+   * plain ground, it draws no prop and offers no Use until then.
+   */
+  reserved?: boolean;
+}
+
+/** Kesh's needle of rock (3c): a solid prop in the void off the south-east shore, and the ground tile Talk across the water stands on (Task 4). */
+export interface KeshRock {
+  rock: TileRect;
+  talk: TilePoint;
 }
 
 export interface HoldingLayout {
@@ -58,6 +100,9 @@ export interface HoldingLayout {
   tiles: string[];
   stations: LayoutStation[];
   plots: TileRect[];
+  /** Where the boat ties up later, a ground tile on the south shore; no prop or action yet. */
+  landing: TilePoint;
+  kesh: KeshRock;
 }
 
 /** What a working station makes each cycle and the skill it trains. */
@@ -77,9 +122,12 @@ export interface StationDef {
   id: string;
   kind: StationKind;
   name: string;
-  /** Null for the post: Use opens the inventory with the store instead. */
+  /** Null for the post and the store (Use opens the inventory with the store pane) and the rack (reserved). */
   action: StationAction | null;
 }
+
+/** The kinds with no action: Use opens the inventory (post, store), or nothing yet (rack). */
+export const ACTIONLESS_KINDS: readonly StationKind[] = ['post', 'store', 'rack'];
 
 export interface HoldingData {
   offlineCapHours: number;
@@ -105,6 +153,35 @@ function parseRect(v: unknown, at: string, problems: string[]): TileRect | null 
   if (extra.length > 0) problems.push(`${at}: unknown field(s) ${extra.join(', ')}`);
   return { col: v.col, row: v.row, cols: v.cols, rows: v.rows };
 }
+
+function parsePoint(v: unknown, at: string, problems: string[]): TilePoint | null {
+  if (!isObject(v) || !isIndex(v.col) || !isIndex(v.row)) {
+    problems.push(`${at}: must be { col, row }`);
+    return null;
+  }
+  const extra = Object.keys(v).filter((k) => !['col', 'row'].includes(k));
+  if (extra.length > 0) problems.push(`${at}: unknown field(s) ${extra.join(', ')}`);
+  return { col: v.col, row: v.row };
+}
+
+/** Whether two rectangles share a cell. */
+export function rectsOverlap(a: TileRect, b: TileRect): boolean {
+  return a.col < b.col + b.cols && b.col < a.col + a.cols && a.row < b.row + b.rows && b.row < a.row + a.rows;
+}
+
+/** The tiles between two rectangles' nearest cells (Chebyshev): 0 when they overlap or touch, 1 with one cell between. */
+export function rectGap(a: TileRect, b: TileRect): number {
+  const dc = Math.max(0, b.col - (a.col + a.cols) + 1, a.col - (b.col + b.cols) + 1);
+  const dr = Math.max(0, b.row - (a.row + a.rows) + 1, a.row - (b.row + b.rows) + 1);
+  return Math.max(dc, dr);
+}
+
+/** Whether two rectangles overlap or touch, diagonally included. */
+export function rectsTouch(a: TileRect, b: TileRect): boolean {
+  return rectGap(a, b) <= 1;
+}
+
+const pointRect = (p: TilePoint): TileRect => ({ col: p.col, row: p.row, cols: 1, rows: 1 });
 
 /** Check stations.json-shaped data; every problem is listed. */
 export function validateStationsData(
@@ -162,8 +239,8 @@ export function validateStationsData(
           };
       }
     }
-    if (kind === 'post' && action !== undefined) problems.push(`${where}: the post has no action`);
-    if (kind !== 'post' && action === undefined) problems.push(`${where}: a ${String(kind)} needs an action`);
+    if (isKind(kind) && ACTIONLESS_KINDS.includes(kind) && action !== undefined) problems.push(`${where}: the ${kind} has no action`);
+    if (isKind(kind) && !ACTIONLESS_KINDS.includes(kind) && action === undefined) problems.push(`${where}: a ${kind} needs an action`);
     if (problems.length > 0) return;
     stations.push({ id, kind: kind as StationKind, name: name as string, action: parsed });
   });
@@ -171,14 +248,22 @@ export function validateStationsData(
 }
 
 /**
- * Where a layout breaks the rules (docs/design/holding.md), one line each, or
- * none: the template is rectangular and only legend characters; every
- * station's id is in `stations` with its kind, its rectangle is inside the
- * layout and every tile of it is its kind's letter (so solid for the sim),
- * every station letter belongs to a station, its interact point is ground
- * beside the rectangle and reachable from the start; the plots are
- * `PLOT_SIZE` square, on ground, and overlap neither a station nor each
- * other; there is exactly one start, on ground.
+ * Where a layout breaks the rules (docs/design/holding.md, GAME DESIGN
+ * 2026-10-18), one line each, or none: the template is rectangular, only
+ * legend characters, its border all edge (so the shore's drops and corners
+ * fit inside it) and free of the one-cell notch the shore pieces can't draw;
+ * every station's id is in `stations` with its kind, each of its parts is
+ * inside the layout with every tile its kind's letter (so solid for the sim;
+ * a reserved spot's are plain ground), its interact point ground beside the
+ * part and reachable from the start; every station letter belongs to a
+ * station; there is one Writ post, near the island's centre; the store and
+ * the rack are within `NEAR_POST` of it, every tree (west of it) and the
+ * outcrop (east of it) within `FAR_POST`; the plots are `PLOT_SIZE` square,
+ * on ground, and touch neither each other, the post nor the store, nor
+ * overlap any station; the landing is ground on the south shore; Kesh's rock
+ * is void off the south-east shore with its Talk spot on reachable ground
+ * beside the water; a plot's worth of free ground lies north of the post;
+ * there is exactly one start, on ground.
  */
 export function holdingLayoutProblems(layout: HoldingLayout, stations: readonly StationDef[]): string[] {
   const problems: string[] = [];
@@ -194,13 +279,22 @@ export function holdingLayoutProblems(layout: HoldingLayout, stations: readonly 
   const at = (c: number, r: number): string =>
     r < 0 || r >= rows || c < 0 || c >= cols ? HOLDING_EDGE : (layout.tiles[r]?.[c] ?? HOLDING_EDGE);
   const ground = (c: number, r: number): boolean => at(c, r) === HOLDING_GROUND || at(c, r) === HOLDING_START;
+  const island = (c: number, r: number): boolean => at(c, r) !== HOLDING_EDGE;
   const inside = (rect: TileRect): boolean =>
     rect.col >= 0 && rect.row >= 0 && rect.col + rect.cols <= cols && rect.row + rect.rows <= rows;
-  const overlap = (a: TileRect, b: TileRect): boolean =>
-    a.col < b.col + b.cols && b.col < a.col + a.cols && a.row < b.row + b.rows && b.row < a.row + a.rows;
   const beside = (p: TilePoint, rect: TileRect): boolean =>
     (p.row >= rect.row && p.row < rect.row + rect.rows && (p.col === rect.col - 1 || p.col === rect.col + rect.cols)) ||
     (p.col >= rect.col && p.col < rect.col + rect.cols && (p.row === rect.row - 1 || p.row === rect.row + rect.rows));
+  const cell = (p: TilePoint): string => `(${p.col}, ${p.row})`;
+
+  // The border: all edge, so every drop and corner the shore rule draws has a cell inside the template.
+  const borderHoles: string[] = [];
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++)
+      if ((r === 0 || r === rows - 1 || c === 0 || c === cols - 1) && at(c, r) !== HOLDING_EDGE) borderHoles.push(`(${c}, ${r})`);
+  if (borderHoles.length)
+    problems.push(`${name}: the border must be edge (#) all round, so the shore's drops fit the template; not at ${borderHoles.join(' ')}`);
+  problems.push(...shoreProblems(holdingTemplate(layout)));
 
   // The start.
   const starts: TilePoint[] = [];
@@ -225,33 +319,53 @@ export function holdingLayoutProblems(layout: HoldingLayout, stations: readonly 
       }
     }
   }
+  const reachable = (p: TilePoint): boolean => reach.has(`${p.col},${p.row}`);
 
   // The stations.
   const ids = new Set<string>();
   const covered = new Set<string>();
+  const byKind = new Map<StationKind, LayoutStation[]>();
   for (const s of layout.stations) {
     const where = `${name}: station ${s.id}`;
     if (ids.has(s.id)) problems.push(`${where} is listed twice`);
     ids.add(s.id);
+    byKind.set(s.kind, [...(byKind.get(s.kind) ?? []), s]);
     const def = stations.find((d) => d.id === s.id);
     if (!def) problems.push(`${where} is not in stations.json`);
     else if (def.kind !== s.kind) problems.push(`${where} is a ${s.kind} here but a ${def.kind} in stations.json`);
-    if (!inside(s.rect)) {
-      problems.push(`${where}: its rectangle is outside the layout`);
+    if (s.reserved && def?.action) problems.push(`${where} is reserved, but has an action in stations.json`);
+    if (s.parts.length === 0) problems.push(`${where} has no parts`);
+    const letter = s.reserved ? HOLDING_GROUND : STATION_TILE[s.kind];
+    if (letter === undefined) {
+      problems.push(`${where}: a ${s.kind} has no tile letter, so it can only stand on a reserved spot`);
       continue;
     }
-    const letter = STATION_TILE[s.kind];
-    for (let r = s.rect.row; r < s.rect.row + s.rect.rows; r++) {
-      for (let c = s.rect.col; c < s.rect.col + s.rect.cols; c++) {
-        covered.add(`${c},${r}`);
-        if (at(c, r) !== letter) problems.push(`${where}: tile (${c}, ${r}) is "${at(c, r)}", not ${letter}`);
+    s.parts.forEach((part, i) => {
+      const pw = s.parts.length > 1 ? `${where} part ${i}` : where;
+      if (!inside(part.rect)) {
+        problems.push(`${pw}: its rectangle is outside the layout`);
+        return;
       }
-    }
-    const p = s.interact;
-    if (!ground(p.col, p.row)) problems.push(`${where}: its interact point (${p.col}, ${p.row}) is not ground`);
-    else if (!beside(p, s.rect)) problems.push(`${where}: its interact point (${p.col}, ${p.row}) is not beside it`);
-    else if (!reach.has(`${p.col},${p.row}`))
-      problems.push(`${where}: its interact point (${p.col}, ${p.row}) can't be reached from the start`);
+      for (let r = part.rect.row; r < part.rect.row + part.rect.rows; r++) {
+        for (let c = part.rect.col; c < part.rect.col + part.rect.cols; c++) {
+          covered.add(`${c},${r}`);
+          if (at(c, r) !== letter)
+            problems.push(`${pw}: tile (${c}, ${r}) is "${at(c, r)}", not ${s.reserved ? 'ground (a reserved spot)' : letter}`);
+        }
+      }
+      const p = part.interact;
+      if (!ground(p.col, p.row)) problems.push(`${pw}: its interact point ${cell(p)} is not ground`);
+      else if (!beside(p, part.rect)) problems.push(`${pw}: its interact point ${cell(p)} is not beside it`);
+      else if (!reachable(p)) problems.push(`${pw}: its interact point ${cell(p)} can't be reached from the start`);
+      for (const other of layout.stations) {
+        if (other === s) continue;
+        for (const op of other.parts)
+          if (rectsOverlap(part.rect, op.rect)) problems.push(`${pw} overlaps station ${other.id}`);
+      }
+      s.parts.forEach((op, j) => {
+        if (j > i && rectsOverlap(part.rect, op.rect)) problems.push(`${pw} overlaps its part ${j}`);
+      });
+    });
   }
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -260,7 +374,48 @@ export function holdingLayoutProblems(layout: HoldingLayout, stations: readonly 
     }
   }
 
-  // The plots.
+  // GAME DESIGN's placement: one post near the centre, the rest placed by it.
+  const posts = byKind.get('post') ?? [];
+  const post = posts[0]?.parts[0]?.rect;
+  if (posts.length !== 1) problems.push(`${name}: ${posts.length} Writ posts; there must be one`);
+  const D = HOLDING_DISTANCES;
+  if (post) {
+    let c0 = cols;
+    let c1 = -1;
+    let r0 = rows;
+    let r1 = -1;
+    for (let r = 0; r < rows; r++)
+      for (let c = 0; c < cols; c++)
+        if (island(c, r)) {
+          c0 = Math.min(c0, c);
+          c1 = Math.max(c1, c);
+          r0 = Math.min(r0, r);
+          r1 = Math.max(r1, r);
+        }
+    const centre = { col: (c0 + c1) / 2, row: (r0 + r1) / 2 };
+    if (Math.abs(post.col - centre.col) > D.CENTRE_SLACK || Math.abs(post.row - centre.row) > D.CENTRE_SLACK)
+      problems.push(
+        `${name}: the Writ post at (${post.col}, ${post.row}) is not at the island's centre (${centre.col}, ${centre.row}), within ${D.CENTRE_SLACK} tiles`,
+      );
+    const near = (kind: StationKind, limit: number, side: 'west' | 'east' | null): void => {
+      for (const s of byKind.get(kind) ?? []) {
+        s.parts.forEach((part, i) => {
+          const pw = s.parts.length > 1 ? `${name}: station ${s.id} part ${i}` : `${name}: station ${s.id}`;
+          const gap = rectGap(part.rect, post);
+          if (gap > limit) problems.push(`${pw} is ${gap} tiles from the post; at most ${limit}`);
+          if (side === 'west' && part.rect.col + part.rect.cols > post.col) problems.push(`${pw} is not west of the post`);
+          if (side === 'east' && part.rect.col < post.col + post.cols) problems.push(`${pw} is not east of the post`);
+        });
+      }
+    };
+    near('store', D.NEAR_POST, null);
+    near('rack', D.NEAR_POST, null);
+    near('trees', D.FAR_POST, 'west');
+    near('outcrop', D.FAR_POST, 'east');
+  }
+
+  // The plots: on ground, overlapping no station, touching neither each other, the post nor the store.
+  const stores = (byKind.get('store') ?? []).flatMap((s) => s.parts.map((p) => p.rect));
   layout.plots.forEach((plot, i) => {
     const where = `${name}: plot ${i}`;
     if (plot.cols !== PLOT_SIZE || plot.rows !== PLOT_SIZE)
@@ -272,11 +427,63 @@ export function holdingLayoutProblems(layout: HoldingLayout, stations: readonly 
     for (let r = plot.row; r < plot.row + plot.rows; r++)
       for (let c = plot.col; c < plot.col + plot.cols; c++)
         if (at(c, r) !== HOLDING_GROUND) problems.push(`${where}: tile (${c}, ${r}) is "${at(c, r)}", not ground`);
-    for (const s of layout.stations) if (overlap(plot, s.rect)) problems.push(`${where} overlaps station ${s.id}`);
+    for (const s of layout.stations)
+      if (s.parts.some((p) => rectsOverlap(plot, p.rect))) problems.push(`${where} overlaps station ${s.id}`);
+    if (post && rectsTouch(plot, post)) problems.push(`${where} touches the Writ post`);
+    if (stores.some((r) => rectsTouch(plot, r))) problems.push(`${where} touches the store`);
     layout.plots.forEach((other, j) => {
-      if (j > i && overlap(plot, other)) problems.push(`${where} overlaps plot ${j}`);
+      if (j <= i) return;
+      if (rectsOverlap(plot, other)) problems.push(`${where} overlaps plot ${j}`);
+      else if (rectsTouch(plot, other)) problems.push(`${where} touches plot ${j}`);
     });
   });
+
+  // The landing: ground on the south shore, south of the post.
+  const landing = layout.landing;
+  if (!ground(landing.col, landing.row)) problems.push(`${name}: the landing ${cell(landing)} is not ground`);
+  else {
+    if (island(landing.col, landing.row + 1)) problems.push(`${name}: the landing ${cell(landing)} is not on the shore (the cell south of it is not void)`);
+    if (post && landing.row <= post.row) problems.push(`${name}: the landing ${cell(landing)} is not on the south shore (north of the post)`);
+    if (!reachable(landing)) problems.push(`${name}: the landing ${cell(landing)} can't be reached from the start`);
+  }
+
+  // Kesh's rock: void, off the south-east shore with water between, near enough; its Talk spot on reachable ground beside it.
+  const { rock, talk } = layout.kesh;
+  if (!inside(rock)) problems.push(`${name}: Kesh's rock is outside the layout`);
+  else {
+    let nearest = Infinity;
+    for (let r = 0; r < rows; r++)
+      for (let c = 0; c < cols; c++)
+        if (island(c, r)) nearest = Math.min(nearest, rectGap(rock, pointRect({ col: c, row: r })));
+    for (let r = rock.row; r < rock.row + rock.rows; r++)
+      for (let c = rock.col; c < rock.col + rock.cols; c++)
+        if (at(c, r) !== HOLDING_EDGE) problems.push(`${name}: Kesh's rock tile (${c}, ${r}) is "${at(c, r)}", not void (#)`);
+    if (nearest <= D.ROCK_OFF_SHORE) problems.push(`${name}: Kesh's rock touches the island; it stands off the shore with at least ${D.ROCK_OFF_SHORE} cell of void between`);
+    if (nearest > D.ROCK_NEAR_SHORE) problems.push(`${name}: Kesh's rock is ${nearest} tiles off the shore; at most ${D.ROCK_NEAR_SHORE}`);
+    if (post && (rock.col < post.col + post.cols || rock.row < post.row + post.rows))
+      problems.push(`${name}: Kesh's rock is not off the south-east shore (south and east of the post)`);
+    if (!ground(talk.col, talk.row)) problems.push(`${name}: the Talk spot ${cell(talk)} is not ground`);
+    else if (!reachable(talk)) problems.push(`${name}: the Talk spot ${cell(talk)} can't be reached from the start`);
+    else if (rectGap(pointRect(talk), rock) > D.TALK_REACH)
+      problems.push(`${name}: the Talk spot ${cell(talk)} is ${rectGap(pointRect(talk), rock)} tiles from Kesh's rock; at most ${D.TALK_REACH}`);
+  }
+
+  // Free ground on the north side: a plot's square of plain ground, wholly north of the post, clear of every plot and station.
+  if (post) {
+    const taken = [...layout.plots, ...layout.stations.flatMap((s) => s.parts.map((p) => p.rect))];
+    let free = false;
+    for (let r = 0; !free && r + PLOT_SIZE <= post.row; r++) {
+      for (let c = 0; !free && c + PLOT_SIZE <= cols; c++) {
+        const square = { col: c, row: r, cols: PLOT_SIZE, rows: PLOT_SIZE };
+        if (taken.some((t) => rectsOverlap(square, t))) continue;
+        let clear = true;
+        for (let rr = r; clear && rr < r + PLOT_SIZE; rr++)
+          for (let cc = c; clear && cc < c + PLOT_SIZE; cc++) if (at(cc, rr) !== HOLDING_GROUND) clear = false;
+        free = clear;
+      }
+    }
+    if (!free) problems.push(`${name}: no free ${PLOT_SIZE} × ${PLOT_SIZE} of ground north of the post for later Writ lines' plots`);
+  }
   return problems;
 }
 
@@ -301,9 +508,9 @@ export function validateHoldingData(
         problems.push(`${at}: not an object`);
         return;
       }
-      const more = Object.keys(entry).filter((k) => !['id', 'tiles', 'stations', 'plots'].includes(k));
+      const more = Object.keys(entry).filter((k) => !['id', 'tiles', 'stations', 'plots', 'landing', 'kesh'].includes(k));
       if (more.length > 0) problems.push(`${at}: unknown field(s) ${more.join(', ')}`);
-      const { id, tiles, stations: list, plots } = entry;
+      const { id, tiles, stations: list, plots, landing, kesh } = entry;
       if (!isStationId(id)) {
         problems.push(`${at}: id must be kebab-case`);
         return;
@@ -322,15 +529,29 @@ export function validateHoldingData(
             problems.push(`${sat}: must have a kebab-case id and a kind (${STATION_KINDS.join(', ')})`);
             return;
           }
-          const sExtra = Object.keys(s).filter((k) => !['id', 'kind', 'rect', 'interact'].includes(k));
+          const sExtra = Object.keys(s).filter((k) => !['id', 'kind', 'parts', 'reserved'].includes(k));
           if (sExtra.length > 0) problems.push(`${sat}: unknown field(s) ${sExtra.join(', ')}`);
-          const rect = parseRect(s.rect, `${sat}.rect`, problems);
-          const p = s.interact;
-          if (!isObject(p) || !isIndex(p.col) || !isIndex(p.row)) {
-            problems.push(`${sat}.interact: must be { col, row }`);
+          if (s.reserved !== undefined && s.reserved !== true) problems.push(`${sat}.reserved: must be true when present`);
+          if (!Array.isArray(s.parts) || s.parts.length === 0) {
+            problems.push(`${sat}.parts: must be a non-empty list of { rect, interact }`);
             return;
           }
-          if (rect) parsedStations.push({ id: s.id, kind: s.kind, rect, interact: { col: p.col, row: p.row } });
+          const parts: StationPart[] = [];
+          s.parts.forEach((part: unknown, k) => {
+            const pat = `${sat}.parts[${k}]`;
+            if (!isObject(part)) {
+              problems.push(`${pat}: must be { rect, interact }`);
+              return;
+            }
+            const pExtra = Object.keys(part).filter((key) => !['rect', 'interact'].includes(key));
+            if (pExtra.length > 0) problems.push(`${pat}: unknown field(s) ${pExtra.join(', ')}`);
+            const rect = parseRect(part.rect, `${pat}.rect`, problems);
+            const interact = parsePoint(part.interact, `${pat}.interact`, problems);
+            if (rect && interact) parts.push({ rect, interact });
+          });
+          const station: LayoutStation = { id: s.id, kind: s.kind, parts };
+          if (s.reserved === true) station.reserved = true;
+          parsedStations.push(station);
         });
       const parsedPlots: TileRect[] = [];
       if (!Array.isArray(plots)) problems.push(`${at} (${id}): plots must be a list`);
@@ -339,8 +560,25 @@ export function validateHoldingData(
           const rect = parseRect(p, `${at} (${id}): plots[${j}]`, problems);
           if (rect) parsedPlots.push(rect);
         });
-      if (problems.length > before) return;
-      const layout: HoldingLayout = { id, tiles: tiles as string[], stations: parsedStations, plots: parsedPlots };
+      const parsedLanding = parsePoint(landing, `${at} (${id}): landing`, problems);
+      let parsedKesh: KeshRock | null = null;
+      if (!isObject(kesh)) problems.push(`${at} (${id}): kesh must be { rock, talk }`);
+      else {
+        const kExtra = Object.keys(kesh).filter((k) => !['rock', 'talk'].includes(k));
+        if (kExtra.length > 0) problems.push(`${at} (${id}): kesh has unknown field(s) ${kExtra.join(', ')}`);
+        const rock = parseRect(kesh.rock, `${at} (${id}): kesh.rock`, problems);
+        const talk = parsePoint(kesh.talk, `${at} (${id}): kesh.talk`, problems);
+        if (rock && talk) parsedKesh = { rock, talk };
+      }
+      if (problems.length > before || !parsedLanding || !parsedKesh) return;
+      const layout: HoldingLayout = {
+        id,
+        tiles: tiles as string[],
+        stations: parsedStations,
+        plots: parsedPlots,
+        landing: parsedLanding,
+        kesh: parsedKesh,
+      };
       problems.push(...holdingLayoutProblems(layout, stations));
       layouts.push(layout);
     });
@@ -390,12 +628,12 @@ export function holdingLayout(id: string = HOLDING_LAYOUT_ID): HoldingLayout {
   return layout;
 }
 
-/** The layout as the room tile rule reads it: a template whose stations are open ground (the props stand on it). */
+/** The layout as the shore tile rule reads it: a template whose stations are ground (the props stand on it) and whose edge is the void. */
 export function holdingTemplate(layout: HoldingLayout = holdingLayout()): TileTemplate {
   return { name: layout.id, tiles: layout.tiles };
 }
 
-/** The layout as the sim walks it: every station tile a pillar (`o`), solid like the edge. */
+/** The layout as the sim walks it: every station tile a pillar (`o`), solid like the edge; a reserved spot stays ground. */
 export function holdingRoomTiles(layout: HoldingLayout = holdingLayout()): string[] {
   return layout.tiles.map((row) =>
     row
@@ -403,6 +641,11 @@ export function holdingRoomTiles(layout: HoldingLayout = holdingLayout()): strin
       .map((ch) => (STATION_LETTERS.includes(ch) ? 'o' : ch))
       .join(''),
   );
+}
+
+/** A station's parts in a layout, by id (none for a station the layout lacks). */
+export function stationParts(layout: HoldingLayout, stationId: string): readonly StationPart[] {
+  return layout.stations.find((s) => s.id === stationId)?.parts ?? [];
 }
 
 /** The start tile of a layout (its one `P`). */

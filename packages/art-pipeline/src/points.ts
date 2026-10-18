@@ -72,7 +72,7 @@ export function placePoints(recipe: Recipe, f: PointFrame): FramePoints {
   const file = `art/sheets/${recipe.sheet}.json`;
   const out: FramePoints = {};
   const problems: string[] = [];
-  const { cell } = cellFor(recipe.kind);
+  const { cell } = cellFor(recipe.sheet);
   for (const point of KINDLED_POINTS) {
     const listed = recipe.points[point] ?? {};
     let source = listed[f.name];

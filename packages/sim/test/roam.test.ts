@@ -45,7 +45,7 @@ const steps = (r: Roam, n: number, input: number): void => {
 };
 
 describe('the roam parameters', () => {
-  it("compile tuning.json's roam block into integers: 0.7 of the run, 1200 ms, 400 ms, 90°, a stick under 0.6 walks", () => {
+  it("compile tuning.json's roam block into integers: 0.7 of the run, 1200 ms, 400 ms, 90°, a stick under 0.6 walks, a 250 ms dip grace", () => {
     const P = compileRoam(defaultTuning.player, defaultTuning.roam);
     expect(P.speed).toBe(Math.round((100 * SUB) / TICK_HZ));
     expect(P.walk).toBe(700);
@@ -53,6 +53,7 @@ describe('the roam parameters', () => {
     expect(P.ramp).toBe(24);
     expect(P.resetTurn).toBe(1024);
     expect(P.walkMagMax).toBe(4);
+    expect(P.dipGrace).toBe(15);
     expect(P.radius).toBe(6 * SUB);
     expect(roamSpeedFactor(P, 0)).toBe(700);
     expect(roamSpeedFactor(P, 72)).toBe(700);
@@ -133,27 +134,73 @@ describe('walking and running', () => {
     const firm = roam();
     steps(firm, ticks(1200) + 1, move(E, 5));
     expect(firm.state.gait).toBe('run');
-    // Easing the stick back to a light push drops the run.
-    stepRoam(firm, move(E, 3));
+    // Easing the stick back to a light push for longer than the grace drops the run.
+    steps(firm, ticks(250) + 1, move(E, 3));
     expect(firm.state.gait).toBe('walk');
     expect(firm.state.movingTicks).toBe(0);
+    // A light push from a standstill never starts the clock, grace or not.
+    const light2 = roam();
+    steps(light2, 5, move(E, 3));
+    expect(light2.state.movingTicks).toBe(0);
+    expect(light2.state.dipTicks).toBe(5);
+  });
+
+  it("keeps the run clock through a dip under 60% shorter than 250 ms, and resets it on a longer one (GAME DESIGN 2026-10-18)", () => {
+    // A 200 ms dip to a light push: the run goes on, the clock still counting.
+    const wobble = roam();
+    steps(wobble, ticks(1600), move(E));
+    expect(wobble.state.gait).toBe('run');
+    const before = wobble.state.movingTicks;
+    steps(wobble, ticks(200), move(E, 3));
+    expect(wobble.state.gait).toBe('run');
+    expect(wobble.state.movingTicks).toBe(before + ticks(200));
+    expect(wobble.state.dipTicks).toBe(ticks(200));
+    stepRoam(wobble, move(E));
+    expect(wobble.state.gait).toBe('run');
+    expect(wobble.state.dipTicks).toBe(0);
+    // A 300 ms dip: the clock resets on the tick past the grace and the run drops; the next full push starts it over.
+    const slip = roam();
+    steps(slip, ticks(1600), move(E));
+    steps(slip, ticks(250), move(E, 3));
+    expect(slip.state.gait).toBe('run');
+    stepRoam(slip, move(E, 3));
+    expect(slip.state.gait).toBe('walk');
+    expect(slip.state.movingTicks).toBe(0);
+    steps(slip, ticks(300) - ticks(250) - 1, move(E, 3));
+    expect(slip.state.movingTicks).toBe(0);
+    steps(slip, ticks(1200), move(E));
+    expect(slip.state.gait).toBe('walk');
+    stepRoam(slip, move(E));
+    expect(slip.state.gait).toBe('run');
+    // A stop in the dip is still a stop: no grace.
+    const stop = roam();
+    steps(stop, ticks(1600), move(E));
+    stepRoam(stop, still);
+    expect(stop.state.gait).toBe('walk');
+    expect(stop.state.movingTicks).toBe(0);
   });
 
   it("stays inside the edge and out of the stations' tiles (the same wall collision as the rooms)", () => {
     const r = roam();
-    // Run north for a long time, clear of the post: the edge stops the body a radius short of row 0's bottom.
-    r.state.x = tileCentre(10, 11).x * SUB;
+    // Run north for a long time up the path west of the post (col 13): the edge stops the body a radius short of row 0's bottom.
+    r.state.x = tileCentre(13, 15).x * SUB;
     steps(r, 60 * 20, move(192));
     expect(r.state.y).toBe(TILE_PX * SUB + r.params.radius);
-    // The Writ post is a solid tile at (14, 9): walking into it from the south stops short.
+    // The Writ post is a solid tile at (14, 13): walking into it from the start stops short.
     const q = roam();
     steps(q, 60 * 5, move(192));
-    expect(q.state.y).toBeGreaterThanOrEqual((9 + 1) * TILE_PX * SUB + q.params.radius);
-    // The trees (cols 3-4, rows 9-10): walking west along row 10 stops at their east side.
+    expect(q.state.y).toBeGreaterThanOrEqual((13 + 1) * TILE_PX * SUB + q.params.radius);
+    // A tree (cols 4-5, rows 10-11): walking west along row 10 stops at its east side.
     const w = roam();
     w.state.y = tileCentre(0, 10).y * SUB;
     steps(w, 60 * 10, move(W));
-    expect(w.state.x).toBe(5 * TILE_PX * SUB + w.params.radius);
+    expect(w.state.x).toBe(6 * TILE_PX * SUB + w.params.radius);
+    // The reserved weapon rack (cols 17-18, row 13) is plain ground: walking east along row 13 crosses it and stops at the outcrop (col 23).
+    const e = roam();
+    e.state.y = tileCentre(0, 13).y * SUB;
+    e.state.x = tileCentre(16, 13).x * SUB;
+    steps(e, 60 * 10, move(E));
+    expect(e.state.x).toBe(23 * TILE_PX * SUB - e.params.radius);
   });
 });
 
