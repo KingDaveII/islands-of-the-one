@@ -1,5 +1,6 @@
 import {
   holdingLayout,
+  isShoreGround,
   itemDef,
   PACK_SLOTS,
   SKILL_NAMES,
@@ -13,6 +14,8 @@ import {
   type LayoutStation,
   type SkillView,
   type StationPart,
+  type TileRect,
+  type TileTemplate,
 } from '@iot/shared';
 import { displayable } from './drawable.js';
 import { packUsed } from './inventoryView.js';
@@ -228,6 +231,17 @@ export function propBase(part: Pick<StationPart, 'rect'>): { x: number; y: numbe
     x: (part.rect.col + part.rect.cols / 2) * TILE_SIZE_PX,
     y: (part.rect.row + part.rect.rows) * TILE_SIZE_PX,
   };
+}
+
+/**
+ * Whether a prop stands on the island: some cell of its bottom row is shore
+ * ground. A prop in the void (Kesh's rock) has nothing under it to shade, so
+ * it draws no grounding shadow.
+ */
+export function standsOnGround(template: TileTemplate, rect: TileRect): boolean {
+  const row = rect.row + rect.rows - 1;
+  for (let c = rect.col; c < rect.col + rect.cols; c++) if (isShoreGround(template, c, row)) return true;
+  return false;
 }
 
 /** The pack button's fill: "12/20". */

@@ -11,7 +11,7 @@ import {
   type TileRect,
 } from '@iot/shared';
 import type { RoamState } from '@iot/sim';
-import { nearestPart, propBase } from '../game/holdingView.js';
+import { nearestPart, propBase, standsOnGround } from '../game/holdingView.js';
 import { RoamGaitClock, roamPose, type KindledPose } from './animState.js';
 import { PLAYER_SHEET } from './characters.js';
 import { DEPTH } from './depth.js';
@@ -36,6 +36,8 @@ interface Prop {
   rect: TileRect;
   image: Phaser.GameObjects.Image;
   sheet: string;
+  /** False for a prop in the void (Kesh's rock): no grounding shadow. */
+  grounded: boolean;
 }
 
 /**
@@ -73,14 +75,15 @@ export class HoldingWorld {
     this.floor = scene.add.graphics().setDepth(DEPTH.floor);
     layer.add(this.floor);
     this.tiles = new TileRoom(scene, layer, HOLDING_SHEET);
-    this.tiles.build(holdingTemplate(layout));
+    const template = holdingTemplate(layout);
+    this.tiles.build(template);
     const stand = (stationId: string | null, rect: TileRect, sheet: string): void => {
       const base = propBase({ rect });
       const image = scene.add
         .image(snapToArt(base.x), snapToArt(base.y), sheet, 'idle_0')
         .setDepth(bodyDepth({ kind: 'prop' }, base.y));
       layer.add(image);
-      this.props.push({ stationId, rect, image, sheet });
+      this.props.push({ stationId, rect, image, sheet, grounded: standsOnGround(template, rect) });
     };
     for (const station of layout.stations) {
       const sheet = STATION_SHEETS[station.kind];
@@ -149,7 +152,8 @@ export class HoldingWorld {
   /** Poses the Kindled at its interpolated position (sim px) from the roam state, and draws the shadows. */
   draw(s: RoamState, player: { x: number; y: number }): void {
     this.floor.clear();
-    for (const { rect, image, sheet } of this.props) {
+    for (const { rect, image, sheet, grounded } of this.props) {
+      if (!grounded) continue;
       const sh = this.propShadow(sheet, image.frame.name);
       const base = propBase({ rect });
       if (sh.w > 0) this.shadowAt(snapToArt(base.x), snapToArt(base.y), sh.w, sh.h);
