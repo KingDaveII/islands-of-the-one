@@ -14,6 +14,7 @@ ART DIRECTION's art jobs as they were run. Each one is a prompt David pastes int
 | [run-kindled-ash](run-kindled-ash.md) | The player's run (8 frames, 8 facings) into the finished kindled-ash recipe, and the measured stride of walk and run | #46 |
 | [husks-m1](husks-m1.md) | The Peeling and the Nutshell at B: bases, east-only animations, draft recipes | #55 |
 | [tiles-cave](tiles-cave.md) | Raw material for the cave tiles (floor texture, wall, north door) and the chest; ART composes the pieces after G1.5e | #56 |
-| [run-back-kindled-ash](run-back-kindled-ash.md) | The player's backpedal (`run_back`, 4 frames, 8 facings) into the kindled-ash recipe, and its stride | (to run) |
+| [run-back-kindled-ash](run-back-kindled-ash.md) | The player's backpedal (`run_back`, 4 frames, 8 facings) into the kindled-ash recipe, and its stride | #74 |
+| [holding](holding.md) | Raw material for the starting holding: the ground texture and five props (Writ post, twisted tree, stone outcrop, holding store, Kesh's rock); ART composes the shore and cleans the props | (to run) |
 
 The current rules (heights, canvas sizes, colours) are in `art/anchors/style-sheet.md`, not in these prompts. New jobs start from the shared header in these prompts and the style sheet.
