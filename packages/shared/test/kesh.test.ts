@@ -4,6 +4,7 @@ import {
   firstSliverLines,
   KESH_GOODBYE_TOPIC,
   keshData,
+  scaffoldLines,
   topicLines,
   validateKeshData,
   validateScaffoldData,
@@ -58,27 +59,37 @@ describe('kesh.json', () => {
     expect(keshData.afterFirstPlot).toEqual([
       { who: 'kesh', text: '(throws a twist of cloth) "Now it knows it\'s for growing. Put those in. They\'ll come up while you\'re out."', toss: 'seeds' },
       { who: 'hint', text: 'Set Farming as your action and the field keeps growing while you\'re away.' },
+      { who: 'kesh', text: '"Now. Cut what you can and stack it by the post. A field with nothing built round it is only dirt with a name."' },
       { who: 'narrator', text: "One word, little light, and the ground believes you. Remember how easy that was. It won't always be." },
     ]);
-    expect(keshData.gifts).toEqual({ word: 'adamah', seeds: { itemId: 'grey-seeds', quantity: 10 } });
+    expect(keshData.gifts).toEqual({ word: 'adamah', seeds: { itemId: 'grey-seeds', quantity: 4 } });
     expect(keshData.afterNaming[0]?.text).toBe(
       '(squints at the post) "Hm. That\'s what you\'re calling it?" (shrugs) "Doesn\'t matter. Whatever you call it, it\'s yours now. The Hollow doesn\'t care if it\'s pretty."',
     );
     expect(keshData.afterFirstFeeding).toEqual([
       { who: 'kesh', text: '"There. Now it\'ll hold while you\'re gone. Two days, give or take. After that it starts forgetting the edges first."' },
     ]);
-    expect(keshData.tideSliver).toEqual([{ who: 'kesh', text: '(flicks a sliver across the water) "Don\'t get used to it."', toss: 'sliver' }]);
+    expect(keshData.tideSliver).toEqual([
+      { who: 'kesh', text: '(flicks a sliver across the water) "Tide\'s turned. The haze coughed one up. Don\'t burn it all in one place."', toss: 'sliver', m2Scaffold: true },
+    ]);
     const sparkglass = keshData.topics.find((t) => t.id === 'sparkglass');
-    expect(sparkglass?.lines.map((l) => l.who)).toEqual(['kesh', 'kesh', 'kesh', 'kesh', 'kesh', 'kesh', 'kesh', 'hint', 'narrator']);
+    expect(sparkglass?.lines.map((l) => l.who)).toEqual(['kesh', 'kesh', 'kesh', 'kesh', 'kesh', 'kesh', 'kesh', 'hint', 'kesh', 'narrator']);
     expect(firstSliverLines()).toEqual([
       { who: 'kesh', text: '(flicks the sliver across the water) "First one\'s free. Don\'t get used to it."', toss: 'sliver', only: 'first-sliver' },
       { who: 'hint', text: 'Touch Sparkglass to your Writ to feed it.', only: 'first-sliver' },
     ]);
-    // The topic plays its first-sliver step only while the first sliver hasn't been given.
+    // The topic plays its first-sliver step only while the first sliver hasn't been given; once it has and the tide's
+    // isn't due, LORE's "One a tide." takes its place (asked again the same tide); with the tide's due, neither.
     if (!sparkglass) throw new Error('no Sparkglass topic');
+    const oneATide = { who: 'kesh', text: '"One a tide. I\'m a fisherman, not a Pillar."', only: 'tide-taken', m2Scaffold: true };
     expect(topicLines(sparkglass, false)).toHaveLength(9);
-    expect(topicLines(sparkglass, true)).toHaveLength(7);
-    expect(topicLines(sparkglass, true).some((l) => l.toss !== undefined || l.only !== undefined)).toBe(false);
+    expect(topicLines(sparkglass, false).some((l) => l.only === 'tide-taken')).toBe(false);
+    expect(topicLines(sparkglass, true, false)).toHaveLength(8);
+    expect(topicLines(sparkglass, true, false)[6]).toEqual(oneATide);
+    expect(topicLines(sparkglass, true, true)).toHaveLength(7);
+    expect(topicLines(sparkglass, true, true).some((l) => l.toss !== undefined || l.only !== undefined)).toBe(false);
+    expect(topicLines(sparkglass, true)).toEqual(topicLines(sparkglass, true, false));
+    expect(scaffoldLines()).toEqual([...keshData.tideSliver, oneATide]);
     // Every other topic ends with the Narrator; no toss outside the Sparkglass topic and the tide.
     for (const t of keshData.topics) {
       expect(t.lines[t.lines.length - 1]?.who, t.id).toBe('narrator');
@@ -109,7 +120,7 @@ describe('kesh.json', () => {
         'afterNaming[0]: who must be one of kesh, narrator, hint',
         'afterNaming[0]: text must be a non-empty string',
         'afterNaming[2]: the fonts can\'t draw "✦" (don\'t change the text; flag it)',
-        'afterNaming[2]: only must be one of first-sliver',
+        'afterNaming[2]: only must be one of first-sliver, tide-taken',
         'afterNaming must carry exactly one toss, the word',
         'tideSliver must carry exactly one toss, a sliver',
         'topics[0]: id must be kebab-case',
@@ -128,6 +139,10 @@ describe('kesh.json', () => {
       problems: ['gifts: unknown field(s) more', 'gifts.word must be a word of words.json', 'gifts.seeds must be { itemId (items.json), quantity (a positive integer) }'],
     });
     expect(validateKeshData({ ...base, gifts: 'adamah' })).toMatchObject({ ok: false, problems: ['gifts must be { word, seeds: { itemId, quantity } }'] });
+    expect(validateKeshData({ ...base, afterFirstFeeding: [{ who: 'kesh', text: 'x', m2Scaffold: false }] })).toMatchObject({
+      ok: false,
+      problems: ['afterFirstFeeding[0]: m2Scaffold must be true when present'],
+    });
     expect(validateKeshData({ ...base, afterFirstPlot: [{ who: 'kesh', text: 'x', toss: 'word' }] })).toMatchObject({
       ok: false,
       problems: ['afterFirstPlot must carry exactly one toss, the seeds'],

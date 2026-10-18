@@ -1,5 +1,5 @@
 {
-  "$comment": "The holding's stations (docs/design/holding.md). id: kebab-case, the basket is basket:<id>, stored in the ledger so never renamed; kind: post | trees | outcrop | store | rack (the layout's legend letter; the rack has none, it is a reserved spot until Task 8); name: display name; action (none for the post, the store and the rack): name, the yield (itemId, quantity per cycle), cycleMs, the skill it trains and the XP per cycle (GAME DESIGN's curve: the action's base time in seconds). cycle (optional, on a station or a plot kind): the basket cycle, the passive trickle while the Writ is lit (itemId, quantity, cycleMs; no XP); today only the field has one, GAME DESIGN gave the trees and the outcrop no number. plotKinds (Task 5): what a Ground word builds on a plot; a named plot is a station of its kind with the plot's id (its basket is basket:<plot id>). Field: 1 pale grain every 20 s farmed as the active action, Farming, 20 XP; its cycle 1 pale grain every 15 min. Use on the post or the store opens the inventory with the store pane (the post gets its Writ panel in Task 4). The living branch, regrowth and the quarry's layers come later with their items.",
+  "$comment": "The holding's stations (docs/design/holding.md). id: kebab-case, the basket is basket:<id>, stored in the ledger so never renamed; kind: post | trees | outcrop | store | rack (the layout's legend letter; the rack has none, it is a reserved spot until Task 8); name: display name; action (none for the post, the store and the rack): name, the yield (itemId, quantity per cycle), cycleMs, the skill it trains and the XP per cycle (GAME DESIGN's curve: the action's base time in seconds). cycle (optional, on a station or a plot kind): the basket cycle, the passive trickle while the Writ is lit (itemId, quantity, cycleMs; no XP); perPart multiplies the yield by the station's part count in the layout (the trees: 1 log every 2 h per tree, six trees). The outcrop has none: stone never comes by itself, only by working it (GAME DESIGN). plotKinds (Task 5): what a Ground word builds on a plot; a named plot is a station of its kind with the plot's id (its basket is basket:<plot id>). Field: 1 pale grain every 20 s farmed as the active action, Farming, 20 XP; its cycle 1 pale grain every 15 min; sow: what a new field is sown with once before it cycles or can be worked (1 grey seed). Use on the post or the store opens the inventory with the store pane (the post gets its Writ panel in Task 4). The living branch, regrowth and the quarry's layers come later with their items.",
   "stations": [
     { "id": "writ-post", "kind": "post", "name": "Writ post" },
     { "id": "holding-store", "kind": "store", "name": "Holding store" },
@@ -8,7 +8,8 @@
       "id": "twisted-trees",
       "kind": "trees",
       "name": "Twisted trees",
-      "action": { "name": "a dead branch", "itemId": "twisted-log", "quantity": 1, "cycleMs": 4000, "skill": "woodcutting", "xp": 4 }
+      "action": { "name": "a dead branch", "itemId": "twisted-log", "quantity": 1, "cycleMs": 4000, "skill": "woodcutting", "xp": 4 },
+      "cycle": { "itemId": "twisted-log", "quantity": 1, "cycleMs": 7200000, "perPart": true }
     },
     {
       "id": "stone-outcrop",
@@ -22,7 +23,8 @@
       "id": "field",
       "name": "Field",
       "action": { "name": "farming", "itemId": "pale-grain", "quantity": 1, "cycleMs": 20000, "skill": "farming", "xp": 20 },
-      "cycle": { "itemId": "pale-grain", "quantity": 1, "cycleMs": 900000 }
+      "cycle": { "itemId": "pale-grain", "quantity": 1, "cycleMs": 900000 },
+      "sow": { "itemId": "grey-seeds", "quantity": 1 }
     }
   ]
 }

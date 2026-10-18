@@ -25,6 +25,19 @@ const BASE_OF_FINAL: Readonly<Record<string, string>> = Object.fromEntries(
   Object.entries(FINAL_FORMS).map(([base, final]) => [final, base]),
 );
 
+/**
+ * The divider of a plot sentence (docs/design/letters.md "The divider",
+ * LORE 2026-10-18): a single dot at mid-height between the Ground and the
+ * Virtue (and at the seal ring's other join). The letter sheet has no glyph
+ * for it yet (ART has been asked), so `shapeLetters` places it and the
+ * drawing code paints one sheet pixel at `DIVIDER_ROW`, centred in the word
+ * space, in the letters' state colour; ART's glyph on the sheet replaces it
+ * with no other change. It is not a letter: the filter drops it.
+ */
+export const PLOT_DIVIDER = '·';
+/** The sheet row the drawn divider's pixel sits on (mid-height of the body rows). */
+export const DIVIDER_ROW = 4;
+
 /** Position of a letter (a final form counts as its base letter), or -1. */
 export function letterPosition(char: string): number {
   return OLD_LETTERS.indexOf(BASE_OF_FINAL[char] ?? char);
@@ -77,6 +90,8 @@ export interface ShapedLetters {
   width: number;
   height: number;
   glyphs: PlacedLetter[];
+  /** The x of each divider's pixel (`PLOT_DIVIDER` between two words), on `DIVIDER_ROW`. */
+  dividers: number[];
 }
 
 /**
@@ -87,22 +102,35 @@ export interface ShapedLetters {
  */
 export function shapeLetters(text: string): ShapedLetters {
   // Split into words of sheet cells, folding typed final forms to their base first
-  // so the final form is applied only where the word actually ends.
+  // so the final form is applied only where the word actually ends. A divider between
+  // two words marks the space before the next word (its pixel is drawn there).
   const words: number[][] = [[]];
+  const dividedBefore = new Set<number>();
+  let divider = false;
   for (const char of text.normalize('NFKD')) {
     if (/\s/.test(char)) {
       if ((words[words.length - 1] as number[]).length > 0) words.push([]);
       continue;
     }
+    if (char === PLOT_DIVIDER && sheetCell(char) < 0) {
+      if ((words[words.length - 1] as number[]).length > 0) words.push([]);
+      divider = true;
+      continue;
+    }
     const cell = sheetCell(BASE_OF_FINAL[char] ?? char);
-    if (cell >= 0) (words[words.length - 1] as number[]).push(cell);
+    if (cell < 0) continue;
+    if (divider && (words[words.length - 1] as number[]).length === 0) dividedBefore.add(words.length - 1);
+    divider = false;
+    (words[words.length - 1] as number[]).push(cell);
   }
   if ((words[words.length - 1] as number[]).length === 0) words.pop();
 
   const cells: number[] = [];
   const wordStart = new Set<number>();
-  for (const word of words) {
+  const dividerAt = new Set<number>();
+  for (const [w, word] of words.entries()) {
     wordStart.add(cells.length);
+    if (w > 0 && dividedBefore.has(w)) dividerAt.add(cells.length);
     for (const [i, cell] of word.entries()) {
       const letter = sheet.chars[cell] as string;
       const final = i === word.length - 1 ? FINAL_FORMS[letter] : undefined;
@@ -117,12 +145,15 @@ export function shapeLetters(text: string): ShapedLetters {
   }
 
   const glyphs: PlacedLetter[] = [];
+  const dividers: number[] = [];
   let right = width;
   for (const [i, cell] of cells.entries()) {
     if (i > 0) right -= wordStart.has(i) ? sheet.space : sheet.gap;
+    // The divider's pixel, centred in the word space this word follows.
+    if (dividerAt.has(i)) dividers.push(right + Math.floor(sheet.space / 2));
     const w = sheet.widths[cell] as number;
     right -= w;
     glyphs.push({ cell, index: i, x: right, width: w });
   }
-  return { width, height: sheet.height, glyphs };
+  return { width, height: sheet.height, glyphs, dividers };
 }

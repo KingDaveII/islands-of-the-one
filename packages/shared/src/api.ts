@@ -30,6 +30,7 @@ export const ApiRoute = {
   KeshWord: '/api/kesh/word',
   KeshSeeds: '/api/kesh/seeds',
   PlotsName: '/api/plots/name',
+  PlotsSow: '/api/plots/sow',
 } as const;
 export type ApiRoute = (typeof ApiRoute)[keyof typeof ApiRoute];
 
@@ -89,6 +90,8 @@ export const ApiErrorCode = {
   Unchanged: 'unchanged',
   SentenceRefused: 'sentence-refused',
   UnnamedPlot: 'unnamed-plot',
+  NotSown: 'not-sown',
+  AlreadySown: 'already-sown',
 } as const;
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
 
@@ -270,6 +273,8 @@ export interface PlotView {
   virtue: string | null;
   namedAt: string | null;
   virtueSetAt: string | null;
+  /** When the plot was sown (ISO 8601); null until then, and for a kind that needs no sowing. */
+  sownAt: string | null;
   kind: string | null;
   level: number;
   state: WritLineState;
@@ -343,6 +348,16 @@ export interface PlotNameRequest {
   plotId: string;
   ground: string | null;
   virtue: string | null;
+}
+
+/**
+ * POST /api/plots/sow, `{ plotId }` (M2 Task 5): sows a new field with its
+ * kind's seed, from the store first, then the pack; it then cycles and can
+ * be worked. Answers the holding, or `unknown-plot`, `unnamed-plot`,
+ * `faded`, `already-sown` or `insufficient`.
+ */
+export interface PlotSowRequest {
+  plotId: string;
 }
 
 /** POST /api/writ/name: the island's Name as typed; the server hears its letters. Once only in M2 (`already-named` after). */
@@ -565,12 +580,14 @@ const isStringOrNull = (value: unknown): value is string | null => value === nul
 export function isPlotView(value: unknown): value is PlotView {
   return (
     isObject(value) &&
-    hasOnly(value, ['id', 'ground', 'virtue', 'namedAt', 'virtueSetAt', 'kind', 'level', 'state']) &&
+    hasOnly(value, ['id', 'ground', 'virtue', 'namedAt', 'virtueSetAt', 'sownAt', 'kind', 'level', 'state']) &&
     isPlotId(value.id) &&
     isStringOrNull(value.ground) &&
     isStringOrNull(value.virtue) &&
     isIsoOrNull(value.namedAt) &&
     isIsoOrNull(value.virtueSetAt) &&
+    isIsoOrNull(value.sownAt) &&
+    (value.ground !== null || value.sownAt === null) &&
     isStringOrNull(value.kind) &&
     (value.ground === null) === (value.namedAt === null) &&
     (value.ground === null) === (value.kind === null) &&
@@ -633,6 +650,11 @@ export function isKeshSliverRequest(value: unknown): value is KeshSliverRequest 
 
 /** The body of POST /api/kesh/word and /seeds: an empty object; any field is refused. */
 export const isKeshGiftRequest: (value: unknown) => value is KeshGiftRequest = isKeshSliverRequest;
+
+/** The body of POST /api/plots/sow: exactly { plotId }. */
+export function isPlotSowRequest(value: unknown): value is PlotSowRequest {
+  return isObject(value) && hasOnly(value, ['plotId']) && typeof value.plotId === 'string';
+}
 
 /** Shape only: the plot and the words are judged by the route. `ground` and `virtue` are word ids or null; nothing else. */
 export function isPlotNameRequest(value: unknown): value is PlotNameRequest {

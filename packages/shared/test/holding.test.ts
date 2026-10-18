@@ -23,7 +23,9 @@ import {
   isKeshSliverRequest,
   isPlotId,
   isPlotNameRequest,
+  isPlotSowRequest,
   isPlotView,
+  cycleYield,
   isStationCycleView,
   layoutPlot,
   plotIndex,
@@ -118,8 +120,13 @@ describe('stations.json', () => {
     expect(isHoldingStationId('stone-outcrop')).toBe(true);
     expect(isHoldingStationId('holding-store')).toBe(true);
     expect(isHoldingStationId('field')).toBe(false);
-    // No station has a cycle today (GAME DESIGN gave the trees and the outcrop no number).
-    expect(STATIONS.every((s) => s.cycle === null)).toBe(true);
+    // The trees' cycle (GAME DESIGN): 1 log every 2 h per tree, six trees; the outcrop has none, stone never comes by itself.
+    expect(stationDef('twisted-trees')?.cycle).toEqual({ itemId: 'twisted-log', quantity: 1, cycleMs: 7_200_000, perPart: true });
+    expect(cycleYield({ quantity: 1, perPart: true }, shipped, 'twisted-trees')).toBe(6);
+    expect(cycleYield({ quantity: 1, perPart: false }, shipped, 'twisted-trees')).toBe(1);
+    expect(cycleYield({ quantity: 2, perPart: true }, shipped, 'plot-1')).toBe(2);
+    expect(stationDef('stone-outcrop')?.cycle).toBeNull();
+    expect(stationDef('writ-post')?.cycle).toBeNull();
   });
 
   it("holds the field plot kind with GAME DESIGN's numbers: farming 1 pale grain every 20 s for 20 XP, a cycle of 1 every 15 min", () => {
@@ -128,7 +135,8 @@ describe('stations.json', () => {
       id: 'field',
       name: 'Field',
       action: { name: 'farming', itemId: 'pale-grain', quantity: 1, cycleMs: 20_000, skill: 'farming', xp: 20 },
-      cycle: { itemId: 'pale-grain', quantity: 1, cycleMs: 900_000 },
+      cycle: { itemId: 'pale-grain', quantity: 1, cycleMs: 900_000, perPart: false },
+      sow: { itemId: 'grey-seeds', quantity: 1 },
     });
     expect(isPlotKindId('field')).toBe(true);
     expect(isPlotKindId('plot-1')).toBe(false);
@@ -164,11 +172,17 @@ describe('stations.json', () => {
     // A cycle (Task 5): optional on a station or a plot kind, the item, the count and the length checked.
     const field = plotKindDef('field');
     expect(problems({ stations: [{ ...trees, cycle: { itemId: 'twisted-log', quantity: 1, cycleMs: 60_000 } }] })).toEqual([]);
-    expect(problems({ stations: [{ ...trees, cycle: { itemId: 'oak-log', quantity: 0, cycleMs: 1.5 } }] })).toEqual([
+    expect(problems({ stations: [{ ...trees, cycle: { itemId: 'oak-log', quantity: 0, cycleMs: 1.5, perPart: 'yes' } }] })).toEqual([
       'stations[0] (trees): cycle.itemId must be an item of items.json',
       'stations[0] (trees): cycle.quantity must be a positive integer',
       'stations[0] (trees): cycle.cycleMs must be a positive integer',
+      'stations[0] (trees): cycle.perPart must be a boolean when present',
     ]);
+    expect(problems({ stations: [trees], plotKinds: [{ ...field, sow: { itemId: 'grey-seeds', quantity: 0, more: 1 } }] })).toEqual([
+      'plotKinds[0] (field): sow has unknown field(s) more',
+      'plotKinds[0] (field): sow.quantity must be a positive integer',
+    ]);
+    expect(problems({ stations: [trees], plotKinds: [{ ...field, sow: undefined }] })).toEqual([]);
     expect(problems({ stations: [{ id: 'post', kind: 'post', name: 'Post', cycle: field?.cycle }] })).toEqual(['stations[0] (post): the post has no cycle']);
     expect(problems({ stations: [trees], plotKinds: [field] })).toEqual([]);
     expect(problems({ stations: [trees], plotKinds: [{ ...field, cycle: undefined }] })).toEqual([]);
@@ -519,7 +533,7 @@ describe('the holding API guards', () => {
     writ: toWritView(pressedWrit(Date.parse('2026-10-17T12:00:00.000Z')), Date.parse('2026-10-17T12:00:13.000Z')),
     kesh: { firstGiven: false, due: 'first', nextTideAt: '2026-10-17T18:00:00.000Z', wordDue: false, seedsDue: false },
     words: [],
-    plots: shipped.plots.map((p) => ({ id: p.id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, kind: null, level: 1, state: 'lit' as const })),
+    plots: shipped.plots.map((p) => ({ id: p.id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, level: 1, state: 'lit' as const })),
     cycles: {},
   };
 
@@ -544,8 +558,13 @@ describe('the holding API guards', () => {
     // Task 5: the words, the plots and the cycles.
     expect(isHoldingResponse({ ...response, words: ['adamah'] })).toBe(true);
     expect(isHoldingResponse({ ...response, words: [1] })).toBe(false);
-    const named = { id: 'plot-1', ground: 'adamah', virtue: null, namedAt: response.now, virtueSetAt: null, kind: 'field', level: 1, state: 'lit' };
+    const named = { id: 'plot-1', ground: 'adamah', virtue: null, namedAt: response.now, virtueSetAt: null, sownAt: null, kind: 'field', level: 1, state: 'lit' };
     expect(isPlotView(named)).toBe(true);
+    expect(isPlotView({ ...named, sownAt: response.now })).toBe(true);
+    expect(isPlotView({ ...named, ground: null, kind: null, namedAt: null, sownAt: response.now })).toBe(false);
+    expect(isPlotSowRequest({ plotId: 'plot-1' })).toBe(true);
+    expect(isPlotSowRequest({ plotId: 'plot-1', seeds: 1 })).toBe(false);
+    expect(isPlotSowRequest({})).toBe(false);
     expect(isPlotView({ ...named, virtue: 'yashan', virtueSetAt: response.now, state: 'dark' })).toBe(true);
     expect(isPlotView({ ...named, virtue: 'yashan' })).toBe(false);
     expect(isPlotView({ ...named, kind: null })).toBe(false);

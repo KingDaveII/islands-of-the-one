@@ -144,6 +144,14 @@ export interface StationCycle {
   itemId: string;
   quantity: number;
   cycleMs: number;
+  /** The yield is multiplied by the station's part count in the layout (the trees: one log per tree). */
+  perPart: boolean;
+}
+
+/** What a new plot of a kind is sown with, once, before it cycles or can be worked (the field: 1 grey seed). */
+export interface PlotSowing {
+  itemId: string;
+  quantity: number;
 }
 
 export interface StationDef {
@@ -162,6 +170,8 @@ export interface PlotKindDef {
   name: string;
   action: StationAction;
   cycle: StationCycle | null;
+  /** What sows a new plot of this kind, or null for a kind that needs no sowing. */
+  sow: PlotSowing | null;
 }
 
 /** The kinds with no action: Use opens the inventory (post, store), or nothing yet (rack). */
@@ -261,13 +271,29 @@ function parseCycle(cycle: unknown, where: string, problems: string[]): StationC
     return null;
   }
   const before = problems.length;
-  const more = Object.keys(cycle).filter((k) => !['itemId', 'quantity', 'cycleMs'].includes(k));
+  const more = Object.keys(cycle).filter((k) => !['itemId', 'quantity', 'cycleMs', 'perPart'].includes(k));
   if (more.length > 0) problems.push(`${where}: cycle has unknown field(s) ${more.join(', ')}`);
   if (!isItemId(cycle.itemId)) problems.push(`${where}: cycle.itemId must be an item of items.json`);
   if (!isCount(cycle.quantity)) problems.push(`${where}: cycle.quantity must be a positive integer`);
   if (!isCount(cycle.cycleMs)) problems.push(`${where}: cycle.cycleMs must be a positive integer`);
+  if (cycle.perPart !== undefined && typeof cycle.perPart !== 'boolean') problems.push(`${where}: cycle.perPart must be a boolean when present`);
   if (problems.length > before) return null;
-  return { itemId: cycle.itemId as string, quantity: cycle.quantity as number, cycleMs: cycle.cycleMs as number };
+  return { itemId: cycle.itemId as string, quantity: cycle.quantity as number, cycleMs: cycle.cycleMs as number, perPart: cycle.perPart === true };
+}
+
+/** A sow block of a plot kind: the item and the count, positive whole numbers. */
+function parseSow(sow: unknown, where: string, problems: string[]): PlotSowing | null {
+  if (!isObject(sow)) {
+    problems.push(`${where}: sow must be an object`);
+    return null;
+  }
+  const before = problems.length;
+  const more = Object.keys(sow).filter((k) => !['itemId', 'quantity'].includes(k));
+  if (more.length > 0) problems.push(`${where}: sow has unknown field(s) ${more.join(', ')}`);
+  if (!isItemId(sow.itemId)) problems.push(`${where}: sow.itemId must be an item of items.json`);
+  if (!isCount(sow.quantity)) problems.push(`${where}: sow.quantity must be a positive integer`);
+  if (problems.length > before) return null;
+  return { itemId: sow.itemId as string, quantity: sow.quantity as number };
 }
 
 /** Check stations.json-shaped data (the stations and the plot kinds); every problem is listed. */
@@ -318,9 +344,9 @@ export function validateStationsData(
           problems.push(`${at}: not an object`);
           return;
         }
-        const extra = Object.keys(entry).filter((k) => !['id', 'name', 'action', 'cycle'].includes(k));
+        const extra = Object.keys(entry).filter((k) => !['id', 'name', 'action', 'cycle', 'sow'].includes(k));
         if (extra.length > 0) problems.push(`${at}: unknown field(s) ${extra.join(', ')}`);
-        const { id, name, action, cycle } = entry;
+        const { id, name, action, cycle, sow } = entry;
         if (!isStationId(id)) {
           problems.push(`${at}: id must be kebab-case`);
           return;
@@ -334,8 +360,9 @@ export function validateStationsData(
         const parsed = action === undefined ? null : parseAction(action, where, problems);
         if (action === undefined) problems.push(`${where}: a plot kind needs an action`);
         const parsedCycle = cycle === undefined ? null : parseCycle(cycle, where, problems);
+        const parsedSow = sow === undefined ? null : parseSow(sow, where, problems);
         if (problems.length > before || !parsed) return;
-        plotKinds.push({ id, name: name as string, action: parsed, cycle: parsedCycle });
+        plotKinds.push({ id, name: name as string, action: parsed, cycle: parsedCycle, sow: parsedSow });
       });
   }
   return problems.length > 0 ? { ok: false, problems } : { ok: true, stations, plotKinds };
@@ -810,6 +837,11 @@ export function holdingRoomTiles(layout: HoldingLayout = holdingLayout(), solidP
 /** A station's parts in a layout, by id (none for a station the layout lacks). */
 export function stationParts(layout: HoldingLayout, stationId: string): readonly StationPart[] {
   return layout.stations.find((s) => s.id === stationId)?.parts ?? [];
+}
+
+/** A cycle's yield per cycle at a station: its quantity, times the station's part count in the layout for a `perPart` cycle (the trees). */
+export function cycleYield(cycle: Pick<StationCycle, 'quantity' | 'perPart'>, layout: HoldingLayout, stationId: string): number {
+  return cycle.perPart ? cycle.quantity * Math.max(1, stationParts(layout, stationId).length) : cycle.quantity;
 }
 
 /** A layout's plot by id, or undefined. */

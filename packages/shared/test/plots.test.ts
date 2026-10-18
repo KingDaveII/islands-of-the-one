@@ -5,9 +5,12 @@ import {
   cycleLengthMs,
   cycleSpeedPermille,
   DAY_MS,
+  daysKept,
   DRAWABLE_CHARS,
+  durationWords,
+  isSafe,
+  lettersFromPositions,
   nextCycleInMs,
-  PLOT_SENTENCE_STRICT,
   PLOT_TEXT,
   plotLevel,
   plotLine,
@@ -39,28 +42,33 @@ const T0 = Date.parse('2026-10-17T12:00:00Z');
 const MIN = 15 * 60_000;
 
 describe('the plot-sentence filter', () => {
-  it('is strict today (the conservative reading of CLAUDE.md; LORE has been asked)', () => {
-    expect(PLOT_SENTENCE_STRICT).toBe(true);
+  it('passes every Ground × Virtue pair in words.json, אדמה · ישן included (the divider closes the door; LORE 2026-10-18)', () => {
+    for (const ground of wordsInSlot('ground')) {
+      expect(plotSentenceSafe(ground, null), ground.id).toEqual({ ok: true });
+      for (const virtue of wordsInSlot('virtue')) expect(plotSentenceSafe(ground, virtue), `${ground.id} ${virtue.id}`).toEqual({ ok: true });
+    }
+    expect(plotSentence(adamah, yashan)).toBe('אדמה · ישן');
+    expect(plotSentence(adamah, null)).toBe('אדמה');
+    expect(WORDS).toHaveLength(2);
+    // A Name with the same letters is still refused by the strict rule: Names keep it.
+    expect(isSafe('אדמה ישן', { strict: true })).toEqual({ ok: false, reason: 'yod-he' });
+    expect(isSafe('אדמה ישן')).toEqual({ ok: true });
   });
 
-  it('enumerates every Ground × Virtue pair in words.json and pins which the filter refuses: אדמה · ישן (he against yod across the space)', () => {
-    const refused: string[] = [];
-    const accepted: string[] = [];
-    for (const ground of wordsInSlot('ground')) {
-      // A Ground alone always passes: its letters pass the filter on their own.
-      expect(plotSentenceSafe(plotSentence(ground, null)), ground.id).toEqual({ ok: true });
-      for (const virtue of wordsInSlot('virtue')) {
-        const sentence = plotSentence(ground, virtue);
-        const r = plotSentenceSafe(sentence);
-        (r.ok ? accepted : refused).push(`${ground.id} ${virtue.id}${r.ok ? '' : ` (${r.reason ?? ''})`}`);
-      }
-    }
-    // The pinned pairs. LORE's answer on the mode flips PLOT_SENTENCE_STRICT and this list.
-    expect(refused).toEqual(['adamah yashan (yod-he)']);
-    expect(accepted).toEqual([]);
-    // Under the non-strict rule the same sentence passes: the filter alone decides.
-    expect(plotSentence(adamah, yashan)).toBe('אדמה ישן');
-    expect(WORDS).toHaveLength(2);
+  it('refuses a pair whose join makes a banned run, across the divider or in the other order (fixtures from positions, never spelled)', () => {
+    // The title read in the One's place, as positions: its first two letters as a Ground, its last two as a Virtue.
+    const [a, b, c, d] = [0, 3, 13, 9];
+    const head = { letters: lettersFromPositions([a, b]) };
+    const tail = { letters: lettersFromPositions([c, d]) };
+    // Each tile passes the strict filter alone...
+    expect(isSafe(head.letters, { strict: true })).toEqual({ ok: true });
+    expect(isSafe(tail.letters, { strict: true })).toEqual({ ok: true });
+    // ...the join across the divider is refused, Ground then Virtue...
+    expect(plotSentenceSafe(head, tail)).toEqual({ ok: false, reason: 'name-hebrew' });
+    // ...and in the other order too, read Virtue then Ground.
+    expect(plotSentenceSafe(tail, head)).toEqual({ ok: false, reason: 'name-hebrew' });
+    // A harmless pair with the same letters in another order passes.
+    expect(plotSentenceSafe({ letters: lettersFromPositions([a, c]) }, { letters: lettersFromPositions([b, d]) })).toEqual({ ok: true });
   });
 });
 
@@ -95,21 +103,32 @@ describe('the plots and their Writ line', () => {
 
 describe("ישן's yield", () => {
   it('is +1% for every whole day the plot has kept its Virtue, up to +20%: 0, 1, 19, 20 and 30 days', () => {
-    expect(yieldBonusPermille(effect, T0, T0)).toBe(0);
-    expect(yieldBonusPermille(effect, T0, T0 + DAY_MS - 1)).toBe(0);
-    expect(yieldBonusPermille(effect, T0, T0 + DAY_MS)).toBe(10);
-    expect(yieldBonusPermille(effect, T0, T0 + 19 * DAY_MS)).toBe(190);
-    expect(yieldBonusPermille(effect, T0, T0 + 20 * DAY_MS)).toBe(200);
-    expect(yieldBonusPermille(effect, T0, T0 + 30 * DAY_MS)).toBe(200);
-    // No Virtue, before it was set, or an unknown effect: nothing.
-    expect(yieldBonusPermille(null, T0, T0 + 30 * DAY_MS)).toBe(0);
-    expect(yieldBonusPermille(effect, null, T0 + 30 * DAY_MS)).toBe(0);
-    expect(yieldBonusPermille(effect, T0 + DAY_MS, T0)).toBe(0);
+    expect(yieldBonusPermille(effect, T0, 0, T0)).toBe(0);
+    expect(yieldBonusPermille(effect, T0, 0, T0 + DAY_MS - 1)).toBe(0);
+    expect(yieldBonusPermille(effect, T0, 0, T0 + DAY_MS)).toBe(10);
+    expect(yieldBonusPermille(effect, T0, 0, T0 + 19 * DAY_MS)).toBe(190);
+    expect(yieldBonusPermille(effect, T0, 0, T0 + 20 * DAY_MS)).toBe(200);
+    expect(yieldBonusPermille(effect, T0, 0, T0 + 30 * DAY_MS)).toBe(200);
+    // No Virtue, before it was set: nothing.
+    expect(yieldBonusPermille(null, T0, 0, T0 + 30 * DAY_MS)).toBe(0);
+    expect(yieldBonusPermille(effect, null, 0, T0 + 30 * DAY_MS)).toBe(0);
+    expect(yieldBonusPermille(effect, T0 + DAY_MS, 0, T0)).toBe(0);
+  });
+
+  it('pauses the count for the time the plot spent faded (GAME DESIGN): 30 days with 10 faded count 20', () => {
+    expect(daysKept(T0, 0, T0 + 30 * DAY_MS)).toBe(30);
+    expect(daysKept(T0, 10 * DAY_MS, T0 + 30 * DAY_MS)).toBe(20);
+    expect(daysKept(T0, 10 * DAY_MS, T0 + 5 * DAY_MS)).toBe(0);
+    expect(daysKept(null, 0, T0)).toBe(0);
+    expect(yieldBonusPermille(effect, T0, 10 * DAY_MS, T0 + 30 * DAY_MS)).toBe(200);
+    expect(yieldBonusPermille(effect, T0, 10 * DAY_MS, T0 + 15 * DAY_MS)).toBe(50);
+    expect(yieldBonusPermille(effect, T0, 36 * 60 * 60_000, T0 + 3 * DAY_MS)).toBe(10);
   });
 
   it('each cycle takes the bonus at its own end, and the count restarts from virtue_set_at', () => {
     // Four 15 min cycles from 45 min before the Virtue's first day ends: the two ending before the day at 0, the two from it on at +1%.
     expect(cycleBonuses(4, T0 + DAY_MS - 3 * MIN, MIN, effect, T0)).toEqual([0, 0, 10, 10]);
+    expect(cycleBonuses(4, T0 + DAY_MS - 3 * MIN, MIN, effect, T0, MIN)).toEqual([0, 0, 0, 10]);
     expect(cycleBonuses(2, T0, MIN, null, T0)).toEqual([0, 0]);
     expect(cycleBonuses(0, T0, MIN, effect, T0)).toEqual([]);
   });
@@ -143,10 +162,19 @@ describe('the plots\' lines', () => {
     }
     expect(PLOT_TEXT.NEXT_IN('12 min')).toBe('Next in 12 min');
     expect(PLOT_TEXT.BONUS_LINE(3)).toBe('+3% for keeping its name');
-    expect(PLOT_TEXT.FADED_PANEL(1)).toBe('Faded into the haze with line 1. Feed your Writ to bring it back.');
-    // LORE's lines, word for word.
+    // LORE's and GAME DESIGN's lines, word for word.
+    expect(PLOT_TEXT.FADED_PANEL).toBe("Faded into the haze with your Writ's first line. Feed your Writ and it will remember.");
     expect(PLOT_TEXT.UNNAMED_PLOT_TIP).toBe('Ground, but not yet ground for anything. Give it a word.');
     expect(PLOT_TEXT.NO_VIRTUE_WORDS).toBe("You don't know any Virtue words yet.");
     expect(PLOT_TEXT.NO_GROUND).toBe('A Ground tile decides the building; without a Ground the plot cannot be built on');
+    expect(PLOT_TEXT.SENTENCE_REFUSED).toBe("Those words won't hold together. Try another pair.");
+    expect(PLOT_TEXT.COST_RENAME).toBe('Renaming: 1 sealed gin');
+    expect(PLOT_TEXT.COST_RENAME_TIP).toBe('A name is paid for.');
+    expect(PLOT_TEXT.NOT_SOWN).toBe('Not sown yet.');
+    expect(PLOT_TEXT.RESTING).toBe('Resting while your Writ is dark.');
+    expect(durationWords(20_000)).toBe('20 s');
+    expect(durationWords(900_000)).toBe('15 min');
+    expect(durationWords(7_200_000)).toBe('2 h');
+    expect(durationWords(90_000)).toBe('90 s');
   });
 });

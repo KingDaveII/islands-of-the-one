@@ -155,6 +155,8 @@ export const InventoryReason = {
   Gift: 'gift',
   /** A plot renamed (docs/design/holding.md "Plots"): the gin a change of its sentence costs. The first naming is free. */
   NamePlot: 'name-plot',
+  /** A new field sown: the seed it takes, once, before it cycles or can be worked. */
+  Sow: 'sow',
 } as const;
 export type InventoryReason = (typeof InventoryReason)[keyof typeof InventoryReason];
 
