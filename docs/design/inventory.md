@@ -202,8 +202,9 @@ The inventory screen (`apps/client/src/scenes/InventoryScene.ts`; its layout log
 in `apps/client/src/game/inventoryView.ts`) opens with I on the keyboard, the Touchpad on a DualSense
 (both the `inventory` binding in `controls.json`), the start screen's **INVENTORY** button (Square on
 the pad); Esc, Circle or I closes it. Placeholder UI in the existing panel style and BitmapText until
-ART's M2 UI kit replaces the look (not the layout logic); icons are the item's initials until ART
-draws them.
+ART's M2 UI kit replaces the look (not the layout logic); each cell draws the item's
+16 px icon from ART's `item-icons` sheet (#77), centred in the 24 px cell, and falls back to the item's
+initials for an item the sheet lacks.
 
 - **Two panes**: the **pack**, a 5 × 4 grid of its derived slots (`packSlots`, the server's order),
   each cell an icon placeholder and its count, titled with the slots used; the **store**, a scrolling

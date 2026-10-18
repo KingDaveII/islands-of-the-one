@@ -1,6 +1,6 @@
 # Sprite sheets
 
-The contract for every animated character sheet the client loads (ART DIRECTION → MAIN, 2026-10-12). Terms: [`glossary.md`](glossary.md); drawing rules and signal colours: [`readability.md`](readability.md); the Old Letters sheet, the first asset delivered this way: [`letters.md`](letters.md). Related engine sheets already in `packages/shared/assets/`: `controller-glyphs-12px.png` + `.json` (44 cells, prompts and the controls screen) and `hookblade-fx.png` + `.json` (chain link, hook, charge spark); their format is "Engine sheets" in §5.
+The contract for every animated character sheet the client loads (ART DIRECTION → MAIN, 2026-10-12). Terms: [`glossary.md`](glossary.md); drawing rules and signal colours: [`readability.md`](readability.md); the Old Letters sheet, the first asset delivered this way: [`letters.md`](letters.md). Related engine sheets already in `packages/shared/assets/`: `controller-glyphs-12px.png` + `.json` (44 cells, prompts and the controls screen) and `hookblade-fx.png` + `.json` (chain link, hook, charge spark) and `item-icons-16px.png` + `.json` (one 16 px cell per item, named by its id in `items.json`, untinted; the inventory's cells); their format is "Engine sheets" in §5.
 
 How every animated character reaches the engine: a 1× PNG plus a JSON contract, like the Old Letters sheet (PR #8). This spec covers the tool, the frame grid, facings, the animation lists for M1 (Kindled, Peeling, Nutshell), frame rates, the JSON shape for Phaser, and the test MAIN commits with each sheet.
 
@@ -275,7 +275,9 @@ The contract's version, the only one the engine loads (`SPRITE_SHEET_VERSION`); 
 ### Engine sheets
 
 The cell sheets the engine draws its own effects from, next to the sprites in `packages/shared/assets/`:
-`controller-glyphs` and `hookblade-fx` (chain link, hook, charge spark). Each is a PNG plus a JSON of named
+`controller-glyphs`, `hookblade-fx` (chain link, hook, charge spark) and `item-icons` (one 16 px cell per
+item in `items.json`, named by the item's id, drawn in its own colours, `meta.tinted` false; the test checks the
+cells match `items.json` exactly). Each is a PNG plus a JSON of named
 `cells` (`{ name, x, y, w, h }`), checked by `packages/shared/test/sheets.test.ts`. `hookblade-fx.json` also
 carries its anims (`charge_spark`), `chain` (`link`, `taut`, `spacing`) and `hook` (`flight`, `set`, `origin`),
 and a `meta` block (`engineSheetMeta` in `packages/shared/src/sheets.ts`):
