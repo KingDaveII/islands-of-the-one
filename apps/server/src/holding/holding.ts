@@ -26,8 +26,9 @@ import {
 } from '@iot/shared';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type { Database, Transaction } from '../db/client.js';
-import { holdingActivity, kindled, skillXp, writs, type HoldingActivityRow, type KindledRow, type WritRow } from '../db/schema.js';
+import { holdingActivity, keshGifts, kindled, skillXp, writs, type HoldingActivityRow, type KindledRow, type WritRow } from '../db/schema.js';
 import type { Inventory } from '../inventory/index.js';
+import { giveSliver, keshViewOf } from './kesh.js';
 import { feedable, feedChanges, lockWrit, WRIT_ALREADY_NAMED, WRIT_INSUFFICIENT, WRIT_UNNAMED, writStored } from './writ.js';
 
 /**
@@ -41,7 +42,8 @@ import { feedable, feedChanges, lockWrit, WRIT_ALREADY_NAMED, WRIT_INSUFFICIENT,
  * past the cap, so lost time is never paid later. The Writ (M2 Task 4a) sets
  * the offline horizon: a dark Writ stops offline earning at the moment it
  * went dark; its row is pressed on the Kindled's first request. Naming the
- * island and feeding the Writ run here too, under the same lock.
+ * island, feeding the Writ and Kesh's slivers (M2 Task 4b, kesh.ts) run here
+ * too, under the same lock.
  */
 
 /**
@@ -86,7 +88,9 @@ export type HoldingError =
   | 'not-sparkglass'
   | 'insufficient'
   | 'full'
-  | 'too-much';
+  | 'too-much'
+  | 'not-due'
+  | 'pack-full';
 
 export type HoldingResult =
   | { ok: true; value: HoldingResponse }
@@ -107,6 +111,8 @@ export interface Holding {
   feed(kindledId: string, itemId: string, count: number, now: Date): Promise<HoldingResult>;
   /** Settle, then feed as many wild slivers as fit (never gin). */
   fill(kindledId: string, now: Date): Promise<HoldingResult>;
+  /** Settle, then take the sliver Kesh has due (his first, else this tide's): one wild sliver into the pack. */
+  keshSliver(kindledId: string, now: Date): Promise<HoldingResult>;
   /** Settle alone (tests and the API's inventory routes). */
   settle(kindledId: string, now: Date): Promise<void>;
 }
@@ -223,6 +229,8 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
     for (const skill of SKILLS) skills[skill] = skillProgress(rows.find((r) => r.skill === skill)?.xp ?? 0);
     const [w] = await tx.select().from(writs).where(eq(writs.kindledId, k.id));
     if (!w) throw new Error(`writ: no row for Kindled ${k.id}`);
+    // Kesh's gifts: a Kindled without a row yet has been given nothing.
+    const [gifts] = await tx.select().from(keshGifts).where(eq(keshGifts.kindledId, k.id));
     const out: HoldingResponse = {
       layoutId: layout.id,
       baskets,
@@ -230,6 +238,7 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
       now: now.toISOString(),
       skills,
       writ: toWritView(writStored(w), now.getTime()),
+      kesh: keshViewOf(gifts ?? { firstSliverAt: null, lastTide: null }, now),
     };
     if (take) out.take = take;
     return out;
@@ -276,7 +285,11 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
       if (taken.error === 'insufficient') return refuse('insufficient', WRIT_INSUFFICIENT);
       throw new Error(`feed-writ: ${taken.message}`);
     }
-    await tx.update(writs).set({ emptyAt: new Date(preview.emptyAt) }).where(eq(writs.kindledId, k.id));
+    // The first feed is remembered once (fed_at): the client plays Kesh's after-first-feeding line when it appears.
+    await tx
+      .update(writs)
+      .set(w.fedAt === null ? { emptyAt: new Date(preview.emptyAt), fedAt: now } : { emptyAt: new Date(preview.emptyAt) })
+      .where(eq(writs.kindledId, k.id));
     return undefined;
   }
 
@@ -362,6 +375,14 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
         if (!preview.ok) return refuse(preview.error, preview.message);
         if (have === 0) return refuse('insufficient', WRIT_INSUFFICIENT);
         return feedIn(tx, k, w, FILL_ITEM, Math.min(preview.count, have), now, held);
+      }),
+
+    // Kesh's sliver (docs/design/holding.md "Kesh"): under the Kindled's lock, the gift row decides what is due;
+    // a full pack refuses and the sliver stays due; the answer is the holding like every other route.
+    keshSliver: (kindledId, now) =>
+      request(kindledId, now, async (tx, k) => {
+        const given = await giveSliver(tx, inventory, k.id, now);
+        return given.ok ? undefined : refuse(given.error, given.message);
       }),
 
     settle: async (kindledId, now) => {

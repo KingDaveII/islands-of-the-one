@@ -1,7 +1,9 @@
-import { HOUR_MS } from '@iot/shared';
+import { ApiRoute, HOUR_MS, SESSION_COOKIE, type HoldingResponse } from '@iot/shared';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { createApp } from '../src/app.js';
 import { openTestPostgres, type TestPostgres } from './postgres.js';
 import type { DbHandle } from '../src/db/client.js';
+import { eq } from 'drizzle-orm';
 import { accounts, kindled } from '../src/db/schema.js';
 import { createHolding, type Holding } from '../src/holding/index.js';
 import { createInventory, type Inventory } from '../src/inventory/index.js';
@@ -10,8 +12,10 @@ import { createInventory, type Inventory } from '../src/inventory/index.js';
  * The holding's settle under real concurrency (docs/design/holding.md).
  * PGlite is one connection, so only a real Postgres shows the locks at work:
  * many settles racing for the same Kindled credit each cycle once, and a
- * take-all racing a settle keeps the basket's totals. Needs
- * TEST_DATABASE_URL like inventory.postgres.test.ts (CI provides one).
+ * take-all racing a settle keeps the basket's totals; feeds racing on one
+ * Writ never overfill it; two POST /api/kesh/sliver racing give exactly one
+ * sliver (M2 Task 4b). Needs TEST_DATABASE_URL like
+ * inventory.postgres.test.ts (CI provides one).
  */
 const url = process.env.TEST_DATABASE_URL;
 const RACERS = 16;
@@ -127,5 +131,45 @@ describe.runIf(url)('the holding settle on Postgres', () => {
     const after = await inv.view(k);
     expect((after.store.find((e) => e.itemId === 'wild-sliver')?.quantity ?? 0) + (after.pack.find((e) => e.itemId === 'wild-sliver')?.quantity ?? 0)).toBe(5);
     await expectChains(k);
+  });
+
+  it('two POST /api/kesh/sliver racing give exactly one sliver', async () => {
+    const app = await createApp({ db: handle, now: () => at(0) });
+    try {
+      const host = 'game.test';
+      const post = (url: string, cookie: string, body: unknown = {}) =>
+        app.http.inject({ method: 'POST', url, headers: { host, origin: `https://${host}`, 'content-type': 'application/json', cookie }, payload: JSON.stringify(body) });
+      const reg = await post(ApiRoute.Register, '', { username: `keshracer${++n}`, password: 'correct horse' });
+      const pair = (Array.isArray(reg.headers['set-cookie']) ? reg.headers['set-cookie'][0] : reg.headers['set-cookie'])?.split(';')[0];
+      if (!pair?.startsWith(`${SESSION_COOKIE}=`)) throw new Error('no session cookie');
+      expect((await post(ApiRoute.Kindled, pair, { name: 'Iltani', remembrance: 'tide' })).statusCode).toBe(201);
+      // The first sliver, alone; then the tide's is due, once: of the racers exactly one gets it, the rest are not-due.
+      const first = await post(ApiRoute.KeshSliver, pair);
+      expect(first.statusCode).toBe(200);
+      expect(first.json<HoldingResponse>().kesh).toMatchObject({ firstGiven: true, due: 'tide' });
+      const results = await race(RACERS, () => post(ApiRoute.KeshSliver, pair));
+      const landed = results.filter((r) => r.statusCode === 200);
+      expect(landed).toHaveLength(1);
+      expect(landed[0]?.json<HoldingResponse>().kesh).toMatchObject({ firstGiven: true, due: null });
+      expect(results.filter((r) => r.statusCode === 409)).toHaveLength(RACERS - 1);
+      expect(results.filter((r) => r.statusCode === 409).every((r) => r.json<{ error: string }>().error === 'not-due')).toBe(true);
+      const [k] = await handle.db.select({ id: kindled.id }).from(kindled).innerJoin(accounts, eq(kindled.accountId, accounts.id)).where(eq(accounts.username, `keshracer${n}`));
+      if (!k) throw new Error('no Kindled');
+      expect((await inv.view(k.id)).pack).toEqual([{ itemId: 'wild-sliver', quantity: 2 }]);
+      expect((await inv.ledger(k.id)).filter((e) => e.reason === 'gift').map((e) => e.delta)).toEqual([1, 1]);
+      await expectChains(k.id);
+      // The first sliver racing with itself, on a fresh Kindled: exactly one first, exactly one tide's, never a third.
+      const reg2 = await post(ApiRoute.Register, '', { username: `keshracer${++n}`, password: 'correct horse' });
+      const pair2 = (Array.isArray(reg2.headers['set-cookie']) ? reg2.headers['set-cookie'][0] : reg2.headers['set-cookie'])?.split(';')[0] ?? '';
+      expect((await post(ApiRoute.Kindled, pair2, { name: 'Iltani', remembrance: 'tide' })).statusCode).toBe(201);
+      const both = await race(RACERS, () => post(ApiRoute.KeshSliver, pair2));
+      expect(both.filter((r) => r.statusCode === 200)).toHaveLength(2);
+      const [k2] = await handle.db.select({ id: kindled.id }).from(kindled).innerJoin(accounts, eq(kindled.accountId, accounts.id)).where(eq(accounts.username, `keshracer${n}`));
+      if (!k2) throw new Error('no Kindled');
+      expect((await inv.view(k2.id)).pack).toEqual([{ itemId: 'wild-sliver', quantity: 2 }]);
+      await expectChains(k2.id);
+    } finally {
+      await app.close();
+    }
   });
 });
