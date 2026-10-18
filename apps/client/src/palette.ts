@@ -33,6 +33,7 @@ export const Tokens = {
   huskShell: hex('husk-shell'),
   huskCore: hex('husk-core'),
   choirFlame: hex('choir-flame'),
+  choirGold: hex('choir-gold'),
   choirFlameDeep: hex('choir-flame-deep'),
   dreamNight: hex('dream-night'),
   signalHit: hex('signal-hit'),
@@ -111,6 +112,8 @@ export const Palette = {
   writDim: T.hollowDusk,
   writDark: T.hollowBelow,
   writEmber: T.sparkEmber,
+  /** A full Writ (GAME DESIGN's "clear gold"; ART 2026-10-18): choir-gold, apart from ember and the amber marks. */
+  writGold: T.choirGold,
   rarity: [T.hollowLavender, T.hollowLight, T.sparkAmber, T.sparkEmber, T.choirFlameDeep],
 } as const;
 

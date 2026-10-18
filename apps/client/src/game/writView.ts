@@ -148,7 +148,7 @@ export function relightDone(elapsedMs: number, lineCount: number): boolean {
  * the aleph dark until it returns and the lines dim until each returns.
  */
 export function faceStates(
-  writ: Pick<WritDerived, 'state' | 'lines'>,
+  writ: Pick<WritDerived, 'state' | 'lines'> & Partial<Pick<WritDerived, 'full'>>,
   letters: string,
   beat: boolean,
   relight: { aleph: boolean; lines: number } | null = null,
@@ -165,8 +165,11 @@ export function faceStates(
     };
   }
   switch (writ.state) {
-    case 'lit':
-      return { emet: fill(emetCount, 'lit'), name: fill(nameCount, 'lit') };
+    case 'lit': {
+      // Full (not even a sliver fits): every letter clear gold, steady (GAME DESIGN; ART's gold state, 2026-10-18).
+      const s: LetterState = writ.full === true ? 'gold' : 'lit';
+      return { emet: fill(emetCount, s), name: fill(nameCount, s) };
+    }
     case 'flickering':
       return { emet: outer(emetCount, 'ember', beat ? 'dim' : 'ember'), name: outer(nameCount, 'ember', beat ? 'dim' : 'ember') };
     case 'dark':
@@ -313,16 +316,19 @@ export interface WritChip {
   /** The letters the chip shows instead of words (מת), or null. */
   letters: string | null;
   ember: boolean;
+  /** Full: the Name's letters on the HUD are clear gold (ART's gold state). */
+  gold: boolean;
   tooltip: string;
   state: WritState;
 }
 
-export function writChip(writ: Pick<WritDerived, 'state' | 'words' | 'chargeMs'>): WritChip {
+export function writChip(writ: Pick<WritDerived, 'state' | 'words' | 'chargeMs'> & Partial<Pick<WritDerived, 'full'>>): WritChip {
   const dark = writ.state === 'dark' || writ.state === 'fading';
   return {
     text: dark ? null : writ.words,
     letters: dark ? MET : null,
     ember: writ.state === 'flickering',
+    gold: writ.full === true && writ.state === 'lit',
     tooltip: exactTime(writ.chargeMs),
     state: writ.state,
   };

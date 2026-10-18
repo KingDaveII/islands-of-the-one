@@ -9,13 +9,15 @@ import { css, Palette } from '../palette.js';
  * and this module stamps the glyphs, tinted per letter state, onto a 2D canvas
  * on whole pixels. Nothing here decides gameplay: states come from the sim.
  */
-export type LetterState = 'lit' | 'dim' | 'dark' | 'ember';
-export const LETTER_STATES: readonly LetterState[] = ['lit', 'dim', 'dark', 'ember'];
+export type LetterState = 'lit' | 'dim' | 'dark' | 'ember' | 'gold';
+export const LETTER_STATES: readonly LetterState[] = ['lit', 'dim', 'dark', 'ember', 'gold'];
+/** One color per state; `gold` is a full Writ's (ART 2026-10-18: choir-gold, steady, never flickering). */
 export const STATE_COLOR: Readonly<Record<LetterState, number>> = {
   lit: Palette.writLit,
   dim: Palette.writDim,
   dark: Palette.writDark,
   ember: Palette.writEmber,
+  gold: Palette.writGold,
 };
 
 /** The sheet's ink, one byte per image pixel (1 = ink), row-major. */

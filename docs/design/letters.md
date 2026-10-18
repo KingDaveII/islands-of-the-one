@@ -36,9 +36,10 @@ widths, column 0, white on transparent).
   Writ panel, the Name screen's tablet); `rasterize(...)` is the same without a canvas (tests,
   Phaser textures).
 - **Letter states** for the Writ, one color each, all palette tokens: `lit` (`hollow-light`),
-  `dim` (`hollow-dusk`), `dark` (`hollow-below`), `ember` (`spark-ember`). `states[i]` is the
+  `dim` (`hollow-dusk`), `dark` (`hollow-below`), `ember` (`spark-ember`), `gold` (`choir-gold`: a full Writ,
+  every letter steady, ART 2026-10-18). `states[i]` is the
   state of letter `i` (spaces not counted); `state` is the default for the rest.
-- The F3 debug overlay shows the demo: emet and a sample Name in all four states; in the dark row
+- The F3 debug overlay shows the demo: emet and a sample Name in every state; in the dark row
   only the aleph is dark, so emet reads as met.
 
 ## 2. The safe-letters filter

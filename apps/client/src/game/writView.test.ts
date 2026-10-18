@@ -99,7 +99,13 @@ describe('the face', () => {
   const letters = 'בלק רוק';
 
   it('lit: every letter lit', () => {
-    expect(faceStates(lit, letters, false)).toEqual({ emet: ['lit', 'lit', 'lit'], name: Array<string>(6).fill('lit') });
+    // 100 h is full (not even a sliver fits): every letter clear gold, steady (ART's gold state); 50 h is plainly lit.
+    expect(lit.full).toBe(true);
+    expect(faceStates(lit, letters, false)).toEqual({ emet: ['gold', 'gold', 'gold'], name: Array<string>(6).fill('gold') });
+    expect(faceStates(lit, letters, true)).toEqual({ emet: ['gold', 'gold', 'gold'], name: Array<string>(6).fill('gold') });
+    const notFull = derive(named(at(50), at(0)), at(0));
+    expect(notFull.full).toBe(false);
+    expect(faceStates(notFull, letters, false)).toEqual({ emet: ['lit', 'lit', 'lit'], name: Array<string>(6).fill('lit') });
   });
 
   it('flickering: ember, the outer letters of each line switching between ember and dim on the beat', () => {
@@ -229,9 +235,9 @@ describe("the panel's lines", () => {
 
 describe('the HUD', () => {
   it('the chip: the words, ember under a day, מת when dark or fading, the exact time as its tooltip', () => {
-    expect(writChip(derive(named(at(100), at(0)), at(0)))).toEqual({ text: 'about four days', letters: null, ember: false, tooltip: '100 h 0 min', state: 'lit' });
-    expect(writChip(derive(named(at(10), at(0)), at(0)))).toEqual({ text: 'less than a day', letters: null, ember: true, tooltip: '10 h 0 min', state: 'flickering' });
-    expect(writChip(derive(named(at(0), at(10)), at(10)))).toEqual({ text: null, letters: MET, ember: false, tooltip: '0 min', state: 'dark' });
+    expect(writChip(derive(named(at(100), at(0)), at(0)))).toEqual({ text: 'about four days', letters: null, ember: false, gold: true, tooltip: '100 h 0 min', state: 'lit' });
+    expect(writChip(derive(named(at(10), at(0)), at(0)))).toEqual({ text: 'less than a day', letters: null, ember: true, gold: false, tooltip: '10 h 0 min', state: 'flickering' });
+    expect(writChip(derive(named(at(0), at(10)), at(10)))).toEqual({ text: null, letters: MET, ember: false, gold: false, tooltip: '0 min', state: 'dark' });
     expect(writChip(derive(named(at(0), at(100)), at(100)))).toMatchObject({ text: null, letters: MET, state: 'fading' });
     expect(writChip(derive(toWritView(pressedWrit(at(0)), at(0)), at(0)))).toMatchObject({ text: 'about two days', ember: false });
   });

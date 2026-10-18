@@ -219,7 +219,7 @@ export class HoldingHud {
     if (name) {
       place(this.name, x + PAD, ly);
       ly += 10;
-      if (sheet) plotLetters(g, sheet, name.letters, x + PAD, ly, { state: 'lit' });
+      if (sheet) plotLetters(g, sheet, name.letters, x + PAD, ly, { state: chip.gold ? 'gold' : 'lit' });
       ly += 8 + 3;
     }
     if (chip.text !== null) place(this.writWords, x + PAD, ly);
