@@ -46,6 +46,11 @@ const KINDLED_NO_RUN: SpriteSheet = {
   ...KINDLED,
   anims: Object.fromEntries(Object.entries(KINDLED.anims).filter(([key]) => !key.startsWith('run_'))),
 };
+/** The Kindled sheet without `run_back`, as kindled-ash was before art/run-back-kindled-ash: the run plays in reverse. */
+const KINDLED_NO_BACK: SpriteSheet = {
+  ...KINDLED,
+  anims: Object.fromEntries(Object.entries(KINDLED.anims).filter(([key]) => !key.startsWith('run_back_'))),
+};
 /** The Kindled sheet as it was before ART's run_start and run_stop landed: without the transition rows. */
 const KINDLED_NO_TRANSITIONS: SpriteSheet = {
   ...KINDLED,
@@ -320,7 +325,9 @@ describe('the backpedal: the run played in reverse (G1.5h)', () => {
     s.player.aim = deg(0);
     s.player.vx = 300;
     const back = backpedals(false, separationDeg(moveDeg, simDeg(s.player.aim)));
-    return [0, 1, 2, 3, 4, 5, 6, 7].map((k) => kindledPose(s, run.params, KINDLED, NO_CLOCKS, stride(k * 12, back)).frame);
+    return [0, 1, 2, 3, 4, 5, 6, 7].map(
+      (k) => kindledPose(s, run.params, KINDLED_NO_BACK, NO_CLOCKS, stride(k * 12, back)).frame,
+    );
   }
 
   it('measures the angle between movement and facing the short way round, and reads the sim aim in degrees', () => {
@@ -342,7 +349,7 @@ describe('the backpedal: the run played in reverse (G1.5h)', () => {
     const run = newRun(1);
     run.state.player.aim = deg(0);
     run.state.player.vx = -300;
-    expect(kindledPose(run.state, run.params, KINDLED, NO_CLOCKS, stride(12, true))).toMatchObject({
+    expect(kindledPose(run.state, run.params, KINDLED_NO_BACK, NO_CLOCKS, stride(12, true))).toMatchObject({
       name: 'run',
       anim: 'run_E',
       frame: 6,
@@ -368,7 +375,7 @@ describe('the backpedal: the run played in reverse (G1.5h)', () => {
 
   it('keeps walk, and the Nutshell, forwards: only the run gait reverses', () => {
     expect(gaitPose(KINDLED, 'walk', deg(0), 0, stride(11, true))).toMatchObject({ anim: 'walk_E', frame: 1 });
-    expect(gaitPose(KINDLED, 'run', deg(0), 0, stride(12, true))).toMatchObject({ anim: 'run_E', frame: 6 });
+    expect(gaitPose(KINDLED_NO_BACK, 'run', deg(0), 0, stride(12, true))).toMatchObject({ anim: 'run_E', frame: 6 });
     // walk standing in for run (a sheet without run) is the run gait: it reverses with it, at the run's cycle.
     expect(gaitPose(KINDLED_NO_RUN, 'run', deg(0), 0, stride(16, true))).toMatchObject({ anim: 'walk_E', frame: 4 });
   });
@@ -381,7 +388,7 @@ describe('the backpedal: the run played in reverse (G1.5h)', () => {
     let back = false;
     const pose = () => {
       if (meter.headingDeg !== null) back = backpedals(back, separationDeg(meter.headingDeg, simDeg(s.player.aim)));
-      return kindledPose(s, run.params, KINDLED, NO_CLOCKS, stride(meter.distancePx, back));
+      return kindledPose(s, run.params, KINDLED_NO_BACK, NO_CLOCKS, stride(meter.distancePx, back));
     };
     meter.step(100, 100);
     expect(meter.headingDeg).toBeNull();
@@ -426,11 +433,11 @@ describe('run transitions and run_back (M1 polish, ART 2026-10-17)', () => {
   const stride = (distancePx: number, backpedal = false): Stride => ({ distancePx, cycles: CYCLES, backpedal });
   const T = KINDLED_TRANSITIONS;
 
-  it("lists run_back as awaiting art; ART's run_start and run_stop are on kindled-ash (#72) and required", () => {
-    expect(ANIMS_AWAITING_ART).toEqual(['run_back']);
-    // ART's run_start and run_stop are on kindled-ash (16 rows); run_back is still to come.
+  it("awaits nothing: ART's run_start and run_stop (#72) and run_back (#74) are on kindled-ash and required", () => {
+    expect(ANIMS_AWAITING_ART).toEqual([]);
+    // ART's run_start and run_stop are on kindled-ash (16 rows), and run_back (8 facings).
     expect(Object.keys(KINDLED.anims).filter((k) => /^run_(start|stop)_/.test(k))).toHaveLength(16);
-    expect(Object.keys(KINDLED.anims).some((k) => /^run_back_/.test(k))).toBe(false);
+    expect(Object.keys(KINDLED.anims).filter((k) => k.startsWith('run_back_'))).toHaveLength(8);
     expect(Object.keys(T.anims).filter((k) => /^run_(start|stop|back)_/.test(k))).toHaveLength(24);
   });
 
@@ -445,8 +452,9 @@ describe('run transitions and run_back (M1 polish, ART 2026-10-17)', () => {
     expect(back[0]).toMatchObject({ name: 'run_back', anim: 'run_back_E', facing: 'E' });
     // Not backpedalling: the run, forwards, whatever the sheet has.
     expect(kindledPose(s, run.params, T, NO_CLOCKS, stride(12))).toMatchObject({ name: 'run', frame: 1 });
-    // The same on kindled-ash today: the run in reverse (the stopgap).
-    expect(kindledPose(s, run.params, KINDLED, NO_CLOCKS, stride(12, true))).toMatchObject({ name: 'run', frame: 6 });
+    // On a sheet without run_back: the run in reverse (the stopgap). kindled-ash has the row now and plays it.
+    expect(kindledPose(s, run.params, KINDLED_NO_BACK, NO_CLOCKS, stride(12, true))).toMatchObject({ name: 'run', frame: 6 });
+    expect(kindledPose(s, run.params, KINDLED, NO_CLOCKS, stride(12, true))).toMatchObject({ name: 'run_back', frame: 1 });
     // walk never backpedals, and the gait helper agrees.
     expect(gaitPose(T, 'walk', deg(0), 0, stride(12, true))).toMatchObject({ anim: 'walk_E', frame: 1 });
     expect(gaitPose(T, 'run', deg(0), 0, stride(24, true))).toMatchObject({ anim: 'run_back_E', frame: 2 });
@@ -864,9 +872,9 @@ describe('headless playtest (autopilot through the state machine)', () => {
       kindledPose(deathRun.state, deathRun.params, KINDLED, { hitMs: -1, deathMs: 300 }).name,
     );
     // walk is an M1 row but plays only in M2's holding (and for run on a sheet without it), never in an encounter.
-    // run_start and run_stop play from the client's GaitClock, which this sim-only playthrough doesn't feed;
-    // the 'run transitions and run_back' tests above cover them with the clock.
-    const CLOCK_DRIVEN = ['walk', 'run_start', 'run_stop'];
+    // run_start and run_stop play from the client's GaitClock, and run_back from the StrideMeter's heading, which
+    // this sim-only playthrough doesn't feed; the 'run transitions and run_back' tests above cover them.
+    const CLOCK_DRIVEN = ['walk', 'run_start', 'run_stop', 'run_back'];
     const missing = M1_PLAYABLE.filter((n) => !CLOCK_DRIVEN.includes(n) && !shown.has(n));
     expect(shown.has('walk')).toBe(false);
     // Logged for the PR's playtest record (vitest shows stdout with --silent=false).

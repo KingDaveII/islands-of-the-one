@@ -85,6 +85,22 @@ kebab-case and never renamed once shipped (the ledger stores them).
 | store          | The holding store by the Writ post; reachable only on the holding.                                                     | `store`                           |
 | basket         | A station's basket: what it makes, until the Kindled takes it to the store.                                            | `basket:<stationId>`              |
 
+## The holding
+
+The Kindled's home Shard ([`holding.md`](holding.md)).
+
+| Term           | Meaning                                                                                                   | In code                                      |
+| -------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| station        | A place on the holding that makes something, or the post. One has a basket.                               | `station`; ids in `stations.json`            |
+| Writ post      | The post the Writ hangs on, by the store.                                                                 | `writ-post`, kind `post`                     |
+| twisted trees  | The station that yields twisted logs (Woodcutting).                                                       | `twisted-trees`, kind `trees`                |
+| stone outcrop  | The station that yields black stone (Mining).                                                             | `stone-outcrop`, kind `outcrop`              |
+| plot           | One of the four 6 × 6 fields round the post; Task 5 names them.                                           | `plot`                                       |
+| active action  | The one station a Kindled works at a time; it keeps going offline up to the cap.                          | `activity`, table `holding_activity`         |
+| settle         | Computing what the active action produced since it was last asked.                                        | `settle`                                     |
+| skill          | Woodcutting, Mining, Farming; XP on GAME DESIGN's curve, no level cap.                                    | `skill`; `woodcutting`, `mining`, `farming`  |
+| roam           | Walking outside encounters: the walk, the automatic run.                                                  | `roam`                                       |
+
 ## Combat (the Hookblade)
 
 | Term          | Meaning                                                                       | In code                   |

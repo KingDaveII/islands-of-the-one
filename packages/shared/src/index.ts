@@ -12,3 +12,5 @@ export * from './api.js';
 export * from './items.js';
 export * from './places.js';
 export * from './rooms.js';
+export * from './skills.js';
+export * from './holding.js';

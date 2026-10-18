@@ -6,6 +6,7 @@ import {
   DEFAULT_CLAY_TONE,
   isClayTone,
   isCreateKindledRequest,
+  isHoldingStationRequest,
   isInventoryMoveRequest,
   isLoginRequest,
   isRegisterRequest,
@@ -16,6 +17,7 @@ import {
   WRONG_CREDENTIALS,
   type AccountView,
   type ApiErrorBody,
+  type HoldingResponse,
   type KindledResponse,
   type InventoryResponse,
   type KindledView,
@@ -38,6 +40,7 @@ import { LoginThrottle, type LoginThrottleOptions } from '../auth/throttle.js';
 import type { Database } from '../db/client.js';
 import { isUniqueViolation } from '../db/errors.js';
 import { accounts, kindled, type Account, type KindledRow } from '../db/schema.js';
+import { createHolding, type HoldingResult } from '../holding/index.js';
 import { canReachStore, createInventory, moveItems } from '../inventory/index.js';
 
 /**
@@ -107,6 +110,7 @@ export function sameOrigin(origin: string | undefined, host: string | undefined)
 export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise<void> {
   const { db, now } = opts;
   const inventory = createInventory(db);
+  const holding = createHolding(db, inventory);
   const throttle = new LoginThrottle(opts.loginThrottle);
 
   await app.register(rateLimit, {
@@ -330,5 +334,59 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
     }
     const body: InventoryResponse = await inventory.view(k.id);
     return reply.send(body);
+  });
+
+  // The holding (docs/design/holding.md). Every route settles the active action first,
+  // takes the Kindled from the session cookie only, refuses unknown fields and stations,
+  // and answers the same shape as GET.
+  const holdingReply = (reply: FastifyReply, result: HoldingResult): FastifyReply => {
+    if (result.ok) {
+      const body: HoldingResponse = result.value;
+      return reply.send(body);
+    }
+    switch (result.error) {
+      case 'unknown-kindled':
+        return fail(reply, 404, ApiErrorCode.NoKindled, result.message);
+      case 'unknown-station':
+        return fail(reply, 400, ApiErrorCode.UnknownStation, result.message);
+      case 'no-action':
+        return fail(reply, 400, ApiErrorCode.NoAction, result.message);
+    }
+  };
+
+  app.get(path(ApiRoute.Holding), async (req, reply) => {
+    const account = await signedIn(req, reply);
+    if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
+    const k = await findKindled(account.id);
+    if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+    return holdingReply(reply, await holding.view(k.id, now()));
+  });
+
+  for (const [route, act] of [
+    [ApiRoute.HoldingWork, 'work'],
+    [ApiRoute.HoldingTake, 'take'],
+  ] as const) {
+    app.post(path(route), { bodyLimit: BODY_LIMIT }, async (req, reply) => {
+      const account = await signedIn(req, reply);
+      if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
+      const k = await findKindled(account.id);
+      if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+      if (!isHoldingStationRequest(req.body))
+        return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
+      const { stationId } = req.body;
+      const result =
+        act === 'work' ? await holding.work(k.id, stationId, now()) : await holding.takeAll(k.id, stationId, now());
+      return holdingReply(reply, result);
+    });
+  }
+
+  app.post(path(ApiRoute.HoldingStop), { bodyLimit: BODY_LIMIT }, async (req, reply) => {
+    const account = await signedIn(req, reply);
+    if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
+    const k = await findKindled(account.id);
+    if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+    if (typeof req.body !== 'object' || req.body === null || Object.keys(req.body).length > 0)
+      return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
+    return holdingReply(reply, await holding.stop(k.id, now()));
   });
 }

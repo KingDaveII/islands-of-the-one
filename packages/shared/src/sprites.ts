@@ -3,6 +3,9 @@ import huskNutshell from '../assets/sprites/husk-nutshell.json' with { type: 'js
 import huskPeeling from '../assets/sprites/husk-peeling.json' with { type: 'json' };
 import kindledAsh from '../assets/sprites/kindled-ash.json' with { type: 'json' };
 import propChest from '../assets/sprites/prop-chest.json' with { type: 'json' };
+import propStoneOutcrop from '../assets/sprites/prop-stone-outcrop.json' with { type: 'json' };
+import propTwistedTree from '../assets/sprites/prop-twisted-tree.json' with { type: 'json' };
+import propWritPost from '../assets/sprites/prop-writ-post.json' with { type: 'json' };
 import { TILE_DOOR_ANIMS, TILE_WORLD_PX } from './tiles.js';
 
 /**
@@ -149,12 +152,21 @@ export interface SpriteSheet {
 }
 
 /**
- * The sheets the client loads: the Kindled, the two Husks and the chest
- * (`CHEST_SHEET`). The sheet test runs on every sheet on disk and checks that
+ * The sheets the client loads: the Kindled, the two Husks, the chest
+ * (`CHEST_SHEET`) and the holding's three station props (`STATION_SHEETS`,
+ * M2 Task 3b). The sheet test runs on every sheet on disk and checks that
  * each name here is one of them; a sheet on disk (an NPC's, say) joins this
  * list when the client starts using it. Tile sheets load apart (tiles.ts).
  */
-export const SPRITE_SHEET_NAMES = ['kindled-ash', 'husk-peeling', 'husk-nutshell', 'prop-chest'] as const;
+export const SPRITE_SHEET_NAMES = [
+  'kindled-ash',
+  'husk-peeling',
+  'husk-nutshell',
+  'prop-chest',
+  'prop-writ-post',
+  'prop-twisted-tree',
+  'prop-stone-outcrop',
+] as const;
 export type SpriteSheetName = (typeof SPRITE_SHEET_NAMES)[number];
 
 /** Every animated sheet the client loads, by name (the texture key the engine uses). */
@@ -163,6 +175,20 @@ export const spriteSheets: Readonly<Record<SpriteSheetName, SpriteSheet>> = {
   'husk-peeling': huskPeeling,
   'husk-nutshell': huskNutshell,
   'prop-chest': propChest,
+  'prop-writ-post': propWritPost,
+  'prop-twisted-tree': propTwistedTree,
+  'prop-stone-outcrop': propStoneOutcrop,
+};
+
+/**
+ * The holding's station props (docs/design/holding.md), by station kind: a
+ * prop without a table each, `idle` alone, one frame (MAIN's placeholders
+ * through the pipeline; ART replaces the pixels without an engine change).
+ */
+export const STATION_SHEETS: Readonly<Record<'post' | 'trees' | 'outcrop', SpriteSheetName>> = {
+  post: 'prop-writ-post',
+  trees: 'prop-twisted-tree',
+  outcrop: 'prop-stone-outcrop',
 };
 
 /** Kindled facings in sheet order. */
@@ -194,9 +220,10 @@ export const REQUIRED_MILESTONE: SpriteMilestone = 'M1';
  * `run_stop` → none, the run and idle switch directly). When ART's sheet
  * lands with it, MAIN removes it here. Empty from kindled-ash's run (#46) to
  * the M1 polish (ART 2026-10-17), which added the run transitions and
- * `run_back`; `run_start` and `run_stop` came off when ART's frames landed (#72).
+ * `run_back`; `run_start` and `run_stop` came off when ART's frames landed (#72), `run_back`
+ * with the backwards-run job (#74). Empty again.
  */
-export const ANIMS_AWAITING_ART: readonly string[] = ['run_back'];
+export const ANIMS_AWAITING_ART: readonly string[] = [];
 
 /** Whether a table row is still waiting for ART (`ANIMS_AWAITING_ART`). */
 export function isAwaitingArt(row: Pick<SpriteAnimSpec, 'name'>): boolean {

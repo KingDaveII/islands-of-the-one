@@ -82,6 +82,11 @@ const STICK_DELAY_MS = 320;
 const STICK_REPEAT_MS = 120;
 const STICK_DEADZONE = 0.5;
 
+/** Where the inventory screen goes back to: the start screen (its default), or the holding it was opened over (M2 Task 3b). */
+export interface InventoryData {
+  back?: 'start' | 'holding';
+}
+
 type Pane = Focus['pane'];
 const other = (pane: Pane): Pane => (pane === 'pack' ? 'store' : 'pack');
 
@@ -148,9 +153,22 @@ export class InventoryScene extends Phaser.Scene {
   private busy = false;
   private stickDir: Direction | null = null;
   private stickNext = 0;
+  private backTo: 'start' | 'holding' = 'start';
 
   constructor() {
     super('inventory');
+  }
+
+  init(data: InventoryData): void {
+    this.backTo = data.back ?? 'start';
+  }
+
+  /** Back: the start screen, or the holding this screen was launched over (resumed, the screen stopped). */
+  private back(): void {
+    if (this.backTo === 'holding') {
+      this.scene.stop();
+      this.scene.resume('holding');
+    } else this.scene.start('start');
   }
 
   preload(): void {
@@ -264,7 +282,7 @@ export class InventoryScene extends Phaser.Scene {
 
     // Keys: Esc or I close; the arrows (or WASD) move the focus; Enter moves the stack; Tab switches tabs.
     const back = () => {
-      this.scene.start('start');
+      this.back();
     };
     const kb = this.input.keyboard;
     for (const action of ['menu', 'inventory'] as const) {
@@ -643,7 +661,7 @@ export class InventoryScene extends Phaser.Scene {
     const edges = padEdges(this.pad);
     const closes = [MENU_BUTTONS.back, ...buttonsFor(controlsStore.get(), 'inventory', 'calm')];
     if (closes.some((b) => edges.includes(b))) {
-      this.scene.start('start');
+      this.back();
       return;
     }
     if (edges.includes(MENU_BUTTONS.confirm[0])) this.moveFocused(true);

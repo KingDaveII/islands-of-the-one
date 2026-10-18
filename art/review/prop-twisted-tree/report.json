@@ -1,0 +1,72 @@
+{
+  "sheet": "prop-twisted-tree",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "cell": {
+    "w": 64,
+    "h": 64
+  },
+  "origin": {
+    "x": 32,
+    "y": 54
+  },
+  "rows": [
+    "idle"
+  ],
+  "totals": {
+    "frames": 1,
+    "offPalette": 0,
+    "maxDeltaE": 0,
+    "outlineGaps": 0
+  },
+  "flags": {
+    "seam": [],
+    "bob": [],
+    "held": [],
+    "colours": []
+  },
+  "missing": [],
+  "optional": [],
+  "skinProblems": [],
+  "missingPoints": [],
+  "remap": [],
+  "staleRemap": [],
+  "snappedColours": 0,
+  "snapped": [],
+  "anims": [
+    {
+      "key": "idle",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          43
+        ],
+        "range": 0,
+        "flag": false
+      }
+    }
+  ],
+  "frames": [
+    {
+      "name": "idle_0",
+      "source": "art/clean/prop-twisted-tree/idle 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": -1,
+      "shift": -1,
+      "outlineGaps": 0,
+      "colours": 7,
+      "interiorDreamNight": 0
+    }
+  ],
+  "outputs": [
+    "art/review/prop-twisted-tree/contact.png",
+    "art/review/prop-twisted-tree/report.json",
+    "art/review/prop-twisted-tree/report.md",
+    "packages/shared/assets/sprites/prop-twisted-tree.json",
+    "packages/shared/assets/sprites/prop-twisted-tree.png"
+  ]
+}

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { bigint, index, integer, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 /**
  * Retired: no code reads or writes this table any more (accounts and kindled
@@ -60,6 +60,45 @@ export const kindled = pgTable('kindled', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * The holding's one active action per Kindled (docs/design/holding.md, M2
+ * Task 3b): the station being worked, when this stretch of work started,
+ * how many of its cycles have been credited, and the last heartbeat. The
+ * server settles it on every holding request (nothing ticks in the
+ * background) with the row locked FOR UPDATE; stopping deletes the row.
+ */
+export const holdingActivity = pgTable('holding_activity', {
+  kindledId: uuid('kindled_id')
+    .primaryKey()
+    .references(() => kindled.id, { onDelete: 'cascade' }),
+  /** A station id of data/stations.json. */
+  stationId: text('station_id').notNull(),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+  /** Cycles of this stretch already paid into the basket and the skill. */
+  creditedCycles: integer('credited_cycles').notNull().default(0),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull(),
+});
+
+/**
+ * Skill XP (docs/design/holding.md): one row per Kindled and skill, written
+ * only in the settle transaction. XP is not an item, so it is not in the item
+ * ledger. bigint: skills have no level cap.
+ */
+export const skillXp = pgTable(
+  'skill_xp',
+  {
+    kindledId: uuid('kindled_id')
+      .notNull()
+      .references(() => kindled.id, { onDelete: 'cascade' }),
+    /** A skill of packages/shared/src/skills.ts. */
+    skill: text('skill').notNull(),
+    xp: bigint('xp', { mode: 'number' }).notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.kindledId, t.skill] })],
+);
+
 export type Account = typeof accounts.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type KindledRow = typeof kindled.$inferSelect;
+export type HoldingActivityRow = typeof holdingActivity.$inferSelect;
+export type SkillXpRow = typeof skillXp.$inferSelect;

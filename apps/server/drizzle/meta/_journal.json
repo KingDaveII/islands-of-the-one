@@ -29,6 +29,13 @@
       "when": 1792249143517,
       "tag": "0003_inventory_places",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792257456179,
+      "tag": "0004_holding_activity_skill_xp",
+      "breakpoints": true
     }
   ]
 }
