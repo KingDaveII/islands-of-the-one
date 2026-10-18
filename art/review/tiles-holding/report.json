@@ -20,7 +20,7 @@
     "frames": 16,
     "offPalette": 0,
     "maxDeltaE": 0,
-    "outlineGaps": 148
+    "outlineGaps": 156
   },
   "missing": [],
   "opacity": [],
@@ -49,7 +49,7 @@
       "offPalette": 0,
       "maxDeltaE": 0,
       "outlineGaps": 0,
-      "colours": 2
+      "colours": 3
     },
     {
       "name": "floor_1",
@@ -59,7 +59,7 @@
       "offPalette": 0,
       "maxDeltaE": 0,
       "outlineGaps": 0,
-      "colours": 2
+      "colours": 4
     },
     {
       "name": "floor_2",
@@ -69,7 +69,7 @@
       "offPalette": 0,
       "maxDeltaE": 0,
       "outlineGaps": 0,
-      "colours": 2
+      "colours": 3
     },
     {
       "name": "floor_3",
@@ -79,7 +79,7 @@
       "offPalette": 0,
       "maxDeltaE": 0,
       "outlineGaps": 0,
-      "colours": 2
+      "colours": 5
     },
     {
       "name": "drop_mid_0",
@@ -88,8 +88,8 @@
       "h": 32,
       "offPalette": 0,
       "maxDeltaE": 0,
-      "outlineGaps": 0,
-      "colours": 5
+      "outlineGaps": 1,
+      "colours": 6
     },
     {
       "name": "drop_mid_1",
@@ -98,8 +98,8 @@
       "h": 32,
       "offPalette": 0,
       "maxDeltaE": 0,
-      "outlineGaps": 0,
-      "colours": 5
+      "outlineGaps": 4,
+      "colours": 6
     },
     {
       "name": "drop_w",
@@ -108,8 +108,8 @@
       "h": 32,
       "offPalette": 0,
       "maxDeltaE": 0,
-      "outlineGaps": 0,
-      "colours": 5
+      "outlineGaps": 13,
+      "colours": 6
     },
     {
       "name": "drop_e",
@@ -118,8 +118,8 @@
       "h": 32,
       "offPalette": 0,
       "maxDeltaE": 0,
-      "outlineGaps": 0,
-      "colours": 5
+      "outlineGaps": 12,
+      "colours": 6
     },
     {
       "name": "drop_we",
@@ -128,8 +128,8 @@
       "h": 32,
       "offPalette": 0,
       "maxDeltaE": 0,
-      "outlineGaps": 0,
-      "colours": 5
+      "outlineGaps": 24,
+      "colours": 6
     },
     {
       "name": "drop_corner_w",
@@ -138,8 +138,8 @@
       "h": 32,
       "offPalette": 0,
       "maxDeltaE": 0,
-      "outlineGaps": 29,
-      "colours": 5
+      "outlineGaps": 0,
+      "colours": 1
     },
     {
       "name": "drop_corner_e",
@@ -148,8 +148,8 @@
       "h": 32,
       "offPalette": 0,
       "maxDeltaE": 0,
-      "outlineGaps": 15,
-      "colours": 5
+      "outlineGaps": 0,
+      "colours": 1
     },
     {
       "name": "lip_n",
@@ -188,7 +188,7 @@
       "h": 32,
       "offPalette": 0,
       "maxDeltaE": 0,
-      "outlineGaps": 4,
+      "outlineGaps": 3,
       "colours": 2
     },
     {
@@ -198,8 +198,8 @@
       "h": 32,
       "offPalette": 0,
       "maxDeltaE": 0,
-      "outlineGaps": 4,
-      "colours": 2
+      "outlineGaps": 3,
+      "colours": 3
     }
   ],
   "outputs": [

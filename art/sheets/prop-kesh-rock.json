@@ -3,7 +3,7 @@
   "kind": "prop",
   "outline": "other",
   "draft": false,
-  "notes": "Placeholder by MAIN (tools/placeholder-holding.py); ART replaces the pixels through this recipe in the holding art job. Kesh's needle of rock, a solid prop in the void off the holding's south-east shore (M2 Task 3c); Kesh arrives in Task 4.",
+  "notes": "ART: the holding job's pick (PR #82) by art/clean/holding/props.py: 7 shaft rows out, the dark side lifted to hollow-below to read on the Hollow, the foot dithered out into the void.",
   "anims": {
     "idle": {
       "src": "art/clean/prop-kesh-rock/idle",

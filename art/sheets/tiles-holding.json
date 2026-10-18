@@ -3,7 +3,7 @@
   "kind": "tiles",
   "outline": "other",
   "draft": false,
-  "notes": "Placeholder by MAIN (tools/placeholder-holding.py); ART replaces the pixels through this recipe in the holding art job. A shore set without doors (sprites.md \"Tiles\"): the floors, the drops (a lit lip, a short rock face, a dither into hollow-deep) and the lips. The drops and lips carry initials, the floors none.",
+  "notes": "ART: every piece by art/clean/tiles-holding/_scripts/compose.py: the floors from the holding job's reduced Wang tiles (PR #82), the drops (a lit lip, an earth band, rock hanging in an uneven underside, dithered into the Hollow) and the lips drawn there. A shore set without doors.",
   "rule": "shore",
   "doors": false,
   "floorWeights": [

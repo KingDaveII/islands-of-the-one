@@ -7,7 +7,7 @@ Kind tiles, the shore rule, no doors, outline other, 32×32 tiles, floor weights
 
 - Frames: 16 (static pieces).
 - Off-palette pixels snapped: 0 (largest ΔE 0).
-- Outline gaps (edge pixels against the piece's own transparency, not in an outline colour; the border is no edge): 148.
+- Outline gaps (edge pixels against the piece's own transparency, not in an outline colour; the border is no edge): 156.
 - Missing against the contract: none.
 - Opaque pieces with transparent pixels: 0.
 
@@ -25,22 +25,22 @@ Kind tiles, the shore rule, no doors, outline other, 32×32 tiles, floor weights
 
 | Frame | Source | Size | Off-palette | Max ΔE | Outline gaps | Colours | Holes |
 |---|---|---|---|---|---|---|---|
-| floor_0 | `art/clean/tiles-holding/floor_0.png 0` | 32×32 | 0 | 0 | 0 | 2 |  |
-| floor_1 | `art/clean/tiles-holding/floor_1.png 0` | 32×32 | 0 | 0 | 0 | 2 |  |
-| floor_2 | `art/clean/tiles-holding/floor_2.png 0` | 32×32 | 0 | 0 | 0 | 2 |  |
-| floor_3 | `art/clean/tiles-holding/floor_3.png 0` | 32×32 | 0 | 0 | 0 | 2 |  |
-| drop_mid_0 | `art/clean/tiles-holding/drop_mid_0.png 0` | 32×32 | 0 | 0 | 0 | 5 |  |
-| drop_mid_1 | `art/clean/tiles-holding/drop_mid_1.png 0` | 32×32 | 0 | 0 | 0 | 5 |  |
-| drop_w | `art/clean/tiles-holding/drop_w.png 0` | 32×32 | 0 | 0 | 0 | 5 |  |
-| drop_e | `art/clean/tiles-holding/drop_e.png 0` | 32×32 | 0 | 0 | 0 | 5 |  |
-| drop_we | `art/clean/tiles-holding/drop_we.png 0` | 32×32 | 0 | 0 | 0 | 5 |  |
-| drop_corner_w | `art/clean/tiles-holding/drop_corner_w.png 0` | 32×32 | 0 | 0 | 29 | 5 |  |
-| drop_corner_e | `art/clean/tiles-holding/drop_corner_e.png 0` | 32×32 | 0 | 0 | 15 | 5 |  |
+| floor_0 | `art/clean/tiles-holding/floor_0.png 0` | 32×32 | 0 | 0 | 0 | 3 |  |
+| floor_1 | `art/clean/tiles-holding/floor_1.png 0` | 32×32 | 0 | 0 | 0 | 4 |  |
+| floor_2 | `art/clean/tiles-holding/floor_2.png 0` | 32×32 | 0 | 0 | 0 | 3 |  |
+| floor_3 | `art/clean/tiles-holding/floor_3.png 0` | 32×32 | 0 | 0 | 0 | 5 |  |
+| drop_mid_0 | `art/clean/tiles-holding/drop_mid_0.png 0` | 32×32 | 0 | 0 | 1 | 6 |  |
+| drop_mid_1 | `art/clean/tiles-holding/drop_mid_1.png 0` | 32×32 | 0 | 0 | 4 | 6 |  |
+| drop_w | `art/clean/tiles-holding/drop_w.png 0` | 32×32 | 0 | 0 | 13 | 6 |  |
+| drop_e | `art/clean/tiles-holding/drop_e.png 0` | 32×32 | 0 | 0 | 12 | 6 |  |
+| drop_we | `art/clean/tiles-holding/drop_we.png 0` | 32×32 | 0 | 0 | 24 | 6 |  |
+| drop_corner_w | `art/clean/tiles-holding/drop_corner_w.png 0` | 32×32 | 0 | 0 | 0 | 1 |  |
+| drop_corner_e | `art/clean/tiles-holding/drop_corner_e.png 0` | 32×32 | 0 | 0 | 0 | 1 |  |
 | lip_n | `art/clean/tiles-holding/lip_n.png 0` | 32×32 | 0 | 0 | 32 | 2 |  |
 | lip_w | `art/clean/tiles-holding/lip_w.png 0` | 32×32 | 0 | 0 | 32 | 2 |  |
 | lip_e | `art/clean/tiles-holding/lip_e.png 0` | 32×32 | 0 | 0 | 32 | 2 |  |
-| lip_nw | `art/clean/tiles-holding/lip_nw.png 0` | 32×32 | 0 | 0 | 4 | 2 |  |
-| lip_ne | `art/clean/tiles-holding/lip_ne.png 0` | 32×32 | 0 | 0 | 4 | 2 |  |
+| lip_nw | `art/clean/tiles-holding/lip_nw.png 0` | 32×32 | 0 | 0 | 3 | 2 |  |
+| lip_ne | `art/clean/tiles-holding/lip_ne.png 0` | 32×32 | 0 | 0 | 3 | 3 |  |
 
 ## Off-palette colours the snap moved
 

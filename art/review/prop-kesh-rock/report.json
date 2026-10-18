@@ -18,7 +18,7 @@
     "frames": 1,
     "offPalette": 0,
     "maxDeltaE": 0,
-    "outlineGaps": 0
+    "outlineGaps": 43
   },
   "flags": {
     "seam": [],
@@ -55,10 +55,10 @@
       "offPalette": 0,
       "maxDeltaE": 0,
       "dx": 0,
-      "dy": -1,
-      "shift": -1,
-      "outlineGaps": 0,
-      "colours": 4,
+      "dy": -7,
+      "shift": -7,
+      "outlineGaps": 43,
+      "colours": 7,
       "interiorDreamNight": 0
     }
   ],
