@@ -1,7 +1,8 @@
 import type Phaser from 'phaser';
-import { controllerGlyphsSheet, hookbladeFxSheet, type CellSheet } from '@iot/shared';
+import { controllerGlyphsSheet, hookbladeFxSheet, itemIconsSheet, type CellSheet } from '@iot/shared';
 import glyphsUrl from '@iot/shared/assets/controller-glyphs-12px.png';
 import hookbladeUrl from '@iot/shared/assets/hookblade-fx.png';
+import itemIconsUrl from '@iot/shared/assets/item-icons-16px.png';
 
 /**
  * The engine's cell sheets (packages/shared/assets, white on transparent)
@@ -11,10 +12,13 @@ import hookbladeUrl from '@iot/shared/assets/hookblade-fx.png';
  */
 export const GLYPH_TEXTURE = 'controller-glyphs';
 export const HOOKBLADE_TEXTURE = 'hookblade-fx';
+/** ART's item icons (#77): a frame per item id, 16 px, in their own colours. */
+export const ITEM_ICON_TEXTURE = 'item-icons';
 
 const SHEETS: [string, string, CellSheet][] = [
   [GLYPH_TEXTURE, glyphsUrl, controllerGlyphsSheet],
   [HOOKBLADE_TEXTURE, hookbladeUrl, hookbladeFxSheet],
+  [ITEM_ICON_TEXTURE, itemIconsUrl, itemIconsSheet],
 ];
 
 export function preloadSheets(scene: Phaser.Scene): void {
