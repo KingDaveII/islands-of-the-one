@@ -1,4 +1,4 @@
-/** The holding module: the active action, its settle, the baskets' take-all, the skill XP and the Writ (docs/design/holding.md). */
+/** The holding module: the active action, its settle, the baskets' take-all, the skill XP, the Writ and Kesh's slivers (docs/design/holding.md). */
 export {
   createHolding,
   fitsInStore,
@@ -15,3 +15,18 @@ export {
 export { moveAway, parseAwayArgs, type AwayArgs } from './away.js';
 export { feedChanges, feedPlaces, feedable, lockWrit, writStored, WRIT_ALREADY_NAMED, WRIT_INSUFFICIENT, WRIT_UNNAMED } from './writ.js';
 export { parseWritSetArgs, setWrit, WRIT_SET_USAGE, type WritSetArgs, type WritSetResult } from './writ-set.js';
+export {
+  giveSliver,
+  KESH_GIFT_ITEM,
+  KESH_GIFT_PLACE,
+  KESH_NOT_DUE,
+  KESH_PACK_FULL,
+  KESH_RESET_USAGE,
+  keshDue,
+  keshViewOf,
+  lockGifts,
+  parseKeshResetArgs,
+  resetKesh,
+  type GiveResult,
+  type KeshResetResult,
+} from './kesh.js';

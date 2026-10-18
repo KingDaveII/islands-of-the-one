@@ -151,6 +151,8 @@ export const InventoryReason = {
   Admin: 'admin',
   /** Between two of one Kindled's places: one set with -n from one and +n to the other. */
   Move: 'move',
+  /** A gift from an NPC: Kesh's first sliver and the tide's (docs/design/holding.md "Kesh"). */
+  Gift: 'gift',
 } as const;
 export type InventoryReason = (typeof InventoryReason)[keyof typeof InventoryReason];
 

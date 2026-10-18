@@ -1,12 +1,15 @@
-import type Phaser from 'phaser';
+import Phaser from 'phaser';
 import {
   holdingTemplate,
   KESH_ROCK_SHEET,
+  KESH_SHEET,
+  SPARKGLASS_SHEET,
   spriteSheets,
   STATION_SHEETS,
   type AnimTuning,
   type ClayTone,
   type HoldingLayout,
+  type KeshTuning,
   type SpriteSheet,
   type SpriteSheetName,
   type TileRect,
@@ -17,6 +20,8 @@ import { RoamGaitClock, roamPose, type KindledPose } from './animState.js';
 import { PLAYER_SHEATHED_SHEET } from './characters.js';
 import { DEPTH } from './depth.js';
 import { bodyDepth, PLAYER_FEET } from './feet.js';
+import { tossPoint, tossReleaseFrame, tossReleasePoint } from './keshToss.js';
+import { pickupFrameAt } from './pickupSprites.js';
 import { shadowEllipse } from './pixels.js';
 import { propShadowSizes, type ShadowSize } from './propShadow.js';
 import { HOLDING_SHEET, TileRoom } from './roomTiles.js';
@@ -35,6 +40,18 @@ function sheetData(name: string): SpriteSheet | undefined {
 /** The Kindled's grounding shadow, world px (readability.md §2). */
 const SHADOW_W = 20;
 const SHADOW_H = 6;
+
+/** Kesh's rows (sprites.md §4 "Old Kesh"): `fish` loops by default, `talk` while his line is open, `toss` once, then `fish`. */
+export type KeshRow = 'fish' | 'talk' | 'toss';
+
+/** The thrown thing in the air: from the hand to the feet over `tossMs`, drawn from its own sprite. */
+interface Flight {
+  image: Phaser.GameObjects.Image;
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+  startMs: number;
+  onLand: () => void;
+}
 
 /** A prop standing in the world: a station part's, or Kesh's rock; its image's origin is the line under its base. */
 interface Prop {
@@ -57,8 +74,13 @@ interface Prop {
  * its tile rectangle with a grounding shadow by the prop rule, and the
  * Kindled from its Kindled sheet posed by `roamPose` from the roam state,
  * with its 20 × 6 shadow, all y-sorted by the line they stand on
- * (`bodyDepth`): the Kindled north of a tree draws behind its canopy. Purely
- * a view of the roam state and the layout.
+ * (`bodyDepth`): the Kindled north of a tree draws behind its canopy. Old
+ * Kesh (M2 Task 4b) sits on his rock from `npc-kesh`, at the rock's world
+ * point one depth step above it with no shadow: `fish` looping, `talk`
+ * while the talk box shows his line, `toss` once when he throws; the thrown
+ * thing leaves his hand on the release frame and flies its arc
+ * (keshToss.ts) from `prop-sparkglass`'s `idle`. Purely a view of the roam
+ * state, the layout and what the scene says Kesh is doing.
  */
 export class HoldingWorld {
   readonly tiles: TileRoom;
@@ -72,13 +94,25 @@ export class HoldingWorld {
   readonly playerSheet: SpriteSheet = spriteSheets[PLAYER_SHEATHED_SHEET];
   /** The pose shown this frame (playtests). */
   pose: KindledPose | null = null;
+  /** Old Kesh on his rock. */
+  private readonly kesh: Phaser.GameObjects.Sprite;
+  readonly keshSheet: SpriteSheet = spriteSheets[KESH_SHEET];
+  private keshRow: KeshRow = 'fish';
+  /** The row to go back to once a toss has played (`talk` while his line is open, else `fish`). */
+  private keshRest: 'fish' | 'talk' = 'fish';
+  /** While a toss plays: what to throw once the release frame shows (the server has answered), and whether it has. */
+  private tossPending: (() => void) | null = null;
+  private tossReleasedAt = false;
+  private flight: Flight | null = null;
+  private keshTop = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
-    layer: Phaser.GameObjects.Layer,
+    private readonly layer: Phaser.GameObjects.Layer,
     readonly layout: HoldingLayout,
     private readonly anim: () => AnimTuning,
     private tone: ClayTone,
+    private readonly keshTuning: () => KeshTuning,
   ) {
     this.floor = scene.add.graphics().setDepth(DEPTH.floor);
     layer.add(this.floor);
@@ -105,8 +139,119 @@ export class HoldingWorld {
         stand(station.id, part.rect, part.sheet && scene.textures.exists(part.sheet) ? part.sheet : kindSheet);
     }
     stand(null, layout.kesh.rock, KESH_ROCK_SHEET);
+    // Kesh at the rock's world point, one depth step above it, no shadow (his clay is drawn in: no tone swap).
+    const rockBase = propBase({ rect: layout.kesh.rock });
+    this.kesh = scene.add
+      .sprite(snapToArt(rockBase.x), snapToArt(rockBase.y), KESH_SHEET, 'fish_0')
+      .setDepth(bodyDepth({ kind: 'prop' }, rockBase.y) + DEPTH.perPixel);
+    layer.add(this.kesh);
+    this.kesh.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      if (this.keshRow === 'toss') this.playKesh(this.keshRest);
+    });
+    this.playKesh('fish');
+    this.keshTop = this.readKeshTop();
     this.player = scene.add.sprite(0, 0, this.playerTexture()).setVisible(false);
     layer.add(this.player);
+  }
+
+  /** How far above his world point Kesh's head is (the prompt stands there): the first opaque row of `fish_0`, else the cell's. */
+  private readKeshTop(): number {
+    const img = texturePixels(this.scene, KESH_SHEET);
+    const f = this.keshSheet.frames.fish_0;
+    const { origin, cell } = this.keshSheet.meta;
+    if (!img || !f) return cell.h - origin.y;
+    for (let y = 0; y < f.frame.h; y++)
+      for (let x = 0; x < f.frame.w; x++)
+        if ((img.data[((f.frame.y + y) * img.width + f.frame.x + x) * 4 + 3] ?? 0) > 0) return origin.y - y;
+    return cell.h - origin.y;
+  }
+
+  private playKesh(row: KeshRow): void {
+    const key = animKey(KESH_SHEET, row);
+    this.keshRow = row;
+    if (this.scene.anims.exists(key)) this.kesh.play(key);
+    else this.kesh.setFrame(`${row}_0`);
+  }
+
+  /** Whether Kesh speaks (`talk` loops) or fishes while nothing is thrown; a toss in progress finishes first. */
+  setKeshTalking(talking: boolean): void {
+    this.keshRest = talking ? 'talk' : 'fish';
+    if (this.keshRow !== 'toss' && this.keshRow !== this.keshRest) this.playKesh(this.keshRest);
+  }
+
+  /**
+   * Kesh throws: `toss` plays once at its rate, then his rest row. The thrown
+   * thing leaves his hand when the release frame shows: `release` is called
+   * then (or at once if the frame has already passed), so the scene can
+   * launch the flight once the server has answered.
+   */
+  toss(release: () => void): void {
+    this.tossPending = release;
+    this.tossReleasedAt = false;
+    this.playKesh('toss');
+  }
+
+  /** Whether a toss is in the air or still in his hand. */
+  get tossing(): boolean {
+    return this.keshRow === 'toss' || this.flight !== null;
+  }
+
+  /**
+   * Launches the thrown thing from the release frame's `hand` point to the
+   * Kindled's feet (sim px) in the arc from tuning, drawn from
+   * `prop-sparkglass`'s `idle` when that sheet is loaded; `onLand` fires
+   * where it lands. Without the sheet the flight is skipped and `onLand`
+   * fires at once.
+   */
+  launchToss(feet: { x: number; y: number }, onLand: () => void): void {
+    const from = tossReleasePoint(this.keshSheet, { x: this.kesh.x, y: this.kesh.y });
+    const to = { x: snapToArt(feet.x), y: snapToArt(feet.y + PLAYER_FEET) };
+    if (!from || !optionalSheet(SPARKGLASS_SHEET) || !this.scene.textures.exists(SPARKGLASS_SHEET)) {
+      onLand();
+      return;
+    }
+    this.flight?.image.destroy();
+    const image = this.scene.add.image(from.x, from.y, SPARKGLASS_SHEET, 'idle_0').setDepth(DEPTH.fx);
+    this.layer.add(image);
+    this.flight = { image, from, to, startMs: this.scene.time.now, onLand };
+  }
+
+  /** Where the prompt stands over Kesh (world px): above his head. */
+  keshPrompt(): { x: number; y: number } {
+    return { x: this.kesh.x, y: this.kesh.y - this.keshTop - 2 };
+  }
+
+  /** Kesh's row and frame this frame, and the thrown thing's place while it flies (playtests). */
+  keshState(): { row: KeshRow; frame: string; flight: { x: number; y: number } | null } {
+    return { row: this.keshRow, frame: this.kesh.frame.name, flight: this.flight ? { x: this.flight.image.x, y: this.flight.image.y } : null };
+  }
+
+  /** The release and the flight, each frame: the thing leaves the hand on the release frame, then flies for `tossMs`. */
+  private updateToss(): void {
+    if (this.keshRow === 'toss' && !this.tossReleasedAt && this.kesh.frame.name === tossReleaseFrame()) {
+      this.tossReleasedAt = true;
+      const release = this.tossPending;
+      this.tossPending = null;
+      release?.();
+    }
+    const f = this.flight;
+    if (!f) return;
+    const { tossMs, tossArcPx } = this.keshTuning();
+    const t = (this.scene.time.now - f.startMs) / Math.max(1, tossMs);
+    const sheet = optionalSheet(SPARKGLASS_SHEET);
+    if (sheet) f.image.setFrame(pickupFrameAt(sheet, this.scene.time.now));
+    const p = tossPoint(f.from, f.to, t, tossArcPx);
+    f.image.setPosition(p.x, p.y);
+    if (t >= 1) {
+      f.image.destroy();
+      this.flight = null;
+      f.onLand();
+    }
+  }
+
+  /** Whether the toss has released (the thing is in the air or the frame passed) while a toss plays; the scene launches on the server's answer. */
+  get tossReleased(): boolean {
+    return this.tossReleasedAt;
   }
 
   private playerTexture(): string {
@@ -163,8 +308,9 @@ export class HoldingWorld {
     return this.player.depth;
   }
 
-  /** Poses the Kindled at its interpolated position (sim px) from the roam state, and draws the shadows. */
+  /** Poses the Kindled at its interpolated position (sim px) from the roam state, draws the shadows, and runs Kesh's toss. */
   draw(s: RoamState, player: { x: number; y: number }): void {
+    this.updateToss();
     this.floor.clear();
     for (const { rect, image, sheet, grounded } of this.props) {
       if (!grounded) continue;

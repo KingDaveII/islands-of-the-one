@@ -18,3 +18,6 @@ export * from './holding.js';
 export * from './writ-data.js';
 export * from './hear-name.js';
 export * from './writ.js';
+export * from './kesh.js';
+export * from './scaffold.js';
+export * from './tide.js';

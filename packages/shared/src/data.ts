@@ -16,6 +16,8 @@ export type JuiceTuning = TuningData['juice'];
  * cycle (sprites.md §8). Presentation only, like `juice`; not part of the sim.
  */
 export type AnimTuning = TuningData['anim'];
+/** Kesh's toss (M2 Task 4b): how long the thrown thing flies and how high its arc is (world px). Presentation only. */
+export type KeshTuning = TuningData['kesh'];
 
 export const roomTemplates = rooms.templates;
 /** One hand-made room of rooms.json: its name and its rows of legend characters. */

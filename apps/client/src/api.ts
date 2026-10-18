@@ -91,6 +91,8 @@ export interface Api {
   writName(body: WritNameRequest): Promise<ApiResult<HoldingResponse>>;
   /** Feed the Writ: a count of a kind, or `fill` (wild slivers). `unnamed`, `not-sparkglass`, `insufficient`, `full`, `too-much`. */
   writFeed(body: WritFeedRequest): Promise<ApiResult<HoldingResponse>>;
+  /** Ask Kesh for the sliver that is due (his first, else this tide's): one wild sliver into the pack. `not-due`, `pack-full`. */
+  keshSliver(): Promise<ApiResult<HoldingResponse>>;
 }
 
 export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)): Api {
@@ -112,6 +114,7 @@ export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)):
     holdingTake: (body) => request(fetchFn, ApiRoute.HoldingTake, 'POST', body, isHoldingResponse),
     writName: (body) => request(fetchFn, ApiRoute.WritName, 'POST', body, isHoldingResponse),
     writFeed: (body) => request(fetchFn, ApiRoute.WritFeed, 'POST', body, isHoldingResponse),
+    keshSliver: () => request(fetchFn, ApiRoute.KeshSliver, 'POST', {}, isHoldingResponse),
   };
 }
 

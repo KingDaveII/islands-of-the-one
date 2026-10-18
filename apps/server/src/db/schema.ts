@@ -105,7 +105,9 @@ export const skillXp = pgTable(
  * Writ is certified (nobody can be in M2); when its charge runs out (set at
  * the pressing, pressChargeHours ahead); how many lines it has (1 in M2).
  * Everything else is derived by writView at request time; nothing ticks in
- * the background.
+ * the background. `fed_at` (M2 Task 4b, migration 0006, expand-only) is
+ * when the Writ was first fed, null until then: the client plays Kesh's
+ * after-first-feeding line once, when it goes from null to set.
  */
 export const writs = pgTable('writs', {
   kindledId: uuid('kindled_id')
@@ -117,6 +119,24 @@ export const writs = pgTable('writs', {
   emptyAt: timestamp('empty_at', { withTimezone: true }).notNull(),
   lines: integer('lines').notNull().default(1),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  fedAt: timestamp('fed_at', { withTimezone: true }),
+});
+
+/**
+ * Kesh's gifts (docs/design/holding.md "Kesh", M2 Task 4b): one row per
+ * Kindled, touched only by the holding module. When his first sliver was
+ * given (null until then) and the tide index (shared `tideIndex`) of the
+ * last tide whose sliver was given (null until one was; the once-per-tide
+ * sliver is M2's scaffolding, `m2Scaffold`). The row is created under the
+ * Kindled's lock on the first request that needs it. Migration 0006,
+ * expand-only.
+ */
+export const keshGifts = pgTable('kesh_gifts', {
+  kindledId: uuid('kindled_id')
+    .primaryKey()
+    .references(() => kindled.id, { onDelete: 'cascade' }),
+  firstSliverAt: timestamp('first_sliver_at', { withTimezone: true }),
+  lastTide: integer('last_tide'),
 });
 
 export type Account = typeof accounts.$inferSelect;
@@ -125,3 +145,4 @@ export type KindledRow = typeof kindled.$inferSelect;
 export type HoldingActivityRow = typeof holdingActivity.$inferSelect;
 export type SkillXpRow = typeof skillXp.$inferSelect;
 export type WritRow = typeof writs.$inferSelect;
+export type KeshGiftRow = typeof keshGifts.$inferSelect;

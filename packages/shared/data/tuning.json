@@ -393,6 +393,10 @@
     "runCyclePx": 96,
     "backCyclePx": 48
   },
+  "kesh": {
+    "tossMs": 600,
+    "tossArcPx": 20
+  },
   "view": {
     "widthPx": 960,
     "minWidthPx": 768,

@@ -21,6 +21,7 @@ export function writStored(row: WritRow): WritStored {
     certified: row.certified,
     emptyAt: row.emptyAt.getTime(),
     lineCount: row.lines,
+    fedAt: row.fedAt?.getTime() ?? null,
   };
 }
 

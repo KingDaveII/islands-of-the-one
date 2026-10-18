@@ -100,6 +100,9 @@ The Kindled's home Shard ([`holding.md`](holding.md)).
 | settle         | Computing what the active action produced since it was last asked.                                        | `settle`                                     |
 | skill          | Woodcutting, Mining, Farming; XP on GAME DESIGN's curve, no level cap.                                    | `skill`; `woodcutting`, `mining`, `farming`  |
 | roam           | Walking outside encounters: the walk, the automatic run.                                                  | `roam`                                       |
+| Old Kesh       | The fisherman on the needle of rock off the holding's shore; "Kesh" in text.                              | `kesh`; sheet `npc-kesh`, rock `prop-kesh-rock` |
+| tide           | The game's day: tide n begins at the full of the tide, a fixed local hour (`tide.json`).                  | `tide`; `tideIndex`, `fullOfTide`            |
+| full of the tide | The hour each tide begins at (20:00 Europe/Berlin), chosen for the server's players.                    | `fullOfTide`, `nextFullOfTide`               |
 
 ## Combat (the Hookblade)
 

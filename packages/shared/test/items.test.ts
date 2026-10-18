@@ -152,6 +152,7 @@ describe('ledger vocabulary', () => {
       'trade',
       'admin',
       'move',
+      'gift',
     ]);
     expect(isInventoryReason('trade')).toBe(true);
     expect(isInventoryReason('theft')).toBe(false);

@@ -6,21 +6,25 @@ import {
   countOf,
   cycleProgress,
   cyclesDone,
+  hudRects,
   interactPoint,
   nearestPart,
   nearestStation,
   nearestStationPart,
+  nearKesh,
   packFill,
   pluralName,
   propBase,
   propIdlePlays,
-  standsOnGround,
   purseGin,
+  rectsOverlap,
   serverTime,
+  standsOnGround,
   stationInitials,
   stationLines,
   takeFloat,
   takeResultLine,
+  talkSpot,
   xpFraction,
 } from './holdingView.js';
 
@@ -42,6 +46,7 @@ const working: HoldingResponse = {
     farming: { xp: 0, level: 1, into: 0, toNext: 40 },
   },
   writ: toWritView(pressedWrit(T0), T0 + 13_000),
+  kesh: { firstGiven: false, due: 'first', nextTideAt: new Date(T0 + 6 * 3_600_000).toISOString() },
 };
 const idle: HoldingResponse = { ...working, activity: null };
 
@@ -204,5 +209,35 @@ describe('prop idles', () => {
     expect(propIdlePlays(anim(2))).toBe(true);
     expect(propIdlePlays(anim(1))).toBe(false);
     expect(propIdlePlays({ anims: {} })).toBe(false);
+  });
+});
+
+describe('Kesh across the water (M2 Task 4b)', () => {
+  const layout = holdingLayout();
+  const spot = talkSpot(layout);
+
+  it('the Talk spot is the centre of kesh.talk; the prompt reaches it like a station, and a nearer station keeps its prompt', () => {
+    expect(spot).toEqual({ x: 23.5 * 16, y: 19.5 * 16 });
+    expect(nearKesh(spot.x, spot.y, 40, layout)).toBe(true);
+    expect(nearKesh(spot.x + 39, spot.y, 40, layout)).toBe(true);
+    expect(nearKesh(spot.x + 41, spot.y, 40, layout)).toBe(false);
+    // Standing by the outcrop's interact point (22, 14), with the Talk spot in a wide reach: the outcrop is nearer.
+    const outcrop = { x: 22.5 * 16, y: 14.5 * 16 };
+    expect(nearKesh(outcrop.x, outcrop.y + 8, 200, layout)).toBe(false);
+    expect(nearKesh(spot.x, spot.y - 8, 200, layout)).toBe(true);
+  });
+
+  it("lays the HUD's four panels out from the frame and the measured texts", () => {
+    const frame = { x: 0, y: 0, w: 480, h: 270 };
+    const rects = hudRects(frame, { gin: 20, pack: 60, name: null, letters: 0, chip: 70 });
+    expect(rects.writ).toEqual({ x: 8, y: 8, w: 78, h: 16 });
+    expect(rects.purse).toEqual({ x: 480 - 8 - 41, y: 8, w: 41, h: 18 });
+    expect(rects.chip).toEqual({ x: 240 - 61, y: 270 - 8 - 26, w: 122, h: 26 });
+    expect(rects.pack).toEqual({ x: 480 - 8 - 68, y: 270 - 8 - 16, w: 68, h: 16 });
+    // Named: the Name and its letters add their rows, and the widest of the three sets the width.
+    expect(hudRects(frame, { gin: 20, pack: 60, name: 100, letters: 96, chip: 70 }).writ).toEqual({ x: 8, y: 8, w: 108, h: 37 });
+    expect(rectsOverlap(rects.chip, rects.pack)).toBe(false);
+    expect(rectsOverlap({ x: 0, y: 0, w: 10, h: 10 }, { x: 9, y: 9, w: 5, h: 5 })).toBe(true);
+    expect(rectsOverlap({ x: 0, y: 0, w: 10, h: 10 }, { x: 10, y: 0, w: 5, h: 5 })).toBe(false);
   });
 });

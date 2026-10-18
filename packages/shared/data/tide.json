@@ -1,0 +1,5 @@
+{
+  "$comment": "The tide (docs/design/holding.md \"Kesh\"): fullOfTide is the fixed local hour (HH:MM) at which each tide begins, in timeZone (an IANA name), chosen for the server's players (GAME DESIGN). Computed with Intl.DateTimeFormat in that zone, so the full stays at the same wall-clock hour across a daylight-saving change and a tide is 23 or 25 h on those two days.",
+  "fullOfTide": "20:00",
+  "timeZone": "Europe/Berlin"
+}

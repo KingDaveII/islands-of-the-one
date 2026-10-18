@@ -49,6 +49,7 @@ const named = (emptyAt: number, more: Partial<WritStored> = {}): WritStored => (
   certified: false,
   emptyAt,
   lineCount: 1,
+  fedAt: null,
   ...more,
 });
 
@@ -106,7 +107,7 @@ describe('writ.json', () => {
 describe('writView', () => {
   it('a freshly pressed Writ: two days of charge, lit, then flickering, then dark at 48 h', () => {
     const pressed = pressedWrit(at(0));
-    expect(pressed).toEqual({ name: null, letters: null, certified: false, emptyAt: at(48), lineCount: 1 });
+    expect(pressed).toEqual({ name: null, letters: null, certified: false, emptyAt: at(48), lineCount: 1, fedAt: null });
     expect(pressedEmptyAt(at(0))).toBe(at(48));
     expect(writView(pressed, at(0))).toEqual({
       state: 'lit',
@@ -285,7 +286,7 @@ describe('feedPreview', () => {
 
 describe('the wire', () => {
   it('toWritView carries the stored state and the derived one as ISO times, and writFromView reads it back', () => {
-    const w = named(at(100));
+    const w = named(at(100), { fedAt: at(10) });
     const view = toWritView(w, at(120));
     expect(isWritView(view)).toBe(true);
     expect(view).toEqual({
@@ -294,6 +295,7 @@ describe('the wire', () => {
       certified: false,
       emptyAt: new Date(at(100)).toISOString(),
       lineCount: 1,
+      fedAt: new Date(at(10)).toISOString(),
       state: 'dark',
       chargeMs: 0,
       words: 'less than a day',
@@ -311,6 +313,7 @@ describe('the wire', () => {
     expect(isWritView({ ...fresh, state: 'bright' })).toBe(false);
     expect(isWritView({ ...fresh, state: 'new' })).toBe(false);
     expect(isWritView({ ...fresh, emptyAt: null })).toBe(false);
+    expect(isWritView({ ...fresh, fedAt: 'yesterday' })).toBe(false);
     expect(isWritView({ ...fresh, lines: [] })).toBe(false);
     expect(isWritView({ ...fresh, extra: 1 })).toBe(false);
   });
@@ -331,7 +334,7 @@ describe('the wire', () => {
     expect(isWritFeedRequest({ count: 1 })).toBe(false);
   });
 
-  it('the holding answer needs the Writ', () => {
+  it('the holding answer needs the Writ and Kesh', () => {
     const response = {
       layoutId: 'first-holding',
       baskets: { 'twisted-trees': [] },
@@ -343,8 +346,10 @@ describe('the wire', () => {
         farming: { xp: 0, level: 1, into: 0, toNext: 40 },
       },
       writ: toWritView(pressedWrit(T0), T0),
+      kesh: { firstGiven: false, due: 'first', nextTideAt: new Date(T0).toISOString() },
     };
     expect(isHoldingResponse(response)).toBe(true);
     expect(isHoldingResponse({ ...response, writ: undefined })).toBe(false);
+    expect(isHoldingResponse({ ...response, kesh: undefined })).toBe(false);
   });
 });

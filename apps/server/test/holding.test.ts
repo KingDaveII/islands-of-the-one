@@ -2,6 +2,8 @@ import {
   ApiRoute,
   HOLDING_LAYOUT_ID,
   isHoldingResponse,
+  nextFullOfTide,
+  tideIndex,
   NAME_NOT_DRAWABLE,
   NAME_REFUSED,
   pressedWrit,
@@ -18,12 +20,19 @@ import type { InjectOptions, LightMyRequestResponse } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp, type App } from '../src/app.js';
 import { createDb, type DbHandle } from '../src/db/client.js';
-import { accounts, holdingActivity, kindled, skillXp, writs } from '../src/db/schema.js';
+import { accounts, holdingActivity, keshGifts, kindled, skillXp, writs } from '../src/db/schema.js';
 import {
   createHolding,
   feedChanges,
   fitsInStore,
+  giveSliver,
+  KESH_NOT_DUE,
+  KESH_PACK_FULL,
+  keshDue,
+  keshViewOf,
   moveAway,
+  parseKeshResetArgs,
+  resetKesh,
   offlineHorizonMs,
   ONLINE_GRACE_MS,
   parseAwayArgs,
@@ -86,11 +95,12 @@ afterAll(async () => {
   await handle.close();
 });
 
-describe('migrations 0004 and 0005', () => {
-  it('create holding_activity, skill_xp and writs, empty', async () => {
+describe('migrations 0004, 0005 and 0006', () => {
+  it('create holding_activity, skill_xp, writs and kesh_gifts, empty', async () => {
     await expect(handle.db.select().from(holdingActivity).limit(1)).resolves.toEqual([]);
     await expect(handle.db.select().from(skillXp).limit(1)).resolves.toEqual([]);
     await expect(handle.db.select().from(writs).limit(1)).resolves.toEqual([]);
+    await expect(handle.db.select().from(keshGifts).limit(1)).resolves.toEqual([]);
   });
 
   it('an existing Kindled gets its Writ pressed on its first holding request: two days of charge', async () => {
@@ -100,7 +110,7 @@ describe('migrations 0004 and 0005', () => {
     expect(r.writ).toEqual(toWritView(pressedWrit(T0), T0));
     expect(r.writ).toMatchObject({ state: 'lit', words: 'about two days', emptyAt: at(48 * HOUR).toISOString() });
     const [row] = await handle.db.select().from(writs).where(eq(writs.kindledId, k));
-    expect(row).toMatchObject({ kindledId: k, name: null, letters: null, certified: false, emptyAt: at(48 * HOUR), lines: 1, createdAt: at(0) });
+    expect(row).toMatchObject({ kindledId: k, name: null, letters: null, certified: false, emptyAt: at(48 * HOUR), lines: 1, createdAt: at(0), fedAt: null });
     // Once only: the next request finds it, draining from the pressing; never fed, it goes dark after two days.
     expect(value(await holding.view(k, at(30 * HOUR))).writ.state).toBe('flickering');
     expect(value(await holding.view(k, at(49 * HOUR))).writ).toMatchObject({ state: 'dark', emptyAt: at(48 * HOUR).toISOString() });
@@ -124,6 +134,7 @@ describe('the settle', () => {
         farming: { xp: 0, level: 1, into: 0, toNext: 40 },
       },
       writ: toWritView(pressedWrit(T0), T0),
+      kesh: { firstGiven: false, due: 'first', nextTideAt: at(6 * HOUR).toISOString() },
     });
   });
 
@@ -375,7 +386,7 @@ describe('feeding the Writ', () => {
     expect(await inv.ledger(k)).toHaveLength(3);
     // Two slivers: one from the store, one from the pack, as one change set; 48 + 96 = 144 h.
     const fed = value(await holding.feed(k, 'wild-sliver', 2, at(0)));
-    expect(fed.writ).toMatchObject({ state: 'lit', emptyAt: at(144 * HOUR).toISOString(), chargeMs: 144 * HOUR, words: 'about six days' });
+    expect(fed.writ).toMatchObject({ state: 'lit', emptyAt: at(144 * HOUR).toISOString(), chargeMs: 144 * HOUR, words: 'about six days', fedAt: at(0).toISOString() });
     expect(await inv.view(k)).toMatchObject({ store: [{ itemId: 'twisted-log', quantity: 5 }], pack: [{ itemId: 'wild-sliver', quantity: 1 }] });
     const feeds = (await inv.ledger(k)).filter((e) => e.reason === 'feed-writ');
     expect(feeds.map((e) => [e.itemId, e.place, e.delta, e.balanceAfter])).toEqual([
@@ -393,7 +404,8 @@ describe('feeding the Writ', () => {
     expect(await inv.view(k)).toMatchObject({ pack: [{ itemId: 'wild-sliver', quantity: 1 }] });
     // Currency comes from the purse: 44 h left at 100 h, plus 48.
     await inv.apply([{ kindledId: k, itemId: 'sealed-gin', place: 'purse', delta: 2 }], 'admin');
-    expect(value(await holding.feed(k, 'sealed-gin', 1, at(100 * HOUR))).writ).toMatchObject({ emptyAt: at(192 * HOUR).toISOString() });
+    // fed_at is set by the first feed only: the gin feed at 100 h leaves it at 0.
+    expect(value(await holding.feed(k, 'sealed-gin', 1, at(100 * HOUR))).writ).toMatchObject({ emptyAt: at(192 * HOUR).toISOString(), fedAt: at(0).toISOString() });
     expect(await inv.view(k)).toMatchObject({ purse: [{ itemId: 'sealed-gin', quantity: 1 }] });
     expect((await inv.ledger(k)).filter((e) => e.reason === 'feed-writ')).toHaveLength(3);
     expect(feedChanges(k, [{ itemId: 'wild-sliver', place: 'store', quantity: 1 }, { itemId: 'wild-sliver', place: 'pack', quantity: 2 }], 'wild-sliver', 2)).toEqual([
@@ -473,6 +485,106 @@ describe('the Writ hook (writ:set)', () => {
   });
 });
 
+
+describe("Kesh's slivers", () => {
+  const pack = async (k: string): Promise<number> => (await inv.view(k)).pack.find((e) => e.itemId === 'wild-sliver')?.quantity ?? 0;
+  const gifts = (k: string) => inv.ledger(k).then((rows) => rows.filter((e) => e.reason === 'gift'));
+  /** The full of the tide after T0 (14:00 Berlin time): 20:00 that evening, 6 h on. */
+  const FULL = 6 * HOUR;
+
+  it('the first sliver: once, into the pack, ledger reason gift; then not-due with the scaffold off', async () => {
+    const k = await newKindled();
+    expect(value(await holding.view(k, at(0))).kesh).toEqual({ firstGiven: false, due: 'first', nextTideAt: at(FULL).toISOString() });
+    const r = value(await holding.keshSliver(k, at(0)));
+    expect(r.kesh).toMatchObject({ firstGiven: true });
+    expect(await pack(k)).toBe(1);
+    expect((await gifts(k)).map((e) => [e.itemId, e.place, e.delta, e.balanceAfter])).toEqual([['wild-sliver', 'pack', 1, 1]]);
+    const [row] = await handle.db.select().from(keshGifts).where(eq(keshGifts.kindledId, k));
+    expect(row).toEqual({ kindledId: k, firstSliverAt: at(0), lastTide: null });
+    // Never a second first; with the scaffold off nothing else is due either.
+    expect(keshDue({ firstSliverAt: at(0), lastTide: null }, at(0), false)).toBeNull();
+    expect(keshDue({ firstSliverAt: null, lastTide: null }, at(0), false)).toBe('first');
+    await handle.db.transaction(async (tx) => {
+      expect(await giveSliver(tx, inv, k, at(0), false)).toEqual({ ok: false, error: 'not-due', message: KESH_NOT_DUE });
+    });
+    expect(await pack(k)).toBe(1);
+  });
+
+  it("the tide's sliver: once per tide, again the next tide; the first doesn't use up the tide's", async () => {
+    const k = await newKindled();
+    // The first and the tide's on the same day.
+    value(await holding.keshSliver(k, at(0)));
+    expect(value(await holding.view(k, at(0))).kesh).toEqual({ firstGiven: true, due: 'tide', nextTideAt: at(FULL).toISOString() });
+    const tide = value(await holding.keshSliver(k, at(HOUR)));
+    expect(tide.kesh).toEqual({ firstGiven: true, due: null, nextTideAt: at(FULL).toISOString() });
+    expect(await pack(k)).toBe(2);
+    const [row] = await handle.db.select().from(keshGifts).where(eq(keshGifts.kindledId, k));
+    expect(row).toEqual({ kindledId: k, firstSliverAt: at(0), lastTide: tideIndex(at(HOUR)) });
+    // Not due again this tide, right up to the full.
+    expect(await holding.keshSliver(k, at(2 * HOUR))).toEqual({ ok: false, error: 'not-due', message: KESH_NOT_DUE });
+    expect(await holding.keshSliver(k, at(FULL - 1000))).toEqual({ ok: false, error: 'not-due', message: KESH_NOT_DUE });
+    expect(await pack(k)).toBe(2);
+    // The next tide begins at the full: one more, and the next full moves a day on.
+    expect(value(await holding.view(k, at(FULL))).kesh).toEqual({ firstGiven: true, due: 'tide', nextTideAt: at(FULL + 24 * HOUR).toISOString() });
+    expect(value(await holding.keshSliver(k, at(FULL))).kesh.due).toBeNull();
+    expect(await pack(k)).toBe(3);
+    expect(await holding.keshSliver(k, at(FULL + 23 * HOUR))).toMatchObject({ ok: false, error: 'not-due' });
+    // A tide skipped is not paid later: two tides on, one sliver.
+    expect(value(await holding.keshSliver(k, at(FULL + 3 * 24 * HOUR))).kesh.due).toBeNull();
+    expect(await holding.keshSliver(k, at(FULL + 3 * 24 * HOUR + HOUR))).toMatchObject({ ok: false, error: 'not-due' });
+    expect(await pack(k)).toBe(4);
+    expect(await gifts(k)).toHaveLength(4);
+    expect(keshViewOf({ firstSliverAt: at(0), lastTide: tideIndex(at(0)) }, at(0))).toEqual({ firstGiven: true, due: null, nextTideAt: nextFullOfTide(at(0)).toISOString() });
+    expect(keshViewOf({ firstSliverAt: at(0), lastTide: tideIndex(at(0)) }, at(0), false)).toMatchObject({ due: null });
+    expect(keshViewOf({ firstSliverAt: at(0), lastTide: tideIndex(at(0)) - 1 }, at(0))).toMatchObject({ due: 'tide' });
+  });
+
+  it('a full pack refuses with pack-full and the sliver stays due', async () => {
+    const k = await newKindled();
+    // 20 slots of material fill the pack.
+    await inv.apply([{ kindledId: k, itemId: 'black-stone', place: 'pack', delta: 1000 }], 'admin');
+    expect(await holding.keshSliver(k, at(0))).toEqual({ ok: false, error: 'pack-full', message: KESH_PACK_FULL });
+    expect(value(await holding.view(k, at(0))).kesh).toMatchObject({ firstGiven: false, due: 'first' });
+    expect(await gifts(k)).toEqual([]);
+    const [row] = await handle.db.select().from(keshGifts).where(eq(keshGifts.kindledId, k));
+    expect(row).toEqual({ kindledId: k, firstSliverAt: null, lastTide: null });
+    // Room again (a slot freed): given.
+    await inv.apply([{ kindledId: k, itemId: 'black-stone', place: 'pack', delta: -50 }], 'admin');
+    expect(value(await holding.keshSliver(k, at(0))).kesh).toMatchObject({ firstGiven: true, due: 'tide' });
+    expect(await pack(k)).toBe(1);
+  });
+
+  it('kesh:reset clears both columns, so the first sliver is due again', async () => {
+    const k = await newKindled('keshreset');
+    value(await holding.keshSliver(k, at(0)));
+    value(await holding.keshSliver(k, at(0)));
+    expect(value(await holding.view(k, at(0))).kesh).toMatchObject({ firstGiven: true, due: null });
+    expect(parseKeshResetArgs(['--', 'keshreset'])).toEqual({ ok: true, username: 'keshreset' });
+    expect(parseKeshResetArgs([])).toMatchObject({ ok: false });
+    expect(parseKeshResetArgs(['keshreset', 'more'])).toMatchObject({ ok: false });
+    expect(parseKeshResetArgs(['no spaces allowed'])).toMatchObject({ ok: false });
+    expect(await resetKesh(handle.db, 'nobody')).toEqual({ ok: false, message: 'no Kindled for username nobody' });
+    expect(await resetKesh(handle.db, 'KeshReset')).toEqual({ ok: true, row: { kindledId: k, firstSliverAt: null, lastTide: null } });
+    expect(value(await holding.view(k, at(0))).kesh).toMatchObject({ firstGiven: false, due: 'first' });
+    expect(value(await holding.keshSliver(k, at(0))).kesh).toMatchObject({ firstGiven: true, due: 'tide' });
+    expect(await pack(k)).toBe(3);
+    // A Kindled with no row yet: the reset makes one.
+    const fresh = await newKindled('keshfresh');
+    expect(await resetKesh(handle.db, 'keshfresh')).toEqual({ ok: true, row: { kindledId: fresh, firstSliverAt: null, lastTide: null } });
+  });
+
+  it('fed_at is set by the first feed only', async () => {
+    const k = await newKindled();
+    await holding.name(k, 'Ash', at(0));
+    await inv.apply([{ kindledId: k, itemId: 'wild-sliver', place: 'pack', delta: 2 }], 'admin');
+    expect(value(await holding.view(k, at(0))).writ.fedAt).toBeNull();
+    expect(value(await holding.feed(k, 'wild-sliver', 1, at(HOUR))).writ.fedAt).toBe(at(HOUR).toISOString());
+    expect(value(await holding.feed(k, 'wild-sliver', 1, at(2 * HOUR))).writ.fedAt).toBe(at(HOUR).toISOString());
+    const [row] = await handle.db.select().from(writs).where(eq(writs.kindledId, k));
+    expect(row?.fedAt).toEqual(at(HOUR));
+  });
+});
+
 describe('the holding API', () => {
   let app: App;
   const clock = { t: T0 };
@@ -519,7 +631,7 @@ describe('the holding API', () => {
     expect(body).toMatchObject({ layoutId: HOLDING_LAYOUT_ID, activity: null, now: new Date(clock.t).toISOString() });
     expect((await call(ApiRoute.Holding, { method: 'GET', auth: '' })).statusCode).toBe(401);
     expect((await call(ApiRoute.Holding, { method: 'GET', auth: noKindled })).json()).toMatchObject({ error: 'no-kindled' });
-    for (const route of [ApiRoute.HoldingWork, ApiRoute.HoldingStop, ApiRoute.HoldingTake, ApiRoute.WritName, ApiRoute.WritFeed]) {
+    for (const route of [ApiRoute.HoldingWork, ApiRoute.HoldingStop, ApiRoute.HoldingTake, ApiRoute.WritName, ApiRoute.WritFeed, ApiRoute.KeshSliver]) {
       expect((await call(route, { body: { stationId: 'twisted-trees' }, auth: '' })).statusCode).toBe(401);
       expect((await call(route, { body: { stationId: 'twisted-trees' }, auth: noKindled })).statusCode).toBe(404);
     }
@@ -603,5 +715,34 @@ describe('the holding API', () => {
     expect((await call(ApiRoute.Inventory, { method: 'GET' })).json()).toMatchObject({
       store: expect.arrayContaining([{ itemId: 'wild-sliver', quantity: 2 }, { itemId: 'deep-glass', quantity: 1 }]) as unknown,
     });
+  });
+
+  it("asks Kesh for his sliver through the route, with its guard and codes; the holding answer carries kesh", async () => {
+    for (const bad of [{ sliver: 1 }, { due: 'first' }, []])
+      expect((await call(ApiRoute.KeshSliver, { body: bad })).json(), JSON.stringify(bad)).toMatchObject({ error: 'bad-request' });
+    const before = (await call(ApiRoute.Holding, { method: 'GET' })).json<HoldingResponse>();
+    expect(before.kesh).toEqual({ firstGiven: false, due: 'first', nextTideAt: nextFullOfTide(clock.t).toISOString() });
+    const first = await call(ApiRoute.KeshSliver, { body: {} });
+    expect(first.statusCode).toBe(200);
+    const body = first.json<HoldingResponse>();
+    expect(isHoldingResponse(body)).toBe(true);
+    expect(body.kesh).toMatchObject({ firstGiven: true, due: 'tide' });
+    expect((await call(ApiRoute.Inventory, { method: 'GET' })).json()).toMatchObject({ pack: [{ itemId: 'wild-sliver', quantity: 1 }] });
+    const tide = await call(ApiRoute.KeshSliver, { body: {} });
+    expect(tide.statusCode).toBe(200);
+    expect(tide.json<HoldingResponse>().kesh).toMatchObject({ firstGiven: true, due: null });
+    const none = await call(ApiRoute.KeshSliver, { body: {} });
+    expect(none.statusCode).toBe(409);
+    expect(none.json()).toEqual({ error: 'not-due', message: KESH_NOT_DUE });
+    // The next tide, with the pack full: "Pack full.", and still due.
+    clock.t += 24 * HOUR;
+    const [k] = await handle.db.select({ id: kindled.id }).from(kindled).innerJoin(accounts, eq(kindled.accountId, accounts.id)).where(eq(accounts.username, 'apiholder'));
+    if (!k) throw new Error('no api Kindled');
+    // 19 slots of stone and the slivers' slot filled to its 99: a sliver more would need a 21st slot.
+    await inv.apply([{ kindledId: k.id, itemId: 'black-stone', place: 'pack', delta: 950 }, { kindledId: k.id, itemId: 'wild-sliver', place: 'pack', delta: 97 }], 'admin');
+    const full = await call(ApiRoute.KeshSliver, { body: {} });
+    expect(full.statusCode).toBe(409);
+    expect(full.json()).toEqual({ error: 'pack-full', message: 'Pack full.' });
+    expect((await call(ApiRoute.Holding, { method: 'GET' })).json<HoldingResponse>().kesh).toMatchObject({ due: 'tide' });
   });
 });

@@ -8,6 +8,7 @@ import {
   isCreateKindledRequest,
   isHoldingStationRequest,
   isInventoryMoveRequest,
+  isKeshSliverRequest,
   isLoginRequest,
   isRegisterRequest,
   isRemembrance,
@@ -367,6 +368,10 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
         return fail(reply, 409, ApiErrorCode.Full, result.message);
       case 'too-much':
         return fail(reply, 409, ApiErrorCode.TooMuch, result.message);
+      case 'not-due':
+        return fail(reply, 409, ApiErrorCode.NotDue, result.message);
+      case 'pack-full':
+        return fail(reply, 409, ApiErrorCode.PackFull, result.message);
     }
   };
 
@@ -428,5 +433,17 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
     const body = req.body;
     const result = 'fill' in body ? await holding.fill(k.id, now()) : await holding.feed(k.id, body.itemId, body.count, now());
     return holdingReply(reply, result);
+  });
+
+  // Kesh's sliver (docs/design/holding.md "Kesh", M2 Task 4b): `{}` asks for the sliver that is due (his first,
+  // else this tide's); one wild sliver into the pack. The guard refuses any field.
+  app.post(path(ApiRoute.KeshSliver), { bodyLimit: BODY_LIMIT }, async (req, reply) => {
+    const account = await signedIn(req, reply);
+    if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
+    const k = await findKindled(account.id);
+    if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+    if (!isKeshSliverRequest(req.body))
+      return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
+    return holdingReply(reply, await holding.keshSliver(k.id, now()));
   });
 }
