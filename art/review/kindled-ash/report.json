@@ -428,16 +428,8 @@
       "death_E_2"
     ]
   },
-  "missing": [
-    "carry_idle (all facings)",
-    "carry_walk (all facings)",
-    "sit (all facings)"
-  ],
-  "optional": [
-    "carry_idle (M2)",
-    "carry_walk (M2)",
-    "sit (M2)"
-  ],
+  "missing": [],
+  "optional": [],
   "skinProblems": [],
   "missingPoints": [],
   "remap": [

@@ -4,6 +4,7 @@ import { isDrawable } from './accounts.js';
 import { isItemId } from './items.js';
 import { isStationId } from './places.js';
 import { isSkill, type Skill } from './skills.js';
+import { STATION_PART_SHEETS } from './sprites.js';
 import { shoreProblems, type TileTemplate } from './tiles.js';
 
 /**
@@ -75,6 +76,8 @@ export interface TilePoint {
 export interface StationPart {
   rect: TileRect;
   interact: TilePoint;
+  /** A prop sheet for this part instead of its kind's (`STATION_PART_SHEETS`: the second tree); absent, the kind's. */
+  sheet?: string;
 }
 
 export interface LayoutStation {
@@ -543,11 +546,16 @@ export function validateHoldingData(
               problems.push(`${pat}: must be { rect, interact }`);
               return;
             }
-            const pExtra = Object.keys(part).filter((key) => !['rect', 'interact'].includes(key));
+            const pExtra = Object.keys(part).filter((key) => !['rect', 'interact', 'sheet'].includes(key));
             if (pExtra.length > 0) problems.push(`${pat}: unknown field(s) ${pExtra.join(', ')}`);
             const rect = parseRect(part.rect, `${pat}.rect`, problems);
             const interact = parsePoint(part.interact, `${pat}.interact`, problems);
-            if (rect && interact) parts.push({ rect, interact });
+            const allowed: readonly string[] = (isKind(s.kind) ? STATION_PART_SHEETS[s.kind] : undefined) ?? [];
+            if (part.sheet !== undefined && (typeof part.sheet !== 'string' || !allowed.includes(part.sheet)))
+              problems.push(
+                `${pat}.sheet: ${JSON.stringify(part.sheet)} is not a sheet a ${String(s.kind)} part may name (${allowed.join(', ') || 'none'})`,
+              );
+            if (rect && interact) parts.push(typeof part.sheet === 'string' && allowed.includes(part.sheet) ? { rect, interact, sheet: part.sheet } : { rect, interact });
           });
           const station: LayoutStation = { id: s.id, kind: s.kind, parts };
           if (s.reserved === true) station.reserved = true;

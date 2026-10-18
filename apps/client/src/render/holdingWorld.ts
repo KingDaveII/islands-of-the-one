@@ -8,6 +8,7 @@ import {
   type ClayTone,
   type HoldingLayout,
   type SpriteSheet,
+  type SpriteSheetName,
   type TileRect,
 } from '@iot/shared';
 import type { RoamState } from '@iot/sim';
@@ -20,10 +21,16 @@ import { shadowEllipse } from './pixels.js';
 import { propShadowSizes, type ShadowSize } from './propShadow.js';
 import { HOLDING_SHEET, TileRoom } from './roomTiles.js';
 import { snapToArt } from './scale.js';
-import { animKey, texturePixels, toneTextureKey } from './spriteSheets.js';
+import { animKey, optionalSheet, texturePixels, toneTextureKey } from './spriteSheets.js';
 import { StrideMeter } from './stride.js';
 
 type G = Phaser.GameObjects.Graphics;
+
+/** A prop sheet's data: a loaded sheet's, or an optional one's (the second tree) when it was on disk at build time. */
+function sheetData(name: string): SpriteSheet | undefined {
+  return Object.hasOwn(spriteSheets, name) ? spriteSheets[name as SpriteSheetName] : optionalSheet(name);
+}
+
 
 /** The Kindled's grounding shadow, world px (readability.md §2). */
 const SHADOW_W = 20;
@@ -83,15 +90,18 @@ export class HoldingWorld {
         .sprite(snapToArt(base.x), snapToArt(base.y), sheet, 'idle_0')
         .setDepth(bodyDepth({ kind: 'prop' }, base.y));
       // A prop whose idle has more frames plays it at its rate (the Writ post's tablet pulses, ART's holding art).
-      if (propIdlePlays(spriteSheets[sheet as keyof typeof spriteSheets]) && scene.anims.exists(animKey(sheet, 'idle')))
+      const data = sheetData(sheet);
+      if (data && propIdlePlays(data) && scene.anims.exists(animKey(sheet, 'idle')))
         image.play(animKey(sheet, 'idle'));
       layer.add(image);
       this.props.push({ stationId, rect, image, sheet, grounded: standsOnGround(template, rect) });
     };
     for (const station of layout.stations) {
-      const sheet = STATION_SHEETS[station.kind];
-      if (!sheet || station.reserved) continue;
-      for (const part of station.parts) stand(station.id, part.rect, sheet);
+      const kindSheet = STATION_SHEETS[station.kind];
+      if (!kindSheet || station.reserved) continue;
+      // A part may name its own sheet (the second tree); until that optional sheet is on disk, the kind's.
+      for (const part of station.parts)
+        stand(station.id, part.rect, part.sheet && scene.textures.exists(part.sheet) ? part.sheet : kindSheet);
     }
     stand(null, layout.kesh.rock, KESH_ROCK_SHEET);
     this.player = scene.add.sprite(0, 0, this.playerTexture()).setVisible(false);
@@ -112,8 +122,8 @@ export class HoldingWorld {
     let sizes = this.shadows.get(sheet);
     if (!sizes) {
       const img = texturePixels(this.scene, sheet);
-      const def = spriteSheets[sheet as keyof typeof spriteSheets];
-      if (img) {
+      const def = sheetData(sheet);
+      if (img && def) {
         sizes = propShadowSizes(def, img);
         this.shadows.set(sheet, sizes);
       }

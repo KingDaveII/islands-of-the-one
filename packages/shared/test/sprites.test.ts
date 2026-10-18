@@ -2,6 +2,9 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
   CLAY_TONES,
+  isSheathedSheet,
+  KINDLED_SHEATHED_ANIMS,
+  sheathedSheetName,
   framePoint,
   hexOf,
   KINDLED_POINT_ANIMS,
@@ -147,7 +150,8 @@ describe('the sheets on disk (packages/shared/assets/sprites)', () => {
   it('stand the twisted tree on the tall prop cell (96×128, origin (48, 118), ART on #82); every other prop on the 64×64 cell', () => {
     expect(TALL_PROP_CELL).toEqual(spriteCellSpec(96, 128, 118));
     expect(TALL_PROP_CELL).toEqual({ cell: { w: 96, h: 128 }, origin: { x: 48, y: 118 }, canvasAt: { x: 16, y: 64 } });
-    expect(PROP_CELLS).toEqual({ 'twisted-tree': TALL_PROP_CELL });
+    expect(PROP_CELLS).toEqual({ 'twisted-tree': TALL_PROP_CELL, 'twisted-tree-2': TALL_PROP_CELL });
+    expect(spriteSheetSpec('prop-twisted-tree-2').cell).toEqual(TALL_PROP_CELL);
     expect(spriteSheetSpec('prop-twisted-tree').cell).toBe(TALL_PROP_CELL);
     expect(spriteCellSpecFor('prop-twisted-tree')).toBe(TALL_PROP_CELL);
     for (const name of ['prop-writ-post', 'prop-stone-outcrop', 'prop-holding-store', 'prop-kesh-rock', 'prop-chest', 'prop-sparkglass'])
@@ -217,7 +221,7 @@ describe('the Sparkglass pickup fixture sheet (test/fixtures/prop-sparkglass)', 
   it('is a v2 prop sheet without a table: idle alone, 2 frames (the glint) at the recipe rate, the chip 9 × 11 on the prop cell', () => {
     expect(sheet.meta.version).toBe(SPRITE_SHEET_VERSION);
     expect(SPARKGLASS_SHEET).toBe('prop-sparkglass');
-    expect(OPTIONAL_SPRITE_SHEETS).toEqual([SPARKGLASS_SHEET]);
+    expect(OPTIONAL_SPRITE_SHEETS).toEqual([SPARKGLASS_SHEET, 'prop-twisted-tree-2']);
     expect(SPRITE_SHEET_NAMES).not.toContain(SPARKGLASS_SHEET);
     expect(spriteSheetSpec(SPARKGLASS_SHEET).anims).toBeNull();
     expect(propTable(SPARKGLASS_SHEET, sheet)).toEqual([propIdleSpec(2, 2)]);
@@ -851,16 +855,12 @@ describe('optional animations (milestones)', () => {
   const sheetWith = (anims: SpriteSheet['anims']): SpriteSheet => ({ ...fixtureSheet, anims });
   const m1 = KINDLED_ANIMS.filter(isRequiredAnim);
 
-  it('makes carry and sit M2 and everything else M1, and requires every M1 row (nothing awaits art)', () => {
+  it('keeps the combat sheet M1 and required whole (nothing awaits art); carry and sit live on the sheathed sheet', () => {
     expect(REQUIRED_MILESTONE).toBe('M1');
-    expect(KINDLED_ANIMS.filter((a) => a.milestone === 'M2').map((a) => a.name)).toEqual(['carry_idle', 'carry_walk', 'sit']);
+    expect(KINDLED_ANIMS.filter((a) => a.milestone === 'M2')).toEqual([]);
     // The run transitions (#72) and run_back (#74) landed, so every M1 row is required.
     expect(ANIMS_AWAITING_ART).toEqual([]);
-    expect(m1.map((a) => a.name)).toEqual(
-      KINDLED_ANIMS.map((a) => a.name).filter(
-        (n) => !['carry_idle', 'carry_walk', 'sit'].includes(n),
-      ),
-    );
+    expect(m1).toEqual(KINDLED_ANIMS);
     for (const name of ANIMS_AWAITING_ART) {
       expect(isRequiredAnim({ name, milestone: 'M1' }), name).toBe(false);
       expect(optionalReason({ name, milestone: 'M1' }), name).toBe('awaiting art');
@@ -868,22 +868,54 @@ describe('optional animations (milestones)', () => {
     for (const a of [...HUSK_TABLES.peeling, ...HUSK_TABLES.nutshell, ...NPC_ANIMS]) expect(a.milestone, a.name).toBe('M1');
   });
 
-  it('passes a finished Kindled sheet without carry and sit, and one with them', () => {
-    expect(tableProblems('kindled-test', sheetWith(animsOf(m1)), KINDLED_ANIMS)).toEqual([]);
+  it('passes a finished Kindled combat sheet, and fails one missing a required row', () => {
     expect(tableProblems('kindled-test', sheetWith(animsOf(KINDLED_ANIMS)), KINDLED_ANIMS)).toEqual([]);
+    const anims = animsOf(KINDLED_ANIMS);
+    delete anims.dodge_SW;
+    expect(tableProblems('kindled-test', sheetWith(anims), KINDLED_ANIMS)).toEqual(['dodge_SW is missing']);
   });
 
-  it('fails an optional animation that is present but incomplete, and a missing required one', () => {
-    const anims = animsOf(KINDLED_ANIMS);
+  it('gives the sheathed sheet its own table: the five roaming rows required, like the combat ones; carry and sit optional (ART 2026-10-18)', () => {
+    expect(spriteSheetSpec('kindled-test-sheathed').anims).toBe(KINDLED_SHEATHED_ANIMS);
+    expect(spriteSheetSpec('kindled-test').anims).toBe(KINDLED_ANIMS);
+    expect(spriteSheetSpec('kindled-test-sheathed').cell).toBe(SPRITE_CELLS.kindled);
+    expect(spriteSheetSpec('kindled-test-sheathed').palette).toBe(true);
+    expect(isSheathedSheet('kindled-ash-sheathed')).toBe(true);
+    expect(isSheathedSheet('kindled-ash')).toBe(false);
+    expect(isSheathedSheet('kindled-sheathed')).toBe(false);
+    expect(sheathedSheetName('kindled-ash')).toBe('kindled-ash-sheathed');
+    const required = KINDLED_SHEATHED_ANIMS.filter(isRequiredAnim);
+    expect(required.map((a) => a.name)).toEqual(['idle', 'walk', 'run', 'run_start', 'run_stop']);
+    // Same counts, rates, loop and facings as the combat rows of the same name; no run_back.
+    for (const row of required) {
+      const combat = KINDLED_ANIMS.find((a) => a.name === row.name);
+      expect([row.frames, row.fps, row.loop, row.hold, row.facings], row.name).toEqual([
+        combat?.frames,
+        combat?.fps,
+        combat?.loop,
+        combat?.hold,
+        combat?.facings,
+      ]);
+    }
+    expect(KINDLED_SHEATHED_ANIMS.some((a) => a.name === 'run_back')).toBe(false);
+    const sheathed = (rows: readonly SpriteAnimSpec[]): SpriteSheet => sheetWith(animsOf(rows));
+    expect(tableProblems('kindled-test-sheathed', sheathed(required), KINDLED_SHEATHED_ANIMS)).toEqual([]);
+    expect(tableProblems('kindled-test-sheathed', sheathed(KINDLED_SHEATHED_ANIMS), KINDLED_SHEATHED_ANIMS)).toEqual([]);
+    // A required roaming row missing, an optional one present but incomplete.
+    const anims = animsOf(KINDLED_SHEATHED_ANIMS);
+    delete anims.run_stop_W;
     delete anims.sit_E;
     const walk = anims.carry_walk_N;
     if (walk) walk.frames = walk.frames.slice(0, 5);
-    delete anims.dodge_SW;
-    expect(tableProblems('kindled-test', sheetWith(anims), KINDLED_ANIMS)).toEqual([
-      'dodge_SW is missing',
+    expect(tableProblems('kindled-test-sheathed', sheetWith(anims), KINDLED_SHEATHED_ANIMS)).toEqual([
+      'run_stop_W is missing',
       'carry_walk_N has frames carry_walk_N_0, carry_walk_N_1, carry_walk_N_2, carry_walk_N_3, carry_walk_N_4; ' +
         'the table says carry_walk_N_0, carry_walk_N_1, carry_walk_N_2, carry_walk_N_3, carry_walk_N_4, carry_walk_N_5',
       'sit_E is missing (sit is optional until M2, but complete once present; required: M1)',
+    ]);
+    // Combat rows don't belong on a sheathed sheet.
+    expect(tableProblems('kindled-test-sheathed', sheathed([...required, ...KINDLED_ANIMS.filter((a) => a.name === 'dodge')]), KINDLED_SHEATHED_ANIMS)).toEqual([
+      `animations outside the table: ${SPRITE_FACINGS.map((f) => `dodge_${f}`).sort().join(', ')}`,
     ]);
   });
 
