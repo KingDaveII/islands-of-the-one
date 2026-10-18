@@ -3,6 +3,7 @@ import huskNutshell from '../assets/sprites/husk-nutshell.json' with { type: 'js
 import huskPeeling from '../assets/sprites/husk-peeling.json' with { type: 'json' };
 import kindledAsh from '../assets/sprites/kindled-ash.json' with { type: 'json' };
 import kindledAshSheathed from '../assets/sprites/kindled-ash-sheathed.json' with { type: 'json' };
+import npcKesh from '../assets/sprites/npc-kesh.json' with { type: 'json' };
 import propChest from '../assets/sprites/prop-chest.json' with { type: 'json' };
 import propHoldingStore from '../assets/sprites/prop-holding-store.json' with { type: 'json' };
 import propKeshRock from '../assets/sprites/prop-kesh-rock.json' with { type: 'json' };
@@ -180,7 +181,8 @@ export interface SpriteSheet {
  * The sheets the client loads: the Kindled (its combat sheet and its sheathed
  * sheet, the holding's), the two Husks, the chest
  * (`CHEST_SHEET`), the holding's station props (`STATION_SHEETS`, M2 Task
- * 3b and 3c) and Kesh's needle of rock off its shore (`KESH_ROCK_SHEET`, 3c).
+ * 3b and 3c), Kesh's needle of rock off its shore (`KESH_ROCK_SHEET`, 3c)
+ * and Old Kesh himself on it (`KESH_SHEET`, 4b).
  * The sheet test runs on every sheet on disk and checks that each name here
  * is one of them; a sheet on disk (an NPC's, say) joins this list when the
  * client starts using it. Tile sheets load apart (tiles.ts).
@@ -196,6 +198,7 @@ export const SPRITE_SHEET_NAMES = [
   'prop-stone-outcrop',
   'prop-holding-store',
   'prop-kesh-rock',
+  'npc-kesh',
 ] as const;
 export type SpriteSheetName = (typeof SPRITE_SHEET_NAMES)[number];
 
@@ -211,6 +214,7 @@ export const spriteSheets: Readonly<Record<SpriteSheetName, SpriteSheet>> = {
   'prop-stone-outcrop': propStoneOutcrop,
   'prop-holding-store': propHoldingStore,
   'prop-kesh-rock': propKeshRock,
+  'npc-kesh': npcKesh,
 };
 
 /**
@@ -227,8 +231,11 @@ export const STATION_SHEETS: Readonly<Partial<Record<'post' | 'trees' | 'outcrop
   store: 'prop-holding-store',
 };
 
-/** Kesh's needle of rock (M2 Task 3c): a solid prop in the void off the holding's south-east shore, `idle` alone; MAIN's placeholder. */
+/** Kesh's needle of rock (M2 Task 3c): a solid prop in the void off the holding's south-east shore, `idle` alone, with a perch cut into its tip (ART #93). */
 export const KESH_ROCK_SHEET: SpriteSheetName = 'prop-kesh-rock';
+
+/** Old Kesh (M2 Task 4b, ART #93): seated on his rock, drawn at the rock's world point one depth step above it, no shadow (`NPC_TABLES.kesh`). */
+export const KESH_SHEET: SpriteSheetName = 'npc-kesh';
 
 /** Kindled facings in sheet order. */
 export const SPRITE_FACINGS = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'] as const;

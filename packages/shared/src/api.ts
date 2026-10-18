@@ -26,6 +26,7 @@ export const ApiRoute = {
   HoldingTake: '/api/holding/take',
   WritName: '/api/writ/name',
   WritFeed: '/api/writ/feed',
+  KeshSliver: '/api/kesh/sliver',
 } as const;
 export type ApiRoute = (typeof ApiRoute)[keyof typeof ApiRoute];
 
@@ -74,6 +75,8 @@ export const ApiErrorCode = {
   NotSparkglass: 'not-sparkglass',
   Full: 'full',
   TooMuch: 'too-much',
+  // Kesh's slivers (docs/design/holding.md "Kesh").
+  NotDue: 'not-due',
 } as const;
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
 
@@ -210,6 +213,8 @@ export interface WritView {
   certified: boolean;
   emptyAt: string;
   lineCount: number;
+  /** When the Writ was first fed (ISO 8601), null until then; the client plays Kesh's after-first-feeding line when it goes from null to set. */
+  fedAt: string | null;
   state: WritState;
   chargeMs: number;
   words: string;
@@ -218,12 +223,29 @@ export interface WritView {
   lines: WritLineView[];
 }
 
+/** What Kesh has to give (docs/design/holding.md "Kesh"): which sliver is due now, if any. */
+export const KESH_DUE = ['first', 'tide'] as const;
+export type KeshDue = (typeof KESH_DUE)[number];
+
 /**
- * GET /api/holding, and the answer to work, stop, take, name and feed: the
- * layout, every station's basket (by station id, every station listed), the
- * active action or null, the server's clock, the skills and the Writ. The
- * server settles the action before answering, so the counts are true as of
- * `now`. A take-all answer adds `take`.
+ * Kesh in the holding answer (M2 Task 4b): whether his first sliver has been
+ * given, which sliver is due now (`first`, `tide` while `m2Scaffold` is on
+ * and this tide's hasn't been given, or null) and when the next tide begins
+ * (ISO 8601). The client decides which flow to play from this.
+ */
+export interface KeshView {
+  firstGiven: boolean;
+  due: KeshDue | null;
+  nextTideAt: string;
+}
+
+/**
+ * GET /api/holding, and the answer to work, stop, take, name, feed and
+ * Kesh's sliver: the layout, every station's basket (by station id, every
+ * station listed), the active action or null, the server's clock, the
+ * skills, the Writ and Kesh. The server settles the action before
+ * answering, so the counts are true as of `now`. A take-all answer adds
+ * `take`.
  */
 export interface HoldingResponse {
   layoutId: string;
@@ -232,8 +254,17 @@ export interface HoldingResponse {
   now: string;
   skills: Record<Skill, SkillView>;
   writ: WritView;
+  kesh: KeshView;
   take?: HoldingTake;
 }
+
+/**
+ * POST /api/kesh/sliver, `{}`: asks Kesh for the sliver that is due (his
+ * first, else this tide's while `m2Scaffold` is on), one wild sliver into
+ * the pack. Answers the holding, or `not-due` or `pack-full` ("Pack full.",
+ * and the sliver stays due).
+ */
+export type KeshSliverRequest = Record<string, never>;
 
 /** POST /api/writ/name: the island's Name as typed; the server hears its letters. Once only in M2 (`already-named` after). */
 export interface WritNameRequest {
@@ -411,6 +442,7 @@ export function isWritView(value: unknown): value is WritView {
       'certified',
       'emptyAt',
       'lineCount',
+      'fedAt',
       'state',
       'chargeMs',
       'words',
@@ -424,6 +456,7 @@ export function isWritView(value: unknown): value is WritView {
     typeof value.certified === 'boolean' &&
     isIsoDate(value.emptyAt) &&
     isPositiveInt(value.lineCount) &&
+    isIsoOrNull(value.fedAt) &&
     isWritState(value.state) &&
     isNonNegativeInt(value.chargeMs) &&
     typeof value.words === 'string' &&
@@ -435,10 +468,20 @@ export function isWritView(value: unknown): value is WritView {
   );
 }
 
+export function isKeshView(value: unknown): value is KeshView {
+  return (
+    isObject(value) &&
+    hasOnly(value, ['firstGiven', 'due', 'nextTideAt']) &&
+    typeof value.firstGiven === 'boolean' &&
+    (value.due === null || (typeof value.due === 'string' && (KESH_DUE as readonly string[]).includes(value.due))) &&
+    isIsoDate(value.nextTideAt)
+  );
+}
+
 export function isHoldingResponse(value: unknown): value is HoldingResponse {
   return (
     isObject(value) &&
-    hasOnly(value, ['layoutId', 'baskets', 'activity', 'now', 'skills', 'writ', 'take']) &&
+    hasOnly(value, ['layoutId', 'baskets', 'activity', 'now', 'skills', 'writ', 'kesh', 'take']) &&
     typeof value.layoutId === 'string' &&
     isObject(value.baskets) &&
     Object.entries(value.baskets).every(([k, v]) => isHoldingStationId(k) && isEntryList(v)) &&
@@ -447,6 +490,7 @@ export function isHoldingResponse(value: unknown): value is HoldingResponse {
     isObject(value.skills) &&
     Object.entries(value.skills).every(([k, v]) => isSkill(k) && isSkillView(v)) &&
     isWritView(value.writ) &&
+    isKeshView(value.kesh) &&
     (value.take === undefined || isHoldingTake(value.take))
   );
 }
@@ -461,6 +505,11 @@ export function isWritFeedRequest(value: unknown): value is WritFeedRequest {
   if (hasOnly(value, ['itemId', 'count'])) return typeof value.itemId === 'string' && isPositiveInt(value.count);
   if (hasOnly(value, ['fill'])) return value.fill === true;
   return false;
+}
+
+/** The body of POST /api/kesh/sliver: an empty object; any field is refused. */
+export function isKeshSliverRequest(value: unknown): value is KeshSliverRequest {
+  return isObject(value) && Object.keys(value).length === 0;
 }
 
 const ERROR_CODES = new Set<string>(Object.values(ApiErrorCode));

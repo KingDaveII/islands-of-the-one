@@ -29,6 +29,8 @@ export interface WritStored {
   emptyAt: number;
   /** How many lines the Writ has (1 in M2). */
   lineCount: number;
+  /** When the Writ was first fed, null until then (M2 Task 4b: the after-first-feeding line plays once). */
+  fedAt: number | null;
 }
 
 /** When a Writ pressed at `pressedAt` runs out: `pressChargeHours` ahead. It drains normally from then. */
@@ -38,7 +40,7 @@ export function pressedEmptyAt(pressedAt: number, data: WritData = writData): nu
 
 /** A Writ as it is pressed: unnamed, uncertified, one line, two days of charge. */
 export function pressedWrit(pressedAt: number, data: WritData = writData): WritStored {
-  return { name: null, letters: null, certified: false, emptyAt: pressedEmptyAt(pressedAt, data), lineCount: 1 };
+  return { name: null, letters: null, certified: false, emptyAt: pressedEmptyAt(pressedAt, data), lineCount: 1, fedAt: null };
 }
 
 export const WRIT_STATES = ['lit', 'flickering', 'dark', 'fading'] as const;
@@ -326,6 +328,7 @@ export function toWritView(writ: WritStored, now: number, data: WritData = writD
     certified: writ.certified,
     emptyAt: iso(writ.emptyAt),
     lineCount: writ.lineCount,
+    fedAt: writ.fedAt === null ? null : iso(writ.fedAt),
     state: d.state,
     chargeMs: d.chargeMs,
     words: d.words,
@@ -343,5 +346,6 @@ export function writFromView(view: WritView): WritStored {
     certified: view.certified,
     emptyAt: Date.parse(view.emptyAt),
     lineCount: view.lineCount,
+    fedAt: view.fedAt === null ? null : Date.parse(view.fedAt),
   };
 }

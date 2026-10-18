@@ -1,0 +1,68 @@
+{
+  "$comment": "Old Kesh's lines (docs/design/holding.md \"Kesh\", M2 Task 4b): LORE's and GAME DESIGN's, word for word, validated on load (validateKeshData) and every character drawable by the pixel fonts. A line is { who: kesh | narrator | hint, text }, optionally with an action (toss: sliver, the sliver leaves his hand on that line) and only: first-sliver (shown only while his first sliver hasn't been given). Stage directions in parentheses are part of the line and are drawn; the inner quotes are LORE's speech marks and are drawn too. afterNaming plays once the server accepts the Name; afterFirstFeeding the first time a feed lands; the topics are the talk box's menu, in this order; tideSliver is the once-per-tide toss (m2Scaffold). Don't reword a line.",
+  "afterNaming": [
+    { "who": "kesh", "text": "(squints at the post) \"Hm. That's what you're calling it?\" (shrugs) \"Doesn't matter. Whatever you call it, it's yours now. The Hollow doesn't care if it's pretty.\"" },
+    { "who": "narrator", "text": "I've heard worse, little light. Someone once named theirs Rock." },
+    { "who": "hint", "text": "Your Writ keeps your island's name for two days even while you're away. After that it doesn't break. It only forgets, a line at a time, until you bring Sparkglass to make it remember." }
+  ],
+  "afterFirstFeeding": [
+    { "who": "kesh", "text": "\"There. Now it'll hold while you're gone. Two days, give or take. After that it starts forgetting the edges first.\"" }
+  ],
+  "topics": [
+    {
+      "id": "old-letters",
+      "title": "The Old Letters",
+      "lines": [
+        { "who": "kesh", "text": "\"Old Letters. The writing from before. Everything out here that lasts is written in it: Writs, sails, the stones on the roads. Things written in anything else go soft, like your stick out there.\"" },
+        { "who": "kesh", "text": "\"Reads right to left. Starts where your hand doesn't expect. You'll get used to it.\"" },
+        { "who": "kesh", "text": "\"Scriptorium lot say the world was said before it was made. That the light spelled everything as it fell.\" (snorts) \"I say it's a good way to sell tiles.\"" },
+        { "who": "kesh", "text": "\"You learn a word, you've got it for good. Tiles, rubbings off the waymark stones, scraps off old tablets. Every word's a tool.\"" },
+        { "who": "kesh", "text": "\"Out on the roads there are stones with one letter each. Put paper to one and rub. That's your first letter for your sail.\"" },
+        { "who": "kesh", "text": "\"Want to know more, ask the Scriptorium in Malkhut. Ask for the archivist. Don't let her charge you.\"" },
+        { "who": "narrator", "text": "He's right about the tiles. He's wrong about the rest. Or he's right, and it's worse." }
+      ]
+    },
+    {
+      "id": "sparkglass",
+      "title": "Sparkglass",
+      "lines": [
+        { "who": "kesh", "text": "(holds up a sliver; it glows faint amber-white, the glow moving inside like a slow pulse)" },
+        { "who": "kesh", "text": "\"Light. What's left of it. When everything broke, most of the light went up. Some didn't. Out there it goes cold and hard and you get this.\"" },
+        { "who": "kesh", "text": "\"You find it in wrecks. On the cold edges. Inside the eels and worse, when you open them.\"" },
+        { "who": "kesh", "text": "\"Feed it to your Writ and the letters stay lit. Don't, and they go dark. You've seen what dark is.\"" },
+        { "who": "kesh", "text": "\"It's money too. Cities cut it into beads and roll their seal round them. Sealed glass. Raw stuff like this, they'll take, but they weigh it short.\"" },
+        { "who": "kesh", "text": "\"So: burn it or spend it. Can't do both with the same bit.\" / \"Richest man I ever met had a Writ black as a boot. Old joke.\"" },
+        { "who": "kesh", "text": "(flicks the sliver across the water) \"First one's free. Don't get used to it.\"", "toss": "sliver", "only": "first-sliver" },
+        { "who": "hint", "text": "Touch Sparkglass to your Writ to feed it.", "only": "first-sliver" },
+        { "who": "narrator", "text": "Burn it, spend it. Nobody ever asks where it goes when it burns, little light. Nobody." }
+      ]
+    },
+    {
+      "id": "crack",
+      "title": "Where the crack points",
+      "lines": [
+        { "who": "kesh", "text": "\"Malkhut. The Kingdom. Nearest of the big cities, and the lowest. Every new one ends up there sooner or later.\"" },
+        { "who": "kesh", "text": "\"Ten of them, the big cities, each sat on something huge that holds the rock together. Pillars, the clerks call them. Malkhut's got a wheel. A great brass wheel full of eyes. It blinks.\"" },
+        { "who": "kesh", "text": "\"Ziggurats. Clerks. A hearth the size of a house, with that painting over it. More seals than sense.\"" },
+        { "who": "kesh", "text": "\"Every crack on every rock I've seen points at the nearest city. Don't ask me why. I asked once. Got a sermon.\"" },
+        { "who": "kesh", "text": "\"Follow the line. You'll see the lamps before long. Just outside the city there's a stone standing in the light on its own, one mark cut in it. Take your rubbing off it. That's the start of the only road out of the Kingdom.\"" },
+        { "who": "kesh", "text": "\"They'll want you registered. They'll want your glass. Give 'em one of the two.\"" },
+        { "who": "narrator", "text": "The Kingdom, little light. Lowest of the ten, and the only one with a single road out. Everybody starts there. Nobody is told why." }
+      ]
+    },
+    {
+      "id": "goodbye",
+      "title": "Goodbye",
+      "lines": [
+        { "who": "kesh", "text": "\"Goodbye's a big word for a stone's throw. I'll be here. I'm always here.\"" },
+        { "who": "kesh", "text": "\"Mind the eels. Mind the wrecks more. Wrecks have people in them, or had.\"" },
+        { "who": "kesh", "text": "(for the first time, looking straight at the player) \"And if something gets you out there, you'll wake up back on your own rock, lighter in the pockets. Don't ask me how. Hurts, though. Every time.\" / \"What falls out of your pockets doesn't vanish. The haze keeps it. Remember that.\"" },
+        { "who": "kesh", "text": "\"Bring me something odd from the light and I'll trade you a word for it.\"" },
+        { "who": "narrator", "text": "Wave to him, little light. He'll pretend not to see. He sees everything." }
+      ]
+    }
+  ],
+  "tideSliver": [
+    { "who": "kesh", "text": "(flicks a sliver across the water) \"Don't get used to it.\"", "toss": "sliver" }
+  ]
+}

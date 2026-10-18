@@ -16,6 +16,7 @@ import {
   isHoldingResponse,
   isHoldingStationId,
   isHoldingStationRequest,
+  isKeshSliverRequest,
   OFFLINE_CAP_MS,
   PLOT_SIZE,
   rectGap,
@@ -326,6 +327,7 @@ describe('holding.json', () => {
       {
         offlineCapHours: 48,
         heartbeatMs: 30000,
+        cameraMarginTiles: 6,
         layouts: [
           {
             ...shipped,
@@ -347,9 +349,10 @@ describe('holding.json', () => {
       const r = validateHoldingData(data, stations);
       return r.ok ? [] : r.problems;
     };
-    const base = { offlineCapHours: 48, heartbeatMs: 30000, layouts: [shipped] };
+    const base = { offlineCapHours: 48, heartbeatMs: 30000, cameraMarginTiles: 6, layouts: [shipped] };
     expect(problems(base)).toEqual([]);
     expect(problems({ ...base, offlineCapHours: 0 })).toEqual(['offlineCapHours must be a positive integer']);
+    expect(problems({ ...base, cameraMarginTiles: 0 })).toEqual(['cameraMarginTiles must be a positive integer']);
     expect(problems({ ...base, layouts: [] })).toEqual(['layouts must be a non-empty list']);
     expect(problems({ ...base, layouts: [shipped, shipped] })).toEqual(['layouts[1]: duplicate id first-holding']);
     expect(
@@ -416,6 +419,7 @@ describe('the holding API guards', () => {
       farming: { xp: 0, level: 1, into: 0, toNext: 40 },
     },
     writ: toWritView(pressedWrit(Date.parse('2026-10-17T12:00:00.000Z')), Date.parse('2026-10-17T12:00:13.000Z')),
+    kesh: { firstGiven: false, due: 'first', nextTideAt: '2026-10-17T18:00:00.000Z' },
   };
 
   it('accept the holding answer, with or without a take, and refuse unknown fields, stations and skills', () => {
@@ -429,6 +433,16 @@ describe('the holding API guards', () => {
     expect(isHoldingResponse({ ...response, activity: { ...response.activity, cycleMs: 0 } })).toBe(false);
     expect(isHoldingResponse({ ...response, now: 'soon' })).toBe(false);
     expect(isHoldingResponse({ ...response, extra: 1 })).toBe(false);
+    // Kesh (4b): firstGiven a boolean, due one of first, tide or null, nextTideAt a time.
+    expect(isHoldingResponse({ ...response, kesh: { ...response.kesh, due: null } })).toBe(true);
+    expect(isHoldingResponse({ ...response, kesh: { ...response.kesh, due: 'tide' } })).toBe(true);
+    expect(isHoldingResponse({ ...response, kesh: { ...response.kesh, due: 'second' } })).toBe(false);
+    expect(isHoldingResponse({ ...response, kesh: { ...response.kesh, nextTideAt: 'tonight' } })).toBe(false);
+    expect(isHoldingResponse({ ...response, kesh: { ...response.kesh, extra: 1 } })).toBe(false);
+    expect(isKeshSliverRequest({})).toBe(true);
+    expect(isKeshSliverRequest({ sliver: 1 })).toBe(false);
+    expect(isKeshSliverRequest(null)).toBe(false);
+    expect(isKeshSliverRequest([])).toBe(false);
   });
 
   it('accept a station request of exactly { stationId }', () => {

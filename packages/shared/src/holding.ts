@@ -135,6 +135,8 @@ export const ACTIONLESS_KINDS: readonly StationKind[] = ['post', 'store', 'rack'
 export interface HoldingData {
   offlineCapHours: number;
   heartbeatMs: number;
+  /** How far past every edge of the layout the camera may scroll into the void (tiles), so the HUD never covers the shore or Kesh's rock. */
+  cameraMarginTiles: number;
   layouts: HoldingLayout[];
 }
 
@@ -497,10 +499,11 @@ export function validateHoldingData(
 ): { ok: true; data: HoldingData } | { ok: false; problems: string[] } {
   if (!isObject(data)) return { ok: false, problems: ['expected an object'] };
   const problems: string[] = [];
-  const extra = Object.keys(data).filter((k) => !['$comment', 'offlineCapHours', 'heartbeatMs', 'layouts'].includes(k));
+  const extra = Object.keys(data).filter((k) => !['$comment', 'offlineCapHours', 'heartbeatMs', 'cameraMarginTiles', 'layouts'].includes(k));
   if (extra.length > 0) problems.push(`unknown field(s) ${extra.join(', ')}`);
   if (!isCount(data.offlineCapHours)) problems.push('offlineCapHours must be a positive integer');
   if (!isCount(data.heartbeatMs)) problems.push('heartbeatMs must be a positive integer');
+  if (!isCount(data.cameraMarginTiles)) problems.push('cameraMarginTiles must be a positive integer');
   const layouts: HoldingLayout[] = [];
   if (!Array.isArray(data.layouts) || data.layouts.length === 0) problems.push('layouts must be a non-empty list');
   else {
@@ -594,7 +597,12 @@ export function validateHoldingData(
   if (problems.length > 0) return { ok: false, problems };
   return {
     ok: true,
-    data: { offlineCapHours: data.offlineCapHours as number, heartbeatMs: data.heartbeatMs as number, layouts },
+    data: {
+      offlineCapHours: data.offlineCapHours as number,
+      heartbeatMs: data.heartbeatMs as number,
+      cameraMarginTiles: data.cameraMarginTiles as number,
+      layouts,
+    },
   };
 }
 
@@ -627,6 +635,8 @@ export const holdingData: HoldingData = loadHolding();
 export const OFFLINE_CAP_MS: number = holdingData.offlineCapHours * 60 * 60 * 1000;
 /** How often the open holding scene calls GET /api/holding. */
 export const HOLDING_HEARTBEAT_MS: number = holdingData.heartbeatMs;
+/** How far past the layout's edges the camera may scroll (tiles), on every side (M2 Task 4b: the HUD never covers Kesh's rock). */
+export const HOLDING_CAMERA_MARGIN_TILES: number = holdingData.cameraMarginTiles;
 /** Every Kindled's holding today: the one layout. */
 export const HOLDING_LAYOUT_ID: string = holdingData.layouts[0]?.id ?? 'first-holding';
 
