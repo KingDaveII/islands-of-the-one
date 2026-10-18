@@ -1,4 +1,4 @@
-import { oldLettersSheet as sheet, shapeLetters, type ShapedLetters } from '@iot/shared';
+import { oldLettersSheet as sheet, shapeLetters, SHEET_CELLS, type ShapedLetters } from '@iot/shared';
 import sheetUrl from '@iot/shared/assets/old-letters-8px.png';
 import { css, Palette } from '../palette.js';
 
@@ -33,10 +33,9 @@ export function sheetFromPixels(
   width: number,
   height: number,
 ): LetterSheet {
-  if (width !== sheet.cell * sheet.chars.length || height !== sheet.height) {
-    throw new Error(
-      `letter sheet is ${width}x${height}, expected ${sheet.cell * sheet.chars.length}x${sheet.height}`,
-    );
+  // The letters, the final forms and the divider's cell after them (ART #99).
+  if (width !== sheet.cell * SHEET_CELLS || height !== sheet.height) {
+    throw new Error(`letter sheet is ${width}x${height}, expected ${sheet.cell * SHEET_CELLS}x${sheet.height}`);
   }
   const ink = new Uint8Array(width * height);
   for (let i = 0; i < ink.length; i++) ink[i] = (rgba[i * 4 + 3] ?? 0) > 127 ? 1 : 0;
@@ -87,16 +86,20 @@ export function rasterize(
 ): LetterRaster {
   const shape = shapeLetters(text);
   const px = new Uint8Array(shape.width * shape.height);
-  for (const g of shape.glyphs) {
-    const state = options.states?.[g.index] ?? options.state ?? 'lit';
-    const code = 1 + LETTER_STATES.indexOf(state);
+  const stamp = (cell: number, x0: number, w: number, code: number): void => {
     for (let y = 0; y < shape.height; y++) {
-      const row = y * ink.width + g.cell * sheet.cell;
-      for (let x = 0; x < g.width; x++) {
-        if (ink.ink[row + x]) px[y * shape.width + g.x + x] = code;
+      const row = y * ink.width + cell * sheet.cell;
+      for (let x = 0; x < w; x++) {
+        if (ink.ink[row + x]) px[y * shape.width + x0 + x] = code;
       }
     }
+  };
+  for (const g of shape.glyphs) {
+    const state = options.states?.[g.index] ?? options.state ?? 'lit';
+    stamp(g.cell, g.x, g.width, 1 + LETTER_STATES.indexOf(state));
   }
+  // A plot sentence's divider (ART's cell after the letters), in the letters' default state colour.
+  for (const d of shape.dividers) stamp(d.cell, d.x, d.width, 1 + LETTER_STATES.indexOf(options.state ?? 'lit'));
   return { width: shape.width, height: shape.height, px, shape };
 }
 

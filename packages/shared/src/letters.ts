@@ -27,16 +27,21 @@ const BASE_OF_FINAL: Readonly<Record<string, string>> = Object.fromEntries(
 
 /**
  * The divider of a plot sentence (docs/design/letters.md "The divider",
- * LORE 2026-10-18): a single dot at mid-height between the Ground and the
- * Virtue (and at the seal ring's other join). The letter sheet has no glyph
- * for it yet (ART has been asked), so `shapeLetters` places it and the
- * drawing code paints one sheet pixel at `DIVIDER_ROW`, centred in the word
- * space, in the letters' state colour; ART's glyph on the sheet replaces it
- * with no other change. It is not a letter: the filter drops it.
+ * LORE 2026-10-18; ART's glyph, #99): a single dot at mid-height between the
+ * Ground and the Virtue (and at the seal ring's other join). The sheet keeps
+ * it in the cell after the letters (`sheet.divider`: its character, cell,
+ * ink width and row); `shapeLetters` places it centred in the word space it
+ * stands in, and the drawing code stamps that cell in the letters' state
+ * colour. It is not a letter: it is not in `chars`, and the filter drops it.
  */
-export const PLOT_DIVIDER = '·';
-/** The sheet row the drawn divider's pixel sits on (mid-height of the body rows). */
-export const DIVIDER_ROW = 4;
+export const PLOT_DIVIDER: string = sheet.divider.char;
+/** The sheet row the divider's dot sits on (mid-height of the body rows). */
+export const DIVIDER_ROW: number = sheet.divider.row;
+/** The divider's cell on the sheet, after the letters, and its ink width. */
+export const DIVIDER_CELL: number = sheet.divider.cell;
+export const DIVIDER_WIDTH: number = sheet.divider.width;
+/** How many cells the sheet has: the letters, the final forms and the divider. */
+export const SHEET_CELLS: number = sheet.chars.length + 1;
 
 /** Position of a letter (a final form counts as its base letter), or -1. */
 export function letterPosition(char: string): number {
@@ -85,13 +90,20 @@ export interface PlacedLetter {
   width: number;
 }
 
+/** A divider placed between two words: the left edge of its cell's ink (`DIVIDER_CELL`, `DIVIDER_WIDTH` wide), centred in the word space. */
+export interface PlacedDivider {
+  x: number;
+  cell: number;
+  width: number;
+}
+
 export interface ShapedLetters {
   /** Total width in pixels (0 for no letters). */
   width: number;
   height: number;
   glyphs: PlacedLetter[];
-  /** The x of each divider's pixel (`PLOT_DIVIDER` between two words), on `DIVIDER_ROW`. */
-  dividers: number[];
+  /** The dividers (`PLOT_DIVIDER` between two words), each in the word space it stands in. */
+  dividers: PlacedDivider[];
 }
 
 /**
@@ -112,7 +124,7 @@ export function shapeLetters(text: string): ShapedLetters {
       if ((words[words.length - 1] as number[]).length > 0) words.push([]);
       continue;
     }
-    if (char === PLOT_DIVIDER && sheetCell(char) < 0) {
+    if (char === PLOT_DIVIDER) {
       if ((words[words.length - 1] as number[]).length > 0) words.push([]);
       divider = true;
       continue;
@@ -145,12 +157,12 @@ export function shapeLetters(text: string): ShapedLetters {
   }
 
   const glyphs: PlacedLetter[] = [];
-  const dividers: number[] = [];
+  const dividers: PlacedDivider[] = [];
   let right = width;
   for (const [i, cell] of cells.entries()) {
     if (i > 0) right -= wordStart.has(i) ? sheet.space : sheet.gap;
-    // The divider's pixel, centred in the word space this word follows.
-    if (dividerAt.has(i)) dividers.push(right + Math.floor(sheet.space / 2));
+    // The divider's dot, centred in the word space this word follows.
+    if (dividerAt.has(i)) dividers.push({ x: right + Math.floor((sheet.space - DIVIDER_WIDTH) / 2), cell: DIVIDER_CELL, width: DIVIDER_WIDTH });
     const w = sheet.widths[cell] as number;
     right -= w;
     glyphs.push({ cell, index: i, x: right, width: w });
