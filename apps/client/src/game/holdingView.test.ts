@@ -6,13 +6,17 @@ import {
   countOf,
   cycleProgress,
   cyclesDone,
+  directionGlyphs,
   hudRects,
   interactPoint,
+  lineParts,
   nearestPart,
   nearestStation,
   nearestStationPart,
   nearKesh,
+  opaqueBoundsIn,
   packFill,
+  panelsBehind,
   pluralName,
   propBase,
   propIdlePlays,
@@ -239,5 +243,58 @@ describe('Kesh across the water (M2 Task 4b)', () => {
     expect(rectsOverlap(rects.chip, rects.pack)).toBe(false);
     expect(rectsOverlap({ x: 0, y: 0, w: 10, h: 10 }, { x: 9, y: 9, w: 5, h: 5 })).toBe(true);
     expect(rectsOverlap({ x: 0, y: 0, w: 10, h: 10 }, { x: 10, y: 0, w: 5, h: 5 })).toBe(false);
+  });
+});
+
+describe('the HUD never hides the Kindled or Kesh (ART on #95)', () => {
+  const rects = {
+    writ: { x: 4, y: 4, w: 60, h: 30 },
+    purse: { x: 440, y: 4, w: 36, h: 18 },
+    chip: { x: 0, y: 0, w: 0, h: 0 },
+    pack: { x: 420, y: 250, w: 56, h: 16 },
+  };
+  it('dithers the panels a body is behind, never an undrawn one', () => {
+    expect(panelsBehind(rects, [])).toEqual([]);
+    expect(panelsBehind(rects, [{ x: 430, y: 240, w: 12, h: 20 }])).toEqual(['pack']);
+    expect(panelsBehind(rects, [{ x: 10, y: 10, w: 4, h: 4 }, { x: 450, y: 10, w: 4, h: 4 }])).toEqual(['writ', 'purse']);
+    expect(panelsBehind(rects, [{ x: 0, y: 0, w: 4, h: 4 }])).toEqual([]);
+    // Touching an edge is not behind.
+    expect(panelsBehind(rects, [{ x: 64, y: 4, w: 4, h: 4 }])).toEqual([]);
+  });
+
+  it("finds a frame's opaque bounds in a sheet's pixels", () => {
+    const width = 8;
+    const data = new Uint8Array(width * 4 * 4);
+    const ink = (x: number, y: number): void => {
+      data[(y * width + x) * 4 + 3] = 255;
+    };
+    ink(5, 1);
+    ink(6, 3);
+    expect(opaqueBoundsIn({ width, data }, { x: 4, y: 0, w: 4, h: 4 })).toEqual({ x: 1, y: 1, w: 2, h: 3 });
+    expect(opaqueBoundsIn({ width, data }, { x: 0, y: 0, w: 4, h: 4 })).toBeNull();
+  });
+});
+
+describe("Kesh's stage directions read muted (ART on #95)", () => {
+  const line = '(flicks the sliver across the water) "First one\'s free. Don\'t get used to it."';
+  it('splits a line into what he does and what he says', () => {
+    expect(lineParts(line)).toEqual([
+      { text: '(flicks the sliver across the water)', direction: true },
+      { text: ' "First one\'s free. Don\'t get used to it."', direction: false },
+    ]);
+    expect(lineParts('"Light. What\'s left of it."')).toEqual([{ text: '"Light. What\'s left of it."', direction: false }]);
+    expect(lineParts('(snorts) a (shrugs) b')).toEqual([
+      { text: '(snorts)', direction: true },
+      { text: ' a ', direction: false },
+      { text: '(shrugs)', direction: true },
+      { text: ' b', direction: false },
+    ]);
+  });
+
+  it("numbers the directions' glyphs as a wrapped BitmapText draws them: each wrap before a glyph shifts it down by one", () => {
+    const text = 'ab (cd) ef (gh)';
+    expect(directionGlyphs(text, text)).toEqual([3, 4, 5, 6, 11, 12, 13, 14]);
+    // Wrapped after "(cd)": the space at 7 became a break that isn't drawn.
+    expect(directionGlyphs(text, 'ab (cd)\nef (gh)')).toEqual([3, 4, 5, 6, 10, 11, 12, 13]);
   });
 });

@@ -15,7 +15,7 @@ import {
   type TileRect,
 } from '@iot/shared';
 import type { RoamState } from '@iot/sim';
-import { nearestPart, propBase, propIdlePlays, standsOnGround } from '../game/holdingView.js';
+import { nearestPart, opaqueBoundsIn, propBase, propIdlePlays, standsOnGround } from '../game/holdingView.js';
 import { RoamGaitClock, roamPose, type KindledPose } from './animState.js';
 import { PLAYER_SHEATHED_SHEET } from './characters.js';
 import { DEPTH } from './depth.js';
@@ -96,6 +96,7 @@ export class HoldingWorld {
   pose: KindledPose | null = null;
   /** Old Kesh on his rock. */
   private readonly kesh: Phaser.GameObjects.Sprite;
+  private readonly keshBounds: { x: number; y: number; w: number; h: number } | null;
   readonly keshSheet: SpriteSheet = spriteSheets[KESH_SHEET];
   private keshRow: KeshRow = 'fish';
   /** The row to go back to once a toss has played (`talk` while his line is open, else `fish`). */
@@ -150,8 +151,31 @@ export class HoldingWorld {
     });
     this.playKesh('fish');
     this.keshTop = this.readKeshTop();
+    this.keshBounds = this.readKeshBounds();
     this.player = scene.add.sprite(0, 0, this.playerTexture()).setVisible(false);
     layer.add(this.player);
+  }
+
+  /** The union of Kesh's opaque pixels over all his frames, relative to his cell origin (world px); null without pixels. */
+  private readKeshBounds(): { x: number; y: number; w: number; h: number } | null {
+    const img = texturePixels(this.scene, KESH_SHEET);
+    if (!img) return null;
+    const { origin } = this.keshSheet.meta;
+    let box: { x0: number; y0: number; x1: number; y1: number } | null = null;
+    for (const f of Object.values(this.keshSheet.frames)) {
+      const b = opaqueBoundsIn(img, f.frame);
+      if (!b) continue;
+      box = box
+        ? { x0: Math.min(box.x0, b.x), y0: Math.min(box.y0, b.y), x1: Math.max(box.x1, b.x + b.w), y1: Math.max(box.y1, b.y + b.h) }
+        : { x0: b.x, y0: b.y, x1: b.x + b.w, y1: b.y + b.h };
+    }
+    return box ? { x: box.x0 - origin.x, y: box.y0 - origin.y, w: box.x1 - box.x0, h: box.y1 - box.y0 } : null;
+  }
+
+  /** Kesh's drawn box in world px (his opaque pixels over every frame), for the HUD's dither: he is a body while he can be talked to. */
+  keshBox(): { x: number; y: number; w: number; h: number } | null {
+    const b = this.keshBounds;
+    return b ? { x: this.kesh.x + b.x, y: this.kesh.y + b.y, w: b.w, h: b.h } : null;
   }
 
   /** How far above his world point Kesh's head is (the prompt stands there): the first opaque row of `fish_0`, else the cell's. */

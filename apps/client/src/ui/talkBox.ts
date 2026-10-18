@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { KeshTopic } from '@iot/shared';
+import { directionGlyphs } from '../game/holdingView.js';
 import { KESH_NAME, type TalkStep } from '../game/keshTalk.js';
 import type { Rect as ViewRect } from '../game/view.js';
 import { Palette } from '../palette.js';
@@ -134,6 +135,11 @@ export class TalkBox {
         h += 6;
       }
       this.line.setMaxWidth(inner).setText(line.text).setTint(color);
+      // Kesh's stage directions in brackets read muted, so what he says stands out from what he does (ART on #95).
+      this.line.setCharacterTint(0, -1, false);
+      if (line.who === 'kesh')
+        for (const i of directionGlyphs(line.text, this.line.getTextBounds(false).wrappedText))
+          this.line.setCharacterTint(i, 1, false, Palette.uiInkMuted);
       const ly = h;
       draws.push(() => place(this.line.setVisible(true), x + PAD, this.top + ly));
       h += Math.round(this.line.height) + 3;

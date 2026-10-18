@@ -29,6 +29,7 @@ import {
   USE_LABEL,
   type NearStation,
   type StationLines,
+  type UiRect,
 } from '../game/holdingView.js';
 import { REFUSAL_LIFE_MS, refusalVisible } from '../game/inventoryView.js';
 import { KeshTalk, keshSpeaking, TALK_LABEL, type TalkContext, type TalkFlow } from '../game/keshTalk.js';
@@ -326,6 +327,29 @@ export class HoldingScene extends Phaser.Scene {
     this.hud.setFrame(this.frame);
     if (this.panel) this.placePanel(this.panel);
     return true;
+  }
+
+  /**
+   * The bodies a HUD panel must not hide (readability.md "The HUD never hides
+   * the room", ART on #95): the Kindled (the run's box round its feet) and
+   * Kesh while he can be talked to (his drawn pixels); props never count, his
+   * rock included. On the UI grid, rounded outwards.
+   */
+  private bodyRects(): UiRect[] {
+    const p = this.session.position();
+    const a = this.toUi(Math.round(p.x) - 8, Math.round(p.y) - 14);
+    const b = this.toUi(Math.round(p.x) + 8, Math.round(p.y) + 10);
+    const rects: UiRect[] = [outward(a, b)];
+    const k = this.world.keshBox();
+    if (k) rects.push(outward(this.worldToUi(k.x, k.y), this.worldToUi(k.x + k.w, k.y + k.h)));
+    return rects;
+  }
+
+  /** A point of the world in world px on the UI grid (UI px). */
+  private worldToUi(x: number, y: number): { x: number; y: number } {
+    const w = this.worldFit;
+    const z = this.uiFit.zU;
+    return { x: (w.x + (x - this.scroll.x) * w.zW) / z, y: (w.y + (y - this.scroll.y) * w.zW) / z };
   }
 
   /** A point of the world (sim px) on the UI grid (UI px). */
@@ -1040,7 +1064,15 @@ export class HoldingScene extends Phaser.Scene {
     this.followCamera(refit || this.session.state.tick <= 1);
     this.world.setKeshTalking(this.talkBox !== null && keshSpeaking(this.talk.step));
     this.world.draw(this.session.state, this.session.position());
-    this.hud.draw(chipState(this.response, this.serverNow()), packFill(this.inventory), purseGin(this.inventory), this.writHud(), this.letterSheet);
+    this.hud.draw(
+      chipState(this.response, this.serverNow()),
+      packFill(this.inventory),
+      purseGin(this.inventory),
+      this.writHud(),
+      this.letterSheet,
+      this.bodyRects(),
+      delta,
+    );
     this.updatePrompt();
     this.updateFloaters(delta);
     this.updatePanelResult();
@@ -1093,4 +1125,11 @@ export class HoldingScene extends Phaser.Scene {
       else if (MENU_BUTTONS.confirm.slice(1).some((b) => edges.includes(b))) this.pressFocused();
     }
   }
+}
+
+/** The UI rectangle spanning two projected corners, rounded outwards. */
+function outward(a: { x: number; y: number }, b: { x: number; y: number }): UiRect {
+  const x0 = Math.floor(Math.min(a.x, b.x));
+  const y0 = Math.floor(Math.min(a.y, b.y));
+  return { x: x0, y: y0, w: Math.ceil(Math.max(a.x, b.x)) - x0, h: Math.ceil(Math.max(a.y, b.y)) - y0 };
 }

@@ -395,7 +395,7 @@
   },
   "kesh": {
     "tossMs": 600,
-    "tossArcPx": 20
+    "tossArcPx": 32
   },
   "view": {
     "widthPx": 960,

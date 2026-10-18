@@ -147,7 +147,8 @@ inwards), 8 UI px in from its edge, and never over the center where the fight ha
   standing in a room corner is always drawn in the clear area between them; a room that fits the
   area the HUD leaves free is centered in it (`apps/client/src/render/camera.ts`; the margins go
   from UI px to world px through the two zooms). And while the player or a hostile is behind a
-  panel (its body projected from the world onto the UI grid), the panel's fill and frame turn
+  panel (its body projected from the world onto the UI grid), or on the holding the Kindled or Kesh (while he
+  can be talked to; ART on #95; props never count, his rock included, `panelsBehind`), the panel's fill and frame turn
   into a **50 % checkerboard
   dither** of `ui-panel` (every other pixel shows the room) and its ink, bars, icons and glyphs
   stay solid: the readout keeps its contrast and the colours stay in the palette, where an alpha
