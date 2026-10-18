@@ -77,6 +77,10 @@ Call `create_image_pro` once per step with:
 | 3 | `threshing-floor` | 128×128 | about 94 wide × 94 tall | "A round flat threshing floor of irregular flat grey stones fitted together and beaten smooth, a ring of darker edge stones around it, a few wisps of pale straw caught between the stones. It lies flat on the ground, seen from above." |
 | 4 | `clay-channel` | 64×128 | about 26 wide × 124 tall | "A long straight shallow trough of fired reddish clay lying in the ground, running up the picture, its inside dark and damp with a glint of water. Flat on the ground, seen from above." |
 
+If the tool refuses a canvas size (64×96 or 64×128), use the nearest square it accepts that is at least as large (96×96 or 128×128) and say so in the manifest.
+
+The channel is a plain trough: if every candidate of step 4 comes out shorter than the target, pick the best one anyway. ART lengthens it by repeating middle rows in cleanup, so that is not a retake.
+
 For each step:
 1. Save every candidate as `<raw folder>/candidates/<n>.png`, a numbered sheet `<raw folder>/candidates.png`, and your pick as `<raw folder>/pick.png`.
 2. Pick the candidate closest to its target size that matches its description and uses no forbidden colour.
