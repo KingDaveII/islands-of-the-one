@@ -1,0 +1,1108 @@
+{
+ "job": "field-pieces",
+ "date": "2026-10-18",
+ "purpose": "Raw material for the field's three upgrade pieces (M2 Task 6 build mode): the Seed jars in two facings (across and along), the Threshing floor and the Clay channel, each as every candidate, a numbered sheet and the pick. ART cleans them, draws the channel's second facing and the chaff spiral by hand, and writes the three prop-* recipes once MAIN's build-mode contract is on main. No recipe, no art:build, no code, nothing retouched, recoloured, cut, scaled, placed, padded or trimmed here.",
+ "style_sentence": "Top-down RPG pixel art seen from a high three-quarter view, light from the top left, a 1 px dark violet outline, flat shading in two or three steps per material, no dithering on the object, no anti-aliasing, no soft glow, transparent background, no text, letters or symbols.",
+ "palette": [
+  "#F4EFE6",
+  "#D9D2E9",
+  "#A99FC4",
+  "#5B5478",
+  "#2A2540",
+  "#F2B65A",
+  "#C9733A",
+  "#4A4E57",
+  "#7D8794",
+  "#3E5C7A",
+  "#A8743A",
+  "#C79A3E",
+  "#8A6420",
+  "#E9E4D4",
+  "#2F7F7A",
+  "#C98F78",
+  "#9C5B4A",
+  "#E3C29E",
+  "#24305A",
+  "#E8E2D6",
+  "#FFF4C7",
+  "#8C7F6E",
+  "#5E5448",
+  "#FBF8F0",
+  "#D8B24A",
+  "#F07A3A",
+  "#B5402E",
+  "#1C2147"
+ ],
+ "palette_source": "art/anchors/palette-28.png",
+ "images_passed_as": "upload:<id> references from get_upload_url (curl -F to the upload URL); no inline base64 anywhere",
+ "uploads": {
+  "art/anchors/prop-clay-jar-64.png": {
+   "upload": "upload:021a9a68-4ed5-4e6c-ac1b-8f3497c6f0dd",
+   "sha256": "9f08705fb367fa0208ce1e9036a13cba6d7717310f982e7cb04d979a96fc4710"
+  },
+  "art/anchors/kindled-ash-s-64.png": {
+   "upload": "upload:7f36d3f7-c6da-486e-888f-add41079e970",
+   "sha256": "a1225ab6ec082b93e2ff177796b9827d69ec21e21a434d63f6e29b54f7f89b58"
+  },
+  "art/anchors/palette-28.png": {
+   "upload": "upload:4472d6bc-9d0a-4c58-82af-9e56d8cc1cdd",
+   "sha256": "0365cd32dc06ae726d3159cbfa13b988958b6a5f3ef6c10ae69d1c95673dfa25",
+   "note": "uploaded for the record; create_image_pro takes the palette as the hex list, so this upload was not passed to any call"
+  },
+  "art/clean/prop-holding-store/idle/frame-0.png": {
+   "upload": "upload:8d673373-9bb1-48f5-9f6e-79208bb36fde",
+   "sha256": "789ae068aa57ee8eb10c634bf1763388d600e5535f2aefd8e58465f0a276f70e"
+  }
+ },
+ "seed": "create_image_pro took seed 1234 on every step; no retake, so 1235 was never used.",
+ "balance": {
+  "before": 1224.7,
+  "after_all_four_steps": 1184.7,
+  "end": 1184.7,
+  "spent": 40.0,
+  "note": "get_balance before the first call (1224.70); the four calls were started together (steps 1-4 are independent) and had all completed and been charged by the next check (1184.70: 4 x 10 = 40). Each call quoted 10 generations and charged_generations was 10 on every completed job. The end balance is the last call of the job."
+ },
+ "generations": {
+  "create_image_pro (seed-jars/across, 64x64)": 10,
+  "create_image_pro (seed-jars/along, 64x96)": 10,
+  "create_image_pro (threshing-floor, 128x128)": 10,
+  "create_image_pro (clay-channel, 64x128)": 10,
+  "total": 40,
+  "budget": "about 40, hard cap 60; no call quoted more than 10"
+ },
+ "retakes": {
+  "seed-jars/across": 0,
+  "seed-jars/along": 0,
+  "threshing-floor": 0,
+  "clay-channel": 0
+ },
+ "failed_twice": [],
+ "step1_seed_jars_across": {
+  "tool": "create_image_pro",
+  "job_id": "c46aa92e-99ca-4c15-b072-86f663e8f0f3",
+  "asset_id": "7c7f7a46-44ee-53c6-8ceb-ebf5669c4e59",
+  "arguments": {
+   "description": "Four squat lidded grey clay jars standing in a row on a low wooden plank that runs left to right, each lid sealed with a blob of dark red wax pressed with a thumbprint. Seen from the front and above. Top-down RPG pixel art seen from a high three-quarter view, light from the top left, a 1 px dark violet outline, flat shading in two or three steps per material, no dithering on the object, no anti-aliasing, no soft glow, transparent background, no text, letters or symbols.",
+   "width": 64,
+   "height": 64,
+   "no_background": true,
+   "seed": 1234,
+   "palette": [
+    "#F4EFE6",
+    "#D9D2E9",
+    "#A99FC4",
+    "#5B5478",
+    "#2A2540",
+    "#F2B65A",
+    "#C9733A",
+    "#4A4E57",
+    "#7D8794",
+    "#3E5C7A",
+    "#A8743A",
+    "#C79A3E",
+    "#8A6420",
+    "#E9E4D4",
+    "#2F7F7A",
+    "#C98F78",
+    "#9C5B4A",
+    "#E3C29E",
+    "#24305A",
+    "#E8E2D6",
+    "#FFF4C7",
+    "#8C7F6E",
+    "#5E5448",
+    "#FBF8F0",
+    "#D8B24A",
+    "#F07A3A",
+    "#B5402E",
+    "#1C2147"
+   ],
+   "palette_name": "Islands of the One",
+   "reference_images": [
+    {
+     "url": "upload:021a9a68-4ed5-4e6c-ac1b-8f3497c6f0dd",
+     "usage": "prop style: outline, shading, amount of detail",
+     "source": "art/anchors/prop-clay-jar-64.png"
+    },
+    {
+     "url": "upload:8d673373-9bb1-48f5-9f6e-79208bb36fde",
+     "usage": "the same world and palette: a prop that already stands on this holding",
+     "source": "art/clean/prop-holding-store/idle/frame-0.png"
+    },
+    {
+     "url": "upload:7f36d3f7-c6da-486e-888f-add41079e970",
+     "usage": "scale only: this is the player, 45 px tall; the piece stands beside it",
+     "source": "art/anchors/kindled-ash-s-64.png"
+    }
+   ]
+  },
+  "canvas_accepted": "64x64 accepted as asked (no square fallback needed)",
+  "generations": 10,
+  "candidates": 16,
+  "retakes": 0,
+  "all_candidates_on_palette": true,
+  "candidates_files": [
+   {
+    "index": 0,
+    "file": "seed-jars/across/candidates/0.png",
+    "bbox": [
+     2,
+     21,
+     62,
+     44
+    ],
+    "width": 60,
+    "height": 23,
+    "colours": 8,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 1,
+    "file": "seed-jars/across/candidates/1.png",
+    "bbox": [
+     2,
+     21,
+     62,
+     44
+    ],
+    "width": 60,
+    "height": 23,
+    "colours": 8,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 2,
+    "file": "seed-jars/across/candidates/2.png",
+    "bbox": [
+     2,
+     17,
+     62,
+     45
+    ],
+    "width": 60,
+    "height": 28,
+    "colours": 6,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 3,
+    "file": "seed-jars/across/candidates/3.png",
+    "bbox": [
+     2,
+     24,
+     62,
+     45
+    ],
+    "width": 60,
+    "height": 21,
+    "colours": 7,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 4,
+    "file": "seed-jars/across/candidates/4.png",
+    "bbox": [
+     2,
+     19,
+     62,
+     44
+    ],
+    "width": 60,
+    "height": 25,
+    "colours": 9,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 5,
+    "file": "seed-jars/across/candidates/5.png",
+    "bbox": [
+     2,
+     15,
+     62,
+     44
+    ],
+    "width": 60,
+    "height": 29,
+    "colours": 8,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 6,
+    "file": "seed-jars/across/candidates/6.png",
+    "bbox": [
+     2,
+     20,
+     62,
+     43
+    ],
+    "width": 60,
+    "height": 23,
+    "colours": 8,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 7,
+    "file": "seed-jars/across/candidates/7.png",
+    "bbox": [
+     2,
+     18,
+     62,
+     45
+    ],
+    "width": 60,
+    "height": 27,
+    "colours": 9,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 8,
+    "file": "seed-jars/across/candidates/8.png",
+    "bbox": [
+     2,
+     17,
+     62,
+     48
+    ],
+    "width": 60,
+    "height": 31,
+    "colours": 9,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 9,
+    "file": "seed-jars/across/candidates/9.png",
+    "bbox": [
+     4,
+     17,
+     60,
+     47
+    ],
+    "width": 56,
+    "height": 30,
+    "colours": 8,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 10,
+    "file": "seed-jars/across/candidates/10.png",
+    "bbox": [
+     3,
+     25,
+     62,
+     46
+    ],
+    "width": 59,
+    "height": 21,
+    "colours": 7,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 11,
+    "file": "seed-jars/across/candidates/11.png",
+    "bbox": [
+     2,
+     22,
+     62,
+     46
+    ],
+    "width": 60,
+    "height": 24,
+    "colours": 8,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 12,
+    "file": "seed-jars/across/candidates/12.png",
+    "bbox": [
+     2,
+     15,
+     62,
+     55
+    ],
+    "width": 60,
+    "height": 40,
+    "colours": 9,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 13,
+    "file": "seed-jars/across/candidates/13.png",
+    "bbox": [
+     4,
+     24,
+     61,
+     44
+    ],
+    "width": 57,
+    "height": 20,
+    "colours": 8,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 14,
+    "file": "seed-jars/across/candidates/14.png",
+    "bbox": [
+     2,
+     21,
+     62,
+     47
+    ],
+    "width": 60,
+    "height": 26,
+    "colours": 8,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 15,
+    "file": "seed-jars/across/candidates/15.png",
+    "bbox": [
+     3,
+     21,
+     61,
+     44
+    ],
+    "width": 58,
+    "height": 23,
+    "colours": 8,
+    "forbidden": [],
+    "off_palette": []
+   }
+  ],
+  "pick": {
+   "file": "seed-jars/across/pick.png",
+   "candidate": 4,
+   "why": "#4 (60x25) is the right object with the clearest seals: four matching squat grey jars on a left-to-right plank with a lit top edge and two feet, a dark red wax blob with a drip on every lid. Only #0 (60x23), #1 and #4 draw red wax on all four lids; #1 has one small jar and a gap, #0 is 2 rows shorter and its plank is flatter. Taller candidates are the wrong object: #8 (60x31) is four mismatched pots, one lidded in red, #12 (60x40) is a diagonal plank, #9 (56x30) is five jars with no seals, #5 is five jars on a split plank. Every candidate is 56-60 wide (the target is 58); none reaches 36 tall.",
+   "size": [
+    60,
+    25
+   ],
+   "target": [
+    58,
+    36
+   ],
+   "bbox": [
+    2,
+    19,
+    62,
+    44
+   ],
+   "canvas": [
+    64,
+    64
+   ],
+   "placed": false,
+   "note": "not placed, padded or trimmed: ART places it in its cell",
+   "colours": {
+    "watcher-stone #7D8794": 292,
+    "dream-night #1C2147": 270,
+    "unwritten-tar #5E5448": 262,
+    "watcher-iron #4A4E57": 125,
+    "watcher-bronze #A8743A": 116,
+    "choir-flame-deep #B5402E": 106,
+    "sleeper-flesh #C98F78": 38,
+    "unwritten-sail #8C7F6E": 8,
+    "hollow-deep #2A2540": 1
+   },
+   "colour_count": 9,
+   "reserved_colours": {
+    "dream-night": 270,
+    "unwritten-tar": 262,
+    "unwritten-sail": 8
+   },
+   "forbidden": {}
+  },
+  "notes": {
+   "retake_check": "jars on a plank running left to right in every candidate; no retake",
+   "seals": "#2, #3, #6, #9, #10, #11, #13, #14 have no red wax at all; #7 has one pale (husk-shell) jar; #15 has red dots, not blobs"
+  }
+ },
+ "step2_seed_jars_along": {
+  "tool": "create_image_pro",
+  "job_id": "f2b43891-9566-4751-b21d-c219127fae69",
+  "asset_id": "63379fd0-e9f9-5061-b0fe-81fd99f8957e",
+  "arguments": {
+   "description": "Three squat lidded grey clay jars standing one behind another on a low wooden plank that runs away from the viewer, each lid sealed with a blob of dark red wax pressed with a thumbprint. Seen from above, the plank running up the picture. Top-down RPG pixel art seen from a high three-quarter view, light from the top left, a 1 px dark violet outline, flat shading in two or three steps per material, no dithering on the object, no anti-aliasing, no soft glow, transparent background, no text, letters or symbols.",
+   "width": 64,
+   "height": 96,
+   "no_background": true,
+   "seed": 1234,
+   "palette": [
+    "#F4EFE6",
+    "#D9D2E9",
+    "#A99FC4",
+    "#5B5478",
+    "#2A2540",
+    "#F2B65A",
+    "#C9733A",
+    "#4A4E57",
+    "#7D8794",
+    "#3E5C7A",
+    "#A8743A",
+    "#C79A3E",
+    "#8A6420",
+    "#E9E4D4",
+    "#2F7F7A",
+    "#C98F78",
+    "#9C5B4A",
+    "#E3C29E",
+    "#24305A",
+    "#E8E2D6",
+    "#FFF4C7",
+    "#8C7F6E",
+    "#5E5448",
+    "#FBF8F0",
+    "#D8B24A",
+    "#F07A3A",
+    "#B5402E",
+    "#1C2147"
+   ],
+   "palette_name": "Islands of the One",
+   "reference_images": [
+    {
+     "url": "upload:021a9a68-4ed5-4e6c-ac1b-8f3497c6f0dd",
+     "usage": "prop style: outline, shading, amount of detail",
+     "source": "art/anchors/prop-clay-jar-64.png"
+    },
+    {
+     "url": "upload:8d673373-9bb1-48f5-9f6e-79208bb36fde",
+     "usage": "the same world and palette: a prop that already stands on this holding",
+     "source": "art/clean/prop-holding-store/idle/frame-0.png"
+    },
+    {
+     "url": "upload:7f36d3f7-c6da-486e-888f-add41079e970",
+     "usage": "scale only: this is the player, 45 px tall; the piece stands beside it",
+     "source": "art/anchors/kindled-ash-s-64.png"
+    }
+   ]
+  },
+  "canvas_accepted": "64x96 accepted as asked (no square fallback needed)",
+  "generations": 10,
+  "candidates": 9,
+  "retakes": 0,
+  "all_candidates_on_palette": true,
+  "candidates_files": [
+   {
+    "index": 0,
+    "file": "seed-jars/along/candidates/0.png",
+    "bbox": [
+     6,
+     14,
+     58,
+     83
+    ],
+    "width": 52,
+    "height": 69,
+    "colours": 9,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 1,
+    "file": "seed-jars/along/candidates/1.png",
+    "bbox": [
+     6,
+     15,
+     58,
+     83
+    ],
+    "width": 52,
+    "height": 68,
+    "colours": 9,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 2,
+    "file": "seed-jars/along/candidates/2.png",
+    "bbox": [
+     6,
+     15,
+     58,
+     83
+    ],
+    "width": 52,
+    "height": 68,
+    "colours": 9,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 3,
+    "file": "seed-jars/along/candidates/3.png",
+    "bbox": [
+     6,
+     15,
+     58,
+     83
+    ],
+    "width": 52,
+    "height": 68,
+    "colours": 9,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 4,
+    "file": "seed-jars/along/candidates/4.png",
+    "bbox": [
+     6,
+     16,
+     58,
+     83
+    ],
+    "width": 52,
+    "height": 67,
+    "colours": 9,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 5,
+    "file": "seed-jars/along/candidates/5.png",
+    "bbox": [
+     6,
+     14,
+     58,
+     83
+    ],
+    "width": 52,
+    "height": 69,
+    "colours": 9,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 6,
+    "file": "seed-jars/along/candidates/6.png",
+    "bbox": [
+     6,
+     13,
+     58,
+     83
+    ],
+    "width": 52,
+    "height": 70,
+    "colours": 9,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 7,
+    "file": "seed-jars/along/candidates/7.png",
+    "bbox": [
+     6,
+     16,
+     58,
+     83
+    ],
+    "width": 52,
+    "height": 67,
+    "colours": 9,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 8,
+    "file": "seed-jars/along/candidates/8.png",
+    "bbox": [
+     6,
+     14,
+     58,
+     83
+    ],
+    "width": 52,
+    "height": 69,
+    "colours": 9,
+    "forbidden": [],
+    "off_palette": []
+   }
+  ],
+  "pick": {
+   "file": "seed-jars/along/pick.png",
+   "candidate": 7,
+   "why": "All nine are the same drawing with small differences: three grey jars one behind another on a plank that runs away from the viewer, drawn as the three-quarter diagonal (up and to the right), 52 wide and 67-70 tall. #7 (52x67) is one of the two shortest (with #4) and the cleaner of the two: a lid line and a red wax blob with a drip on all three jars, where #4's middle jar has a blob but no lid rim. Every candidate is 22 px wider than the 30 target because the plank is drawn at the diagonal, not straight up the picture.",
+   "size": [
+    52,
+    67
+   ],
+   "target": [
+    30,
+    64
+   ],
+   "bbox": [
+    6,
+    16,
+    58,
+    83
+   ],
+   "canvas": [
+    64,
+    96
+   ],
+   "placed": false,
+   "note": "not placed, padded or trimmed: ART places it in its cell",
+   "colours": {
+    "unwritten-tar #5E5448": 371,
+    "watcher-stone #7D8794": 358,
+    "watcher-iron #4A4E57": 304,
+    "wheel-brass-dark #8A6420": 259,
+    "hollow-deep #2A2540": 168,
+    "dream-night #1C2147": 166,
+    "watcher-bronze #A8743A": 68,
+    "choir-flame-deep #B5402E": 51,
+    "sleeper-ochre #9C5B4A": 49
+   },
+   "colour_count": 9,
+   "reserved_colours": {
+    "unwritten-tar": 371,
+    "dream-night": 166
+   },
+   "forbidden": {}
+  },
+  "notes": {
+   "retake_check": "the jars stand one behind another on every candidate (none side by side), so the plank runs up the picture in depth; no retake",
+   "diagonal": "the tool draws 'running up the picture' as the high three-quarter diagonal, bottom left to top right, not as a vertical plank; ART may want the along facing drawn by hand like the channel's second facing"
+  }
+ },
+ "step3_threshing_floor": {
+  "tool": "create_image_pro",
+  "job_id": "43aeafa4-b871-4024-90d6-ac769d80c11e",
+  "asset_id": "2c5db320-3824-51ad-9464-39f978549205",
+  "arguments": {
+   "description": "A round flat threshing floor of irregular flat grey stones fitted together and beaten smooth, a ring of darker edge stones around it, a few wisps of pale straw caught between the stones. It lies flat on the ground, seen from above. Top-down RPG pixel art seen from a high three-quarter view, light from the top left, a 1 px dark violet outline, flat shading in two or three steps per material, no dithering on the object, no anti-aliasing, no soft glow, transparent background, no text, letters or symbols.",
+   "width": 128,
+   "height": 128,
+   "no_background": true,
+   "seed": 1234,
+   "palette": [
+    "#F4EFE6",
+    "#D9D2E9",
+    "#A99FC4",
+    "#5B5478",
+    "#2A2540",
+    "#F2B65A",
+    "#C9733A",
+    "#4A4E57",
+    "#7D8794",
+    "#3E5C7A",
+    "#A8743A",
+    "#C79A3E",
+    "#8A6420",
+    "#E9E4D4",
+    "#2F7F7A",
+    "#C98F78",
+    "#9C5B4A",
+    "#E3C29E",
+    "#24305A",
+    "#E8E2D6",
+    "#FFF4C7",
+    "#8C7F6E",
+    "#5E5448",
+    "#FBF8F0",
+    "#D8B24A",
+    "#F07A3A",
+    "#B5402E",
+    "#1C2147"
+   ],
+   "palette_name": "Islands of the One",
+   "reference_images": [
+    {
+     "url": "upload:021a9a68-4ed5-4e6c-ac1b-8f3497c6f0dd",
+     "usage": "prop style: outline, shading, amount of detail",
+     "source": "art/anchors/prop-clay-jar-64.png"
+    },
+    {
+     "url": "upload:8d673373-9bb1-48f5-9f6e-79208bb36fde",
+     "usage": "the same world and palette: a prop that already stands on this holding",
+     "source": "art/clean/prop-holding-store/idle/frame-0.png"
+    },
+    {
+     "url": "upload:7f36d3f7-c6da-486e-888f-add41079e970",
+     "usage": "scale only: this is the player, 45 px tall; the piece stands beside it",
+     "source": "art/anchors/kindled-ash-s-64.png"
+    }
+   ]
+  },
+  "canvas_accepted": "128x128 accepted as asked (no square fallback needed)",
+  "generations": 10,
+  "candidates": 4,
+  "retakes": 0,
+  "all_candidates_on_palette": true,
+  "candidates_files": [
+   {
+    "index": 0,
+    "file": "threshing-floor/candidates/0.png",
+    "bbox": [
+     9,
+     20,
+     119,
+     108
+    ],
+    "width": 110,
+    "height": 88,
+    "colours": 10,
+    "forbidden": [
+     "#FFF4C7"
+    ],
+    "off_palette": []
+   },
+   {
+    "index": 1,
+    "file": "threshing-floor/candidates/1.png",
+    "bbox": [
+     9,
+     21,
+     119,
+     108
+    ],
+    "width": 110,
+    "height": 87,
+    "colours": 10,
+    "forbidden": [
+     "#FFF4C7"
+    ],
+    "off_palette": []
+   },
+   {
+    "index": 2,
+    "file": "threshing-floor/candidates/2.png",
+    "bbox": [
+     10,
+     20,
+     118,
+     110
+    ],
+    "width": 108,
+    "height": 90,
+    "colours": 11,
+    "forbidden": [
+     "#FFF4C7"
+    ],
+    "off_palette": []
+   },
+   {
+    "index": 3,
+    "file": "threshing-floor/candidates/3.png",
+    "bbox": [
+     10,
+     20,
+     118,
+     110
+    ],
+    "width": 108,
+    "height": 90,
+    "colours": 9,
+    "forbidden": [
+     "#FFF4C7"
+    ],
+    "off_palette": []
+   }
+  ],
+  "pick": {
+   "file": "threshing-floor/pick.png",
+   "candidate": 3,
+   "why": "#3 (108x90) is the best match and, with #2, the closest in height: large irregular flat grey flagstones (watcher-stone) with unwritten-tar joints, a ring of darker (unwritten-tar/sail) edge stones, and the straw drawn in wheel-brass and sleeper-soil, the colours the job asks for. It has 2 px of husk-core where the other three have 53-94 px of it (their straw is drawn in husk-core). #0 has blue (watcher-rain) stones mixed in, #1 is concentric rings with no darker edge, #2 is a radial pattern round a centre stone. All four are flat ellipses 108-110 wide and 87-90 tall: a round floor foreshortened by the three-quarter view, so it is round and flat and no retake.",
+   "size": [
+    108,
+    90
+   ],
+   "target": [
+    94,
+    94
+   ],
+   "bbox": [
+    10,
+    20,
+    118,
+    110
+   ],
+   "canvas": [
+    128,
+    128
+   ],
+   "placed": false,
+   "note": "not placed, padded or trimmed: ART places it in its cell",
+   "colours": {
+    "watcher-stone #7D8794": 3059,
+    "unwritten-tar #5E5448": 2552,
+    "unwritten-sail #8C7F6E": 1155,
+    "hollow-deep #2A2540": 786,
+    "wheel-brass #C79A3E": 138,
+    "dream-night #1C2147": 17,
+    "sleeper-soil #E3C29E": 15,
+    "husk-core #FFF4C7": 2,
+    "watcher-iron #4A4E57": 1
+   },
+   "colour_count": 9,
+   "reserved_colours": {
+    "unwritten-tar": 2552,
+    "unwritten-sail": 1155,
+    "dream-night": 17
+   },
+   "forbidden": {
+    "husk-core #FFF4C7": 2
+   }
+  },
+  "notes": {
+   "retake_check": "every candidate is round (an ellipse in the three-quarter view) and flat, not a raised platform or a well; no retake",
+   "forbidden": "every candidate uses husk-core #FFF4C7 for straw highlights (#0 53 px, #1 94, #2 82, #3 2); the pick has the fewest, 2 px, which ART's cleanup recolours. #2 also has 1 px choir-paper.",
+   "footprint": "108x90 is 12 px wider than the 3x3 footprint (96) and 6 px shorter; the contact sheet shows the overhang"
+  }
+ },
+ "step4_clay_channel": {
+  "tool": "create_image_pro",
+  "job_id": "7c045ded-8726-4c2f-b1b2-eea9839551c5",
+  "asset_id": "fdfde95f-7c44-5cba-a8f4-52dab10ff7ce",
+  "arguments": {
+   "description": "A long straight shallow trough of fired reddish clay lying in the ground, running up the picture, its inside dark and damp with a glint of water. Flat on the ground, seen from above. Top-down RPG pixel art seen from a high three-quarter view, light from the top left, a 1 px dark violet outline, flat shading in two or three steps per material, no dithering on the object, no anti-aliasing, no soft glow, transparent background, no text, letters or symbols.",
+   "width": 64,
+   "height": 128,
+   "no_background": true,
+   "seed": 1234,
+   "palette": [
+    "#F4EFE6",
+    "#D9D2E9",
+    "#A99FC4",
+    "#5B5478",
+    "#2A2540",
+    "#F2B65A",
+    "#C9733A",
+    "#4A4E57",
+    "#7D8794",
+    "#3E5C7A",
+    "#A8743A",
+    "#C79A3E",
+    "#8A6420",
+    "#E9E4D4",
+    "#2F7F7A",
+    "#C98F78",
+    "#9C5B4A",
+    "#E3C29E",
+    "#24305A",
+    "#E8E2D6",
+    "#FFF4C7",
+    "#8C7F6E",
+    "#5E5448",
+    "#FBF8F0",
+    "#D8B24A",
+    "#F07A3A",
+    "#B5402E",
+    "#1C2147"
+   ],
+   "palette_name": "Islands of the One",
+   "reference_images": [
+    {
+     "url": "upload:021a9a68-4ed5-4e6c-ac1b-8f3497c6f0dd",
+     "usage": "prop style: outline, shading, amount of detail",
+     "source": "art/anchors/prop-clay-jar-64.png"
+    },
+    {
+     "url": "upload:8d673373-9bb1-48f5-9f6e-79208bb36fde",
+     "usage": "the same world and palette: a prop that already stands on this holding",
+     "source": "art/clean/prop-holding-store/idle/frame-0.png"
+    },
+    {
+     "url": "upload:7f36d3f7-c6da-486e-888f-add41079e970",
+     "usage": "scale only: this is the player, 45 px tall; the piece stands beside it",
+     "source": "art/anchors/kindled-ash-s-64.png"
+    }
+   ]
+  },
+  "canvas_accepted": "64x128 accepted as asked (no square fallback needed)",
+  "generations": 10,
+  "candidates": 4,
+  "retakes": 0,
+  "all_candidates_on_palette": true,
+  "candidates_files": [
+   {
+    "index": 0,
+    "file": "clay-channel/candidates/0.png",
+    "bbox": [
+     3,
+     23,
+     61,
+     106
+    ],
+    "width": 58,
+    "height": 83,
+    "colours": 10,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 1,
+    "file": "clay-channel/candidates/1.png",
+    "bbox": [
+     4,
+     22,
+     62,
+     104
+    ],
+    "width": 58,
+    "height": 82,
+    "colours": 10,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 2,
+    "file": "clay-channel/candidates/2.png",
+    "bbox": [
+     0,
+     22,
+     64,
+     106
+    ],
+    "width": 64,
+    "height": 84,
+    "colours": 10,
+    "forbidden": [],
+    "off_palette": []
+   },
+   {
+    "index": 3,
+    "file": "clay-channel/candidates/3.png",
+    "bbox": [
+     3,
+     22,
+     62,
+     105
+    ],
+    "width": 59,
+    "height": 83,
+    "colours": 9,
+    "forbidden": [],
+    "off_palette": []
+   }
+  ],
+  "pick": {
+   "file": "clay-channel/pick.png",
+   "candidate": 1,
+   "why": "All four are a straight trough drawn at the three-quarter diagonal (bottom left to top right), 58-64 wide and 82-84 tall, so every candidate is shorter than the 124 target and the job says to pick the best anyway. #1 (58x82) is the one in the job's colours: fired-clay walls in sleeper-ochre lit with sleeper-flesh on the rims (661 and 322 px), the inside dark hollow-deep and watcher-iron with a few pale glints (hollow-dusk, choir-paper). #0 and #2 draw the rims in choir-flame orange (303 and 361 px), the fire colour, and #2 is clipped at both canvas edges with dirt scattered round it; #3's inside is unwritten-tar brown, not dark and damp, and its ribbed sides read as a planter. #1's lip is slightly notched at the corners.",
+   "size": [
+    58,
+    82
+   ],
+   "target": [
+    26,
+    124
+   ],
+   "bbox": [
+    4,
+    22,
+    62,
+    104
+   ],
+   "canvas": [
+    64,
+    128
+   ],
+   "placed": false,
+   "note": "not placed, padded or trimmed: ART places it in its cell",
+   "colours": {
+    "sleeper-ochre #9C5B4A": 661,
+    "hollow-deep #2A2540": 591,
+    "watcher-iron #4A4E57": 474,
+    "sleeper-flesh #C98F78": 322,
+    "choir-flame-deep #B5402E": 95,
+    "choir-flame #F07A3A": 77,
+    "hollow-below #5B5478": 36,
+    "unwritten-tar #5E5448": 8,
+    "choir-paper #FBF8F0": 6,
+    "hollow-dusk #A99FC4": 4
+   },
+   "colour_count": 10,
+   "reserved_colours": {
+    "unwritten-tar": 8
+   },
+   "forbidden": {}
+  },
+  "notes": {
+   "retake_check": "every candidate is a trough running up the picture (as the diagonal of the three-quarter view); no retake. The job says a short channel is not a retake: ART lengthens it by repeating middle rows.",
+   "diagonal": "like step 2, 'running up the picture' came out as the diagonal; the target 26x124 assumed a vertical trough. ART draws the second facing by hand anyway.",
+   "not_vertical": "a straight-up trough was not produced by any candidate, so the 1x4 footprint on the contact sheet shows the diagonal pick overhanging it"
+  }
+ },
+ "picks": {
+  "seed-jars/across": "seed-jars/across/pick.png (#4)",
+  "seed-jars/along": "seed-jars/along/pick.png (#7)",
+  "threshing-floor": "threshing-floor/pick.png (#3)",
+  "clay-channel": "clay-channel/pick.png (#1)"
+ },
+ "colour_notes": {
+  "outline": "Every pick outlines in dream-night #1C2147 (across 270 px, along 166, floor 17, channel 0) and/or hollow-deep #2A2540 (across 1, along 168, floor 786, channel 591); the style sheet keeps dream-night for the player and gives props hollow-deep. Not recoloured here; ART's recipes map the outline by role.",
+  "skin_ramp": "The jars' shade is unwritten-tar #5E5448 (across 262 px, along 371) with a little unwritten-sail #8C7F6E (across 8); the floor's joints and edge stones are unwritten-tar (2552) and unwritten-sail (1155); the channel has 8 px of unwritten-tar. Both are skin ramp only on player sheets, so ART's recipes map them (jar shade to watcher-iron, stone joints to watcher-iron / hollow-below).",
+  "seals": "The wax seals are choir-flame-deep #B5402E with no darker thumbprint pixel (the palette has nothing darker in that hue but hollow-deep); ART adds the thumbprint.",
+  "channel_glints": "The channel's dew glints are hollow-dusk #A99FC4 (4 px) and choir-paper #FBF8F0 (6 px); the job's glint colour is hollow-dusk.",
+  "forbidden": "Only the threshing floor pick carries a forbidden colour: 2 px of husk-core #FFF4C7. No pick is off the 28-colour palette; no white, no green."
+ },
+ "contact": "contact.png: every pick at 4x on the holding's ground (art/clean/tiles-holding/floor_0.png tiled) beside the player reference at 4x, centred over its footprint drawn as a 1 px tile grid in dream-night (across 2x1, along 1x2, floor 3x3, channel 1x4; a tile is 32 px, 128 px at 4x); below, each step's candidates sheet at 2x.",
+ "candidate_sheets": "candidates.png per step: every candidate at 2x on a white cell, numbered, 4 to a row (the holding job's layout)",
+ "surprises": [
+  "The Pro model draws 'running up the picture' / 'running away from the viewer' as the high three-quarter diagonal (bottom left to top right) in both step 2 and step 4, so the along jars are 52 wide (target 30) and the channel 58 wide and 82 tall (target 26x124).",
+  "Every threshing-floor candidate draws its straw partly in husk-core #FFF4C7 (the Husks' colour); the pick has only 2 px of it.",
+  "64x96 and 64x128 canvases were accepted; no square fallback was needed. 64x96 gives 9 candidates, 64x128 and 128x128 give 4 each, 64x64 gives 16.",
+  "One download of a candidate (clay-channel #1) was reset by the proxy on the first try and succeeded on the retry; every file was verified by size and bbox afterwards."
+ ],
+ "requests_for_main": "none",
+ "files": {
+  "clay-channel/candidates.png": "2accc78e2825ecb3b6d720f673775cc878bf0638b018a42b553def2d4d443532",
+  "clay-channel/candidates/0.png": "fa47e85747029facfb72d3d48d0f849733f5dacd6cb9403e2aad38385a145a0d",
+  "clay-channel/candidates/1.png": "1929a663476d65e83664001132026e56d186aca6d355a469be8f0d1bdb2be7a1",
+  "clay-channel/candidates/2.png": "a4c8769ace73b6acc9570c12b394d9936ab95c9fd4612cf99c8ac1f4eaee3c45",
+  "clay-channel/candidates/3.png": "e76d5371848c71ddf18ba349751d4320abf2e7643c0e32d4f3e4477af37a9b39",
+  "clay-channel/pick.png": "1929a663476d65e83664001132026e56d186aca6d355a469be8f0d1bdb2be7a1",
+  "contact.png": "a80ca2b17020a862ccf7934cc0e05edfb0a65404003fe6e0391b3994637ff8d7",
+  "seed-jars/across/candidates.png": "d8698348e122a94f560c3621196204e7523aa1a82af74c7ddee35e8da18a0e7f",
+  "seed-jars/across/candidates/0.png": "36f3258b98cd59cd046dd6912e4e6d82e3a60ba6d43ded3fcd2c3d1a5f49e522",
+  "seed-jars/across/candidates/1.png": "ff1b8225fa57bd281f180e933ead820236587d52580b951b25465f04a7cb53d7",
+  "seed-jars/across/candidates/10.png": "103bd3d53c5d956cca87137a67bb0b38420a96faaa7ed06d7256005db8e6afc0",
+  "seed-jars/across/candidates/11.png": "1d372a13542b329ad067d4807945847ec4227bee98ac54e72a8e77fcf817f686",
+  "seed-jars/across/candidates/12.png": "24392e8b1fb3c51e884671b3b3bf6494ef5e7a64d075da6272d3b966c3191b3b",
+  "seed-jars/across/candidates/13.png": "0660215946094e63967f7f376362dbce6fd118c2cd5b4e420f5864024335d861",
+  "seed-jars/across/candidates/14.png": "fc4a84ffafb951ad3c362950cfa3e2dd1ab60b5934270acb8defd83e03fd4cf1",
+  "seed-jars/across/candidates/15.png": "28b89396437703d16a877bb905ffe0052fd047129d6e28c00f4d7de5b322ddff",
+  "seed-jars/across/candidates/2.png": "2594793daf6b6ac85d2b246263f9a9b4e361fdbfeabad33a2886cae87c359f14",
+  "seed-jars/across/candidates/3.png": "91c1084919150c862429d67ba5ddef916de1919ffb0accf711d07646563e2711",
+  "seed-jars/across/candidates/4.png": "be3d480d0a26acd0dc1ee5b1c98e2a35046b960ba8dbe3d14429eb0e958d29c8",
+  "seed-jars/across/candidates/5.png": "443631fb257b715953ca1279164924c8704e70f76d76cc39dd9909544c9c9e56",
+  "seed-jars/across/candidates/6.png": "1e6e756cc8baf4515614545a856b113c2432804f037bca87bc5e94b71d4f25ad",
+  "seed-jars/across/candidates/7.png": "c02d99f929c89ad3465092aa8bb6fea08a981e1626cb4dbffe68db417bbc37b7",
+  "seed-jars/across/candidates/8.png": "fbf4aafef640d3cfb3f28dc7042c8f6c120a100dc6f269a315ce55db5a33dbec",
+  "seed-jars/across/candidates/9.png": "6d66e4a35ee91ed8ddeeeb3b96341c3c42d0dccad76217ea4a1f5511f9105b60",
+  "seed-jars/across/pick.png": "be3d480d0a26acd0dc1ee5b1c98e2a35046b960ba8dbe3d14429eb0e958d29c8",
+  "seed-jars/along/candidates.png": "53caac5c7e6b637918390a3eaaf193b6285cccc2fa4f50f438a136167875daa2",
+  "seed-jars/along/candidates/0.png": "7e79274c4f0cfdfb5140c6c02c8b87d3edc088c8c04a9df30bf2d2e0b71228ea",
+  "seed-jars/along/candidates/1.png": "756cc89a7aee93a3d9c7b886fd60c025545dbef6bf6060370b029a1d3f87ab51",
+  "seed-jars/along/candidates/2.png": "482c51cbef85d656b72ae1e5908fdd1f96af3549087da10f5039b0c1ecf26314",
+  "seed-jars/along/candidates/3.png": "eabef11cc06fa38240d3a087a6e00cfeb46df55904bc6bf118661352e5ac62de",
+  "seed-jars/along/candidates/4.png": "1d00551b51ee1c694c381e57cd34e9d547023015b46685ecb2e77fc2c35914db",
+  "seed-jars/along/candidates/5.png": "182fe045dc17457b0c02b31df074d3b755a150d029dfdb9704e97cf964e800d7",
+  "seed-jars/along/candidates/6.png": "116761f8a9843117585127e697bc5c24780c3866b1b1b1c95dbe41cd293f7986",
+  "seed-jars/along/candidates/7.png": "ea53cc344a7e0d90c5c61d89f2c9ff078ae75b835a60f8c33b90df5dce7843dc",
+  "seed-jars/along/candidates/8.png": "0bcdd32c96c6df6f6a28ea2dab6c540cb5a09bc25222dace7794e011d1ba1d56",
+  "seed-jars/along/pick.png": "ea53cc344a7e0d90c5c61d89f2c9ff078ae75b835a60f8c33b90df5dce7843dc",
+  "threshing-floor/candidates.png": "0665e2f39d31994b4668e4afde5c7e4c98cef55b9d19767b311d521104a8e138",
+  "threshing-floor/candidates/0.png": "ce5c6ed1c86ae9576047d2d189c7ae2916866ba3974b476ecb8b9c9454340036",
+  "threshing-floor/candidates/1.png": "1cda665d5f64d1c1da4d8020738de4df3f4a38a8d5d24ac8890497866da82037",
+  "threshing-floor/candidates/2.png": "d89f1f402f47afcf445aa2edf9ccb13c4b5ea8cf587825252984c100a89b5fc4",
+  "threshing-floor/candidates/3.png": "624cd2861c3515fa50d3cd480b06ccbb502c1d8956591cee109c3249299af3f2",
+  "threshing-floor/pick.png": "624cd2861c3515fa50d3cd480b06ccbb502c1d8956591cee109c3249299af3f2"
+ },
+ "file_count": 42
+}
