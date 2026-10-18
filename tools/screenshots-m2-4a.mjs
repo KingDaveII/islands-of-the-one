@@ -241,7 +241,7 @@ console.log('the Writ panel:');
 expectEq('panel state', h.writPanel.state, 'lit');
 expectEq('panel charge', h.writPanel.charge, 'Charge: about two days');
 expectEq('panel state line', h.writPanel.stateLine, 'Lit');
-expectEq('panel line 1', h.writPanel.line1, 'Line 1: tethers 4 plots · lit');
+expectEq('panel line 1', h.writPanel.line1, 'Line 1, the Name: tethers 4 plots · lit');
 expectEq('nothing to feed yet', h.writPanel.feedOn, false);
 console.log(`  ${JSON.stringify(h.writPanel.kinds)}`);
 await shot('06-panel-pressed');
@@ -294,7 +294,7 @@ cli('writ:set', '--dark-hours', '60');
 await openPost();
 h = await until((x) => x.writPanel?.state === 'fading', 'fading');
 expectEq('fading line', h.writPanel.stateLine, 'Line 1 fading');
-expectEq('line 1 faded', h.writPanel.line1, 'Line 1: tethers 4 plots · faded');
+expectEq('line 1 faded', h.writPanel.line1, 'Line 1, the Name: tethers 4 plots · faded');
 expectEq('no charge line while fading', h.writPanel.charge, null);
 await shot('13-panel-fading');
 
@@ -337,8 +337,25 @@ await until((x) => x.writPanel?.state === 'lit', 'the panel lit');
 await clickText('Wild slivers');
 h = await until((x) => x.writPanel?.selected === 'wild-sliver', 'the slivers row chosen');
 expectEq('the preview says Full.', h.writPanel.preview, 'Full.');
+expectEq('the charge says full', h.writPanel.charge, 'Charge: about four days, full');
 expectEq('feed disabled', h.writPanel.feedOn, false);
 expectEq('fill disabled', h.writPanel.fillOn, false);
+expectEq('humming glass reads Full. too', h.writPanel.kinds.find((k) => k.itemId === 'glass-chip').refusal, 'Full.');
+// Hover the greyed buttons: when a sliver fits again.
+{
+  const at = await page.evaluate(() => {
+    const scene = window.__iot.holdingScene();
+    const objects = scene.children.list.flatMap((o) => (o.type === 'Layer' ? o.list : [o]));
+    const found = objects.filter((o) => o.type === 'Container').flatMap((c) => c.list.map((child) => ({ c, child }))).find(({ child }) => child.text === 'FEED ONE');
+    const b = found.c.getBounds();
+    return { x: b.centerX, y: b.centerY };
+  });
+  const p = await uiToPage(at.x, at.y);
+  await page.mouse.move(p.x, p.y);
+  h = await until((x) => x.writPanel?.buttonTip !== null, 'the full tooltip');
+  console.log(`  button tooltip: "${h.writPanel.buttonTip}"`);
+  if (!/^A sliver fits in about 4 h$/.test(h.writPanel.buttonTip)) throw new Error(`tooltip: ${h.writPanel.buttonTip}`);
+}
 const refused = await api('/api/writ/feed', { itemId: 'wild-sliver', count: 1 });
 expectEq('the API refuses', refused.status, 409);
 if (refused.body.error !== 'full' || refused.body.message !== 'Full.') throw new Error(`refusal: ${JSON.stringify(refused.body)}`);

@@ -1,7 +1,6 @@
 import { validateTypedName, type TypedNameRejection } from './accounts.js';
 import type { WritView } from './api.js';
 import { hearName, heardLetterCount } from './hear-name.js';
-import { itemDef } from './items.js';
 import { isSafe, NAME_REFUSED } from './safe-letters.js';
 import { writData, type WritData } from './writ-data.js';
 
@@ -73,6 +72,10 @@ export interface WritDerived {
   /** The grace this Writ gets, in ms. */
   graceMs: number;
   lines: WritLine[];
+  /** Full: not even a sliver fits any more (charge past capacity − sliverHours). The only meaning of full. */
+  full: boolean;
+  /** How long until a sliver fits again (0 when one fits now): the time the charge needs to drain to capacity − sliverHours. */
+  sliverFitsInMs: number;
 }
 
 /** The grace a Writ gets, by its certification (both 48 h in M2; the Wet House's task lowers the uncertified one). */
@@ -159,6 +162,8 @@ export function writView(writ: WritStored, now: number, data: WritData = writDat
     graceEndsAt,
     graceMs,
     lines,
+    full: isFull(writ, now, data),
+    sliverFitsInMs: sliverFitsInMs(writ, now, data),
   };
 }
 
@@ -166,6 +171,7 @@ export function writView(writ: WritStored, now: number, data: WritData = writDat
 export const WRIT_FULL = 'Full.';
 export const WRIT_TOO_MUCH_NOW = 'Too much for your Writ now';
 export const WRIT_TOO_MUCH_EVER = 'Too much for one Writ';
+export const WRIT_NOT_SPARKGLASS = 'The Writ only takes Sparkglass.';
 
 /** What Fill feeds: wild slivers only, never gin. */
 export const FILL_ITEM = 'wild-sliver';
@@ -221,11 +227,15 @@ export function chargeShare(hours: number, data: WritData = writData): string {
   return `${hours / g}/${data.capacityHours / g}`;
 }
 
-const itemName = (itemId: string): string => (itemDef(itemId)?.name ?? itemId).toLowerCase();
-
-/** Whether a Writ is full: not even a wild sliver (the smallest piece) fits any more. */
+/** Whether a Writ is full: not even a wild sliver (the smallest piece) fits any more. GAME DESIGN: the only meaning of full. */
 export function isFull(writ: Pick<WritStored, 'emptyAt'>, now: number, data: WritData = writData): boolean {
   return fitCount(writ, FILL_ITEM, now, data) === 0;
+}
+
+/** How long until a sliver fits (charge + sliverHours ≤ capacityHours): 0 when one fits now. */
+export function sliverFitsInMs(writ: Pick<WritStored, 'emptyAt'>, now: number, data: WritData = writData): number {
+  const room = (data.capacityHours - data.sliverHours) * HOUR_MS;
+  return Math.max(0, feedStart(writ, now) - now - room);
 }
 
 /**
@@ -242,7 +252,7 @@ export function feedRefusal(
   data: WritData = writData,
 ): { error: FeedError; message: string } | null {
   const perItem = feedHours(itemId, data);
-  if (perItem === null) return { error: 'not-sparkglass', message: `The Writ won't burn ${itemName(itemId)}.` };
+  if (perItem === null) return { error: 'not-sparkglass', message: WRIT_NOT_SPARKGLASS };
   if (perItem > data.capacityHours) return { error: 'too-much', message: WRIT_TOO_MUCH_EVER };
   if (isFull(writ, now, data)) return { error: 'full', message: WRIT_FULL };
   if (fitCount(writ, itemId, now, data) === 0) return { error: 'too-much', message: WRIT_TOO_MUCH_NOW };

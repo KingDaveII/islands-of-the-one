@@ -1,5 +1,6 @@
 import {
   exactTime,
+  HOUR_MS,
   feedRefusal,
   FILL_ITEM,
   fillPreview,
@@ -48,6 +49,8 @@ export const NEXT_LINE_LINE = 'Line 2: certified, Writ clay, 20 gin';
 export const FEED_ONE = 'FEED ONE';
 export const FEED_COUNT = 'FEED';
 export const FILL = 'FILL';
+/** The gin count's sign (U+00D7, drawable). */
+export const COUNT_SIGN = '×';
 
 /** The letters of a text, spaces dropped (what per-letter states index). */
 export function lettersOf(text: string): string[] {
@@ -183,9 +186,15 @@ export function stateLine(writ: Pick<WritDerived, 'state' | 'darkSince' | 'grace
   }
 }
 
-/** "Line 1: tethers 4 plots · lit". */
+/** "Line 1, the Name: tethers 4 plots · lit"; from line 2 on, "Line 2: …". */
 export function lineLine(line: WritLine): string {
-  return `Line ${line.line}: tethers ${line.plots} plot${line.plots === 1 ? '' : 's'} · ${line.state}`;
+  const which = line.line === 1 ? 'Line 1, the Name' : `Line ${line.line}`;
+  return `${which}: tethers ${line.plots} plot${line.plots === 1 ? '' : 's'} · ${line.state}`;
+}
+
+/** The greyed feed button's tooltip while the Writ is full: "A sliver fits in about 4 h" (the hours until charge + 48 ≤ 144, rounded up). */
+export function fullTip(writ: Pick<WritDerived, 'sliverFitsInMs'>): string {
+  return `A sliver fits in about ${Math.ceil(writ.sliverFitsInMs / HOUR_MS)} h`;
 }
 
 /**
@@ -193,9 +202,10 @@ export function lineLine(line: WritLine): string {
  * lit or flickering; null when it is dark or fading (the charge is 0 and
  * the state line already says so: MAIN's review of #91).
  */
-export function chargeLines(writ: Pick<WritDerived, 'state' | 'words' | 'chargeMs'>): { words: string; exact: string } | null {
+export function chargeLines(writ: Pick<WritDerived, 'state' | 'words' | 'chargeMs' | 'full'>): { words: string; exact: string } | null {
   if (writ.state === 'dark' || writ.state === 'fading') return null;
-  return { words: writ.words, exact: exactTime(writ.chargeMs) };
+  // While full the words say so: "about five days, full" (GAME DESIGN).
+  return { words: writ.full ? `${writ.words}, full` : writ.words, exact: exactTime(writ.chargeMs) };
 }
 
 /** The kinds the panel offers, in writ.json's order: the Sparkglass grades and gin. */
@@ -275,9 +285,9 @@ export function takesCount(itemId: string): boolean {
   return itemDef(itemId)?.kind === 'currency';
 }
 
-/** The panel's feed button for a kind: FEED ONE for glass, FEED for gin (with its count beside it). */
-export function feedButtonLabel(itemId: string): string {
-  return takesCount(itemId) ? FEED_COUNT : FEED_ONE;
+/** The panel's feed button for a kind: FEED ONE for glass, "FEED 3" for gin (the number following the count). */
+export function feedButtonLabel(itemId: string, count = 1): string {
+  return takesCount(itemId) ? `${FEED_COUNT} ${count}` : FEED_ONE;
 }
 
 // --- The HUD -------------------------------------------------------------------

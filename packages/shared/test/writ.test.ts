@@ -17,6 +17,7 @@ import {
   isWritView,
   pressedEmptyAt,
   pressedWrit,
+  sliverFitsInMs,
   toWritView,
   validateWritData,
   WRIT_FULL,
@@ -112,6 +113,8 @@ describe('writView', () => {
       graceEndsAt: at(96),
       graceMs: 48 * H,
       lines: [{ line: 1, plots: 4, state: 'lit', fadesAt: at(96) }],
+      full: false,
+      sliverFitsInMs: 0,
     });
     expect(writView(pressed, at(30)).state).toBe('flickering');
     expect(writView(pressed, at(48))).toMatchObject({ state: 'dark', darkSince: at(48) });
@@ -188,7 +191,7 @@ describe('writView', () => {
 
 describe('feedPreview', () => {
   it('only items in feeds can be fed', () => {
-    expect(feedPreview(named(at(10)), 'twisted-log', 1, at(0))).toEqual({ ok: false, error: 'not-sparkglass', message: "The Writ won't burn twisted log." });
+    expect(feedPreview(named(at(10)), 'twisted-log', 1, at(0))).toEqual({ ok: false, error: 'not-sparkglass', message: 'The Writ only takes Sparkglass.' });
     expect(feedPreview(named(at(10)), 'nothing', 1, at(0))).toMatchObject({ ok: false, error: 'not-sparkglass' });
     expect(fitCount(named(at(10)), 'twisted-log', at(0))).toBe(0);
     expect(feedRefusal(named(at(10)), 'twisted-log', at(0))).toMatchObject({ error: 'not-sparkglass' });
@@ -227,6 +230,17 @@ describe('feedPreview', () => {
     expect(isFull(named(at(96)), at(0))).toBe(false);
     expect(feedPreview(named(at(96) + 1), 'wild-sliver', 1, at(0))).toEqual({ ok: false, error: 'full', message: 'Full.' });
     expect(isFull(named(at(96) + 1), at(0))).toBe(true);
+    // The only meaning of full, derived too, with the time until a sliver fits again (charge + 48 ≤ 144).
+    expect(writView(named(at(100)), at(0))).toMatchObject({ full: true, sliverFitsInMs: 4 * H });
+    expect(writView(named(at(96)), at(0))).toMatchObject({ full: false, sliverFitsInMs: 0 });
+    expect(writView(named(at(144)), at(0))).toMatchObject({ full: true, sliverFitsInMs: 48 * H });
+    expect(writView(named(at(0)), at(10))).toMatchObject({ full: false, sliverFitsInMs: 0 });
+    expect(sliverFitsInMs(named(at(100)), at(0))).toBe(4 * H);
+    // The order of the refusals: deep glass first, then full for every other kind, humming glass included, then too much now.
+    expect(feedRefusal(named(at(100)), 'deep-glass', at(0))).toEqual({ error: 'too-much', message: WRIT_TOO_MUCH_EVER });
+    expect(feedRefusal(named(at(100)), 'glass-chip', at(0))).toEqual({ error: 'full', message: 'Full.' });
+    expect(feedRefusal(named(at(100)), 'sealed-gin', at(0))).toEqual({ error: 'full', message: 'Full.' });
+    expect(feedRefusal(named(at(10)), 'glass-chip', at(0))).toEqual({ error: 'too-much', message: WRIT_TOO_MUCH_NOW });
     expect(WRIT_TOO_MUCH_NOW).toBe('Too much for your Writ now');
     // 90 h left: one sliver fits, two don't.
     expect(feedPreview(named(at(90)), 'wild-sliver', 2, at(0))).toEqual({ ok: false, error: 'too-much', message: WRIT_TOO_MUCH_NOW });

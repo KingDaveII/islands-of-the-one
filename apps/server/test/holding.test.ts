@@ -367,7 +367,7 @@ describe('feeding the Writ', () => {
       ],
       'admin',
     );
-    expect(await holding.feed(k, 'twisted-log', 1, at(0))).toEqual({ ok: false, error: 'not-sparkglass', message: "The Writ won't burn twisted log." });
+    expect(await holding.feed(k, 'twisted-log', 1, at(0))).toEqual({ ok: false, error: 'not-sparkglass', message: 'The Writ only takes Sparkglass.' });
     expect(await holding.feed(k, 'deep-glass', 1, at(0))).toEqual({ ok: false, error: 'too-much', message: WRIT_TOO_MUCH_EVER });
     // A humming glass fits only an empty Writ; this one holds its pressed two days.
     expect(await holding.feed(k, 'glass-chip', 1, at(0))).toEqual({ ok: false, error: 'too-much', message: WRIT_TOO_MUCH_NOW });

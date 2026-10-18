@@ -73,4 +73,4 @@ export function feedChanges(kindledId: string, held: readonly Stack[], itemId: s
 /** The refusals the holding answers around the Writ (the book's "Full." is in @iot/shared). */
 export const WRIT_UNNAMED = 'Name the island first.';
 export const WRIT_ALREADY_NAMED = 'The island has its Name.';
-export const WRIT_INSUFFICIENT = 'Not that many there.';
+export const WRIT_INSUFFICIENT = "You don't have that many.";

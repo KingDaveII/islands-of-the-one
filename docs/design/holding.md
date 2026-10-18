@@ -340,8 +340,13 @@ from the answer):
 hours`), a lit or flickering one adds to `emptyAt`; **nothing is wasted:** a piece fits when charge + its
 hours ≤ `capacityHours`, no feed is ever partial, so a humming glass fits only an empty (dark or fading)
 Writ, where it relights it in one go, and deep glass never fits (it is for the Weighing and gear). The
-refusals, GAME DESIGN's lines: "Full." when the Writ is full (not even a sliver fits any more, `isFull`);
-"Too much for your Writ now" for a piece that doesn't fit now; "Too much for one Writ" for deep glass.
+refusals, GAME DESIGN's lines, in this order: "Too much for one Writ" for deep glass; else "Full." for every
+other kind when the Writ is full (not even a sliver fits any more, `isFull`: the only meaning of full); else
+"Too much for your Writ now" for a piece that doesn't fit now (humming glass with any charge). While full the
+charge line reads "Charge: about five days, full" and the greyed buttons' tooltip "A sliver fits in about 4 h"
+(`sliverFitsInMs`, rounded up); GAME DESIGN's "clear gold" letters while full wait for ART's kit (the sheet has
+no gold state), so they stay lit. A kind that can't be fed says "The Writ only takes Sparkglass."; too few
+held, "You don't have that many.".
 **Fill feeds wild slivers only**, one at a time while the next one fits, of what the Kindled holds; gin is
 money, burned only when the player picks it and a count. Any feed relights a dark or fading Writ at once: on
 the server the lines are lit the moment the feed lands; the client animates them back.
@@ -380,10 +385,10 @@ fading, the aleph dark so the Writ reads מת and the Name line dim while dark, 
 faded. A Name wider than the face after the lean hand widens the face, never the letters. Then the rim
 ("not certified: the Wet House in Malkhut", or "certified"), the charge in words with the exact time as a
 tooltip (left out while dark or fading: the charge is 0 and the state line says so), the state line ("Lit", "Flickering", "Dark since 3 h 12 min, grace ends in 44 h 48 min", "Line 1
-fading"; relative times in hours and minutes), "Line 1: tethers 4 plots · lit", "Line 2: certified, Writ
+fading"; relative times in hours and minutes), "Line 1, the Name: tethers 4 plots · lit", "Line 2: certified, Writ
 clay, 20 gin" greyed, and the Sparkglass by kind with what the pack and the store hold (the purse for gin),
 a kind that doesn't fit now greyed with its line. The player picks a kind, sees the preview ("+1/3 charge,
-about two days"; "⅓" isn't in the fonts, so "1/3"), and feeds one (a count for gin) or fills (wild
+about two days"; "⅓" isn't in the fonts, so "1/3"), and feeds one (a count for gin: "FEED 3", "× 3" with − and +) or fills (wild
 slivers); on a full Writ the preview reads "Full." and the buttons are disabled. The face redraws from the
 server's answer, never ahead of it; on a relight from dark or fading the aleph returns first, then each
 line one after another (`relightProgress`), whole frames. Inputs: mouse and touch on the rows and buttons;

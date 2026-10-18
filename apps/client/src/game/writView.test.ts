@@ -2,7 +2,10 @@ import { HOUR_MS, pressedWrit, toWritView, WRIT_FULL, WRIT_TOO_MUCH_EVER, WRIT_T
 import { describe, expect, it } from 'vitest';
 import {
   chargeLines,
+  COUNT_SIGN,
   derive,
+  feedButtonLabel,
+  fullTip,
   EMET,
   faceStates,
   feedChoices,
@@ -146,8 +149,21 @@ describe("the panel's lines", () => {
     const dark = derive(named(at(0), at(3) + 12 * 60_000), at(3) + 12 * 60_000);
     expect(stateLine(dark, at(3) + 12 * 60_000)).toBe('Dark since 3 h 12 min, grace ends in 44 h 48 min');
     expect(stateLine(derive(named(at(0), at(100)), at(100)), at(100))).toBe('Line 1 fading');
-    expect(lineLine({ line: 1, plots: 4, state: 'lit', fadesAt: 0 })).toBe('Line 1: tethers 4 plots · lit');
-    expect(lineLine({ line: 1, plots: 4, state: 'faded', fadesAt: 0 })).toBe('Line 1: tethers 4 plots · faded');
+    expect(lineLine({ line: 1, plots: 4, state: 'lit', fadesAt: 0 })).toBe('Line 1, the Name: tethers 4 plots · lit');
+    expect(lineLine({ line: 1, plots: 4, state: 'faded', fadesAt: 0 })).toBe('Line 1, the Name: tethers 4 plots · faded');
+    expect(lineLine({ line: 2, plots: 4, state: 'lit', fadesAt: 0 })).toBe('Line 2: tethers 4 plots · lit');
+    // Full: the words say so, and the greyed button's tooltip says when a sliver fits again.
+    const full = derive(named(at(100), at(0)), at(0));
+    expect(chargeLines(full)).toEqual({ words: 'about four days, full', exact: '100 h 0 min' });
+    expect(fullTip(full)).toBe('A sliver fits in about 4 h');
+    expect(fullTip(derive(named(at(96) + 1, at(0)), at(0)))).toBe('A sliver fits in about 1 h');
+    expect(fullTip(derive(named(at(144), at(0)), at(0)))).toBe('A sliver fits in about 48 h');
+    expect(chargeLines(derive(named(at(96), at(0)), at(0)))).toEqual({ words: 'about four days', exact: '96 h 0 min' });
+    // The gin button carries the count; glass feeds one.
+    expect(feedButtonLabel('sealed-gin', 3)).toBe('FEED 3');
+    expect(feedButtonLabel('sealed-gin')).toBe('FEED 1');
+    expect(feedButtonLabel('wild-sliver', 3)).toBe('FEED ONE');
+    expect(COUNT_SIGN).toBe('\u00d7');
   });
 
   it('the feed choices: every kind with its counts, greyed with the line when it does not fit', () => {

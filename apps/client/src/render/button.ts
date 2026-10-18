@@ -15,6 +15,8 @@ export interface Button {
   /** A disabled button keeps its place, draws sunken with muted ink, and ignores presses. */
   setEnabled(enabled: boolean): void;
   readonly enabled: boolean;
+  /** Whether the pointer is over the button (a disabled button's tooltip). */
+  readonly hover: boolean;
 }
 
 export const BUTTON_H = 15;
@@ -95,6 +97,9 @@ export function button(
     },
     get enabled(): boolean {
       return enabled;
+    },
+    get hover(): boolean {
+      return hover;
     },
   };
 }

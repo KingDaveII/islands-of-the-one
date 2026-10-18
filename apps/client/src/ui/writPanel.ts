@@ -3,6 +3,7 @@ import { shapeLetters, type InventoryResponse, type WritView } from '@iot/shared
 import type { Rect as ViewRect } from '../game/view.js';
 import {
   chargeLines,
+  COUNT_SIGN,
   derive,
   EMET,
   faceStates,
@@ -12,6 +13,7 @@ import {
   FILL,
   fillEnabled,
   flickerBeat,
+  fullTip,
   heldLine,
   lineLine,
   NEXT_LINE_LINE,
@@ -86,6 +88,10 @@ export class WritPanel {
   private readonly tipG: Phaser.GameObjects.Graphics;
   private readonly tip: Text;
   private readonly chargeZone: Phaser.GameObjects.Zone;
+  /** The greyed buttons' tooltip while the Writ is full ("A sliver fits in about 4 h"). */
+  private readonly buttonTipG: Phaser.GameObjects.Graphics;
+  private readonly buttonTip: Text;
+  private full = false;
   private feedButton: Button;
   private fillButton: Button;
   /** The gin count's steppers (mouse and touch; the keys and the pad use Left/Right). */
@@ -129,6 +135,8 @@ export class WritPanel {
     this.chargeZone.on('pointerout', () => {
       this.tipVisible = false;
     });
+    this.buttonTipG = scene.add.graphics().setVisible(false);
+    this.buttonTip = body(scene, 0, 0, '', Palette.uiInk).setVisible(false);
     this.feedButton = button(scene, 0, 0, feedButtonLabel('wild-sliver'), true, () => {
       this.pressFeed();
     });
@@ -153,6 +161,8 @@ export class WritPanel {
       this.result,
       this.countText,
       this.chargeZone,
+      this.buttonTipG,
+      this.buttonTip,
       this.feedButton.container,
       this.fillButton.container,
       this.less.container,
@@ -164,6 +174,8 @@ export class WritPanel {
     for (const o of objects) o.setDepth(DEPTH.prompt);
     this.tipG.setDepth(DEPTH.cursor - 1);
     this.tip.setDepth(DEPTH.cursor - 1);
+    this.buttonTipG.setDepth(DEPTH.cursor - 1);
+    this.buttonTip.setDepth(DEPTH.cursor - 1);
   }
 
   /** The latest answer: the Writ, the inventory, the server's clock; a relight starts when it came back from dark. */
@@ -191,6 +203,8 @@ export class WritPanel {
     const d = derive(view, this.serverMs);
     this.rim.setText(rimLine(view.certified));
     const charge = chargeLines(d);
+    this.full = d.full;
+    this.buttonTip.setText(d.full ? fullTip(d) : '');
     this.charge.setText(charge ? `Charge: ${charge.words}` : '').setVisible(charge !== null);
     this.tip.setText(charge?.exact ?? '');
     if (charge) this.chargeZone.setInteractive();
@@ -257,7 +271,7 @@ export class WritPanel {
     this.preview.setText(choice.enabled ? feedLine(previewResult) : (choice.refusal ?? feedLine(previewResult)));
     this.feedOn = choice.enabled && previewResult.ok && choice.have >= previewResult.count;
     this.fillOn = fillEnabled(view, this.choices, this.serverMs);
-    const label = feedButtonLabel(choice.itemId);
+    const label = feedButtonLabel(choice.itemId, this.count);
     if (label !== this.feedLabel) {
       this.feedLabel = label;
       this.feedButton.container.destroy(true);
@@ -267,7 +281,7 @@ export class WritPanel {
       this.feedButton.container.setDepth(DEPTH.prompt);
       this.host.layer.add(this.feedButton.container);
     }
-    this.countText.setText(wantCount ? `x ${this.count}` : '').setVisible(wantCount);
+    this.countText.setText(wantCount ? `${COUNT_SIGN} ${this.count}` : '').setVisible(wantCount);
     this.feedButton.setEnabled(this.feedOn);
     this.fillButton.setEnabled(this.fillOn);
     this.placed = '';
@@ -402,6 +416,11 @@ export class WritPanel {
     }
     this.fillButton.container.setPosition(bx, ly);
     this.fillButton.setFocused(this.host.showFocus() && 'button' in this.focus && this.focus.button === 'fill');
+    // While full, hovering the greyed buttons says when a sliver fits again.
+    const btw = Math.round(this.buttonTip.width) + 8;
+    this.buttonTipG.clear();
+    panel(this.buttonTipG, x + PAD, ly + 15 + 2, btw, ROW + 4, { plain: true });
+    place(this.buttonTip, x + PAD + 4, ly + 15 + 4);
     ly += 15 + 4;
     place(this.result, x + w - PAD, ly, 1);
     // The charge's tooltip, above its line.
@@ -443,6 +462,9 @@ export class WritPanel {
     const showTip = this.tipVisible && this.charge.visible;
     this.tipG.setVisible(showTip);
     this.tip.setVisible(showTip);
+    const showButtonTip = this.full && (this.feedButton.hover || this.fillButton.hover);
+    this.buttonTipG.setVisible(showButtonTip);
+    this.buttonTip.setVisible(showButtonTip);
     if (this.resultAt >= 0) {
       const elapsed = this.host.scene.time.now - this.resultAt;
       if (elapsed >= REFUSAL_LIFE_MS) {
@@ -468,6 +490,8 @@ export class WritPanel {
     relighting: boolean;
     tip: string | null;
     count: number;
+    full: boolean;
+    buttonTip: string | null;
   } {
     return {
       state: this.view?.state ?? '',
@@ -484,11 +508,13 @@ export class WritPanel {
       relighting: this.relightAt >= 0,
       tip: this.tipVisible ? this.tip.text : null,
       count: this.count,
+      full: this.full,
+      buttonTip: this.full && (this.feedButton.hover || this.fillButton.hover) ? this.buttonTip.text : null,
     };
   }
 
   destroy(): void {
-    for (const o of [this.g, this.face, this.rim, this.charge, this.state, this.line1, this.line2, this.preview, this.result, this.countText, this.chargeZone, this.tipG, this.tip])
+    for (const o of [this.g, this.face, this.rim, this.charge, this.state, this.line1, this.line2, this.preview, this.result, this.countText, this.chargeZone, this.tipG, this.tip, this.buttonTipG, this.buttonTip])
       o.destroy();
     for (const row of this.rows) for (const o of [row.name, row.held, row.refusal, row.marker, row.zone]) o.destroy();
     this.feedButton.container.destroy(true);
