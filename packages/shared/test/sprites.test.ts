@@ -46,6 +46,10 @@ import {
   SPRITE_FACINGS,
   SPRITE_SHEET_NAMES,
   OPTIONAL_SPRITE_SHEETS,
+  PIECE_SHADOWS,
+  PIECE_SHEETS,
+  pieceAnim,
+  PROP_IDLE_TURNED,
   SPARKGLASS_SHEET,
   SPRITE_SHEET_VERSION,
   SPRITE_WHITELIST,
@@ -155,7 +159,13 @@ describe('the sheets on disk (packages/shared/assets/sprites)', () => {
   it('stand the twisted tree on the tall prop cell (96×128, origin (48, 118), ART on #82); every other prop on the 64×64 cell', () => {
     expect(TALL_PROP_CELL).toEqual(spriteCellSpec(96, 128, 118));
     expect(TALL_PROP_CELL).toEqual({ cell: { w: 96, h: 128 }, origin: { x: 48, y: 118 }, canvasAt: { x: 16, y: 64 } });
-    expect(PROP_CELLS).toEqual({ 'twisted-tree': TALL_PROP_CELL, 'twisted-tree-2': TALL_PROP_CELL });
+    expect(PROP_CELLS).toEqual({
+      'twisted-tree': TALL_PROP_CELL,
+      'twisted-tree-2': TALL_PROP_CELL,
+      'clay-channel': spriteCellSpec(136, 136, 132),
+      'seed-jars': spriteCellSpec(80, 104, 96),
+      'threshing-floor': spriteCellSpec(112, 128, 120),
+    });
     expect(spriteSheetSpec('prop-twisted-tree-2').cell).toEqual(TALL_PROP_CELL);
     expect(spriteSheetSpec('prop-twisted-tree').cell).toBe(TALL_PROP_CELL);
     expect(spriteCellSpecFor('prop-twisted-tree')).toBe(TALL_PROP_CELL);
@@ -221,12 +231,46 @@ describe('the chest fixture sheet (test/fixtures/prop-chest)', () => {
   sheetSuite(CHEST_SHEET, sheet, fixtureUrl, true);
 });
 
+describe("the field's upgrade pieces' sheets (M2 Task 6; ART on #102)", () => {
+  it('give each piece its own optional sheet and cell, the origin at the bottom centre of its footprint', () => {
+    expect(PIECE_SHEETS).toEqual({ 'clay-channel': 'prop-clay-channel', 'seed-jars': 'prop-seed-jars', 'threshing-floor': 'prop-threshing-floor' });
+    for (const [piece, sheet] of Object.entries(PIECE_SHEETS)) {
+      expect(OPTIONAL_SPRITE_SHEETS, sheet).toContain(sheet);
+      expect(SPRITE_SHEET_NAMES, sheet).not.toContain(sheet);
+      expect(spriteSheetSpec(sheet).cell, sheet).toBe(PROP_CELLS[piece as keyof typeof PROP_CELLS]);
+    }
+    // Each origin is a whole pixel on the cell's centre line.
+    for (const piece of ['clay-channel', 'seed-jars', 'threshing-floor'] as const) {
+      const { cell, origin } = PROP_CELLS[piece];
+      expect(origin.x * 2, piece).toBe(cell.w);
+      expect(Number.isInteger(origin.x) && origin.y < cell.h, piece).toBe(true);
+    }
+    // A 1 × 4 channel (32 × 128 world px, rising from y 4 to 132) and its 4 × 1 turn (x 4 to 132) fit the 136 cell
+    // with room for the 1 px clear ring.
+    expect(PROP_CELLS['clay-channel'].origin).toEqual({ x: 68, y: 132 });
+    expect(PIECE_SHADOWS).toEqual({ 'clay-channel': false, 'seed-jars': true, 'threshing-floor': false });
+  });
+
+  it('turn the channel and the jars with an idle_turned row, never mirrored; the round floor has idle alone', () => {
+    for (const piece of ['clay-channel', 'seed-jars'] as const) {
+      const table = PROP_TABLES[piece];
+      expect(table.map((r) => r.name), piece).toEqual(['idle', 'idle_turned']);
+      expect(table.map((r) => r.fromRecipe), piece).toEqual([PROP_IDLE, PROP_IDLE_TURNED]);
+      expect(propTableFor(`prop-${piece}`, () => ({ frames: 1 })), piece).toEqual([propAnimSpec(PROP_IDLE, 1), propAnimSpec(PROP_IDLE_TURNED, 1)]);
+    }
+    expect(spriteSheetSpec('prop-threshing-floor').anims).toBeNull();
+    expect(propTableFor('prop-threshing-floor', () => ({ frames: 8, fps: 6 }))).toEqual([propAnimSpec(PROP_IDLE, 8, 6)]);
+    expect([0, 90, 180, 270].map((r) => pieceAnim(r, true))).toEqual(['idle', 'idle_turned', 'idle', 'idle_turned']);
+    expect([0, 90, 180, 270].map((r) => pieceAnim(r, false))).toEqual(['idle', 'idle', 'idle', 'idle']);
+  });
+});
+
 describe('the Sparkglass pickup fixture sheet (test/fixtures/prop-sparkglass)', () => {
   const sheet: SpriteSheet = sparkglassFixture;
   it('is a v2 prop sheet without a table: idle alone, 2 frames (the glint) at the recipe rate, the chip 9 × 11 on the prop cell', () => {
     expect(sheet.meta.version).toBe(SPRITE_SHEET_VERSION);
     expect(SPARKGLASS_SHEET).toBe('prop-sparkglass');
-    expect(OPTIONAL_SPRITE_SHEETS).toEqual([SPARKGLASS_SHEET, 'prop-twisted-tree-2']);
+    expect(OPTIONAL_SPRITE_SHEETS).toEqual([SPARKGLASS_SHEET, 'prop-twisted-tree-2', ...Object.values(PIECE_SHEETS)]);
     expect(SPRITE_SHEET_NAMES).not.toContain(SPARKGLASS_SHEET);
     expect(spriteSheetSpec(SPARKGLASS_SHEET).anims).toBeNull();
     expect(propTable(SPARKGLASS_SHEET, sheet)).toEqual([propIdleSpec(2, 2)]);

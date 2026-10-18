@@ -206,11 +206,31 @@ A prop without an entry keeps the rule below: `idle` only.
 | `idle` | 1–8, from the recipe | from the recipe, default 8 | yes with more than one frame; one frame holds | none |
 
 For flames and the like. No palette block and no mask. The cell is the 64×64 prop cell, origin (32, 54) (§2),
-or the tall prop cell for a prop in `PROP_CELLS` (the twisted tree, 96×128, origin (48, 118)).
+or the prop's own cell in `PROP_CELLS` (the twisted tree's tall cell, 96×128, origin (48, 118); the upgrade
+pieces' below).
 
 A row's frame count and rate can come from the recipe within a range, like `idle` (`fromRecipe` on the row,
 `PropRecipeAnim`): the pipeline writes the recipe's count and `fps`, the sheet test takes the sheet's, and
 `propTableFor` resolves the table for both. Such a row loops with more than one frame and holds with one.
+
+#### The upgrade pieces (`prop-<piece id>`, M2 Task 6; ART on #102)
+
+Each of the field's upgrade pieces has a sheet named for its id (`PIECE_SHEETS`), optional until ART's sheets land
+(`OPTIONAL_SPRITE_SHEETS`; build mode draws its placeholders until then), and a cell of its own in `PROP_CELLS`
+holding both facings, the origin at the bottom centre of the piece's footprint, as the holding's props stand on
+theirs:
+
+| Sheet | Footprint | Cell | Origin | Rows | Shadow |
+|---|---|---|---|---|---|
+| `prop-clay-channel` | 1 × 4 (turned 4 × 1) | 136×136 | (68, 132) | `idle` lengthwise (running north–south), `idle_turned` (east–west) | none (sunk into the ground) |
+| `prop-seed-jars` | 2 × 1 (turned 1 × 2) | 80×104 | (40, 96) | `idle` (plank across), `idle_turned` (plank along) | the prop rule's |
+| `prop-threshing-floor` | 3 × 3 | 112×128 | (56, 120) | `idle` alone: the chaff spiral, 8 frames at 6 fps, looping | none (flat) |
+
+`idle` and `idle_turned` are recipe-rated rows like a prop's `idle` (1 to 8 frames, `PROP_IDLE`,
+`PROP_IDLE_TURNED`). A piece turned 90° or 270° shows `idle_turned` when its sheet has it, 0° and 180° show `idle`
+(`pieceAnim`): the pieces are symmetric and the light stays top left, so a turned piece is never mirrored.
+`PIECE_SHADOWS` says which cast the grounding shadow. A piece stands on the bottom centre of its footprint's tile
+rectangle as it lies (turned or not).
 
 #### The Sparkglass pickup (`prop-sparkglass`, M1 polish)
 
