@@ -1,5 +1,5 @@
 {
-  "$comment": "Old Kesh's lines (docs/design/holding.md \"Kesh\", M2 Task 4b and 5): LORE's and GAME DESIGN's, word for word, validated on load (validateKeshData) and every character drawable by the pixel fonts. A line is { who: kesh | narrator | hint, text }, optionally with a toss (sliver: a wild sliver; word: the clay tile of gifts.word; seeds: gifts.seeds; the thrown thing leaves his hand on that line), an only (first-sliver: shown only while his first sliver hasn't been given; tide-taken: shown only while the first has been given and the tide's isn't due, the Sparkglass topic's step then) and m2Scaffold (true on the two tide lines, which go when M3 brings voyages). Stage directions in parentheses are part of the line and are drawn; the inner quotes are LORE's speech marks and are drawn too. gifts: the word tile Kesh tosses after the Name (a word id of words.json) and the seeds he throws after the first plot is named (one for each plot line 1 tethers; GAME DESIGN). afterNaming plays once the server accepts the Name and ends with the tile's toss; afterFirstPlot plays when a plot's first naming lands, after the seal scene (its third line is LORE's M2 stand-in; the raft line waits for M3); afterFirstFeeding the first time a feed lands; the topics are the talk box's menu, in this order; tideSliver is the once-per-tide toss (m2Scaffold). Talk plays a due gift first: the tile line, then the seeds flow, then the sliver. Don't reword a line.",
+  "$comment": "Old Kesh's lines (docs/design/holding.md \"Kesh\", M2 Task 4b and 5): LORE's and GAME DESIGN's, word for word, validated on load (validateKeshData) and every character drawable by the pixel fonts. A line is { who: kesh | narrator | hint, text }, optionally with a toss (sliver: a wild sliver; word: the clay tile of gifts.word; seeds: gifts.seeds; the thrown thing leaves his hand on that line), an only (first-sliver: shown only while his first sliver hasn't been given; tide-taken: shown only while the first has been given and the tide's isn't due, the Sparkglass topic's step then) and m2Scaffold (true on the two tide lines, which go when M3 brings voyages). Stage directions in parentheses are part of the line and are drawn; the inner quotes are LORE's speech marks and are drawn too. gifts: the word tile Kesh tosses after the Name (a word id of words.json) and the seeds he throws after the first plot is named (one for each plot line 1 tethers; GAME DESIGN). afterNaming plays once the server accepts the Name and ends with the tile's toss; afterFirstPlot plays when a plot's first naming lands, after the seal scene (its third line is LORE's M2 stand-in; the raft line waits for M3); afterFirstFeeding the first time a feed lands; the topics are the talk box's menu, in this order (The rack, M2 Task 8, is LORE's and always open); tideSliver is the once-per-tide toss (m2Scaffold). Talk plays a due gift first: the tile line, then the seeds flow, then the sliver. Don't reword a line.",
   "gifts": { "word": "adamah", "seeds": { "itemId": "grey-seeds", "quantity": 4 } },
   "afterNaming": [
     { "who": "kesh", "text": "(squints at the post) \"Hm. That's what you're calling it?\" (shrugs) \"Doesn't matter. Whatever you call it, it's yours now. The Hollow doesn't care if it's pretty.\"" },
@@ -57,6 +57,15 @@
         { "who": "kesh", "text": "\"Follow the line. You'll see the lamps before long. Just outside the city there's a stone standing in the light on its own, one mark cut in it. Take your rubbing off it. That's the start of the only road out of the Kingdom.\"" },
         { "who": "kesh", "text": "\"They'll want you registered. They'll want your glass. Give 'em one of the two.\"" },
         { "who": "narrator", "text": "The Kingdom, little light. Lowest of the ten, and the only one with a single road out. Everybody starts there. Nobody is told why." }
+      ]
+    },
+    {
+      "id": "rack",
+      "title": "The rack",
+      "lines": [
+        { "who": "kesh", "text": "\"Pick one before you go. One blade, one trip. Nobody fights with a rack on their back.\"" },
+        { "who": "kesh", "text": "\"Hook for close. Sling for far. The maul for anything that won't get out of the way.\"" },
+        { "who": "kesh", "text": "\"Get yourself killed out there and you'll wake by your post, and it'll be hanging right here. What's yours finds its way home. Glass doesn't, not all of it.\"" }
       ]
     },
     {

@@ -15,6 +15,11 @@ import {
   validateItemsData,
   pluralItemName,
   itemCount,
+  isWeaponId,
+  WEAPON_IDS,
+  WEAPON_ROSTER,
+  weaponCanFight,
+  weaponOrder,
 } from '../src/index.js';
 import { BANNED } from './banned.js';
 
@@ -54,6 +59,9 @@ describe('items.json', () => {
       'streaked-stone',
       'grey-seeds',
       'pale-grain',
+      'hookblade',
+      'sling',
+      'keelmaul',
     ]);
   });
 
@@ -98,7 +106,8 @@ describe('items.json', () => {
     expect(itemDef('grey-seeds')?.skill).toBe('farming');
     expect(itemDef('pale-grain')?.skill).toBe('farming');
     expect(itemDef('wild-sliver')?.skill).toBeNull();
-    expect(ITEM_KINDS).toEqual(['currency', 'sparkglass', 'material', 'consumable', 'lore']);
+    expect(ITEM_KINDS).toEqual(['currency', 'sparkglass', 'material', 'consumable', 'lore', 'weapon']);
+    for (const item of ITEMS) expect(item.kit === null, item.id).toBe(item.kind !== 'weapon');
     for (const skill of ITEM_SKILLS) expect(SKILL_NAMES[skill]).toMatch(/^[A-Z][a-z]+$/);
   });
 
@@ -113,6 +122,9 @@ describe('items.json', () => {
       'streaked-stone': 'streaked stone',
       'grey-seeds': 'grey seeds',
       'pale-grain': 'pale grain',
+      hookblade: 'hookblades',
+      sling: 'slings',
+      keelmaul: 'keelmauls',
     });
     for (const item of ITEMS) {
       expect(item.plural, item.id).toBe(item.plural.toLowerCase());
@@ -157,7 +169,7 @@ describe('validateItemsData', () => {
     expect(problemsOf([{ ...good, name: 'Void crystal' }])[0]).toContain('retired word "void"');
     expect(problemsOf([{ ...good, name: '' }])).toHaveLength(1);
     expect(problemsOf([{ ...good, name: 'Stone א' }])).toHaveLength(1);
-    expect(problemsOf([{ ...good, kind: 'weapon' }])).toHaveLength(1);
+    expect(problemsOf([{ ...good, kind: 'tool' }])).toHaveLength(1);
     // The plural is data (MAIN 2026-10-19): required, lowercase, drawable.
     const noPlural: Record<string, unknown> = { ...good };
     delete noPlural.plural;
@@ -176,6 +188,47 @@ describe('validateItemsData', () => {
     ]);
     expect(problemsOf(['stone'])).toEqual(['items[0]: not an object']);
   });
+
+  it('a weapon (M2 Task 8): an id the tuning names, one of each, no skill, a kit on a weapon that can fight, and a kit on nothing else', () => {
+    const weapon = { id: 'hookblade', name: 'Hookblade', plural: 'hookblades', kind: 'weapon', stackLimit: 1, kit: ['Arc', 'Hook-thrust', 'Haul'], description: '' };
+    expect(validateItemsData({ items: [weapon] })).toMatchObject({ ok: true, items: [{ kind: 'weapon', stackLimit: 1, skill: null, kit: ['Arc', 'Hook-thrust', 'Haul'] }] });
+    // A locked weapon may have an empty kit; one that can fight needs its moves.
+    expect(validateItemsData({ items: [{ ...weapon, id: 'sling', kit: [] }] })).toMatchObject({ ok: true });
+    expect(problemsOf([{ ...weapon, kit: [] }])).toEqual(['items[0] (hookblade): a weapon that can fight needs its kit']);
+    expect(problemsOf([{ ...weapon, id: 'black-stone' }])).toEqual(["items[0] (black-stone): a weapon must be in tuning.json's weaponRoster or weapons"]);
+    expect(problemsOf([{ ...weapon, stackLimit: 2 }])).toEqual(["items[0] (hookblade): a weapon's stackLimit is 1 (one of each hangs on the rack)"]);
+    expect(problemsOf([{ ...weapon, skill: 'mining' }])).toEqual(['items[0] (hookblade): a weapon has no skill']);
+    const noKit: Record<string, unknown> = { ...weapon };
+    delete noKit.kit;
+    expect(problemsOf([noKit])).toEqual(["items[0] (hookblade): kit must be a list of the weapon's moves, text the game can draw"]);
+    expect(problemsOf([{ ...weapon, kit: ['Arc', ''] }])).toHaveLength(1);
+    expect(problemsOf([{ ...weapon, kit: ['Arc', 'א'] }])).toHaveLength(1);
+    expect(problemsOf([{ ...weapon, kit: 'Arc' }])).toHaveLength(1);
+    expect(problemsOf([{ ...good, kit: [] }])).toEqual(['items[0] (black-stone): only a weapon carries a kit']);
+  });
+
+  it("holds LORE's three weapons word for word, each named by the roster or the tuning's weapons, the Hookblade's kit in input order", () => {
+    expect(ITEMS.filter((i) => i.kind === 'weapon').map((i) => [i.id, i.name, i.stackLimit, i.skill, i.kit])).toEqual([
+      ['hookblade', 'Hookblade', 1, null, ['Arc', 'Hook-thrust', 'Haul']],
+      ['sling', 'Sling', 1, null, []],
+      ['keelmaul', 'Keelmaul', 1, null, []],
+    ]);
+    expect(itemDef('hookblade')?.description).toBe('A short curved blade with a hook on its back and a coil of cord at the pommel. For getting close, and pulling things closer.');
+    expect(itemDef('sling')?.description).toBe('A leather sling and a pouch of clay pellets, each pellet pressed with a mark. For keeping your distance.');
+    expect(itemDef('keelmaul')?.description).toBe("A maul made from a piece of ship's keel, banded in iron. Heavy. For when there's no going around.");
+    for (const item of ITEMS) if (item.kind === 'weapon') expect(isWeaponId(item.id), item.id).toBe(true);
+    // The roster renamed (locked-2, locked-3 are sling and keelmaul, still locked), so the roster and the items share ids.
+    expect(WEAPON_ROSTER).toEqual([
+      { id: 'hookblade', locked: false },
+      { id: 'sling', locked: true },
+      { id: 'keelmaul', locked: true },
+    ]);
+    expect(WEAPON_IDS).toEqual(['hookblade', 'sling', 'keelmaul']);
+    expect(WEAPON_ROSTER.map((w) => weaponCanFight(w.id))).toEqual([true, false, false]);
+    expect(weaponCanFight('locked-2')).toBe(false);
+    expect(isWeaponId('locked-2')).toBe(false);
+    expect(['keelmaul', 'hookblade', 'sling', 'axe'].map(weaponOrder)).toEqual([2, 0, 1, 3]);
+  });
 });
 
 describe('ledger vocabulary', () => {
@@ -193,6 +246,7 @@ describe('ledger vocabulary', () => {
       'name-plot',
       'sow',
       'build',
+      'kit',
     ]);
     expect(isInventoryReason('trade')).toBe(true);
     expect(isInventoryReason('theft')).toBe(false);

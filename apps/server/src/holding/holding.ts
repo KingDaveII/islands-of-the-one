@@ -61,6 +61,7 @@ import {
   type Workplace,
 } from './plots.js';
 import { knownWordIds } from './words.js';
+import { chooseWeaponIn, giveKit, rackViewOf } from './rack.js';
 import { feedable, feedChanges, lockWrit, WRIT_ALREADY_NAMED, WRIT_INSUFFICIENT, WRIT_UNNAMED, writStored } from './writ.js';
 
 /**
@@ -81,7 +82,9 @@ import { feedable, feedChanges, lockWrit, WRIT_ALREADY_NAMED, WRIT_INSUFFICIENT,
  * last heartbeat lives on the Writ row. Build mode (M2 Task 6, pieces.ts):
  * the piece rows are locked with the plots', the cycles run at the speed the
  * pieces give, and building, moving and taking down are acts after the
- * settle.
+ * settle. The weapon rack (M2 Task 8, rack.ts): the kit is given on the
+ * first request of a Kindled who owns no weapon, after the settle, and the
+ * run's weapon is chosen as an act under the same lock.
  */
 
 /**
@@ -146,7 +149,9 @@ export type HoldingError =
   | 'limit'
   | 'blocked'
   | 'not-built'
-  | 'store-full';
+  | 'store-full'
+  | 'not-owned'
+  | 'not-ready';
 
 export type HoldingResult =
   | { ok: true; value: HoldingResponse }
@@ -185,6 +190,8 @@ export interface Holding {
   takeDownPiece(kindledId: string, args: PlotTakeDownRequest, now: Date): Promise<HoldingResult>;
   /** Settle, then take every piece of a plot down with its refund, which may overfill the store (the playtest CLI). */
   clearPieces(kindledId: string, plotId: string, now: Date): Promise<ClearResult>;
+  /** Settle, then choose the weapon a run takes, at the rack (M2 Task 8): it must hang there and the sim must run it. */
+  chooseWeapon(kindledId: string, weaponId: string, now: Date): Promise<HoldingResult>;
   /** Settle alone (tests and the API's inventory routes, so every route sees the same absence). */
   settle(kindledId: string, now: Date): Promise<void>;
   /** Dismiss the away card drawn with this `to` (M2 Task 7): the row goes only while it still ends there. Whether one went. */
@@ -350,6 +357,9 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
   /** What GET /api/holding answers, read inside the transaction after the settle (and after the body's changes). */
   async function answer(tx: Transaction, k: KindledRow, now: Date, take?: HoldingTake): Promise<HoldingResponse> {
     const view = await inventory.view(k.id, tx);
+    const held = await inventory.holdings(k.id, tx);
+    // The choice as the body may have just written it (M2 Task 8).
+    const [choice] = await tx.select({ runWeapon: kindled.runWeapon }).from(kindled).where(eq(kindled.id, k.id));
     const baskets: Record<string, InventoryEntry[]> = {};
     for (const s of layout.stations) baskets[s.id] = view.baskets[s.id] ?? [];
     for (const p of layout.plots) baskets[p.id] = view.baskets[p.id] ?? [];
@@ -393,6 +403,7 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
       plots: plotViews(layout, rows, pieceRows, stored, now.getTime()),
       cycles,
       away: null,
+      rack: rackViewOf(held, choice?.runWeapon ?? k.runWeapon),
     };
     // The away card waiting to be seen (M2 Task 7); its Writ line reads the answer's `writ`.
     const card = await awayCardOf(tx, k.id);
@@ -401,7 +412,10 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
     return out;
   }
 
-  /** One holding request: the Kindled, its Writ and its plots locked, everything settled, then `body`, then the answer. */
+  /**
+   * One holding request: the Kindled, its Writ and its plots locked, everything settled, the kit given to a Kindled
+   * who owns no weapon (M2 Task 8, behind the scaffold), then `body`, then the answer.
+   */
   async function request(
     kindledId: string,
     now: Date,
@@ -411,6 +425,7 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
       const k = await lockKindled(tx, kindledId);
       if (!k) return { ok: false, error: 'unknown-kindled', message: 'No such Kindled.' };
       const { w, plots, pieces } = await settleAll(tx, k, now);
+      await giveKit(tx, inventory, k.id, await inventory.holdings(k.id, tx));
       const result = await body({ tx, k, w, plots, pieces });
       if (result && 'refused' in result) return result.refused;
       return { ok: true, value: await answer(tx, k, now, result) };
@@ -601,6 +616,14 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
       request(kindledId, now, async ({ tx, k, w, plots }) => {
         const sown = await sowPlotIn(tx, inventory, k.id, writStored(w), layout, plots, plotId, now);
         return sown.ok ? undefined : refuse(sown.error, sown.message);
+      }),
+
+    // The weapon rack (docs/design/holding.md "The weapon rack", M2 Task 8): the choice is judged against what hangs
+    // on the rack after the settle and the kit, under the Kindled's lock; the answer carries it resolved.
+    chooseWeapon: (kindledId, weaponId, now) =>
+      request(kindledId, now, async ({ tx, k }) => {
+        const chosen = await chooseWeaponIn(tx, k, await inventory.holdings(k.id, tx), weaponId);
+        return chosen.ok ? undefined : refuse(chosen.error, chosen.message);
       }),
 
     settle: async (kindledId, now) => {

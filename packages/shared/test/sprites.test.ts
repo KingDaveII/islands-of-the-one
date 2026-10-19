@@ -40,6 +40,14 @@ import {
   SPRITE_CANVAS,
   SPRITE_CELLS,
   PROP_CELLS,
+  isKindledPoint,
+  RACK_SHEET,
+  RACK_PEGS,
+  PROP_POINT_ANIMS,
+  requiredPointsFor,
+  isSpritePoint,
+  SPRITE_POINTS,
+  OPTIONAL_POINTS,
   TALL_PROP_CELL,
   KESH_ROCK_SHEET,
   spriteCellSpec,
@@ -59,6 +67,7 @@ import {
   spriteSheets,
   WORLD_PX_PER_UNIT,
   type SpriteSheet,
+  type SpriteSheetName,
   caveTileSheet,
   CAVE_TILE_SHEET,
   holdingTileSheet,
@@ -147,13 +156,20 @@ describe('the sheets on disk (packages/shared/assets/sprites)', () => {
     expect(holdingTileSheet).toEqual(disk.get(HOLDING_TILE_SHEET));
     // The station props and Kesh's rock load with the characters (an idle, no table): one frame each,
     // but the Writ post's, whose tablet marks pulse over two (ART, the holding art).
+    const bundled = (name: string): name is SpriteSheetName => (SPRITE_SHEET_NAMES as readonly string[]).includes(name);
     for (const name of [...Object.values(STATION_SHEETS), KESH_ROCK_SHEET]) {
-      expect(SPRITE_SHEET_NAMES).toContain(name);
+      // The weapon rack's sheet is optional (M2 Task 8): a placeholder box until ART's sheet lands.
+      if (name === RACK_SHEET) {
+        expect(OPTIONAL_SPRITE_SHEETS).toContain(name);
+        continue;
+      }
+      if (!bundled(name)) throw new Error(`${name} is not bundled`);
       expect(spriteSheets[name].anims.idle?.frames, name).toEqual(
         name === 'prop-writ-post' ? ['idle_0', 'idle_1'] : ['idle_0'],
       );
     }
-    expect(STATION_SHEETS).toEqual({ post: 'prop-writ-post', trees: 'prop-twisted-tree', outcrop: 'prop-stone-outcrop', store: 'prop-holding-store' });
+    expect(STATION_SHEETS).toEqual({ post: 'prop-writ-post', trees: 'prop-twisted-tree', outcrop: 'prop-stone-outcrop', store: 'prop-holding-store', rack: 'prop-weapon-rack' });
+    expect(RACK_SHEET).toBe('prop-weapon-rack');
   });
 
   it('stand the twisted tree on the tall prop cell (96×128, origin (48, 118), ART on #82); every other prop on the 64×64 cell', () => {
@@ -165,6 +181,7 @@ describe('the sheets on disk (packages/shared/assets/sprites)', () => {
       'clay-channel': spriteCellSpec(136, 136, 132),
       'seed-jars': spriteCellSpec(80, 104, 96),
       'threshing-floor': spriteCellSpec(112, 128, 120),
+      'weapon-rack': spriteCellSpec(64, 72, 64),
     });
     expect(spriteSheetSpec('prop-twisted-tree-2').cell).toEqual(TALL_PROP_CELL);
     expect(spriteSheetSpec('prop-twisted-tree').cell).toBe(TALL_PROP_CELL);
@@ -270,7 +287,7 @@ describe('the Sparkglass pickup fixture sheet (test/fixtures/prop-sparkglass)', 
   it('is a v2 prop sheet without a table: idle alone, 2 frames (the glint) at the recipe rate, the chip 9 × 11 on the prop cell', () => {
     expect(sheet.meta.version).toBe(SPRITE_SHEET_VERSION);
     expect(SPARKGLASS_SHEET).toBe('prop-sparkglass');
-    expect(OPTIONAL_SPRITE_SHEETS).toEqual([SPARKGLASS_SHEET, 'prop-twisted-tree-2', ...Object.values(PIECE_SHEETS)]);
+    expect(OPTIONAL_SPRITE_SHEETS).toEqual([SPARKGLASS_SHEET, 'prop-twisted-tree-2', ...Object.values(PIECE_SHEETS), RACK_SHEET]);
     expect(SPRITE_SHEET_NAMES).not.toContain(SPARKGLASS_SHEET);
     expect(spriteSheetSpec(SPARKGLASS_SHEET).anims).toBeNull();
     expect(propTable(SPARKGLASS_SHEET, sheet)).toEqual([propIdleSpec(2, 2)]);
@@ -717,6 +734,60 @@ describe('points (sprites.md §5)', () => {
       'haul_throw_W_0: hand is [96.5,3], not [x, y] in whole pixels',
     ]);
     expect(pointProblems('kindled-test', withPoints({ ...good, heavy_charge_S_0: { tip: [94, 78] } }))).toEqual([]);
+  });
+
+  it("reserves the weapon rack's three pegs on prop-weapon-rack's idle alone, optional, inside its 64×72 cell (M2 Task 8; ART)", () => {
+    expect(RACK_PEGS).toEqual(['peg_0', 'peg_1', 'peg_2']);
+    expect(SPRITE_POINTS).toEqual(['tip', 'hand', 'peg_0', 'peg_1', 'peg_2']);
+    expect(OPTIONAL_POINTS).toEqual(RACK_PEGS);
+    expect(PROP_POINT_ANIMS).toEqual({ 'weapon-rack': { peg_0: ['idle'], peg_1: ['idle'], peg_2: ['idle'] } });
+    expect(spritePointsFor(RACK_SHEET, 'idle')).toEqual(['peg_0', 'peg_1', 'peg_2']);
+    // Optional: a finished rack sheet need not carry them; the Kindled's points stay required.
+    expect(requiredPointsFor(RACK_SHEET, 'idle')).toEqual([]);
+    expect(requiredPointsFor('kindled-ash', 'heavy_charge')).toEqual(['tip']);
+    expect(requiredPointsFor('npc-kesh', 'toss')).toEqual(['hand']);
+    // On this prop alone: no other prop, no Kindled sheet and no NPC may carry a peg.
+    expect(spritePointsFor('prop-holding-store', 'idle')).toEqual([]);
+    expect(pointAnimsFor('prop-holding-store', 'peg_0')).toEqual([]);
+    expect(pointAnimsFor('kindled-ash', 'peg_0')).toEqual([]);
+    expect(pointAnimsFor('npc-kesh', 'peg_1')).toEqual([]);
+    expect(pointAnimsFor(RACK_SHEET, 'tip')).toEqual([]);
+    expect(pointAnimsFor(RACK_SHEET, 'hand')).toEqual([]);
+    expect(isSpritePoint('peg_2')).toBe(true);
+    expect(isSpritePoint('peg_3')).toBe(false);
+    expect(isKindledPoint('peg_0')).toBe(false);
+    // A rack sheet in the contract's shape: 64×72, origin (32, 64), idle alone, its pegs on the frame.
+    const cellSpec = spriteSheetSpec(RACK_SHEET).cell;
+    expect(cellSpec).toEqual(spriteCellSpec(64, 72, 64));
+    expect(cellSpec).toEqual({ cell: { w: 64, h: 72 }, origin: { x: 32, y: 64 }, canvasAt: { x: 0, y: 10 } });
+    expect(spriteSheetSpec(RACK_SHEET).anims).toBeNull();
+    const rack = (points: Record<string, number[]> | undefined, name = RACK_SHEET): [string, SpriteSheet] => [
+      name,
+      {
+        ...fixtureSheet,
+        meta: { ...fixtureSheet.meta, cell: { w: 64, h: 72 }, origin: { x: 32, y: 64 } },
+        frames: { idle_0: { ...cell, frame: { x: 0, y: 0, w: 64, h: 72 }, anchor: { x: 0.5, y: 64 / 72 }, ...(points ? { points } : {}) } },
+        anims: { idle: { frames: ['idle_0'], frameRate: 8, repeat: -1 } },
+      },
+    ];
+    expect(pointProblems(...rack({ peg_0: [16, 30], peg_1: [32, 30], peg_2: [48, 30] }))).toEqual([]);
+    expect(pointProblems(...rack({ peg_1: [32, 30] }))).toEqual([]);
+    expect(pointProblems(...rack(undefined))).toEqual([]);
+    expect(pointProblems(...rack({ peg_0: [0, 30], peg_1: [32, 71], peg_2: [63, 30] }))).toEqual([
+      'idle_0: peg_0 at (0, 30) is outside the 64×72 cell or on its outer 1 px ring',
+      'idle_0: peg_1 at (32, 71) is outside the 64×72 cell or on its outer 1 px ring',
+      'idle_0: peg_2 at (63, 30) is outside the 64×72 cell or on its outer 1 px ring',
+    ]);
+    expect(pointProblems(...rack({ peg_3: [16, 30], hand: [20, 20] }))).toEqual([
+      'idle_0: unknown point "peg_3"',
+      'idle_0: a hand point, but its animation carries peg_0, peg_1, peg_2',
+    ]);
+    // The same pegs on another prop are refused.
+    expect(pointProblems(...rack({ peg_0: [16, 30] }, 'prop-holding-store'))).toEqual(['idle_0: a peg_0 point, but its animation carries no points']);
+    // And a peg on a Kindled frame.
+    expect(pointProblems('kindled-test', withPoints({ ...good, heavy_charge_S_0: { tip: [30, 40], peg_0: [20, 20] } }))).toEqual([
+      'heavy_charge_S_0: a peg_0 point, but its animation carries tip',
+    ]);
   });
 
   it('reads a point as { x, y } in the cell, null where a frame has none', () => {

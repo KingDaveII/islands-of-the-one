@@ -22,7 +22,7 @@ import type { Inventory, LedgerEntry } from './inventory.js';
  */
 
 export const GRANT_USAGE =
-  'usage: inv:grant <username> <item> <qty> [place]   (qty: a non-zero integer; negative takes away; place: purse, pack, store or basket:<station>, default purse for currency, store otherwise)';
+  'usage: inv:grant <username> <item> <qty> [place]   (qty: a non-zero integer; negative takes away; place: purse, pack, store, rack or basket:<station>, default purse for currency, rack for a weapon, store otherwise)';
 
 export interface GrantArgs {
   username: string;
@@ -47,7 +47,7 @@ export function parseGrantArgs(
     return { ok: false, message: `qty must be a non-zero integer: ${rawQty}` };
   const kind = itemDef(itemId)?.kind ?? 'material';
   if (rawPlace !== undefined && !isPlace(rawPlace))
-    return { ok: false, message: `not a place: ${rawPlace} (purse, pack, store or basket:<station>)` };
+    return { ok: false, message: `not a place: ${rawPlace} (purse, pack, store, rack or basket:<station>)` };
   const place = rawPlace ?? defaultPlace(kind);
   return { ok: true, args: { username: username.value, itemId, quantity, place } };
 }

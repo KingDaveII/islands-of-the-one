@@ -267,10 +267,10 @@ describe('the routes', () => {
     expect(form.statusCode).toBe(415);
   });
 
-  it('the card moves no items: the ledger holds the gather and harvest rows only', async () => {
+  it('the card moves no items: the ledger holds the gather and harvest rows only (and the kit of M2 Task 8)', async () => {
     const [k] = await handle.db.select({ id: kindled.id }).from(kindled).innerJoin(accounts, eq(kindled.accountId, accounts.id)).where(eq(accounts.username, 'awayapi'));
     if (!k) throw new Error('no kindled');
     const reasons = new Set((await inv.ledger(k.id)).map((e) => e.reason));
-    expect([...reasons].every((r) => r === InventoryReason.Harvest || r === InventoryReason.Gather)).toBe(true);
+    expect([...reasons].every((r) => r === InventoryReason.Harvest || r === InventoryReason.Gather || r === InventoryReason.Kit)).toBe(true);
   });
 });

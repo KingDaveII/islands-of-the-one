@@ -3,6 +3,7 @@ import {
   basketPlace,
   basketStation,
   canMove,
+  FIXED_PLACES,
   defaultPlace,
   inventoryData,
   isInventoryMoveRequest,
@@ -63,14 +64,14 @@ describe('inventory.json', () => {
     expect(
       problemsOf({ ...good, slotSize: { material: 50, sparkglass: 99, consumable: 5 } }),
     ).toEqual(['slotSize.lore must be a positive integer']);
+    // A weapon takes no pack slot: it hangs on the rack (M2 Task 8).
     expect(problemsOf({ ...good, slotSize: { ...good.slotSize, weapon: 1 } })).toEqual([
-      'slotSize: unknown kind weapon',
+      'slotSize: weapon takes no slot (it lives in the rack)',
     ]);
+    expect(problemsOf({ ...good, slotSize: { ...good.slotSize, tool: 1 } })).toEqual(['slotSize: unknown kind tool']);
     expect(problemsOf({ ...good, slotSize: 'lots' })).toHaveLength(1);
     expect(problemsOf({ ...good, storeLimit: { material: -1 } })).toHaveLength(1);
-    expect(problemsOf({ ...good, storeLimit: { weapon: 1 } })).toEqual([
-      'storeLimit: unknown kind weapon',
-    ]);
+    expect(problemsOf({ ...good, storeLimit: { tool: 1 } })).toEqual(['storeLimit: unknown kind tool']);
     expect(problemsOf({ ...good, storeLimit: [] })).toHaveLength(1);
     expect(problemsOf({ ...good, extra: 1 })).toEqual(['unknown field(s) extra']);
   });
@@ -103,16 +104,31 @@ describe('places', () => {
     expect(basketStation('store')).toBeUndefined();
   });
 
-  it('knows which kind goes where', () => {
+  it('knows which kind goes where: currency in the purse, weapons on the rack, nothing else in either', () => {
     expect(defaultPlace('currency')).toBe('purse');
     expect(defaultPlace('material')).toBe('store');
     expect(defaultPlace('sparkglass')).toBe('store');
+    expect(defaultPlace('weapon')).toBe('rack');
     expect(kindFitsPlace('currency', 'purse')).toBe(true);
     expect(kindFitsPlace('currency', 'pack')).toBe(false);
     expect(kindFitsPlace('currency', 'basket:field')).toBe(false);
+    expect(kindFitsPlace('currency', 'rack')).toBe(false);
     expect(kindFitsPlace('material', 'purse')).toBe(false);
     expect(kindFitsPlace('material', 'pack')).toBe(true);
+    expect(kindFitsPlace('material', 'rack')).toBe(false);
     expect(kindFitsPlace('sparkglass', 'basket:field')).toBe(true);
+    expect(kindFitsPlace('sparkglass', 'rack')).toBe(false);
+    // The rack (M2 Task 8) holds weapons and nothing else; a weapon is nowhere else, and takes no pack slot.
+    expect(kindFitsPlace('weapon', 'rack')).toBe(true);
+    for (const place of ['purse', 'pack', 'store', 'basket:field'] as const) expect(kindFitsPlace('weapon', place), place).toBe(false);
+    expect(isPlace('rack')).toBe(true);
+    expect(FIXED_PLACES).toEqual(['purse', 'pack', 'store', 'rack']);
+    expect(slotSizeOf('weapon')).toBeUndefined();
+    expect(slotsFor('hookblade', 1)).toBe(0);
+    expect(packSlots([{ itemId: 'hookblade', quantity: 1 }, { itemId: 'twisted-log', quantity: 1 }])).toEqual([{ itemId: 'twisted-log', quantity: 1 }]);
+    expect(canMove('rack', 'store')).toBe(false);
+    expect(canMove('store', 'rack')).toBe(false);
+    expect(canMove('pack', 'rack')).toBe(false);
   });
 
   it('allows pack and store both ways and a basket to the store, nothing else', () => {
@@ -243,6 +259,6 @@ describe('inventory API guards', () => {
   });
 
   it('every item has a default place', () => {
-    for (const item of ITEMS) expect(['purse', 'store']).toContain(defaultPlace(item.kind));
+    for (const item of ITEMS) expect(['purse', 'store', 'rack']).toContain(defaultPlace(item.kind));
   });
 });

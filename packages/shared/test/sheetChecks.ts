@@ -1,6 +1,7 @@
 import {
   hexOf,
-  isKindledPoint,
+  isSpritePoint,
+  requiredPointsFor,
   isRequiredAnim,
   kindledAnimKey,
   kindledFrameName,
@@ -182,7 +183,7 @@ export function pointProblems(name: string, sheet: SpriteSheet, finished = true)
   for (const [frame, f] of withPoints) {
     const allowed = spritePointsFor(name, animOf.get(frame) ?? '');
     for (const [point, at] of Object.entries(f.points ?? {})) {
-      if (!isKindledPoint(point)) {
+      if (!isSpritePoint(point)) {
         problems.push(`${frame}: unknown point "${point}"`);
         continue;
       }
@@ -201,7 +202,7 @@ export function pointProblems(name: string, sheet: SpriteSheet, finished = true)
   }
   if (finished) {
     for (const frame of Object.keys(sheet.frames)) {
-      for (const point of spritePointsFor(name, animOf.get(frame) ?? '')) {
+      for (const point of requiredPointsFor(name, animOf.get(frame) ?? '')) {
         if (sheet.frames[frame]?.points?.[point] === undefined) problems.push(`${frame} has no ${point} point`);
       }
     }

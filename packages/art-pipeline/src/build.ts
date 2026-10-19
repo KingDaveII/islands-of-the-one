@@ -1,6 +1,6 @@
 import {
   isRequiredAnim,
-  KINDLED_POINTS,
+  SPRITE_POINTS,
   optionalReason,
   paletteData,
   propFrameRangeProblem,
@@ -315,7 +315,7 @@ export function sheetJson(
       sourceSize: { w: cell.w, h: cell.h },
       anchor,
     };
-    const points = KINDLED_POINTS.flatMap((p) => {
+    const points = SPRITE_POINTS.flatMap((p) => {
       const at = f.points[p];
       return at ? [[p, [at.x, at.y]] as const] : [];
     });

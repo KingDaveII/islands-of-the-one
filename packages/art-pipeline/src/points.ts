@@ -1,11 +1,11 @@
-import { KINDLED_POINTS, spritePointsFor, type KindledPoint } from '@iot/shared';
+import { requiredPointsFor, SPRITE_POINTS, type SpritePoint } from '@iot/shared';
 import { cellFor, frameName, SPRITE_FACINGS, type Facing } from './contract.js';
 import { PipelineError } from './errors.js';
 import type { FrameSource, Recipe } from './recipe.js';
 
 /**
  * Named points (sprites.md §5, the recipe's `points`): where a frame's hook
- * tip or throwing hand is, in that frame's source pixels. Each point moves
+ * tip, throwing hand or rack peg is, in that frame's source pixels. Each point moves
  * with its frame (the same `flipX`, horizontal centring and `ground` shift),
  * so the sheet stores it in cell pixels. A facing built with `flipX` from
  * another facing's files inherits that facing's points, mirrored, unless it
@@ -23,7 +23,7 @@ export interface PlacedPoint {
   from?: string;
 }
 
-export type FramePoints = Partial<Record<KindledPoint, PlacedPoint>>;
+export type FramePoints = Partial<Record<SpritePoint, PlacedPoint>>;
 
 /** One frame being built: what the points step needs to know about it. */
 export interface PointFrame {
@@ -73,7 +73,7 @@ export function placePoints(recipe: Recipe, f: PointFrame): FramePoints {
   const out: FramePoints = {};
   const problems: string[] = [];
   const { cell } = cellFor(recipe.sheet);
-  for (const point of KINDLED_POINTS) {
+  for (const point of SPRITE_POINTS) {
     const listed = recipe.points[point] ?? {};
     let source = listed[f.name];
     let from: string | undefined;
@@ -108,14 +108,14 @@ export function placePoints(recipe: Recipe, f: PointFrame): FramePoints {
   return out;
 }
 
-/** Every required point a built frame lacks (`spritePointsFor`), as messages. */
+/** Every required point a built frame lacks (`requiredPointsFor`; the rack's pegs are optional), as messages. */
 export function missingPoints(
   recipe: Recipe,
   frames: readonly { name: string; anim: string; points: FramePoints }[],
 ): string[] {
   const out: string[] = [];
   for (const f of frames) {
-    for (const point of spritePointsFor(recipe.sheet, f.anim)) {
+    for (const point of requiredPointsFor(recipe.sheet, f.anim)) {
       if (!f.points[point])
         out.push(`${recipe.sheet}: ${f.name} has no ${point} point (points.${point}.${f.name})`);
     }

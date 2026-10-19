@@ -1,5 +1,5 @@
 {
-  "$comment": "Items (docs/design/inventory.md). id: kebab-case, glossary terms only, never changed once shipped (the ledger stores it); name: display name; plural: the name in a count past 1, lowercase (MAIN 2026-10-19: the plural is data, a mass noun stays, \"40 black stone\"); kind: currency | sparkglass | material | consumable | lore; stackLimit: the most of the item one place holds, or \"unlimited\"; description: LORE's card text; skill (optional): the gathering skill the tooltip's kind line names. Listed in display order.",
+  "$comment": "Items (docs/design/inventory.md). id: kebab-case, glossary terms only, never changed once shipped (the ledger stores it); name: display name; plural: the name in a count past 1, lowercase (MAIN 2026-10-19: the plural is data, a mass noun stays, \"40 black stone\"); kind: currency | sparkglass | material | consumable | lore | weapon (M2 Task 8: a weapon hangs on the rack, one of each, and carries its kit, the moves in input order as the rack shows them; empty while its combat hasn't landed); stackLimit: the most of the item one place holds, or \"unlimited\"; description: LORE's card text; skill (optional): the gathering skill the tooltip's kind line names. Listed in display order.",
   "items": [
     {
       "id": "sealed-gin",
@@ -77,6 +77,33 @@
       "stackLimit": 9999,
       "skill": "farming",
       "description": "Grain the color of old paper. It tastes of nothing and fills you up."
+    },
+    {
+      "id": "hookblade",
+      "name": "Hookblade",
+      "plural": "hookblades",
+      "kind": "weapon",
+      "stackLimit": 1,
+      "kit": ["Arc", "Hook-thrust", "Haul"],
+      "description": "A short curved blade with a hook on its back and a coil of cord at the pommel. For getting close, and pulling things closer."
+    },
+    {
+      "id": "sling",
+      "name": "Sling",
+      "plural": "slings",
+      "kind": "weapon",
+      "stackLimit": 1,
+      "kit": [],
+      "description": "A leather sling and a pouch of clay pellets, each pellet pressed with a mark. For keeping your distance."
+    },
+    {
+      "id": "keelmaul",
+      "name": "Keelmaul",
+      "plural": "keelmauls",
+      "kind": "weapon",
+      "stackLimit": 1,
+      "kit": [],
+      "description": "A maul made from a piece of ship's keel, banded in iron. Heavy. For when there's no going around."
     }
   ]
 }

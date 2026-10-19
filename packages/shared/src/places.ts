@@ -10,8 +10,8 @@ import { itemDef, ITEM_KINDS, MAX_QUANTITY, type ItemKind } from './items.js';
  * derived from the counts, never stored, so both sides draw the same grid.
  */
 
-/** The three fixed places; baskets are `basket:<stationId>`. */
-export const FIXED_PLACES = ['purse', 'pack', 'store'] as const;
+/** The four fixed places (the rack holds weapons and nothing else, M2 Task 8); baskets are `basket:<stationId>`. */
+export const FIXED_PLACES = ['purse', 'pack', 'store', 'rack'] as const;
 export type FixedPlace = (typeof FIXED_PLACES)[number];
 export type BasketPlace = `basket:${string}`;
 export type Place = FixedPlace | BasketPlace;
@@ -24,8 +24,8 @@ const STATION_ID = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 /** Shape of data/inventory.json. */
 export interface InventoryData {
   packSlots: number;
-  /** How many of a kind fill one pack slot, for every kind but currency. */
-  slotSize: Readonly<Record<Exclude<ItemKind, 'currency'>, number>>;
+  /** How many of a kind fill one pack slot, for every kind but currency (the purse) and weapons (the rack). */
+  slotSize: Readonly<Record<Exclude<ItemKind, 'currency' | 'weapon'>, number>>;
   /** The most of one item the store keeps, by kind; a kind left out has no store limit of its own. */
   storeLimit: Readonly<Partial<Record<ItemKind, number>>>;
 }
@@ -51,9 +51,9 @@ export function validateInventoryData(
   if (!isObject(slotSize)) problems.push('slotSize must be an object of counts by kind');
   else {
     for (const kind of ITEM_KINDS) {
-      if (kind === 'currency') {
+      if (kind === 'currency' || kind === 'weapon') {
         if (kind in slotSize)
-          problems.push('slotSize: currency takes no slot (it lives in the purse)');
+          problems.push(`slotSize: ${kind} takes no slot (it lives in the ${kind === 'currency' ? 'purse' : 'rack'})`);
       } else if (!isCount(slotSize[kind]))
         problems.push(`slotSize.${kind} must be a positive integer`);
     }
@@ -114,19 +114,24 @@ export function basketStation(place: Place): string | undefined {
   return place.startsWith(BASKET_PREFIX) ? place.slice(BASKET_PREFIX.length) : undefined;
 }
 
-/** The place a kind belongs in when nothing says otherwise: currency in the purse, the rest in the store. */
+/** The place a kind belongs in when nothing says otherwise: currency in the purse, weapons on the rack, the rest in the store. */
 export function defaultPlace(kind: ItemKind): FixedPlace {
-  return kind === 'currency' ? 'purse' : 'store';
+  return kind === 'currency' ? 'purse' : kind === 'weapon' ? 'rack' : 'store';
 }
 
-/** Whether an item of `kind` may be in `place` at all: currency only in the purse, nothing else there. */
+/**
+ * Whether an item of `kind` may be in `place` at all: currency only in the
+ * purse, weapons only on the rack (M2 Task 8), and nothing else in either.
+ */
 export function kindFitsPlace(kind: ItemKind, place: Place): boolean {
-  return (kind === 'currency') === (place === 'purse');
+  if (kind === 'currency') return place === 'purse';
+  if (kind === 'weapon') return place === 'rack';
+  return place !== 'purse' && place !== 'rack';
 }
 
-/** How many of a kind fill one pack slot (currency takes none: undefined). */
+/** How many of a kind fill one pack slot (currency and weapons take none: undefined). */
 export function slotSizeOf(kind: ItemKind): number | undefined {
-  return kind === 'currency' ? undefined : inventoryData.slotSize[kind];
+  return kind === 'currency' || kind === 'weapon' ? undefined : inventoryData.slotSize[kind];
 }
 
 /** The most of one item the store keeps: its kind's store limit, else the item's own stack limit. */
@@ -187,7 +192,8 @@ export function packSlots(stacks: readonly Stack[]): PackSlot[] {
 /**
  * The moves a Kindled may ask for by the API (docs/design/inventory.md):
  * pack and store both ways, and a basket to the store ("take all"). The
- * purse is never a move target, and nothing moves into a basket.
+ * purse is never a move target, nothing moves into a basket, and the rack
+ * moves nothing either way (a weapon is given, never moved).
  */
 export function canMove(from: Place, to: Place): boolean {
   if (from === to) return false;

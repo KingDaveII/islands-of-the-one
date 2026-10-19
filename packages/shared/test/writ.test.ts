@@ -351,9 +351,11 @@ describe('the wire', () => {
       plots: [],
       cycles: {},
       away: null,
+      rack: { weapons: [], chosen: null },
     };
     expect(isHoldingResponse(response)).toBe(true);
     expect(isHoldingResponse({ ...response, writ: undefined })).toBe(false);
     expect(isHoldingResponse({ ...response, kesh: undefined })).toBe(false);
+    expect(isHoldingResponse({ ...response, rack: undefined })).toBe(false);
   });
 });

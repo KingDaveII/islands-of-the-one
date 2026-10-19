@@ -9,6 +9,7 @@ import {
   validateKeshData,
   validateScaffoldData,
   wordTossLines,
+  M2_KIT,
   M2_SCAFFOLD,
   scaffoldData,
   type KeshLine,
@@ -32,9 +33,9 @@ const allLines = (): KeshLine[] => [
 ];
 
 describe('kesh.json', () => {
-  it('validates, with the four topics in order and Goodbye last', () => {
+  it('validates, with the five topics in order (The rack before Goodbye, M2 Task 8) and Goodbye last', () => {
     expect(validateKeshData(keshJson)).toEqual({ ok: true, data: keshData });
-    expect(keshData.topics.map((t) => t.title)).toEqual(['The Old Letters', 'Sparkglass', 'Where the crack points', 'Goodbye']);
+    expect(keshData.topics.map((t) => t.title)).toEqual(['The Old Letters', 'Sparkglass', 'Where the crack points', 'The rack', 'Goodbye']);
     expect(keshData.topics[keshData.topics.length - 1]?.id).toBe(KESH_GOODBYE_TOPIC);
   });
 
@@ -90,11 +91,28 @@ describe('kesh.json', () => {
     expect(topicLines(sparkglass, true, true).some((l) => l.toss !== undefined || l.only !== undefined)).toBe(false);
     expect(topicLines(sparkglass, true)).toEqual(topicLines(sparkglass, true, false));
     expect(scaffoldLines()).toEqual([...keshData.tideSliver, oneATide]);
-    // Every other topic ends with the Narrator; no toss outside the Sparkglass topic and the tide.
+    // Every other topic ends with the Narrator, but The rack, which is Kesh's three lines alone (LORE, M2 Task 8); no
+    // toss outside the Sparkglass topic and the tide.
     for (const t of keshData.topics) {
-      expect(t.lines[t.lines.length - 1]?.who, t.id).toBe('narrator');
+      if (t.id !== 'rack') expect(t.lines[t.lines.length - 1]?.who, t.id).toBe('narrator');
       if (t.id !== 'sparkglass') expect(t.lines.some((l) => l.toss !== undefined), t.id).toBe(false);
     }
+    // The rack (M2 Task 8): LORE's lines word for word, always open (no `only`, no scaffold), before Goodbye.
+    const rack = keshData.topics.find((t) => t.id === 'rack');
+    expect(keshData.topics.findIndex((t) => t.id === 'rack')).toBe(keshData.topics.length - 2);
+    expect(rack).toEqual({
+      id: 'rack',
+      title: 'The rack',
+      lines: [
+        { who: 'kesh', text: '"Pick one before you go. One blade, one trip. Nobody fights with a rack on their back."' },
+        { who: 'kesh', text: '"Hook for close. Sling for far. The maul for anything that won\'t get out of the way."' },
+        {
+          who: 'kesh',
+          text: '"Get yourself killed out there and you\'ll wake by your post, and it\'ll be hanging right here. What\'s yours finds its way home. Glass doesn\'t, not all of it."',
+        },
+      ],
+    });
+    if (rack) expect(topicLines(rack, false)).toEqual(topicLines(rack, true, true));
     // The outer quotes are the data's; LORE's speech marks are in the text. Stage directions are text.
     expect(keshData.topics.find((t) => t.id === 'goodbye')?.lines[2]?.text.startsWith('(for the first time, looking straight at the player) "And if')).toBe(true);
   });
@@ -159,16 +177,20 @@ describe('kesh.json', () => {
 });
 
 describe('scaffold.json', () => {
-  it('holds the M2 flag and validates', () => {
+  it('holds the M2 flag and the kit (the Hookblade alone, GAME DESIGN; M2 Task 8), and validates', () => {
     expect(validateScaffoldData(scaffoldJson)).toEqual({ ok: true, data: scaffoldData });
-    expect(scaffoldData).toEqual({ m2Scaffold: true });
+    expect(scaffoldData).toEqual({ m2Scaffold: true, kit: ['hookblade'] });
     expect(M2_SCAFFOLD).toBe(true);
+    expect(M2_KIT).toEqual(['hookblade']);
   });
 
-  it('refuses a missing or non-boolean flag and unknown fields', () => {
-    expect(validateScaffoldData({ m2Scaffold: 'yes' })).toEqual({ ok: false, problems: ['m2Scaffold must be a boolean'] });
-    expect(validateScaffoldData({ m2Scaffold: false, m3: true })).toEqual({ ok: false, problems: ['unknown field(s) m3'] });
-    expect(validateScaffoldData({ m2Scaffold: false })).toEqual({ ok: true, data: { m2Scaffold: false } });
+  it('refuses a missing or non-boolean flag, a kit that is not weapons, and unknown fields', () => {
+    expect(validateScaffoldData({ m2Scaffold: 'yes', kit: [] })).toEqual({ ok: false, problems: ['m2Scaffold must be a boolean'] });
+    expect(validateScaffoldData({ m2Scaffold: false, kit: [], m3: true })).toEqual({ ok: false, problems: ['unknown field(s) m3'] });
+    expect(validateScaffoldData({ m2Scaffold: false, kit: ['sling'] })).toEqual({ ok: true, data: { m2Scaffold: false, kit: ['sling'] } });
+    expect(validateScaffoldData({ m2Scaffold: false })).toEqual({ ok: false, problems: ['kit must be a list of weapon item ids (items.json, kind weapon)'] });
+    expect(validateScaffoldData({ m2Scaffold: false, kit: ['twisted-log'] })).toEqual({ ok: false, problems: ['kit must be a list of weapon item ids (items.json, kind weapon)'] });
+    expect(validateScaffoldData({ m2Scaffold: false, kit: ['hookblade', 'hookblade'] })).toEqual({ ok: false, problems: ['kit lists a weapon twice'] });
     expect(validateScaffoldData(7)).toEqual({ ok: false, problems: ['expected an object'] });
   });
 });

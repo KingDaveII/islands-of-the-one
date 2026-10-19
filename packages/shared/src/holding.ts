@@ -25,7 +25,8 @@ import { shoreProblems, type TileTemplate } from './tiles.js';
 /**
  * The station kinds: the Writ post, the twisted trees, the stone outcrop, the
  * holding store (its own station by the post, 3c; Use opens the inventory
- * with the store pane) and the weapon rack (Task 8; a reserved spot today).
+ * with the store pane) and the weapon rack (Task 8; Use opens the rack panel,
+ * where the run's weapon is chosen).
  */
 export const STATION_KINDS = ['post', 'trees', 'outcrop', 'store', 'rack'] as const;
 export type StationKind = (typeof STATION_KINDS)[number];
@@ -34,8 +35,8 @@ export type StationKind = (typeof STATION_KINDS)[number];
 export const HOLDING_GROUND = '.';
 export const HOLDING_EDGE = '#';
 export const HOLDING_START = 'P';
-/** The letter a kind's tiles carry; a kind without one (the rack) only ever stands on a reserved spot of plain ground. */
-export const STATION_TILE: Readonly<Partial<Record<StationKind, string>>> = { post: 'W', trees: 'T', outcrop: 'R', store: 'S' };
+/** The letter a kind's tiles carry (every M2 kind has one; a kind without one could only stand on a reserved spot of plain ground). */
+export const STATION_TILE: Readonly<Partial<Record<StationKind, string>>> = { post: 'W', trees: 'T', outcrop: 'R', store: 'S', rack: 'K' };
 const STATION_LETTERS = Object.values(STATION_TILE).join('');
 /** The legend's solid characters: the edge and every station letter (the sim treats them as walls). */
 export const HOLDING_SOLID = `${HOLDING_EDGE}${STATION_LETTERS}`;
@@ -86,8 +87,9 @@ export interface LayoutStation {
   /** Where it stands, one part for most stations; the trees have one per tree, and any part's interact point works the station. */
   parts: StationPart[];
   /**
-   * A spot kept for a later task (the weapon rack, Task 8): its tiles are
-   * plain ground, it draws no prop and offers no Use until then.
+   * A spot kept for a later task: its tiles are plain ground, it draws no
+   * prop and offers no Use until then. The weapon rack was one until Task 8;
+   * no spot of the shipped layout is reserved today.
    */
   reserved?: boolean;
 }
@@ -156,7 +158,7 @@ export interface StationDef {
   id: string;
   kind: StationKind;
   name: string;
-  /** Null for the post and the store (Use opens the inventory with the store pane) and the rack (reserved). */
+  /** Null for the post and the store (Use opens the inventory with the store pane) and the rack (Use opens the rack panel). */
   action: StationAction | null;
   /** The basket cycle, or null (no station has one today). */
   cycle: StationCycle | null;
@@ -172,7 +174,7 @@ export interface PlotKindDef {
   sow: PlotSowing | null;
 }
 
-/** The kinds with no action: Use opens the inventory (post, store), or nothing yet (rack). */
+/** The kinds with no action: Use opens the Writ panel (post), the inventory (store) or the rack panel (rack). */
 export const ACTIONLESS_KINDS: readonly StationKind[] = ['post', 'store', 'rack'];
 
 export interface HoldingData {

@@ -80,7 +80,7 @@ export const SPRITE_CELLS = {
  * not in a recipe: `spriteSheetSpec` returns it, so the pipeline places frames
  * on it and the sheet test checks it.
  */
-export const PROP_CELLS: Readonly<Record<'twisted-tree' | 'twisted-tree-2' | PieceProp, SpriteCellSpec>> = {
+export const PROP_CELLS: Readonly<Record<'twisted-tree' | 'twisted-tree-2' | PieceProp | 'weapon-rack', SpriteCellSpec>> = {
   'twisted-tree': spriteCellSpec(96, 128, 118),
   // The second tree (ART 2026-10-18: a forked crown, from the holding job's candidate 2) on the same cell.
   'twisted-tree-2': spriteCellSpec(96, 128, 118),
@@ -92,6 +92,9 @@ export const PROP_CELLS: Readonly<Record<'twisted-tree' | 'twisted-tree-2' | Pie
   'seed-jars': spriteCellSpec(80, 104, 96),
   // The threshing floor, 3 × 3, the chaff rising about 24 px over its far edge: 112×128.
   'threshing-floor': spriteCellSpec(112, 128, 120),
+  // The weapon rack (M2 Task 8; ART's contract): 2 × 1 tiles, at most 62 px wide and about 40 px tall, on the bottom
+  // centre of its rect like every prop: 64×72, origin (32, 64).
+  'weapon-rack': spriteCellSpec(64, 72, 64),
 };
 
 /** The field's upgrade pieces' props (M2 Task 6), by the name after `prop-`: each piece's id is its sheet's name. */
@@ -232,15 +235,29 @@ export const spriteSheets: Readonly<Record<SpriteSheetName, SpriteSheet>> = {
  * The holding's station props (docs/design/holding.md), by station kind: a
  * prop without a table each, `idle` alone, one frame (MAIN's placeholders
  * through the pipeline; ART replaces the pixels without an engine change).
- * The twisted tree stands on the tall cell (`PROP_CELLS`). A kind with no
- * entry (the reserved weapon rack, Task 8) draws no prop.
+ * The twisted tree stands on the tall cell (`PROP_CELLS`). The weapon rack's
+ * sheet (`RACK_SHEET`, M2 Task 8) is optional: drawn when it is on disk, and
+ * a placeholder box of its rect in the piece tokens until then. A kind with
+ * no entry draws no prop.
  */
-export const STATION_SHEETS: Readonly<Partial<Record<'post' | 'trees' | 'outcrop' | 'store' | 'rack', SpriteSheetName>>> = {
+export const STATION_SHEETS: Readonly<Partial<Record<'post' | 'trees' | 'outcrop' | 'store' | 'rack', string>>> = {
   post: 'prop-writ-post',
   trees: 'prop-twisted-tree',
   outcrop: 'prop-stone-outcrop',
   store: 'prop-holding-store',
+  rack: 'prop-weapon-rack',
 };
+
+/**
+ * The weapon rack's sheet (M2 Task 8; ART: "lashed twisted logs in the
+ * twisted tree's bronze and brass-dark, bound with sleeper-ochre rope"): a
+ * prop without a table, `idle` alone, on its own cell in `PROP_CELLS` (64×72,
+ * origin (32, 64)), with the prop rule's shadow, optional
+ * (`OPTIONAL_SPRITE_SHEETS`). Its frames may carry the peg points
+ * (`RACK_PEGS`), where a hung weapon's sprite goes later; nothing hangs on
+ * them in M2.
+ */
+export const RACK_SHEET = 'prop-weapon-rack';
 
 /** Kesh's needle of rock (M2 Task 3c): a solid prop in the void off the holding's south-east shore, `idle` alone, with a perch cut into its tip (ART #93). */
 export const KESH_ROCK_SHEET: SpriteSheetName = 'prop-kesh-rock';
@@ -431,6 +448,23 @@ export const KINDLED_POINTS = ['tip', 'hand'] as const;
 export type KindledPoint = (typeof KINDLED_POINTS)[number];
 
 /**
+ * The weapon rack's pegs (M2 Task 8; ART: "Please reserve the pegs in the
+ * contract now"): three named points on `prop-weapon-rack`'s `idle`, where
+ * each unequipped weapon's small "hung" sprite is drawn later, one rack frame
+ * however many weapons come. Optional: a finished rack sheet may carry any of
+ * them; no other sheet may.
+ */
+export const RACK_PEGS = ['peg_0', 'peg_1', 'peg_2'] as const;
+export type RackPeg = (typeof RACK_PEGS)[number];
+
+/** Every point name a sheet may carry: the Kindled's (Kesh's `hand` among them) and the rack's pegs. */
+export const SPRITE_POINTS = [...KINDLED_POINTS, ...RACK_PEGS] as const;
+export type SpritePoint = (typeof SPRITE_POINTS)[number];
+
+/** The points a finished sheet need not carry: the rack's pegs (ART places them when the hung sprites come). */
+export const OPTIONAL_POINTS: readonly SpritePoint[] = RACK_PEGS;
+
+/**
  * Where each point is required: on every frame and facing of these
  * animations, and allowed nowhere else (for now). The sheet test and the art
  * pipeline both read this.
@@ -445,23 +479,38 @@ export const KINDLED_POINT_ANIMS: Readonly<Record<KindledPoint, readonly string[
  * Kesh's `hand` on every frame of `toss`, where the thrown thing leaves his
  * hand (`KESH_TOSS_RELEASE_FRAME`). An NPC without an entry carries none.
  */
-export const NPC_POINT_ANIMS: Readonly<Record<string, Partial<Record<KindledPoint, readonly string[]>>>> = {
+export const NPC_POINT_ANIMS: Readonly<Record<string, Partial<Record<SpritePoint, readonly string[]>>>> = {
   kesh: { hand: ['toss'] },
 };
 
 /** The `toss` frame on which the thrown thing leaves Kesh's hand (ART: `toss_2`); the engine flies it from that frame's `hand`. */
 export const KESH_TOSS_RELEASE_FRAME = 2;
 
-/** The animations a point goes on, on a sheet: `KINDLED_POINT_ANIMS` for a Kindled sheet, `NPC_POINT_ANIMS` for an NPC's, none otherwise. */
-export function pointAnimsFor(sheetName: string, point: KindledPoint): readonly string[] {
-  if (isKindledSheet(sheetName)) return KINDLED_POINT_ANIMS[point];
+/** The same for props, by the name after `prop-`: the weapon rack's pegs on `idle` (M2 Task 8). A prop without an entry carries none. */
+export const PROP_POINT_ANIMS: Readonly<Record<string, Partial<Record<SpritePoint, readonly string[]>>>> = {
+  'weapon-rack': { peg_0: ['idle'], peg_1: ['idle'], peg_2: ['idle'] },
+};
+
+/**
+ * The animations a point goes on, on a sheet: `KINDLED_POINT_ANIMS` for a
+ * Kindled sheet, `NPC_POINT_ANIMS` for an NPC's, `PROP_POINT_ANIMS` for a
+ * prop's, none otherwise.
+ */
+export function pointAnimsFor(sheetName: string, point: SpritePoint): readonly string[] {
+  if (isKindledSheet(sheetName)) return isKindledPoint(point) ? KINDLED_POINT_ANIMS[point] : [];
   if (sheetName.startsWith('npc-')) return NPC_POINT_ANIMS[sheetName.slice('npc-'.length)]?.[point] ?? [];
+  if (sheetName.startsWith('prop-')) return PROP_POINT_ANIMS[sheetName.slice('prop-'.length)]?.[point] ?? [];
   return [];
 }
 
-/** The points every frame of an animation carries on a sheet (`pointAnimsFor`). */
-export function spritePointsFor(sheetName: string, anim: string): readonly KindledPoint[] {
-  return KINDLED_POINTS.filter((p) => pointAnimsFor(sheetName, p).includes(anim));
+/** The points a frame of an animation may carry on a sheet (`pointAnimsFor`); the required ones are those not in `OPTIONAL_POINTS`. */
+export function spritePointsFor(sheetName: string, anim: string): readonly SpritePoint[] {
+  return SPRITE_POINTS.filter((p) => pointAnimsFor(sheetName, p).includes(anim));
+}
+
+/** The points every frame of an animation must carry on a finished sheet: `spritePointsFor` less the optional ones. */
+export function requiredPointsFor(sheetName: string, anim: string): readonly SpritePoint[] {
+  return spritePointsFor(sheetName, anim).filter((p) => !OPTIONAL_POINTS.includes(p));
 }
 
 /** Whether a name is one of `KINDLED_POINTS`. */
@@ -469,11 +518,16 @@ export function isKindledPoint(name: string): name is KindledPoint {
   return (KINDLED_POINTS as readonly string[]).includes(name);
 }
 
+/** Whether a name is one of `SPRITE_POINTS`. */
+export function isSpritePoint(name: string): name is SpritePoint {
+  return (SPRITE_POINTS as readonly string[]).includes(name);
+}
+
 /**
  * A frame's point as `{ x, y }` in its cell, or null when the frame has none
  * (a frame that carries no points, a malformed entry).
  */
-export function framePoint(sheet: SpriteSheet, frame: string, point: KindledPoint): { x: number; y: number } | null {
+export function framePoint(sheet: SpriteSheet, frame: string, point: SpritePoint): { x: number; y: number } | null {
   const p = sheet.frames[frame]?.points?.[point];
   if (!p || p.length !== 2) return null;
   const [x, y] = p;
@@ -636,6 +690,8 @@ export const OPTIONAL_SPRITE_SHEETS: readonly string[] = [
   'prop-clay-channel',
   'prop-seed-jars',
   'prop-threshing-floor',
+  // The weapon rack (`RACK_SHEET`, M2 Task 8): a placeholder box until ART's sheet lands.
+  RACK_SHEET,
 ];
 
 /**

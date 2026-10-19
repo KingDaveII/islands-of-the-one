@@ -368,7 +368,7 @@ describe('the recipe guard on points', () => {
     [
       'an unknown point name',
       { hilt: { heavy_charge_S_0: [1, 1] } },
-      'points.hilt is not a point name (tip, hand)',
+      'points.hilt is not a point name (tip, hand, peg_0, peg_1, peg_2)',
     ],
     [
       'a point name that maps to a list',

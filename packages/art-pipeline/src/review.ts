@@ -1,7 +1,7 @@
 import {
   isAwaitingArt,
   isRequiredAnim,
-  KINDLED_POINTS,
+  SPRITE_POINTS,
   paletteData,
   REQUIRED_MILESTONE,
   spritePointsFor,
@@ -447,7 +447,7 @@ export function writeReport(
       if (f.interiorDreamNight !== null) r.interiorDreamNight = f.interiorDreamNight;
       if (f.despeckled !== null) r.despeckled = f.despeckled;
       if (f.masked !== null) r.masked = f.masked;
-      const points = KINDLED_POINTS.flatMap((name) => {
+      const points = SPRITE_POINTS.flatMap((name) => {
         const p = f.points[name];
         if (!p) return [];
         const entry: NonNullable<FrameReport['points']>[string] = {

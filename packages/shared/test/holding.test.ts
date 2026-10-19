@@ -218,15 +218,14 @@ describe('the layout validator', () => {
     expect(problems(withStation('stone-outcrop', (s) => ({ ...s, kind: 'trees' })))).toEqual(
       expect.arrayContaining(['first-holding: station stone-outcrop is a trees here but a outcrop in stations.json']),
     );
-    expect(problems(withCells({ '17,13': 'S' }))).toEqual([
-      'first-holding: station weapon-rack: tile (17, 13) is "S", not ground (a reserved spot)',
-    ]);
+    expect(problems(withCells({ '17,13': 'S' }))).toEqual(['first-holding: station weapon-rack: tile (17, 13) is "S", not K']);
     expect(problems(withStation('twisted-trees', (s) => ({ ...s, reserved: true })))).toEqual(
       expect.arrayContaining(['first-holding: station twisted-trees is reserved, but has an action in stations.json']),
     );
-    // A kind with no letter stands only on a reserved spot.
-    expect(problems(withStation('weapon-rack', ({ id, kind, parts }) => ({ id, kind, parts })))).toEqual([
-      'first-holding: station weapon-rack: a rack has no tile letter, so it can only stand on a reserved spot',
+    // A reserved spot's tiles are plain ground (the rack was one until Task 8; its tiles carry K now).
+    expect(problems(withStation('weapon-rack', (s) => ({ ...s, reserved: true })))).toEqual([
+      'first-holding: station weapon-rack: tile (17, 13) is "K", not ground (a reserved spot)',
+      'first-holding: station weapon-rack: tile (18, 13) is "K", not ground (a reserved spot)',
     ]);
   });
 
@@ -397,10 +396,12 @@ describe('holding.json', () => {
     expect(shipped.stations.map((s) => [s.id, s.parts.length, s.reserved ?? false])).toEqual([
       ['writ-post', 1, false],
       ['holding-store', 1, false],
-      ['weapon-rack', 1, true],
+      ['weapon-rack', 1, false],
       ['twisted-trees', 6, false],
       ['stone-outcrop', 1, false],
     ]);
+    // The rack (Task 8): 2 × 1 beside the post, no longer reserved; no spot of the shipped layout is.
+    expect(stationParts(shipped, 'weapon-rack')).toEqual([{ rect: { col: 17, row: 13, cols: 2, rows: 1 }, interact: { col: 16, row: 13 } }]);
     expect(stationParts(shipped, 'writ-post')).toEqual([{ rect: { col: 14, row: 13, cols: 1, rows: 1 }, interact: { col: 14, row: 14 } }]);
     expect(stationParts(shipped, 'field')).toEqual([]);
     expect(shipped.plots).toHaveLength(4);
@@ -477,7 +478,7 @@ describe('holding.json', () => {
       'layouts[0] (first-holding): stations[0]: unknown field(s) rect, interact',
       'layouts[0] (first-holding): stations[0].parts: must be a non-empty list of { rect, interact }',
     ]);
-    expect(problems({ ...base, layouts: [{ ...shipped, stations: shipped.stations.map((s) => (s.reserved ? { ...s, reserved: false } : s)) }] })).toEqual([
+    expect(problems({ ...base, layouts: [{ ...shipped, stations: shipped.stations.map((s) => (s.id === 'weapon-rack' ? { ...s, reserved: false } : s)) }] })).toEqual([
       'layouts[0] (first-holding): stations[2].reserved: must be true when present',
     ]);
     expect(problems({ ...base, layouts: [{ ...shipped, landing: { col: 14 } }] })).toEqual(['layouts[0] (first-holding): landing: must be { col, row }']);
@@ -505,11 +506,12 @@ describe('holding.json', () => {
     expect(named[9]).toBe('##.......o...................#');
     expect(named[18]).toBe('##..oo.............o....######');
     expect(named[14]).toBe(sim[14]);
-    // The reserved rack's spot stays ground; a row without a letter is unchanged.
-    expect(sim[13]).toBe('#.............o........oo....#');
+    // The rack's two tiles (K, Task 8) are pillars like the post's; a row without a letter is unchanged.
+    expect(shipped.tiles[13]).toBe('#.............W..KK....RR....#');
+    expect(sim[13]).toBe('#.............o..oo....oo....#');
     expect(sim[17]).toBe(shipped.tiles[17]);
-    expect(HOLDING_SOLID).toBe('#WTRS');
-    expect(STATION_TILE).toEqual({ post: 'W', trees: 'T', outcrop: 'R', store: 'S' });
+    expect(HOLDING_SOLID).toBe('#WTRSK');
+    expect(STATION_TILE).toEqual({ post: 'W', trees: 'T', outcrop: 'R', store: 'S', rack: 'K' });
   });
 
   it("matches the golden snapshot of every cell's pieces (test/golden/first-holding.tiles.txt), so a layout edit shows as a readable diff", () => {
@@ -545,6 +547,7 @@ describe('the holding API guards', () => {
     plots: shipped.plots.map((p) => ({ id: p.id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, pieces: [], level: 1, state: 'lit' as const })),
     cycles: {},
     away: null,
+    rack: { weapons: [{ itemId: 'hookblade', ready: true }], chosen: 'hookblade' },
   };
 
   it('accept the holding answer, with or without a take, and refuse unknown fields, stations and skills', () => {
