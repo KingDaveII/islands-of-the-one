@@ -1,0 +1,27 @@
+{
+  "sheet": "prop-weapon-rack",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "notes": "The holding's weapon rack (M2 Task 8; Lore §14.15: a rack of twisted logs lashed up by the post). idle: the weapon-rack job's pick (PR #112), cleaned and placed in its 64 × 72 cell by weapon_rack() in art/clean/holding/props.py (dream-night to hollow-deep, tar to wheel-brass-dark, nine rows cut from the posts below the top rail so it stands 44 px tall, near the contract's 40). The three pegs carry peg_0 … peg_2 at their tips, where a hung weapon goes later (nothing hangs in M2). The frame is cell-sized and already placed; ground on frame 0 moves nothing.",
+  "anims": {
+    "idle": {
+      "src": "art/clean/prop-weapon-rack/idle",
+      "frames": [0],
+      "ground": {
+        "ref": 0
+      }
+    }
+  },
+  "points": {
+    "peg_0": {
+      "idle_0": [27, 24]
+    },
+    "peg_1": {
+      "idle_0": [37, 24]
+    },
+    "peg_2": {
+      "idle_0": [45, 23]
+    }
+  }
+}
