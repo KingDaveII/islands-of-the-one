@@ -536,6 +536,15 @@ await page.evaluate(() => {
   window.__iot.holdingScene().refresh();
 });
 await until((x) => x.plots[0].drawn === 'faded', 'the plot drawn faded');
+// The stretch the Writ was dark in brings the While you were away card (Task 7) when there is one: a key closes it.
+for (let i = 0; i < 10; i++) {
+  if ((await holding()).away) {
+    await page.keyboard.press('KeyW');
+    await until((x) => x.away === null, 'the away card closed');
+    break;
+  }
+  await sleep(200);
+}
 await shot('14-faded-plot');
 await useAt(plotUse, 'the field');
 h = await until(
