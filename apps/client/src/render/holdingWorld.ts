@@ -10,13 +10,14 @@ import {
   type ClayTone,
   type HoldingLayout,
   type KeshTuning,
+  SPRITE_FACINGS,
   type SpriteSheet,
   type SpriteSheetName,
   type TileRect,
 } from '@iot/shared';
 import type { RoamState } from '@iot/sim';
 import { nearestPart, opaqueBoundsIn, propBase, propIdlePlays, standsOnGround } from '../game/holdingView.js';
-import { RoamGaitClock, roamPose, type KindledPose } from './animState.js';
+import { RoamGaitClock, roamPose, sheetFacing, type KindledPose } from './animState.js';
 import { PLAYER_SHEATHED_SHEET } from './characters.js';
 import { DEPTH } from './depth.js';
 import { bodyDepth, PLAYER_FEET } from './feet.js';
@@ -108,6 +109,8 @@ export class HoldingWorld {
   readonly playerSheet: SpriteSheet = spriteSheets[PLAYER_SHEATHED_SHEET];
   /** The pose shown this frame (playtests). */
   pose: KindledPose | null = null;
+  /** Sleep (M2 Task 7): the Kindled sits against the post facing `angle` (the `sit` row when the sheet has it, else `idle`), still. */
+  sitting: { angle: number } | null = null;
   /** Old Kesh on his rock. */
   private readonly kesh: Phaser.GameObjects.Sprite;
   private readonly keshBounds: { x: number; y: number; w: number; h: number } | null;
@@ -395,7 +398,7 @@ export class HoldingWorld {
     }
     this.shadowAt(snapToArt(player.x), snapToArt(player.y + PLAYER_FEET), SHADOW_W, SHADOW_H);
     const distancePx = this.stride.step(player.x, player.y);
-    const pose = roamPose(s, this.playerSheet, this.gait.update(s), { distancePx, cycles: this.anim() });
+    const pose = this.sitting ? sitPose(this.playerSheet, this.sitting.angle) : roamPose(s, this.playerSheet, this.gait.update(s), { distancePx, cycles: this.anim() });
     this.pose = pose;
     const frame = this.playerSheet.anims[pose.anim]?.frames[pose.frame] ?? this.playerSheet.anims[pose.anim]?.frames[0] ?? '';
     const texture = this.playerTexture();
@@ -405,4 +408,11 @@ export class HoldingWorld {
       .setVisible(true)
       .setDepth(bodyDepth({ kind: 'kindled' }, player.y));
   }
+}
+
+/** The sleep pose (M2 Task 7): `sit` facing the post when the sheet has the row (2 facings, S or E), else `idle` there, frame 0, held. */
+export function sitPose(sheet: SpriteSheet, angle: number): KindledPose {
+  const name = SPRITE_FACINGS.some((f) => `sit_${f}` in sheet.anims) ? 'sit' : 'idle';
+  const facing = sheetFacing(sheet, name, angle);
+  return { name, facing, anim: `${name}_${facing}`, frame: 0 };
 }

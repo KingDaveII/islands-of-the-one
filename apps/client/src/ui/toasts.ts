@@ -6,7 +6,7 @@ import { tuningStore } from '../game/tuningStore.js';
 import { fitUi, fitWorldView, viewInUi, type Rect as ViewRect } from '../game/view.js';
 import { Palette } from '../palette.js';
 import { loadLetterSheet, plotLetters, type LetterSheet } from '../render/letters.js';
-import { ITEM_ICON_TEXTURE, preloadSheets, registerSheetFrames } from '../render/sheets.js';
+import { preloadSheets, registerSheetFrames, TOAST_GLYPH_TEXTURE } from '../render/sheets.js';
 import { body, place, preloadFonts, registerFonts, type Text } from '../render/text.js';
 import { panel } from '../render/ui.js';
 
@@ -22,10 +22,11 @@ import { panel } from '../render/ui.js';
  * no blink pattern and no alpha. The strip sits at `hudRects`' toasts
  * rectangle, the newest toast at the bottom; it waits (hidden, not ageing)
  * while the away card is open; and it draws dithered while the HUD finds a
- * body behind it, like the other panels. Placeholder look until ART's M2 UI
- * kit: the glyphs are an item's icon from the item icon sheet, or an 8 × 8
- * square of the muted ink; מת in the Writ-dark toast is drawn from the
- * letter sheet, as on the HUD chip.
+ * body behind it, like the other panels. The glyphs are ART's toast glyph
+ * sheet (#109): 12 px, drawn untinted at 1 UI px per px, vertically centred
+ * on a line as tall as the glyph, one HUD gap before the text; מת in the
+ * Writ-dark toast is drawn from the letter sheet, as on the HUD chip. The
+ * panel is the existing style until ART's M2 UI kit.
  */
 
 /** The widest strip (the HUD's toasts rectangle): where it sits is decided for that width, so the strip never jumps as texts differ. */
@@ -54,8 +55,14 @@ export const toastStore = {
     this.queue.push(kind, text, glyph);
   },
   /** What the playtests read: the toasts showing, oldest first (the newest is the bottom line). */
-  snapshot(): { lines: string[]; kinds: ToastKind[]; paused: boolean; rect: UiRect } {
-    return { lines: this.queue.lines(), kinds: this.queue.toasts.map((t) => t.kind), paused: this.paused, rect: { ...this.rect } };
+  snapshot(): { lines: string[]; kinds: ToastKind[]; lives: number[]; paused: boolean; rect: UiRect } {
+    return {
+      lines: this.queue.lines(),
+      kinds: this.queue.toasts.map((t) => t.kind),
+      lives: this.queue.toasts.map((t) => Math.round(t.life)),
+      paused: this.paused,
+      rect: { ...this.rect },
+    };
   },
 };
 
@@ -129,7 +136,7 @@ export class ToastScene extends Phaser.Scene {
     row = {
       before: body(this, 0, 0, '', Palette.uiInk).setVisible(false),
       after: body(this, 0, 0, '', Palette.uiInk).setVisible(false),
-      icon: this.add.image(0, 0, ITEM_ICON_TEXTURE).setOrigin(0, 0).setVisible(false),
+      icon: this.add.image(0, 0, TOAST_GLYPH_TEXTURE).setOrigin(0, 0).setVisible(false),
     };
     this.rows.push(row);
     return row;
@@ -171,11 +178,11 @@ export class ToastScene extends Phaser.Scene {
       const p = parts[i] ?? { before: '', letters: '', after: '' };
       const ry = y + HUD_PAD + i * TOAST_ROW;
       const gx = x + HUD_PAD;
-      // The glyph: the item's 16 px icon, or the 8 × 8 square of the muted ink centred in the glyph box.
-      if (t.glyph.kind === 'item' && this.textures.exists(ITEM_ICON_TEXTURE) && this.textures.get(ITEM_ICON_TEXTURE).has(t.glyph.itemId)) {
-        row.icon.setFrame(t.glyph.itemId).setPosition(gx, ry).setVisible(true);
+      // The glyph: ART's cell for the kind, at 1 UI px per px; a square of the muted ink only if the sheet lacks it.
+      if (this.textures.exists(TOAST_GLYPH_TEXTURE) && this.textures.get(TOAST_GLYPH_TEXTURE).has(t.glyph.name)) {
+        row.icon.setFrame(t.glyph.name).setPosition(gx, ry).setVisible(true);
       } else {
-        this.g.fillStyle(Palette.uiInkMuted, 1).fillRect(gx + 4, ry + 4, 8, 8);
+        this.g.fillStyle(Palette.uiInkMuted, 1).fillRect(gx + 2, ry + 2, 8, 8);
       }
       let tx = gx + TOAST_GLYPH + TOAST_GAP;
       const ty = ry + (TOAST_ROW - 8) / 2;

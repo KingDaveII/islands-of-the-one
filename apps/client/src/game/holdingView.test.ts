@@ -230,7 +230,7 @@ describe('the station panel', () => {
     expect(stationLines('twisted-trees', dark, now)?.next).toBe('Resting while your Writ is dark.');
     // Not sown: only the note and SOW.
     expect(stationLines('plot-2', fields, now)).toEqual({
-      title: 'FIELD',
+      title: 'FIELD 2',
       letters: 'אדמה',
       level: 'Level 1',
       rate: null,
@@ -248,7 +248,7 @@ describe('the station panel', () => {
     });
     // Faded, with ישן: the sentence with its divider, the faded line, the basket kept, no buttons.
     expect(stationLines('plot-3', fields, now)).toEqual({
-      title: 'FIELD',
+      title: 'OLD FIELD',
       letters: 'אדמה · ישן',
       level: 'Level 1',
       rate: null,
@@ -392,16 +392,16 @@ describe('Kesh across the water (M2 Task 4b)', () => {
     expect(rects.purse).toEqual({ x: 480 - 8 - 41, y: 8, w: 41, h: 18 });
     expect(rects.chip).toEqual({ x: 240 - 61, y: 270 - 8 - 26, w: 122, h: 26 });
     expect(rects.pack).toEqual({ x: 480 - 8 - 68, y: 270 - 8 - 16, w: 68, h: 16 });
-    // The toast strip (Task 7): bottom left at the inset, two lines of 16 at the widest text behind a 16 px glyph.
-    expect(rects.toasts).toEqual({ x: 8, y: 270 - 8 - 40, w: 4 + 16 + 3 + 100 + 4, h: 40 });
+    // The toast strip (Task 7): bottom left at the inset, two lines of 12 at the widest text behind ART's 12 px glyph and a HUD gap.
+    expect(rects.toasts).toEqual({ x: 8, y: 270 - 8 - 32, w: 4 + 12 + 4 + 100 + 4, h: 32 });
     // A frame too narrow for the strip beside the chip lifts it above the chip's band.
     const narrow = hudRects({ x: 0, y: 0, w: 320, h: 270 }, { gin: 20, pack: 60, name: null, letters: 0, chip: 70, toast: 100 });
     expect(narrow.toasts.y + narrow.toasts.h).toBe(270 - 8 - 26 - 2);
     expect(rectsOverlap(narrow.toasts, narrow.chip)).toBe(false);
     expect(toastStripBottom({ x: 0, y: 0, w: 480, h: 270 }, 127)).toBe(262);
     expect(toastStripBottom({ x: 0, y: 0, w: 320, h: 270 }, 127)).toBe(234);
-    expect(TOAST_MAX * TOAST_ROW + 8).toBe(40);
-    expect(TOAST_GLYPH + TOAST_GAP).toBe(19);
+    expect(TOAST_MAX * TOAST_ROW + 8).toBe(32);
+    expect(TOAST_GLYPH + TOAST_GAP).toBe(16);
     // Named: the Name and its letters add their rows, and the widest of the three sets the width.
     expect(hudRects(frame, { gin: 20, pack: 60, name: 100, letters: 96, chip: 70, toast: 100 }).writ).toEqual({ x: 8, y: 8, w: 108, h: 37 });
     expect(rectsOverlap(rects.chip, rects.pack)).toBe(false);

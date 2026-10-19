@@ -53,10 +53,12 @@ export interface WordDef {
   builds: string | null;
   /** For a Virtue: what it asks of the plot. */
   effect: WordEffect | null;
+  /** For a Virtue: LORE's epithet for a plot named with it in the Latin UI ("Old" → "Old field"; Lore §14.22). */
+  epithet: string | null;
 }
 
 const WORD_ID = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
-const KEYS = ['id', 'letters', 'say', 'meaning', 'slot', 'element', 'card', 'builds', 'effect'];
+const KEYS = ['id', 'letters', 'say', 'meaning', 'slot', 'element', 'card', 'builds', 'effect', 'epithet'];
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -117,7 +119,7 @@ export function validateWordsData(
     }
     const extra = Object.keys(entry).filter((k) => !KEYS.includes(k));
     if (extra.length > 0) problems.push(`${at}: unknown field(s) ${extra.join(', ')}`);
-    const { id, letters, say, meaning, slot, element, card, builds, effect } = entry;
+    const { id, letters, say, meaning, slot, element, card, builds, effect, epithet } = entry;
     if (typeof id !== 'string' || !WORD_ID.test(id)) {
       problems.push(`${at}: id must be kebab-case (it is stored)`);
       return;
@@ -145,10 +147,13 @@ export function validateWordsData(
       if (typeof builds !== 'string' || !plotKindIds.includes(builds))
         problems.push(`${where}: a Ground builds a plot kind of stations.json (${plotKindIds.join(', ') || 'none'})`);
       if (effect !== undefined) problems.push(`${where}: a Ground has no effect`);
+      if (epithet !== undefined) problems.push(`${where}: a Ground has no epithet`);
     } else if (slot === 'virtue') {
       if (builds !== undefined) problems.push(`${where}: a Virtue builds nothing`);
       if (effect === undefined) problems.push(`${where}: a Virtue needs an effect`);
       else parsedEffect = parseEffect(effect, where, problems);
+      if (typeof epithet !== 'string' || epithet.trim() === '' || !isDrawable(epithet))
+        problems.push(`${where}: a Virtue needs an epithet the game can draw`);
     }
     if (problems.length > before) return;
     words.push({
@@ -161,6 +166,7 @@ export function validateWordsData(
       card: card as string,
       builds: typeof builds === 'string' ? builds : null,
       effect: parsedEffect,
+      epithet: typeof epithet === 'string' ? epithet : null,
     });
   });
   return problems.length > 0 ? { ok: false, problems } : { ok: true, words };

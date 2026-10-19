@@ -127,7 +127,7 @@ It exists because the combat sheet is nearly full: 2048 × 2048 holds 525 cells 
 |---|---|---|---|---|---|---|
 | `idle`, `walk`, `run`, `run_start`, `run_stop` | 2, 6, 8, 2, 2 | 2, 10, 16, 20, 20 | as the combat rows | 8 | M2, required | the same counts, rates and playback as the combat sheet's rows of the same name; no `run_back` (backpedalling is combat only) |
 | `carry_idle`, `carry_walk` | 2, 6 | 2, 10 | yes | 4 | M2 | both arms round the Glowing Shell (hour two) |
-| `sit` | 1 | — | hold | 2 (S, E) | M2 | the ebb, by the post |
+| `sit` | 1 | — | hold | 2 (S, E) | M2 | the ebb, by the post; sleep (M2 Task 7, [`holding.md`](holding.md) §13) sits the Kindled against the post on it for `sleepSitMs` before the cut, facing the post (S or E), and holds `idle` while a sheet lacks the row |
 
 M2 adds the station animations (`chop`, `hoe`, `fish`, `knead`: 4 frames, 8 fps, 2 facings) here too. The
 holding draws the Kindled from its sheathed sheet (`PLAYER_SHEATHED_SHEET`, `kindled-ash-sheathed`, ART #87); encounters keep the combat sheet.
@@ -340,9 +340,12 @@ The contract's version, the only one the engine loads (`SPRITE_SHEET_VERSION`); 
 ### Engine sheets
 
 The cell sheets the engine draws its own effects from, next to the sprites in `packages/shared/assets/`:
-`controller-glyphs`, `hookblade-fx` (chain link, hook, charge spark) and `item-icons` (one 16 px cell per
+`controller-glyphs`, `hookblade-fx` (chain link, hook, charge spark), `item-icons` (one 16 px cell per
 item in `items.json`, named by the item's id, drawn in its own colours, `meta.tinted` false; the test checks the
-cells match `items.json` exactly). Each is a PNG plus a JSON of named
+cells match `items.json` exactly) and `toast-glyphs` (ART, #109; M2 Task 7: one 12 px cell per toast kind,
+`skill-woodcutting`, `skill-mining`, `skill-farming`, `writ-low`, `writ-dark`, `store-full`, `pack-full`, drawn in
+colour, `meta.tinted` false; the toast strip draws one before each line at 1 UI px per px, vertically centred, one
+HUD gap before the text, [`holding.md`](holding.md) §13). Each is a PNG plus a JSON of named
 `cells` (`{ name, x, y, w, h }`), checked by `packages/shared/test/sheets.test.ts`. `hookblade-fx.json` also
 carries its anims (`charge_spark`), `chain` (`link`, `taut`, `spacing`) and `hook` (`flight`, `set`, `origin`),
 and a `meta` block (`engineSheetMeta` in `packages/shared/src/sheets.ts`):

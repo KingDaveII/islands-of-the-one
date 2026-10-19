@@ -394,9 +394,9 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
       cycles,
       away: null,
     };
-    // The away card waiting to be seen (M2 Task 7), with the Writ as it stands now.
+    // The away card waiting to be seen (M2 Task 7); its Writ line reads the answer's `writ`.
     const card = await awayCardOf(tx, k.id);
-    if (card) out.away = awayCardView(card, stored, now);
+    if (card) out.away = awayCardView(card);
     if (take) out.take = take;
     return out;
   }

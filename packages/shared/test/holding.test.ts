@@ -434,6 +434,7 @@ describe('holding.json', () => {
         awayCardMinMs: 1800000,
         toastMs: 3000,
         toastMax: 2,
+        sleepSitMs: 600,
         sleepMs: 1500,
         layouts: [
           {
@@ -456,13 +457,14 @@ describe('holding.json', () => {
       const r = validateHoldingData(data, stations);
       return r.ok ? [] : r.problems;
     };
-    const base = { offlineCapHours: 48, heartbeatMs: 30000, cameraMarginTiles: 6, awayCardMinMs: 1800000, toastMs: 3000, toastMax: 2, sleepMs: 1500, layouts: [shipped] };
+    const base = { offlineCapHours: 48, heartbeatMs: 30000, cameraMarginTiles: 6, awayCardMinMs: 1800000, toastMs: 3000, toastMax: 2, sleepSitMs: 600, sleepMs: 1500, layouts: [shipped] };
     expect(problems(base)).toEqual([]);
     expect(problems({ ...base, offlineCapHours: 0 })).toEqual(['offlineCapHours must be a positive integer']);
     expect(problems({ ...base, awayCardMinMs: 0.5 })).toEqual(['awayCardMinMs must be a positive integer']);
-    expect(problems({ ...base, toastMs: 0, toastMax: -1, sleepMs: 'soon' })).toEqual([
+    expect(problems({ ...base, toastMs: 0, toastMax: -1, sleepSitMs: 0, sleepMs: 'soon' })).toEqual([
       'toastMs must be a positive integer',
       'toastMax must be a positive integer',
+      'sleepSitMs must be a positive integer',
       'sleepMs must be a positive integer',
     ]);
     expect(problems({ ...base, cameraMarginTiles: 0 })).toEqual(['cameraMarginTiles must be a positive integer']);
@@ -560,7 +562,7 @@ describe('the holding API guards', () => {
     const withoutAway: Record<string, unknown> = { ...response };
     delete withoutAway.away;
     expect(isHoldingResponse(withoutAway)).toBe(false);
-    const card = { from: '2026-10-17T06:00:00.000Z', to: response.now, made: { 'twisted-trees': { itemId: 'twisted-log', quantity: 18 } }, levels: { woodcutting: { from: 1, to: 2 } }, writ: response.writ };
+    const card = { from: '2026-10-17T06:00:00.000Z', to: response.now, made: { 'twisted-trees': { itemId: 'twisted-log', quantity: 18 } }, levels: { woodcutting: { from: 1, to: 2 } } };
     expect(isHoldingResponse({ ...response, away: card })).toBe(true);
     expect(isHoldingResponse({ ...response, away: { ...card, made: { field: { itemId: 'twisted-log', quantity: 1 } } } })).toBe(false);
     expect(isHoldingResponse({ ...response, away: { ...card, levels: { cooking: { from: 1, to: 2 } } } })).toBe(false);

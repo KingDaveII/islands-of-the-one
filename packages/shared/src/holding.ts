@@ -184,6 +184,8 @@ export interface HoldingData {
   toastMs: number;
   /** How many toasts stack at most. */
   toastMax: number;
+  /** How long the Kindled sits against the post (or stands, without a `sit` row) before the cut to the sleep screen. */
+  sleepSitMs: number;
   /** How long the sleep screen holds before the log-out lands on the start screen. */
   sleepMs: number;
   /** How far past every edge of the layout the camera may scroll into the void (tiles), so the HUD never covers the shore or Kesh's rock. */
@@ -636,7 +638,7 @@ export function validateHoldingData(
   if (!isObject(data)) return { ok: false, problems: ['expected an object'] };
   const problems: string[] = [];
   const extra = Object.keys(data).filter(
-    (k) => !['$comment', 'offlineCapHours', 'heartbeatMs', 'cameraMarginTiles', 'awayCardMinMs', 'toastMs', 'toastMax', 'sleepMs', 'layouts'].includes(k),
+    (k) => !['$comment', 'offlineCapHours', 'heartbeatMs', 'cameraMarginTiles', 'awayCardMinMs', 'toastMs', 'toastMax', 'sleepSitMs', 'sleepMs', 'layouts'].includes(k),
   );
   if (extra.length > 0) problems.push(`unknown field(s) ${extra.join(', ')}`);
   if (!isCount(data.offlineCapHours)) problems.push('offlineCapHours must be a positive integer');
@@ -645,6 +647,7 @@ export function validateHoldingData(
   if (!isCount(data.awayCardMinMs)) problems.push('awayCardMinMs must be a positive integer');
   if (!isCount(data.toastMs)) problems.push('toastMs must be a positive integer');
   if (!isCount(data.toastMax)) problems.push('toastMax must be a positive integer');
+  if (!isCount(data.sleepSitMs)) problems.push('sleepSitMs must be a positive integer');
   if (!isCount(data.sleepMs)) problems.push('sleepMs must be a positive integer');
   const layouts: HoldingLayout[] = [];
   if (!Array.isArray(data.layouts) || data.layouts.length === 0) problems.push('layouts must be a non-empty list');
@@ -760,6 +763,7 @@ export function validateHoldingData(
       awayCardMinMs: data.awayCardMinMs as number,
       toastMs: data.toastMs as number,
       toastMax: data.toastMax as number,
+      sleepSitMs: data.sleepSitMs as number,
       sleepMs: data.sleepMs as number,
       cameraMarginTiles: data.cameraMarginTiles as number,
       layouts,
@@ -824,6 +828,8 @@ export const AWAY_CARD_MIN_MS: number = holdingData.awayCardMinMs;
 export const TOAST_MS: number = holdingData.toastMs;
 /** How many toasts stack at most. */
 export const TOAST_MAX: number = holdingData.toastMax;
+/** How long the Kindled sits against the post (or stands, without a `sit` row) before the cut to the sleep screen. */
+export const SLEEP_SIT_MS: number = holdingData.sleepSitMs;
 /** How long the sleep screen holds before the log-out lands on the start screen. */
 export const SLEEP_MS: number = holdingData.sleepMs;
 /** Every Kindled's holding today: the one layout. */

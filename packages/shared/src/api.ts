@@ -329,8 +329,8 @@ export interface AwayLevel {
  * absence of `awayCardMinMs` or more between two heartbeats: the absence
  * (`from` the last heartbeat before it, `to` the settle's now; ISO 8601),
  * what each place made into its basket meanwhile (by station or plot id),
- * the skills whose level rose (by skill), and the Writ as it stands at the
- * answer, so the card's Writ line reads the Writ now. The card stays in the
+ * and the skills whose level rose (by skill); the card's Writ line reads the
+ * answer's own `writ`, so it says the Writ now. The card stays in the
  * answer until POST /api/holding/away/seen with its `to` dismisses it; an
  * absence recorded while it waits merges into it.
  */
@@ -339,7 +339,6 @@ export interface AwayCard {
   to: string;
   made: Record<string, InventoryEntry>;
   levels: Partial<Record<Skill, AwayLevel>>;
-  writ: WritView;
 }
 
 /** POST /api/holding/away/seen: the card's `to` as drawn; the row goes only if it still ends there. */
@@ -714,19 +713,18 @@ export function isAwayLevel(value: unknown): value is AwayLevel {
   return isObject(value) && hasOnly(value, ['from', 'to']) && isPositiveInt(value.from) && isPositiveInt(value.to) && value.to > value.from;
 }
 
-/** The away card on the wire: an absence that ends after it begins, counts per station or plot, levels per skill, and the Writ now. */
+/** The away card on the wire: an absence that ends after it begins, counts per station or plot, levels per skill. */
 export function isAwayCard(value: unknown): value is AwayCard {
   return (
     isObject(value) &&
-    hasOnly(value, ['from', 'to', 'made', 'levels', 'writ']) &&
+    hasOnly(value, ['from', 'to', 'made', 'levels']) &&
     isIsoDate(value.from) &&
     isIsoDate(value.to) &&
     Date.parse(value.to) > Date.parse(value.from) &&
     isObject(value.made) &&
     Object.entries(value.made).every(([k, v]) => isHoldingStationId(k) && isInventoryEntry(v)) &&
     isObject(value.levels) &&
-    Object.entries(value.levels).every(([k, v]) => isSkill(k) && isAwayLevel(v)) &&
-    isWritView(value.writ)
+    Object.entries(value.levels).every(([k, v]) => isSkill(k) && isAwayLevel(v))
   );
 }
 

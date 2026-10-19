@@ -1,10 +1,9 @@
 import {
-  PLOT_KINDS,
   SKILLS,
-  STATIONS,
   TOAST_MAX,
   TOAST_MS,
   TOAST_TEXT,
+  toastGlyphName,
   writFromView,
   writView,
   type HoldingResponse,
@@ -27,8 +26,10 @@ import {
  * strip (ui/toasts.ts) draws the queue; the scenes feed the triggers.
  */
 
-/** A toast's glyph, placeholders until ART's M2 UI kit: an item's icon from the item icon sheet, or an 8 × 8 square of the muted ink. */
-export type ToastGlyph = { kind: 'item'; itemId: string } | { kind: 'square' };
+/** A toast's glyph: a cell of ART's toast glyph sheet (#109), by name. */
+export interface ToastGlyph {
+  name: string;
+}
 
 export interface Toast {
   kind: ToastKind;
@@ -76,17 +77,9 @@ export class ToastQueue {
   }
 }
 
-/** The item a skill makes (the placeholder glyph of a skill-level toast): the first station or plot kind whose action trains it. */
-export function skillItem(skill: Skill): string | null {
-  for (const s of STATIONS) if (s.action?.skill === skill) return s.action.itemId;
-  for (const k of PLOT_KINDS) if (k.action.skill === skill) return k.action.itemId;
-  return null;
-}
-
-/** A kind's placeholder glyph: the item's own icon for store-full, the skill's item for skill-level, the square for the rest. */
-export function toastGlyph(kind: ToastKind, itemId: string | null = null): ToastGlyph {
-  if ((kind === 'store-full' || kind === 'skill-level') && itemId !== null) return { kind: 'item', itemId };
-  return { kind: 'square' };
+/** A kind's glyph (ART): a skill level the skill's own (`skill-woodcutting`), store full the store's bin, never the item's icon, the rest by kind. */
+export function toastGlyph(kind: ToastKind, skill: Skill | null = null): ToastGlyph {
+  return { name: toastGlyphName(kind, skill) };
 }
 
 /**
@@ -107,13 +100,13 @@ export function levelUps(prev: HoldingResponse | null, next: HoldingResponse): {
 
 /** The skill-level toast's text and glyph. */
 export function skillLevelToast(skill: Skill, level: number): { text: string; glyph: ToastGlyph } {
-  return { text: TOAST_TEXT.skillLevel(skill, level), glyph: toastGlyph('skill-level', skillItem(skill)) };
+  return { text: TOAST_TEXT.skillLevel(skill, level), glyph: toastGlyph('skill-level', skill) };
 }
 
 /** The store-full toast after a take-all that left some of a stack in the basket (`take.left`), or null when all moved. */
 export function storeFullToast(take: HoldingTake): { text: string; glyph: ToastGlyph } | null {
   const stuck = take.left[0];
-  return stuck ? { text: TOAST_TEXT.storeFull(stuck.itemId), glyph: toastGlyph('store-full', stuck.itemId) } : null;
+  return stuck ? { text: TOAST_TEXT.storeFull(stuck.itemId), glyph: toastGlyph('store-full') } : null;
 }
 
 /** The pack-full toast (anything refused as `pack-full`). */

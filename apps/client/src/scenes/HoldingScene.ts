@@ -10,7 +10,9 @@ import {
   layoutPlot,
   PLOT_TEXT,
   plotKindDef,
+  plotLabel,
   shapeLetters,
+  SLEEP_SIT_MS,
   TILE_SIZE_PX,
   TOAST_TEXT,
   wordDef,
@@ -372,6 +374,7 @@ export class HoldingScene extends Phaser.Scene {
       tone,
       () => tuningStore.get().kesh,
     );
+    this.world.sitting = null;
     this.plots = new PlotsLayer(this, this.worldLayer, layout, () => tuningStore.get().plots);
     this.plots.setSheet(this.letterSheet);
     this.pieces = new PiecesLayer(this, this.worldLayer, this.hudLayer, layout, () => tuningStore.get().plots, (x, y) => this.worldToUi(x, y));
@@ -953,13 +956,26 @@ export class HoldingScene extends Phaser.Scene {
   }
 
   /**
-   * SLEEP (M2 Task 7): the panel closes and the scene cuts, with no fade, to the sleep scene, which logs out after
-   * `sleepMs`. This scene's shutdown stops the heartbeat; the active action keeps running on the server up to the cap.
+   * SLEEP (M2 Task 7, GAME DESIGN): the panel closes, the Kindled turns to the post and sits down against it (the
+   * `sit` row when the sheet has it, else idle, held) for `sleepSitMs`, then the scene cuts, with no fade, to the
+   * sleep scene, which logs out after `sleepMs`. This scene's shutdown stops the heartbeat; the active action keeps
+   * running on the server up to the cap.
    */
   private sleep(): void {
+    if (this.world.sitting) return;
     this.closeWritPanel();
     this.closeNameScreen();
-    this.scene.start('sleep');
+    this.session.held = true;
+    const p = this.session.position();
+    const post = this.session.layout.stations.find((s) => s.kind === 'post')?.parts[0];
+    const at = post ? { x: (post.rect.col + post.rect.cols / 2) * TILE_SIZE_PX, y: (post.rect.row + post.rect.rows) * TILE_SIZE_PX } : p;
+    // The facing in the sim's 1/4096 turn, 0 east, screen y down.
+    const angle = Math.round((Math.atan2(at.y - p.y, at.x - p.x) / (2 * Math.PI)) * 4096) & 4095;
+    this.world.sitting = { angle };
+    const dark = (this.response?.writ.chargeMs ?? 1) === 0;
+    this.time.delayedCall(SLEEP_SIT_MS, () => {
+      if (this.alive) this.scene.start('sleep', { dark });
+    });
   }
 
   // --- The away card (M2 Task 7) -------------------------------------------------
@@ -980,14 +996,16 @@ export class HoldingScene extends Phaser.Scene {
     if (card.to === this.awayDismissedTo) return;
     this.awayCard = card;
     this.awayDismiss = false;
-    const lines = awayLines(card, this.session.layout, this.response?.plots ?? [], this.serverNow());
+    const writ = this.response?.writ;
+    if (!writ) return;
+    const lines = awayLines(card, this.session.layout, this.response?.plots ?? [], writ, this.serverNow());
     this.away = new AwayCardPanel({ scene: this, layer: this.hudLayer, frame: () => this.frame }, lines);
     // The Kindled stands still; the toasts wait.
     this.session.held = true;
     toastStore.paused = true;
     // The card's Writ line has told this drain: the Writ toasts don't repeat it.
-    if (card.writ.name !== null) {
-      const due = writToastsDue(card.writ, this.serverNow());
+    if (writ.name !== null) {
+      const due = writToastsDue(writ, this.serverNow());
       if (due.low) this.writMemory.mark('writLow', this.who(), due.emptyAt);
       if (due.dark) this.writMemory.mark('writDark', this.who(), due.emptyAt);
     }
@@ -1023,11 +1041,11 @@ export class HoldingScene extends Phaser.Scene {
     const who = this.who();
     if (due.low && !this.writMemory.told('writLow', who, due.emptyAt)) {
       this.writMemory.mark('writLow', who, due.emptyAt);
-      toastStore.post('writ-low', TOAST_TEXT.WRIT_LOW, { kind: 'square' });
+      toastStore.post('writ-low', TOAST_TEXT.WRIT_LOW, { name: 'writ-low' });
     }
     if (due.dark && !this.writMemory.told('writDark', who, due.emptyAt)) {
       this.writMemory.mark('writDark', who, due.emptyAt);
-      toastStore.post('writ-dark', TOAST_TEXT.WRIT_DARK, { kind: 'square' });
+      toastStore.post('writ-dark', TOAST_TEXT.WRIT_DARK, { name: 'writ-dark' });
     }
   }
 
@@ -1106,7 +1124,9 @@ export class HoldingScene extends Phaser.Scene {
       this.nameScreen !== null ||
       this.talkBox !== null ||
       this.plotPanel !== null ||
-      this.build !== null;
+      this.build !== null ||
+      this.away !== null ||
+      this.world.sitting !== null;
     const pointer = this.input.activePointer;
     const w = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
     const plot =
@@ -1211,7 +1231,8 @@ export class HoldingScene extends Phaser.Scene {
       return;
     }
     if (this.selectedPiece && !view.pieces.some((p) => p.pieceId === this.selectedPiece)) this.selectedPiece = null;
-    b.sync(buildHeader(view, kind.name, r.writ.lineCount), pieceRows(kind.id, view, this.inventory, r.writ.lineCount, r.skills), this.selectedPiece);
+    // The header names the plot by its label (LORE: "Old field, level 2"; M2 Task 7).
+    b.sync(buildHeader(view, plotLabel(view, r.plots), r.writ.lineCount), pieceRows(kind.id, view, this.inventory, r.writ.lineCount, r.skills), this.selectedPiece);
   }
 
   /** A row of the list picked: its ghost follows the pointer (or the cursor) from here on. */
@@ -1871,7 +1892,8 @@ export class HoldingScene extends Phaser.Scene {
       this.talkBox !== null ||
       this.plotPanel !== null ||
       this.build !== null ||
-      this.away !== null;
+      this.away !== null ||
+      this.world.sitting !== null;
     const p = this.session.position();
     const talk =
       !open && nearKesh(p.x, p.y, tuningStore.get().juice.promptRangePx, this.session.layout);
@@ -2036,6 +2058,8 @@ export class HoldingScene extends Phaser.Scene {
     awayRect: ViewRect | null;
     /** The toasts showing, oldest first. */
     toasts: ReturnType<typeof toastStore.snapshot>;
+    /** Sleep's moment at the post: the Kindled sitting (or standing, without a sit row) before the cut. */
+    sitting: boolean;
   } {
     const s = this.session.state;
     return {
@@ -2071,6 +2095,7 @@ export class HoldingScene extends Phaser.Scene {
       away: this.away?.snapshot() ?? null,
       awayRect: this.away?.rect() ?? null,
       toasts: toastStore.snapshot(),
+      sitting: this.world.sitting !== null,
     };
   }
 

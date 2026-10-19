@@ -1,4 +1,4 @@
-import { AWAY_CARD_MIN_MS, isSkill, levelFromXp, SKILLS, toWritView, type AwayCard, type AwayLevel, type InventoryEntry, type Skill, type WritStored } from '@iot/shared';
+import { AWAY_CARD_MIN_MS, isSkill, levelFromXp, SKILLS, type AwayCard, type AwayLevel, type InventoryEntry, type Skill } from '@iot/shared';
 import { and, eq } from 'drizzle-orm';
 import type { Database, Transaction } from '../db/client.js';
 import { awayCards, skillXp, type AwayCardRow } from '../db/schema.js';
@@ -119,16 +119,10 @@ export async function awayCardOf(db: Database | Transaction, kindledId: string):
   return row;
 }
 
-/** The row on the wire, with the Writ as it stands at `now` so the card's Writ line reads the Writ now. */
-export function awayCardView(row: AwayCardRow, writ: WritStored, now: Date): AwayCard {
+/** The row on the wire (the card's Writ line reads the answer's own Writ view). */
+export function awayCardView(row: AwayCardRow): AwayCard {
   const record = recordOf(row);
-  return {
-    from: record.fromAt.toISOString(),
-    to: record.toAt.toISOString(),
-    made: record.made,
-    levels: record.levels,
-    writ: toWritView(writ, now.getTime()),
-  };
+  return { from: record.fromAt.toISOString(), to: record.toAt.toISOString(), made: record.made, levels: record.levels };
 }
 
 /** Dismisses the card: the row goes only while its `to_at` still equals `to`. Whether a row went. */

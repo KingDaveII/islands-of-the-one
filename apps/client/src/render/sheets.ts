@@ -1,8 +1,9 @@
 import type Phaser from 'phaser';
-import { controllerGlyphsSheet, hookbladeFxSheet, itemIconsSheet, type CellSheet } from '@iot/shared';
+import { controllerGlyphsSheet, hookbladeFxSheet, itemIconsSheet, toastGlyphsSheet, type CellSheet } from '@iot/shared';
 import glyphsUrl from '@iot/shared/assets/controller-glyphs-12px.png';
 import hookbladeUrl from '@iot/shared/assets/hookblade-fx.png';
 import itemIconsUrl from '@iot/shared/assets/item-icons-16px.png';
+import toastGlyphsUrl from '@iot/shared/assets/toast-glyphs-12px.png';
 
 /**
  * The engine's cell sheets (packages/shared/assets, white on transparent)
@@ -14,11 +15,14 @@ export const GLYPH_TEXTURE = 'controller-glyphs';
 export const HOOKBLADE_TEXTURE = 'hookblade-fx';
 /** ART's item icons (#77): a frame per item id, 16 px, in their own colours. */
 export const ITEM_ICON_TEXTURE = 'item-icons';
+/** ART's toast glyphs (#109, M2 Task 7): a frame per toast kind (a skill level per skill), 12 px, in their own colours. */
+export const TOAST_GLYPH_TEXTURE = 'toast-glyphs';
 
 const SHEETS: [string, string, CellSheet][] = [
   [GLYPH_TEXTURE, glyphsUrl, controllerGlyphsSheet],
   [HOOKBLADE_TEXTURE, hookbladeUrl, hookbladeFxSheet],
   [ITEM_ICON_TEXTURE, itemIconsUrl, itemIconsSheet],
+  [TOAST_GLYPH_TEXTURE, toastGlyphsUrl, toastGlyphsSheet],
 ];
 
 export function preloadSheets(scene: Phaser.Scene): void {

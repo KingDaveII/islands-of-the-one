@@ -8,12 +8,14 @@ import {
   PACK_SLOTS,
   PLOT_TEXT,
   plotKindDef,
+  plotLabel,
   plotLevel,
   SKILL_NAMES,
   SKILLS,
   stationDef,
   TILE_SIZE_PX,
   tiny5Font,
+  TOAST_GLYPH_PX,
   TOAST_MAX,
   TOAST_TEXT,
   type HoldingActivity,
@@ -197,7 +199,8 @@ export function stationLines(stationId: string, r: HoldingResponse | null, serve
   const working = r?.activity?.stationId === stationId;
   const view = r?.skills[action.skill];
   const rate = `${countOf(action.itemId, action.quantity)} every ${action.cycleMs / 1000} s`;
-  const title = displayable(place.name.toUpperCase());
+  // A plot is called by its label (LORE: the Virtue's epithet and the kind, "Old field"; M2 Task 7), a station by its name.
+  const title = displayable((plot ? plotLabel(plot, r?.plots ?? []) : place.name).toUpperCase());
   const letters = plot ? sentenceLetters(plot.ground, plot.virtue) : null;
   const level = plot ? `${PLOT_TEXT.LEVEL}${plotLevel(plot.pieces)}` : null;
   const basketLine = basket.length ? `Basket: ${basket.map((e) => countOf(e.itemId, e.quantity)).join(', ')}` : 'Basket: empty';
@@ -387,11 +390,11 @@ export const HUD_INSET = 8;
 export const HUD_PAD = 4;
 export const HUD_CHIP_W = 122;
 export const HUD_CHIP_H = 26;
-/** A toast's glyph box and line (UI px): ART's 16 px item icons are the placeholder glyphs, so a line is 16 tall (M2 Task 7). */
-export const TOAST_GLYPH = 16;
-export const TOAST_ROW = 16;
-/** Between a toast's glyph and its text. */
-export const TOAST_GAP = 3;
+/** A toast's glyph box and line (UI px): ART's 12 px glyphs at 1 UI px per px, a line as tall as the glyph (M2 Task 7, #109). */
+export const TOAST_GLYPH = TOAST_GLYPH_PX;
+export const TOAST_ROW = TOAST_GLYPH_PX;
+/** Between a toast's glyph and its text: one HUD gap (ART). */
+export const TOAST_GAP = HUD_PAD;
 
 /** The widest toast text of M2 (UI px, the body font): what the toast strip's rectangle is sized for. */
 export function toastTextWidth(): number {

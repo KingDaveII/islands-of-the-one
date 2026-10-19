@@ -4,7 +4,6 @@ import {
   defaultToastStorage,
   levelUps,
   packFullToast,
-  skillItem,
   skillLevelToast,
   storeFullToast,
   ToastQueue,
@@ -48,7 +47,7 @@ function writ(chargeMs: number, named = true): WritView {
 describe('the queue', () => {
   it('holds a toast toastMs then drops it in one frame', () => {
     const q = new ToastQueue();
-    q.push('pack-full', 'Pack full.', { kind: 'square' });
+    q.push('pack-full', 'Pack full.', { name: 'pack-full' });
     expect(q.lines()).toEqual(['Pack full.']);
     q.update(TOAST_MS - 1);
     expect(q.lines()).toEqual(['Pack full.']);
@@ -59,17 +58,17 @@ describe('the queue', () => {
 
   it('a new toast joins at the bottom, pushing the older up a line; a third drops the oldest at once', () => {
     const q = new ToastQueue();
-    q.push('skill-level', 'Woodcutting 2.', { kind: 'item', itemId: 'twisted-log' });
+    q.push('skill-level', 'Woodcutting 2.', { name: 'skill-woodcutting' });
     q.update(1000);
-    q.push('store-full', 'Store: twisted logs full.', { kind: 'item', itemId: 'twisted-log' });
+    q.push('store-full', 'Store: twisted logs full.', { name: 'skill-woodcutting' });
     expect(q.lines()).toEqual(['Woodcutting 2.', 'Store: twisted logs full.']);
     expect(q.toasts.map((t) => t.life)).toEqual([2000, 3000]);
-    q.push('pack-full', 'Pack full.', { kind: 'square' });
+    q.push('pack-full', 'Pack full.', { name: 'pack-full' });
     expect(q.lines()).toEqual(['Store: twisted logs full.', 'Pack full.']);
     expect(TOAST_MAX).toBe(2);
     // Each keeps its own hold: the older goes first.
     q.update(1000);
-    q.push('writ-low', 'Your Writ has about a day left.', { kind: 'square' });
+    q.push('writ-low', 'Your Writ has about a day left.', { name: 'pack-full' });
     expect(q.lines()).toEqual(['Pack full.', 'Your Writ has about a day left.']);
     q.update(2000);
     expect(q.lines()).toEqual(['Your Writ has about a day left.']);
@@ -79,9 +78,9 @@ describe('the queue', () => {
 
   it('the same text restarts its hold instead of stacking', () => {
     const q = new ToastQueue();
-    q.push('pack-full', 'Pack full.', { kind: 'square' });
+    q.push('pack-full', 'Pack full.', { name: 'pack-full' });
     q.update(2500);
-    q.push('pack-full', 'Pack full.', { kind: 'square' });
+    q.push('pack-full', 'Pack full.', { name: 'pack-full' });
     expect(q.lines()).toEqual(['Pack full.']);
     expect(q.toasts[0]?.life).toBe(TOAST_MS);
     q.update(2999);
@@ -92,32 +91,27 @@ describe('the queue', () => {
 
   it('takes its hold and its depth from the data, or from the caller', () => {
     const q = new ToastQueue(100, 3);
-    q.push('pack-full', 'a', { kind: 'square' });
-    q.push('pack-full', 'b', { kind: 'square' });
-    q.push('pack-full', 'c', { kind: 'square' });
-    q.push('pack-full', 'd', { kind: 'square' });
+    q.push('pack-full', 'a', { name: 'pack-full' });
+    q.push('pack-full', 'b', { name: 'pack-full' });
+    q.push('pack-full', 'c', { name: 'pack-full' });
+    q.push('pack-full', 'd', { name: 'pack-full' });
     expect(q.lines()).toEqual(['b', 'c', 'd']);
     q.update(100);
     expect(q.lines()).toEqual([]);
-    q.push('pack-full', 'e', { kind: 'square' });
+    q.push('pack-full', 'e', { name: 'pack-full' });
     q.clear();
     expect(q.lines()).toEqual([]);
   });
 });
 
-describe('the glyphs', () => {
-  it("each skill's item: a twisted log, black stone, pale grain", () => {
-    expect(skillItem('woodcutting')).toBe('twisted-log');
-    expect(skillItem('mining')).toBe('black-stone');
-    expect(skillItem('farming')).toBe('pale-grain');
-  });
-
-  it("the item's icon for store-full and skill-level, the square for the rest", () => {
-    expect(toastGlyph('store-full', 'twisted-log')).toEqual({ kind: 'item', itemId: 'twisted-log' });
-    expect(toastGlyph('skill-level', 'pale-grain')).toEqual({ kind: 'item', itemId: 'pale-grain' });
-    expect(toastGlyph('pack-full')).toEqual({ kind: 'square' });
-    expect(toastGlyph('writ-low', 'twisted-log')).toEqual({ kind: 'square' });
-    expect(toastGlyph('writ-dark')).toEqual({ kind: 'square' });
+describe('the glyphs (ART, #109)', () => {
+  it("a skill level names the skill's own cell, the other kinds their own; store full is the store's bin, never the item's icon", () => {
+    expect(toastGlyph('skill-level', 'woodcutting')).toEqual({ name: 'skill-woodcutting' });
+    expect(toastGlyph('skill-level', 'farming')).toEqual({ name: 'skill-farming' });
+    expect(toastGlyph('store-full')).toEqual({ name: 'store-full' });
+    expect(toastGlyph('pack-full')).toEqual({ name: 'pack-full' });
+    expect(toastGlyph('writ-low')).toEqual({ name: 'writ-low' });
+    expect(toastGlyph('writ-dark')).toEqual({ name: 'writ-dark' });
   });
 });
 
@@ -131,19 +125,19 @@ describe('the triggers', () => {
     ]);
     // A level that fell (nothing does in M2) is no toast.
     expect(levelUps(answer({ mining: 4 }), answer({ mining: 3 }))).toEqual([]);
-    expect(skillLevelToast('woodcutting', 2)).toEqual({ text: 'Woodcutting 2.', glyph: { kind: 'item', itemId: 'twisted-log' } });
+    expect(skillLevelToast('woodcutting', 2)).toEqual({ text: 'Woodcutting 2.', glyph: { name: 'skill-woodcutting' } });
   });
 
   it("store full: the take-all's left-overs, the item's own icon; nothing when all moved", () => {
     expect(storeFullToast({ stationId: 'twisted-trees', moved: [{ itemId: 'twisted-log', quantity: 3 }], left: [] })).toBeNull();
     expect(storeFullToast({ stationId: 'twisted-trees', moved: [], left: [{ itemId: 'twisted-log', quantity: 4 }] })).toEqual({
       text: 'Store: twisted logs full.',
-      glyph: { kind: 'item', itemId: 'twisted-log' },
+      glyph: { name: 'store-full' },
     });
   });
 
   it('pack full: the one line, the square', () => {
-    expect(packFullToast()).toEqual({ text: TOAST_TEXT.PACK_FULL, glyph: { kind: 'square' } });
+    expect(packFullToast()).toEqual({ text: TOAST_TEXT.PACK_FULL, glyph: { name: 'pack-full' } });
   });
 
   it('the Writ: low while under a day with charge, dark once it has none, keyed by the drain; lit is neither', () => {

@@ -105,7 +105,7 @@ describe('the settle and the card', () => {
     // The trees' trickle (one log every 20 min from the first settle) dropped its second log in the stretch.
     const made = { 'twisted-trees': { itemId: 'twisted-log', quantity: 1 } };
     expect(await row(k)).toMatchObject({ kindledId: k, fromAt: at(29 * MIN), toAt: at(59 * MIN), made, levels: {} });
-    expect(r.away).toEqual({ from: at(29 * MIN).toISOString(), to: at(59 * MIN).toISOString(), made, levels: {}, writ: r.writ });
+    expect(r.away).toEqual({ from: at(29 * MIN).toISOString(), to: at(59 * MIN).toISOString(), made, levels: {} });
     expect(isHoldingResponse(r)).toBe(true);
   });
 
@@ -122,7 +122,6 @@ describe('the settle and the card', () => {
       to: at(5 * HOUR).toISOString(),
       made: { 'twisted-trees': { itemId: 'twisted-log', quantity: logs } },
       levels: { woodcutting: { from: 1, to: 7 } },
-      writ: r.writ,
     });
   });
 
@@ -134,7 +133,7 @@ describe('the settle and the card', () => {
     expect(r.away?.levels).toEqual({});
   });
 
-  it('merges a second absence into a card never dismissed, and the Writ line reads the Writ now', async () => {
+  it('merges a second absence into a card never dismissed', async () => {
     const k = await newKindled();
     value(await holding.work(k, 'twisted-trees', at(0)));
     value(await holding.view(k, at(HOUR)));
@@ -148,7 +147,6 @@ describe('the settle and the card', () => {
       to: at(3 * HOUR).toISOString(),
       made: { 'twisted-trees': { itemId: 'twisted-log', quantity: logs } },
       levels: { woodcutting: { from: 1, to: r.skills.woodcutting.level } },
-      writ: r.writ,
     });
     // The first stretch alone levelled the skill; the merge keeps the earliest from and the latest to.
     expect(r.skills.woodcutting.level).toBeGreaterThan(2);
