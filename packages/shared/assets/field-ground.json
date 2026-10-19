@@ -1,0 +1,39 @@
+{
+  "image": "field-ground-64px.png",
+  "cell": 64,
+  "meta": {
+    "version": "2",
+    "pixelScale": 1,
+    "tinted": false
+  },
+  "cells": [
+    {
+      "name": "unsown",
+      "x": 0,
+      "y": 0,
+      "w": 64,
+      "h": 64
+    },
+    {
+      "name": "sown",
+      "x": 64,
+      "y": 0,
+      "w": 64,
+      "h": 64
+    },
+    {
+      "name": "faded",
+      "x": 128,
+      "y": 0,
+      "w": 64,
+      "h": 64
+    }
+  ],
+  "inset": {
+    "top": 26,
+    "right": 10,
+    "bottom": 14,
+    "left": 10
+  },
+  "notes": "The field's ground inside a named plot (ART, M2 Task 5): each cell a seamless 64 px pattern, tiled over the plot's rect less `inset` (world px; the headland of plain holding ground that keeps the seal ring, its letters and the divider on pale earth), from that inner rect's corner, under the props and the Kindled. unsown: a named field before SOW; sown: once sown; faded: a faded plot, sown or not. Made by art/clean/field-ground/ground.py."
+}
