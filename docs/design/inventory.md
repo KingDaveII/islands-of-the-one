@@ -13,6 +13,7 @@ on load (`validateItemsData`; a bad file throws, and `packages/shared/test/items
 | ------------- | --------------------------------------------------------------------------------------------------------- |
 | `id`          | kebab-case, unique, glossary terms only; stored in the ledger, so never renamed                           |
 | `name`        | display name, only characters the game can draw                                                           |
+| `plural`      | the name in a count past 1, lowercase: "twisted logs", and a mass noun as it is, "black stone" (MAIN 2026-10-19: the plural is data, read by `pluralItemName` alone) |
 | `kind`        | `currency`, `sparkglass`, `material`, `consumable` or `lore` (`ITEM_KINDS`)                               |
 | `stackLimit`  | the most of the item one place holds (a positive integer), or `"unlimited"`; see "Places" for which apply |
 | `description` | LORE's card text, word for word, only characters the game can draw                                        |

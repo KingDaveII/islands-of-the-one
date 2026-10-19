@@ -3,7 +3,7 @@ import {
   cycleLengthMs,
   holdingLayout,
   isShoreGround,
-  itemDef,
+  itemCount,
   measureText,
   PACK_SLOTS,
   PLOT_TEXT,
@@ -133,10 +133,9 @@ export function chipState(r: HoldingResponse | null, serverMs: number): ChipStat
   };
 }
 
-/** An item's name in a count: "1 twisted log", "3 twisted logs". */
+/** An item's name in a count, from items.json's `plural` (shared `itemCount`): "1 twisted log", "3 twisted logs", "12 black stone". */
 export function countOf(itemId: string, quantity: number): string {
-  const name = displayable((itemDef(itemId)?.name ?? itemId.replaceAll('-', ' ')).toLowerCase());
-  return `${quantity} ${name}${quantity === 1 ? '' : 's'}`;
+  return displayable(itemCount(itemId, quantity));
 }
 
 /** The station panel's buttons, in order. */
@@ -232,11 +231,6 @@ export function stationLines(stationId: string, r: HoldingResponse | null, serve
   };
 }
 
-/** The plural display name of an item, lowercase: "twisted logs". */
-export function pluralName(itemId: string): string {
-  return `${displayable((itemDef(itemId)?.name ?? itemId.replaceAll('-', ' ')).toLowerCase())}s`;
-}
-
 /**
  * The line after a take-all (GAME DESIGN 2026-10-17, 2026-10-18): "Store:
  * twisted logs full." when something stayed because the store's stack is
@@ -247,7 +241,7 @@ export function pluralName(itemId: string): string {
  */
 export function takeResultLine(take: HoldingTake): string | null {
   const stuck = take.left[0];
-  return stuck ? `Store: ${pluralName(stuck.itemId)} full.` : null;
+  return stuck ? displayable(TOAST_TEXT.storeFull(stuck.itemId)) : null;
 }
 
 /** What floats over the station after a take-all, the same float the cycles use: "+3" for what moved, null when nothing did. */

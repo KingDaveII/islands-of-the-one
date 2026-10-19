@@ -137,7 +137,7 @@ describe('pieces.json', () => {
       "That piece isn't standing here.",
     ]);
     expect(needsSkillLine({ skill: 'farming', level: 5 })).toBe('Needs Farming 5');
-    expect(pluralItemName('black-stone')).toBe('black stones');
+    expect(pluralItemName('black-stone')).toBe('black stone');
   });
 
   it('lists every problem', () => {

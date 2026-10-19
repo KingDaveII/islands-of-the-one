@@ -17,7 +17,6 @@ import {
   opaqueBoundsIn,
   packFill,
   panelsBehind,
-  pluralName,
   propBase,
   propIdlePlays,
   purseGin,
@@ -179,8 +178,10 @@ describe('the station panel', () => {
     expect(stationLines('plot-1', working)).toBeNull();
     expect(stationLines('plot-1', null)).toBeNull();
     expect(countOf('twisted-log', 1)).toBe('1 twisted log');
-    expect(countOf('black-stone', 12)).toBe('12 black stones');
-    expect(pluralName('twisted-log')).toBe('twisted logs');
+    // The plural is items.json's: a count noun takes its s, a mass noun stays, grey seeds stay (MAIN 2026-10-19).
+    expect(countOf('twisted-log', 3)).toBe('3 twisted logs');
+    expect(countOf('black-stone', 12)).toBe('12 black stone');
+    expect(countOf('grey-seeds', 4)).toBe('4 grey seeds');
   });
 
   it("a field's panel (Task 5): the sentence, the level, both rates, the basket, \"Next in …\" and RENAME; not sown: the note and SOW; faded: the line and no buttons", () => {
@@ -192,7 +193,7 @@ describe('the station panel', () => {
       rate: 'By hand: 1 pale grain every 20 s',
       cycle: 'By itself: 1 pale grain every 15 min',
       bonus: null,
-      basket: 'Basket: 12 pale grains',
+      basket: 'Basket: 12 pale grain',
       next: 'Next in 12 min',
       you: null,
       skill: 'Farming 2 · 1083 XP to next',
@@ -254,7 +255,7 @@ describe('the station panel', () => {
       rate: null,
       cycle: null,
       bonus: null,
-      basket: 'Basket: 2 pale grains',
+      basket: 'Basket: 2 pale grain',
       next: null,
       you: null,
       skill: null,

@@ -74,10 +74,12 @@ describe('duration (LORE)', () => {
     expect(TIDE_MS).toBe(24 * HOUR_MS);
   });
 
-  it('counts items with their display name, plural when not 1', () => {
+  it("counts items with items.json's plural past 1: a count noun takes its s, a mass noun stays, grey seeds stay", () => {
     expect(itemCount('twisted-log', 1)).toBe('1 twisted log');
-    expect(itemCount('pale-grain', 14)).toBe('14 pale grains');
-    expect(itemCount('black-stone', 40)).toBe('40 black stones');
+    expect(itemCount('twisted-log', 18)).toBe('18 twisted logs');
+    expect(itemCount('pale-grain', 14)).toBe('14 pale grain');
+    expect(itemCount('black-stone', 40)).toBe('40 black stone');
+    expect(itemCount('grey-seeds', 4)).toBe('4 grey seeds');
   });
 });
 
@@ -92,7 +94,7 @@ describe('awayLines', () => {
     const c = card({
       made: {
         'plot-1': { itemId: 'pale-grain', quantity: 14 },
-        'stone-outcrop': { itemId: 'black-stone', quantity: 1 },
+        'stone-outcrop': { itemId: 'black-stone', quantity: 40 },
         'twisted-trees': { itemId: 'twisted-log', quantity: 18 },
         'plot-2': { itemId: 'pale-grain', quantity: 0 },
       },
@@ -100,9 +102,9 @@ describe('awayLines', () => {
     const named = [field('plot-1'), field('plot-2'), unnamedPlot('plot-3'), unnamedPlot('plot-4')];
     expect(awayLines(c, layout, named, lit, T0)).toEqual([
       'Away 5 hours.',
-      'Field: 14 pale grains, in the basket',
+      'Field: 14 pale grain, in the basket',
       'Trees: 18 twisted logs, in the basket',
-      'Outcrop: 1 black stone, in the basket',
+      'Outcrop: 40 black stone, in the basket',
       'Writ: about four days left',
     ]);
   });
@@ -117,13 +119,13 @@ describe('awayLines', () => {
         'twisted-trees': { itemId: 'twisted-log', quantity: 1 },
       },
     });
-    expect(awayLines(c, layout, named, lit, T0).slice(1, 3)).toEqual(['Fields: 56 pale grains, in the baskets', 'Trees: 1 twisted log, in the basket']);
+    expect(awayLines(c, layout, named, lit, T0).slice(1, 3)).toEqual(['Fields: 56 pale grain, in the baskets', 'Trees: 1 twisted log, in the basket']);
   });
 
   it("the active action's output counts in its kind's line with the cycle's (the server sums them per place already)", () => {
     // A field worked by hand and trickling: one count per place on the wire, one line on the card.
     const c = card({ made: { 'plot-2': { itemId: 'pale-grain', quantity: 1260 + 28 } } });
-    expect(awayLines(c, layout, [unnamedPlot('plot-1'), field('plot-2')], lit, T0)[1]).toBe('Field: 1288 pale grains, in the basket');
+    expect(awayLines(c, layout, [unnamedPlot('plot-1'), field('plot-2')], lit, T0)[1]).toBe('Field: 1288 pale grain, in the basket');
   });
 
   it("the skill levels on one line, in skills order, with GAME DESIGN's arrow; one skill alone", () => {
@@ -161,7 +163,7 @@ describe('awayLines', () => {
     expect(lines).toHaveLength(AWAY_MAX_LINES);
     expect(lines).toEqual([
       'Away 5 hours.',
-      'Fields: 42 pale grains, in the baskets',
+      'Fields: 42 pale grain, in the baskets',
       'Trees: 18 twisted logs, in the basket',
       'Outcrop: 1 black stone, in the basket',
       'Woodcutting 7 → 9 · Mining 1 → 2 · Farming 1 → 3',
@@ -196,6 +198,7 @@ describe('the lines and the toasts', () => {
     ...AWAY_FIXED_TEXTS,
     AWAY_TEXT.away(TIDE_MS + 3 * HOUR_MS),
     AWAY_TEXT.made('Fields', 'pale-grain', 56, 3),
+    AWAY_TEXT.made('Trees', 'grey-seeds', 4, 1),
     AWAY_TEXT.levels('Woodcutting', 7, 9),
     AWAY_TEXT.writ('about four days'),
     AWAY_TEXT.writDark(5 * HOUR_MS),

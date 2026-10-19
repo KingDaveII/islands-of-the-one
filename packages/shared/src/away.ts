@@ -1,7 +1,6 @@
 import type { AwayCard, PlotView, WritView } from './api.js';
 import { type HoldingLayout, plotKindDef, stationDef } from './holding.js';
-import { itemDef, SKILL_NAMES } from './items.js';
-import { pluralItemName } from './pieces.js';
+import { itemCount, pluralItemName, SKILL_NAMES } from './items.js';
 import { SKILLS, type Skill } from './skills.js';
 import { wordDef } from './words.js';
 import { HOUR_MS, writFromView, writView } from './writ.js';
@@ -49,13 +48,7 @@ export function duration(ms: number): string {
   return `${count(tides, 'tide')} and ${count(hours, 'hour')}`;
 }
 
-/** "14 pale grains", "1 twisted log": an item's display name in a count, plural when the count is not 1. */
-export function itemCount(itemId: string, quantity: number): string {
-  const one = (itemDef(itemId)?.name ?? itemId.replaceAll('-', ' ')).toLowerCase();
-  return `${quantity} ${quantity === 1 ? one : pluralItemName(itemId)}`;
-}
-
-/** The card's words: LORE's and GAME DESIGN's, final. */
+/** The card's words: LORE's and GAME DESIGN's, final. The counts use items.json's `plural` (`itemCount`): "14 pale grain", "18 twisted logs". */
 export const AWAY_TEXT = {
   /** The card's title (GAME DESIGN). */
   TITLE: 'While you were away',

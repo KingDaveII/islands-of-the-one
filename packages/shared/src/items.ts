@@ -28,6 +28,8 @@ export interface ItemDef {
   id: string;
   /** Display name. */
   name: string;
+  /** The name in a count past 1, lowercase: "twisted logs", and a mass noun as it is, "black stone" (MAIN 2026-10-19: the plural is data). */
+  plural: string;
   kind: ItemKind;
   /** The most of the item one place holds; null = unlimited. The pack and the store have their own limits (places.ts). */
   stackLimit: number | null;
@@ -48,7 +50,7 @@ export const MAX_QUANTITY = Number.MAX_SAFE_INTEGER;
 export const RETIRED_WORDS = ['void', 'island', 'tether', 'crystal', 'fishing', 'shard'] as const;
 
 const ITEM_ID = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
-const ITEM_KEYS = ['id', 'name', 'kind', 'stackLimit', 'description', 'skill'];
+const ITEM_KEYS = ['id', 'name', 'plural', 'kind', 'stackLimit', 'description', 'skill'];
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -73,7 +75,7 @@ export function validateItemsData(
       problems.push(`${at}: not an object`);
       return;
     }
-    const { id, name, kind, stackLimit, description, skill } = entry;
+    const { id, name, plural, kind, stackLimit, description, skill } = entry;
     const extra = Object.keys(entry).filter((k) => !ITEM_KEYS.includes(k));
     if (extra.length > 0) problems.push(`${at}: unknown field(s) ${extra.join(', ')}`);
     if (typeof id !== 'string' || !ITEM_ID.test(id)) {
@@ -85,7 +87,9 @@ export function validateItemsData(
     seen.add(id);
     if (typeof name !== 'string' || name.trim() === '' || !isDrawable(name))
       problems.push(`${where}: name must be non-empty text the game can draw`);
-    for (const text of [id, typeof name === 'string' ? name : '']) {
+    if (typeof plural !== 'string' || plural.trim() === '' || plural !== plural.toLowerCase() || !isDrawable(plural))
+      problems.push(`${where}: plural must be non-empty lowercase text the game can draw`);
+    for (const text of [id, typeof name === 'string' ? name : '', typeof plural === 'string' ? plural : '']) {
       const retired = usesRetiredWord(text);
       if (retired) problems.push(`${where}: "${text}" uses the retired word "${retired}"`);
     }
@@ -106,6 +110,7 @@ export function validateItemsData(
     items.push({
       id,
       name: name as string,
+      plural: plural as string,
       kind: kind as ItemKind,
       stackLimit: stackLimit === 'unlimited' ? null : (stackLimit as number),
       description: description as string,
@@ -132,6 +137,17 @@ export function isItemId(value: unknown): value is string {
 
 export function itemDef(id: string): ItemDef | undefined {
   return BY_ID.get(id);
+}
+
+/** An item's name in a count past 1, lowercase, from items.json's `plural`: "twisted logs", "black stone" (a mass noun). The one place the plural is read. */
+export function pluralItemName(itemId: string): string {
+  return itemDef(itemId)?.plural ?? itemId.replaceAll('-', ' ');
+}
+
+/** An item's name in a count: "1 twisted log", "3 twisted logs", "40 black stone". */
+export function itemCount(itemId: string, quantity: number): string {
+  const one = (itemDef(itemId)?.name ?? itemId.replaceAll('-', ' ')).toLowerCase();
+  return `${quantity} ${quantity === 1 ? one : pluralItemName(itemId)}`;
 }
 
 /** The item's place in display order (unknown ids last). */

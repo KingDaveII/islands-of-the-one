@@ -130,7 +130,7 @@ describe('the cycles', () => {
   it("rates: the field's and the trees' (one log at a time, six trees); the bonus line from the permille, none at 0", () => {
     expect(cycleRateLine({ itemId: 'pale-grain', quantity: 1, cycleMs: 900_000 })).toBe('1 pale grain every 15 min');
     expect(cycleRateLine({ itemId: 'twisted-log', quantity: 1, cycleMs: 1_200_000 })).toBe('1 twisted log every 20 min');
-    expect(cycleRateLine({ itemId: 'pale-grain', quantity: 2, cycleMs: 8_000 })).toBe('2 pale grains every 8 s');
+    expect(cycleRateLine({ itemId: 'pale-grain', quantity: 2, cycleMs: 8_000 })).toBe('2 pale grain every 8 s');
     expect(bonusLine(0)).toBeNull();
     expect(bonusLine(30)).toBe('+3% for keeping its name');
     expect(bonusLine(200)).toBe('+20% for keeping its name');

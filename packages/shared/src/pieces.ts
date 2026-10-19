@@ -11,7 +11,7 @@ import {
   type TilePoint,
   type TileRect,
 } from './holding.js';
-import { isItemId, itemDef, SKILL_NAMES } from './items.js';
+import { isItemId, pluralItemName, SKILL_NAMES } from './items.js';
 import { isSkill, type Skill } from './skills.js';
 
 /**
@@ -466,11 +466,6 @@ export function signpostReachable(layout: HoldingLayout, plot: LayoutPlot, solid
 }
 
 // --- Text ---------------------------------------------------------------------------
-
-/** The plural display name of an item, lowercase: "twisted logs" (the take-all's line). */
-export function pluralItemName(itemId: string): string {
-  return `${(itemDef(itemId)?.name ?? itemId.replaceAll('-', ' ')).toLowerCase()}s`;
-}
 
 /** Placeholder words for each placement reason (MAIN's, until LORE answers), after LORE's "That doesn't fit there.". */
 export const PLACEMENT_WORDS: Readonly<Record<PlacementProblem, string>> = {

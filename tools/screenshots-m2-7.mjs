@@ -303,7 +303,7 @@ const card = r.body.away;
 expectEq('the card on the wire', typeof card?.to, 'string');
 expectMatch('the time away', h.away.lines[0], /^Away 7 hours\.$/);
 // The Old field's 15 min trickle over 7 h (28 grains, ישן's bonus not yet due), the trees' basket, the skills line.
-expectMatch('the field', h.away.lines[1], /^Field: \d+ pale grains, in the basket$/);
+expectMatch('the field', h.away.lines[1], /^Field: \d+ pale grain, in the basket$/);
 expectMatch('the trees', h.away.lines[2], /^Trees: \d+ twisted logs, in the basket$/);
 expectMatch('the skills', h.away.lines[3], /^Woodcutting 1 → \d+$/);
 expectEq('the Writ now', h.away.lines[4], 'Writ: about two days left');

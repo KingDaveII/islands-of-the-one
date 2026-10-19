@@ -919,11 +919,11 @@ each only when it has something to say:
 1. **Time away** (LORE): "Away " + `duration(ms)` + ".". The duration gives whole tides first, then hours, with minutes
    only under an hour, in tens, rounded down: "1 tide and 3 hours", "2 tides", "5 hours", "40 minutes" (30 to 39
    minutes read "30 minutes"); a whole number of tides drops the hours, and tides and minutes never meet.
-2. **One line per station kind, summed** (GAME DESIGN), in the order fields, trees, outcrop: "Field: 14 pale grains,
-   in the basket" when one field made something, "Fields: 56 pale grains, in the baskets" when several did; "Trees: 18
-   twisted logs, in the basket" (the trees share one basket); "Outcrop: 40 black stones, in the basket". The count is
-   the active action's output with the cycle's; the item's display name is singular at 1 and plural otherwise
-   (`pluralItemName`); the line ends with where the things wait, "basket" for one station and "baskets" for several
+2. **One line per station kind, summed** (GAME DESIGN), in the order fields, trees, outcrop: "Field: 14 pale grain,
+   in the basket" when one field made something, "Fields: 56 pale grain, in the baskets" when several did; "Trees: 18
+   twisted logs, in the basket" (the trees share one basket); "Outcrop: 40 black stone, in the basket". The count is
+   the active action's output with the cycle's; the item's name is singular at 1 and items.json's `plural` otherwise
+   (`pluralItemName`: a count noun takes its s, a mass noun stays, "40 black stone"); the line ends with where the things wait, "basket" for one station and "baskets" for several
    (the baskets the line sums). The short kind labels are `AWAY_TEXT.KIND`.
 3. **Skill levels, one line** (GAME DESIGN): "Woodcutting 7 → 9 · Farming 3 → 4", the skills in `skills.json` order
    joined by " · ", with ART's "→" (in both atlases since #109, drawable).

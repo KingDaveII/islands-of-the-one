@@ -175,7 +175,7 @@ describe('moving and taking down', () => {
     value(await holding.buildPiece(k.id, channel(), at(0)));
     // The store filled to the brim with stone: the refund's stone doesn't fit, so nothing comes back and the piece stays.
     await inv.apply([{ kindledId: k.id, itemId: 'black-stone', place: 'store', delta: 9900 }], 'admin');
-    expect(await holding.takeDownPiece(k.id, { plotId: 'plot-1', pieceId: 'clay-channel' }, at(MIN))).toEqual({ ok: false, error: 'store-full', message: 'Store: black stones full.' });
+    expect(await holding.takeDownPiece(k.id, { plotId: 'plot-1', pieceId: 'clay-channel' }, at(MIN))).toEqual({ ok: false, error: 'store-full', message: 'Store: black stone full.' });
     expect(await store(k.id, 'twisted-log')).toBe(0);
     expect(await store(k.id, 'black-stone')).toBe(9900);
     expect(await rows(k.id)).toHaveLength(1);
@@ -365,7 +365,7 @@ describe('the build routes', () => {
     await inv.apply([{ kindledId: k.id, itemId: 'black-stone', place: 'store', delta: 9900 }], 'admin');
     const full = await call(ApiRoute.PlotsTakeDown, { body: { plotId: 'plot-1', pieceId: 'clay-channel' } });
     expect(full.statusCode).toBe(409);
-    expect(full.json()).toEqual({ error: 'store-full', message: 'Store: black stones full.' });
+    expect(full.json()).toEqual({ error: 'store-full', message: 'Store: black stone full.' });
     await inv.apply([{ kindledId: k.id, itemId: 'black-stone', place: 'store', delta: -9900 }], 'admin');
     const down = await call(ApiRoute.PlotsTakeDown, { body: { plotId: 'plot-1', pieceId: 'clay-channel' } });
     expect(down.statusCode).toBe(200);
