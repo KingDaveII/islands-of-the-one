@@ -67,6 +67,8 @@ class Config:
     idle_breath: dict    # facing -> raw idle frame for the breath, or None (the rest frame crouched)
     run_order: dict      # facing -> raw run frame of the first contact
     belt: bool = False
+    feet: bool = True       # wrapped feet drawn in the skin colours (Clay); False where the feet are boots
+    pale: dict = field(default_factory=lambda: {"w": "L", "W": "L"})  # raw pale letters -> material letter
     fix: Optional[Callable] = None   # fix(anim, facing, n, materials) -> materials, for one-off repairs
     notes: dict = field(default_factory=dict)
 
@@ -121,7 +123,7 @@ def classify(cfg, im):
 def materials(cfg, g):
     """Give every pixel its material letter (see BASE and Config.tokens)."""
     m = dict(g)
-    pale = ("w", "W")
+    pale = tuple(cfg.pale)
     ys = [y for _, y in g]
     top, bottom = min(ys), max(ys)
     tall = bottom - top
@@ -168,7 +170,7 @@ def materials(cfg, g):
     def under_trousers(x, y):
         return y >= lower and any(g.get((x, y - d)) == "i" for d in range(1, 8))
     feet = set()
-    for comp in components(skin):
+    for comp in components(skin) if cfg.feet else []:
         if sum(under_trousers(x, y) for x, y in comp) * 2 >= len(comp) or max(y for _, y in comp) >= bottom - 3:
             feet.update(comp)
     skin -= feet
@@ -202,7 +204,7 @@ def materials(cfg, g):
             elif rope and any(q in rope for q in near(p, N4)) and any(q in line for q in near(p, N4)):
                 m[p] = "K"
             else:
-                m[p] = "L"
+                m[p] = cfg.pale[k]
     return m
 
 

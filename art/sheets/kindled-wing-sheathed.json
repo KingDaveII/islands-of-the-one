@@ -1,0 +1,198 @@
+{
+  "sheet": "kindled-wing-sheathed",
+  "kind": "kindled",
+  "outline": "player",
+  "draft": false,
+  "notes": "The Kindled of the Wing Remembrance outside combat: a down-lined mantle over a harness, hands empty (Lore §14.0). Raw material from art job remembrance-sheathed (#120), all 8 facings as generated, cleaned by art/clean/kindled-wing-sheathed/_scripts/clean.py (the shared art/clean/_shared/sheathed.py): the mantle wheel-brass shaded wheel-brass-dark with its down sleeper-soil (the generated mantle was the holding's earth); the chest and arms bare clay under dark straps, kept on the skin ramp; one wheel-eye eye-white per eye, the freckles spark-amber; strays under run SE 0's foot, over run SE 1's hair and under walk E 4's sole removed. idle is the rest frame and the fullest breath; run is listed from its first contact (checked by eye) and grounds on it; run_start and run_stop are made as Ash's are and ground on the crouch.",
+  "anims": {
+    "idle": {
+      "facings": {
+        "S": {
+          "src": "art/clean/kindled-wing-sheathed/idle/south",
+          "frames": [0, 1]
+        },
+        "SE": {
+          "src": "art/clean/kindled-wing-sheathed/idle/south-east",
+          "frames": [0, 1]
+        },
+        "E": {
+          "src": "art/clean/kindled-wing-sheathed/idle/east",
+          "frames": [0, 1]
+        },
+        "NE": {
+          "src": "art/clean/kindled-wing-sheathed/idle/north-east",
+          "frames": [0, 1]
+        },
+        "N": {
+          "src": "art/clean/kindled-wing-sheathed/idle/north",
+          "frames": [0, 1]
+        },
+        "NW": {
+          "src": "art/clean/kindled-wing-sheathed/idle/north-west",
+          "frames": [0, 1]
+        },
+        "W": {
+          "src": "art/clean/kindled-wing-sheathed/idle/west",
+          "frames": [0, 1]
+        },
+        "SW": {
+          "src": "art/clean/kindled-wing-sheathed/idle/south-west",
+          "frames": [0, 1]
+        }
+      }
+    },
+    "walk": {
+      "facings": {
+        "S": {
+          "src": "art/clean/kindled-wing-sheathed/walk/south",
+          "frames": [0, 1, 2, 3, 4, 5]
+        },
+        "SE": {
+          "src": "art/clean/kindled-wing-sheathed/walk/south-east",
+          "frames": [0, 1, 2, 3, 4, 5]
+        },
+        "E": {
+          "src": "art/clean/kindled-wing-sheathed/walk/east",
+          "frames": [0, 1, 2, 3, 4, 5]
+        },
+        "NE": {
+          "src": "art/clean/kindled-wing-sheathed/walk/north-east",
+          "frames": [0, 1, 2, 3, 4, 5]
+        },
+        "N": {
+          "src": "art/clean/kindled-wing-sheathed/walk/north",
+          "frames": [0, 1, 2, 3, 4, 5]
+        },
+        "NW": {
+          "src": "art/clean/kindled-wing-sheathed/walk/north-west",
+          "frames": [0, 1, 2, 3, 4, 5]
+        },
+        "W": {
+          "src": "art/clean/kindled-wing-sheathed/walk/west",
+          "frames": [0, 1, 2, 3, 4, 5]
+        },
+        "SW": {
+          "src": "art/clean/kindled-wing-sheathed/walk/south-west",
+          "frames": [0, 1, 2, 3, 4, 5]
+        }
+      }
+    },
+    "run": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/clean/kindled-wing-sheathed/run/south",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7]
+        },
+        "SE": {
+          "src": "art/clean/kindled-wing-sheathed/run/south-east",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7]
+        },
+        "E": {
+          "src": "art/clean/kindled-wing-sheathed/run/east",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7]
+        },
+        "NE": {
+          "src": "art/clean/kindled-wing-sheathed/run/north-east",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7]
+        },
+        "N": {
+          "src": "art/clean/kindled-wing-sheathed/run/north",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7]
+        },
+        "NW": {
+          "src": "art/clean/kindled-wing-sheathed/run/north-west",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7]
+        },
+        "W": {
+          "src": "art/clean/kindled-wing-sheathed/run/west",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7]
+        },
+        "SW": {
+          "src": "art/clean/kindled-wing-sheathed/run/south-west",
+          "frames": [0, 1, 2, 3, 4, 5, 6, 7]
+        }
+      }
+    },
+    "run_start": {
+      "ground": {
+        "ref": 0
+      },
+      "facings": {
+        "S": {
+          "src": "art/clean/kindled-wing-sheathed/run_start/south",
+          "frames": [0, 1]
+        },
+        "SE": {
+          "src": "art/clean/kindled-wing-sheathed/run_start/south-east",
+          "frames": [0, 1]
+        },
+        "E": {
+          "src": "art/clean/kindled-wing-sheathed/run_start/east",
+          "frames": [0, 1]
+        },
+        "NE": {
+          "src": "art/clean/kindled-wing-sheathed/run_start/north-east",
+          "frames": [0, 1]
+        },
+        "N": {
+          "src": "art/clean/kindled-wing-sheathed/run_start/north",
+          "frames": [0, 1]
+        },
+        "NW": {
+          "src": "art/clean/kindled-wing-sheathed/run_start/north-west",
+          "frames": [0, 1]
+        },
+        "W": {
+          "src": "art/clean/kindled-wing-sheathed/run_start/west",
+          "frames": [0, 1]
+        },
+        "SW": {
+          "src": "art/clean/kindled-wing-sheathed/run_start/south-west",
+          "frames": [0, 1]
+        }
+      }
+    },
+    "run_stop": {
+      "ground": {
+        "ref": 1
+      },
+      "facings": {
+        "S": {
+          "src": "art/clean/kindled-wing-sheathed/run_stop/south",
+          "frames": [0, 1]
+        },
+        "SE": {
+          "src": "art/clean/kindled-wing-sheathed/run_stop/south-east",
+          "frames": [0, 1]
+        },
+        "E": {
+          "src": "art/clean/kindled-wing-sheathed/run_stop/east",
+          "frames": [0, 1]
+        },
+        "NE": {
+          "src": "art/clean/kindled-wing-sheathed/run_stop/north-east",
+          "frames": [0, 1]
+        },
+        "N": {
+          "src": "art/clean/kindled-wing-sheathed/run_stop/north",
+          "frames": [0, 1]
+        },
+        "NW": {
+          "src": "art/clean/kindled-wing-sheathed/run_stop/north-west",
+          "frames": [0, 1]
+        },
+        "W": {
+          "src": "art/clean/kindled-wing-sheathed/run_stop/west",
+          "frames": [0, 1]
+        },
+        "SW": {
+          "src": "art/clean/kindled-wing-sheathed/run_stop/south-west",
+          "frames": [0, 1]
+        }
+      }
+    }
+  }
+}
