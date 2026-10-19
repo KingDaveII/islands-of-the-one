@@ -49,6 +49,8 @@ export const KIND_NAMES: Readonly<Record<ItemKind, string>> = {
   material: 'Material',
   consumable: 'Consumable',
   lore: 'Lore object',
+  // Never in a pane (a weapon hangs on the rack, M2 Task 8); here so every kind has its word.
+  weapon: 'Weapon',
 };
 
 /** The pack grid: 5 across, 4 down. */

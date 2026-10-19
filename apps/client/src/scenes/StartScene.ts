@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { ControlAction } from '@iot/shared';
-import { isWeaponAvailable, type Tuning } from '@iot/sim';
+import type { Tuning } from '@iot/sim';
 import { accountStore, api } from '../api.js';
 import { deviceStore } from '../game/activeDevice.js';
 import { controlsStore } from '../game/controlsStore.js';
@@ -8,6 +8,7 @@ import { buttonsFor, glyphsFor, MENU_BUTTONS, padEdges, padEdgeState, type PadFa
 import { eventKeyFor, keyboardBinding } from '../game/keyboard.js';
 import { parseSeed, randomSeed } from '../game/seed.js';
 import { displayable } from '../game/drawable.js';
+import { startWeapon } from '../game/rackView.js';
 import { tuningStore } from '../game/tuningStore.js';
 import { Palette } from '../palette.js';
 import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
@@ -16,7 +17,7 @@ import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
 import { groundShadow } from '../render/pixels.js';
 import { preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { body, label, place, preloadFonts, registerFonts, type Text } from '../render/text.js';
-import { abilitySlot, divider, panel, tierPips } from '../render/ui.js';
+import { panel } from '../render/ui.js';
 import { drawKindled } from '../render/world.js';
 import { buildLabel } from '../ui/buildLabel.js';
 import type { GameData } from './GameScene.js';
@@ -24,34 +25,40 @@ import { UI_H, UI_W } from '../game/view.js';
 import { menuCamera } from '../render/cameras.js';
 
 const MAX_SEED_LEN = 16;
-const CARD_W = 136;
-const CARD_H = 104;
-const CARD_GAP = 8;
-const CARD_Y = 62;
+/** The run's weapon, where the picker stood (M2 Task 8: the rack decides): the name, and LORE's line under it. */
+const WEAPON_Y = 62;
+const WEAPON_H = 40;
 /** The hint panel over the shore strip: centered right of the Kindled, two 12 px rows on a 14 px pitch. */
 const HINT_PANEL_CX = 282;
 const HINT_PANEL_Y = UI_H - 40;
 const HINT_PANEL_PAD = 6;
 
 /**
- * Start screen: pick the run's weapon (one per run; only the Hookblade is
- * available yet, the rest show as locked), keep or type a seed, start. The
+ * Start screen: the holding (the main action), or the M1 run (START RUN, the
+ * combat test bed until boats give the holding its landing) with the weapon
+ * the rack decides (M2 Task 8, docs/design/holding.md "The weapon rack"):
+ * `rack.chosen` from a holding answer fetched when the screen opens, its
+ * name where the weapon picker stood with LORE's "Taken from your weapon
+ * rack." under it; without an answer (the server is down) the roster's first
+ * weapon that can fight, and the line says nothing. Keep or type a seed. The
  * signed-in Kindled shows top right, with the log-out button (Esc, Circle).
  */
 export class StartScene extends Phaser.Scene {
   seedText = '';
   weapon = 'hookblade';
+  /** The line under the weapon's name: LORE's when it came from the rack, else nothing (playtests read it). */
+  weaponLine: string | null = null;
   private field!: Text;
   private caret!: Phaser.GameObjects.Rectangle;
-  private cards!: Phaser.GameObjects.Graphics;
+  private weaponName!: Text;
+  private weaponNote!: Text;
+  private alive = false;
   private pad = { prev: [] as boolean[] };
   /** The two hint lines (the active device's bindings, then the menu keys) and the pad family they are drawn in. */
   private hintRows: HintRow[] = [];
   /** The plain panel behind the hint lines (the ink needs ui-panel under it, not the pale floor). */
   private hintPanel!: Phaser.GameObjects.Graphics;
   private padFamily: PadFamily = 'ps';
-  /** Divider y per card (between stats and lore). */
-  private dividers: number[] = [];
   private loggingOut = false;
 
   constructor() {
@@ -71,9 +78,8 @@ export class StartScene extends Phaser.Scene {
     this.seedText = String(randomSeed());
     this.pad = padEdgeState();
     this.loggingOut = false;
+    this.alive = true;
     const t: Tuning = tuningStore.get();
-    const roster = t.weaponRoster;
-    this.weapon = roster.find((w) => isWeaponAvailable(t, w.id))?.id ?? 'hookblade';
     const cx = UI_W / 2;
 
     const bg = this.add.graphics();
@@ -95,43 +101,21 @@ export class StartScene extends Phaser.Scene {
       this.logOut();
     });
     logout.container.setX(UI_W - 6 - logout.width);
-    place(label(this, 0, 0, 'CHOOSE YOUR WEAPON', Palette.uiInk), cx, 50, 0.5);
 
-    // Weapon cards.
-    this.cards = this.add.graphics();
-    const x0 = Math.round(cx - (roster.length * CARD_W + (roster.length - 1) * CARD_GAP) / 2);
-    roster.forEach((entry, i) => {
-      const x = x0 + i * (CARD_W + CARD_GAP);
-      const weapon = t.weapons[entry.id];
-      const available = isWeaponAvailable(t, entry.id);
-      if (available && weapon) {
-        place(label(this, 0, 0, weapon.name.toUpperCase()), x + 32, CARD_Y + 9);
-        // Stats first; lore last, muted, below a divider (never italic).
-        const stats = body(this, x + 10, CARD_Y + 32, weapon.blurb, Palette.uiInk, CARD_W - 20);
-        this.dividers[i] = Math.round(stats.y + stats.height + 3);
-        body(
-          this,
-          x + 10,
-          (this.dividers[i] ?? 0) + 4,
-          weapon.lore,
-          Palette.uiInkMuted,
-          CARD_W - 20,
-        );
-      } else {
-        place(label(this, 0, 0, entry.name, Palette.uiInkMuted), x + 32, CARD_Y + 9);
-        body(this, x + 10, CARD_Y + 33, 'Not found yet.', Palette.uiInkMuted, CARD_W - 20);
-      }
-      const zone = this.add
-        .zone(x, CARD_Y, CARD_W, CARD_H)
-        .setOrigin(0, 0)
-        .setInteractive({ useHandCursor: available });
-      zone.on('pointerdown', () => {
-        if (available) this.weapon = entry.id;
-      });
+    // The run's weapon (M2 Task 8): the rack decides. The roster's fallback shows until the holding answers.
+    const fallback = startWeapon(null, t);
+    this.weaponName = label(this, 0, 0, fallback.name.toUpperCase(), Palette.uiInk);
+    this.weaponNote = body(this, 0, 0, '', Palette.uiInkMuted);
+    place(this.weaponName, cx, WEAPON_Y + 10, 0.5);
+    place(this.weaponNote, cx, WEAPON_Y + 24, 0.5);
+    this.setWeapon(fallback);
+    void api.holding().then((res) => {
+      if (!this.alive) return;
+      this.setWeapon(startWeapon(res.ok ? res.value : null, tuningStore.get()));
     });
 
     // Seed.
-    const seedY = CARD_Y + CARD_H + 10;
+    const seedY = WEAPON_Y + WEAPON_H + 10;
     place(label(this, 0, 0, 'SEED', Palette.uiInk), cx - 120, seedY + 4);
     const g = this.add.graphics();
     panel(g, cx - 84, seedY, 128, 16, { plain: true });
@@ -213,6 +197,7 @@ export class StartScene extends Phaser.Scene {
     };
     window.addEventListener('paste', onPaste);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.alive = false;
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('paste', onPaste);
     });
@@ -251,9 +236,6 @@ export class StartScene extends Phaser.Scene {
           ...menu(MENU_BUTTONS.inventory),
           ...padKey('inventory'),
           word('inventory  ·'),
-          ...menu(MENU_BUTTONS.left),
-          ...menu(MENU_BUTTONS.right),
-          word('weapon  ·'),
           ...menu(MENU_BUTTONS.back),
           word('log out'),
         ],
@@ -314,47 +296,15 @@ export class StartScene extends Phaser.Scene {
     menuCursor(this);
   }
 
-  /** Step the weapon choice through the roster's unlocked entries (D-pad). */
-  private cycleWeapon(delta: number): void {
-    const t: Tuning = tuningStore.get();
-    const open = t.weaponRoster.filter((w) => isWeaponAvailable(t, w.id)).map((w) => w.id);
-    if (open.length === 0) return;
-    const i = Math.max(0, open.indexOf(this.weapon));
-    this.weapon = open[(((i + delta) % open.length) + open.length) % open.length] ?? this.weapon;
-  }
-
-  private drawCards(): void {
-    const t: Tuning = tuningStore.get();
-    const roster = t.weaponRoster;
-    const g = this.cards;
-    g.clear();
-    const x0 = Math.round(
-      UI_W / 2 - (roster.length * CARD_W + (roster.length - 1) * CARD_GAP) / 2,
-    );
-    roster.forEach((entry, i) => {
-      const x = x0 + i * (CARD_W + CARD_GAP);
-      const weapon = t.weapons[entry.id];
-      const available = isWeaponAvailable(t, entry.id) && weapon !== undefined;
-      const selected = available && entry.id === this.weapon;
-      panel(
-        g,
-        x,
-        CARD_Y,
-        CARD_W,
-        CARD_H,
-        selected ? {} : { rim: Palette.uiBevel, plain: !available },
-      );
-      abilitySlot(g, x + 8, CARD_Y + 7, {
-        icon: 'hookblade',
-        cooldown: 0,
-        locked: !available,
-        ready: selected,
-      });
-      if (available) {
-        tierPips(g, x + 32, CARD_Y + 21, weapon.tier);
-        divider(g, x + 10, this.dividers[i] ?? CARD_Y + 63, CARD_W - 20);
-      }
-    });
+  /** The weapon START RUN takes, and what the screen says about it: its name, and LORE's line when it came from the rack. */
+  private setWeapon(w: ReturnType<typeof startWeapon>): void {
+    this.weapon = w.weapon;
+    this.weaponLine = w.line;
+    this.weaponName.setText(w.name.toUpperCase());
+    this.weaponNote.setText(w.line ?? '');
+    const cx = UI_W / 2;
+    place(this.weaponName, cx, WEAPON_Y + 10, 0.5);
+    place(this.weaponNote, cx, WEAPON_Y + 24, 0.5);
   }
 
   /** End the session on the server and go back to the account screen. */
@@ -379,7 +329,6 @@ export class StartScene extends Phaser.Scene {
   }
 
   override update(): void {
-    this.drawCards();
     const family = padFamilyNow();
     if (family !== this.padFamily) {
       this.padFamily = family;
@@ -397,7 +346,5 @@ export class StartScene extends Phaser.Scene {
     )
       this.scene.start('inventory');
     else if (edges.includes(MENU_BUTTONS.back)) this.logOut();
-    else if (edges.includes(MENU_BUTTONS.left)) this.cycleWeapon(-1);
-    else if (edges.includes(MENU_BUTTONS.right)) this.cycleWeapon(1);
   }
 }

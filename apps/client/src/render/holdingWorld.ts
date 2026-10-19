@@ -14,6 +14,7 @@ import {
   type SpriteSheet,
   type SpriteSheetName,
   type TileRect,
+  TILE_WORLD_PX,
 } from '@iot/shared';
 import { TURN, type RoamState } from '@iot/sim';
 import {
@@ -72,6 +73,9 @@ interface Flight {
 
 /** The clay tile's placeholder texture (M2 Task 5): a small rectangle in two tokens, drawn once as a sprite texture. */
 export const CLAY_TILE_TEXTURE = 'clay-tile';
+/** A prop's placeholder box (M2 Task 8: the weapon rack until ART's sheet lands), keyed by its footprint; its rise over the footprint, world px, as the pieces' box. */
+export const PLACEHOLDER_TEXTURE = 'placeholder';
+const PLACEHOLDER_RISE = 10;
 const CLAY_TILE_W = 10;
 const CLAY_TILE_H = 7;
 
@@ -91,7 +95,8 @@ interface Prop {
  * like a room: the layout through the shore tile rule from the
  * `tiles-holding` sheet (the void transparent over the hollow background),
  * a prop per station part (the six trees on the tall cell, the post, the
- * store, the outcrop; a reserved spot draws none) and Kesh's rock in the
+ * store, the outcrop, the weapon rack as its placeholder box until ART's optional sheet lands; a reserved spot draws
+ * none) and Kesh's rock in the
  * void, each a sprite from its prop sheet standing on the bottom centre of
  * its tile rectangle with a grounding shadow by the prop rule, and the
  * Kindled from its Kindled sheet posed by `roamPose` from the roam state,
@@ -159,13 +164,13 @@ export class HoldingWorld {
     for (const station of layout.stations) {
       const kindSheet = STATION_SHEETS[station.kind];
       if (!kindSheet || station.reserved) continue;
-      // A part may name its own sheet (the second tree); until that optional sheet is on disk, the kind's.
-      for (const part of station.parts)
-        stand(
-          station.id,
-          part.rect,
-          part.sheet && scene.textures.exists(part.sheet) ? part.sheet : kindSheet,
-        );
+      // A part may name its own sheet (the second tree); until that optional sheet is on disk, the kind's. A kind whose
+      // own sheet is optional and not on disk (the weapon rack until ART's lands, M2 Task 8) draws its placeholder box.
+      for (const part of station.parts) {
+        const sheet = part.sheet && scene.textures.exists(part.sheet) ? part.sheet : kindSheet;
+        if (scene.textures.exists(sheet)) stand(station.id, part.rect, sheet);
+        else this.standPlaceholder(station.id, part.rect);
+      }
     }
     stand(null, layout.kesh.rock, KESH_ROCK_SHEET);
     // Kesh at the rock's world point, one depth step above it, no shadow (his clay is drawn in: no tone swap).
@@ -254,6 +259,38 @@ export class HoldingWorld {
   /** Whether a toss is in the air or still in his hand. */
   get tossing(): boolean {
     return this.keshRow === 'toss' || this.flight !== null;
+  }
+
+  /**
+   * A prop's placeholder until its optional sheet lands (the weapon rack, M2 Task 8): the pieces' box of its tile
+   * rectangle in the piece tokens, the front face `pieceShade` under the top `pieceFace`, a 1 px outline round both,
+   * rising `PLACEHOLDER_RISE` over the footprint; no shadow, like a piece's placeholder. It stands in `props` like a
+   * sheet's prop, so the prompt and the floats find it (`propTop`), as `placeholder:<cols>x<rows>`.
+   */
+  private standPlaceholder(stationId: string, rect: TileRect): void {
+    const base = propBase({ rect });
+    const w = rect.cols * TILE_WORLD_PX;
+    const h = rect.rows * TILE_WORLD_PX;
+    const key = `${PLACEHOLDER_TEXTURE}:${rect.cols}x${rect.rows}`;
+    if (!this.scene.textures.exists(key)) {
+      const canvas = this.scene.textures.createCanvas(key, w + 2, h + PLACEHOLDER_RISE + 2);
+      const ctx = canvas?.getContext();
+      if (!canvas || !ctx) return;
+      const hex = (c: number): string => `#${c.toString(16).padStart(6, '0')}`;
+      ctx.fillStyle = hex(Palette.playerOutline);
+      ctx.fillRect(0, 0, w + 2, h + PLACEHOLDER_RISE + 2);
+      ctx.fillStyle = hex(Palette.pieceFace);
+      ctx.fillRect(1, 1, w, h);
+      ctx.fillStyle = hex(Palette.pieceShade);
+      ctx.fillRect(1, 1 + h, w, PLACEHOLDER_RISE);
+      canvas.refresh();
+    }
+    const image = this.scene.add
+      .sprite(snapToArt(base.x), snapToArt(base.y) + 1, key)
+      .setOrigin(0.5, 1)
+      .setDepth(bodyDepth({ kind: 'prop' }, base.y));
+    this.layer.add(image);
+    this.props.push({ stationId, rect, image, sheet: key, grounded: false });
   }
 
   /** The clay tile's texture, made on first use: a `clayTile` face with a `clayTileEdge` 1 px rim and the player outline. */

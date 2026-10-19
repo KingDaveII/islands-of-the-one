@@ -94,6 +94,7 @@ const working: HoldingResponse = {
   })),
   cycles: { 'twisted-trees': { cycleMs: 1_200_000, cycledUntil: iso(0), bonusPermille: 0 } },
   away: null,
+  rack: { weapons: [{ itemId: 'hookblade', ready: true }], chosen: 'hookblade' },
 };
 const idle: HoldingResponse = { ...working, activity: null };
 /** The same holding with plot-1 a sown field, plot-2 named but not sown, plot-3 a field with ישן on a faded line. */
@@ -254,7 +255,8 @@ describe('the station panel', () => {
     });
     expect(stationLines('twisted-trees', null)?.skill).toBe('Woodcutting');
     expect(stationLines('twisted-trees', null)?.next).toBeNull();
-    // The post and the store have no panel: Use opens the inventory with the store pane; the reserved rack has none either.
+    // The post, the store and the rack have no station panel: Use opens the Writ panel, the inventory with the store
+    // pane, or the rack panel (M2 Task 8).
     expect(stationLines('writ-post', working)).toBeNull();
     expect(stationLines('holding-store', working)).toBeNull();
     expect(stationLines('weapon-rack', working)).toBeNull();
@@ -460,10 +462,16 @@ describe('the prompt and the props', () => {
     // The store's interact point (12, 14) and the outcrop's (22, 14).
     expect(nearestStation(200, 232, 40, layout)?.id).toBe('holding-store');
     expect(nearestStation(360, 232, 40, layout)?.id).toBe('stone-outcrop');
-    // The reserved rack offers no Use: standing on its interact point (16, 13) prompts for the post beside it, or nothing in a short range.
+    // The rack (M2 Task 8) offers its Use: standing on its interact point (16, 13), between it and the post, it is nearest.
     expect(interactPoint(rack.parts[0] ?? tree0)).toEqual({ x: 264, y: 216 });
-    expect(nearestStation(264, 216, 40, layout)?.id).toBe('writ-post');
-    expect(nearestStation(264, 216, 10, layout)).toBeNull();
+    expect(rack.reserved).toBeUndefined();
+    expect(nearestStation(264, 216, 40, layout)?.id).toBe('weapon-rack');
+    expect(nearestStation(264, 216, 10, layout)?.id).toBe('weapon-rack');
+    // A step west, by the post's side: the post again.
+    expect(nearestStation(240, 216, 40, layout)?.id).toBe('writ-post');
+    // A reserved spot would offer none (no spot of the shipped layout is reserved today).
+    const reserved = { ...layout, stations: layout.stations.map((s) => (s.id === 'weapon-rack' ? { ...s, reserved: true as const } : s)) };
+    expect(nearestStation(264, 216, 10, reserved)).toBeNull();
     expect(nearestStation(0, 0, 40, layout)).toBeNull();
     // The plots (Task 5) prompt at their signposts' interact points, only once the island has a Name (`plots` true).
     const plot1 = layout.plots[0];

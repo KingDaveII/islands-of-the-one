@@ -138,6 +138,7 @@ import { NameScreen } from '../ui/nameScreen.js';
 import { PlotPanel } from '../ui/plotPanel.js';
 import { TalkBox } from '../ui/talkBox.js';
 import { toastStore } from '../ui/toasts.js';
+import { RackPanel } from '../ui/rackPanel.js';
 import { WritPanel } from '../ui/writPanel.js';
 import type { InventoryData } from './InventoryScene.js';
 
@@ -262,6 +263,8 @@ export class HoldingScene extends Phaser.Scene {
   private panel: StationPanel | null = null;
   /** The Writ panel and the Name screen (M2 Task 4a), one at a time, over the post. */
   private writPanel: WritPanel | null = null;
+  /** The weapon rack's panel (M2 Task 8), open over the rack. */
+  private rackPanel: RackPanel | null = null;
   private nameScreen: NameScreen | null = null;
   /** The plot sentence panel (M2 Task 5), over a plot. */
   private plotPanel: PlotPanel | null = null;
@@ -332,6 +335,7 @@ export class HoldingScene extends Phaser.Scene {
     this.busy = false;
     this.panel = null;
     this.writPanel = null;
+    this.rackPanel = null;
     this.nameScreen = null;
     this.plotPanel = null;
     this.plotPanelFor = null;
@@ -439,7 +443,7 @@ export class HoldingScene extends Phaser.Scene {
     });
     bind(keyboardKeys('inventory'), () => {
       if (this.away) return;
-      if (!this.writPanel && !this.plotPanel) this.openInventory();
+      if (!this.writPanel && !this.plotPanel && !this.rackPanel) this.openInventory();
     });
     bind(keyboardKeys('menu'), () => {
       if (this.away) return;
@@ -462,6 +466,9 @@ export class HoldingScene extends Phaser.Scene {
       } else if (this.writPanel) {
         this.keyNav = true;
         this.writPanel.press();
+      } else if (this.rackPanel) {
+        this.keyNav = true;
+        this.rackPanel.press();
       } else if (this.plotPanel) {
         this.keyNav = true;
         this.plotPanel.press();
@@ -481,6 +488,9 @@ export class HoldingScene extends Phaser.Scene {
           this.keyNav = true;
           if (key === 'TAB') this.writPanel.moveFocus(1);
           else this.writPanel.moveSide(key === 'LEFT' ? -1 : 1);
+        } else if (this.rackPanel) {
+          this.keyNav = true;
+          if (key === 'TAB') this.rackPanel.moveFocus(1);
         } else if (this.plotPanel) {
           this.keyNav = true;
           if (key === 'TAB') this.plotPanel.moveFocus(1);
@@ -504,6 +514,9 @@ export class HoldingScene extends Phaser.Scene {
         if (this.writPanel) {
           this.keyNav = true;
           this.writPanel.moveFocus(key === 'UP' ? -1 : 1);
+        } else if (this.rackPanel) {
+          this.keyNav = true;
+          this.rackPanel.moveFocus(key === 'UP' ? -1 : 1);
         } else if (this.plotPanel) {
           this.keyNav = true;
           this.plotPanel.moveFocus(key === 'UP' ? -1 : 1);
@@ -551,6 +564,7 @@ export class HoldingScene extends Phaser.Scene {
       this.closeTalk();
       this.closeNameScreen();
       this.closeWritPanel();
+      this.closeRackPanel();
       this.closePlotPanel();
       this.closeBuild();
       this.dropAway();
@@ -648,6 +662,7 @@ export class HoldingScene extends Phaser.Scene {
     this.session.setSolidPlots(namedPlotIds(res.value), plotPieceTiles(res.value.plots));
     this.syncPanel();
     this.syncWritPanel();
+    this.syncRackPanel();
     this.syncPlotPanel();
     this.syncBuild();
     this.syncAway();
@@ -778,7 +793,7 @@ export class HoldingScene extends Phaser.Scene {
 
   /**
    * Use: the post opens the Writ panel (the Name screen first, unnamed); the store opens the inventory with the
-   * store pane; a tree or the outcrop opens its panel; an unnamed plot the plot sentence panel, a named plot its
+   * store pane; the weapon rack opens the rack panel (M2 Task 8); a tree or the outcrop opens its panel; an unnamed plot the plot sentence panel, a named plot its
    * station panel; the Talk spot across the water from Kesh opens the talk box, and while it is open Use advances it.
    */
   private use(): void {
@@ -793,6 +808,10 @@ export class HoldingScene extends Phaser.Scene {
     }
     if (this.writPanel) {
       this.closeWritPanel();
+      return;
+    }
+    if (this.rackPanel) {
+      this.closeRackPanel();
       return;
     }
     if (this.plotPanel) {
@@ -822,6 +841,7 @@ export class HoldingScene extends Phaser.Scene {
     if (!station) return;
     if (station.kind === 'post') this.openWrit();
     else if (station.kind === 'store') this.openInventory();
+    else if (station.kind === 'rack') this.openRackPanel();
     else this.openPanel(station.id);
   }
 
@@ -898,6 +918,7 @@ export class HoldingScene extends Phaser.Scene {
 
   private openWritPanel(): void {
     this.closePanel();
+    this.closeRackPanel();
     if (this.writPanel) return;
     this.session.held = true;
     this.writPanel = new WritPanel({
@@ -932,6 +953,51 @@ export class HoldingScene extends Phaser.Scene {
   private syncWritPanel(): void {
     if (this.writPanel && this.response)
       this.writPanel.sync(this.response.writ, this.inventory, this.serverNow());
+  }
+
+  // --- The weapon rack (M2 Task 8) ----------------------------------------------
+
+  /** Use on the rack: the rack panel (ui/rackPanel.ts), the rows from the latest answer's `rack`. */
+  private openRackPanel(): void {
+    this.closePanel();
+    this.closeWritPanel();
+    this.closePlotPanel();
+    if (this.rackPanel) return;
+    this.session.held = true;
+    this.rackPanel = new RackPanel({
+      scene: this,
+      layer: this.hudLayer,
+      frame: () => this.frame,
+      showFocus: () => this.showFocus(),
+      choose: (weaponId) => {
+        this.chooseWeapon(weaponId);
+      },
+    });
+    this.syncRackPanel();
+    // Opening the panel is an interaction: what hangs there is fresh.
+    this.refresh();
+  }
+
+  private closeRackPanel(): void {
+    if (!this.rackPanel) return;
+    this.rackPanel.destroy();
+    this.rackPanel = null;
+    this.session.held = this.panel !== null || this.writPanel !== null || this.plotPanel !== null || this.build !== null;
+  }
+
+  private syncRackPanel(): void {
+    if (this.rackPanel && this.response) this.rackPanel.sync(this.response.rack);
+  }
+
+  /** TAKE (and the playtests): POST /api/holding/rack/choose; the rows redraw from the answer; a refusal is the panel's footer line. */
+  chooseWeapon(weaponId: string): void {
+    this.request(
+      () => api.rackChoose({ weaponId }),
+      undefined,
+      (message) => {
+        this.rackPanel?.setResult(message);
+      },
+    );
   }
 
   /** POST /api/writ/feed: the face relights from the answer, never ahead of it; a refusal is the panel's one line. */
@@ -1020,6 +1086,7 @@ export class HoldingScene extends Phaser.Scene {
       this.nameScreen ||
       this.talkBox ||
       this.writPanel ||
+      this.rackPanel ||
       this.plotPanel ||
       this.build ||
       this.panel
@@ -1070,6 +1137,7 @@ export class HoldingScene extends Phaser.Scene {
     this.session.held =
       this.panel !== null ||
       this.writPanel !== null ||
+      this.rackPanel !== null ||
       this.nameScreen !== null ||
       this.plotPanel !== null ||
       this.build !== null ||
@@ -1102,6 +1170,7 @@ export class HoldingScene extends Phaser.Scene {
   private openPlotPanel(plotId: string): void {
     this.closePanel();
     this.closeWritPanel();
+    this.closeRackPanel();
     const view = plotOf(this.response, plotId);
     if (!view || this.plotPanel) return;
     this.session.held = true;
@@ -1125,7 +1194,7 @@ export class HoldingScene extends Phaser.Scene {
     this.plotPanel.destroy();
     this.plotPanel = null;
     this.plotPanelFor = null;
-    this.session.held = this.panel !== null || this.writPanel !== null || this.nameScreen !== null;
+    this.session.held = this.panel !== null || this.writPanel !== null || this.rackPanel !== null || this.nameScreen !== null;
   }
 
   private syncPlotPanel(): void {
@@ -1168,6 +1237,7 @@ export class HoldingScene extends Phaser.Scene {
     const open =
       this.panel !== null ||
       this.writPanel !== null ||
+      this.rackPanel !== null ||
       this.nameScreen !== null ||
       this.talkBox !== null ||
       this.plotPanel !== null ||
@@ -1264,6 +1334,7 @@ export class HoldingScene extends Phaser.Scene {
     this.session.held =
       this.panel !== null ||
       this.writPanel !== null ||
+      this.rackPanel !== null ||
       this.nameScreen !== null ||
       this.plotPanel !== null;
   }
@@ -1644,6 +1715,7 @@ export class HoldingScene extends Phaser.Scene {
     this.session.held =
       this.panel !== null ||
       this.writPanel !== null ||
+      this.rackPanel !== null ||
       this.nameScreen !== null ||
       this.plotPanel !== null;
     const after = this.afterTalk;
@@ -1662,6 +1734,7 @@ export class HoldingScene extends Phaser.Scene {
     if (this.nameScreen || this.away) return;
     if (this.panel) this.closePanel();
     if (this.writPanel) this.closeWritPanel();
+    if (this.rackPanel) this.closeRackPanel();
     if (this.plotPanel) this.closePlotPanel();
     if (this.build) this.closeBuild();
     const data: InventoryData = { back: 'holding' };
@@ -1681,6 +1754,10 @@ export class HoldingScene extends Phaser.Scene {
     }
     if (this.writPanel) {
       this.closeWritPanel();
+      return;
+    }
+    if (this.rackPanel) {
+      this.closeRackPanel();
       return;
     }
     if (this.plotPanel) {
@@ -1706,6 +1783,7 @@ export class HoldingScene extends Phaser.Scene {
   private openPanel(id: string): void {
     this.closePanel();
     this.closeWritPanel();
+    this.closeRackPanel();
     const g = this.add.graphics();
     const face = this.add.graphics();
     const title = label(this, 0, 0, '', Palette.uiInk);
@@ -1977,6 +2055,7 @@ export class HoldingScene extends Phaser.Scene {
       this.plots.sealing !== null ||
       this.panel !== null ||
       this.writPanel !== null ||
+      this.rackPanel !== null ||
       this.nameScreen !== null ||
       this.talkBox !== null ||
       this.plotPanel !== null ||
@@ -2127,6 +2206,8 @@ export class HoldingScene extends Phaser.Scene {
     /** The Writ (M2 Task 4a): the HUD's block, the panel and the Name screen while open. */
     writ: WritHud | null;
     writPanel: ReturnType<WritPanel['snapshot']> | null;
+    /** The weapon rack's panel while open (M2 Task 8). */
+    rackPanel: ReturnType<RackPanel['snapshot']> | null;
     nameScreen: ReturnType<NameScreen['snapshot']> | null;
     writTip: boolean;
     /** The HUD's Writ block (UI px), for the tooltip hover. */
@@ -2172,6 +2253,7 @@ export class HoldingScene extends Phaser.Scene {
       playerDepth: this.world.playerDepth(),
       writ: this.writHud(),
       writPanel: this.writPanel?.snapshot() ?? null,
+      rackPanel: this.rackPanel?.snapshot() ?? null,
       nameScreen: this.nameScreen?.snapshot() ?? null,
       writTip: this.hud.writTipVisible,
       writRect: this.hud.writRect,
@@ -2236,6 +2318,7 @@ export class HoldingScene extends Phaser.Scene {
       }
     }
     this.writPanel?.update(this.serverNow());
+    this.rackPanel?.update();
     this.plotPanel?.update();
     this.build?.update();
     this.talkBox?.layout();
@@ -2276,6 +2359,14 @@ export class HoldingScene extends Phaser.Scene {
         this.talk.moveFocus(1);
         this.syncTalk();
       } else if (confirmed()) this.talkAdvance();
+    } else if (this.rackPanel) {
+      const axes = connectedPad()?.axes ?? [];
+      const sy = Math.abs(axes[1] ?? 0) > 0.5 ? Math.sign(axes[1] ?? 0) : 0;
+      const pushedY = sy !== 0 && sy !== this.stick.y ? sy : 0;
+      this.stick = { x: 0, y: sy };
+      if (edges.includes(MENU_BUTTONS.up) || pushedY < 0) this.rackPanel.moveFocus(-1);
+      else if (edges.includes(MENU_BUTTONS.down) || pushedY > 0) this.rackPanel.moveFocus(1);
+      else if (confirmed()) this.rackPanel.press();
     } else if (this.writPanel || this.plotPanel) {
       const p = this.writPanel ?? this.plotPanel;
       if (!p) return;

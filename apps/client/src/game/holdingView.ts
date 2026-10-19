@@ -310,9 +310,9 @@ export interface NearStation {
 /**
  * The station part to prompt for: the one whose interact point is nearest
  * the Kindled (sim px) within `rangePx`, or null. The prompt's existing
- * rules: the nearest in reach, nothing when none is. A reserved spot (the
- * weapon rack until Task 8) offers no Use; the plots offer theirs only once
- * the island has a Name (`plots`).
+ * rules: the nearest in reach, nothing when none is. A reserved spot offers
+ * no Use (the weapon rack was one until Task 8); the plots offer theirs only
+ * once the island has a Name (`plots`).
  */
 export function nearestStationPart(
   x: number,

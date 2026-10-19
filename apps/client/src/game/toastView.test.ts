@@ -63,6 +63,7 @@ function answer(
     plots: [],
     cycles: {},
     away,
+    rack: { weapons: [{ itemId: 'hookblade', ready: true }], chosen: 'hookblade' },
   };
 }
 

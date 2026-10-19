@@ -29,14 +29,14 @@ describe('the talk box', () => {
     expect(KESH_NAME).toBe('Kesh');
   });
 
-  it('Talk with nothing due opens on the menu: the four topics in order, Goodbye last', () => {
+  it('Talk with nothing due opens on the menu: the five topics in order (The rack before Goodbye, M2 Task 8), Goodbye last', () => {
     const talk = new KeshTalk();
     expect(talk.open).toBe(false);
     expect(talk.start('talk', given)).toEqual({ kind: 'menu', focus: 0 });
     expect(talk.open).toBe(true);
-    expect(talk.topics.map((t) => t.title)).toEqual(['The Old Letters', 'Sparkglass', 'Where the crack points', 'Goodbye']);
+    expect(talk.topics.map((t) => t.title)).toEqual(['The Old Letters', 'Sparkglass', 'Where the crack points', 'The rack', 'Goodbye']);
     expect(talk.moveFocus(1)).toEqual({ kind: 'menu', focus: 1 });
-    expect(talk.moveFocus(-2)).toEqual({ kind: 'menu', focus: 3 });
+    expect(talk.moveFocus(-2)).toEqual({ kind: 'menu', focus: 4 });
     expect(talk.moveFocus(1)).toEqual({ kind: 'menu', focus: 0 });
     expect(talk.setFocus(2)).toEqual({ kind: 'menu', focus: 2 });
     expect(talk.setFocus(9)).toEqual({ kind: 'menu', focus: 2 });
@@ -54,11 +54,18 @@ describe('the talk box', () => {
       expect(steps.map((s) => (s.kind === 'line' ? [s.index, s.count] : null))).toEqual(steps.map((_, k) => [k, steps.length]));
       expect(talk.step).toEqual({ kind: 'menu', focus: i });
     }
+    // The rack (M2 Task 8): Kesh's three lines, always, then the menu again.
+    talk.setFocus(3);
+    expect(talk.advance(given).kind).toBe('line');
+    const rack = play(talk, given);
+    expect(rack.map(text)).toEqual(keshData.topics[3]?.lines.map((l) => l.text));
+    expect(rack).toHaveLength(3);
+    expect(talk.step).toEqual({ kind: 'menu', focus: 3 });
     // Goodbye: its five lines, then closed. A topic is chosen from the menu only.
-    expect(talk.choose(3, given).kind).toBe('line');
+    expect(talk.choose(4, given).kind).toBe('line');
     expect(talk.choose(0, given).kind).toBe('line');
     const bye = play(talk, given);
-    expect(bye.map(text)).toEqual(keshData.topics[3]?.lines.map((l) => l.text));
+    expect(bye.map(text)).toEqual(keshData.topics[4]?.lines.map((l) => l.text));
     expect(talk.step).toEqual({ kind: 'closed' });
     expect(talk.open).toBe(false);
     expect(talk.advance(given)).toEqual({ kind: 'closed' });
