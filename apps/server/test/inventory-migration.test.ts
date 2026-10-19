@@ -10,7 +10,7 @@ import { MIGRATIONS_DIR } from '../src/db/client.js';
 import * as schema from '../src/db/schema.js';
 import { createInventory } from '../src/inventory/index.js';
 
-const { accounts, kindled } = schema;
+const { accounts } = schema;
 
 /**
  * Migration 0003 (M2 Task 3a) copies Task 2's `items` rows into
@@ -55,16 +55,11 @@ describe('migration 0003: items into places', () => {
       .insert(accounts)
       .values({ username: 'old', passwordHash: 'x' })
       .returning();
-    const [k] = await db
-      .insert(kindled)
-      .values({
-        accountId: account?.id ?? '',
-        name: 'Old Tally',
-        remembrance: 'clay',
-        clayTone: 'clay-pale',
-      })
-      .returning();
-    const id = k?.id ?? '';
+    // Raw SQL: the schema object names columns later migrations add (run_weapon, 0010), which this database lacks.
+    const inserted = await db.execute<{ id: string }>(
+      sql`insert into kindled (account_id, name, remembrance, clay_tone) values (${account?.id ?? ''}, 'Old Tally', 'clay', 'clay-pale') returning id`,
+    );
+    const id = inserted.rows[0]?.id ?? '';
     // Task 2's rows: one balance per item, and ledger rows without a place.
     await db.execute(sql`insert into items (kindled_id, item_id, quantity) values
       (${id}, 'sealed-gin', 120), (${id}, 'black-stone', 30), (${id}, 'grey-seeds', 0)`);

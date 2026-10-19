@@ -4,17 +4,17 @@ import {
   isDoorPieceName,
   isFloorWeights,
   isMidWeights,
-  isKindledPoint,
+  isSpritePoint,
   isTileRule,
   pointAnimsFor,
-  KINDLED_POINTS,
+  SPRITE_POINTS,
   spritePointsFor,
   staticTilePiece,
   TILE_RULES,
   TILE_SET_DEFAULT,
   tileRecipePiecesFor,
   tileSetOf,
-  type KindledPoint,
+  type SpritePoint,
   type PropAnimGiven,
   type SpriteAnimSpec,
   type TileRule,
@@ -120,7 +120,7 @@ export interface Recipe {
    * frame's source pixels (after any downscale and `flipX`), like `fixes`. The pipeline places
    * each with its frame; a `flipX` facing inherits its unmirrored twin's points, mirrored.
    */
-  points: Partial<Record<KindledPoint, Record<string, [number, number]>>>;
+  points: Partial<Record<SpritePoint, Record<string, [number, number]>>>;
   /** Tiles only (kind `tiles`): its `floorWeights` and `pieces`; `anims` is empty. */
   tiles?: TilesRecipe;
 }
@@ -422,8 +422,8 @@ export function parseRecipe(json: Json, file: string, root: string): Recipe {
     else {
       for (const [point, block] of Object.entries(json.points)) {
         const path = `points.${point}`;
-        if (!isKindledPoint(point)) {
-          bad(path, `is not a point name (${KINDLED_POINTS.join(', ')})`);
+        if (!isSpritePoint(point)) {
+          bad(path, `is not a point name (${SPRITE_POINTS.join(', ')})`);
           continue;
         }
         if (!isObj(block)) {

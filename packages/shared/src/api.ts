@@ -26,6 +26,7 @@ export const ApiRoute = {
   HoldingStop: '/api/holding/stop',
   HoldingTake: '/api/holding/take',
   HoldingAwaySeen: '/api/holding/away/seen',
+  RackChoose: '/api/holding/rack/choose',
   WritName: '/api/writ/name',
   WritFeed: '/api/writ/feed',
   KeshSliver: '/api/kesh/sliver',
@@ -106,6 +107,9 @@ export const ApiErrorCode = {
   Blocked: 'blocked',
   NotBuilt: 'not-built',
   StoreFull: 'store-full',
+  // The weapon rack (docs/design/holding.md "The weapon rack", M2 Task 8).
+  NotOwned: 'not-owned',
+  NotReady: 'not-ready',
 } as const;
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
 
@@ -346,6 +350,29 @@ export interface AwaySeenRequest {
   to: string;
 }
 
+/** One weapon on the Kindled's rack (M2 Task 8): its item id and whether the sim can run it. */
+export interface RackWeaponView {
+  itemId: string;
+  ready: boolean;
+}
+
+/**
+ * The weapon rack in the holding answer (docs/design/holding.md "The weapon
+ * rack", M2 Task 8): the Kindled's weapons in roster order, and `chosen`,
+ * the weapon a run takes, resolved (the stored choice while it is owned and
+ * can fight, else the first in roster order that can): null only while the
+ * Kindled owns no weapon that can fight, which M2's kit never allows.
+ */
+export interface RackView {
+  weapons: RackWeaponView[];
+  chosen: string | null;
+}
+
+/** POST /api/holding/rack/choose: the weapon a run takes from now on, by item id. `not-owned`, `not-ready`. */
+export interface RackChooseRequest {
+  weaponId: string;
+}
+
 /**
  * GET /api/holding, and the answer to work, stop, take, name, feed and
  * Kesh's sliver: the layout, every station's basket (by station id, every
@@ -353,7 +380,7 @@ export interface AwaySeenRequest {
  * skills, the Writ and Kesh. The server settles the action before
  * answering, so the counts are true as of `now`. A take-all answer adds
  * `take`. `away` is the While you were away card waiting to be seen, or
- * null (M2 Task 7).
+ * null (M2 Task 7); `rack` the weapon rack (M2 Task 8).
  */
 export interface HoldingResponse {
   layoutId: string;
@@ -372,6 +399,8 @@ export interface HoldingResponse {
   cycles: Record<string, StationCycleView>;
   /** The away card waiting to be dismissed, or null (Task 7). */
   away: AwayCard | null;
+  /** The weapon rack: what hangs there and the weapon a run takes (Task 8). */
+  rack: RackView;
   take?: HoldingTake;
 }
 
@@ -733,10 +762,29 @@ export function isAwaySeenRequest(value: unknown): value is AwaySeenRequest {
   return isObject(value) && hasOnly(value, ['to']) && isIsoDate(value.to);
 }
 
+export function isRackWeaponView(value: unknown): value is RackWeaponView {
+  return isObject(value) && hasOnly(value, ['itemId', 'ready']) && typeof value.itemId === 'string' && typeof value.ready === 'boolean';
+}
+
+/** The rack on the wire: each weapon once, and `chosen` one of them that is ready, or null only while none is. */
+export function isRackView(value: unknown): value is RackView {
+  if (!isObject(value) || !hasOnly(value, ['weapons', 'chosen'])) return false;
+  const { weapons, chosen } = value;
+  if (!Array.isArray(weapons) || !weapons.every(isRackWeaponView)) return false;
+  if (new Set(weapons.map((w) => w.itemId)).size !== weapons.length) return false;
+  if (chosen === null) return weapons.every((w) => !w.ready);
+  return typeof chosen === 'string' && weapons.some((w) => w.itemId === chosen && w.ready);
+}
+
+/** The body of POST /api/holding/rack/choose: exactly { weaponId }; the route judges the weapon. */
+export function isRackChooseRequest(value: unknown): value is RackChooseRequest {
+  return isObject(value) && hasOnly(value, ['weaponId']) && typeof value.weaponId === 'string';
+}
+
 export function isHoldingResponse(value: unknown): value is HoldingResponse {
   return (
     isObject(value) &&
-    hasOnly(value, ['layoutId', 'baskets', 'activity', 'now', 'skills', 'writ', 'kesh', 'words', 'plots', 'cycles', 'away', 'take']) &&
+    hasOnly(value, ['layoutId', 'baskets', 'activity', 'now', 'skills', 'writ', 'kesh', 'words', 'plots', 'cycles', 'away', 'rack', 'take']) &&
     typeof value.layoutId === 'string' &&
     isObject(value.baskets) &&
     Object.entries(value.baskets).every(([k, v]) => isHoldingStationId(k) && isEntryList(v)) &&
@@ -753,6 +801,7 @@ export function isHoldingResponse(value: unknown): value is HoldingResponse {
     isObject(value.cycles) &&
     Object.entries(value.cycles).every(([k, v]) => isHoldingStationId(k) && isStationCycleView(v)) &&
     (value.away === null || isAwayCard(value.away)) &&
+    isRackView(value.rack) &&
     (value.take === undefined || isHoldingTake(value.take))
   );
 }

@@ -104,7 +104,7 @@ export interface Inventory {
    * they commit; the holding's take-all).
    */
   holdings(kindledId: string, tx?: Transaction): Promise<Holding[]>;
-  /** The same, by place: what GET /api/inventory answers. */
+  /** The same, by place: what GET /api/inventory answers. The rack is not in it: weapons never show in the panes (the holding answers them). */
   view(kindledId: string, tx?: Transaction): Promise<InventoryResponse>;
   /** A Kindled's ledger rows, oldest first. */
   ledger(kindledId: string): Promise<LedgerEntry[]>;
@@ -139,7 +139,7 @@ const cmp = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 const byKey = (a: ItemChange, b: ItemChange): number =>
   cmp(a.kindledId, b.kindledId) || cmp(a.itemId, b.itemId) || cmp(a.place, b.place);
 
-/** Display order of places: the purse, the pack, the store, then baskets by station id. */
+/** Display order of places: the purse, the pack, the store, the rack, then baskets by station id. */
 export function placeOrder(place: Place): number {
   switch (place) {
     case 'purse':
@@ -148,8 +148,10 @@ export function placeOrder(place: Place): number {
       return 1;
     case 'store':
       return 2;
-    default:
+    case 'rack':
       return 3;
+    default:
+      return 4;
   }
 }
 
@@ -185,12 +187,21 @@ function validate(
   });
 }
 
-/** The first change that puts a kind where it can't be: currency outside the purse, anything else in it. */
+/** The first change that puts a kind where it can't be: currency outside the purse, a weapon off the rack, anything else in either. */
 function wrongPlace(changes: readonly ItemChange[]): ItemChange | undefined {
   return changes.find((c) => {
     const def = itemDef(c.itemId);
     return def !== undefined && !kindFitsPlace(def.kind, c.place);
   });
+}
+
+/** Why a change is in the wrong place, by its kind and place (docs/design/inventory.md "Places"). */
+function wrongPlaceMessage(c: ItemChange): string {
+  const def = itemDef(c.itemId);
+  if (def?.kind === 'currency') return `${c.itemId} is currency: it lives in the purse, not the ${c.place}.`;
+  if (def?.kind === 'weapon') return `${c.itemId} is a weapon: it hangs on the rack, not in the ${c.place}.`;
+  if (c.place === 'rack') return `${c.itemId} can't hang on the rack: only a weapon can.`;
+  return `${c.itemId} can't be in the purse: only currency can.`;
 }
 
 export function createInventory(db: Database, options: InventoryOptions = {}): Inventory {
@@ -206,18 +217,7 @@ export function createInventory(db: Database, options: InventoryOptions = {}): I
   ): Promise<ApplyResult> {
     const changes = validate(input, reason, ref);
     const misplaced = wrongPlace(changes);
-    if (misplaced) {
-      const def = itemDef(misplaced.itemId);
-      return {
-        ok: false,
-        error: 'wrong-place',
-        message:
-          def?.kind === 'currency'
-            ? `${misplaced.itemId} is currency: it lives in the purse, not the ${misplaced.place}.`
-            : `${misplaced.itemId} can't be in the purse: only currency can.`,
-        change: misplaced,
-      };
-    }
+    if (misplaced) return { ok: false, error: 'wrong-place', message: wrongPlaceMessage(misplaced), change: misplaced };
     const sorted = [...changes].sort(byKey);
     const kindledIds = [...new Set(sorted.map((c) => c.kindledId))].sort(cmp);
     // Inside a caller's transaction the set runs as a savepoint, so a refusal rolls back
@@ -309,10 +309,11 @@ export function createInventory(db: Database, options: InventoryOptions = {}): I
               c,
             );
           // The purse stops at the item's stack limit, the store at its store limit (and the
-          // item's), the pack at its slots (below); a basket has no limit here (3b decides).
+          // item's), the rack at the weapon's stack limit (one of each, M2 Task 8), the pack at
+          // its slots (below); a basket has no limit here (3b decides).
           const def = itemDef(c.itemId);
           const limit =
-            c.place === 'purse'
+            c.place === 'purse' || c.place === 'rack'
               ? (def?.stackLimit ?? MAX_QUANTITY)
               : c.place === 'store' && !overfillStore
                 ? Math.min(def?.stackLimit ?? MAX_QUANTITY, storeLimitOf(c.itemId))
@@ -322,7 +323,9 @@ export function createInventory(db: Database, options: InventoryOptions = {}): I
               'stack-limit',
               c.place === 'store'
                 ? `Store: ${def?.name ?? c.itemId} full (${limit}).`
-                : `${c.itemId} would be ${balance} in the ${c.place}, over its limit of ${limit}.`,
+                : c.place === 'rack'
+                  ? `${def?.name ?? c.itemId}: already on the rack.`
+                  : `${c.itemId} would be ${balance} in the ${c.place}, over its limit of ${limit}.`,
               c,
             );
           after.push(balance);
@@ -424,7 +427,8 @@ export function createInventory(db: Database, options: InventoryOptions = {}): I
         if (station !== undefined) (out.baskets[station] ??= []).push(entry);
         else if (h.place === 'purse') out.purse.push(entry);
         else if (h.place === 'pack') out.pack.push(entry);
-        else out.store.push(entry);
+        else if (h.place === 'store') out.store.push(entry);
+        // The rack's weapons are the holding's to answer (M2 Task 8).
       }
       return out;
     },

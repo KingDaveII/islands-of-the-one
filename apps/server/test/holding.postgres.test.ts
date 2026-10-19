@@ -16,7 +16,8 @@ import { createInventory, type Inventory } from '../src/inventory/index.js';
  * Writ never overfill it; two POST /api/kesh/sliver racing give exactly one
  * sliver (M2 Task 4b); settles racing on a sown field credit each cycle once
  * and names racing on one plot charge at most once (M2 Task 5); two builds racing for the last free
- * slot on one plot stand one and pay one cost (M2 Task 6). Needs TEST_DATABASE_URL like
+ * slot on one plot stand one and pay one cost (M2 Task 6); first requests racing on a new Kindled
+ * give the kit once (M2 Task 8). Needs TEST_DATABASE_URL like
  * inventory.postgres.test.ts (CI provides one).
  */
 const url = process.env.TEST_DATABASE_URL;
@@ -208,6 +209,18 @@ describe.runIf(url)('the holding settle on Postgres', () => {
     expect(view.store.find((e) => e.itemId === 'twisted-log')?.quantity).toBe(10 * 300 + 200 - 300 - 200);
     expect(view.store.find((e) => e.itemId === 'pale-grain')).toBeUndefined();
     expect((await inv.ledger(k)).filter((e) => e.reason === 'build')).toHaveLength(4);
+    await expectChains(k);
+  });
+
+  it('first requests racing on a new Kindled give the kit once: one Hookblade, one ledger row (M2 Task 8)', async () => {
+    const k = await newKindled();
+    const results = await race(RACERS, (i) => (i % 2 === 0 ? holding.view(k, at(0)) : holding.chooseWeapon(k, 'hookblade', at(0))));
+    expect(results.every((r) => r.ok)).toBe(true);
+    for (const r of results) if (r.ok) expect(r.value.rack).toEqual({ weapons: [{ itemId: 'hookblade', ready: true }], chosen: 'hookblade' });
+    expect((await inv.holdings(k)).filter((h) => h.place === 'rack')).toEqual([{ itemId: 'hookblade', place: 'rack', quantity: 1 }]);
+    const kit = (await inv.ledger(k)).filter((e) => e.reason === 'kit');
+    expect(kit).toHaveLength(1);
+    expect(kit[0]).toMatchObject({ itemId: 'hookblade', place: 'rack', delta: 1, balanceAfter: 1 });
     await expectChains(k);
   });
 

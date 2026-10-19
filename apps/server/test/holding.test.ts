@@ -2,6 +2,7 @@ import {
   ApiRoute,
   HOLDING_LAYOUT_ID,
   isHoldingResponse,
+  kitRef,
   nextFullOfTide,
   tideIndex,
   NAME_NOT_DRAWABLE,
@@ -145,6 +146,8 @@ describe('the settle', () => {
       // The trees' cycle clock starts at the first settle (Task 5): nothing is paid for the time before it.
       cycles: { 'twisted-trees': { cycleMs: 20 * 60 * SEC, cycledUntil: at(0).toISOString(), bonusPermille: 0 } },
       away: null,
+      // The kit (M2 Task 8): the Hookblade on the rack, given by this first request, and chosen.
+      rack: { weapons: [{ itemId: 'hookblade', ready: true }], chosen: 'hookblade' },
     });
   });
 
@@ -162,9 +165,11 @@ describe('the settle', () => {
     const many = value(await holding.view(k, at(100 * SEC)));
     expect(basket(many, 'twisted-trees', 'twisted-log')).toBe(25);
     expect(many.skills.woodcutting).toEqual(skillProgress(100));
-    // The ledger: gather rows with the stretch's ref, each paying the cycles since the last.
+    // The ledger: the kit's row from the first request (M2 Task 8), then gather rows with the stretch's ref, each
+    // paying the cycles since the last.
     const ledger = await inv.ledger(k);
     expect(ledger.map((e) => [e.reason, e.place, e.delta, e.ref])).toEqual([
+      ['kit', 'rack', 1, kitRef(k, 'hookblade')],
       ['gather', 'basket:twisted-trees', 2, settleRef(k, at(0), 0, 2)],
       ['gather', 'basket:twisted-trees', 23, settleRef(k, at(0), 2, 25)],
     ]);
@@ -416,7 +421,7 @@ describe('feeding the Writ', () => {
     // A humming glass fits only an empty Writ; this one holds its pressed two days.
     expect(await holding.feed(k, 'glass-chip', 1, at(0))).toEqual({ ok: false, error: 'too-much', message: WRIT_TOO_MUCH_NOW });
     expect(await holding.feed(k, 'wild-sliver', 3, at(0))).toEqual({ ok: false, error: 'too-much', message: WRIT_TOO_MUCH_NOW });
-    expect(await inv.ledger(k)).toHaveLength(3);
+    expect((await inv.ledger(k)).filter((e) => e.reason !== 'kit')).toHaveLength(3);
     // Two slivers: one from the store, one from the pack, as one change set; 48 + 96 = 144 h.
     const fed = value(await holding.feed(k, 'wild-sliver', 2, at(0)));
     expect(fed.writ).toMatchObject({ state: 'lit', emptyAt: at(144 * HOUR).toISOString(), chargeMs: 144 * HOUR, words: 'about six days', fedAt: at(0).toISOString() });

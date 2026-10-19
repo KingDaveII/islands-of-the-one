@@ -58,6 +58,13 @@ export const kindled = pgTable('kindled', {
   /** A palette.json clay tone id. */
   clayTone: text('clay_tone').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  /**
+   * The weapon a run takes, chosen at the weapon rack (M2 Task 8,
+   * docs/design/holding.md "The weapon rack"): an item id of kind `weapon`,
+   * or null, meaning the first weapon in roster order the Kindled owns that
+   * can fight. Migration 0010, expand-only.
+   */
+  runWeapon: text('run_weapon'),
 });
 
 /**

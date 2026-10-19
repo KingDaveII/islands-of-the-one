@@ -1,4 +1,7 @@
 {
-  "$comment": "M2's scaffolding (docs/design/holding.md \"Kesh\"): m2Scaffold turns on the once-per-tide sliver from Kesh, M2's only Sparkglass after his first; it goes away in M3 when caves and wrecks give glass. Read by the server and the client.",
-  "m2Scaffold": true
+  "$comment": "M2's scaffolding (docs/design/holding.md \"Kesh\", \"The weapon rack\"): m2Scaffold turns on the once-per-tide sliver from Kesh, M2's only Sparkglass after his first, and the kit: the weapons (item ids of kind weapon) given once onto the rack by a Kindled's first holding request while it owns no weapon (GAME DESIGN: the Hookblade alone). Both go away in M3, when caves and wrecks give glass and the first wreck's rack gives the weapons. Read by the server and the client.",
+  "m2Scaffold": true,
+  "kit": [
+    "hookblade"
+  ]
 }

@@ -112,8 +112,8 @@ describe("Kesh's word and seeds", () => {
     expect(row).toMatchObject({ wordGivenAt: at(HOUR), seedsGivenAt: null });
     expect(await handle.db.select().from(knownWords).where(eq(knownWords.kindledId, k))).toEqual([{ kindledId: k, wordId: 'adamah', learnedAt: at(HOUR) }]);
     expect(await holding.keshWord(k, at(2 * HOUR))).toMatchObject({ ok: false, error: 'not-due' });
-    // Knowledge, not an item: nothing of it in the ledger (the trees' trickle is the only row).
-    expect((await inv.ledger(k)).filter((e) => e.reason !== 'harvest')).toEqual([]);
+    // Knowledge, not an item: nothing of it in the ledger (the trees' trickle and the kit of M2 Task 8 are the only rows).
+    expect((await inv.ledger(k)).filter((e) => e.reason !== 'harvest' && e.reason !== 'kit')).toEqual([]);
     // A Kindled who learned the word by the CLI: the tile isn't due.
     const other = await newKindled('cliword');
     value(await holding.name(other.id, 'Tide', at(0)));

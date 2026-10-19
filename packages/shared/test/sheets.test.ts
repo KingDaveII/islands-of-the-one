@@ -231,8 +231,8 @@ describe('the toast glyphs (ART, #109; M2 Task 7)', () => {
 });
 
 describe('the item icons (ART, #77)', () => {
-  it('has one 16 px cell per item in items.json, named by its id, and no other', () => {
-    expect(itemIconsSheet.cells.map((c) => c.name).sort()).toEqual(ITEMS.map((i) => i.id).sort());
+  it('has one 16 px cell per item in items.json but the weapons (they hang on the rack, never in a pane; M2 Task 8), named by its id, and no other', () => {
+    expect(itemIconsSheet.cells.map((c) => c.name).sort()).toEqual(ITEMS.filter((i) => i.kind !== 'weapon').map((i) => i.id).sort());
     for (const c of itemIconsSheet.cells) expect([c.name, c.w, c.h]).toEqual([c.name, 16, 16]);
     expect(engineSheetMeta(itemIconsSheet).tinted).toBe(false);
   });

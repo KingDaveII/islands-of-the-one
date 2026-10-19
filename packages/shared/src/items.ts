@@ -1,6 +1,7 @@
 import itemsJson from '../data/items.json' with { type: 'json' };
 import tellingJson from '../data/telling.json' with { type: 'json' };
 import { isDrawable } from './accounts.js';
+import { isWeaponId, weaponCanFight } from './weapons.js';
 
 /**
  * Items and the inventory ledger's shared vocabulary (docs/design/inventory.md):
@@ -9,7 +10,7 @@ import { isDrawable } from './accounts.js';
  * stamped with. The server is the only authority over who holds what.
  */
 
-export const ITEM_KINDS = ['currency', 'sparkglass', 'material', 'consumable', 'lore'] as const;
+export const ITEM_KINDS = ['currency', 'sparkglass', 'material', 'consumable', 'lore', 'weapon'] as const;
 export type ItemKind = (typeof ITEM_KINDS)[number];
 
 /** The gathering skills an item's tooltip can name on its kind line ("Material · Mining"); 3b gives them rules. */
@@ -37,6 +38,12 @@ export interface ItemDef {
   description: string;
   /** The gathering skill the tooltip's kind line names, or null. */
   skill: ItemSkill | null;
+  /**
+   * A weapon's moves in input order, as the rack shows them (M2 Task 8; GAME
+   * DESIGN): the Hookblade's Arc, Hook-thrust, Haul. Empty on a weapon whose
+   * combat hasn't landed (locked in the roster); null on every other kind.
+   */
+  kit: readonly string[] | null;
 }
 
 /** The largest balance or delta the ledger stores (quantities are bigint, read as JS numbers). */
@@ -50,7 +57,7 @@ export const MAX_QUANTITY = Number.MAX_SAFE_INTEGER;
 export const RETIRED_WORDS = ['void', 'island', 'tether', 'crystal', 'fishing', 'shard'] as const;
 
 const ITEM_ID = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
-const ITEM_KEYS = ['id', 'name', 'plural', 'kind', 'stackLimit', 'description', 'skill'];
+const ITEM_KEYS = ['id', 'name', 'plural', 'kind', 'stackLimit', 'description', 'skill', 'kit'];
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -75,7 +82,7 @@ export function validateItemsData(
       problems.push(`${at}: not an object`);
       return;
     }
-    const { id, name, plural, kind, stackLimit, description, skill } = entry;
+    const { id, name, plural, kind, stackLimit, description, skill, kit } = entry;
     const extra = Object.keys(entry).filter((k) => !ITEM_KEYS.includes(k));
     if (extra.length > 0) problems.push(`${at}: unknown field(s) ${extra.join(', ')}`);
     if (typeof id !== 'string' || !ITEM_ID.test(id)) {
@@ -106,6 +113,16 @@ export function validateItemsData(
       problems.push(`${where}: description must be text the game can draw (may be empty)`);
     if (skill !== undefined && !(ITEM_SKILLS as readonly string[]).includes(skill as string))
       problems.push(`${where}: skill must be one of ${ITEM_SKILLS.join(', ')} (or left out)`);
+    // A weapon (M2 Task 8): an id the tuning names, one of each on the rack, no skill, and its kit: the moves in
+    // input order, non-empty once the sim can run it. Only a weapon carries a kit.
+    if (kind === 'weapon') {
+      if (!isWeaponId(id)) problems.push(`${where}: a weapon must be in tuning.json's weaponRoster or weapons`);
+      if (stackLimit !== 1) problems.push(`${where}: a weapon's stackLimit is 1 (one of each hangs on the rack)`);
+      if (skill !== undefined) problems.push(`${where}: a weapon has no skill`);
+      const kitOk = Array.isArray(kit) && kit.every((m) => typeof m === 'string' && m.trim() !== '' && isDrawable(m));
+      if (!kitOk) problems.push(`${where}: kit must be a list of the weapon's moves, text the game can draw`);
+      else if (kit.length === 0 && weaponCanFight(id)) problems.push(`${where}: a weapon that can fight needs its kit`);
+    } else if (kit !== undefined) problems.push(`${where}: only a weapon carries a kit`);
     if (problems.length > 0) return;
     items.push({
       id,
@@ -115,6 +132,7 @@ export function validateItemsData(
       stackLimit: stackLimit === 'unlimited' ? null : (stackLimit as number),
       description: description as string,
       skill: skill === undefined ? null : (skill as ItemSkill),
+      kit: kind === 'weapon' ? [...(kit as string[])] : null,
     });
   });
   return problems.length > 0 ? { ok: false, problems } : { ok: true, items };
@@ -175,6 +193,8 @@ export const InventoryReason = {
   Sow: 'sow',
   /** A piece built in a plot (docs/design/holding.md "Build mode"): its cost from the store; a take-down's refund, positive, back into it. */
   Build: 'build',
+  /** What a Kindled is given to start with (M2 Task 8): the Hookblade onto the rack, once, behind m2Scaffold. */
+  Kit: 'kit',
 } as const;
 export type InventoryReason = (typeof InventoryReason)[keyof typeof InventoryReason];
 

@@ -1,0 +1,1 @@
+ALTER TABLE "kindled" ADD COLUMN "run_weapon" text;

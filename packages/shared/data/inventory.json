@@ -1,5 +1,5 @@
 {
-  "$comment": "Where items are (docs/design/inventory.md). packSlots: how many slots the pack has; slotSize: how many of a kind fill one pack slot (currency takes no slot: it lives in the purse); storeLimit: the most of one item the holding store keeps, by kind (a kind left out is bounded by the item's stackLimit alone). GAME DESIGN's starting values; pass 3 may change them.",
+  "$comment": "Where items are (docs/design/inventory.md). packSlots: how many slots the pack has; slotSize: how many of a kind fill one pack slot (currency takes no slot: it lives in the purse; a weapon takes none either: it hangs on the rack, M2 Task 8); storeLimit: the most of one item the holding store keeps, by kind (a kind left out is bounded by the item's stackLimit alone). GAME DESIGN's starting values; pass 3 may change them.",
   "packSlots": 20,
   "slotSize": {
     "material": 50,

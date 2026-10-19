@@ -90,6 +90,7 @@ export {
   type WordsResult,
 } from './words.js';
 export { feedChanges, feedPlaces, feedable, lockWrit, writStored, WRIT_ALREADY_NAMED, WRIT_INSUFFICIENT, WRIT_UNNAMED } from './writ.js';
+export { chooseWeaponIn, giveKit, ownedWeapons, rackViewOf, weaponReady, type ChooseResult } from './rack.js';
 export { parseWritSetArgs, setWrit, WRIT_SET_USAGE, type WritSetArgs, type WritSetResult } from './writ-set.js';
 export {
   giveSeeds,

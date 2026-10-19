@@ -29,6 +29,7 @@ The engine, the §6 test and the G1.2 pipeline read these numbers from `packages
 | Kindled player sheets (`kindled-<rem>` and `kindled-<rem>-sheathed`) | 96×80 | (48, 64) | (16, 10), so canvas row 53 is cell row 63 |
 | Every other sheet (Husks and other enemies, NPCs, props) | 64×64 | (32, 54) | (0, 0) |
 | Tall props (`PROP_CELLS`, M2 Task 3c: `prop-twisted-tree` and `prop-twisted-tree-2`) | 96×128 (ART on #82; 64×96 at first) | (48, 118), the line under the trunk | (16, 64), so canvas row 53 is cell row 117; the crown overhangs upwards and to the sides (the tree stands 2.5 times the Kindled's height, about 10 px past its 2 × 2 footprint a side) |
+| The weapon rack (`PROP_CELLS`, M2 Task 8: `prop-weapon-rack`) | 64×72 | (32, 64), the bottom centre of its 2 × 1 rect | (0, 10), so canvas row 53 is cell row 63; the rack is at most 62 px wide and about 40 px tall (§4 "The weapon rack") |
 | Room tiles (`tiles-<set>`, G1.5e) | 32×32 per piece; doors 64×32 (`door_n`) or 32×64 (`door_w`, `door_e`) | none: a piece's top left sits on its cell's | no canvas: a piece is its own size, on one 16 sim px cell ("Tiles", §10) |
 
 - The Kindled's extra room is for actions: the heavy thrust, the Haul throw and the death fall. SS-01 measured
@@ -234,6 +235,28 @@ rectangle as it lies (turned or not). The engine (`apps/client/src/render/pieces
 `pieceArt.ts`) draws the ghost, the faded dim and the selection outline from each frame's opaque pixels, never as an
 alpha fade ([holding.md](holding.md) §12).
 
+#### The weapon rack (`prop-weapon-rack`, M2 Task 8)
+
+MAIN's contract, confirmed by ART (2026-10-19; "lashed twisted logs in the twisted tree's bronze and brass-dark, bound
+with sleeper-ochre rope", at most 62 px wide and about 40 px tall; the raw material is PR #111's job): the station prop
+of the `rack` kind (`STATION_SHEETS`, `RACK_SHEET` in `packages/shared/src/sprites.ts`), drawn when it is on disk.
+Optional (`OPTIONAL_SPRITE_SHEETS`): until the sheet lands the holding draws a placeholder box of the rack's 2 × 1
+rect in the piece tokens (`pieceFace`, `pieceShade`, a 1 px outline), the pieces' fallback (`standPlaceholder` in
+`apps/client/src/render/holdingWorld.ts`).
+
+| Sheet | Footprint | Cell | Origin | Rows | Shadow | Points |
+|---|---|---|---|---|---|---|
+| `prop-weapon-rack` | 2 × 1, at (17, 13) beside the post | 64×72 (`PROP_CELLS`) | (32, 64), the bottom centre of its rect like every prop | `idle` alone (a prop without a table) | the prop rule's | `peg_0`, `peg_1`, `peg_2`, optional, on `idle` |
+
+**The pegs** (ART: "Please reserve the pegs in the contract now"): three optional named points, `RACK_PEGS`, that this
+sheet alone may carry (`PROP_POINT_ANIMS`; the sheet test refuses them on any other prop, on a Kindled sheet and on an
+NPC's, and `pointProblems` checks each one is inside the cell and off its outer ring, like `hand` on `npc-kesh`). They
+are optional: a finished rack sheet need not have them (`OPTIONAL_POINTS`, `requiredPointsFor`). **The plan, not
+built:** in M2 nothing hangs on the pegs, since the equipped weapon is under the cloak and the Hookblade is the only
+weapon (ART). Later each unequipped weapon gets a small "hung" sprite drawn at a peg, in roster order, one rack frame
+however many weapons come; the engine will map a peg to the world like Kesh's `hand` (the anchor plus the point less
+the cell origin).
+
 #### The Sparkglass pickup (`prop-sparkglass`, M1 polish)
 
 ART delivers it (2026-10-17): a prop without a table, so `idle` alone, a 9 × 11 chip with a 2-frame glint at the
@@ -330,9 +353,11 @@ The contract's version, the only one the engine loads (`SPRITE_SHEET_VERSION`); 
   |---|---|---|
   | `tip` | the hook's tip: the charge spark | `heavy_charge` |
   | `hand` | the hand the Haul chain leaves from | `haul_throw`, `haul_pull`, `haul_slide`, `haul_recover` |
+  | `peg_0`, `peg_1`, `peg_2` | the weapon rack's pegs, where a hung weapon goes later (M2 Task 8) | optional, on `prop-weapon-rack`'s `idle` alone (`PROP_POINT_ANIMS`, `OPTIONAL_POINTS`) |
 
-  - Allowed nowhere else for now, and only on Kindled sheets. A finished Kindled sheet has every required
-    point; an unknown name, a point on another frame, or one outside the cell or on its outer 1 px ring fails.
+  - Allowed nowhere else for now: the Kindled's on Kindled sheets (and Kesh's `hand`, §4), the pegs on the rack
+    (`SPRITE_POINTS` is every name). A finished Kindled sheet has every required point; an unknown name, a point
+    on another frame, or one outside the cell or on its outer 1 px ring fails.
   - So every frame the engine attaches an effect to has its point. The one frame it shows over a charge or a
     Haul that has none, the hit flinch after an armored hit (100 ms), keeps the effect where the action last drew
     it (§8); `hit` frames carry no points.
@@ -395,9 +420,10 @@ tasks register NPC sheets as they use them). Every name must have a known kind (
    - no opaque pixel lies on a cell's outer 1 px ring, so nothing was clipped;
    - colours follow §5: the whitelist, the telegraph colours only in `telegraph*` frames, #FFFFFF and #FFE7A3 nowhere;
    - a sheet with a palette block (every Kindled sheet) has its mask: it exists, has the sheet's size, is opaque only on pixels whose colour is a swap key, and every swap key has at least one masked pixel.
-8. Points (§5, `pointProblems` in `sheetChecks.ts`): every point is a known name (`tip`, `hand`), on a frame whose
-   animation carries it, two whole pixels inside the cell and off its outer 1 px ring; a finished sheet has every
-   required point on every frame of `heavy_charge` and the four `haul_*` animations.
+8. Points (§5, `pointProblems` in `sheetChecks.ts`): every point is a known name (`tip`, `hand`, the rack's
+   `peg_0`…`peg_2`), on a frame whose animation carries it, two whole pixels inside the cell and off its outer 1 px
+   ring; a finished sheet has every required point on every frame of `heavy_charge` and the four `haul_*` animations
+   (the pegs are optional, `requiredPointsFor`).
 
 9. A tile sheet (`tiles-<set>`, §10; `tileSheetProblems` in `packages/shared/test/tileChecks.ts`) skips 1–8 and has
    its own checks: meta `version` "2", `pixelScale` 1 and `app` `"iot-art-pipeline"`, the PNG the size of

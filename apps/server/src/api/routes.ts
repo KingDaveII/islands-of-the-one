@@ -6,6 +6,7 @@ import {
   DEFAULT_CLAY_TONE,
   isClayTone,
   isAwaySeenRequest,
+  isRackChooseRequest,
   isCreateKindledRequest,
   isHoldingStationRequest,
   isInventoryMoveRequest,
@@ -419,6 +420,11 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
         return fail(reply, 409, ApiErrorCode.NotBuilt, result.message);
       case 'store-full':
         return fail(reply, 409, ApiErrorCode.StoreFull, result.message);
+      // The weapon rack (docs/design/holding.md "The weapon rack", M2 Task 8).
+      case 'not-owned':
+        return fail(reply, 409, ApiErrorCode.NotOwned, result.message);
+      case 'not-ready':
+        return fail(reply, 409, ApiErrorCode.NotReady, result.message);
     }
   };
 
@@ -459,6 +465,18 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
       return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
     await holding.awaySeen(k.id, new Date(req.body.to));
     return reply.code(204).send();
+  });
+
+  // The weapon rack (M2 Task 8): `{ weaponId }` chooses the weapon a run takes; it must hang on the Kindled's rack
+  // (`not-owned`) and the sim must run it (`not-ready`). A holding request like the rest; the answer is the holding.
+  app.post(path(ApiRoute.RackChoose), { bodyLimit: BODY_LIMIT }, async (req, reply) => {
+    const account = await signedIn(req, reply);
+    if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
+    const k = await findKindled(account.id);
+    if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+    if (!isRackChooseRequest(req.body))
+      return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
+    return holdingReply(reply, await holding.chooseWeapon(k.id, req.body.weaponId, now()));
   });
 
   app.post(path(ApiRoute.HoldingStop), { bodyLimit: BODY_LIMIT }, async (req, reply) => {

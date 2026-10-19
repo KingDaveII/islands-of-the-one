@@ -195,12 +195,19 @@ describe('walking and running', () => {
     w.state.y = tileCentre(0, 10).y * SUB;
     steps(w, 60 * 10, move(W));
     expect(w.state.x).toBe(6 * TILE_PX * SUB + w.params.radius);
-    // The reserved weapon rack (cols 17-18, row 13) is plain ground: walking east along row 13 crosses it and stops at the outcrop (col 23).
+    // The weapon rack (cols 17-18, row 13) is a station since M2 Task 8, solid like the post: walking east along row 13
+    // from its interact point stops at its west side (it was a reserved spot of plain ground before, crossed to the outcrop).
     const e = roam();
     e.state.y = tileCentre(0, 13).y * SUB;
     e.state.x = tileCentre(16, 13).x * SUB;
     steps(e, 60 * 10, move(E));
-    expect(e.state.x).toBe(23 * TILE_PX * SUB - e.params.radius);
+    expect(e.state.x).toBe(17 * TILE_PX * SUB - e.params.radius);
+    // Row 12, just north of it, still runs east to the outcrop's row above (col 23 is ground there: the outcrop is rows 13-14).
+    const n = roam();
+    n.state.y = tileCentre(0, 12).y * SUB;
+    n.state.x = tileCentre(16, 12).x * SUB;
+    steps(n, 60 * 10, move(E));
+    expect(n.state.x).toBeGreaterThan(19 * TILE_PX * SUB);
   });
 });
 

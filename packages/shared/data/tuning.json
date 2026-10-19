@@ -45,13 +45,13 @@
       "locked": false
     },
     {
-      "id": "locked-2",
-      "name": "???",
+      "id": "sling",
+      "name": "Sling",
       "locked": true
     },
     {
-      "id": "locked-3",
-      "name": "???",
+      "id": "keelmaul",
+      "name": "Keelmaul",
       "locked": true
     }
   ],

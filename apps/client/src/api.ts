@@ -22,6 +22,7 @@ import {
   type PlotPieceRequest,
   type PlotSowRequest,
   type PlotTakeDownRequest,
+  type RackChooseRequest,
   type WritFeedRequest,
   type WritNameRequest,
 } from '@iot/shared';
@@ -114,6 +115,8 @@ export interface Api {
   plotsMove(body: PlotPieceRequest): Promise<ApiResult<HoldingResponse>>;
   /** Take a standing piece down, every material back into the store. `unknown-plot`, `unnamed-plot`, `faded`, `not-built`, `store-full`. */
   plotsTakeDown(body: PlotTakeDownRequest): Promise<ApiResult<HoldingResponse>>;
+  /** Choose the weapon a run takes, at the rack (M2 Task 8). `not-owned`, `not-ready`. */
+  rackChoose(body: RackChooseRequest): Promise<ApiResult<HoldingResponse>>;
 }
 
 export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)): Api {
@@ -144,6 +147,7 @@ export function createApi(fetchFn: Fetch = (input, init) => fetch(input, init)):
     plotsBuild: (body) => request(fetchFn, ApiRoute.PlotsBuild, 'POST', body, isHoldingResponse),
     plotsMove: (body) => request(fetchFn, ApiRoute.PlotsMove, 'POST', body, isHoldingResponse),
     plotsTakeDown: (body) => request(fetchFn, ApiRoute.PlotsTakeDown, 'POST', body, isHoldingResponse),
+    rackChoose: (body) => request(fetchFn, ApiRoute.RackChoose, 'POST', body, isHoldingResponse),
   };
 }
 

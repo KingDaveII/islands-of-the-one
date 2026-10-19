@@ -71,6 +71,13 @@
       "when": 1792376545750,
       "tag": "0009_away_cards",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792396038608,
+      "tag": "0010_kindled_run_weapon",
+      "breakpoints": true
     }
   ]
 }
