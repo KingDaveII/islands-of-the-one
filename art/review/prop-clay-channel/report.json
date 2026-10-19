@@ -1,0 +1,90 @@
+{
+  "sheet": "prop-clay-channel",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "cell": {
+    "w": 136,
+    "h": 136
+  },
+  "origin": {
+    "x": 68,
+    "y": 132
+  },
+  "rows": [
+    "idle",
+    "idle_turned"
+  ],
+  "totals": {
+    "frames": 2,
+    "offPalette": 0,
+    "maxDeltaE": 0,
+    "outlineGaps": 0
+  },
+  "flags": {
+    "seam": [],
+    "bob": [],
+    "held": [],
+    "colours": []
+  },
+  "missing": [],
+  "optional": [],
+  "skinProblems": [],
+  "missingPoints": [],
+  "remap": [],
+  "staleRemap": [],
+  "snappedColours": 0,
+  "snapped": [],
+  "anims": [
+    {
+      "key": "idle",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          123
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_turned",
+      "frames": 1,
+      "held": []
+    }
+  ],
+  "frames": [
+    {
+      "name": "idle_0",
+      "source": "art/clean/prop-clay-channel/idle 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -42,
+      "outlineGaps": 0,
+      "colours": 7,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "idle_turned_0",
+      "source": "art/clean/prop-clay-channel/idle_turned 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -42,
+      "outlineGaps": 0,
+      "colours": 7,
+      "interiorDreamNight": 0
+    }
+  ],
+  "outputs": [
+    "art/review/prop-clay-channel/contact.png",
+    "art/review/prop-clay-channel/report.json",
+    "art/review/prop-clay-channel/report.md",
+    "packages/shared/assets/sprites/prop-clay-channel.json",
+    "packages/shared/assets/sprites/prop-clay-channel.png"
+  ]
+}

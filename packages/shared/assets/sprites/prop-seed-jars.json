@@ -1,0 +1,90 @@
+{
+  "frames": {
+    "idle_0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 104
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 104
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 104
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9230769230769231
+      }
+    },
+    "idle_turned_0": {
+      "frame": {
+        "x": 80,
+        "y": 0,
+        "w": 80,
+        "h": 104
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 104
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 104
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9230769230769231
+      }
+    }
+  },
+  "meta": {
+    "image": "prop-seed-jars.png",
+    "size": {
+      "w": 160,
+      "h": 104
+    },
+    "scale": "1",
+    "format": "RGBA8888",
+    "app": "iot-art-pipeline",
+    "version": "2",
+    "cell": {
+      "w": 80,
+      "h": 104
+    },
+    "origin": {
+      "x": 40,
+      "y": 96
+    },
+    "pixelScale": 1
+  },
+  "anims": {
+    "idle": {
+      "frames": [
+        "idle_0"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "hold": true
+    },
+    "idle_turned": {
+      "frames": [
+        "idle_turned_0"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "hold": true
+    }
+  }
+}

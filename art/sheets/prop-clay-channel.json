@@ -1,0 +1,27 @@
+{
+  "sheet": "prop-clay-channel",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "notes": "The field's Clay channel (M2 Task 6; Lore \u00a716.8; MAIN #105), drawn by art/clean/field-pieces/pieces.py in the colours of the field-pieces job's step 4 pick (PR #103): four fired-clay sections sunk in the ground, damp inside. idle runs north-south (1 x 4), idle_turned east-west (4 x 1). Frames are cell-sized and already placed; ground on frame 0 moves nothing.",
+  "anims": {
+    "idle": {
+      "src": "art/clean/prop-clay-channel/idle",
+      "frames": [
+        0
+      ],
+      "ground": {
+        "ref": 0
+      }
+    },
+    "idle_turned": {
+      "src": "art/clean/prop-clay-channel/idle_turned",
+      "frames": [
+        0
+      ],
+      "ground": {
+        "ref": 0
+      }
+    }
+  }
+}

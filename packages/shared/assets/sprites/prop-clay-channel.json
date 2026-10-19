@@ -1,0 +1,90 @@
+{
+  "frames": {
+    "idle_0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 136,
+        "h": 136
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 136,
+        "h": 136
+      },
+      "sourceSize": {
+        "w": 136,
+        "h": 136
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9705882352941176
+      }
+    },
+    "idle_turned_0": {
+      "frame": {
+        "x": 136,
+        "y": 0,
+        "w": 136,
+        "h": 136
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 136,
+        "h": 136
+      },
+      "sourceSize": {
+        "w": 136,
+        "h": 136
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9705882352941176
+      }
+    }
+  },
+  "meta": {
+    "image": "prop-clay-channel.png",
+    "size": {
+      "w": 272,
+      "h": 136
+    },
+    "scale": "1",
+    "format": "RGBA8888",
+    "app": "iot-art-pipeline",
+    "version": "2",
+    "cell": {
+      "w": 136,
+      "h": 136
+    },
+    "origin": {
+      "x": 68,
+      "y": 132
+    },
+    "pixelScale": 1
+  },
+  "anims": {
+    "idle": {
+      "frames": [
+        "idle_0"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "hold": true
+    },
+    "idle_turned": {
+      "frames": [
+        "idle_turned_0"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "hold": true
+    }
+  }
+}
