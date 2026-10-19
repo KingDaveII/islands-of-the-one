@@ -9,7 +9,7 @@ Read these first:
 - `art/jobs/ss01-kindled-ash.md`, `art/jobs/run-kindled-ash.md` and `art/raw/ss01-kindled-ash/manifest.json`: how the Ash Kindled was made (this job animates the same character in another outfit);
 - `art/jobs/g13b-job2.md` and `art/raw/g13b-job2/manifest.json`: how `create_character_state` was called for the Tide test.
 
-The job **generates raw material only**: the Kindled in the `<rem>` Remembrance's starting clothes, with no blade in hand, in 8 facings, idling, walking and running. ART cleans it, makes `run_start` and `run_stop` from it, and writes `art/sheets/kindled-<rem>-sheathed.json`. So:
+The job **generates raw material only**: the Kindled in the `<rem>` Remembrance's starting clothes, with no blade in hand, in 8 facings, idling, walking and running. ART cleans it, makes `run_start` and `run_stop` from it, and writes `art/sheets/kindled-<rem>-sheathed.json` with its skin mask (`kindled-<rem>-sheathed.skin.png`, which the clay-tone swap needs). So:
 - write no recipe;
 - run no `art:build`;
 - make no code changes;
@@ -81,6 +81,7 @@ Retake an animation once only if, in most facings:
 ## Done when
 1. Make `art/raw/<rem>-sheathed/contact.png`, at 4× on hollow-deep #2A2540:
    - the 8 rotations in a row, with Ash's sheathed `idle_S_0` (cut from `packages/shared/assets/sprites/kindled-ash-sheathed.png`) beside them for the height and design;
+   - the same row again on the holding's ground (`art/clean/tiles-holding/floor_0.png`, tiled), where the sheet is used: the outfit must keep its shape on that earth (Wing's pale mantle is close to it);
    - each animation, one row per facing, labelled.
 2. Run `bash scripts/cloud-setup.sh`, then `pnpm check`.
 3. Commit the raw files, the manifest and the contact sheet, push, and open the draft PR.
@@ -89,6 +90,7 @@ The PR description holds:
 - `contact.png`;
 - the state: its height in px per facing against 45, whether the hands are empty, the hood gone, the freckles kept;
 - per animation and facing: whether it reads, and the frames that loop best (`idle`: the rest frame and the fullest breath; `walk`: six; `run`: eight, starting at a contact);
+- whether the outfit keeps its shape on the holding's ground, or only the outline holds it;
 - the colours used, and whether the clothes landed on the skin ramp (unwritten-sail / unwritten-tar) anywhere: ART remaps them, so just list where;
 - any forbidden colour (#FFFFFF, #FFE7A3, #E0457B, #8E2550, husk-core #FFF4C7);
 - the generations per call, and the balance before and after;
