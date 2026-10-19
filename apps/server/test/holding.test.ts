@@ -144,6 +144,7 @@ describe('the settle', () => {
       plots: ['plot-1', 'plot-2', 'plot-3', 'plot-4'].map(unnamedPlot),
       // The trees' cycle clock starts at the first settle (Task 5): nothing is paid for the time before it.
       cycles: { 'twisted-trees': { cycleMs: 20 * 60 * SEC, cycledUntil: at(0).toISOString(), bonusPermille: 0 } },
+      away: null,
     });
   });
 
@@ -288,6 +289,7 @@ describe('the away hook', () => {
       activity: { stationId: 'twisted-trees', startedAt: at(-60 * HOUR), lastSeenAt: at(-60 * HOUR) },
       lastSeenAt: at(-60 * HOUR),
       cycles: { 'twisted-trees': at(-60 * HOUR) },
+      card: null,
     });
     const r = value(await holding.view(k, at(0)));
     // 48 h of the action's cycles, and 24 of the trees' trickle (6 logs each).
@@ -295,12 +297,14 @@ describe('the away hook', () => {
     expect(r.activity?.startedAt).toBe(at(0).toISOString());
     expect(r.cycles['twisted-trees']?.cycledUntil).toBe(at(0).toISOString());
     await holding.stop(k, at(0));
-    // Idle, the hook still moves the holding-wide clocks, so the trickle can be playtested without an action.
+    // Idle, the hook still moves the holding-wide clocks, so the trickle can be playtested without an action. The 60 h
+    // settle above recorded the away card (M2 Task 7); the hook reports it and writes nothing to it.
     expect(await moveAway(handle.db, { username: 'awayone', hours: 1 })).toEqual({
       ok: true,
       activity: null,
       lastSeenAt: at(-HOUR),
       cycles: { 'twisted-trees': at(-HOUR) },
+      card: { kindledId: k, fromAt: at(-60 * HOUR), toAt: at(0), made: { 'twisted-trees': { itemId: 'twisted-log', quantity: OFFLINE_CAP_MS / 4000 + 24 * 6 } }, levels: { woodcutting: { from: 1, to: 16 } } },
     });
     // A Kindled never on the holding has nothing to move.
     await newKindled('awaynever');

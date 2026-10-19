@@ -5,6 +5,7 @@ import {
   ApiRoute,
   DEFAULT_CLAY_TONE,
   isClayTone,
+  isAwaySeenRequest,
   isCreateKindledRequest,
   isHoldingStationRequest,
   isInventoryMoveRequest,
@@ -301,12 +302,14 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
     return reply.code(201).send(body);
   });
 
-  // The Kindled comes from the session cookie only; a request names no one.
+  // The Kindled comes from the session cookie only; a request names no one. The inventory routes settle the holding
+  // first (the heartbeat and the away card, M2 Task 7), so every route sees the same absence and the baskets are true.
   app.get(path(ApiRoute.Inventory), async (req, reply) => {
     const account = await signedIn(req, reply);
     if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
     const k = await findKindled(account.id);
     if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+    await holding.settle(k.id, now());
     const body: InventoryResponse = await inventory.view(k.id);
     return reply.send(body);
   });
@@ -323,6 +326,7 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
     const { itemId, from, to, quantity } = req.body;
     if ((from === 'store' || to === 'store') && !canReachStore(k))
       return fail(reply, 409, ApiErrorCode.WrongPlace, 'The store is on the holding.');
+    await holding.settle(k.id, now());
     const result = await moveItems(inventory, { kindledId: k.id, itemId, from, to, quantity });
     if (!result.ok) {
       switch (result.error) {
@@ -443,6 +447,19 @@ export async function apiRoutes(app: FastifyInstance, opts: ApiOptions): Promise
       return holdingReply(reply, result);
     });
   }
+
+  // The away card seen (M2 Task 7): `{ to }` names the card as drawn; the row goes only while it still ends there, so
+  // an absence merged in after survives. 204 either way; guarded like every mutating route.
+  app.post(path(ApiRoute.HoldingAwaySeen), { bodyLimit: BODY_LIMIT }, async (req, reply) => {
+    const account = await signedIn(req, reply);
+    if (!account) return fail(reply, 401, ApiErrorCode.NotSignedIn, 'Not signed in.');
+    const k = await findKindled(account.id);
+    if (!k) return fail(reply, 404, ApiErrorCode.NoKindled, 'This account has no Kindled yet.');
+    if (!isAwaySeenRequest(req.body))
+      return fail(reply, 400, ApiErrorCode.BadRequest, 'Malformed request.');
+    await holding.awaySeen(k.id, new Date(req.body.to));
+    return reply.code(204).send();
+  });
 
   app.post(path(ApiRoute.HoldingStop), { bodyLimit: BODY_LIMIT }, async (req, reply) => {
     const account = await signedIn(req, reply);

@@ -10,8 +10,8 @@ import { moveAway, parseAwayArgs } from './away.js';
  * clock), as if it had been away that long: the next holding request settles
  * the stretch as offline time, up to the cap. Uses DATABASE_URL (or
  * PGLITE_DIR), the same database as the dev server; never an in-memory PGlite
- * the server holds. Prints the moved times, or why it was refused, with a
- * non-zero exit code.
+ * the server holds. Prints the moved times and the away card waiting, if
+ * one exists (M2 Task 7), or why it was refused, with a non-zero exit code.
  */
 async function main(argv: string[]): Promise<number> {
   const parsed = parseAwayArgs(argv);
@@ -33,6 +33,12 @@ async function main(argv: string[]): Promise<number> {
         Object.entries(result.cycles)
           .map(([station, until]) => `, ${station} cycled until ${until.toISOString()}`)
           .join(''),
+    );
+    const card = result.card;
+    console.log(
+      card
+        ? `away card: ${card.fromAt.toISOString()} to ${card.toAt.toISOString()}, made ${JSON.stringify(card.made)}, levels ${JSON.stringify(card.levels)}`
+        : 'away card: none',
     );
     return 0;
   } finally {
