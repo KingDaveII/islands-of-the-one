@@ -447,7 +447,7 @@ console.log(
     .join('; ')}`,
 );
 await useAt(plotUse, 'the field');
-await until((x) => x.panelLines?.basket === 'Basket: 192 pale grains', 'the basket line');
+await until((x) => x.panelLines?.basket === 'Basket: 192 pale grain', 'the basket line');
 await shot('10-away-48h-basket-192');
 await page.keyboard.press('Escape');
 await useAt(treeUse, 'a tree');
