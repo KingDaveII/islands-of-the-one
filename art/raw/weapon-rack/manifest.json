@@ -1,0 +1,492 @@
+{
+ "job": "weapon-rack",
+ "date": "2026-10-19",
+ "purpose": "Raw material for the holding's weapon rack (Lore 14.15: a rack of twisted logs lashed up by the post): every candidate of one create_image_pro call, a numbered sheet, the pick and a contact sheet. ART cleans the pick, places it in its 64x72 cell (origin (32, 64)), adds its peg points and writes art/sheets/prop-weapon-rack.json. No recipe, no art:build, no code, nothing retouched, recoloured, cut, scaled, padded or trimmed here.",
+ "style_sentence": "Top-down RPG pixel art seen from a high three-quarter view, light from the top left, a 1 px dark violet outline, flat shading in two or three steps per material, no dithering on the object, no anti-aliasing, no soft glow, transparent background, no text, letters or symbols.",
+ "palette": [
+  "#F4EFE6",
+  "#D9D2E9",
+  "#A99FC4",
+  "#5B5478",
+  "#2A2540",
+  "#F2B65A",
+  "#C9733A",
+  "#4A4E57",
+  "#7D8794",
+  "#3E5C7A",
+  "#A8743A",
+  "#C79A3E",
+  "#8A6420",
+  "#E9E4D4",
+  "#2F7F7A",
+  "#C98F78",
+  "#9C5B4A",
+  "#E3C29E",
+  "#24305A",
+  "#E8E2D6",
+  "#FFF4C7",
+  "#8C7F6E",
+  "#5E5448",
+  "#FBF8F0",
+  "#D8B24A",
+  "#F07A3A",
+  "#B5402E",
+  "#1C2147"
+ ],
+ "palette_source": "art/anchors/palette-28.png",
+ "images_passed_as": "upload:<id> references from get_upload_url (curl -F to the upload URL); no inline base64 anywhere",
+ "uploads": {
+  "art/clean/prop-twisted-tree/idle/frame-0.png": {
+   "upload": "upload:14ed3976-5281-461e-9a0c-f6307d308e0b",
+   "sha256": "82b3dda63220036944d40b58fba97b6d3bdde81028143a318877d1936b5ab400"
+  },
+  "art/clean/prop-holding-store/idle/frame-0.png": {
+   "upload": "upload:8209c72b-03f8-4878-b94d-fceed0aa8a34",
+   "sha256": "789ae068aa57ee8eb10c634bf1763388d600e5535f2aefd8e58465f0a276f70e"
+  },
+  "art/anchors/kindled-ash-s-64.png": {
+   "upload": "upload:a7bab23a-760c-4fe9-b85a-07a8288973cc",
+   "sha256": "a1225ab6ec082b93e2ff177796b9827d69ec21e21a434d63f6e29b54f7f89b58"
+  },
+  "art/anchors/palette-28.png": {
+   "upload": "upload:c4749999-d212-434b-b49b-56d538d3e99e",
+   "sha256": "0365cd32dc06ae726d3159cbfa13b988958b6a5f3ef6c10ae69d1c95673dfa25",
+   "note": "uploaded with the others but not passed: the palette went as the 28 hex colours, as the holding job passed it"
+  }
+ },
+ "seed": "create_image_pro took seed 1234; no retake, so 1235 was never used.",
+ "balance": {
+  "before": 1184.7,
+  "after_step1": 1174.7,
+  "end": 1174.7,
+  "spent": 10.0,
+  "note": "get_balance before the first call (1184.70) and after the one call had completed (1174.70); the call quoted 10 generations and charged_generations in get_image says 10, matching the balance exactly. The end balance is the last call of the job."
+ },
+ "generations": {
+  "create_image_pro (weapon-rack, 64x64)": 10,
+  "total": 10,
+  "budget": "about 10, hard cap 20; the one call quoted 10, so no need to ask"
+ },
+ "retakes": {
+  "weapon-rack": 0
+ },
+ "retake_needed": false,
+ "step1_weapon_rack": {
+  "tool": "create_image_pro",
+  "job_id": "b7ec1c24-4e46-489e-ad6a-4f8f9f95d3a5",
+  "asset_id": "31889227-147e-54d5-adbd-b8d87416e6c7",
+  "arguments": {
+   "description": "An empty weapon rack made of twisted, gnarled bronze-brown logs lashed together with rope: two short upright posts, a crossbar near the top with three short wooden pegs sticking out toward the viewer, and a lower crossbar. It stands on the ground, seen from the front and above, about as tall as a person and twice as wide as it is deep. No weapons on it. Top-down RPG pixel art seen from a high three-quarter view, light from the top left, a 1 px dark violet outline, flat shading in two or three steps per material, no dithering on the object, no anti-aliasing, no soft glow, transparent background, no text, letters or symbols.",
+   "width": 64,
+   "height": 64,
+   "no_background": true,
+   "seed": 1234,
+   "palette": [
+    "#F4EFE6",
+    "#D9D2E9",
+    "#A99FC4",
+    "#5B5478",
+    "#2A2540",
+    "#F2B65A",
+    "#C9733A",
+    "#4A4E57",
+    "#7D8794",
+    "#3E5C7A",
+    "#A8743A",
+    "#C79A3E",
+    "#8A6420",
+    "#E9E4D4",
+    "#2F7F7A",
+    "#C98F78",
+    "#9C5B4A",
+    "#E3C29E",
+    "#24305A",
+    "#E8E2D6",
+    "#FFF4C7",
+    "#8C7F6E",
+    "#5E5448",
+    "#FBF8F0",
+    "#D8B24A",
+    "#F07A3A",
+    "#B5402E",
+    "#1C2147"
+   ],
+   "palette_name": "Islands of the One",
+   "reference_images": [
+    {
+     "url": "upload:14ed3976-5281-461e-9a0c-f6307d308e0b",
+     "usage": "the same twisted bronze wood, its shading and outline",
+     "source": "art/clean/prop-twisted-tree/idle/frame-0.png"
+    },
+    {
+     "url": "upload:8209c72b-03f8-4878-b94d-fceed0aa8a34",
+     "usage": "the same world and palette: a prop that already stands on this holding, its rope lashing",
+     "source": "art/clean/prop-holding-store/idle/frame-0.png"
+    },
+    {
+     "url": "upload:a7bab23a-760c-4fe9-b85a-07a8288973cc",
+     "usage": "scale only: this is the player, 45 px tall; the rack stands beside it",
+     "source": "art/anchors/kindled-ash-s-64.png"
+    }
+   ]
+  },
+  "generations": 10,
+  "candidates": 16,
+  "retakes": 0,
+  "took_seconds": 164,
+  "downloaded_from": "https://api.pixellab.ai/mcp/images/<job_id>/download?index=<n>, n = 0..15, straight after completion",
+  "candidates_files": [
+   {
+    "index": 0,
+    "file": "candidates/0.png",
+    "bbox": [
+     6,
+     2,
+     58,
+     63
+    ],
+    "width": 52,
+    "height": 61,
+    "lowest_opaque_row": 62,
+    "colours": 7,
+    "off_palette": [],
+    "forbidden": []
+   },
+   {
+    "index": 1,
+    "file": "candidates/1.png",
+    "bbox": [
+     7,
+     3,
+     58,
+     61
+    ],
+    "width": 51,
+    "height": 58,
+    "lowest_opaque_row": 60,
+    "colours": 7,
+    "off_palette": [],
+    "forbidden": []
+   },
+   {
+    "index": 2,
+    "file": "candidates/2.png",
+    "bbox": [
+     7,
+     3,
+     59,
+     62
+    ],
+    "width": 52,
+    "height": 59,
+    "lowest_opaque_row": 61,
+    "colours": 7,
+    "off_palette": [],
+    "forbidden": []
+   },
+   {
+    "index": 3,
+    "file": "candidates/3.png",
+    "bbox": [
+     9,
+     7,
+     57,
+     60
+    ],
+    "width": 48,
+    "height": 53,
+    "lowest_opaque_row": 59,
+    "colours": 7,
+    "off_palette": [],
+    "forbidden": []
+   },
+   {
+    "index": 4,
+    "file": "candidates/4.png",
+    "bbox": [
+     6,
+     6,
+     58,
+     59
+    ],
+    "width": 52,
+    "height": 53,
+    "lowest_opaque_row": 58,
+    "colours": 7,
+    "off_palette": [],
+    "forbidden": []
+   },
+   {
+    "index": 5,
+    "file": "candidates/5.png",
+    "bbox": [
+     6,
+     3,
+     60,
+     61
+    ],
+    "width": 54,
+    "height": 58,
+    "lowest_opaque_row": 60,
+    "colours": 7,
+    "off_palette": [],
+    "forbidden": []
+   },
+   {
+    "index": 6,
+    "file": "candidates/6.png",
+    "bbox": [
+     10,
+     5,
+     55,
+     62
+    ],
+    "width": 45,
+    "height": 57,
+    "lowest_opaque_row": 61,
+    "colours": 7,
+    "off_palette": [],
+    "forbidden": []
+   },
+   {
+    "index": 7,
+    "file": "candidates/7.png",
+    "bbox": [
+     6,
+     6,
+     58,
+     59
+    ],
+    "width": 52,
+    "height": 53,
+    "lowest_opaque_row": 58,
+    "colours": 7,
+    "off_palette": [],
+    "forbidden": []
+   },
+   {
+    "index": 8,
+    "file": "candidates/8.png",
+    "bbox": [
+     10,
+     3,
+     59,
+     61
+    ],
+    "width": 49,
+    "height": 58,
+    "lowest_opaque_row": 60,
+    "colours": 7,
+    "off_palette": [],
+    "forbidden": []
+   },
+   {
+    "index": 9,
+    "file": "candidates/9.png",
+    "bbox": [
+     9,
+     6,
+     61,
+     62
+    ],
+    "width": 52,
+    "height": 56,
+    "lowest_opaque_row": 61,
+    "colours": 7,
+    "off_palette": [],
+    "forbidden": []
+   },
+   {
+    "index": 10,
+    "file": "candidates/10.png",
+    "bbox": [
+     10,
+     5,
+     56,
+     60
+    ],
+    "width": 46,
+    "height": 55,
+    "lowest_opaque_row": 59,
+    "colours": 6,
+    "off_palette": [],
+    "forbidden": []
+   },
+   {
+    "index": 11,
+    "file": "candidates/11.png",
+    "bbox": [
+     8,
+     2,
+     55,
+     60
+    ],
+    "width": 47,
+    "height": 58,
+    "lowest_opaque_row": 59,
+    "colours": 7,
+    "off_palette": [],
+    "forbidden": []
+   },
+   {
+    "index": 12,
+    "file": "candidates/12.png",
+    "bbox": [
+     12,
+     3,
+     53,
+     60
+    ],
+    "width": 41,
+    "height": 57,
+    "lowest_opaque_row": 59,
+    "colours": 7,
+    "off_palette": [],
+    "forbidden": []
+   },
+   {
+    "index": 13,
+    "file": "candidates/13.png",
+    "bbox": [
+     11,
+     3,
+     54,
+     61
+    ],
+    "width": 43,
+    "height": 58,
+    "lowest_opaque_row": 60,
+    "colours": 6,
+    "off_palette": [],
+    "forbidden": []
+   },
+   {
+    "index": 14,
+    "file": "candidates/14.png",
+    "bbox": [
+     12,
+     3,
+     56,
+     62
+    ],
+    "width": 44,
+    "height": 59,
+    "lowest_opaque_row": 61,
+    "colours": 7,
+    "off_palette": [],
+    "forbidden": []
+   },
+   {
+    "index": 15,
+    "file": "candidates/15.png",
+    "bbox": [
+     9,
+     3,
+     58,
+     61
+    ],
+    "width": 49,
+    "height": 58,
+    "lowest_opaque_row": 60,
+    "colours": 7,
+    "off_palette": [],
+    "forbidden": []
+   }
+  ],
+  "candidates_read": {
+   "0": "an upright rack: two posts, a top crossbar with three pegs, a lower crossbar, rope at the joints; 52x61",
+   "1": "a frame with an X of rope braces across it, no pegs: a gate, not a rack",
+   "2": "an upright rack: two posts, a top crossbar with three pegs, a lower crossbar, rope at the joints; 52x59",
+   "3": "two posts and two crossbars, the pegs only small nubs; the right post leans",
+   "4": "an upright rack: two posts, a top crossbar with three pegs, a lower crossbar, rope at every joint with loose rope ends hanging from the top corners; 52x53, the shortest rack",
+   "5": "an upright rack with three pegs and a lower crossbar, splayed feet; 54x58",
+   "6": "a single twisted branch, not a rack",
+   "7": "an arched frame with a lower crossbar, no pegs",
+   "8": "a frame with two crossbars, no clear pegs",
+   "9": "a leaning frame with pegs and splayed feet, half fallen over",
+   "10": "a rack with pegs drawn in the dark ramp (unwritten-tar and hollow-deep), not the bronze wood",
+   "11": "a frame with two crossbars, no pegs",
+   "12": "two posts with short branches poking inward and a lower crossbar, no top-crossbar pegs",
+   "13": "two posts, a lower crossbar and a thin top bar with two small stubs",
+   "14": "two twisted posts with a crossbar, one post a knot of branches",
+   "15": "an arch with pegs hanging under it, splayed feet"
+  },
+  "all_candidates_on_palette": true,
+  "any_forbidden_colour": false,
+  "semi_transparent_pixels": 0,
+  "retake_check": "Candidates 0, 2, 4 and 5 are empty upright racks with visible pegs (10 is one too, in the wrong ramp), so the retake rule (no candidate an empty upright rack) does not apply. No retake.",
+  "pick": {
+   "file": "pick.png",
+   "candidate": 4,
+   "size": [
+    52,
+    53
+   ],
+   "target": [
+    [
+     56,
+     60
+    ],
+    [
+     40,
+     44
+    ]
+   ],
+   "bbox": [
+    6,
+    6,
+    58,
+    59
+   ],
+   "lowest_opaque_row": 58,
+   "why": "#4 (52x53) is the shortest of the four clear racks (#0 52x61, #2 52x59, #5 54x58) and so the closest to 56-60 x 40-44: 4 px narrower and 9 px taller than the target. It reads at once as the brief: two posts of gnarled bronze wood, a top crossbar with three pegs, a lower crossbar, rope at every joint with two loose rope ends hanging from the top corners, lit from the top left, empty. No candidate is wider than tall: every one is 41-54 wide and 53-61 tall, so none meets the width or the height; the pegs on every rack point up from the crossbar rather than toward the viewer. Size is not a retake reason. Not placed, padded or trimmed: a straight copy of candidates/4.png.",
+   "colours": {
+    "dream-night #1C2147": 482,
+    "unwritten-tar #5E5448": 289,
+    "watcher-bronze #A8743A": 265,
+    "wheel-brass #C79A3E": 199,
+    "sleeper-ochre #9C5B4A": 128,
+    "hollow-deep #2A2540": 84,
+    "wheel-brass-dark #8A6420": 44
+   },
+   "colour_count": 7,
+   "reserved_colours": {
+    "dream-night #1C2147": 482,
+    "unwritten-tar #5E5448": 289
+   },
+   "forbidden": [],
+   "off_palette": []
+  }
+ },
+ "colour_notes": {
+  "outline": "The pick outlines in dream-night #1C2147 (482 px), the player-only outline, as every holding pick did: the description asked for a 1 px dark violet outline and the palette snapped it there. Props take hollow-deep #2A2540 (84 px here, the deepest wood shade and the gaps). Not recoloured; ART maps the outline by role.",
+  "skin_ramp": "The wood's shade is unwritten-tar #5E5448 (289 px), the skin-ramp colour, as the twisted tree's raw pick was; ART maps it to the bronze/leather ramp (wheel-brass-dark or hollow-deep).",
+  "wood": "watcher-bronze #A8743A 265 px (base), wheel-brass #C79A3E 199 (lit), wheel-brass-dark #8A6420 44 (shade): the brief's wood ramp, though most of the shading went to unwritten-tar instead of wheel-brass-dark.",
+  "rope": "sleeper-ochre #9C5B4A 128 px, the brief's rope colour; the rope has no lit step (sleeper-flesh #C98F78 does not appear anywhere in the call).",
+  "husk_core_and_green": "No candidate uses husk-core #FFF4C7 or wheel-patina #2F7F7A; no green anywhere.",
+  "reserved": "No pixel in any file is #FFFFFF, #FFE7A3, #E0457B or #8E2550: every candidate is on the 28-colour palette with no semi-transparent pixel."
+ },
+ "contact": "contact.png: the pick at 4x on floor_0 tiled (12 x 5 tiles), its lowest pixel on the last row of its 2 x 1 footprint (tiles (5, 3) and (6, 3), each outlined in hollow-deep as a 1 px tile grid) and centred on it, the Writ post (frame-0) on tile (3, 3) to its west and the player anchor on tile (8, 3) to its east, each with its cell origin (32, 54) on its tile's bottom centre; below it the candidates sheet at 2x. The 1x scene is composed by whole-pixel moves and scaled up as a whole; the committed pick is not touched.",
+ "files": {
+  "candidates.png": "8cbe06d49fb0e7cab94f3cdc058931e594037d4305bfe9452c9b435b3daa5d60",
+  "candidates/0.png": "f8cb0a6f974e8c0070e3140e1ebd52b0394d563a4fbfe3c7aa2b93aa94db06bc",
+  "candidates/1.png": "f26bf343a5f50bf256250af44b141819d7f6bcb9bbf1a1afe8e074476213dbf6",
+  "candidates/10.png": "7b03133c23fac07bc295a7d641447912914909849727d313d4713e3887ca3196",
+  "candidates/11.png": "f57576c6043120eb0fbc12c6c2e55a4f015ba983c86dbf752af95891d95cb591",
+  "candidates/12.png": "d84f880cf988d98e2d3c2d4cd3f358dcff6058bb69684b543f0e418624751c74",
+  "candidates/13.png": "4d199359ca34580b2fe4c6c09b0a370b8be3b3df8e25baec0f1f674ae1d97419",
+  "candidates/14.png": "7d36c6de855de45ba28cfa082293cf2c309552454ce70ca09b3fcbd7104786d3",
+  "candidates/15.png": "9c6229d719d8ed7ed967f252d0194cc92848ece48feab7df58a482780552106e",
+  "candidates/2.png": "ded81d3f98c1f54a61d85e5d9ce585302ab11fe358fd8701d7101ca130d19147",
+  "candidates/3.png": "ed61d0c93e7024a8f91c7d580cad951ba6f57c6a2953d984bc5eaab6bf4d6829",
+  "candidates/4.png": "9a15020055790b3dbde5efc65012d02472e672d856b1d71408723dd42443488a",
+  "candidates/5.png": "5e5ccbfc79ae3c323555ab4e0baa2556a576c7f5ebd29c314c4af8bc0b54ac93",
+  "candidates/6.png": "41e924d502a1187c592bbb60779c92dc9b1674dc829fd6a0d4f506bd297fba8c",
+  "candidates/7.png": "e363bd274ab6d378585bcc94f28229c61f26439e1efdc004b1b4e55c2c74c3dc",
+  "candidates/8.png": "273b4f0587e497f4e5c182e756b3fb8873394e9c35dd69d95a9f0c9ed266bfd1",
+  "candidates/9.png": "e036c77bbe4847bb2d90a4179774c800e2f90f34c655c53ea2ca660682491f98",
+  "contact.png": "f2e486ad55201aa02ec337610f16a1b8f894bcd99af4376cde79f662ba5d0b50",
+  "pick.png": "9a15020055790b3dbde5efc65012d02472e672d856b1d71408723dd42443488a"
+ },
+ "file_count": 19
+}
