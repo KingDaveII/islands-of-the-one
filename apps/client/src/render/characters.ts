@@ -1,7 +1,9 @@
 import type Phaser from 'phaser';
 import {
+  sheathedSheetName,
   spriteSheets,
   type AnimTuning,
+  type Remembrance,
   type ClayTone,
   type SpriteSheet,
   type SpriteSheetName,
@@ -25,7 +27,7 @@ import { DEPTH } from './depth.js';
 import { bodyDepth, huskFeet, PLAYER_FEET } from './feet.js';
 import type { Fx } from './fx.js';
 import { snapToArt } from './scale.js';
-import { toneTextureKey } from './spriteSheets.js';
+import { optionalSheet, toneTextureKey } from './spriteSheets.js';
 import { StrideMeter } from './stride.js';
 
 type Sprite = Phaser.GameObjects.Sprite;
@@ -43,6 +45,23 @@ export const PLAYER_SHEET: SpriteSheetName = 'kindled-ash';
  * holding draws the Kindled from it; encounters keep `PLAYER_SHEET`.
  */
 export const PLAYER_SHEATHED_SHEET: SpriteSheetName = 'kindled-ash-sheathed';
+
+/**
+ * The Kindled's sheet outside combat, by Remembrance (M2 Task 9):
+ * `kindled-<remembrance>-sheathed` when it is loaded (an optional sheet on
+ * disk with its skin mask, `optionalSheet`), else Ash's
+ * (`PLAYER_SHEATHED_SHEET`), as ART asked ("Keep it"). Creation's figure and
+ * the holding's Kindled draw from it; ART's job #114 brings Clay, Tide and
+ * Wing one at a time, and each shows up with no code change. `loaded` is the
+ * check, for tests.
+ */
+export function sheathedSheetFor(
+  remembrance: Remembrance,
+  loaded: (name: string) => boolean = (name) => optionalSheet(name) !== undefined,
+): string {
+  const own = sheathedSheetName(`kindled-${remembrance}`);
+  return own !== PLAYER_SHEATHED_SHEET && loaded(own) ? own : PLAYER_SHEATHED_SHEET;
+}
 
 const HUSK_SHEET: Record<HuskKind, SpriteSheetName> = {
   peeling: 'husk-peeling',

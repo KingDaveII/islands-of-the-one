@@ -1,10 +1,26 @@
 {
-  "$comment": "Kindled creation (docs/design/accounts.md). remembrances: the four cosmetic origins (glossary), in display order, with the outfit each one wears; clayTones: the four clay tones in display order (ids are palette.json clay.tones keys), with display names; defaultClayTone is preselected; name: the Kindled name rules, counted in grapheme clusters after NFC and whitespace collapsing.",
+  "$comment": "Kindled creation (docs/design/accounts.md), validated on load (src/creation.ts). remembrances: the four cosmetic origins (glossary), in display order, each with LORE's image line and starting clothing (Lore §14.0); clayTones: the four clay tones in display order (ids are palette.json clay.tones keys), with display names; defaultClayTone is preselected; name: the Kindled name rules, counted in grapheme clusters after NFC and whitespace collapsing. screens: each step's line; narrator: the Narrator's five lines (opening and closing on black, the hover/focus lines of the first two steps, the Name step's empty-field line); toneTip: the tones' tooltip; refused: a refused Kindled name (LORE 2026-10-15; the island's Name keeps the Writ's line). openingMs and closingMs: how long the opening and closing lines hold on black; turnMs: how long the Appearance figure holds each facing. Every line is LORE's word for word (§14.0).",
   "remembrances": {
-    "clay": { "name": "Clay", "outfit": "potter's wrap and clay-stiffened apron" },
-    "ash": { "name": "Ash", "outfit": "soot-black hooded cloak with singed hem" },
-    "tide": { "name": "Tide", "outfit": "salt-stiff sailcloth tunic with rope belt" },
-    "wing": { "name": "Wing", "outfit": "down-lined mantle over a torn harness" }
+    "clay": {
+      "name": "Clay",
+      "image": "A riverbank, your hands deep in wet mud, shaping something.",
+      "clothing": "A potter's wrap and a clay-stiffened apron, sleeves rolled"
+    },
+    "ash": {
+      "name": "Ash",
+      "image": "A tower burning against the sky, and the heat on your face.",
+      "clothing": "A soot-black hooded cloak with a singed hem"
+    },
+    "tide": {
+      "name": "Tide",
+      "image": "Light pouring into water and drowning there.",
+      "clothing": "A salt-stiff sailcloth tunic with a rope belt"
+    },
+    "wing": {
+      "name": "Wing",
+      "image": "Falling, and the wind tearing past you.",
+      "clothing": "A down-lined mantle over a torn harness"
+    }
   },
   "clayTones": {
     "clay-grey-ochre": { "name": "Grey-ochre" },
@@ -17,5 +33,22 @@
     "minGraphemes": 2,
     "maxGraphemes": 24,
     "maxMarksPerGrapheme": 4
-  }
+  },
+  "screens": {
+    "remembrance": "Choose your Remembrance. Your Remembrance is the one image you carried out of the dark: who you were, as far as you know. It decides what you wake up wearing and which memories come back to you first. It does not make you stronger or weaker.",
+    "appearance": "Your clay. Everyone who wakes out here is made of it. Only the color is yours to choose.",
+    "name": "Your name. You don't remember it. Nobody who wakes out here does. Choose the one you'll answer to."
+  },
+  "narrator": {
+    "opening": "Before you open your eyes, little light, one thing comes back to you. Only one. Everything else the Hollow has already taken. Hold on to what's left.",
+    "remembrance": "Choose the one that hurts least. Or most. It was all real, either way.",
+    "appearance": "Riverbank clay, little light. Every bank is a different color. Someone dug all of it, once.",
+    "nameEmpty": "Any name will do, little light. The one you had is in the dark with everything else, and the dark doesn't give things back. Not often.",
+    "closing": "There. Now something out here knows what to call you."
+  },
+  "toneTip": "Clay: What you were shaped from. It changes nothing but the color.",
+  "refused": "That name won't hold. Try another.",
+  "openingMs": 3000,
+  "closingMs": 2000,
+  "turnMs": 600
 }

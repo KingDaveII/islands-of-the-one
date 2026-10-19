@@ -80,10 +80,15 @@ application/json` (`415` otherwise) and an `Origin` whose host is the request's 
   one space; no control, format (bidi overrides and isolates, zero-width space, soft hyphen),
   surrogate or private-use characters; through the safe-letters filter (not strict: a typed name
   may contain yod-he; the island's letters are checked strict); **only characters the game can draw**; 2–24 grapheme clusters; at least one
-  letter. Refused names get `NAME_REFUSED`, except undrawable ones (below). Names are not unique.
+  letter. A refused Kindled name gets LORE's line, "That name won't hold. Try another." (`KINDLED_NAME_REFUSED`, from
+  `creation.json`'s `refused`; there is no Writ in creation yet), and the island's Name keeps the Writ's
+  `NAME_REFUSED`, "The Writ won't take that name. Try another."; undrawable ones get their own line (below), and
+  `POST /api/kindled` answers `name-refused` with the same line the client shows. "Both filters" (GAME DESIGN) are
+  the safe-letters filter and its offensive-word list, both in `isSafe` (the list is empty for now). Names are not
+  unique.
 - **Names the game can draw.** The book asks for names in any language; until the pixel fonts have
   more scripts, that is narrowed to the characters both atlases contain (`DRAWABLE_CHARS` in
-  `packages/shared/src/accounts.ts`, read from the atlas contracts, so server and client agree):
+  `packages/shared/src/fonts.ts`, read from the atlas contracts, so server and client agree):
   printable ASCII and the Latin-1 Supplement, i.e. A–Z and accented Latin letters (`tools/
 bitmap-fonts.py` builds both). Anything else (other scripts, Latin letters outside Latin-1, a mark
   with no precomposed letter, emoji) is refused with "Use letters the game can draw for now: A–Z and
@@ -93,8 +98,8 @@ bitmap-fonts.py` builds both). Anything else (other scripts, Latin letters outsi
 - **Remembrance** (`clay | ash | tide | wing`) and **clay tone** (palette.json's `clay.tones`,
   default grey-ochre) come from
   [`packages/shared/data/creation.json`](../../packages/shared/data/creation.json), with their
-  display names and each Remembrance's outfit. One Kindled per account, created once (`409` after);
-  hair and build are not chosen yet.
+  display names and each Remembrance's image line and starting clothing (LORE's, Lore §14.0). One Kindled per
+  account, created once (`409` after); hair and build are not chosen yet (they wait for their sprites).
 
 ## Tables
 
@@ -112,6 +117,38 @@ from `schema.ts` and drops it.
 On load the gate scene asks `GET /api/me`: no session → the account scene (log in / create account),
 a session without a Kindled → the creation scene, otherwise the start screen, which shows the Kindled
 and a log-out button (Esc, Circle). `apps/client/src/api.ts` is the typed API client.
+
+### Creation (M2 Task 9)
+
+LORE's scene (Lore §14.0), every line word for word in `creation.json` (`CREATION_TEXT` in
+`packages/shared/src/creation.ts`, checked on load: each line present and drawable; a test holds them to LORE's
+text and the banned names). The logic is `apps/client/src/game/creationView.ts`, drawn by `CreationScene`.
+
+1. **The opening** on black: the Narrator's opening line for `openingMs` (3 s), or until any key, click, tap or
+   pad button.
+2. **Remembrance**: the step's line at the top, four cards (the name, the image line muted, the starting
+   clothing), and one figure under them for the chosen card.
+3. **Appearance**: the four clay-tone swatches with their names and the tooltip line under them; the figure,
+   twice the size, turning through the 8 facings (`idle` S, SE, E, NE, N, NW, W, SW, each held `turnMs`, 600 ms).
+   The step has two focus rows, the tones and the figure: on the figure row Left/Right (the D-pad) turn it one
+   facing, and a drag across it (mouse or touch) turns it one facing per 24 UI px; either pauses the turning
+   until the player leaves the step. Left/Right on the tones row choose the tone.
+4. **Name**: the step's line, the DOM name field and the figure standing south. CONFIRM checks the name here
+   (the same validator the server runs) and then `POST /api/kindled`; a refusal shows under the field in the
+   error token until the next CONFIRM, and the step stays.
+5. **The closing** on black: the closing line for `closingMs` (2 s), then the start screen.
+
+Each step has BACK and NEXT (the Name step's NEXT reads CONFIRM); BACK is greyed on the first step and takes no
+focus. The choices (the Remembrance, the tone, the typed name) are kept across BACK and NEXT. The figure wears the
+Remembrance's sheathed sheet once it is on disk, else Ash's (`sheathedSheetFor`, [sprites](sprites.md) §4), in the
+chosen tone. Keyboard: Left/Right step through the choices (or turn the figure, or move between BACK and NEXT),
+Up/Down and Tab/Shift+Tab move the focus between the rows and the buttons, Enter is NEXT (BACK when BACK has the
+focus), Esc is BACK, typing goes to the name field on the Name step. Pad (`MENU_BUTTONS`): the D-pad the same,
+Cross NEXT, Circle BACK; the name still needs the keyboard. Mouse and touch: a click or tap on a card or swatch
+chooses it, the buttons move. The Narrator's line ([readability](readability.md) §4) is the moment's: the opening
+and closing lines on black, the Remembrance line while a card is hovered or the cards have the focus, the clay
+line while a swatch is hovered or the tones have the focus, the empty-field line while the name is empty,
+nothing otherwise.
 
 The username, password and Kindled name fields are real HTML inputs in a real `<form>` laid over the
 canvas (`apps/client/src/ui/formFields.ts`): phones open their on-screen keyboard, password managers

@@ -213,3 +213,17 @@ export function rasterizeText(atlas: InkMask, layout: TextLayout, scale = 1): In
   }
   return { width, height, ink };
 }
+
+/**
+ * The characters the game can draw: those both pixel fonts have a glyph for
+ * (printable ASCII and the Latin-1 Supplement, tools/bitmap-fonts.py). A
+ * Kindled name may only use these until the atlases grow more scripts.
+ */
+export const DRAWABLE_CHARS: ReadonlySet<string> = new Set(
+  silkscreenFont.chars.map((g) => g.ch).filter((ch) => tiny5Font.chars.some((g) => g.ch === ch)),
+);
+
+export function isDrawable(text: string): boolean {
+  for (const ch of text) if (!DRAWABLE_CHARS.has(ch)) return false;
+  return true;
+}
