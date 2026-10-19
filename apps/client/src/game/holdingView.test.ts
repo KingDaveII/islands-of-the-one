@@ -1,4 +1,4 @@
-import { holdingLayout, holdingTemplate, pressedWrit, toWritView, type HoldingResponse } from '@iot/shared';
+import { holdingLayout, holdingTemplate, measureText, pressedWrit, tiny5Font, TOAST_MAX, TOAST_TEXT, toWritView, type HoldingResponse } from '@iot/shared';
 import { describe, expect, it } from 'vitest';
 import {
   chipState,
@@ -29,6 +29,11 @@ import {
   takeFloat,
   takeResultLine,
   talkSpot,
+  TOAST_GAP,
+  TOAST_GLYPH,
+  TOAST_ROW,
+  toastStripBottom,
+  toastTextWidth,
   xpFraction,
 } from './holdingView.js';
 
@@ -54,6 +59,7 @@ const working: HoldingResponse = {
   words: [],
   plots: holdingLayout().plots.map((p) => ({ id: p.id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, pieces: [], level: 1, state: 'lit' as const })),
   cycles: { 'twisted-trees': { cycleMs: 1_200_000, cycledUntil: iso(0), bonusPermille: 0 } },
+  away: null,
 };
 const idle: HoldingResponse = { ...working, activity: null };
 /** The same holding with plot-1 a sown field, plot-2 named but not sown, plot-3 a field with ישן on a faded line. */
@@ -369,16 +375,37 @@ describe('Kesh across the water (M2 Task 4b)', () => {
     expect(nearKesh(spot.x, spot.y - 8, 200, layout)).toBe(true);
   });
 
+  it('sizes the toast strip for the widest M2 toast, measured in the body font', () => {
+    const w = toastTextWidth();
+    expect(w).toBe(measureText(tiny5Font, TOAST_TEXT.WRIT_LOW));
+    expect(w).toBeGreaterThanOrEqual(measureText(tiny5Font, TOAST_TEXT.storeFull('streaked-stone')));
+    expect(w).toBeGreaterThanOrEqual(measureText(tiny5Font, TOAST_TEXT.skillLevel('woodcutting', 200)));
+    // At the smallest window (a 480-wide UI grid) the strip stays clear of the action chip.
+    const rects = hudRects({ x: 0, y: 0, w: 480, h: 270 }, { gin: 20, pack: 60, name: null, letters: 0, chip: 70, toast: w });
+    expect(rects.toasts.x + rects.toasts.w).toBeLessThan(rects.chip.x);
+  });
+
   it("lays the HUD's four panels out from the frame and the measured texts", () => {
     const frame = { x: 0, y: 0, w: 480, h: 270 };
-    const rects = hudRects(frame, { gin: 20, pack: 60, name: null, letters: 0, chip: 70 });
+    const rects = hudRects(frame, { gin: 20, pack: 60, name: null, letters: 0, chip: 70, toast: 100 });
     expect(rects.writ).toEqual({ x: 8, y: 8, w: 78, h: 16 });
     expect(rects.purse).toEqual({ x: 480 - 8 - 41, y: 8, w: 41, h: 18 });
     expect(rects.chip).toEqual({ x: 240 - 61, y: 270 - 8 - 26, w: 122, h: 26 });
     expect(rects.pack).toEqual({ x: 480 - 8 - 68, y: 270 - 8 - 16, w: 68, h: 16 });
+    // The toast strip (Task 7): bottom left at the inset, two lines of 16 at the widest text behind a 16 px glyph.
+    expect(rects.toasts).toEqual({ x: 8, y: 270 - 8 - 40, w: 4 + 16 + 3 + 100 + 4, h: 40 });
+    // A frame too narrow for the strip beside the chip lifts it above the chip's band.
+    const narrow = hudRects({ x: 0, y: 0, w: 320, h: 270 }, { gin: 20, pack: 60, name: null, letters: 0, chip: 70, toast: 100 });
+    expect(narrow.toasts.y + narrow.toasts.h).toBe(270 - 8 - 26 - 2);
+    expect(rectsOverlap(narrow.toasts, narrow.chip)).toBe(false);
+    expect(toastStripBottom({ x: 0, y: 0, w: 480, h: 270 }, 127)).toBe(262);
+    expect(toastStripBottom({ x: 0, y: 0, w: 320, h: 270 }, 127)).toBe(234);
+    expect(TOAST_MAX * TOAST_ROW + 8).toBe(40);
+    expect(TOAST_GLYPH + TOAST_GAP).toBe(19);
     // Named: the Name and its letters add their rows, and the widest of the three sets the width.
-    expect(hudRects(frame, { gin: 20, pack: 60, name: 100, letters: 96, chip: 70 }).writ).toEqual({ x: 8, y: 8, w: 108, h: 37 });
+    expect(hudRects(frame, { gin: 20, pack: 60, name: 100, letters: 96, chip: 70, toast: 100 }).writ).toEqual({ x: 8, y: 8, w: 108, h: 37 });
     expect(rectsOverlap(rects.chip, rects.pack)).toBe(false);
+    expect(rectsOverlap(rects.toasts, rects.chip)).toBe(false);
     expect(rectsOverlap({ x: 0, y: 0, w: 10, h: 10 }, { x: 9, y: 9, w: 5, h: 5 })).toBe(true);
     expect(rectsOverlap({ x: 0, y: 0, w: 10, h: 10 }, { x: 10, y: 0, w: 5, h: 5 })).toBe(false);
   });
@@ -390,9 +417,11 @@ describe('the HUD never hides the Kindled or Kesh (ART on #95)', () => {
     purse: { x: 440, y: 4, w: 36, h: 18 },
     chip: { x: 0, y: 0, w: 0, h: 0 },
     pack: { x: 420, y: 250, w: 56, h: 16 },
+    toasts: { x: 0, y: 0, w: 0, h: 0 },
   };
-  it('dithers the panels a body is behind, never an undrawn one', () => {
+  it('dithers the panels a body is behind, never an undrawn one; the toast strip counts like the others', () => {
     expect(panelsBehind(rects, [])).toEqual([]);
+    expect(panelsBehind({ ...rects, toasts: { x: 8, y: 222, w: 100, h: 40 } }, [{ x: 20, y: 230, w: 8, h: 8 }])).toEqual(['toasts']);
     expect(panelsBehind(rects, [{ x: 430, y: 240, w: 12, h: 20 }])).toEqual(['pack']);
     expect(panelsBehind(rects, [{ x: 10, y: 10, w: 4, h: 4 }, { x: 450, y: 10, w: 4, h: 4 }])).toEqual(['writ', 'purse']);
     expect(panelsBehind(rects, [{ x: 0, y: 0, w: 4, h: 4 }])).toEqual([]);

@@ -4,13 +4,18 @@ import {
   holdingLayout,
   isShoreGround,
   itemDef,
+  measureText,
   PACK_SLOTS,
   PLOT_TEXT,
   plotKindDef,
   plotLevel,
   SKILL_NAMES,
+  SKILLS,
   stationDef,
   TILE_SIZE_PX,
+  tiny5Font,
+  TOAST_MAX,
+  TOAST_TEXT,
   type HoldingActivity,
   type HoldingLayout,
   type HoldingResponse,
@@ -230,11 +235,12 @@ export function pluralName(itemId: string): string {
 }
 
 /**
- * The one panel line after a take-all (GAME DESIGN 2026-10-17, 2026-10-18):
- * "Store: twisted logs full." when something stayed because the store's
- * stack is full (the one line until toasts arrive in Task 7); otherwise
- * none: what was taken floats over the station (`takeFloat`), and an empty
- * basket's panel already reads "Basket: empty".
+ * The line after a take-all (GAME DESIGN 2026-10-17, 2026-10-18): "Store:
+ * twisted logs full." when something stayed because the store's stack is
+ * full, a toast since Task 7 (game/toastView.ts `storeFullToast` carries
+ * it with its glyph); otherwise none: what was taken floats over the
+ * station (`takeFloat`), and an empty basket's panel already reads "Basket:
+ * empty".
  */
 export function takeResultLine(take: HoldingTake): string | null {
   const stuck = take.left[0];
@@ -381,8 +387,25 @@ export const HUD_INSET = 8;
 export const HUD_PAD = 4;
 export const HUD_CHIP_W = 122;
 export const HUD_CHIP_H = 26;
+/** A toast's glyph box and line (UI px): ART's 16 px item icons are the placeholder glyphs, so a line is 16 tall (M2 Task 7). */
+export const TOAST_GLYPH = 16;
+export const TOAST_ROW = 16;
+/** Between a toast's glyph and its text. */
+export const TOAST_GAP = 3;
 
-/** The measured widths (UI px) of the HUD's texts: the purse's number, the pack's label, and the Writ block's Name, letters and chip words. */
+/** The widest toast text of M2 (UI px, the body font): what the toast strip's rectangle is sized for. */
+export function toastTextWidth(): number {
+  const texts = [
+    TOAST_TEXT.WRIT_LOW,
+    TOAST_TEXT.WRIT_DARK,
+    TOAST_TEXT.PACK_FULL,
+    ...SKILLS.map((s) => TOAST_TEXT.skillLevel(s, 200)),
+    ...['twisted-log', 'black-stone', 'streaked-stone', 'pale-grain', 'grey-seeds'].map((id) => TOAST_TEXT.storeFull(id)),
+  ];
+  return Math.max(...texts.map((t) => measureText(tiny5Font, t)));
+}
+
+/** The measured widths (UI px) of the HUD's texts: the purse's number, the pack's label, the Writ block's Name, letters and chip words, and the widest toast. */
 export interface HudWidths {
   gin: number;
   pack: number;
@@ -390,10 +413,12 @@ export interface HudWidths {
   name: number | null;
   letters: number;
   chip: number;
+  /** The widest toast text (`toastTextWidth`); the strip's rectangle is sized for two lines of it. */
+  toast: number;
 }
 
-/** The HUD's four panels' rectangles for a view frame (UI px): the Writ block, the purse, the action chip and the pack button. Pure. */
-export function hudRects(frame: UiRect, widths: HudWidths): { writ: UiRect; purse: UiRect; chip: UiRect; pack: UiRect } {
+/** The HUD's panels' rectangles for a view frame (UI px): the Writ block, the purse, the action chip, the pack button and the toast strip. Pure. */
+export function hudRects(frame: UiRect, widths: HudWidths): { writ: UiRect; purse: UiRect; chip: UiRect; pack: UiRect; toasts: UiRect } {
   const L = frame.x;
   const T = frame.y;
   const R = frame.x + frame.w;
@@ -405,12 +430,29 @@ export function hudRects(frame: UiRect, widths: HudWidths): { writ: UiRect; purs
   const packW = HUD_PAD + widths.pack + HUD_PAD;
   const packH = HUD_PAD + 8 + HUD_PAD;
   const cx = Math.round(L + frame.w / 2);
+  // The toast strip (Task 7): bottom left, sized for `toastMax` lines at the widest text; the newest toast at the bottom.
+  const toastsW = HUD_PAD + TOAST_GLYPH + TOAST_GAP + widths.toast + HUD_PAD;
+  const toastsH = HUD_PAD + TOAST_MAX * TOAST_ROW + HUD_PAD;
+  const toastsBottom = toastStripBottom(frame, toastsW);
   return {
     writ: { x: L + HUD_INSET, y: T + HUD_INSET, w: writW, h: writH },
     purse: { x: R - HUD_INSET - purseW, y: T + HUD_INSET, w: purseW, h: purseH },
     chip: { x: cx - HUD_CHIP_W / 2, y: B - HUD_INSET - HUD_CHIP_H, w: HUD_CHIP_W, h: HUD_CHIP_H },
     pack: { x: R - HUD_INSET - packW, y: B - HUD_INSET - packH, w: packW, h: packH },
+    toasts: { x: L + HUD_INSET, y: toastsBottom - toastsH, w: toastsW, h: toastsH },
   };
+}
+
+/**
+ * Where the toast strip's bottom edge sits (UI px): at the inset from the
+ * view's bottom, like the chip, or above the chip's band when the frame is
+ * too narrow for the strip beside the chip (a 320 px frame at 1440 × 810),
+ * so the two never meet. The strip (ui/toasts.ts) anchors to it.
+ */
+export function toastStripBottom(frame: UiRect, toastsW: number): number {
+  const chipX = Math.round(frame.x + frame.w / 2) - HUD_CHIP_W / 2;
+  const bottom = frame.y + frame.h - HUD_INSET;
+  return frame.x + HUD_INSET + toastsW > chipX ? bottom - HUD_CHIP_H - 2 : bottom;
 }
 
 /** Whether two rectangles overlap (touching edges don't count). */
@@ -418,8 +460,8 @@ export function rectsOverlap(a: UiRect, b: UiRect): boolean {
   return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 }
 
-/** The HUD panels by name (`hudRects`'s keys). */
-export type HudPanel = 'writ' | 'purse' | 'chip' | 'pack';
+/** The HUD panels by name (`hudRects`'s keys); the toast strip counts like the others (Task 7). */
+export type HudPanel = 'writ' | 'purse' | 'chip' | 'pack' | 'toasts';
 
 /**
  * The HUD panels a body is behind (readability.md "The HUD never hides the

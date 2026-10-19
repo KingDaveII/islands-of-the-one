@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import { shapeLetters, type InventoryResponse, type WritView } from '@iot/shared';
+import { shapeLetters, SLEEP_TEXT, type InventoryResponse, type WritView } from '@iot/shared';
 import type { Rect as ViewRect } from '../game/view.js';
 import {
   chargeLines,
@@ -33,8 +33,8 @@ import { plotLetters, type LetterSheet } from '../render/letters.js';
 import { body, label, place, type Text } from '../render/text.js';
 import { divider, panel } from '../render/ui.js';
 
-/** The panel (UI px). */
-const W = 244;
+/** The panel (UI px); wide enough for the sleep hint on one line. */
+const W = 252;
 const PAD = 8;
 const INNER = W - 2 * PAD;
 /** The face's letters at 2 UI px per sheet px. */
@@ -54,10 +54,13 @@ export interface WritPanelHost {
   showFocus(): boolean;
   feed(itemId: string, count: number): void;
   fill(): void;
+  /** SLEEP: lie down by the Writ (the in-world log-out, M2 Task 7). */
+  sleep(): void;
 }
 
-/** What the focus is on: a kind's row, or a button. */
-type FocusItem = { kind: number } | { button: 'feed' | 'fill' };
+/** What the focus is on: a kind's row, or a button; SLEEP is the last in the order. */
+type FocusItem = { kind: number } | { button: 'feed' | 'fill' | 'sleep' };
+const BUTTONS: readonly ('feed' | 'fill' | 'sleep')[] = ['feed', 'fill', 'sleep'];
 
 /**
  * The Writ panel (docs/design/holding.md "The Writ", GAME DESIGN's screen):
@@ -68,7 +71,9 @@ type FocusItem = { kind: number } | { button: 'feed' | 'fill' };
  * (the exact time in a tooltip), the state line, line 1 and the greyed line
  * 2, the Sparkglass by kind with what the Kindled holds, each kind greyed
  * with GAME DESIGN's line when it doesn't fit now, the feed preview, FEED
- * ONE (FEED with a count for gin) and FILL (wild slivers). The face redraws
+ * ONE (FEED with a count for gin) and FILL (wild slivers); at the foot,
+ * SLEEP with its hint (M2 Task 7: lying down by the Writ post is the
+ * in-world log-out; the last item in the focus order). The face redraws
  * from the server's answer, never ahead of it; a relight from dark brings
  * the aleph back first, then each line, whole frames. Mouse, keys, pad and
  * touch; the scene feeds the key and pad events in.
@@ -94,6 +99,9 @@ export class WritPanel {
   private full = false;
   private feedButton: Button;
   private fillButton: Button;
+  private readonly sleepButton: Button;
+  /** Under SLEEP, muted: the hint that says plainly what lying down does. */
+  private readonly sleepHint: Text;
   /** The gin count's steppers (mouse and touch; the keys and the pad use Left/Right). */
   private readonly less: Button;
   private readonly more: Button;
@@ -143,6 +151,10 @@ export class WritPanel {
     this.fillButton = button(scene, 0, 0, FILL, false, () => {
       this.pressFill();
     });
+    this.sleepButton = button(scene, 0, 0, SLEEP_TEXT.SLEEP, false, () => {
+      this.host.sleep();
+    });
+    this.sleepHint = body(scene, 0, 0, SLEEP_TEXT.HINT, Palette.uiInkMuted, INNER);
     this.less = button(scene, 0, 0, '-', false, () => {
       this.stepCount(-1);
     });
@@ -165,6 +177,8 @@ export class WritPanel {
       this.buttonTip,
       this.feedButton.container,
       this.fillButton.container,
+      this.sleepButton.container,
+      this.sleepHint,
       this.less.container,
       this.more.container,
       this.tipG,
@@ -300,11 +314,11 @@ export class WritPanel {
 
   // --- Keys and the pad -----------------------------------------------------
 
-  /** Up and down: through the kinds, then the buttons. */
+  /** Up and down: through the kinds, then the buttons, SLEEP last. */
   moveFocus(delta: number): void {
     const n = this.choices.length;
-    const items: FocusItem[] = [...this.choices.map((_, i) => ({ kind: i })), { button: 'feed' }, { button: 'fill' }];
-    const at = 'kind' in this.focus ? this.focus.kind : n + (this.focus.button === 'feed' ? 0 : 1);
+    const items: FocusItem[] = [...this.choices.map((_, i) => ({ kind: i })), ...BUTTONS.map((button) => ({ button }))];
+    const at = 'kind' in this.focus ? this.focus.kind : n + BUTTONS.indexOf(this.focus.button);
     const next = items[(((at + delta) % items.length) + items.length) % items.length] ?? { kind: 0 };
     this.focus = next;
     if ('kind' in next) this.select(next.kind);
@@ -319,13 +333,14 @@ export class WritPanel {
     this.syncButtons();
   }
 
-  /** Left and right: the gin count on its row, the other button on a button. */
+  /** Left and right: the gin count on its row, the next button on a button (FEED, FILL, SLEEP round). */
   moveSide(delta: number): void {
     if ('kind' in this.focus) {
       this.stepCount(delta);
       return;
     }
-    this.focus = { button: this.focus.button === 'feed' ? 'fill' : 'feed' };
+    const at = BUTTONS.indexOf(this.focus.button);
+    this.focus = { button: BUTTONS[(((at + delta) % BUTTONS.length) + BUTTONS.length) % BUTTONS.length] ?? 'feed' };
     this.placed = '';
   }
 
@@ -338,7 +353,8 @@ export class WritPanel {
       return;
     }
     if (this.focus.button === 'feed') this.pressFeed();
-    else this.pressFill();
+    else if (this.focus.button === 'fill') this.pressFill();
+    else this.host.sleep();
   }
 
   // --- Drawing ---------------------------------------------------------------
@@ -351,7 +367,10 @@ export class WritPanel {
     const w = Math.max(W, faceW + 2 * PAD);
     const rows = this.choices.length;
     const chargeRows = this.charge.visible ? 1 : 0;
-    const h = PAD + FACE_H + 6 + (3 + chargeRows) * ROW + 4 + 1 + 4 + rows * ROW + 4 + ROW + 4 + 15 + 4 + ROW + PAD;
+    const hintH = Math.round(this.sleepHint.height);
+    // The rim, the charge (when shown), the state, line 1 and line 2, then the kinds, the preview, the buttons, the result
+    // line, and the foot: SLEEP and its hint.
+    const h = PAD + FACE_H + 6 + (4 + chargeRows) * ROW + 4 + 1 + 4 + rows * ROW + 4 + ROW + 4 + 15 + 4 + ROW + 4 + 1 + 4 + 15 + 3 + hintH + PAD;
     const x = Math.round(frame.x + frame.w / 2 - w / 2);
     const y = Math.round(frame.y + frame.h / 2 - h / 2);
     const key = `${x},${y},${w},${h},${chargeRows},${this.feedLabel},${this.selected},${JSON.stringify(this.focus)},${this.host.showFocus()}`;
@@ -423,6 +442,14 @@ export class WritPanel {
     place(this.buttonTip, x + PAD + 4, ly + 15 + 4);
     ly += 15 + 4;
     place(this.result, x + w - PAD, ly, 1);
+    // The foot: SLEEP and its hint (M2 Task 7), under a divider.
+    ly += ROW + 4;
+    divider(this.g, x + PAD, ly, w - 2 * PAD);
+    ly += 1 + 4;
+    this.sleepButton.container.setPosition(x + PAD, ly);
+    this.sleepButton.setFocused(this.host.showFocus() && 'button' in this.focus && this.focus.button === 'sleep');
+    ly += 15 + 3;
+    place(this.sleepHint, x + PAD, ly);
     // The charge's tooltip, above its line.
     const tw = Math.round(this.tip.width) + 8;
     this.tipG.clear();
@@ -492,6 +519,10 @@ export class WritPanel {
     count: number;
     full: boolean;
     buttonTip: string | null;
+    /** SLEEP and its hint (M2 Task 7). */
+    sleep: string;
+    sleepHint: string;
+    focus: string;
   } {
     return {
       state: this.view?.state ?? '',
@@ -510,6 +541,9 @@ export class WritPanel {
       count: this.count,
       full: this.full,
       buttonTip: this.full && (this.feedButton.hover || this.fillButton.hover) ? this.buttonTip.text : null,
+      sleep: SLEEP_TEXT.SLEEP,
+      sleepHint: this.sleepHint.text,
+      focus: 'kind' in this.focus ? `kind:${this.focus.kind}` : this.focus.button,
     };
   }
 
@@ -519,6 +553,8 @@ export class WritPanel {
     for (const row of this.rows) for (const o of [row.name, row.held, row.refusal, row.marker, row.zone]) o.destroy();
     this.feedButton.container.destroy(true);
     this.fillButton.container.destroy(true);
+    this.sleepButton.container.destroy(true);
+    this.sleepHint.destroy();
     this.less.container.destroy(true);
     this.more.container.destroy(true);
   }

@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import {
+  ApiErrorCode,
+  awayLines,
   BUILD_TEXT,
   HOLDING_CAMERA_MARGIN_TILES,
   HOLDING_HEARTBEAT_MS,
@@ -10,7 +12,9 @@ import {
   plotKindDef,
   shapeLetters,
   TILE_SIZE_PX,
+  TOAST_TEXT,
   wordDef,
+  type AwayCard,
   type ClayTone,
   type HoldingResponse,
   type InventoryResponse,
@@ -52,7 +56,6 @@ import {
   serverTime,
   stationLines,
   takeFloat,
-  takeResultLine,
   USE_LABEL,
   workplaceDef,
   type NearStation,
@@ -61,6 +64,15 @@ import {
   type UiRect,
 } from '../game/holdingView.js';
 import { REFUSAL_LIFE_MS, refusalVisible } from '../game/inventoryView.js';
+import {
+  defaultToastStorage,
+  levelUps,
+  packFullToast,
+  skillLevelToast,
+  storeFullToast,
+  WritToastMemory,
+  writToastsDue,
+} from '../game/toastView.js';
 import {
   KeshTalk,
   keshSpeaking,
@@ -109,10 +121,12 @@ import {
   type Text,
 } from '../render/text.js';
 import { divider, panel } from '../render/ui.js';
+import { AwayCardPanel } from '../ui/awayCard.js';
 import { BuildMode } from '../ui/buildMode.js';
 import { NameScreen } from '../ui/nameScreen.js';
 import { PlotPanel } from '../ui/plotPanel.js';
 import { TalkBox } from '../ui/talkBox.js';
+import { toastStore } from '../ui/toasts.js';
 import { WritPanel } from '../ui/writPanel.js';
 import type { InventoryData } from './InventoryScene.js';
 
@@ -198,7 +212,14 @@ interface StationPanel {
  * ghost on the pointer (or the pad's tile cursor), green where it fits, R or
  * Triangle turns it, Confirm sends the build, and the building moment plays
  * on the server's answer; a standing piece selected offers MOVE and TAKE
- * DOWN. Positions are the client's; every count comes from the server.
+ * DOWN. Sleep, the away card and the toasts (M2 Task 7): SLEEP on the Writ
+ * panel (and the Name screen) cuts to the sleep scene, which logs out; an
+ * answer carrying an away card opens it over the holding (ui/awayCard.ts),
+ * closed by any input, which does nothing else, and dismissed on the server
+ * with away/seen; the toasts (ui/toasts.ts, a scene over everything) are
+ * fed from the answers: a level gained in this session, the Writ under a
+ * day or dark once per drain, a take-all's full store, a full pack.
+ * Positions are the client's; every count comes from the server.
  */
 export class HoldingScene extends Phaser.Scene {
   session!: RoamSession;
@@ -262,6 +283,14 @@ export class HoldingScene extends Phaser.Scene {
   /** The seal's tooltip while the pointer is over a named plot (LORE's line), on the UI layer. */
   private plotTipG!: Phaser.GameObjects.Graphics;
   private plotTip!: Text;
+  /** The away card (M2 Task 7) while it is open, the card it shows, and the input that closes it (acted on next frame). */
+  private away: AwayCardPanel | null = null;
+  private awayCard: AwayCard | null = null;
+  private awayDismiss = false;
+  /** The `to` of the card last dismissed: an answer already in flight may still carry it; it comes back only if the dismissal failed. */
+  private awayDismissedTo: string | null = null;
+  /** Which drain each Writ toast was shown for, per Kindled, in localStorage. */
+  private readonly writMemory = new WritToastMemory(defaultToastStorage());
   /** The last error a request answered (playtests). */
   lastError = '';
   /** Between create and shutdown: answers that arrive after the scene is gone are dropped. */
@@ -308,6 +337,14 @@ export class HoldingScene extends Phaser.Scene {
     this.floaters = [];
     this.lastCycles = -1;
     this.lastError = '';
+    this.away = null;
+    this.awayCard = null;
+    this.awayDismiss = false;
+    this.awayDismissedTo = null;
+    toastStore.queue.clear();
+    toastStore.paused = false;
+    // The toast strip: a scene over everything, the inventory included; stopped with this one.
+    this.scene.launch('toasts');
     this.alive = true;
     if (!this.letterSheet)
       void loadLetterSheet().then(
@@ -375,17 +412,26 @@ export class HoldingScene extends Phaser.Scene {
         if (code !== undefined) kb?.addKey(code, true).on('down', fn);
       }
     };
+    // The away card closes on the first key, and that key does nothing else: every handler yields to it while it is
+    // open, and the card is closed at the start of the next frame (M2 Task 7).
+    kb?.on('keydown', () => {
+      if (this.away) this.awayDismiss = true;
+    });
     bind(keyboardKeys('inventory'), () => {
+      if (this.away) return;
       if (!this.writPanel && !this.plotPanel) this.openInventory();
     });
     bind(keyboardKeys('menu'), () => {
+      if (this.away) return;
       this.back();
     });
     // R turns the ghost (the `rotate` binding, M2 Task 6).
     bind(keyboardKeys('rotate'), () => {
+      if (this.away) return;
       this.turnGhost();
     });
     kb?.on('keydown-ENTER', () => {
+      if (this.away) return;
       if (this.talkBox) {
         this.keyNav = true;
         this.talkAdvance();
@@ -403,6 +449,7 @@ export class HoldingScene extends Phaser.Scene {
     });
     for (const key of ['LEFT', 'RIGHT', 'TAB'])
       kb?.on(`keydown-${key}`, () => {
+        if (this.away) return;
         if (this.talkBox) {
           this.keyNav = true;
           if (key === 'TAB') this.talk.moveFocus(1);
@@ -422,6 +469,7 @@ export class HoldingScene extends Phaser.Scene {
       });
     for (const key of ['UP', 'DOWN'])
       kb?.on(`keydown-${key}`, () => {
+        if (this.away) return;
         if (this.talkBox) {
           this.keyNav = true;
           this.talk.moveFocus(key === 'UP' ? -1 : 1);
@@ -447,6 +495,11 @@ export class HoldingScene extends Phaser.Scene {
     this.input.on(
       'pointerdown',
       (p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => {
+        // A mouse button or a touch closes the away card and does nothing else.
+        if (this.away) {
+          this.awayDismiss = true;
+          return;
+        }
         if (this.talkBox) {
           if (over.length === 0 && this.talk.step.kind === 'line') this.talkAdvance();
           return;
@@ -480,6 +533,8 @@ export class HoldingScene extends Phaser.Scene {
       this.closeWritPanel();
       this.closePlotPanel();
       this.closeBuild();
+      this.dropAway();
+      this.scene.stop('toasts');
       this.pieces.destroy();
       this.plots.destroy();
       this.controls.dispose();
@@ -558,6 +613,7 @@ export class HoldingScene extends Phaser.Scene {
       this.lastError = res.message;
       return false;
     }
+    const prev = this.response;
     this.response = res.value;
     this.offset = clockOffset(res.value.now, Date.now());
     this.lastCycles = res.value.activity ? cyclesDone(res.value.activity, this.serverNow()) : -1;
@@ -575,6 +631,13 @@ export class HoldingScene extends Phaser.Scene {
     this.syncWritPanel();
     this.syncPlotPanel();
     this.syncBuild();
+    this.syncAway();
+    // A skill's level higher than in the previous answer of this session is a toast (M2 Task 7); the first answer
+    // never toasts: levels gained while away belong to the card.
+    for (const up of levelUps(prev, res.value)) {
+      const toast = skillLevelToast(up.skill, up.level);
+      toastStore.post('skill-level', toast.text, toast.glyph);
+    }
     return true;
   }
 
@@ -635,8 +698,9 @@ export class HoldingScene extends Phaser.Scene {
         if (take) {
           const text = takeFloat(take);
           if (text) this.float(text, stationId);
-          const line = takeResultLine(take);
-          if (line) this.panelResult(stationId, line);
+          // "Store: twisted logs full." is a toast since Task 7, no longer the panel's line.
+          const full = storeFullToast(take);
+          if (full) toastStore.post('store-full', full.text, full.glyph);
         }
         void api.inventory().then((res) => {
           if (this.alive && res.ok) this.inventory = res.value;
@@ -696,6 +760,10 @@ export class HoldingScene extends Phaser.Scene {
    * station panel; the Talk spot across the water from Kesh opens the talk box, and while it is open Use advances it.
    */
   private use(): void {
+    if (this.away) {
+      this.awayDismiss = true;
+      return;
+    }
     if (this.nameScreen) return;
     if (this.talkBox) {
       this.talkAdvance();
@@ -768,6 +836,9 @@ export class HoldingScene extends Phaser.Scene {
       submit: (name) => {
         this.nameIsland(name);
       },
+      sleep: () => {
+        this.sleep();
+      },
     });
   }
 
@@ -818,6 +889,9 @@ export class HoldingScene extends Phaser.Scene {
       },
       fill: () => {
         this.feedWrit({ fill: true });
+      },
+      sleep: () => {
+        this.sleep();
       },
     });
     this.syncWritPanel();
@@ -876,6 +950,85 @@ export class HoldingScene extends Phaser.Scene {
   private afterFeeding(fedBefore: string | null): void {
     if (fedBefore === null && this.response?.writ.fedAt !== null)
       this.openTalk('afterFirstFeeding');
+  }
+
+  /**
+   * SLEEP (M2 Task 7): the panel closes and the scene cuts, with no fade, to the sleep scene, which logs out after
+   * `sleepMs`. This scene's shutdown stops the heartbeat; the active action keeps running on the server up to the cap.
+   */
+  private sleep(): void {
+    this.closeWritPanel();
+    this.closeNameScreen();
+    this.scene.start('sleep');
+  }
+
+  // --- The away card (M2 Task 7) -------------------------------------------------
+
+  /** Who the Writ toasts are remembered for: the account's one Kindled, by its username (the client never sees a Kindled id). */
+  private who(): string {
+    return accountStore.current?.account.username ?? 'kindled';
+  }
+
+  /**
+   * An answer carrying an away card opens it, once nothing else is open (the Name screen first, while the island is
+   * unnamed; a panel or the talk box keeps it for the next answer) and unless this very card was just dismissed.
+   */
+  private syncAway(): void {
+    const card = this.response?.away ?? null;
+    if (!card || this.away) return;
+    if (this.nameScreen || this.talkBox || this.writPanel || this.plotPanel || this.build || this.panel) return;
+    if (card.to === this.awayDismissedTo) return;
+    this.awayCard = card;
+    this.awayDismiss = false;
+    const lines = awayLines(card, this.session.layout, this.response?.plots ?? [], this.serverNow());
+    this.away = new AwayCardPanel({ scene: this, layer: this.hudLayer, frame: () => this.frame }, lines);
+    // The Kindled stands still; the toasts wait.
+    this.session.held = true;
+    toastStore.paused = true;
+    // The card's Writ line has told this drain: the Writ toasts don't repeat it.
+    if (card.writ.name !== null) {
+      const due = writToastsDue(card.writ, this.serverNow());
+      if (due.low) this.writMemory.mark('writLow', this.who(), due.emptyAt);
+      if (due.dark) this.writMemory.mark('writDark', this.who(), due.emptyAt);
+    }
+  }
+
+  /** The card goes without a word to the server (the scene is shutting down): it comes back with the next log-in's answer. */
+  private dropAway(): void {
+    if (!this.away) return;
+    this.away.destroy();
+    this.away = null;
+    this.awayCard = null;
+    this.awayDismiss = false;
+    toastStore.paused = false;
+  }
+
+  /** The first input closed the card: it goes, and away/seen with its `to` dismisses it on the server; if that fails it comes back with the next answer. */
+  private closeAway(): void {
+    const card = this.awayCard;
+    if (!this.away || !card) return;
+    this.dropAway();
+    this.session.held = this.panel !== null || this.writPanel !== null || this.nameScreen !== null || this.plotPanel !== null || this.build !== null || this.talkBox !== null;
+    this.awayDismissedTo = card.to;
+    void api.awaySeen({ to: card.to }).then((res) => {
+      if (!res.ok && this.alive && this.awayDismissedTo === card.to) this.awayDismissedTo = null;
+    });
+  }
+
+  /** The Writ toasts (M2 Task 7): under a day with charge, and dark, each once per drain, remembered per Kindled; never while the card is open. */
+  private updateWritToasts(): void {
+    const view = this.response?.writ;
+    if (!view || this.away) return;
+    const due = writToastsDue(view, this.serverNow());
+    const who = this.who();
+    if (due.low && !this.writMemory.told('writLow', who, due.emptyAt)) {
+      this.writMemory.mark('writLow', who, due.emptyAt);
+      toastStore.post('writ-low', TOAST_TEXT.WRIT_LOW, { kind: 'square' });
+    }
+    if (due.dark && !this.writMemory.told('writDark', who, due.emptyAt)) {
+      this.writMemory.mark('writDark', who, due.emptyAt);
+      toastStore.post('writ-dark', TOAST_TEXT.WRIT_DARK, { kind: 'square' });
+    }
   }
 
   // --- The plots (M2 Task 5) ----------------------------------------------------
@@ -1359,7 +1512,11 @@ export class HoldingScene extends Phaser.Scene {
       if (!this.alive) return;
       this.busy = false;
       if (!res.ok) {
-        this.talkBox?.setNote(res.message);
+        // A full pack is a toast (M2 Task 7); any other refusal stays the box's note.
+        if (res.error === ApiErrorCode.PackFull) {
+          const toast = packFullToast();
+          toastStore.post('pack-full', toast.text, toast.glyph);
+        } else this.talkBox?.setNote(res.message);
         return;
       }
       if (!this.take(res)) return;
@@ -1395,7 +1552,7 @@ export class HoldingScene extends Phaser.Scene {
   }
 
   openInventory(): void {
-    if (this.nameScreen) return;
+    if (this.nameScreen || this.away) return;
     if (this.panel) this.closePanel();
     if (this.writPanel) this.closeWritPanel();
     if (this.plotPanel) this.closePlotPanel();
@@ -1713,7 +1870,8 @@ export class HoldingScene extends Phaser.Scene {
       this.nameScreen !== null ||
       this.talkBox !== null ||
       this.plotPanel !== null ||
-      this.build !== null;
+      this.build !== null ||
+      this.away !== null;
     const p = this.session.position();
     const talk =
       !open && nearKesh(p.x, p.y, tuningStore.get().juice.promptRangePx, this.session.layout);
@@ -1873,6 +2031,11 @@ export class HoldingScene extends Phaser.Scene {
     build: ReturnType<BuildMode['snapshot']> | null;
     pieces: ReturnType<PiecesLayer['snapshot']>;
     ghost: Ghost | null;
+    /** The away card while it is open (M2 Task 7), and its rectangle (UI px). */
+    away: ReturnType<AwayCardPanel['snapshot']> | null;
+    awayRect: ViewRect | null;
+    /** The toasts showing, oldest first. */
+    toasts: ReturnType<typeof toastStore.snapshot>;
   } {
     const s = this.session.state;
     return {
@@ -1905,11 +2068,16 @@ export class HoldingScene extends Phaser.Scene {
       build: this.build?.snapshot() ?? null,
       pieces: this.pieces.snapshot(),
       ghost: this.ghost,
+      away: this.away?.snapshot() ?? null,
+      awayRect: this.away?.rect() ?? null,
+      toasts: toastStore.snapshot(),
     };
   }
 
   override update(_time: number, delta: number): void {
     const refit = this.fitCameras();
+    // The input that closed the away card is acted on here, after every handler has yielded to it (M2 Task 7).
+    if (this.away && this.awayDismiss) this.closeAway();
     this.session.update(delta);
     if (this.session.pressed & Button.Interact) this.use();
     this.followCamera(refit || this.session.state.tick <= 1);
@@ -1931,7 +2099,10 @@ export class HoldingScene extends Phaser.Scene {
       this.letterSheet,
       this.bodyRects(),
       delta,
+      toastStore.rect,
     );
+    toastStore.dither = this.hud.toastsDithered;
+    this.updateWritToasts();
     this.updatePrompt();
     this.updatePlotTip();
     this.updateFloaters(delta);
@@ -1947,6 +2118,7 @@ export class HoldingScene extends Phaser.Scene {
     this.plotPanel?.update();
     this.build?.update();
     this.talkBox?.layout();
+    this.away?.layout();
     // A plot's panel shows "Next in …" from the clock: refresh its lines once a minute.
     if (
       this.panel?.lines?.next &&
@@ -1962,6 +2134,13 @@ export class HoldingScene extends Phaser.Scene {
       (edges.includes(MENU_BUTTONS.confirm[0]) &&
         !buttonsFor(preset, 'interact', 'calm').includes(MENU_BUTTONS.confirm[0])) ||
       MENU_BUTTONS.confirm.slice(1).some((b) => edges.includes(b));
+    if (this.away) {
+      // Any pad button, or a stick pushed past the menu threshold, closes the card and does nothing else.
+      const axes = connectedPad()?.axes ?? [];
+      const pushed = Math.abs(axes[0] ?? 0) > 0.5 || Math.abs(axes[1] ?? 0) > 0.5;
+      if (edges.length > 0 || pushed) this.awayDismiss = true;
+      return;
+    }
     if (edges.includes(MENU_BUTTONS.back)) this.back();
     else if (this.build) this.buildPad(edges, confirmed);
     else if (this.talkBox) {
