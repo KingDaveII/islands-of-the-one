@@ -18,6 +18,7 @@ ART DIRECTION's art jobs as they were run. Each one is a prompt David pastes int
 | [holding](holding.md) | Raw material for the starting holding: the ground texture and five props (Writ post, twisted tree, stone outcrop, holding store, Kesh's rock); ART composes the shore and cleans the props | #82 |
 | [kesh](kesh.md) | Raw material for Old Kesh fishing on his rock: a seated Fishing state and the `fish`, `talk` and `toss` animations (south-east); ART composes `npc-kesh` after Task 4b's contract | #90 |
 | [field-pieces](field-pieces.md) | Raw material for the field's upgrade pieces: Seed jars (two facings), Threshing floor, Clay channel; ART draws the channel's turned facing and the chaff spiral and writes the recipes after Task 6's contract | #103 |
-| [weapon-rack](weapon-rack.md) | Raw material for the holding's weapon rack (Task 8): one empty rack of lashed twisted logs; ART places it and adds its peg points | (to run) |
+| [weapon-rack](weapon-rack.md) | Raw material for the holding's weapon rack (Task 8): one empty rack of lashed twisted logs; ART places it and adds its peg points | #112 |
+| [remembrance-sheathed](remembrance-sheathed.md) | Raw material for one Remembrance's sheathed Kindled (clay, tide, wing; run once each): its outfit state on SS-01's character, hands empty, idle, walk and run in 8 facings; ART makes the transitions and the recipe | (to run) |
 
 The current rules (heights, canvas sizes, colours) are in `art/anchors/style-sheet.md`, not in these prompts. New jobs start from the shared header in these prompts and the style sheet.
