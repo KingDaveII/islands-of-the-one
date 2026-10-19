@@ -1,4 +1,4 @@
-import { defaultTuning, InventoryReason, kitRef, M2_KIT, M2_SCAFFOLD, RACK_PLACE, rackWeapons, resolveChosen, type RackView } from '@iot/shared';
+import { defaultTuning, InventoryReason, kitRef, M2_KIT, M2_SCAFFOLD, RACK_PLACE, RACK_TEXT, rackWeapons, resolveChosen, type RackView } from '@iot/shared';
 import { isWeaponAvailable, type Tuning } from '@iot/sim';
 import { eq } from 'drizzle-orm';
 import type { Transaction } from '../db/client.js';
@@ -65,18 +65,14 @@ export async function giveKit(
 
 export type ChooseResult = { ok: true } | { ok: false; error: 'not-owned' | 'not-ready'; message: string };
 
-/** The refusals' lines (the panel's footer shows them). */
-export const RACK_NOT_OWNED = "That weapon isn't on your rack.";
-export const RACK_NOT_READY = "Your hands aren't ready for this one yet.";
-
 /**
  * Chooses the weapon a run takes, under the Kindled's lock: it must hang on
  * the rack (`not-owned`) and the sim must run it (`not-ready`); then
- * `run_weapon` is written.
+ * `run_weapon` is written. The refusals' lines are `RACK_TEXT`'s (the panel's footer shows them).
  */
 export async function chooseWeaponIn(tx: Transaction, k: Pick<KindledRow, 'id'>, held: readonly Holding[], weaponId: string): Promise<ChooseResult> {
-  if (!ownedWeapons(held).includes(weaponId)) return { ok: false, error: 'not-owned', message: RACK_NOT_OWNED };
-  if (!weaponReady(weaponId)) return { ok: false, error: 'not-ready', message: RACK_NOT_READY };
+  if (!ownedWeapons(held).includes(weaponId)) return { ok: false, error: 'not-owned', message: RACK_TEXT.NOT_OWNED };
+  if (!weaponReady(weaponId)) return { ok: false, error: 'not-ready', message: RACK_TEXT.NOT_READY };
   await tx.update(kindled).set({ runWeapon: weaponId }).where(eq(kindled.id, k.id));
   return { ok: true };
 }

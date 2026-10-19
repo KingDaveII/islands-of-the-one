@@ -145,7 +145,7 @@ const hookblade = items.find((i) => i.id === 'hookblade');
 const rackTopic = kesh.topics.find((t) => t.id === 'rack');
 const TOOLTIP = 'Every weapon you own hangs here. Take one out with you; the others wait.';
 const FROM_RACK = 'Taken from your weapon rack.';
-const NOT_OWNED = "That weapon isn't on your rack.";
+const NOT_OWNED = "That one isn't hanging on your rack.";
 
 /** Log in and land on the holding (a reload, the start screen's main action). */
 async function land() {

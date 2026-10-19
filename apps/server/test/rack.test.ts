@@ -4,6 +4,7 @@ import {
   InventoryReason,
   isHoldingResponse,
   kitRef,
+  RACK_TEXT,
   SESSION_COOKIE,
   WEAPON_IDS,
   weaponCanFight,
@@ -16,7 +17,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp, type App } from '../src/app.js';
 import { createDb, type DbHandle } from '../src/db/client.js';
 import { accounts, kindled } from '../src/db/schema.js';
-import { createHolding, giveKit, RACK_NOT_OWNED, RACK_NOT_READY, rackViewOf, weaponReady, type Holding } from '../src/holding/index.js';
+import { createHolding, giveKit, rackViewOf, weaponReady, type Holding } from '../src/holding/index.js';
 import { createInventory, type Inventory } from '../src/inventory/index.js';
 
 /**
@@ -162,11 +163,11 @@ describe('the choice', () => {
     const ok = await holding.chooseWeapon(k, 'hookblade', at(0));
     expect(value(ok).rack).toEqual({ weapons: [{ itemId: 'hookblade', ready: true }], chosen: 'hookblade' });
     expect(await runWeaponOf(k)).toBe('hookblade');
-    expect(await holding.chooseWeapon(k, 'keelmaul', at(1))).toEqual({ ok: false, error: 'not-owned', message: RACK_NOT_OWNED });
-    expect(await holding.chooseWeapon(k, 'banana', at(1))).toEqual({ ok: false, error: 'not-owned', message: RACK_NOT_OWNED });
-    expect(await holding.chooseWeapon(k, 'twisted-log', at(1))).toEqual({ ok: false, error: 'not-owned', message: RACK_NOT_OWNED });
+    expect(await holding.chooseWeapon(k, 'keelmaul', at(1))).toEqual({ ok: false, error: 'not-owned', message: RACK_TEXT.NOT_OWNED });
+    expect(await holding.chooseWeapon(k, 'banana', at(1))).toEqual({ ok: false, error: 'not-owned', message: RACK_TEXT.NOT_OWNED });
+    expect(await holding.chooseWeapon(k, 'twisted-log', at(1))).toEqual({ ok: false, error: 'not-owned', message: RACK_TEXT.NOT_OWNED });
     expect((await inv.apply([{ kindledId: k, itemId: 'sling', place: 'rack', delta: 1 }], InventoryReason.Admin)).ok).toBe(true);
-    expect(await holding.chooseWeapon(k, 'sling', at(2))).toEqual({ ok: false, error: 'not-ready', message: RACK_NOT_READY });
+    expect(await holding.chooseWeapon(k, 'sling', at(2))).toEqual({ ok: false, error: 'not-ready', message: RACK_TEXT.NOT_READY });
     expect(await runWeaponOf(k)).toBe('hookblade');
     expect(value(await holding.view(k, at(3))).rack).toEqual({
       weapons: [
@@ -246,14 +247,14 @@ describe('the rack API', () => {
     expect(body).toMatchObject({ rack: { chosen: 'hookblade' } });
     const notOwned = await call(ApiRoute.RackChoose, { body: { weaponId: 'keelmaul' } });
     expect(notOwned.statusCode).toBe(409);
-    expect(notOwned.json()).toEqual({ error: 'not-owned', message: RACK_NOT_OWNED });
+    expect(notOwned.json()).toEqual({ error: 'not-owned', message: RACK_TEXT.NOT_OWNED });
     // The Sling on the rack (as the wreck will hang it): owned, but the sim can't run it.
     const [k] = await handle.db.select({ id: kindled.id }).from(kindled).innerJoin(accounts, eq(kindled.accountId, accounts.id)).where(eq(accounts.username, 'rackapi'));
     if (!k) throw new Error('no kindled');
     expect((await inv.apply([{ kindledId: k.id, itemId: 'sling', place: 'rack', delta: 1 }], InventoryReason.Admin)).ok).toBe(true);
     const notReady = await call(ApiRoute.RackChoose, { body: { weaponId: 'sling' } });
     expect(notReady.statusCode).toBe(409);
-    expect(notReady.json()).toEqual({ error: 'not-ready', message: RACK_NOT_READY });
+    expect(notReady.json()).toEqual({ error: 'not-ready', message: RACK_TEXT.NOT_READY });
     // bad-request: the shape only.
     for (const body of [{}, { weaponId: 1 }, { weaponId: 'hookblade', extra: 1 }, { itemId: 'hookblade' }, []]) {
       const res = await call(ApiRoute.RackChoose, { body });

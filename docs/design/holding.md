@@ -1055,7 +1055,8 @@ first weapon in roster order the Kindled owns that can fight (the sim's `isWeapo
 `weaponCanFight` in `packages/shared/src/weapons.ts` is its static mirror for shared code, and a server test holds them
 equal). `POST /api/holding/rack/choose { weaponId }` sets it: a holding request like the rest (the session cookie, a JSON
 body, a same-origin `Origin`, the guard refusing anything but `{ weaponId }`), answering the holding or refusing with
-`not-owned` (not on the Kindled's rack; an unknown id too) or `not-ready` (owned, but the sim can't run it), both 409.
+`not-owned` (not on the Kindled's rack; an unknown id too) or `not-ready` (owned, but the sim can't run it), both 409,
+their lines `RACK_TEXT.NOT_OWNED` (LORE's "That one isn't hanging on your rack.", Lore §14.15) and `RACK_TEXT.NOT_READY`.
 `HoldingResponse.rack` is `{ weapons: { itemId, ready }[], chosen }`: the weapons owned in roster order, and the weapon
 a run takes, resolved (`resolveChosen`: the stored choice while it is owned and ready, else the first ready; GAME DESIGN:
 "One weapon is always chosen", so `chosen` is null only while the Kindled owns no weapon that can fight, which M2's kit

@@ -32,6 +32,7 @@ describe('RACK_TEXT', () => {
       TAKEN: 'Taken',
       TAKE: 'TAKE',
       NOT_READY: "Your hands aren't ready for this one yet.",
+      NOT_OWNED: "That one isn't hanging on your rack.",
       NEEDS_SMITH: 'It needs a smith who knows it',
       FROM_RACK: 'Taken from your weapon rack.',
       KIT_JOIN: ' · ',

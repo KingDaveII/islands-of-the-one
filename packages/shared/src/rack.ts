@@ -25,8 +25,10 @@ export const RACK_TEXT = {
   TAKEN: 'Taken',
   /** The button on an owned weapon that can fight. */
   TAKE: 'TAKE',
-  /** LORE's line on an owned weapon the sim can't run yet (greyed). Never shown in M2. */
+  /** LORE's line on an owned weapon the sim can't run yet (greyed); the server's `not-ready` refusal too. Never shown in M2. */
   NOT_READY: "Your hands aren't ready for this one yet.",
+  /** The server's `not-owned` refusal (the panel's footer): a weapon chosen that doesn't hang on the rack (LORE, Lore §14.15, 2026-10-19). */
+  NOT_OWNED: "That one isn't hanging on your rack.",
   /**
    * GAME DESIGN's Found-weapons line, for a *rusted* weapon of a kind the game can't play yet: kept for the
    * state that comes with the Forge, not drawn on the rack (MAIN; both asked to confirm on the Task 8 PR).
