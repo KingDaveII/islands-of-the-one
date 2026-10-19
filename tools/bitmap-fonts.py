@@ -73,6 +73,34 @@ SOURCE_DIRS = [ROOT / "apps/client/src/scenes", ROOT / "apps/client/src/render",
 # Shared player-facing strings the client shows (account rules and refusals).
 SOURCE_FILES = [ROOT / "packages/shared/src/accounts.ts", ROOT / "packages/shared/src/api.ts"]
 
+# Characters the game will draw that no string above holds yet: "→" for GAME DESIGN's "Woodcutting 7 → 9" on the
+# away card (M2 Task 7; ART 2026-10-19).
+EXTRA_CHARS = {"→"}
+
+# Glyphs a face lacks, drawn by ART on the face's own pixel grid: rows of the glyph's box ('#' ink), its left
+# bearing from the pen (xo), its top from the top of the 8 px line box (yo) and the pen advance, matched to the
+# face's own '>' and '-' (the arrowhead is '>' at the shaft's end, the shaft sits on '-''s row).
+HAND_GLYPHS = {
+    "Silkscreen": {
+        "→": ([
+            "..#..",
+            "...#.",
+            "#####",
+            "...#.",
+            "..#..",
+        ], 1, 3, 7),
+    },
+    "Tiny5": {
+        "→": ([
+            ".#..",
+            "..#.",
+            "####",
+            "..#.",
+            ".#..",
+        ], 0, 2, 5),
+    },
+}
+
 # Design-system colors for the contact sheet (hollow-deep panel, hollow-light ink, hollow-dusk labels).
 PANEL = (0x2A, 0x25, 0x40, 255)
 INK = (0xF4, 0xEF, 0xE6, 255)
@@ -121,8 +149,12 @@ def charset() -> list[str]:
             chars |= source_strings(f)
     for f in SOURCE_FILES:
         chars |= source_strings(f)
-    # Control characters never get a glyph (newlines break lines, tabs are not drawn).
-    return sorted(c for c in chars if ord(c) >= 0x20 and not (0x7F <= ord(c) < 0xA0))
+    chars |= EXTRA_CHARS
+    # Control characters never get a glyph (newlines break lines, tabs are not drawn), and the Old Letters
+    # (Hebrew block) are drawn from their own sheet (packages/shared/assets/old-letters-8px.png), never a font.
+    return sorted(
+        c for c in chars if ord(c) >= 0x20 and not (0x7F <= ord(c) < 0xA0) and not (0x0590 <= ord(c) <= 0x05FF)
+    )
 
 
 @dataclass
@@ -208,7 +240,8 @@ def unhinted(tt: TTFont, out: Path) -> None:
 def rasterize(family: str, path: Path, chars: list[str], tmp: Path) -> tuple[list[Glyph], int]:
     tt = TTFont(path)
     cmap = tt.getBestCmap()
-    missing = [c for c in chars if ord(c) not in cmap]
+    hand = HAND_GLYPHS.get(family, {})
+    missing = [c for c in chars if ord(c) not in cmap and c not in hand]
     if missing:
         sys.exit(f"{family}: no glyph for {', '.join(f'U+{ord(c):04X} {c!r}' for c in missing)}")
     upem = tt["head"].unitsPerEm
@@ -220,6 +253,15 @@ def rasterize(family: str, path: Path, chars: list[str], tmp: Path) -> tuple[lis
     face = freetype.Face(str(raw))
     glyphs: list[Glyph] = []
     for ch in chars:
+        if ord(ch) not in cmap:
+            rows, xo, yo, adv = hand[ch]
+            mask = Image.new("1", (len(rows[0]), len(rows)), 0)
+            for y, row in enumerate(rows):
+                for x, c in enumerate(row):
+                    if c == "#":
+                        mask.putpixel((x, y), 1)
+            glyphs.append(Glyph(ch, mask, xo, yo, adv))
+            continue
         im8, adv = render(face, ch, SIZE)
         if adv != int(adv):
             sys.exit(f"{family} {ch!r}: advance {adv} is not a whole pixel at {SIZE} px")
