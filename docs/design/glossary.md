@@ -116,6 +116,9 @@ The Kindled's home Shard ([`holding.md`](holding.md)).
 | Old Kesh       | The fisherman on the needle of rock off the holding's shore; "Kesh" in text.                              | `kesh`; sheet `npc-kesh`, rock `prop-kesh-rock` |
 | tide           | The game's day: tide n begins at the full of the tide, a fixed local hour (`tide.json`).                  | `tide`; `tideIndex`, `fullOfTide`            |
 | full of the tide | The hour each tide begins at (20:00 Europe/Berlin), chosen for the server's players.                    | `fullOfTide`, `nextFullOfTide`               |
+| sleep          | Lying down by the Writ post: the in-world log-out (SLEEP on the Writ panel).                              | `sleep`, scene `sleep`                       |
+| away card      | The While you were away card: the holding summed up on the first log-in after an absence of 30 min or more. | `away`, `AwayCard`, table `away_cards`, route `away/seen` |
+| toast          | One line bottom left with a glyph for its kind, 3 s then gone in one frame, two at most; the only system voice besides hints. | `toast`, `ToastKind`, `ui/toasts.ts`          |
 
 ## Combat (the Hookblade)
 

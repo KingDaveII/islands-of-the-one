@@ -3,7 +3,7 @@
 The Kindled's home Shard (M2 Task 3b): where a player lands after logging in, walks around, works
 the twisted trees or the stone outcrop, takes a station's basket into the store and moves things
 between the store and the pack, names the island and feeds its Writ (M2 Task 4a, §9), names and builds up
-its plots (§11, §12). Numbers live in
+its plots (§11, §12), sleeps by the post and reads the While you were away card (§13). Numbers live in
 [`packages/shared/data/holding.json`](../../packages/shared/data/holding.json),
 [`stations.json`](../../packages/shared/data/stations.json), [`skills.json`](../../packages/shared/data/skills.json),
 [`writ.json`](../../packages/shared/data/writ.json), [`pieces.json`](../../packages/shared/data/pieces.json) and the `roam`
@@ -196,8 +196,8 @@ cycle (`apps/server/src/holding/cycles.ts`):
 (§5) moves every `cycled_until` and the last seen back too.
 
 **Take all** (Use on a station → Take all) moves the basket into the store **moving only what fits**
-(GAME DESIGN 2026-10-17): when a store stack is full the rest stays in the basket and the panel's one line
-says "Store: twisted logs full." (until toasts arrive in Task 7). 3a's move refuses an over-limit set, so
+(GAME DESIGN 2026-10-17): when a store stack is full the rest stays in the basket and the toast says
+"Store: twisted logs full." (§13; Task 7). 3a's move refuses an over-limit set, so
 take-all computes what fits under the Kindled's lock (`fitsInStore`: the item's stack limit and
 `storeLimit(kind)` less what the store holds) and moves that, as one `move` set per item, so the ledger
 shows both sides. What moved shows as "+3" floating over the station, the same float the cycles use, and
@@ -240,6 +240,7 @@ routes ([`accounts.md`](accounts.md)): the Kindled comes from the session cookie
 | `POST /api/plots/build`   | `{ plotId, pieceId, col, row, rotation }` | `200` the same · `400` bad-request / unknown-plot / unknown-piece / blocked · `409` unnamed-plot / faded / already-built / needs-line / needs-skill / limit / insufficient · `401` · `404` (§12) |
 | `POST /api/plots/move`    | `{ plotId, pieceId, col, row, rotation }` | `200` the same · `400` bad-request / unknown-plot / blocked · `409` unnamed-plot / faded / not-built · `401` · `404` (§12) |
 | `POST /api/plots/take-down` | `{ plotId, pieceId }` | `200` the same · `400` bad-request / unknown-plot · `409` unnamed-plot / faded / not-built / store-full · `401` · `404` (§12) |
+| `POST /api/holding/away/seen` | `{ to }` (ISO)  | `204`, the away card dismissed while its `to` still matches · `400` bad-request · `401` · `404` (§13) |
 
 `POST /api/holding/work` and `/take` take a named plot's id as a station id too: an unnamed plot is
 `unnamed-plot` (409), an unsown field `not-sown` (409), a faded plot `faded` (409).
@@ -254,17 +255,20 @@ ids; `plots`, one `PlotView` per layout plot (`id`, `ground`, `virtue`, `namedAt
 line); and `cycles`, by station id for every station with a running cycle, `{ cycleMs, cycledUntil,
 bonusPermille }` (`cycleMs` the real length, §12), so the client draws "Next in 12 min" between heartbeats (§11). A take answer adds `take`: the station, what `moved` into the store and what
 was `left` in the basket. Every route settles first, refuses unknown fields and stations, and answers
-the same shape as GET. The Writ's routes are in §9; the shape change made `PROTOCOL_VERSION` 3,
-`kesh` with the Writ's `fedAt` (4b) made it 4, the plots (Task 5) 5, and the pieces (Task 6) 6.
+the same shape as GET; `away` is the While you were away card waiting to be seen, or null (§13). The Writ's
+routes are in §9; the shape change made `PROTOCOL_VERSION` 3, `kesh` with the Writ's `fedAt` (4b) made it 4,
+the plots (Task 5) 5, the pieces (Task 6) 6, and the away card (Task 7) 7.
 
 **The heartbeat:** while the holding scene is open the client calls `GET /api/holding` every
 `heartbeatMs` (30 s) and after each interaction (work, stop, take, opening a station panel, coming
-back from the inventory), so `last_seen_at` stays fresh and the counts stay true.
+back from the inventory), so `last_seen_at` stays fresh and the counts stay true. The inventory routes
+(`GET /api/inventory`, `POST /api/inventory/move`) settle first too (`Holding.settle`), so every route sees the
+same absence (§13).
 
 **The away hook** (playtests only): `pnpm --filter @iot/server holding:away <username> <hours>` moves
 the active action's `started_at` and `last_seen_at`, the holding-wide last seen and every basket cycle's
 `cycled_until` back that far, as if the Kindled had been away; the next request settles the stretch as
-offline time, up to the cap.
+offline time, up to the cap. It prints the `away_cards` row too, if one exists (§13); it never writes one.
 
 ## 6. The client
 
@@ -318,8 +322,12 @@ Use on a tree or the outcrop opens a small station panel
 "Next in 19 min" (or "Resting while your Writ is dark."), the basket count, the skill's level and XP to the next, and the
 buttons WORK HERE (STOP WORKING while working here) and TAKE ALL. Use on a plot: the plot sentence panel
 while unnamed, its field's panel once named (§11). After Take all what moved floats over the
-station ("+3", `takeFloat`); "Store: twisted logs full." (`takeResultLine`) is the one panel line, shown
-with the inventory's blink-and-hold timing when it applies. Toasts proper are Task 7.
+station ("+3", `takeFloat`); "Store: twisted logs full." is a toast (§13, `storeFullToast`), no longer the
+panel's line; a refusal (work, take, sow) is still the panel's one line, with the inventory's blink-and-hold
+timing. The toast strip's rectangle is the fifth of `hudRects` (bottom left, sized for two lines at the widest
+M2 toast; above the chip's band where the frame is too narrow for both, `toastStripBottom`), counted in
+`panelsBehind` like the others; `render/keshFraming.test.ts` checks it meets neither the chip nor the pack
+panel at the three window sizes.
 
 ## 7. Seams for later tasks
 
@@ -332,11 +340,14 @@ with the inventory's blink-and-hold timing when it applies. Toasts proper are Ta
 - **Task 5, plots and their baskets' cycles:** done (§11).
 - **Task 6, build mode:** done (§12). What stays for later: the pieces of the lumber camp, the quarry and the forge
   wait for their Ground words (their names and cards are in `pieces.json` already, unavailable); a piece's real
-  effect replaces GAME DESIGN's placeholder when they are worked out; the toasts (Task 7) replace the footer line.
+  effect replaces GAME DESIGN's placeholder when they are worked out. Build mode's footer refusals stay the footer's
+  line: GAME DESIGN's list of M2 toast kinds doesn't include them, and they are panel lines in its screen list
+  (Task 7 told GAME DESIGN so).
 - **Task 8, the weapon rack:** the reserved `weapon-rack` spot by the post gets its prop and its Use.
 - **Boats:** the `landing` on the south shore.
-- **Task 7, sleep, the away card and toasts:** the settle already reports what a stretch credited
-  (`Settlement`); the take-all result line is where the toast goes.
+- **Task 7, sleep, the away card and toasts:** done (§13). What stays for later: ART's `lie_down` row on the
+  sheathed Kindled sheet, the "→" glyph in the atlases, the kinds' glyphs from the M2 UI kit; visitors, the
+  Board and Hearth-warm join the card in later milestones; the journal takes the card's overflow when it exists.
 - **Visits and voyages:** `inRange(kindled, station)` and `canReachStore(kindled)`.
 
 ## 8. Tests and shots
@@ -363,6 +374,7 @@ depths). Shots: `docs/screenshots/m2-3b/`.
 `tools/screenshots-m2-4b.mjs` is Kesh's (§10); shots: `docs/screenshots/m2-4b/`.
 `tools/screenshots-m2-5.mjs` is the plots' (§11); shots: `docs/screenshots/m2-5/`.
 `tools/screenshots-m2-6.mjs` is build mode's (§12); shots: `docs/screenshots/m2-6/`.
+`tools/screenshots-m2-7.mjs` is sleep's, the card's and the toasts' (§13); shots: `docs/screenshots/m2-7/`.
 
 ## 9. The Writ
 
@@ -526,8 +538,8 @@ leaves his hand: drawn from `prop-sparkglass`'s `idle`, it flies a whole-pixel a
 from that frame's `hand` point (mapped like the Hookblade's points: the anchor plus the point less the cell
 origin) to the Kindled's feet over `kesh.tossMs` (600) with the arc `kesh.tossArcPx` (32 world px, a lob over the water; ART on #95) high,
 both in `tuning.json`, and "+1" floats where it lands, the cycles' float. The flight is cosmetic: the count
-comes from the server's answer, never from the animation. A refusal ("Pack full.") is the box's note line
-under his line, and nothing flies.
+comes from the server's answer, never from the animation. A full pack is the "Pack full." toast (§13); any other
+refusal is the box's note line under his line, and nothing flies.
 
 **Slivers from Kesh (the server).** `POST /api/kesh/sliver`, `{}` (the guard refuses any field; the Kindled
 from the session cookie; a JSON body and a same-origin `Origin` like every mutating route) runs as a holding
@@ -832,7 +844,7 @@ are pillars in the roam
 and Cross) offers **MOVE** (it becomes the ghost; confirming sends `move`) and **TAKE DOWN** (sends `take-down`;
 one float per item rises over the signpost by its display name, "+300 Twisted log" then "+150 Black stone", never a
 bare total (LORE). A refusal is one line in the list's footer,
-with the inventory's blink-and-hold timing, until the toasts of Task 7. The field's panel shows the real level and
+with the inventory's blink-and-hold timing (not a toast: §7, §13). The field's panel shows the real level and
 the real cycle ("By itself: 1 pale grain every 12 min"); the plot sentence panel lists the pieces by name (§11).
 
 **Tests:** `packages/shared/test/pieces.test.ts` (the validator, LORE's cards, the level and the speed at 0, 1 and 2
@@ -847,3 +859,119 @@ rotation, the cursor, the building moment's phases, the roam's pillars), `holdin
 lines and BUILD HERE), `plotView.test.ts` (the pieces line), `render/glyphCells.test.ts` (the R key cap),
 `render/pieceArt.test.ts` (the ghost's checkerboard, the silhouette outline and the rise, on ART's sheets).
 `tools/screenshots-m2-6.mjs` runs it end to end; shots: `docs/screenshots/m2-6/`.
+
+## 13. Sleep, the away card and toasts
+
+M2 Task 7 (GAME DESIGN, "Holding & village", "Spaces and interaction", the M2 screen list and the toasts; the no-fade
+rule of the decision log, 2026-10-15; MAIN's decisions of 2026-10-19). Numbers in `holding.json`, validated with the
+rest: `awayCardMinMs` (1 800 000, 30 min), `toastMs` (3000), `toastMax` (2), `sleepMs` (1500). A tide is 24 h of
+server time (`TIDE_MS` in [`packages/shared/src/away.ts`](../../packages/shared/src/away.ts), with every line of
+text the card, the sleep screen and the toasts show: `AWAY_TEXT`, `SLEEP_TEXT`, `TOAST_TEXT`, each placeholder one
+line so an answer is a one-line change). The UI kit isn't in yet: the card and the strip are placeholders in the
+existing panel style, following GAME DESIGN's layout, for ART to restyle.
+
+**Sleep.** "Lying down by the Writ post is the in-world log-out; the hint says so plainly." A **SLEEP** button at the
+foot of the Writ panel (Use on the post), the last item in the panel's focus order (the D-pad or the arrows reach it
+after FEED and FILL; Left/Right step FEED, FILL, SLEEP round), with the hint under it, muted: "Lie down here to sleep.
+Your island keeps working while you're away." (LORE placeholder). The Name screen, which opens instead of the panel
+while the island is unnamed, has the same button and hint at its foot, so sleep is there whether or not the island is
+named (MAIN's default; GAME DESIGN decides where the player lies down). Pressing it closes the panel and cuts, with no
+fade, to the sleep scene (`scenes/SleepScene.ts`): the Hollow's background and one body line, "You lie down by the
+Writ." (LORE placeholder; ART's `lie_down` row joins later). The holding scene is gone, so its heartbeat has stopped;
+after `sleepMs` the client sends `POST /api/logout` and lands on the start screen logged out, the way the start
+screen's LOG OUT does; a failed log-out lands there too. Sleep changes nothing on the server: the active action keeps
+running offline up to the cap, as it does whenever the tab closes.
+
+**The absence (server).** In `settleAll`, before the heartbeat refreshes it, `absence = now − writs.last_seen_at`
+(the holding-wide heartbeat, so the holding routes and the inventory routes, which settle through `settle`, see the
+same one; a Kindled never seen has none). At `awayCardMinMs` or more the settle records what the stretch made
+(`apps/server/src/holding/away-card.ts`): per station or plot, the item and the count credited into its basket (the
+active action's `due × quantity` from `settleIn` plus the cycles from `settleCycles`, summed per place); per skill,
+the level before the settle and after it (`levelFromXp` on the XP read before and after; only skills whose level
+changed). The card shows after any absence of 30 minutes or more, whether the player slept or simply closed the tab,
+and a hidden tab that stops the heartbeat for 30 minutes counts as an absence too: GAME DESIGN's rule read literally.
+A heartbeat under 30 min is no absence: what it settled is in the basket, not the card.
+
+| `away_cards` (migration 0009, expand-only; one row per Kindled, cascade) | |
+| --- | --- |
+| `from_at` | the last heartbeat before the absence |
+| `to_at` | the settle's `now` |
+| `made` | jsonb, place id → `{ itemId, quantity }` |
+| `levels` | jsonb, skill → `{ from, to }` |
+
+Only `settleAll` writes it; it moves no items, so `inventory.apply` is not involved. **Merging:** a row still there
+when another absence is recorded (the card was never dismissed) merges: the earlier `from_at`, the later `to_at`,
+`made` summed per place, `levels` keeping the earliest `from` and the latest `to` (`mergeAway`). **The answer:**
+`HoldingResponse.away` is the `AwayCard` (`from`, `to`, `made`, `levels`, and the server's `writ` view as it stands,
+so the Writ line reads the Writ now) or null; shared type and guard in `api.ts`; `PROTOCOL_VERSION` 7. **Clearing:**
+`POST /api/holding/away/seen` `{ to }` (ISO) deletes the row only if its `to_at` still equals `to`, so an absence
+merged in after the card was drawn survives the dismissal; `204` either way, guarded like every mutating route (a JSON
+body, a same-origin `Origin`, the session cookie; `400` bad-request, `401`, `404`). The away hook prints the row.
+
+**The card's lines** (`awayLines(card, layout, plots, serverMs)` in `away.ts`, pure), in GAME DESIGN's order, each
+only when true:
+
+1. **Time away**, in tides and hours (under an hour, minutes): "Away 1 tide and 3 hours.", "Away 5 hours.", "Away 40
+   minutes." (LORE placeholder wording).
+2. **What each station made**, one line per place with a count above 0, in layout order (the stations, then the
+   plots by index), GAME DESIGN's format: "Field: 14 pale grain, in the basket" with the station's name from
+   `stations.json` and the item's display name, plural when the count is not 1 (`itemCount`). Two fields: "Field" for
+   the first named plot of the kind, "Field 2" and so on, in plot order (LORE placeholder).
+3. **Skill levels gained**, one line per skill: GAME DESIGN's "Woodcutting 7 → 9", as "Woodcutting 7 to 9" until ART
+   adds the "→" glyph to both atlases (it isn't in `DRAWABLE_CHARS`).
+4. **The Writ now:** lit or flickering, "Writ: " plus the chip's charge words ("Writ: about four days left", "Writ:
+   less than a day left"); dark in the grace, "Writ: dark since 5 hours ago" (LORE placeholder); faded, GAME DESIGN's
+   "Writ: dark since …; the outer line faded" with the same "since"; unnamed, no line.
+
+Six lines at most (GAME DESIGN decides what goes; the journal doesn't exist in M2): the time away and the Writ line
+stay, the middle fills with the station lines then the skill lines, and what doesn't fit folds into one last line,
+"And more at the stations." (LORE placeholder). Every line passes `isDrawable` and the banned-names test
+(`packages/shared/test/away.test.ts`).
+
+**The card (client)** (`ui/awayCard.ts`): on a holding answer whose `away` is not null, once nothing else is open (the
+Name screen first while the island is unnamed; a panel or the talk box keeps the card for the next answer), it opens
+over the holding, centred on the UI grid: a panel with the title "While you were away", the lines in the body font,
+and under a divider, muted, "Press any key." (LORE placeholder; the one "press X" line allowed, since the card closes
+on any input). While it is open the Kindled stands still (`session.held`), the world keeps drawing, the heartbeat keeps
+running, the prompt hides and the toasts wait. **Dismissing:** the first key, mouse button, pad button, stick push past
+the menu threshold or touch closes it and does nothing else (every handler yields to the open card; the close lands at
+the start of the next frame). Closing sends `away/seen` with the card's `to`; a card whose dismissal failed comes back
+with the next answer, one that was dismissed is not reopened by an answer already in flight (`awayDismissedTo`). When
+the card shows a Writ line, that drain is marked told for the Writ toasts.
+
+**Toasts** (`game/toastView.ts`, pure; the strip `ui/toasts.ts`): "A toast is one line, bottom left, above the
+consumable slots, in the body font with a small glyph for its kind … at most two stack, and it never takes input.
+Toasts are the only system voice besides hints." The strip is a scene of its own, registered last, so it draws above
+everything on the UI camera, the inventory and the panels included, with nothing interactive in it (clicks pass
+through); the holding scene launches and stops it, and the scenes post into `toastStore`. It sits at `hudRects`'
+toasts rectangle (`HUD_INSET` from the bottom left, the newest toast at the bottom; above the chip's band in a frame
+too narrow for both), counts in `panelsBehind` like the other panels (dithered while a body is behind it), and holds
+each toast `toastMs` (3 s), then it disappears in one frame: no blink pattern and no alpha (GAME DESIGN's "blinks out
+in one frame"). A new toast pushes the older one up a line; a third drops the oldest at once; a toast with the same
+text as one showing restarts that one's 3 s instead of stacking (MAIN). "Item gains are not toasts": they stay the
+"+12" floats. The kinds and their triggers:
+
+| Kind | When | Text (GAME DESIGN, final) | Glyph (placeholder until ART's kit) |
+| --- | --- | --- | --- |
+| skill level | a skill's level in a holding answer is higher than in the previous answer of this session (never the first answer: levels gained while away belong to the card) | `Woodcutting 2.` | the icon of the item the skill makes (Woodcutting a twisted log, Mining black stone, Farming pale grain) |
+| Writ low | the derived charge falls under a day while on the holding, or is already under a day on landing with no card showing; once per drain | `Your Writ has about a day left.` | an 8 × 8 square of `uiInkMuted` |
+| Writ dark | the Writ goes dark, once per drain (מת from the letter sheet, as on the chip) | `Your Writ reads מת.` | the square |
+| store full | a take-all leaves some of a stack in the basket (`take.left`) | `Store: twisted logs full.` | the item's own icon |
+| pack full | anything refused as `pack-full`: the inventory's moves over the holding, Kesh's tosses | `Pack full.` | the square |
+
+The Writ toasts are remembered per Kindled in `localStorage` (`iot.toast.writLow.<username>`,
+`iot.toast.writDark.<username>`; the account's one Kindled is named by its username, since the client never sees a
+Kindled id) as the Writ's `emptyAt` they were shown for: a feed that changes `emptyAt` re-arms them; every read and
+write is wrapped, so without storage a toast may repeat, which is fine. The inventory's refusal line and the talk
+box's note no longer say "Pack full." over the holding; the start screen's inventory, which has no toast strip, keeps
+the line. Build mode's footer refusals and the Writ panel's refusals stay where they are (§7).
+
+**Tests:** `packages/shared/test/away.test.ts` (the lines, the placeholders, the guards); `apps/server/test/away.test.ts`
+on PGlite (under and at 30 min, the credits per place, a level-up, the merge, `away/seen`, the inventory route's
+settle, the route's guards and codes, migration 0009); `apps/client/src/game/toastView.test.ts` (the queue, each
+trigger, the memory with and without storage), `holdingView.test.ts` and `render/keshFraming.test.ts` (the strip's
+rectangle at the three sizes). `tools/screenshots-m2-7.mjs` runs it end to end (shots: `docs/screenshots/m2-7/`):
+the panel with SLEEP, the sleep screen, the start screen logged out, the card after `holding:away … 7` with the
+trees' logs, the level and the Writ, the holding after any key closed it, a level-up toast, "Store: twisted logs
+full." under a second toast, "Pack full." over the open inventory, the Writ-low crossing watched live, and the
+card's faded Writ line after `writ:set --dark-hours 49`.
