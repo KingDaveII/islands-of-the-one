@@ -3,7 +3,8 @@
 The Kindled's home Shard (M2 Task 3b): where a player lands after logging in, walks around, works
 the twisted trees or the stone outcrop, takes a station's basket into the store and moves things
 between the store and the pack, names the island and feeds its Writ (M2 Task 4a, §9), names and builds up
-its plots (§11, §12), sleeps by the post and reads the While you were away card (§13). Numbers live in
+its plots (§11, §12), sleeps by the post and reads the While you were away card (§13), and takes the run's weapon from the
+weapon rack (§14). Numbers live in
 [`packages/shared/data/holding.json`](../../packages/shared/data/holding.json),
 [`stations.json`](../../packages/shared/data/stations.json), [`skills.json`](../../packages/shared/data/skills.json),
 [`writ.json`](../../packages/shared/data/writ.json), [`pieces.json`](../../packages/shared/data/pieces.json) and the `roam`
@@ -25,6 +26,7 @@ ring of plots, the trees within reach of the post and the free ground north all 
 | `#`    | the edge of the Shard, void and solid; everything outside the template is void too        |
 | `W`    | the Writ post                                                                             |
 | `S`    | the holding store                                                                         |
+| `K`    | the weapon rack (M2 Task 8)                                                               |
 | `T`    | a twisted tree                                                                            |
 | `R`    | the stone outcrop                                                                         |
 | `P`    | the start, by the post                                                                    |
@@ -36,8 +38,9 @@ ring of plots, the trees within reach of the post and the free ground north all 
   kind `rack`, 2 × 1 at (17, 13)) within 3 tiles of it; the six twisted trees, one 2 × 2 part each on the west side
   within 10 tiles of the post, all the one `twisted-trees` station with one basket; the stone outcrop (2 × 2 at
   (23, 13)) on the east side within 10. The start is at (14, 15).
-- **`reserved`:** a spot kept for a later task. The weapon rack (Task 8) is reserved: its tiles are plain ground,
-  it draws no prop and offers no Use, and stations.json gives it no action.
+- **`reserved`:** a spot kept for a later task: its tiles are plain ground, it draws no prop and offers no Use, and
+  stations.json gives it no action. The weapon rack was one until Task 8 (§14); no spot of the shipped layout is
+  reserved today, and the rule stays for the next.
 - **Plots:** four 6 × 6 rectangles (`PLOT_SIZE`) in a loose ring around the post with paths between them. Each
   has a permanent `id` (`plot-1` … `plot-4`, in order; the basket is `basket:<id>` in the ledger, so ids are
   never renamed) and a `station`: a 1 × 1 `rect` at the plot's centre ((col + 2, row + 2), the signpost, a
@@ -125,7 +128,7 @@ ART #87), with the same tone swap; encounters keep the combat sheet.
 | --------------- | ------- | --------------- | ----------------- | ----- | ----------- | ------------ | -------------------------- |
 | `writ-post`     | post    | none: Use opens the Writ panel (the Name screen first, unnamed; §9) | n/a   | n/a   | n/a         | n/a          | none |
 | `holding-store` | store   | none: Use opens the inventory with the store pane | n/a | n/a | n/a | n/a | none |
-| `weapon-rack`   | rack    | none: a reserved spot until Task 8 | n/a | n/a | n/a | n/a | none |
+| `weapon-rack`   | rack    | none: Use opens the rack panel (§14) | n/a | n/a | n/a | n/a | none |
 | `twisted-trees` | trees   | a dead branch   | 1 `twisted-log`   | 4 s   | Woodcutting | 4            | 1 `twisted-log` every 20 min (six trees at 2 h each, one shared basket filling one log at a time) |
 | `stone-outcrop` | outcrop | surface stone   | 1 `black-stone`   | 6 s   | Mining      | 6            | none: stone never comes by itself (GAME DESIGN) |
 
@@ -241,6 +244,7 @@ routes ([`accounts.md`](accounts.md)): the Kindled comes from the session cookie
 | `POST /api/plots/move`    | `{ plotId, pieceId, col, row, rotation }` | `200` the same · `400` bad-request / unknown-plot / blocked · `409` unnamed-plot / faded / not-built · `401` · `404` (§12) |
 | `POST /api/plots/take-down` | `{ plotId, pieceId }` | `200` the same · `400` bad-request / unknown-plot · `409` unnamed-plot / faded / not-built / store-full · `401` · `404` (§12) |
 | `POST /api/holding/away/seen` | `{ to }` (ISO)  | `204`, the away card dismissed while its `to` still matches · `400` bad-request · `401` · `404` (§13) |
+| `POST /api/holding/rack/choose` | `{ weaponId }` | `200` the same · `400` bad-request · `409` not-owned / not-ready · `401` · `404` (§14) |
 
 `POST /api/holding/work` and `/take` take a named plot's id as a station id too: an unnamed plot is
 `unnamed-plot` (409), an unsown field `not-sown` (409), a faded plot `faded` (409).
@@ -255,13 +259,15 @@ ids; `plots`, one `PlotView` per layout plot (`id`, `ground`, `virtue`, `namedAt
 line); and `cycles`, by station id for every station with a running cycle, `{ cycleMs, cycledUntil,
 bonusPermille }` (`cycleMs` the real length, §12), so the client draws "Next in 12 min" between heartbeats (§11). A take answer adds `take`: the station, what `moved` into the store and what
 was `left` in the basket. Every route settles first, refuses unknown fields and stations, and answers
-the same shape as GET; `away` is the While you were away card waiting to be seen, or null (§13). The Writ's
+the same shape as GET; `away` is the While you were away card waiting to be seen, or null (§13); `rack` is the weapon
+rack, the weapons owned and the one a run takes (§14). The Writ's
 routes are in §9; the shape change made `PROTOCOL_VERSION` 3, `kesh` with the Writ's `fedAt` (4b) made it 4,
-the plots (Task 5) 5, the pieces (Task 6) 6, and the away card (Task 7) 7.
+the plots (Task 5) 5, the pieces (Task 6) 6, the away card (Task 7) 7, and the rack (Task 8) 8.
 
 **The heartbeat:** while the holding scene is open the client calls `GET /api/holding` every
 `heartbeatMs` (30 s) and after each interaction (work, stop, take, opening a station panel, coming
-back from the inventory), so `last_seen_at` stays fresh and the counts stay true. The inventory routes
+back from the inventory), so `last_seen_at` stays fresh and the counts stay true. The start screen fetches it once,
+when it opens, for the run's weapon (§14). The inventory routes
 (`GET /api/inventory`, `POST /api/inventory/move`) settle first too (`Holding.settle`), so every route sees the
 same absence (§13).
 
@@ -273,7 +279,8 @@ offline time, up to the cap. It prints the `away_cards` row too, if one exists (
 ## 6. The client
 
 **The start screen's main action is HOLDING** (Enter, Cross); the M1 run stays as a secondary entry
-(START RUN, Shift+Enter, Start on the pad), the combat test bed, until boats reach encounters.
+(START RUN, Shift+Enter, Start on the pad), the combat test bed, until boats reach encounters. Since Task 8 it has
+no weapon picker: the run takes the weapon chosen at the rack (§14).
 
 **The holding scene** (`apps/client/src/scenes/HoldingScene.ts`) runs on the world and UI cameras as
 runs do. In the world: the island (`HoldingWorld`, `render/holdingWorld.ts`, the shore set over the hollow
@@ -314,7 +321,8 @@ the Kindled and stops at the layout's edges.
 
 **Interacting** (interact is E, Cross or a tap; I or the Touchpad opens the inventory; Esc or Circle
 backs out, all from `controls.json`): Use on the Writ post opens the Writ panel, or the Name screen first
-while the island has no Name (§9); Use on the holding store opens the inventory with the store pane;
+while the island has no Name (§9); Use on the holding store opens the inventory with the store pane; Use on the
+weapon rack opens the rack panel (§14);
 Use on a tree or the outcrop opens a small station panel
 (`stationLines`): the name; two labelled rate lines (GAME DESIGN 2026-10-18), "By itself: 1 twisted log every
 20 min" (the cycle; the outcrop has none) and "By hand: 1 twisted log every 4 s", which becomes the highlighted
@@ -343,7 +351,9 @@ panel at the three window sizes.
   effect replaces GAME DESIGN's placeholder when they are worked out. Build mode's footer refusals stay the footer's
   line: GAME DESIGN's list of M2 toast kinds doesn't include them, and they are panel lines in its screen list
   (Task 7 told GAME DESIGN so).
-- **Task 8, the weapon rack:** the reserved `weapon-rack` spot by the post gets its prop and its Use.
+- **Task 8, the weapon rack:** done (§14). What stays for later: ART's `prop-weapon-rack` sheet replaces the placeholder
+  box when it lands (the contract is written); the hung sprites at the pegs, the Sling's and the Keelmaul's combat,
+  and M3's wreck, which takes the kit's place (`m2Scaffold`); the Forge's rusted-weapon state (`NEEDS_SMITH`).
 - **Boats:** the `landing` on the south shore.
 - **Task 7, sleep, the away card and toasts:** done (§13). What stays for later: ART's `sit` row on the sheathed
   Kindled sheet (sleep holds `idle` until then); visitors, the Board and Hearth-warm join the card in later
@@ -375,6 +385,7 @@ depths). Shots: `docs/screenshots/m2-3b/`.
 `tools/screenshots-m2-5.mjs` is the plots' (§11); shots: `docs/screenshots/m2-5/`.
 `tools/screenshots-m2-6.mjs` is build mode's (§12); shots: `docs/screenshots/m2-6/`.
 `tools/screenshots-m2-7.mjs` is sleep's, the card's and the toasts' (§13); shots: `docs/screenshots/m2-7/`.
+`tools/screenshots-m2-8.mjs` is the weapon rack's (§14); shots: `docs/screenshots/m2-8/`.
 
 ## 9. The Writ
 
@@ -511,8 +522,8 @@ the line, Kesh's in the UI ink, the Narrator's muted under a divider (readabilit
 `talkHint` (spark-amber, a placeholder for ART's hint style). Confirm (Cross, click, tap, the interact key)
 advances; Circle or Esc closes it at any step. The world keeps running behind it; the Kindled doesn't move
 while it is open (`session.held`). At the top level the box offers the topics, in this order, then ends:
-**The Old Letters**, **Sparkglass**, **Where the crack points**, **Goodbye**; a topic plays its lines and
-comes back to the menu, Goodbye plays its lines and closes. The arrows, the D-pad or the left stick move
+**The Old Letters**, **Sparkglass**, **Where the crack points**, **The rack** (Task 8, §14), **Goodbye**; a topic
+plays its lines and comes back to the menu, Goodbye plays its lines and closes. The arrows, the D-pad or the left stick move
 the menu's focus, the pointer hovers and clicks a row.
 
 **The lines** live in [`packages/shared/data/kesh.json`](../../packages/shared/data/kesh.json), validated on
@@ -1014,3 +1025,87 @@ toast, the level toast on landing after `holding:away … 0.33` across a level-u
 under a second toast, "Pack full." over the open inventory, the Writ-low toast on
 landing after `writ:set --charge-hours 23` (and not again on a second reload), and the card's faded Writ line after
 `writ:set --dark-hours 49`.
+
+## 14. The weapon rack
+
+M2 Task 8 (GAME DESIGN, Encounters & dungeons: "The first weapon comes from the rack in the first wreck: all three hang
+there, the player takes one, and the other two are carried home to the weapon rack at the holding, where every weapon
+owned hangs. One weapon goes on a run, chosen at the rack before leaving; there is no swapping mid-run"; LORE §14.15 and
+§16.5, 2026-10-19; ART's contract; MAIN's decisions). M2 has no wreck (voyages come in M3) and only the Hookblade fights
+in the sim, so the rack in M2 is a stand-in for the wreck's gift: it holds what you own, and choosing at it decides the
+weapon a run uses. Every player-facing line is `RACK_TEXT` in
+[`packages/shared/src/rack.ts`](../../packages/shared/src/rack.ts), LORE's word for word, or data.
+
+**Weapons are items** ([inventory.md](inventory.md)): kind `weapon` in `items.json` (`hookblade`, `sling`, `keelmaul`,
+LORE's names and cards, stack limit 1, no skill, a `kit`: the moves in input order as the rack shows them), each an id
+of `tuning.json`'s `weaponRoster` or `weapons` (`WEAPON_IDS`; the roster's `locked-2` and `locked-3` became `sling` and
+`keelmaul`, still locked). They hang in the fixed place `rack`, which holds weapons and nothing else, one of each;
+`inventory.apply` refuses a weapon anywhere else and anything else there (`wrong-place`) and a second of one weapon
+(`stack-limit`). They take no pack slot and never show in the inventory's panes: the rack is where they are seen.
+
+**The kit** (GAME DESIGN: "In M2 the rack holds the Hookblade alone, given once on arrival behind m2Scaffold, and chosen;
+in M3 the wreck takes over, and a Kindled who already has the Hookblade finds the other two there"): the weapons of
+`scaffold.json`'s `kit` (the Hookblade) are given onto the rack, reason `kit`, by the first holding request of a Kindled
+who owns no weapon, after the settle and under the Kindled's lock (`giveKit` in `apps/server/src/holding/rack.ts`), each
+under the ref `kit:<kindledId>:<weaponId>`, so racing first requests and repeats give it once. The Sling and the Keelmaul
+aren't owned in M2; the not-ready state below is built and tested, but no M2 player sees it.
+
+**The choice.** `kindled.run_weapon` (migration 0010, nullable, expand-only) is the weapon a run takes; null means the
+first weapon in roster order the Kindled owns that can fight (the sim's `isWeaponAvailable` over the shipped tuning;
+`weaponCanFight` in `packages/shared/src/weapons.ts` is its static mirror for shared code, and a server test holds them
+equal). `POST /api/holding/rack/choose { weaponId }` sets it: a holding request like the rest (the session cookie, a JSON
+body, a same-origin `Origin`, the guard refusing anything but `{ weaponId }`), answering the holding or refusing with
+`not-owned` (not on the Kindled's rack; an unknown id too) or `not-ready` (owned, but the sim can't run it), both 409.
+`HoldingResponse.rack` is `{ weapons: { itemId, ready }[], chosen }`: the weapons owned in roster order, and the weapon
+a run takes, resolved (`resolveChosen`: the stored choice while it is owned and ready, else the first ready; GAME DESIGN:
+"One weapon is always chosen", so `chosen` is null only while the Kindled owns no weapon that can fight, which M2's kit
+never allows; the guard `isRackView` holds it to that). `PROTOCOL_VERSION` 8.
+
+**The spot and the prop.** The `weapon-rack` station (kind `rack`, 2 × 1 at (17, 13) beside the post, its interact
+point (16, 13)) is no longer reserved: its tiles carry `K`, solid for the sim like the post's, and it is actionless like
+the post and the store (Use opens the panel). Its prop is `prop-weapon-rack` ([sprites.md](sprites.md) §4 "The weapon
+rack": optional, a 64×72 cell with the origin (32, 64) on the bottom centre of its rect, `idle` alone with the prop rule's
+shadow, the three optional peg points reserved for the hung sprites to come); until ART's sheet lands the holding draws a
+placeholder box of its rect in the piece tokens, the pieces' fallback.
+
+**The panel** (Use on the rack; `ui/rackPanel.ts`, its logic pure in `game/rackView.ts`; GAME DESIGN's row with LORE's
+words): the title `Weapon rack`, then LORE's tooltip line, muted: `Every weapon you own hangs here. Take one out with you;
+the others wait.` One row per weapon owned, in roster order: the weapon's name; its card, muted and wrapped; its kit in
+input order joined by ` · ` (`Arc · Hook-thrust · Haul`); and on the right its state: the weapon going out next run,
+LORE's `Taken` (highlighted); an owned weapon that can fight, LORE's **TAKE** button; an owned weapon that can't fight
+yet, greyed, with LORE's `Your hands aren't ready for this one yet.` under its kit; a weapon not owned has no row. In M2
+the panel shows one row, the Hookblade, Taken. TAKE is `POST /api/holding/rack/choose`; the rows redraw from the answer,
+never ahead of it; a refusal is one line in the panel's footer with the inventory's blink-and-hold timing (panel refusals
+stay panel lines). Pad: Up and Down move the focus through the rows, Cross chooses the focused row's weapon, Circle
+closes; keys the same with the arrows, Enter and Esc; the mouse clicks a row or its button, touch taps them. GAME
+DESIGN's row reuses the book's Found-weapons line, `It needs a smith who knows it`, for the not-ready state; in the book
+that line is for a *rusted* weapon of a kind the game can't play yet, so the rack shows LORE's line and GAME DESIGN's is
+kept in `RACK_TEXT` as `NEEDS_SMITH` for the rusted state that comes with the Forge (MAIN; both asked to confirm on the
+Task 8 PR). GAME DESIGN's row still says CHOOSE and Chosen; LORE's TAKE and Taken are the words.
+
+**Kesh** (LORE): a new topic in `kesh.json`, `rack`, titled `The rack`, before Goodbye, always open, three lines of his:
+"Pick one before you go. One blade, one trip. Nobody fights with a rack on their back."; "Hook for close. Sling for far.
+The maul for anything that won't get out of the way."; "Get yourself killed out there and you'll wake by your post, and
+it'll be hanging right here. What's yours finds its way home. Glass doesn't, not all of it."
+
+**The start screen.** The rack decides: CHOOSE YOUR WEAPON is gone. START RUN reads `rack.chosen` from a holding answer
+fetched when the screen opens, and the run starts with that weapon; where the picker was, the weapon's name shows with
+LORE's line under it, `Taken from your weapon rack.` If the answer can't be had (the server is down), START RUN uses the
+roster's first weapon that can fight, as before, and the line says nothing (`startWeapon` in `game/rackView.ts`).
+START RUN stays on the start screen until boats (M3) give the holding its landing (GAME DESIGN); nothing on the holding
+starts a run.
+
+**Tests:** `packages/shared/test/items.test.ts` (the weapons' cards word for word, the kit in the validator, every weapon
+item named by the roster or the tuning's weapons, the roster renamed), `rack.test.ts` (`RACK_TEXT`'s lines drawable and
+clear of the banned names, the kit ref, the rows and the resolved choice, the guards for `rack` in the answer and the
+choose body), `places.test.ts` (the `rack` place), `kesh.test.ts` (the topic and `scaffold.json`'s kit), `sprites.test.ts`
+(the sheet contract: `PROP_CELLS`, the optional sheet, the pegs allowed on this prop alone); `apps/server/test/rack.test.ts`
+on PGlite (the kit given once and never with the scaffold off, `inventory.apply` refusing a weapon off the rack, a
+material on it and a second Hookblade, choose: ok, `not-owned`, `not-ready`, `bad-request` and the guards, `chosen`
+resolved when null or stale, migration 0010, the inventory view without weapons) and `holding.postgres.test.ts` (first
+requests racing give the kit once); `apps/client/src/game/rackView.test.ts` (the rows and their states, the focus, the
+start screen's weapon from an answer and its fallback), `keshTalk.test.ts` (the topic in the menu).
+`tools/screenshots-m2-8.mjs` runs it end to end (shots: `docs/screenshots/m2-8/`): the rack beside the post with the Use
+prompt, the panel with the Hookblade Taken and its kit line, a refusal in the footer (`keelmaul` chosen: `not-owned`), the
+start screen with the chosen weapon and "Taken from your weapon rack.", Kesh's "The rack" topic, and a run started from it
+with that weapon.

@@ -14,10 +14,11 @@ on load (`validateItemsData`; a bad file throws, and `packages/shared/test/items
 | `id`          | kebab-case, unique, glossary terms only; stored in the ledger, so never renamed                           |
 | `name`        | display name, only characters the game can draw                                                           |
 | `plural`      | the name in a count past 1, lowercase: "twisted logs", and a mass noun as it is, "black stone" (MAIN 2026-10-19: the plural is data, read by `pluralItemName` alone) |
-| `kind`        | `currency`, `sparkglass`, `material`, `consumable` or `lore` (`ITEM_KINDS`)                               |
+| `kind`        | `currency`, `sparkglass`, `material`, `consumable`, `lore` or `weapon` (`ITEM_KINDS`)                     |
 | `stackLimit`  | the most of the item one place holds (a positive integer), or `"unlimited"`; see "Places" for which apply |
 | `description` | LORE's card text, word for word, only characters the game can draw                                        |
 | `skill`       | optional: `woodcutting`, `mining` or `farming` (`ITEM_SKILLS`), the tooltip's kind line names it          |
+| `kit`         | a weapon's moves in input order, as the rack shows them (GAME DESIGN; M2 Task 8): the Hookblade's `["Arc", "Hook-thrust", "Haul"]`. Required and non-empty on a weapon that can fight (`weaponCanFight`: unlocked in `tuning.json`'s `weaponRoster` with data in `weapons`), allowed empty on a locked one, allowed on no other kind |
 
 No id or name may use a word the glossary retires (`RETIRED_WORDS`: void, island, tether, crystal,
 fishing, shard) or a banned name (`packages/shared/test/banned.ts`, the same matcher as
@@ -28,7 +29,14 @@ The M2 items: **sealed gin** (`sealed-gin`, the currency unit); Sparkglass as **
 (`wild-sliver`), **humming glass** (`glass-chip`, renamed from "glass chip" in M2 Task 3a; the id
 stays) and **deep glass** (`deep-glass`); the materials **twisted log** (Woodcutting), **black
 stone** and **streaked stone** (Mining), **grey seeds** and **pale grain** (Farming). Currency and
-Sparkglass are unlimited; materials stop at 9,999. There are no consumable or lore items yet.
+Sparkglass are unlimited; materials stop at 9,999. There are no consumable or lore items yet. **The weapons**
+(M2 Task 8, [holding.md](holding.md) §14): **Hookblade** (`hookblade`), **Sling** (`sling`) and **Keelmaul**
+(`keelmaul`), LORE's cards word for word, plurals `hookblades`, `slings`, `keelmauls`, stack limit 1, no skill. A
+weapon's id must be a key of `tuning.json`'s `weapons` or an entry of its `weaponRoster` (`WEAPON_IDS`,
+`packages/shared/src/weapons.ts`; the roster's placeholders `locked-2` and `locked-3` became `sling` and `keelmaul`,
+still locked, so the roster and the items share ids); the Sling and the Keelmaul carry an empty `kit` until their
+combat lands. Weapons take no pack slot and never show in the inventory's panes or its icon sheet: the rack is where
+they are seen.
 Plot-sentence word tiles are not items: they are knowledge, the `known_words` table ([holding.md](holding.md)
 §11), shown on the inventory's Words tab.
 
@@ -43,13 +51,14 @@ Every item a Kindled holds is in exactly one place
 | Place                | Holds                        | Limit                                                                                                                                                  |
 | -------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `purse`              | currency only (`sealed-gin`) | the item's `stackLimit` (unlimited today). Takes no slot, never lost.                                                                                  |
-| `pack`               | everything but currency      | `packSlots` (20) slots in all; an item takes `ceil(quantity / slotSize(kind))` of them. What a Kindled carries abroad; death costs only this.          |
-| `store`              | everything but currency      | one stack per item, up to `storeLimit(kind)` (material 9,999) and the item's `stackLimit` (so Sparkglass is unlimited). Reachable only on the holding. |
+| `pack`               | everything but currency and weapons | `packSlots` (20) slots in all; an item takes `ceil(quantity / slotSize(kind))` of them. What a Kindled carries abroad; death costs only this.          |
+| `store`              | everything but currency and weapons | one stack per item, up to `storeLimit(kind)` (material 9,999) and the item's `stackLimit` (so Sparkglass is unlimited). Reachable only on the holding. |
+| `rack`               | weapons only, one of each    | the weapon rack by the Writ post (M2 Task 8, [holding.md](holding.md) §14): where every weapon a Kindled owns hangs. `inventory.apply` refuses a weapon anywhere else (`wrong-place`), anything else on the rack (`wrong-place`) and a second of one weapon (`stack-limit`, the weapon's limit of 1). Nothing moves to or from it by the API (`canMove`): a weapon is given, never moved. |
 | `basket:<stationId>` | what that station makes      | none: what the 48 h rule produced waits there ([holding](holding.md)). `stationId` is a station of stations.json, kebab-case.                       |
 
 The numbers live in [`packages/shared/data/inventory.json`](../../packages/shared/data/inventory.json)
-(`packSlots`, `slotSize` by kind: material 50, Sparkglass 99, consumable 5, lore 1; `storeLimit` by
-kind), validated on load like `items.json` (`validateInventoryData`). They are GAME DESIGN's starting
+(`packSlots`, `slotSize` by kind: material 50, Sparkglass 99, consumable 5, lore 1; currency and weapons
+take none; `storeLimit` by kind), validated on load like `items.json` (`validateInventoryData`). They are GAME DESIGN's starting
 values. "Store: twisted logs full." reads as one stack per item; if "unlimited slots" meant several
 9,999 stacks of one item, that is a data change later.
 
@@ -75,7 +84,7 @@ the item tables.
   may span several Kindleds (a trade); each (Kindled, item, place) appears at most once in it (merge
   the deltas; the same item in two places is two changes).
 - **reason**: one of `InventoryReason` in shared code: `grant`, `gather`, `harvest`, `feed-writ`,
-  `craft`, `trade`, `admin`, `move`, `gift`, `name-plot`, `sow`, `build`. `gather` is a station's yield credited into its basket when the
+  `craft`, `trade`, `admin`, `move`, `gift`, `name-plot`, `sow`, `build`, `kit`. `gather` is a station's yield credited into its basket when the
   holding settles ([holding.md](holding.md) §3): one row per settle, in the settle's transaction, with
   the ref `act:<kindled>:<started_at>:<credited>-<new total>` so a stretch's cycles are paid once.
   `gift` is what an NPC gives: Kesh's first sliver and the tide's, one `wild-sliver` into the pack
@@ -85,7 +94,10 @@ the item tables.
   gin a plot's rename costs, from the purse; `sow` the seed a new field takes, from the store first, then
   the pack (§11). `build` is an upgrade piece's cost leaving the store when it is built, and the same
   materials coming back (positive deltas) when it is taken down ([holding.md](holding.md) §12); a
-  take-down whose refund doesn't fit the store is refused whole.
+  take-down whose refund doesn't fit the store is refused whole. `kit` is what a Kindled is given to start with
+  (M2 Task 8): the weapons of `scaffold.json`'s `kit` (the Hookblade alone; GAME DESIGN) onto the rack, by the first
+  holding request of a Kindled who owns no weapon, under the ref `kit:<kindledId>:<weaponId>` so racing requests and
+  repeats give it once; behind `m2Scaffold`, since M3's wreck replaces it ([holding.md](holding.md) §14).
 - **overfillStore** (optional): lets the store's stacks go past their limits for this set, the purse and
   the pack keeping theirs. Only for a refund that must land whatever the store holds: every piece of a
   plot taken down by a Ground-changing rename or the `plots:pieces --clear` CLI (nothing is ever
@@ -111,11 +123,11 @@ NOTHING`), so every affected row can be locked.
    place, all `collate "C"`** (both sides of a trade alike). Two change sets over the same rows, such
    as a trade and its reverse or two moves, queue up instead of deadlocking.
 4. The whole set is refused and nothing changes if any change would:
-   - put a kind where it can't be: currency outside the purse, anything else in it (`wrong-place`,
-     judged before the transaction);
+   - put a kind where it can't be: currency outside the purse, a weapon off the rack, anything else in
+     either (`wrong-place`, judged before the transaction);
    - take a place below zero (`insufficient`);
-   - put a purse balance past the item's `stackLimit`, or a store stack past `storeLimit(kind)` or
-     the `stackLimit` (`stack-limit`);
+   - put a purse balance past the item's `stackLimit`, a store stack past `storeLimit(kind)` or
+     the `stackLimit`, or a second of a weapon on the rack (`stack-limit`);
    - take a pack over `packSlots`: the slots are counted over every stack in the pack with the new
      balances, and only a set whose pack gains is refused, so taking things out of a pack that is
      somehow over its slots always goes (`pack-full`).
@@ -131,8 +143,9 @@ player can cause.
 **A move** (`moveItems` in `move.ts`) is one set with reason `move`: −n from one place and +n to
 another, so the ledger shows both sides. The inventory module also reads: `holdings(kindledId)`
 (every stack, quantity > 0, in items.json order then purse, pack, store, baskets by station),
-`view(kindledId)` (the same by place, the API's shape) and `ledger(kindledId)` (the rows, oldest
-first); both take a caller's transaction to read what it sees (the holding's take-all after its settle).
+`view(kindledId)` (the same by place, the API's shape, without the rack: the holding answers the weapons) and
+`ledger(kindledId)` (the rows, oldest first); both take a caller's transaction to read what it sees (the holding's
+take-all after its settle).
 
 ## Enforcing "nothing else touches item tables"
 
@@ -177,7 +190,8 @@ In [`packages/shared/src/api.ts`](../../packages/shared/src/api.ts), like the ro
 | `POST /api/inventory/move` | `{ itemId, from, to, quantity }` | `200` the new inventory · `400` bad-request · `409` pack-full / stack-limit / insufficient / wrong-place · `401` · `404` |
 
 `purse`, `pack` and `store` are lists of `{ itemId, quantity }` (quantity > 0, items.json order);
-`baskets` is keyed by station id. A move is allowed between `pack` and `store` both ways, and from a
+`baskets` is keyed by station id. The rack is not in the answer: `GET /api/holding` carries it as `rack`
+([holding.md](holding.md) §14). A move is allowed between `pack` and `store` both ways, and from a
 `basket:*` to `store` (the holding's take-all goes through the same change set, server-side, moving
 only what fits: [holding.md](holding.md) §3); nothing else moves by this route, and the purse is
 never a move target (`wrong-place`). The guard refuses unknown fields and non-positive or non-integer
@@ -200,6 +214,7 @@ pnpm --filter @iot/server inv:grant mira sealed-gin 120           # the purse (c
 pnpm --filter @iot/server inv:grant mira black-stone 30           # the store (everything else's default)
 pnpm --filter @iot/server inv:grant mira black-stone -30 pack     # a negative qty takes away, here from the pack
 pnpm --filter @iot/server inv:grant mira pale-grain 9 basket:field
+pnpm --filter @iot/server inv:grant mira sling 1                  # the rack (a weapon's default; it can hang nowhere else)
 
 # Staging (the server container; see DEPLOY.md for c()):
 cd /opt/islands
@@ -272,5 +287,7 @@ racing for the pack's last slots (exactly one wins) and one ref sent many times 
 has a Postgres service for it and fails without it; `scripts/cloud-setup.sh` creates `game_test` for
 Claude Code on the web; elsewhere the suite only runs when the variable is set.
 `apps/client/src/game/inventoryView.test.ts` covers the screen's layout logic: the pack slots from an
-inventory answer, the tab filters, the header, the tooltip lines and the grid navigation.
+inventory answer, the tab filters, the header, the tooltip lines and the grid navigation. The rack's rules
+(`wrong-place` off it and on it, `stack-limit` for a second weapon, the view without weapons) run in
+`apps/server/test/rack.test.ts` ([holding.md](holding.md) §14).
 `tools/screenshots-m2-3a.mjs` is the end-to-end run (`docs/screenshots/m2-3a`).

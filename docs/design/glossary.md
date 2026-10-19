@@ -120,6 +120,8 @@ The Kindled's home Shard ([`holding.md`](holding.md)).
 | plot label     | How the Latin UI names a plot: its Virtue's epithet and its kind ("Old field"), "Field" without a Virtue, "Field 2" only while two share a label. | `plotLabel`, `epithet` in `words.json`        |
 | away card      | The While you were away card: the holding summed up on the first log-in after an absence of 30 min or more. | `away`, `AwayCard`, table `away_cards`, route `away/seen` |
 | toast          | One line bottom left with a glyph for its kind, 3 s then gone in one frame, two at most; the only system voice besides hints. | `toast`, `ToastKind`, `ui/toasts.ts`          |
+| weapon rack    | The rack of twisted logs by the Writ post where every weapon a Kindled owns hangs; the run's weapon is taken there (TAKE, Taken). | `weapon-rack`, kind `rack`, place `rack`, `RACK_TEXT`, route `rack/choose` |
+| weapon         | An item of kind `weapon` on the rack, one of each: the Hookblade, the Sling, the Keelmaul; its kit is its moves in input order. | `weapon`, `kit`, `hookblade`, `sling`, `keelmaul` |
 
 ## Combat (the Hookblade)
 
