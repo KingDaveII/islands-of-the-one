@@ -1,0 +1,170 @@
+{
+  "sheet": "prop-threshing-floor",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "cell": {
+    "w": 112,
+    "h": 128
+  },
+  "origin": {
+    "x": 56,
+    "y": 120
+  },
+  "rows": [
+    "idle"
+  ],
+  "totals": {
+    "frames": 8,
+    "offPalette": 0,
+    "maxDeltaE": 0,
+    "outlineGaps": 40
+  },
+  "flags": {
+    "seam": [],
+    "bob": [
+      "idle"
+    ],
+    "held": [],
+    "colours": []
+  },
+  "missing": [],
+  "optional": [],
+  "skinProblems": [],
+  "missingPoints": [],
+  "remap": [],
+  "staleRemap": [],
+  "snappedColours": 0,
+  "snapped": [],
+  "anims": [
+    {
+      "key": "idle",
+      "frames": 8,
+      "held": [],
+      "seam": {
+        "lastToFirst": 38,
+        "meanInCycle": 38.86,
+        "flag": false
+      },
+      "bob": {
+        "tops": [
+          107,
+          98,
+          99,
+          93,
+          99,
+          104,
+          109,
+          96
+        ],
+        "range": 16,
+        "flag": true
+      }
+    }
+  ],
+  "frames": [
+    {
+      "name": "idle_0",
+      "source": "art/clean/prop-threshing-floor/idle 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -34,
+      "outlineGaps": 6,
+      "colours": 7,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "idle_1",
+      "source": "art/clean/prop-threshing-floor/idle 1",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -34,
+      "outlineGaps": 4,
+      "colours": 7,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "idle_2",
+      "source": "art/clean/prop-threshing-floor/idle 2",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -34,
+      "outlineGaps": 4,
+      "colours": 7,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "idle_3",
+      "source": "art/clean/prop-threshing-floor/idle 3",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -34,
+      "outlineGaps": 4,
+      "colours": 7,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "idle_4",
+      "source": "art/clean/prop-threshing-floor/idle 4",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -34,
+      "outlineGaps": 4,
+      "colours": 7,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "idle_5",
+      "source": "art/clean/prop-threshing-floor/idle 5",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -34,
+      "outlineGaps": 6,
+      "colours": 7,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "idle_6",
+      "source": "art/clean/prop-threshing-floor/idle 6",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -34,
+      "outlineGaps": 6,
+      "colours": 7,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "idle_7",
+      "source": "art/clean/prop-threshing-floor/idle 7",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -34,
+      "outlineGaps": 6,
+      "colours": 7,
+      "interiorDreamNight": 0
+    }
+  ],
+  "outputs": [
+    "art/review/prop-threshing-floor/contact.png",
+    "art/review/prop-threshing-floor/report.json",
+    "art/review/prop-threshing-floor/report.md",
+    "packages/shared/assets/sprites/prop-threshing-floor.json",
+    "packages/shared/assets/sprites/prop-threshing-floor.png"
+  ]
+}

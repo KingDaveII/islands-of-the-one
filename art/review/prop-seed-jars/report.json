@@ -1,0 +1,90 @@
+{
+  "sheet": "prop-seed-jars",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "cell": {
+    "w": 80,
+    "h": 104
+  },
+  "origin": {
+    "x": 40,
+    "y": 96
+  },
+  "rows": [
+    "idle",
+    "idle_turned"
+  ],
+  "totals": {
+    "frames": 2,
+    "offPalette": 0,
+    "maxDeltaE": 0,
+    "outlineGaps": 0
+  },
+  "flags": {
+    "seam": [],
+    "bob": [],
+    "held": [],
+    "colours": []
+  },
+  "missing": [],
+  "optional": [],
+  "skinProblems": [],
+  "missingPoints": [],
+  "remap": [],
+  "staleRemap": [],
+  "snappedColours": 0,
+  "snapped": [],
+  "anims": [
+    {
+      "key": "idle",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          24
+        ],
+        "range": 0,
+        "flag": false
+      }
+    },
+    {
+      "key": "idle_turned",
+      "frames": 1,
+      "held": []
+    }
+  ],
+  "frames": [
+    {
+      "name": "idle_0",
+      "source": "art/clean/prop-seed-jars/idle 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -22,
+      "outlineGaps": 0,
+      "colours": 8,
+      "interiorDreamNight": 0
+    },
+    {
+      "name": "idle_turned_0",
+      "source": "art/clean/prop-seed-jars/idle_turned 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -22,
+      "outlineGaps": 0,
+      "colours": 8,
+      "interiorDreamNight": 0
+    }
+  ],
+  "outputs": [
+    "art/review/prop-seed-jars/contact.png",
+    "art/review/prop-seed-jars/report.json",
+    "art/review/prop-seed-jars/report.md",
+    "packages/shared/assets/sprites/prop-seed-jars.json",
+    "packages/shared/assets/sprites/prop-seed-jars.png"
+  ]
+}

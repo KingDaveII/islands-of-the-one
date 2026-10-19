@@ -1,0 +1,232 @@
+{
+  "frames": {
+    "idle_0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      }
+    },
+    "idle_1": {
+      "frame": {
+        "x": 112,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      }
+    },
+    "idle_2": {
+      "frame": {
+        "x": 224,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      }
+    },
+    "idle_3": {
+      "frame": {
+        "x": 336,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      }
+    },
+    "idle_4": {
+      "frame": {
+        "x": 448,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      }
+    },
+    "idle_5": {
+      "frame": {
+        "x": 560,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      }
+    },
+    "idle_6": {
+      "frame": {
+        "x": 672,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      }
+    },
+    "idle_7": {
+      "frame": {
+        "x": 784,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 128
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      }
+    }
+  },
+  "meta": {
+    "image": "prop-threshing-floor.png",
+    "size": {
+      "w": 896,
+      "h": 128
+    },
+    "scale": "1",
+    "format": "RGBA8888",
+    "app": "iot-art-pipeline",
+    "version": "2",
+    "cell": {
+      "w": 112,
+      "h": 128
+    },
+    "origin": {
+      "x": 56,
+      "y": 120
+    },
+    "pixelScale": 1
+  },
+  "anims": {
+    "idle": {
+      "frames": [
+        "idle_0",
+        "idle_1",
+        "idle_2",
+        "idle_3",
+        "idle_4",
+        "idle_5",
+        "idle_6",
+        "idle_7"
+      ],
+      "frameRate": 6,
+      "repeat": -1
+    }
+  }
+}

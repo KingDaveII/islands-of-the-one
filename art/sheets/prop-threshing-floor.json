@@ -1,0 +1,26 @@
+{
+  "sheet": "prop-threshing-floor",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "notes": "The field's Threshing floor (M2 Task 6; Lore \u00a716.8; MAIN #105): the field-pieces job's step 3 pick (PR #103), 12 columns out at its joints to lie in its 3 x 3 footprint, recoloured, with 8 frames of chaff spiralling up off it by art/clean/field-pieces/pieces.py. Frames are cell-sized and already placed; ground on frame 0 moves nothing.",
+  "anims": {
+    "idle": {
+      "src": "art/clean/prop-threshing-floor/idle",
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "ground": {
+        "ref": 0
+      },
+      "fps": 6
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "sheet": "prop-seed-jars",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "notes": "The field's Seed jars (M2 Task 6; Lore \u00a716.8; MAIN #105). idle: the field-pieces job's step 1 pick (PR #103), recoloured by part, a thumbprint in each seal; idle_turned: drawn by art/clean/field-pieces/pieces.py, the pick's jar three times one behind another on a plank running up the picture. Frames are cell-sized and already placed; ground on frame 0 moves nothing.",
+  "anims": {
+    "idle": {
+      "src": "art/clean/prop-seed-jars/idle",
+      "frames": [
+        0
+      ],
+      "ground": {
+        "ref": 0
+      }
+    },
+    "idle_turned": {
+      "src": "art/clean/prop-seed-jars/idle_turned",
+      "frames": [
+        0
+      ],
+      "ground": {
+        "ref": 0
+      }
+    }
+  }
+}
