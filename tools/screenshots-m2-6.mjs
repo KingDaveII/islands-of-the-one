@@ -10,7 +10,9 @@
  * tuning for the shot); the field's panel reads "Level 2" and "By itself:
  * 1 pale grain every 12 min". The seed jars without grain in the store
  * refuse with "Not enough in the store."; granted, they stand and the
- * header reads "Pieces 2/2". A standing piece is selected and moved, then
+ * header reads "Pieces 2/2". Every piece draws from ART's sheets (#107);
+ * the jars, selected, are outlined round their silhouette, then moved and
+ * turned (their turned row), and the channel is
  * taken down ("+300 Twisted log" and "+150 Black stone" float over the signpost). `writ:set` fades the plot:
  * its pieces draw dim. Every state is checked through the API and the
  * scene's snapshot. Shots are whole-page screenshots at 1280 × 720.
@@ -328,6 +330,7 @@ await until((x) => x.ghost?.pieceId === 'clay-channel', 'the ghost');
 await hoverTile(plot.rect.col, plot.rect.row + 2, 'the ghost on the west column');
 h = await until((x) => x.pieces.ghost?.fits === true, 'a green ghost');
 expectEq('its footprint', `${h.pieces.ghost.cols}x${h.pieces.ghost.rows}`, '1x4');
+expectEq("the ghost drawn from the piece's own pixels", h.pieces.ghost.art, true);
 await shot('03-green-ghost');
 
 // 4. A red ghost over the signpost's tile.
@@ -379,6 +382,7 @@ expectEq('by itself at 12 min', h.panelLines.cycle, 'By itself: 1 pale grain eve
 expectEq('by hand unchanged', h.panelLines.rate, 'By hand: 1 pale grain every 20 s');
 expectEq('the cycle on the wire', h.response.cycles[plot.id].cycleMs, 12 * 60_000);
 expectEq('a pillar: the piece drawn', h.pieces.pieces[0].pieceId, 'clay-channel');
+expectEq("drawn from ART's sheet", `${h.pieces.pieces[0].art}/${h.pieces.pieces[0].anim}`, 'prop-clay-channel/idle');
 await shot('07-clay-channel-level-2');
 
 // 8. "Not enough in the store.": the seed jars without grain.
@@ -404,21 +408,29 @@ await until((x) => x.build?.rows[1].materials[1] === 'Pale grain 40/40', 'the gr
 await page.mouse.click(at.x, at.y);
 h = await until((x) => x.build?.count === 'Pieces 2/2', 'two pieces', 100);
 expectEq('level 3', h.response.plots[0].level, 3);
-await until((x) => x.pieces.building === null, 'the jars standing');
+h = await until((x) => x.pieces.building === null, 'the jars standing');
+expectEq("the jars from ART's sheet", h.pieces.pieces.find((p) => p.pieceId === 'seed-jars')?.art, 'prop-seed-jars');
 await shot('09-two-pieces');
 
 // 10. Moving a piece: the jars selected (a click on them), MOVE, the ghost placed elsewhere.
 console.log('moving:');
 await page.mouse.click(at.x, at.y);
 await until((x) => x.build?.selected === 'seed-jars', 'the jars selected');
+await until((x) => x.pieces.pieces.find((p) => p.pieceId === 'seed-jars')?.outlined === true, 'the outline round the jars');
+await shot('09b-selected-outline');
 await clickButton('MOVE');
 await until((x) => x.ghost?.moving === true, 'the moving ghost');
+// Turned on the way: the jars stand along (1 x 2) and show their turned row.
+await page.keyboard.press('KeyR');
+await until((x) => x.ghost?.rotation === 90, 'the jars turned');
 await hoverTile(plot.rect.col + 4, plot.rect.row + 1, 'the jars moved north-east');
 await until((x) => x.pieces.ghost?.fits === true, 'a green ghost there');
 await shot('10-moving-a-piece');
 at = await tileToPage(plot.rect.col + 4, plot.rect.row + 1);
 await page.mouse.click(at.x, at.y);
 await until((x) => x.response?.plots[0].pieces.find((p) => p.pieceId === 'seed-jars')?.row === plot.rect.row + 1, 'moved on the server');
+h = await until((x) => x.pieces.pieces.find((p) => p.pieceId === 'seed-jars')?.anim === 'idle_turned', 'the jars on their turned row');
+expectEq('turned on the server', h.response.plots[0].pieces.find((p) => p.pieceId === 'seed-jars')?.rotation, 90);
 r = await api('/api/inventory');
 expectEq('a move is free', r.body.store.find((e) => e.itemId === 'twisted-log')?.quantity, 500);
 

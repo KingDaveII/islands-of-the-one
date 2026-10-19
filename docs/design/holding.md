@@ -818,10 +818,16 @@ same on every preset (GAME DESIGN 2026-10-19): R1 turns the ghost clockwise and 
 nothing attacks or dodges ([controls.md](controls.md)); on touch a TURN button beside the ghost. **Confirm** (LMB, Enter, Cross;
 a second tap on the same tile) sends the route; **cancel** (RMB, Esc, Circle) drops the ghost, a second cancel leaves
 build mode. When the answer lands, **the building moment** plays on the new piece, whole frames timed by
-`tuning.json` `plots.buildMs` (400): a few dust pixels round its base for the first quarter, then the box rising from
-its base row by row; nothing draws before the answer. **Standing pieces** are placeholder props (a footprint-sized
-box in `pieceFace` with a shaded front, a 1 px outline and the piece's initials as a word over the world), y-sorted
-with the bodies by their base, dim like the ground when the plot is faded; their tiles are pillars in the roam
+`tuning.json` `plots.buildMs` (400): a few dust pixels round its base for the first quarter, then the piece's art
+rising from its base a tile (32 world px) at a time (`riseCrop` in `render/pieceArt.ts`); nothing draws before the
+answer. **Standing pieces** draw from ART's sheets (#107, [sprites.md](sprites.md) §4 "The upgrade pieces"): a
+sprite on the bottom centre of the footprint as it lies, `idle_turned` at 90° and 270°, the threshing floor's chaff
+looping at 6 fps, the prop rule's grounding shadow under the seed jars only; y-sorted with the bodies by their base.
+On a faded plot a piece is frozen on its first frame under a 50 % checkerboard of `plotFaded`. Selected, a 2 px
+`uiFocus` outline follows its silhouette (the union of its row's frames, so the floor's outline holds still; ART on
+#106). The ghost is the piece's own pixels as the tint's checkerboard. A piece whose sheet isn't on disk keeps the
+placeholder box (`pieceFace`, a shaded front, a 1 px outline, its initials as a word over the world). Their tiles
+are pillars in the roam
 (`setSolidPlots(plotIds, pieceTiles)`). In build mode a standing piece selected (a click on it; the cursor on it
 and Cross) offers **MOVE** (it becomes the ghost; confirming sends `move`) and **TAKE DOWN** (sends `take-down`;
 one float per item rises over the signpost by its display name, "+300 Twisted log" then "+150 Black stone", never a
@@ -838,5 +844,6 @@ either side of a build, the level and the pieces in the answer, a Ground-changin
 routes' guards and codes), `holding.test.ts` (migration 0008) and `holding.postgres.test.ts` (the race);
 `apps/client/src/game/buildView.test.ts` (the list's lines and locked states, the header, the ghost's colour and
 rotation, the cursor, the building moment's phases, the roam's pillars), `holdingView.test.ts` (the panel's level,
-lines and BUILD HERE), `plotView.test.ts` (the pieces line), `render/glyphCells.test.ts` (the R key cap).
+lines and BUILD HERE), `plotView.test.ts` (the pieces line), `render/glyphCells.test.ts` (the R key cap),
+`render/pieceArt.test.ts` (the ghost's checkerboard, the silhouette outline and the rise, on ART's sheets).
 `tools/screenshots-m2-6.mjs` runs it end to end; shots: `docs/screenshots/m2-6/`.
