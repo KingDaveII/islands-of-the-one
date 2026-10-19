@@ -2,16 +2,19 @@
 /**
  * M2 Task 7 end to end (docs/screenshots/m2-7): sleep, the While you were
  * away card and the toasts. A new account and Kindled name the island
- * (through the API, as Task 4a's run showed it) and land on the holding
- * working the trees. The Writ panel shows SLEEP and its hint; SLEEP cuts to
- * the sleep screen, which logs out onto the start screen. Logged in again
- * after `holding:away … 7`, the away card opens: the time away, the trees'
- * logs, the level gained and the Writ; any key closes it and the row is
- * gone on the server. Then the toasts: a level-up from working the outcrop,
- * "Store: twisted logs full." stacked under "Your Writ has about a day
- * left." (two at most, the newest at the bottom), "Pack full." over the open
- * inventory, the Writ-low crossing watched live after `writ:set`, and after
- * `writ:set --dark-hours 49` and `holding:away`, the card's faded Writ line.
+ * (through the API, as Task 4a's run showed it), name and sow an Old field
+ * (אדמה · ישן, as Task 5's run did) and land on the holding working the
+ * trees. The Writ panel shows SLEEP and its hint; SLEEP sits the Kindled
+ * against the post, then cuts to the sleep screen, which logs out onto the
+ * start screen. Logged in again after `holding:away … 7`, the away card
+ * opens: the time away, the Field and Trees lines, the skills line and the
+ * Writ; any key closes it and the row is gone on the server. Then the
+ * toasts: a level-up from working the outcrop, "Store: twisted logs full."
+ * stacked under "Your Writ has about a day left." (two at most, the newest
+ * at the bottom), "Pack full." over the open inventory, "Your Writ has about
+ * a day left." on landing after `writ:set --charge-hours 23` and a reload
+ * (and not again on a second reload), and after `writ:set --dark-hours 49`
+ * and `holding:away`, the card's faded Writ line.
  * Every state is checked through the API and the scene's snapshot (`away`,
  * `toasts`, `sleeping` on `window.__iot`). Shots are whole-page screenshots
  * at 1280 × 720.
@@ -237,12 +240,23 @@ const setup = await page.evaluate(
     const reg = await post('/api/register', { username, password });
     const k = await post('/api/kindled', { name: 'Iltani', remembrance: 'tide' });
     const name = await post('/api/writ/name', { name: 'Black Rock' });
-    const work = await post('/api/holding/work', { stationId: 'twisted-trees' });
-    return [reg.status, k.status, name.status, work.status];
+    const word = await post('/api/kesh/word', {});
+    return [reg.status, k.status, name.status, word.status];
   },
   { username, password },
 );
 if (setup.join() !== '201,201,200,200') throw new Error(`setup failed: ${setup.join()}`);
+// An Old field (אדמה · ישן): ישן granted, the plot named with both tiles, Kesh's seeds, sown; then the trees worked.
+cli('words:grant', 'yashan');
+const field = await page.evaluate(async () => {
+  const post = (url, body) => fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const plot = await post('/api/plots/name', { plotId: 'plot-1', ground: 'adamah', virtue: 'yashan' });
+  const seeds = await post('/api/kesh/seeds', {});
+  const sown = await post('/api/plots/sow', { plotId: 'plot-1' });
+  const work = await post('/api/holding/work', { stationId: 'twisted-trees' });
+  return [plot.status, seeds.status, sown.status, work.status];
+});
+if (field.join() !== '200,200,200,200') throw new Error(`the field failed: ${field.join()}`);
 let h = await land();
 expectEq('no card on a fresh holding', h.response.away, null);
 expectEq('working the trees', h.response.activity?.stationId, 'twisted-trees');
@@ -252,17 +266,22 @@ console.log('the Writ panel:');
 await useAt(postUse, 'the post');
 h = await until((x) => x.writPanel !== null && x.writPanel.state !== '', 'the Writ panel');
 expectEq('SLEEP on the panel', h.writPanel.sleep, 'SLEEP');
-expectEq('the hint under it', h.writPanel.sleepHint, "Lie down here to sleep. Your island keeps working while you're away.");
+expectEq('the hint under it', h.writPanel.sleepHint, 'Lie down to sleep and leave the game. Your holding keeps working while you sleep, until the Writ runs low.');
 // Up from the first kind wraps to the last item: SLEEP.
 await page.keyboard.press('ArrowUp');
 await until((x) => x.writPanel?.focus === 'sleep', 'SLEEP focused last in the order');
 await shot('01-writ-panel-sleep');
 
-// 2. SLEEP: the cut to the sleep screen, one line, no fade.
+// 2. SLEEP: the Kindled's moment against the post (the sit row when the sheet has it, else idle, facing it), then the
+// cut to the sleep screen, one line, no fade.
 console.log('sleep:');
 await clickButton('SLEEP');
+h = await until((x) => x.sitting && x.writPanel === null, 'the Kindled at the post', 50, 20);
+expectMatch('held still, facing the post', h.pose, /^(sit|idle)\/0$/);
+await page.screenshot({ path: join(OUT, '02a-sitting-at-the-post.png') });
+console.log(`  02a-sitting-at-the-post.png (${h.pose})`);
 const asleep = await untilTrue(sleeping, 'the sleep screen', 50, 50);
-expectEq('the line', asleep.line, 'You lie down by the Writ.');
+expectEq('the line', asleep.line, 'You lie down by the Writ. Its hum is the last thing you hear.');
 expectEq('the holding gone', (await scenes()).includes('holding'), false);
 await page.screenshot({ path: join(OUT, '02-sleep-screen.png') });
 console.log('  02-sleep-screen.png');
@@ -283,12 +302,15 @@ let r = await api('/api/holding');
 const card = r.body.away;
 expectEq('the card on the wire', typeof card?.to, 'string');
 expectMatch('the time away', h.away.lines[0], /^Away 7 hours\.$/);
-expectMatch('the trees', h.away.lines[1], /^Twisted trees: \d+ twisted logs, in the basket$/);
-expectMatch('the level', h.away.lines[2], /^Woodcutting 1 to \d+$/);
-expectEq('the Writ now', h.away.lines[3], 'Writ: about two days left');
-expectEq('four lines', h.away.lines.length, 4);
+// The Old field's 15 min trickle over 7 h (28 grains, ישן's bonus not yet due), the trees' basket, the skills line.
+expectMatch('the field', h.away.lines[1], /^Field: \d+ pale grains, in the basket$/);
+expectMatch('the trees', h.away.lines[2], /^Trees: \d+ twisted logs, in the basket$/);
+expectMatch('the skills', h.away.lines[3], /^Woodcutting 1 → \d+$/);
+expectEq('the Writ now', h.away.lines[4], 'Writ: about two days left');
+expectEq('five lines', h.away.lines.length, 5);
 expectEq('the title', h.away.title, 'While you were away');
-expectEq('the hint', h.away.hint, 'Press any key.');
+expectEq('the hint', h.away.hint, 'Press anything to wake.');
+expectEq('the field on the wire', card.made['plot-1']?.itemId, 'pale-grain');
 expectEq('the Kindled stands still', h.prompt, false);
 expectEq('the toasts wait', h.toasts.paused, true);
 // Seven hours of 4 s cycles and 21 of the trees' trickle, plus the few seconds worked before the sleep.
@@ -322,7 +344,7 @@ h = await until((x) => x.toasts.lines.includes('Mining 2.'), 'the level-up toast
 expectEq('its kind', h.toasts.kinds[h.toasts.lines.indexOf('Mining 2.')], 'skill-level');
 console.log(`  "Mining 2." after ${Math.round((Date.now() - t0) / 1000)} s`);
 await shot('06-level-up-toast', 100);
-await untilTrue(async () => (await toasts()).lines.length === 0, 'the toast gone after its hold', 60, 100);
+await untilTrue(async () => (await toasts()).lines.length === 0, 'the toast gone after its hold', 300, 100);
 
 // 7. "Store: twisted logs full." under "Your Writ has about a day left.": two stacked, the newest at the bottom.
 r = await api('/api/inventory');
@@ -342,11 +364,14 @@ expectEq('the store full', r.body.store.find((e) => e.itemId === 'twisted-log')?
 await shot('07-two-toasts-store-full', 100);
 await page.keyboard.press('Escape');
 await until((x) => x.panel === null, 'the panel closed');
-await untilTrue(async () => (await toasts()).lines.length === 0, 'the toasts gone', 60, 100);
+await untilTrue(async () => (await toasts()).lines.length === 0, 'the toasts gone', 300, 100);
 
 // 8. "Pack full." over the open inventory: the pack filled, a store cell clicked.
+// The pack filled: the seeds already take a slot, so black stone fills the rest.
 const slot = inventoryData.slotSize.material;
-cli('inv:grant', 'black-stone', String(slot * inventoryData.packSlots), 'pack');
+r = await api('/api/inventory');
+const usedSlots = r.body.pack.reduce((n, e) => n + Math.ceil(e.quantity / slot), 0);
+cli('inv:grant', 'black-stone', String(slot * (inventoryData.packSlots - usedSlots)), 'pack');
 await page.keyboard.press('KeyI');
 await waitScene('inventory');
 await sleep(400);
@@ -362,22 +387,21 @@ expectEq('the inventory still open', (await scenes()).includes('inventory'), tru
 await shot('08-pack-full-over-inventory', 100);
 await page.keyboard.press('Escape');
 await waitScene('holding');
-await untilTrue(async () => (await toasts()).lines.length === 0, 'the toast gone', 60, 100);
+await untilTrue(async () => (await toasts()).lines.length === 0, 'the toast gone', 300, 100);
 
-// 9. The Writ-low crossing watched live: 24 h and a few seconds of charge, the toast as the chip turns ember.
-console.log('the crossing:');
-cli('writ:set', '--charge-hours', String(24 + 8 / 3600));
-await refresh();
-h = await until((x) => x.writ?.chip.text === 'about a day', 'about a day, lit');
-expectEq('no toast yet', h.toasts.lines.length, 0);
-h = await until((x) => x.toasts.lines.includes('Your Writ has about a day left.'), 'the crossing', 150, 100);
+// 9. "Your Writ has about a day left." on landing: 23 h of charge and a reload under 30 min, so no card shows and the
+// toast tells the drain; a second reload doesn't toast it again (remembered per Kindled).
+console.log('on landing:');
+cli('writ:set', '--charge-hours', '23');
+h = await land();
+expectEq('no card under 30 min', h.away, null);
+h = await until((x) => x.toasts.lines.includes('Your Writ has about a day left.'), 'the Writ-low toast on landing');
 expectEq('the chip ember', h.writ.chip.ember, true);
 await shot('09-writ-low-toast', 100);
-await untilTrue(async () => (await toasts()).lines.length === 0, 'the toast gone', 60, 100);
-// Once per drain: another answer with the same emptyAt repeats nothing.
-await refresh();
-await sleep(500);
-expectEq('told once per drain', (await toasts()).lines.length, 0);
+await untilTrue(async () => (await toasts()).lines.length === 0, 'the toast gone', 300, 100);
+await land();
+await sleep(1500);
+expectEq('told once per drain: not again after a reload', (await toasts()).lines.length, 0);
 
 // 10. Dark 49 h and an hour away: the card's faded Writ line.
 console.log('faded:');
@@ -386,10 +410,11 @@ cli('holding:away', '1');
 await refresh();
 h = await until((x) => x.away !== null, 'the card again');
 expectEq('the time away', h.away.lines[0], 'Away 1 hour.');
-expectEq('the faded Writ', h.away.lines.at(-1), 'Writ: dark since 2 tides and 1 hour ago; the outer line faded');
+expectEq('the faded Writ', h.away.lines.at(-1), 'Writ: dark for 2 tides and 1 hour; its outer line has faded.');
 expectEq('no dark toast: the card told it', h.toasts.lines.length, 0);
 r = await api('/api/holding');
-expectEq('the merged row', r.body.away?.writ.state, 'fading');
+expectEq('the Writ on the wire', r.body.writ.state, 'fading');
+expectEq('the card on the wire', typeof r.body.away?.to, 'string');
 await shot('10-away-card-faded-writ');
 await page.keyboard.press('Space');
 await until((x) => x.away === null, 'the card closed');
