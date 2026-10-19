@@ -5,6 +5,8 @@ import {
   cycleRateLine,
   cyclesLanded,
   effectLine,
+  fieldGroundCell,
+  fieldGroundRect,
   groundElement,
   lettersBand,
   namedPlotIds,
@@ -14,6 +16,7 @@ import {
   plotAtWorld,
   plotPanelLines,
   plotWorldRect,
+  RING_WIDTH,
   ringPixels,
   ringRect,
   sealDurationMs,
@@ -29,6 +32,7 @@ import {
   sigilOrigin,
   sigilPoint,
   slotChoices,
+  WORLD_SCALE,
 } from './plotView.js';
 
 /**
@@ -155,6 +159,32 @@ describe('the seal scene', () => {
     expect(sealPhase(t, 5000, 4, 4)).toMatchObject({ ring: 1, letters: 4, sigil: 3, ground: 1, done: true });
     // A one-letter sentence has no segment to trace.
     expect(sealPhase(t, 5000, 1, 1).sigil).toBe(0);
+  });
+});
+
+describe("the field's ground (ART, #123)", () => {
+  it('picks the cell by state: unsown until sown, sown, and faded whether sown or not', () => {
+    expect(fieldGroundCell({ state: 'lit', sownAt: null })).toBe('unsown');
+    expect(fieldGroundCell({ state: 'lit', sownAt: iso(0) })).toBe('sown');
+    expect(fieldGroundCell({ state: 'dark', sownAt: iso(0) })).toBe('sown');
+    expect(fieldGroundCell({ state: 'faded', sownAt: iso(0) })).toBe('faded');
+    expect(fieldGroundCell({ state: 'faded', sownAt: null })).toBe('faded');
+  });
+
+  it("tiles over the plot less the sheet's inset, from the inner corner", () => {
+    expect(fieldGroundRect(plot1)).toEqual({ x: 7 * 32 + 10, y: 7 * 32 + 26, w: 192 - 20, h: 192 - 40 });
+    expect(fieldGroundRect(plot1, { inset: { top: 0, right: 0, bottom: 0, left: 0 } })).toEqual(plotWorldRect(plot1));
+  });
+
+  it('leaves the ring, its letters band and the bottom join on the pale headland', () => {
+    const g = fieldGroundRect(plot1);
+    const ring = ringRect(plot1);
+    // The ring's inner edge on every side lies outside the ground.
+    expect(g.x).toBeGreaterThanOrEqual(ring.x + RING_WIDTH);
+    expect(g.x + g.w).toBeLessThanOrEqual(ring.x + ring.w - RING_WIDTH);
+    expect(g.y + g.h).toBeLessThanOrEqual(ring.y + ring.h - RING_WIDTH);
+    // The letters (8 sheet px tall, at WORLD_SCALE) sit above the ground.
+    expect(g.y).toBeGreaterThanOrEqual(lettersBand(plot1, 40).y + 8 * WORLD_SCALE);
   });
 });
 

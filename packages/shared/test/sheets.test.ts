@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
+  FIELD_GROUND_CELLS,
+  fieldGroundSheet,
   itemIconsSheet,
   SKILLS,
   TOAST_GLYPH_PX,
@@ -39,6 +41,7 @@ const SHEETS: [string, CellSheet & { meta?: { tinted?: boolean } }, (image: stri
   ['hookblade-fx', hookbladeFxSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
   ['item-icons', itemIconsSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
   ['toast-glyphs', toastGlyphsSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
+  ['field-ground', fieldGroundSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
   ['hookblade-fixture', fixtureSheet, (image) => new URL(`./fixtures/${image}`, import.meta.url)],
 ];
 
@@ -217,6 +220,24 @@ describe('engine sheet meta (sprites.md "Engine sheets")', () => {
         'telegraph colours (only Husk telegraph frames may use them): #e0457b',
       ]);
     });
+  });
+});
+
+describe('the field ground (ART, #123)', () => {
+  it('has one seamless cell per state, square, drawn in colour', () => {
+    expect(fieldGroundSheet.cells.map((c) => c.name)).toEqual([...FIELD_GROUND_CELLS]);
+    for (const c of fieldGroundSheet.cells)
+      expect([c.name, c.w, c.h]).toEqual([c.name, fieldGroundSheet.cell, fieldGroundSheet.cell]);
+    expect(engineSheetMeta(fieldGroundSheet).tinted).toBe(false);
+    expect(engineSheetMeta(fieldGroundSheet).pixelScale).toBe(1);
+  });
+
+  it("leaves a headland inside the plot: every inset whole, and room for a cell's worth of ground", () => {
+    const { top, right, bottom, left } = fieldGroundSheet.inset;
+    for (const v of [top, right, bottom, left]) expect(Number.isInteger(v) && v >= 0).toBe(true);
+    // A plot is 6 × 6 tiles of 32 world px (holding.json); the ground keeps at least one cell each way.
+    expect(192 - left - right).toBeGreaterThanOrEqual(fieldGroundSheet.cell);
+    expect(192 - top - bottom).toBeGreaterThanOrEqual(fieldGroundSheet.cell);
   });
 });
 
