@@ -413,7 +413,7 @@ await clickButton('SOW');
 h = await until((x) => x.panelLines?.next?.startsWith('Next in'), 'the cycle clock running');
 expectEq('the cycle', h.panelLines.cycle, 'By itself: 1 pale grain every 15 min');
 expectEq('the action', h.panelLines.rate, 'By hand: 1 pale grain every 20 s');
-expectEq('the buttons', h.panelLines.buttons.join(), 'work,take,rename');
+expectEq('the buttons', h.panelLines.buttons.join(), 'work,take,build,rename');
 r = await api('/api/inventory');
 expectEq('one seed spent', r.body.pack.find((e) => e.itemId === 'grey-seeds')?.quantity, 3);
 console.log(`  ${h.panelLines.next}`);
