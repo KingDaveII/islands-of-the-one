@@ -30,7 +30,7 @@ import {
   pieceRows,
   pieceWorldRect,
   plotPieceTiles,
-  refundFloat,
+  refundFloats,
   rotateGhost,
   stepCursor,
   tileOfSim,
@@ -121,6 +121,8 @@ const PANEL_W = 176;
 const PANEL_PAD = 8;
 /** A "+1" (or a take-all's "+3") floater rises this far over its life, and blinks out over the last 200 ms. */
 const FLOAT_MS = 700;
+/** A take-down's floats, one per item (LORE), rise together one text line apart (world px) so they never overlap. */
+const REFUND_FLOAT_LINE_PX = 24;
 const FLOAT_RISE = 10;
 const FLOAT_BLINK_MS = 200;
 /** How far over the Kindled's position (world px) a float over them starts: clear of the head. */
@@ -1012,6 +1014,9 @@ export class HoldingScene extends Phaser.Scene {
       pick: (pieceId) => {
         this.pickPiece(pieceId);
       },
+      select: (pieceId) => {
+        this.selectStanding(pieceId);
+      },
       move: () => {
         this.moveSelected();
       },
@@ -1061,6 +1066,7 @@ export class HoldingScene extends Phaser.Scene {
     const plot = this.buildPlot;
     if (!plot) return;
     this.selectedPiece = null;
+    this.pieces.setSelected(null, null);
     this.tapTile = null;
     this.ghost = ghostAt({ pieceId, col: 0, row: 0, rotation: 0, moving: false }, this.ghostTile());
     this.syncBuild();
@@ -1070,6 +1076,7 @@ export class HoldingScene extends Phaser.Scene {
   private selectStanding(pieceId: string): void {
     this.ghost = null;
     this.selectedPiece = pieceId;
+    this.pieces.setSelected(this.buildPlot?.id ?? null, pieceId);
     this.syncBuild();
     this.build?.focusButtons();
   }
@@ -1089,12 +1096,13 @@ export class HoldingScene extends Phaser.Scene {
   private dropGhost(): void {
     this.ghost = null;
     this.selectedPiece = null;
+    this.pieces.setSelected(null, null);
     this.tapTile = null;
     this.syncBuild();
   }
 
-  private turnGhost(): void {
-    if (this.ghost) this.ghost = rotateGhost(this.ghost);
+  private turnGhost(step: 1 | -1 = 1): void {
+    if (this.ghost) this.ghost = rotateGhost(this.ghost, step);
   }
 
   /** The tile the ghost follows: the pad's cursor in pad mode, the last touch tap, else the pointer's tile through the world camera. */
@@ -1164,10 +1172,13 @@ export class HoldingScene extends Phaser.Scene {
     this.request(
       () => api.plotsTakeDown({ plotId: plot.id, pieceId }),
       () => {
-        const text = refundFloat(pieceId);
-        if (text) this.float(text, plot.id);
+        // One float per item, by its display name (LORE), stacked a line apart over the signpost.
+        refundFloats(pieceId).forEach((text, i) => {
+          this.float(text, plot.id, i * REFUND_FLOAT_LINE_PX);
+        });
         this.ghost = null;
         this.selectedPiece = null;
+        this.pieces.setSelected(null, null);
         this.syncBuild();
         void api.inventory().then((inv) => {
           if (this.alive && inv.ok) {
@@ -1197,7 +1208,10 @@ export class HoldingScene extends Phaser.Scene {
         const same = this.tapTile !== null && this.tapTile.col === tile.col && this.tapTile.row === tile.row;
         this.tapTile = tile;
         this.ghost = ghostAt(this.ghost, tile);
-        if (!same) return;
+        if (!same) {
+          this.build?.setResult(BUILD_TEXT.TAP_AGAIN);
+          return;
+        }
       }
       this.confirmGhost();
       return;
@@ -1206,8 +1220,12 @@ export class HoldingScene extends Phaser.Scene {
     if (standing) this.selectStanding(standing.pieceId);
   }
 
-  /** The pad in build mode: the D-pad or the stick moves the cursor (the list's focus while no ghost is up), Cross confirms or picks, Triangle turns. */
-  private buildPad(edges: number[], preset: ReturnType<typeof controlsStore.get>, confirmed: () => boolean): void {
+  /**
+   * The pad in build mode, its own buttons like a menu on every preset (GAME DESIGN 2026-10-19): the D-pad or the stick
+   * moves the cursor (the list's focus while no ghost is up), Cross confirms or picks, Circle leaves, R1 turns the ghost
+   * clockwise and L1 back.
+   */
+  private buildPad(edges: number[], confirmed: () => boolean): void {
     const b = this.build;
     const plot = this.buildPlot;
     if (!b || !plot) return;
@@ -1219,8 +1237,8 @@ export class HoldingScene extends Phaser.Scene {
     this.stick = { x: sx, y: sy };
     const dx = edges.includes(MENU_BUTTONS.right) || pushedX > 0 ? 1 : edges.includes(MENU_BUTTONS.left) || pushedX < 0 ? -1 : 0;
     const dy = edges.includes(MENU_BUTTONS.down) || pushedY > 0 ? 1 : edges.includes(MENU_BUTTONS.up) || pushedY < 0 ? -1 : 0;
-    if (buttonsFor(preset, 'rotate', 'calm').some((i) => edges.includes(i))) {
-      this.turnGhost();
+    if (edges.includes(MENU_BUTTONS.tabNext) || edges.includes(MENU_BUTTONS.tabPrev)) {
+      this.turnGhost(edges.includes(MENU_BUTTONS.tabNext) ? 1 : -1);
       return;
     }
     if (this.ghost) {
@@ -1727,8 +1745,8 @@ export class HoldingScene extends Phaser.Scene {
    * A float: "+1" as a cycle completes and "+3" as a take-all moves a basket, over the station's part nearest the
    * Kindled (a plot's signpost); "+1" where Kesh's sliver lands. `at` gives the place (sim px) each frame.
    */
-  private float(text: string, at: string | (() => { x: number; y: number } | null)): void {
-    this.addFloater(shadowed(label(this, 0, 0, text, Palette.spark)), at);
+  private float(text: string, at: string | (() => { x: number; y: number } | null), below = 0): void {
+    this.addFloater(shadowed(label(this, 0, 0, text, Palette.spark)), at, below);
   }
 
   /** The word's letters floating where Kesh's tile lands (M2 Task 5), for a float's time; nothing without the sheet. */
@@ -1740,12 +1758,21 @@ export class HoldingScene extends Phaser.Scene {
   private addFloater(
     t: Shadowed | LetterFloat,
     at: string | (() => { x: number; y: number } | null),
+    /** World px under the station's float point (a take-down's second item, a line below the first). */
+    below = 0,
   ): void {
     t.setDepth(DEPTH.floaters);
     this.hudLayer.add(t);
     if (typeof at === 'string') {
       const near = this.session.position();
-      this.floaters.push({ text: t, at: () => this.floatTop(at, near), life: FLOAT_MS });
+      this.floaters.push({
+        text: t,
+        at: () => {
+          const top = this.floatTop(at, near);
+          return top ? { x: top.x, y: top.y + below } : null;
+        },
+        life: FLOAT_MS,
+      });
     } else {
       const feet = at();
       // Over the Kindled who picked it up, as the station floats rise over their props (the thing lands at the feet).
@@ -1936,7 +1963,7 @@ export class HoldingScene extends Phaser.Scene {
         !buttonsFor(preset, 'interact', 'calm').includes(MENU_BUTTONS.confirm[0])) ||
       MENU_BUTTONS.confirm.slice(1).some((b) => edges.includes(b));
     if (edges.includes(MENU_BUTTONS.back)) this.back();
-    else if (this.build) this.buildPad(edges, preset, confirmed);
+    else if (this.build) this.buildPad(edges, confirmed);
     else if (this.talkBox) {
       const axes = connectedPad()?.axes ?? [];
       const sy = Math.abs(axes[1] ?? 0) > 0.5 ? Math.sign(axes[1] ?? 0) : 0;

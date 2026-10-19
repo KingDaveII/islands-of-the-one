@@ -11,7 +11,7 @@
  * 1 pale grain every 12 min". The seed jars without grain in the store
  * refuse with "Not enough in the store."; granted, they stand and the
  * header reads "Pieces 2/2". A standing piece is selected and moved, then
- * taken down ("+450" floats over the signpost). `writ:set` fades the plot:
+ * taken down ("+300 Twisted log" and "+150 Black stone" float over the signpost). `writ:set` fades the plot:
  * its pieces draw dim. Every state is checked through the API and the
  * scene's snapshot. Shots are whole-page screenshots at 1280 × 720.
  *
@@ -422,13 +422,13 @@ await until((x) => x.response?.plots[0].pieces.find((p) => p.pieceId === 'seed-j
 r = await api('/api/inventory');
 expectEq('a move is free', r.body.store.find((e) => e.itemId === 'twisted-log')?.quantity, 500);
 
-// 11. Taking the channel down: "+450" over the signpost, the materials back.
+// 11. Taking the channel down: "+300 Twisted log" then "+150 Black stone" over the signpost, the materials back.
 console.log('taking down:');
 at = await tileToPage(plot.rect.col, plot.rect.row + 2);
 await page.mouse.click(at.x, at.y);
 await until((x) => x.build?.selected === 'clay-channel', 'the channel selected');
 await clickButton('TAKE DOWN');
-h = await until((x) => x.floats.includes('+450'), 'the "+450"', 100, 30);
+h = await until((x) => x.floats.includes("+300 Twisted log"), "the \"+300 Twisted log\"", 100, 30);
 expectEq('one piece left', h.response.plots[0].pieces.map((p) => p.pieceId).join(), 'seed-jars');
 expectEq('the count', h.build.count, 'Pieces 1/2');
 await page.screenshot({ path: join(OUT, '11-take-down.png') });

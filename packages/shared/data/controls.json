@@ -19,9 +19,7 @@
         "interact": {
           "calm": "Cross"
         },
-        "rotate": {
-          "calm": "Triangle"
-        },
+        "rotate": {},
         "chartPeek": "Circle",
         "journal": "Down",
         "inventory": "Touchpad",
@@ -85,9 +83,7 @@
         "interact": {
           "calm": "Cross"
         },
-        "rotate": {
-          "calm": "Triangle"
-        },
+        "rotate": {},
         "chartPeek": "Circle",
         "journal": "Down",
         "inventory": "Touchpad",

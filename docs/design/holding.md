@@ -776,14 +776,16 @@ with the plots' rows on every holding request and touched only by the holding mo
 request (the locks, the settle, then the act; every answer the holding):
 
 - `POST /api/plots/build` `{ plotId, pieceId, col, row, rotation }` refuses, in order: `unknown-plot` (400),
-  `unnamed-plot`, `faded` (409); `unknown-piece` (400: not in pieces.json, not available, or not this plot's kind);
-  `already-built` (409); `needs-line` (409, "Needs Writ line 2."); `needs-skill` (409, "Needs Farming 5."); `limit`
+  `unnamed-plot`, `faded` (409); `unknown-piece` (400: not in pieces.json, not available, or not this plot's kind;
+  "This station doesn't take that piece."); `already-built` (409, "One of those already stands in this plot.");
+  `needs-line` (409, "Needs Writ line 2."); `needs-skill` (409, "Needs Farming 5."); `limit`
   (409, "This plot can take no more pieces until your Writ has another line."); `blocked` (400: LORE's "That doesn't
-  fit there.", then the first reason in MAIN's placeholder words); `insufficient` (409, "Not enough in the store.":
+  fit there.", then the first reason in LORE's words: "It has to stand inside the plot's ring." / "It's on top of the
+  signpost." / "It's on top of another piece." / "It would block the way to the signpost."); `insufficient` (409, "Not enough in the store.":
   the pack doesn't count, GAME DESIGN's "the materials leave the store"). The cost leaves the store through
   `inventory.apply` with reason `build` ([inventory.md](inventory.md)).
 - `POST /api/plots/move` `{ plotId, pieceId, col, row, rotation }` is free: `unknown-plot`, `unnamed-plot`, `faded`,
-  `not-built` (409), `blocked`.
+  `not-built` (409, "That piece isn't standing here."), `blocked`.
 - `POST /api/plots/take-down` `{ plotId, pieceId }` puts every material back into the store (reason `build`, positive
   deltas), or refuses whole as `store-full` (409) with the take-all's line ("Store: twisted logs full.") when a stack
   doesn't fit, the piece staying up: nothing is ever destroyed. Also `unknown-plot`, `unnamed-plot`, `faded`, `not-built`.
@@ -804,13 +806,16 @@ heads "Field, level 2" (LORE: a comma, keeping the dot for the plot sentence's d
 row per piece the station can take, each with a placeholder picture (its footprint as tiles, with its initials),
 its name, its materials by display name against the store ("Twisted log 340/300", a short one in the warning
 token), what it needs ("Needs Writ line 2", "Needs Farming 5") and its effect line apart from the card ("+25% work
-speed"); LORE's card is the row's tooltip. Picking a row makes a **ghost** of the footprint follow the pointer (on
-a pad, a tile cursor moved by the D-pad or the left stick; on touch, a tap places it), snapped to the tile grid and
+speed"); LORE's card is the row's tooltip. A piece already standing in the plot shows "Standing" in place of its
+cost, and picking its row selects it, outlined in the world in the focus token (GAME DESIGN 2026-10-19). Picking a row makes a **ghost** of the footprint follow the pointer (on
+a pad, a tile cursor moved by the D-pad or the left stick; on touch, a tap places it and the footer says "Tap again
+to build"), snapped to the tile grid and
 centred on it: ART's tints (#102), `wheel-patina` where `placementProblems` is empty and `choir-flame-deep` where
 it isn't (and over the Kindled's own tile, which only the client knows), drawn as a 50 % checkerboard over the
-piece's pixels and a 1 px outline round its tiles, never an alpha fade and never a signal colour. **Rotate** is the
-`rotate` action of `controls.json` (R; Triangle in Calm on Triggers and Left-stick; unbound on Faces, where Triangle
-is heavy, [controls.md](controls.md)), and a TURN button beside the ghost on touch. **Confirm** (LMB, Enter, Cross;
+piece's pixels and a 1 px outline round its tiles, never an alpha fade and never a signal colour. **Rotate**: R on
+the keyboard (the `rotate` action of `controls.json`); on the pad build mode has its own buttons like a menu, the
+same on every preset (GAME DESIGN 2026-10-19): R1 turns the ghost clockwise and L1 back, Cross places, Circle leaves,
+nothing attacks or dodges ([controls.md](controls.md)); on touch a TURN button beside the ghost. **Confirm** (LMB, Enter, Cross;
 a second tap on the same tile) sends the route; **cancel** (RMB, Esc, Circle) drops the ghost, a second cancel leaves
 build mode. When the answer lands, **the building moment** plays on the new piece, whole frames timed by
 `tuning.json` `plots.buildMs` (400): a few dust pixels round its base for the first quarter, then the box rising from
@@ -819,7 +824,8 @@ box in `pieceFace` with a shaded front, a 1 px outline and the piece's initials 
 with the bodies by their base, dim like the ground when the plot is faded; their tiles are pillars in the roam
 (`setSolidPlots(plotIds, pieceTiles)`). In build mode a standing piece selected (a click on it; the cursor on it
 and Cross) offers **MOVE** (it becomes the ghost; confirming sends `move`) and **TAKE DOWN** (sends `take-down`;
-the refund's total floats over the signpost, "+450", as a take-all's). A refusal is one line in the list's footer,
+one float per item rises over the signpost by its display name, "+300 Twisted log" then "+150 Black stone", never a
+bare total (LORE). A refusal is one line in the list's footer,
 with the inventory's blink-and-hold timing, until the toasts of Task 7. The field's panel shows the real level and
 the real cycle ("By itself: 1 pale grain every 12 min"); the plot sentence panel lists the pieces by name (§11).
 

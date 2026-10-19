@@ -120,8 +120,10 @@ export function pieceRows(
   skills: Partial<Record<Skill, Pick<SkillView, 'level'>>>,
 ): PieceRowLines[] {
   return piecesFor(kindId).map((def) => {
-    const materials = materialLines(def, inventory);
-    const needs = needsLine(def, writLines, skills);
+    const built = plot.pieces.some((p) => p.pieceId === def.id);
+    // A piece already standing shows "Standing" in place of its cost (GAME DESIGN 2026-10-19).
+    const materials = built ? [{ itemId: '', text: BUILD_TEXT.STANDING, short: false }] : materialLines(def, inventory);
+    const needs = built ? null : needsLine(def, writLines, skills);
     return {
       pieceId: def.id,
       name: displayable(def.name),
@@ -132,7 +134,7 @@ export function pieceRows(
       effect: BUILD_TEXT.EFFECT_SPEED(Math.round(def.effect.permille / 10)),
       card: displayable(def.card),
       locked: needs !== null,
-      built: plot.pieces.some((p) => p.pieceId === def.id),
+      built,
       affordable: materials.every((m) => !m.short),
     };
   });
@@ -186,9 +188,9 @@ export function ghostAt(ghost: Ghost, tile: TilePoint): Ghost {
   return { ...ghost, col: tile.col - Math.floor((rect.cols - 1) / 2), row: tile.row - Math.floor((rect.rows - 1) / 2) };
 }
 
-/** The ghost turned a step clockwise about the same top-left tile. */
-export function rotateGhost(ghost: Ghost): Ghost {
-  return { ...ghost, rotation: nextRotation(ghost.rotation) };
+/** The ghost turned a step about the same top-left tile: clockwise (R, R1, TURN), or back with -1 (L1; GAME DESIGN 2026-10-19). */
+export function rotateGhost(ghost: Ghost, step: 1 | -1 = 1): Ghost {
+  return { ...ghost, rotation: step === 1 ? nextRotation(ghost.rotation) : nextRotation(nextRotation(nextRotation(ghost.rotation))) };
 }
 
 /** What the ghost's colour comes from: the shared placement reasons, plus the Kindled's own tile (positions are the client's). */
@@ -259,11 +261,11 @@ export function plotPieceTiles(plots: readonly Pick<PlotView, 'ground' | 'pieces
   return plots.filter((p) => p.ground !== null).flatMap((p) => standingTiles(p.pieces));
 }
 
-/** What floats over the signpost after a take-down: the refund's total, "+450", as a take-all's; null for an unknown piece. */
-export function refundFloat(pieceId: string): string | null {
+/** What floats over the signpost after a take-down: one float per item by its display name, "+300 Twisted log" then "+150 Black stone" (LORE); none for an unknown piece. */
+export function refundFloats(pieceId: string): string[] {
   const def = pieceDef(pieceId);
-  if (!def?.cost) return null;
-  return `+${def.cost.reduce((s, c) => s + c.quantity, 0)}`;
+  if (!def?.cost) return [];
+  return def.cost.map((c) => BUILD_TEXT.REFUND(c.quantity, displayable(itemDef(c.itemId)?.name ?? c.itemId.replaceAll('-', ' '))));
 }
 
 // --- The building moment -----------------------------------------------------------------

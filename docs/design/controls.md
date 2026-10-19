@@ -71,7 +71,7 @@ alternates) per action. No button is bound twice within a preset.
 | ability 1 (Haul) | L2                     | Circle, R1                      | L2                   |
 | ability 2 / 3    | Square / Triangle \*   | L2 / Up \*                      | Square / Triangle \* |
 | interact         | Cross (Calm)           | Cross (Calm)                    | Cross (Calm)         |
-| rotate           | Triangle (Calm)        | unbound \*\*                   | Triangle (Calm)      |
+| rotate           | build mode's R1 / L1 \*\* | build mode's R1 / L1 \*\*        | build mode's R1 / L1 \*\* |
 | chart peek       | Circle                 | R3                              | Circle               |
 | journal          | Down                   | Down                            | Down                 |
 | inventory        | Touchpad               | Touchpad                        | Touchpad             |
@@ -80,9 +80,11 @@ alternates) per action. No button is bound twice within a preset.
 
 \* Abilities 2 and 3 on buttons fire **only in Combat**; in Calm those buttons are free for menus
 and interaction. In Faces, Cross is the dodge in Combat and interact in Calm; L3 is unbound.
-\*\* Rotate (M2 Task 6, GAME DESIGN: Triangle in Calm) turns build mode's ghost. Faces binds Triangle
-to heavy in both contexts, so the uniqueness test leaves rotate unbound there (the turn button beside
-the ghost and R still turn it); GAME DESIGN has been asked for Faces' button.
+\*\* Rotate turns build mode's ghost (M2 Task 6). On the keyboard it is the `rotate` action, R. On the pad
+build mode has its own buttons like a menu, the same on every preset (GAME DESIGN 2026-10-19): R1 turns the
+ghost clockwise and L1 back (`MENU_BUTTONS.tabNext`/`tabPrev`), Cross places, Circle leaves, nothing attacks
+or dodges; so no preset binds `rotate` (Triangle in Calm clashed with Faces' heavy). On touch, the TURN button
+beside the ghost.
 Playtest 2 moved Triggers and Left-stick to light R1, heavy R2 (hold), Haul L2, dodge L1: the
 attacks on the right hand, the hook and the roll on the left. Faces is unchanged.
 

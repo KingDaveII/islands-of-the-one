@@ -60,6 +60,8 @@ export class PiecesLayer {
   private building: Building | null = null;
   private now = 0;
   private synced = '';
+  /** The standing piece selected in build mode (GAME DESIGN 2026-10-19: picking it highlights it in the world). */
+  private selected: { plotId: string; pieceId: string } | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -102,6 +104,14 @@ export class PiecesLayer {
         this.drawn.push({ plotId: plot.id, piece, rect, world, dim: plot.state === 'faded', g, initials });
       }
     }
+    for (const d of this.drawn) this.drawPiece(d, d.rect.rows);
+  }
+
+  /** The selected standing piece, outlined in the focus token until it is dropped, moved or taken down; null clears it. */
+  setSelected(plotId: string | null, pieceId: string | null): void {
+    const next = plotId && pieceId ? { plotId, pieceId } : null;
+    if (JSON.stringify(next) === JSON.stringify(this.selected)) return;
+    this.selected = next;
     for (const d of this.drawn) this.drawPiece(d, d.rect.rows);
   }
 
@@ -183,6 +193,9 @@ export class PiecesLayer {
     // The rows rise from the base: only the bottom `rowsShown` tile rows (and the box's top above the first of them) draw.
     const top = world.y + world.h - rowsShown * TILE_WORLD_PX;
     const h = rowsShown * TILE_WORLD_PX;
+    const picked = this.selected?.plotId === d.plotId && this.selected.pieceId === d.piece.pieceId;
+    // The selected piece's outline in the focus token, 2 px, so it reads in the world (a placeholder until ART).
+    if (picked) g.fillStyle(Palette.uiFocus, 1).fillRect(world.x - 2, top - BOX_RISE - 2, world.w + 4, h + BOX_RISE + 4);
     g.fillStyle(Palette.playerOutline, 1).fillRect(world.x - 1, top - BOX_RISE - 1, world.w + 2, h + BOX_RISE + 2);
     g.fillStyle(face, 1).fillRect(world.x, top - BOX_RISE, world.w, h);
     g.fillStyle(shade, 1).fillRect(world.x, top + h - BOX_RISE, world.w, BOX_RISE);

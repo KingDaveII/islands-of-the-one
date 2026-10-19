@@ -129,7 +129,13 @@ describe('pieces.json', () => {
     expect(BUILD_TEXT.PIECES_NONE_YET).toBe('Pieces: none yet');
     expect(BUILD_TEXT.LIMIT).toBe('This plot can take no more pieces until your Writ has another line.');
     expect(BUILD_TEXT.STORE_FULL('twisted-log')).toBe('Store: twisted logs full.');
-    expect(BUILD_TEXT.BLOCKED_BECAUSE('outside')).toBe("That doesn't fit there. It must stand inside the plot.");
+    expect(BUILD_TEXT.BLOCKED_BECAUSE('outside')).toBe("That doesn't fit there. It has to stand inside the plot's ring.");
+    expect(BUILD_TEXT.BLOCKED_BECAUSE('blocks-signpost')).toBe("That doesn't fit there. It would block the way to the signpost.");
+    expect([BUILD_TEXT.UNKNOWN_PIECE, BUILD_TEXT.ALREADY_BUILT, BUILD_TEXT.NOT_BUILT]).toEqual([
+      "This station doesn't take that piece.",
+      'One of those already stands in this plot.',
+      "That piece isn't standing here.",
+    ]);
     expect(needsSkillLine({ skill: 'farming', level: 5 })).toBe('Needs Farming 5');
     expect(pluralItemName('black-stone')).toBe('black stones');
   });
