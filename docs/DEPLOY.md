@@ -71,19 +71,23 @@ Environment **`staging`** (Settings → Environments):
 
 | Kind     | Name                 | Value                                                                    |
 | -------- | -------------------- | ------------------------------------------------------------------------ |
-| variable | `DEPLOY_HOST`        | SSH host, when it is the public staging domain                           |
-| secret   | `DEPLOY_HOST`        | instead of the variable, when the SSH host is an IP address              |
+| secret   | `STAGING_DOMAIN`     | e.g. `203-0-113-7.sslip.io`                                              |
+| secret   | `DEPLOY_HOST`        | SSH host (the staging domain, or the VPS address)                        |
 | variable | `DEPLOY_USER`        | `deploy`                                                                 |
 | secret   | `DEPLOY_PORT`        | SSH port                                                                 |
 | secret   | `DEPLOY_SSH_KEY`     | private key (OpenSSH format) for `DEPLOY_USER`                           |
 | secret   | `DEPLOY_KNOWN_HOSTS` | `ssh-keyscan -p <port> <host>` output; strict host checking is always on |
-| variable | `STAGING_DOMAIN`     | e.g. `203-0-113-7.sslip.io`                                              |
 
-Set `DEPLOY_HOST` once, as a variable or as a secret, never both (the variable wins). A bare IP
-address stays a secret: variables are visible to anyone with read access to the repo. `DEPLOY_USER`
-is a variable because a secret's value is masked everywhere in the logs, which turned every
-"deploy" into `***`; a secret of the same name still works as a fallback. The "Configure SSH" step
-logs where the SSH host came from and whether it equals `STAGING_DOMAIN`, without printing it.
+**The repo is public, and so are its Actions logs.** The staging domain names the VPS address
+(sslip.io), so `STAGING_DOMAIN` and `DEPLOY_HOST` are secrets: GitHub masks them wherever they show
+up in a log, and the workflow keeps them out of step names, `echo`s and the environment URL. Never
+add them as variables, which anyone can read. `deploy.env` carries the domain to the VPS for Caddy
+but is never printed. On a failed deploy the Diagnostics step shows `compose ps` only: server and
+Caddy logs contain visitors' IP addresses, so read them on the VPS (`deploy.sh --logs`).
+
+`DEPLOY_USER` is a variable because a secret's value is masked everywhere in the logs, which turned
+every "deploy" into `***`; a secret of the same name still works as a fallback. The "Configure SSH"
+step logs whether the SSH host is the staging domain, without printing either.
 
 No registry PAT is needed: workflows push with `GITHUB_TOKEN` (`packages: write`), and the deploy job
 passes the same short-lived token to `deploy.sh --login` over stdin; `deploy.sh` logs the VPS into
@@ -100,7 +104,7 @@ repository.
    logs in to `ghcr.io`, runs `compose pull` and `compose up -d --remove-orphans`, and logs out on exit.
    The server applies pending migrations on start.
 5. Poll `https://$STAGING_DOMAIN/health` for up to 5 minutes until it reports `ok` **and** the new
-   SHA; otherwise the job fails and prints `compose ps` + recent server/caddy logs.
+   SHA; otherwise the job fails and prints `compose ps`.
 
 Deploys are serialized (`concurrency: deploy-staging`).
 
