@@ -20,9 +20,10 @@ import {
  * is tested in node: the queue (each toast holds `toastMs` then goes in one
  * frame, a new one pushes the older up a line, a third drops the oldest at
  * once, the same text restarts its hold instead of stacking) and the
- * triggers (a skill's level rising between two answers of one session, the
- * Writ falling under a day or going dark once per drain, remembered per
- * Kindled, a take-all's full store, anything refused as pack-full). The
+ * triggers (a skill's level above the last this account saw, remembered
+ * per account, the Writ falling under a day or going dark once per drain,
+ * remembered per Kindled, a take-all's full store, anything refused as
+ * pack-full). The
  * strip (ui/toasts.ts) draws the queue; the scenes feed the triggers.
  */
 
@@ -82,18 +83,31 @@ export function toastGlyph(kind: ToastKind, skill: Skill | null = null): ToastGl
   return { name: toastGlyphName(kind, skill) };
 }
 
+/** Each skill's level, as the client last saw it (`LevelMemory`). */
+export type SkillLevels = Record<Skill, number>;
+
+/** The levels a holding answer carries. */
+export function skillLevels(res: HoldingResponse): SkillLevels {
+  return Object.fromEntries(SKILLS.map((s) => [s, res.skills[s].level])) as SkillLevels;
+}
+
 /**
- * The skills whose level rose from the previous answer of this session to
- * the next, with the new level. None on a session's first answer: levels
- * gained while away belong to the card.
+ * The skills whose level in the answer is above the last this account saw
+ * (GAME DESIGN, 2026-10-19: an absence under 30 minutes shows no card, but
+ * its toasts show on return), with the new level. None with nothing seen
+ * yet (a new browser has nothing to compare), none for a skill the memory
+ * lacks, and none on an answer carrying the away card, which says it.
  */
-export function levelUps(prev: HoldingResponse | null, next: HoldingResponse): { skill: Skill; level: number }[] {
-  if (!prev) return [];
+export function levelUps(
+  seen: Partial<SkillLevels> | null,
+  next: HoldingResponse,
+): { skill: Skill; level: number }[] {
+  if (!seen || next.away) return [];
   const ups: { skill: Skill; level: number }[] = [];
   for (const skill of SKILLS) {
-    const before = prev.skills[skill].level;
+    const before = seen[skill];
     const after = next.skills[skill].level;
-    if (after > before) ups.push({ skill, level: after });
+    if (before !== undefined && after > before) ups.push({ skill, level: after });
   }
   return ups;
 }
@@ -106,7 +120,9 @@ export function skillLevelToast(skill: Skill, level: number): { text: string; gl
 /** The store-full toast after a take-all that left some of a stack in the basket (`take.left`), or null when all moved. */
 export function storeFullToast(take: HoldingTake): { text: string; glyph: ToastGlyph } | null {
   const stuck = take.left[0];
-  return stuck ? { text: TOAST_TEXT.storeFull(stuck.itemId), glyph: toastGlyph('store-full') } : null;
+  return stuck
+    ? { text: TOAST_TEXT.storeFull(stuck.itemId), glyph: toastGlyph('store-full') }
+    : null;
 }
 
 /** The pack-full toast (anything refused as `pack-full`). */
@@ -115,12 +131,24 @@ export function packFullToast(): { text: string; glyph: ToastGlyph } {
 }
 
 /** Which Writ toasts a Writ is due at the server's clock: low while under a day with charge, dark once it has none; each keyed by the drain (`emptyAt`). */
-export function writToastsDue(view: WritView, serverMs: number): { low: boolean; dark: boolean; emptyAt: string } {
+export function writToastsDue(
+  view: WritView,
+  serverMs: number,
+): { low: boolean; dark: boolean; emptyAt: string } {
   const d = writView(writFromView(view), serverMs);
-  return { low: d.state === 'flickering', dark: d.state === 'dark' || d.state === 'fading', emptyAt: view.emptyAt };
+  return {
+    low: d.state === 'flickering',
+    dark: d.state === 'dark' || d.state === 'fading',
+    emptyAt: view.emptyAt,
+  };
 }
 
 export type WritToastKind = 'writLow' | 'writDark';
+
+/** The storage key of the levels memory: `iot.toast.levels.<who>`. */
+export function levelsKey(who: string): string {
+  return `iot.toast.levels.${who}`;
+}
 
 /** The storage key of a Writ toast's memory: `iot.toast.writLow.<who>`, `who` naming the Kindled. */
 export function writToastKey(kind: WritToastKind, who: string): string {
@@ -140,6 +168,42 @@ export function defaultToastStorage(): ToastStorage | null {
     return g.localStorage ?? null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Remembers the skill levels the client last saw, per account, in
+ * `localStorage`, written on every holding answer and read on the next:
+ * a level above the stored one is a toast, so a level-up during an absence
+ * too short for the card still gets its toast on return. Every read and
+ * write is wrapped; a missing or malformed record reads as nothing seen.
+ */
+export class LevelMemory {
+  constructor(private readonly storage: ToastStorage | null) {}
+
+  read(who: string): Partial<SkillLevels> | null {
+    try {
+      const raw = this.storage?.getItem(levelsKey(who));
+      if (!raw) return null;
+      const parsed: unknown = JSON.parse(raw);
+      if (typeof parsed !== 'object' || parsed === null) return null;
+      const out: Partial<SkillLevels> = {};
+      for (const skill of SKILLS) {
+        const v = (parsed as Record<string, unknown>)[skill];
+        if (typeof v === 'number' && Number.isInteger(v) && v >= 1) out[skill] = v;
+      }
+      return out;
+    } catch {
+      return null;
+    }
+  }
+
+  write(who: string, levels: SkillLevels): void {
+    try {
+      this.storage?.setItem(levelsKey(who), JSON.stringify(levels));
+    } catch {
+      // Without storage the next landing has nothing to compare and toasts nothing; that is fine.
+    }
   }
 }
 

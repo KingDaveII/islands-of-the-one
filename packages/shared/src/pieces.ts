@@ -11,7 +11,7 @@ import {
   type TilePoint,
   type TileRect,
 } from './holding.js';
-import { isItemId, pluralItemName, SKILL_NAMES } from './items.js';
+import { isItemId, itemCount, pluralItemName, SKILL_NAMES } from './items.js';
 import { isSkill, type Skill } from './skills.js';
 
 /**
@@ -98,7 +98,18 @@ export interface PiecesData {
 }
 
 const PIECE_ID = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
-const KEYS = ['id', 'stationKind', 'name', 'card', 'available', 'cost', 'footprint', 'skill', 'writLine', 'effect'];
+const KEYS = [
+  'id',
+  'stationKind',
+  'name',
+  'card',
+  'available',
+  'cost',
+  'footprint',
+  'skill',
+  'writLine',
+  'effect',
+];
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -125,7 +136,8 @@ function parseCost(value: unknown, where: string, problems: string[]): PieceCost
     else if (seen.has(entry.itemId)) problems.push(`${at}: ${entry.itemId} is listed twice`);
     else seen.add(entry.itemId);
     if (!isCount(entry.quantity)) problems.push(`${at}: quantity must be a positive integer`);
-    if (isItemId(entry.itemId) && isCount(entry.quantity)) out.push({ itemId: entry.itemId, quantity: entry.quantity });
+    if (isItemId(entry.itemId) && isCount(entry.quantity))
+      out.push({ itemId: entry.itemId, quantity: entry.quantity });
   });
   return problems.length > before ? null : out;
 }
@@ -136,9 +148,12 @@ function parseFootprint(value: unknown, where: string, problems: string[]): Piec
     return null;
   }
   const extra = Object.keys(value).filter((k) => !['cols', 'rows'].includes(k));
-  if (extra.length > 0) problems.push(`${where}: footprint has unknown field(s) ${extra.join(', ')}`);
+  if (extra.length > 0)
+    problems.push(`${where}: footprint has unknown field(s) ${extra.join(', ')}`);
   if (value.cols > PLOT_SIZE || value.rows > PLOT_SIZE) {
-    problems.push(`${where}: footprint ${value.cols} x ${value.rows} doesn't fit a ${PLOT_SIZE} x ${PLOT_SIZE} plot`);
+    problems.push(
+      `${where}: footprint ${value.cols} x ${value.rows} doesn't fit a ${PLOT_SIZE} x ${PLOT_SIZE} plot`,
+    );
     return null;
   }
   return { cols: value.cols, rows: value.rows };
@@ -185,9 +200,12 @@ export function validatePiecesData(
   data: unknown,
   plotKindIds: readonly string[],
 ): { ok: true; data: PiecesData } | { ok: false; problems: string[] } {
-  if (!isObject(data) || !Array.isArray(data.pieces)) return { ok: false, problems: ['expected { piecesPerLine, pieces: [...] }'] };
+  if (!isObject(data) || !Array.isArray(data.pieces))
+    return { ok: false, problems: ['expected { piecesPerLine, pieces: [...] }'] };
   const problems: string[] = [];
-  const extraTop = Object.keys(data).filter((k) => !['$comment', 'piecesPerLine', 'pieces'].includes(k));
+  const extraTop = Object.keys(data).filter(
+    (k) => !['$comment', 'piecesPerLine', 'pieces'].includes(k),
+  );
   if (extraTop.length > 0) problems.push(`unknown field(s) ${extraTop.join(', ')}`);
   if (!isCount(data.piecesPerLine)) problems.push('piecesPerLine must be a positive integer');
   const pieces: PieceDef[] = [];
@@ -200,7 +218,8 @@ export function validatePiecesData(
     }
     const extra = Object.keys(entry).filter((k) => !KEYS.includes(k));
     if (extra.length > 0) problems.push(`${at}: unknown field(s) ${extra.join(', ')}`);
-    const { id, stationKind, name, card, available, cost, footprint, skill, writLine, effect } = entry;
+    const { id, stationKind, name, card, available, cost, footprint, skill, writLine, effect } =
+      entry;
     if (typeof id !== 'string' || !PIECE_ID.test(id)) {
       problems.push(`${at}: id must be kebab-case (it is stored)`);
       return;
@@ -209,19 +228,27 @@ export function validatePiecesData(
     if (seen.has(id)) problems.push(`${where}: duplicate id`);
     seen.add(id);
     const before = problems.length;
-    if (available !== undefined && typeof available !== 'boolean') problems.push(`${where}: available must be a boolean when present`);
+    if (available !== undefined && typeof available !== 'boolean')
+      problems.push(`${where}: available must be a boolean when present`);
     const isAvailable = available !== false;
-    if (typeof stationKind !== 'string' || !PIECE_ID.test(stationKind)) problems.push(`${where}: stationKind must be kebab-case`);
+    if (typeof stationKind !== 'string' || !PIECE_ID.test(stationKind))
+      problems.push(`${where}: stationKind must be kebab-case`);
     else if (isAvailable && !plotKindIds.includes(stationKind))
-      problems.push(`${where}: an available piece's stationKind must be a plot kind of stations.json (${plotKindIds.join(', ') || 'none'})`);
+      problems.push(
+        `${where}: an available piece's stationKind must be a plot kind of stations.json (${plotKindIds.join(', ') || 'none'})`,
+      );
     for (const [key, text] of [
       ['name', name],
       ['card', card],
     ] as const)
-      if (typeof text !== 'string' || text.trim() === '') problems.push(`${where}: ${key} must be non-empty text`);
+      if (typeof text !== 'string' || text.trim() === '')
+        problems.push(`${where}: ${key} must be non-empty text`);
       else {
         const missing = Array.from(text).filter((ch) => !isDrawable(ch));
-        if (missing.length > 0) problems.push(`${where}: the fonts can't draw "${missing[0] ?? ''}" in ${key} (don't change the text; flag it)`);
+        if (missing.length > 0)
+          problems.push(
+            `${where}: the fonts can't draw "${missing[0] ?? ''}" in ${key} (don't change the text; flag it)`,
+          );
       }
     let parsedCost: PieceCost[] | null = null;
     let parsedFootprint: PieceFootprint | null = null;
@@ -284,8 +311,13 @@ export function isAvailablePiece(def: PieceDef | undefined): def is AvailablePie
 }
 
 /** The pieces a station kind can take (its available ones), in pieces.json order. */
-export function piecesFor(stationKind: string, pieces: readonly PieceDef[] = PIECES): AvailablePieceDef[] {
-  return pieces.filter((p): p is AvailablePieceDef => p.stationKind === stationKind && isAvailablePiece(p));
+export function piecesFor(
+  stationKind: string,
+  pieces: readonly PieceDef[] = PIECES,
+): AvailablePieceDef[] {
+  return pieces.filter(
+    (p): p is AvailablePieceDef => p.stationKind === stationKind && isAvailablePiece(p),
+  );
 }
 
 // --- The level and the speed -------------------------------------------------------
@@ -308,7 +340,10 @@ export function cycleSpeedPermille(pieces: readonly Pick<StandingPiece, 'pieceId
 }
 
 /** A basket cycle's real length: `round(cycleMs × 1000 / speed)` (the field: 15 min, 12 min with one piece, 10 with two). */
-export function cycleLengthMs(cycle: Pick<StationCycle, 'cycleMs'>, pieces: readonly Pick<StandingPiece, 'pieceId'>[] = []): number {
+export function cycleLengthMs(
+  cycle: Pick<StationCycle, 'cycleMs'>,
+  pieces: readonly Pick<StandingPiece, 'pieceId'>[] = [],
+): number {
   return Math.round((cycle.cycleMs * 1000) / cycleSpeedPermille(pieces));
 }
 
@@ -320,8 +355,13 @@ export function pieceLimit(writLines: number, perLine: number = PIECES_PER_LINE)
 // --- Footprints and placement ----------------------------------------------------------
 
 /** A footprint turned: 90 and 270 swap its cols and rows. */
-export function rotatedFootprint(footprint: PieceFootprint, rotation: PieceRotation): PieceFootprint {
-  return rotation === 90 || rotation === 270 ? { cols: footprint.rows, rows: footprint.cols } : { ...footprint };
+export function rotatedFootprint(
+  footprint: PieceFootprint,
+  rotation: PieceRotation,
+): PieceFootprint {
+  return rotation === 90 || rotation === 270
+    ? { cols: footprint.rows, rows: footprint.cols }
+    : { ...footprint };
 }
 
 /** The next rotation clockwise (R, Triangle): 0, 90, 180, 270, 0. */
@@ -330,7 +370,12 @@ export function nextRotation(rotation: PieceRotation): PieceRotation {
 }
 
 /** The tiles a footprint covers standing at (col, row) with a rotation. */
-export function pieceRect(footprint: PieceFootprint, col: number, row: number, rotation: PieceRotation): TileRect {
+export function pieceRect(
+  footprint: PieceFootprint,
+  col: number,
+  row: number,
+  rotation: PieceRotation,
+): TileRect {
   const fp = rotatedFootprint(footprint, rotation);
   return { col, row, cols: fp.cols, rows: fp.rows };
 }
@@ -345,7 +390,8 @@ export function standingRect(piece: StandingPiece): TileRect | null {
 /** Every tile of a rectangle, row by row. */
 export function rectTiles(rect: TileRect): TilePoint[] {
   const out: TilePoint[] = [];
-  for (let r = rect.row; r < rect.row + rect.rows; r++) for (let c = rect.col; c < rect.col + rect.cols; c++) out.push({ col: c, row: r });
+  for (let r = rect.row; r < rect.row + rect.rows; r++)
+    for (let c = rect.col; c < rect.col + rect.cols; c++) out.push({ col: c, row: r });
   return out;
 }
 
@@ -358,11 +404,20 @@ export function standingTiles(pieces: readonly StandingPiece[]): TilePoint[] {
 }
 
 const within = (inner: TileRect, outer: TileRect): boolean =>
-  inner.col >= outer.col && inner.row >= outer.row && inner.col + inner.cols <= outer.col + outer.cols && inner.row + inner.rows <= outer.row + outer.rows;
+  inner.col >= outer.col &&
+  inner.row >= outer.row &&
+  inner.col + inner.cols <= outer.col + outer.cols &&
+  inner.row + inner.rows <= outer.row + outer.rows;
 const overlaps = (a: TileRect, b: TileRect): boolean =>
-  a.col < b.col + b.cols && b.col < a.col + a.cols && a.row < b.row + b.rows && b.row < a.row + a.rows;
+  a.col < b.col + b.cols &&
+  b.col < a.col + a.cols &&
+  a.row < b.row + b.rows &&
+  b.row < a.row + a.rows;
 const covers = (rect: TileRect, p: TilePoint): boolean =>
-  p.col >= rect.col && p.col < rect.col + rect.cols && p.row >= rect.row && p.row < rect.row + rect.rows;
+  p.col >= rect.col &&
+  p.col < rect.col + rect.cols &&
+  p.row >= rect.row &&
+  p.row < rect.row + rect.rows;
 
 /** Whether a layout tile is ground the Kindled can walk (the plots' ground and the start; station letters and the edge are not). */
 export function isWalkableTile(layout: HoldingLayout, col: number, row: number): boolean {
@@ -371,7 +426,12 @@ export function isWalkableTile(layout: HoldingLayout, col: number, row: number):
 }
 
 /** Why a footprint can't stand where it is asked to, in the order the server's refusal names them. */
-export const PLACEMENT_PROBLEMS = ['outside', 'on-signpost', 'overlaps', 'blocks-signpost'] as const;
+export const PLACEMENT_PROBLEMS = [
+  'outside',
+  'on-signpost',
+  'overlaps',
+  'blocks-signpost',
+] as const;
 export type PlacementProblem = (typeof PLACEMENT_PROBLEMS)[number];
 
 /** Where a piece is asked to stand: its kind (the footprint comes from pieces.json), its top-left tile and its rotation. */
@@ -399,7 +459,8 @@ export function placementProblems(
   candidate: Placement,
 ): PlacementProblem[] {
   const def = pieceDef(candidate.pieceId);
-  if (!isAvailablePiece(def)) throw new Error(`placement: ${candidate.pieceId} is not a piece that can be built`);
+  if (!isAvailablePiece(def))
+    throw new Error(`placement: ${candidate.pieceId} is not a piece that can be built`);
   const rect = pieceRect(def.footprint, candidate.col, candidate.row, candidate.rotation);
   const problems: PlacementProblem[] = [];
   if (!within(rect, plot.rect)) problems.push('outside');
@@ -411,7 +472,8 @@ export function placementProblems(
   const others = pieces.filter((p) => p.pieceId !== candidate.pieceId);
   const otherRects = others.map(standingRect).filter((r): r is TileRect => r !== null);
   if (otherRects.some((r) => overlaps(rect, r))) problems.push('overlaps');
-  if (!onSignpost && !signpostReachable(layout, plot, [...otherRects, rect])) problems.push('blocks-signpost');
+  if (!onSignpost && !signpostReachable(layout, plot, [...otherRects, rect]))
+    problems.push('blocks-signpost');
   return problems;
 }
 
@@ -421,17 +483,26 @@ export function placementProblems(
  * starts from every free edge tile of the plot that has walkable ground
  * outside it and walks the plot's free tiles four ways.
  */
-export function signpostReachable(layout: HoldingLayout, plot: LayoutPlot, solid: readonly TileRect[]): boolean {
+export function signpostReachable(
+  layout: HoldingLayout,
+  plot: LayoutPlot,
+  solid: readonly TileRect[],
+): boolean {
   const { rect, station } = plot;
   const blocked = (c: number, r: number): boolean =>
     covers(station.rect, { col: c, row: r }) || solid.some((s) => covers(s, { col: c, row: r }));
   const inside = (c: number, r: number): boolean => covers(rect, { col: c, row: r });
-  const free = (c: number, r: number): boolean => inside(c, r) && isWalkableTile(layout, c, r) && !blocked(c, r);
+  const free = (c: number, r: number): boolean =>
+    inside(c, r) && isWalkableTile(layout, c, r) && !blocked(c, r);
   const key = (c: number, r: number): string => `${c},${r}`;
   const seen = new Set<string>();
   const stack: TilePoint[] = [];
   for (const t of rectTiles(rect)) {
-    const edge = t.col === rect.col || t.col === rect.col + rect.cols - 1 || t.row === rect.row || t.row === rect.row + rect.rows - 1;
+    const edge =
+      t.col === rect.col ||
+      t.col === rect.col + rect.cols - 1 ||
+      t.row === rect.row ||
+      t.row === rect.row + rect.rows - 1;
     if (!edge || !free(t.col, t.row)) continue;
     const outsideWalkable = (
       [
@@ -440,7 +511,10 @@ export function signpostReachable(layout: HoldingLayout, plot: LayoutPlot, solid
         [0, 1],
         [0, -1],
       ] as const
-    ).some(([dc, dr]) => !inside(t.col + dc, t.row + dr) && isWalkableTile(layout, t.col + dc, t.row + dr));
+    ).some(
+      ([dc, dr]) =>
+        !inside(t.col + dc, t.row + dr) && isWalkableTile(layout, t.col + dc, t.row + dr),
+    );
     if (!outsideWalkable) continue;
     seen.add(key(t.col, t.row));
     stack.push(t);
@@ -508,13 +582,14 @@ export const BUILD_TEXT = {
   STANDING: 'Standing',
   /** Touch: after the first tap places the ghost, the footer says how to build it (GAME DESIGN 2026-10-19). */
   TAP_AGAIN: 'Tap again to build',
-  /** A take-down's refund, one float per item by its display name (LORE: "+300 Twisted log", never a bare total). */
-  REFUND: (quantity: number, name: string): string => `+${quantity} ${name}`,
+  /** A take-down's refund, one float per item with its count and items.json's plural, lowercase (LORE §16.8: "+300 twisted logs", "+1 twisted log", never a bare total). */
+  REFUND: (itemId: string, quantity: number): string => `+${itemCount(itemId, quantity)}`,
   // The refusals (LORE's lines, the server's messages).
   INSUFFICIENT: 'Not enough in the store.',
   BLOCKED: "That doesn't fit there.",
   /** `blocked`: LORE's line, then the first reason (LORE's words, `PLACEMENT_WORDS`). */
-  BLOCKED_BECAUSE: (reason: PlacementProblem): string => `That doesn't fit there. ${PLACEMENT_WORDS[reason]}`,
+  BLOCKED_BECAUSE: (reason: PlacementProblem): string =>
+    `That doesn't fit there. ${PLACEMENT_WORDS[reason]}`,
   LIMIT: 'This plot can take no more pieces until your Writ has another line.',
   NEEDS_LINE_REFUSAL: (line: number): string => `Needs Writ line ${line}.`,
   NEEDS_SKILL_REFUSAL: (skillName: string, level: number): string => `Needs ${skillName} ${level}.`,

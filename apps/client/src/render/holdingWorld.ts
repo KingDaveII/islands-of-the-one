@@ -15,8 +15,14 @@ import {
   type SpriteSheetName,
   type TileRect,
 } from '@iot/shared';
-import type { RoamState } from '@iot/sim';
-import { nearestPart, opaqueBoundsIn, propBase, propIdlePlays, standsOnGround } from '../game/holdingView.js';
+import { TURN, type RoamState } from '@iot/sim';
+import {
+  nearestPart,
+  opaqueBoundsIn,
+  propBase,
+  propIdlePlays,
+  standsOnGround,
+} from '../game/holdingView.js';
 import { RoamGaitClock, roamPose, sheetFacing, type KindledPose } from './animState.js';
 import { PLAYER_SHEATHED_SHEET } from './characters.js';
 import { DEPTH } from './depth.js';
@@ -36,9 +42,10 @@ type G = Phaser.GameObjects.Graphics;
 
 /** A prop sheet's data: a loaded sheet's, or an optional one's (the second tree) when it was on disk at build time. */
 function sheetData(name: string): SpriteSheet | undefined {
-  return Object.hasOwn(spriteSheets, name) ? spriteSheets[name as SpriteSheetName] : optionalSheet(name);
+  return Object.hasOwn(spriteSheets, name)
+    ? spriteSheets[name as SpriteSheetName]
+    : optionalSheet(name);
 }
-
 
 /** The seeds Kesh throws, drawn from their item icon (kesh.json names the item; the icon sheet has a cell per item). */
 const SEEDS_ITEM = 'grey-seeds';
@@ -154,7 +161,11 @@ export class HoldingWorld {
       if (!kindSheet || station.reserved) continue;
       // A part may name its own sheet (the second tree); until that optional sheet is on disk, the kind's.
       for (const part of station.parts)
-        stand(station.id, part.rect, part.sheet && scene.textures.exists(part.sheet) ? part.sheet : kindSheet);
+        stand(
+          station.id,
+          part.rect,
+          part.sheet && scene.textures.exists(part.sheet) ? part.sheet : kindSheet,
+        );
     }
     stand(null, layout.kesh.rock, KESH_ROCK_SHEET);
     // Kesh at the rock's world point, one depth step above it, no shadow (his clay is drawn in: no tone swap).
@@ -183,10 +194,17 @@ export class HoldingWorld {
       const b = opaqueBoundsIn(img, f.frame);
       if (!b) continue;
       box = box
-        ? { x0: Math.min(box.x0, b.x), y0: Math.min(box.y0, b.y), x1: Math.max(box.x1, b.x + b.w), y1: Math.max(box.y1, b.y + b.h) }
+        ? {
+            x0: Math.min(box.x0, b.x),
+            y0: Math.min(box.y0, b.y),
+            x1: Math.max(box.x1, b.x + b.w),
+            y1: Math.max(box.y1, b.y + b.h),
+          }
         : { x0: b.x, y0: b.y, x1: b.x + b.w, y1: b.y + b.h };
     }
-    return box ? { x: box.x0 - origin.x, y: box.y0 - origin.y, w: box.x1 - box.x0, h: box.y1 - box.y0 } : null;
+    return box
+      ? { x: box.x0 - origin.x, y: box.y0 - origin.y, w: box.x1 - box.x0, h: box.y1 - box.y0 }
+      : null;
   }
 
   /** Kesh's drawn box in world px (his opaque pixels over every frame), for the HUD's dither: he is a body while he can be talked to. */
@@ -203,7 +221,8 @@ export class HoldingWorld {
     if (!img || !f) return cell.h - origin.y;
     for (let y = 0; y < f.frame.h; y++)
       for (let x = 0; x < f.frame.w; x++)
-        if ((img.data[((f.frame.y + y) * img.width + f.frame.x + x) * 4 + 3] ?? 0) > 0) return origin.y - y;
+        if ((img.data[((f.frame.y + y) * img.width + f.frame.x + x) * 4 + 3] ?? 0) > 0)
+          return origin.y - y;
     return cell.h - origin.y;
   }
 
@@ -240,7 +259,11 @@ export class HoldingWorld {
   /** The clay tile's texture, made on first use: a `clayTile` face with a `clayTileEdge` 1 px rim and the player outline. */
   private clayTileTexture(): string | null {
     if (this.scene.textures.exists(CLAY_TILE_TEXTURE)) return CLAY_TILE_TEXTURE;
-    const canvas = this.scene.textures.createCanvas(CLAY_TILE_TEXTURE, CLAY_TILE_W + 2, CLAY_TILE_H + 2);
+    const canvas = this.scene.textures.createCanvas(
+      CLAY_TILE_TEXTURE,
+      CLAY_TILE_W + 2,
+      CLAY_TILE_H + 2,
+    );
     const ctx = canvas?.getContext();
     if (!canvas || !ctx) return null;
     const hex = (c: number): string => `#${c.toString(16).padStart(6, '0')}`;
@@ -258,13 +281,18 @@ export class HoldingWorld {
   private tossTexture(kind: TossKind): { key: string; frame: string | undefined } | null {
     switch (kind) {
       case 'sliver':
-        return optionalSheet(SPARKGLASS_SHEET) && this.scene.textures.exists(SPARKGLASS_SHEET) ? { key: SPARKGLASS_SHEET, frame: 'idle_0' } : null;
+        return optionalSheet(SPARKGLASS_SHEET) && this.scene.textures.exists(SPARKGLASS_SHEET)
+          ? { key: SPARKGLASS_SHEET, frame: 'idle_0' }
+          : null;
       case 'word': {
         const key = this.clayTileTexture();
         return key ? { key, frame: undefined } : null;
       }
       case 'seeds':
-        return this.scene.textures.exists(ITEM_ICON_TEXTURE) && this.scene.textures.get(ITEM_ICON_TEXTURE).has(SEEDS_ITEM) ? { key: ITEM_ICON_TEXTURE, frame: SEEDS_ITEM } : null;
+        return this.scene.textures.exists(ITEM_ICON_TEXTURE) &&
+          this.scene.textures.get(ITEM_ICON_TEXTURE).has(SEEDS_ITEM)
+          ? { key: ITEM_ICON_TEXTURE, frame: SEEDS_ITEM }
+          : null;
     }
   }
 
@@ -285,7 +313,9 @@ export class HoldingWorld {
       return;
     }
     this.flight?.image.destroy();
-    const image = this.scene.add.image(from.x, from.y, texture.key, texture.frame).setDepth(DEPTH.fx);
+    const image = this.scene.add
+      .image(from.x, from.y, texture.key, texture.frame)
+      .setDepth(DEPTH.fx);
     this.layer.add(image);
     this.flight = { image, kind, from, to, startMs: this.scene.time.now, onLand };
   }
@@ -296,17 +326,27 @@ export class HoldingWorld {
   }
 
   /** Kesh's row and frame this frame, and the thrown thing's place and kind while it flies (playtests). */
-  keshState(): { row: KeshRow; frame: string; flight: { x: number; y: number; kind: TossKind } | null } {
+  keshState(): {
+    row: KeshRow;
+    frame: string;
+    flight: { x: number; y: number; kind: TossKind } | null;
+  } {
     return {
       row: this.keshRow,
       frame: this.kesh.frame.name,
-      flight: this.flight ? { x: this.flight.image.x, y: this.flight.image.y, kind: this.flight.kind } : null,
+      flight: this.flight
+        ? { x: this.flight.image.x, y: this.flight.image.y, kind: this.flight.kind }
+        : null,
     };
   }
 
   /** The release and the flight, each frame: the thing leaves the hand on the release frame, then flies for `tossMs`. */
   private updateToss(): void {
-    if (this.keshRow === 'toss' && !this.tossReleasedAt && this.kesh.frame.name === tossReleaseFrame()) {
+    if (
+      this.keshRow === 'toss' &&
+      !this.tossReleasedAt &&
+      this.kesh.frame.name === tossReleaseFrame()
+    ) {
       this.tossReleasedAt = true;
       const release = this.tossPending;
       this.tossPending = null;
@@ -370,15 +410,30 @@ export class HoldingWorld {
    */
   propTop(stationId: string, near?: { x: number; y: number }): { x: number; y: number } | null {
     const station = this.layout.stations.find((s) => s.id === stationId);
-    const part = station && near ? nearestPart(station, near.x, near.y) : (station?.parts[0] ?? null);
+    const part =
+      station && near ? nearestPart(station, near.x, near.y) : (station?.parts[0] ?? null);
     const p = this.props.find((x) => x.stationId === stationId && (!part || x.rect === part.rect));
     if (!p) return null;
     return { x: p.image.x, y: p.image.y - p.image.height + 10 };
   }
 
   /** Every prop's sheet and frame, in layout order, Kesh's rock last (playtests). */
-  propFrames(): { stationId: string | null; sheet: string; frame: string; x: number; y: number; depth: number }[] {
-    return this.props.map((p) => ({ stationId: p.stationId, sheet: p.sheet, frame: p.image.frame.name, x: p.image.x, y: p.image.y, depth: p.image.depth }));
+  propFrames(): {
+    stationId: string | null;
+    sheet: string;
+    frame: string;
+    x: number;
+    y: number;
+    depth: number;
+  }[] {
+    return this.props.map((p) => ({
+      stationId: p.stationId,
+      sheet: p.sheet,
+      frame: p.image.frame.name,
+      x: p.image.x,
+      y: p.image.y,
+      depth: p.image.depth,
+    }));
   }
 
   /** The Kindled's depth this frame (playtests: behind a tree's canopy when its feet are north of the tree's base). */
@@ -398,11 +453,17 @@ export class HoldingWorld {
     }
     this.shadowAt(snapToArt(player.x), snapToArt(player.y + PLAYER_FEET), SHADOW_W, SHADOW_H);
     const distancePx = this.stride.step(player.x, player.y);
-    const pose = this.sitting ? sitPose(this.playerSheet, this.sitting.angle) : roamPose(s, this.playerSheet, this.gait.update(s), { distancePx, cycles: this.anim() });
+    const pose = this.sitting
+      ? sitPose(this.playerSheet, this.sitting.angle)
+      : roamPose(s, this.playerSheet, this.gait.update(s), { distancePx, cycles: this.anim() });
     this.pose = pose;
-    const frame = this.playerSheet.anims[pose.anim]?.frames[pose.frame] ?? this.playerSheet.anims[pose.anim]?.frames[0] ?? '';
+    const frame =
+      this.playerSheet.anims[pose.anim]?.frames[pose.frame] ??
+      this.playerSheet.anims[pose.anim]?.frames[0] ??
+      '';
     const texture = this.playerTexture();
-    if (this.player.texture.key !== texture || this.player.frame.name !== frame) this.player.setTexture(texture, frame);
+    if (this.player.texture.key !== texture || this.player.frame.name !== frame)
+      this.player.setTexture(texture, frame);
     this.player
       .setPosition(snapToArt(player.x), snapToArt(player.y + PLAYER_FEET))
       .setVisible(true)
@@ -410,9 +471,19 @@ export class HoldingWorld {
   }
 }
 
-/** The sleep pose (M2 Task 7): `sit` facing the post when the sheet has the row (2 facings, S or E), else `idle` there, frame 0, held. */
+/**
+ * The sleep pose (M2 Task 7): `sit` when the sheet has the row (2 facings, S
+ * or E, by the angle to the post), frame 0, held. Without the row the
+ * stand-in is `idle_S`: the Kindled sits with its back to the post (ART,
+ * 2026-10-19), so it faces the player, never the post, and nothing turns
+ * round when the row lands.
+ */
 export function sitPose(sheet: SpriteSheet, angle: number): KindledPose {
-  const name = SPRITE_FACINGS.some((f) => `sit_${f}` in sheet.anims) ? 'sit' : 'idle';
-  const facing = sheetFacing(sheet, name, angle);
-  return { name, facing, anim: `${name}_${facing}`, frame: 0 };
+  const FACING_S_ANGLE = TURN / 4; // The sim's angle: clockwise from east, screen y down, so a quarter turn faces south.
+  if (SPRITE_FACINGS.some((f) => `sit_${f}` in sheet.anims)) {
+    const facing = sheetFacing(sheet, 'sit', angle);
+    return { name: 'sit', facing, anim: `sit_${facing}`, frame: 0 };
+  }
+  const facing = sheetFacing(sheet, 'idle', FACING_S_ANGLE);
+  return { name: 'idle', facing, anim: `idle_${facing}`, frame: 0 };
 }

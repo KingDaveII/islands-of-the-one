@@ -842,8 +842,8 @@ placeholder box (`pieceFace`, a shaded front, a 1 px outline, its initials as a 
 are pillars in the roam
 (`setSolidPlots(plotIds, pieceTiles)`). In build mode a standing piece selected (a click on it; the cursor on it
 and Cross) offers **MOVE** (it becomes the ghost; confirming sends `move`) and **TAKE DOWN** (sends `take-down`;
-one float per item rises over the signpost by its display name, "+300 Twisted log" then "+150 Black stone", never a
-bare total (LORE). A refusal is one line in the list's footer,
+one float per item rises over the signpost with its count and items.json's `plural`, lowercase, "+300 twisted logs"
+then "+150 black stone", "+1 twisted log" at one, never a bare total (LORE §16.8; `BUILD_TEXT.REFUND`, `itemCount`). A refusal is one line in the list's footer,
 with the inventory's blink-and-hold timing (not a toast: §7, §13). The field's panel shows the real level and
 the real cycle ("By itself: 1 pale grain every 12 min"); the plot sentence panel lists the pieces by name (§11).
 
@@ -877,9 +877,10 @@ the Writ panel (Use on the post), the last item in the panel's focus order (the 
 FEED and FILL; Left/Right step FEED, FILL, SLEEP round), with LORE's hint under it, muted: "Lie down to sleep and leave
 the game. Your holding keeps working while you sleep, until the Writ runs low." The Name screen, which opens instead
 of the panel while the island is unnamed, has the same button and hint at its foot, so sleep is there whether or not
-the island is named. Pressing it closes the panel; the Kindled turns to face the post and sits down against it (the
-sheathed sheet's `sit` row, 1 frame held, 2 facings, when the sheet has it; no sheet has it yet, so it holds `idle`
-facing the post; `sitPose` in `render/holdingWorld.ts`) for `sleepSitMs`; then the scene cuts, with no fade, to the
+the island is named. Pressing it closes the panel; the Kindled sits down with its back to the post (the sheathed sheet's
+`sit` row, 1 frame held, 2 facings S or E by the angle to the post, when the sheet has it; no sheet has it yet, so the
+stand-in holds `idle_S`, facing the player and never the post, so nothing turns round when the row lands; ART
+2026-10-19; `sitPose` in `render/holdingWorld.ts`) for `sleepSitMs`; then the scene cuts, with no fade, to the
 sleep scene (`scenes/SleepScene.ts`): the Hollow's background and LORE's line in the body font, "You lie down by the
 Writ. Its hum is the last thing you hear.", or while the Writ is dark "You lie down by the Writ. It doesn't hum
 tonight.". The holding scene is gone, so its heartbeat has stopped; after `sleepMs` the client sends `POST
@@ -969,22 +970,32 @@ once; a toast with the same text as one showing restarts that one's 3 s instead 
 not toasts": they stay the "+12" floats. **The glyphs** are ART's toast glyph sheet (`packages/shared/assets/
 toast-glyphs.json` + `toast-glyphs-12px.png`, #109; loaded like the item icon sheet, `meta.tinted` false, drawn
 untinted): "a glyph at 1 UI px per px, vertically centred on its line, one HUD gap before the text", a line as tall as
-the 12 px glyph (`TOAST_GLYPH`, `TOAST_ROW`, `TOAST_GAP` in `game/holdingView.ts`). The kind picks the cell: a skill
+the 12 px glyph, the lines at a pitch of 14 (a 2 px gap between two), and 4 UI px of padding on every side of the
+panel, so the text's right margin matches the glyph's left margin (ART 2026-10-19; `TOAST_GLYPH`, `TOAST_ROW`,
+`TOAST_PITCH`, `TOAST_GAP`, `toastStripHeight` in `game/holdingView.ts`; the strip for two lines is 34 UI px tall).
+The kind picks the cell: a skill
 level the skill's own (`skill-woodcutting`, `skill-mining`, `skill-farming`), store full the store's bin (`store-full`,
 never the item's icon), `writ-low`, `writ-dark`, `pack-full` (`toastGlyphName`). The kinds and their triggers:
 
 | Kind | When | Text (GAME DESIGN, final) | Glyph (ART, #109) |
 | --- | --- | --- | --- |
-| skill level | a skill's level in a holding answer is higher than in the previous answer of this session (never the first answer: levels gained while away belong to the card) | `Woodcutting 2.` | `skill-<skill>` |
+| skill level | a skill's level in a holding answer is above the last this account saw (`iot.toast.levels.<username>`, written on every answer); never on an answer carrying the card, which says it, and never with nothing stored (a new browser) | `Woodcutting 2.` | `skill-<skill>` |
 | Writ low | the derived charge falls under a day while on the holding, or is already under a day on landing with no card showing; once per drain | `Your Writ has about a day left.` | `writ-low` |
 | Writ dark | the Writ goes dark, once per drain (מת from the letter sheet, as on the chip) | `Your Writ reads מת.` | `writ-dark` |
 | store full | a take-all leaves some of a stack in the basket (`take.left`) | `Store: twisted logs full.` | `store-full` |
 | pack full | anything refused as `pack-full`: the inventory's moves over the holding, Kesh's tosses | `Pack full.` | `pack-full` |
 
-The Writ toasts are remembered per Kindled in `localStorage` (`iot.toast.writLow.<username>`,
-`iot.toast.writDark.<username>`; the account's one Kindled is named by its username, since the client never sees a
-Kindled id) as the Writ's `emptyAt` they were shown for: a feed that changes `emptyAt` re-arms them; every read and
-write is wrapped, so without storage a toast may repeat, which is fine. The inventory's refusal line and the talk
+**Toasts after a short absence** (GAME DESIGN 2026-10-19): an absence under 30 minutes still shows no card, but its
+toasts show on return ("close for 20 min across a level-up, reopen, and the level toast shows with no card"). The
+client remembers the last levels it saw, per account, in `localStorage` (`iot.toast.levels.<username>`, `LevelMemory`
+in `game/toastView.ts`), written on every holding answer. Every answer is read against them: a skill whose level is
+above the stored one is a toast; an answer carrying the card toasts no level (the card says it) and just stores the
+new levels; with nothing stored (a new browser) nothing toasts. This replaces the earlier rule that a session's first
+answer never toasts. The Writ toasts already toast on landing with no card, once per drain, and stay as they are:
+remembered per Kindled in `localStorage` (`iot.toast.writLow.<username>`, `iot.toast.writDark.<username>`; the
+account's one Kindled is named by its username, since the client never sees a Kindled id) as the Writ's `emptyAt`
+they were shown for: a feed that changes `emptyAt` re-arms them. Every read and write of the memories is wrapped, so
+without storage a Writ toast may repeat and a level toast may be missed, which is fine. The inventory's refusal line and the talk
 box's note no longer say "Pack full." over the holding; the start screen's inventory, which has no toast strip, keeps
 the line. Build mode's footer refusals and the Writ panel's refusals stay where they are (§7; GAME DESIGN logged it
 on 2026-10-19).
@@ -993,11 +1004,13 @@ on 2026-10-19).
 Writ state, never more than six, the plot labels, every line drawable and clear of the banned names, the guards) and
 `words.test.ts` (the epithet); `apps/server/test/away.test.ts` on PGlite (under and at 30 min, the credits per place,
 a level-up, the merge, `away/seen`, the inventory route's settle, the route's guards and codes, migration 0009);
-`apps/client/src/game/toastView.test.ts` (the queue, each trigger, the memory with and without storage),
+`apps/client/src/game/toastView.test.ts` (the queue, each trigger, GAME DESIGN's 20-minute case with and without a
+card and with nothing stored, the memories with and without storage),
 `holdingView.test.ts` and `render/keshFraming.test.ts` (the strip's rectangle at the three sizes).
 `tools/screenshots-m2-7.mjs` runs it end to end (shots: `docs/screenshots/m2-7/`): the panel with SLEEP, the
 Kindled's moment at the post, the sleep screen, the start screen logged out, the card after `holding:away … 7` with an
 Old field sown (the Field and Trees lines, the skills line, the Writ), the holding after any key closed it, a level-up
-toast, "Store: twisted logs full." under a second toast, "Pack full." over the open inventory, the Writ-low toast on
+toast, the level toast on landing after `holding:away … 0.33` across a level-up (no card), "Store: twisted logs full."
+under a second toast, "Pack full." over the open inventory, the Writ-low toast on
 landing after `writ:set --charge-hours 23` (and not again on a second reload), and the card's faded Writ line after
 `writ:set --dark-hours 49`.

@@ -127,7 +127,7 @@ It exists because the combat sheet is nearly full: 2048 × 2048 holds 525 cells 
 |---|---|---|---|---|---|---|
 | `idle`, `walk`, `run`, `run_start`, `run_stop` | 2, 6, 8, 2, 2 | 2, 10, 16, 20, 20 | as the combat rows | 8 | M2, required | the same counts, rates and playback as the combat sheet's rows of the same name; no `run_back` (backpedalling is combat only) |
 | `carry_idle`, `carry_walk` | 2, 6 | 2, 10 | yes | 4 | M2 | both arms round the Glowing Shell (hour two) |
-| `sit` | 1 | — | hold | 2 (S, E) | M2 | the ebb, by the post; sleep (M2 Task 7, [`holding.md`](holding.md) §13) sits the Kindled against the post on it for `sleepSitMs` before the cut, facing the post (S or E), and holds `idle` while a sheet lacks the row |
+| `sit` | 1 | — | hold | 2 (S, E) | M2 | the ebb, by the post; sleep (M2 Task 7, [`holding.md`](holding.md) §13) sits the Kindled with its back to the post on it for `sleepSitMs` before the cut (S or E by the angle to the post), and holds `idle_S` while a sheet lacks the row (ART 2026-10-19: back to the post, so nothing turns round when the row lands) |
 
 M2 adds the station animations (`chop`, `hoe`, `fish`, `knead`: 4 frames, 8 fps, 2 facings) here too. The
 holding draws the Kindled from its sheathed sheet (`PLAYER_SHEATHED_SHEET`, `kindled-ash-sheathed`, ART #87); encounters keep the combat sheet.

@@ -13,8 +13,9 @@
  * stacked under "Your Writ has about a day left." (two at most, the newest
  * at the bottom), "Pack full." over the open inventory, "Your Writ has about
  * a day left." on landing after `writ:set --charge-hours 23` and a reload
- * (and not again on a second reload), and after `writ:set --dark-hours 49`
- * and `holding:away`, the card's faded Writ line.
+ * (and not again on a second reload), "Mining 3." on landing after
+ * `holding:away … 0.33` across a level-up with no card, and after
+ * `writ:set --dark-hours 49` and `holding:away`, the card's faded Writ line.
  * Every state is checked through the API and the scene's snapshot (`away`,
  * `toasts`, `sleeping` on `window.__iot`). Shots are whole-page screenshots
  * at 1280 × 720.
@@ -272,12 +273,13 @@ await page.keyboard.press('ArrowUp');
 await until((x) => x.writPanel?.focus === 'sleep', 'SLEEP focused last in the order');
 await shot('01-writ-panel-sleep');
 
-// 2. SLEEP: the Kindled's moment against the post (the sit row when the sheet has it, else idle, facing it), then the
+// 2. SLEEP: the Kindled's moment with its back to the post (the sit row when the sheet has it, else idle_S), then the
 // cut to the sleep screen, one line, no fade.
 console.log('sleep:');
 await clickButton('SLEEP');
 h = await until((x) => x.sitting && x.writPanel === null, 'the Kindled at the post', 50, 20);
-expectMatch('held still, facing the post', h.pose, /^(sit|idle)\/0$/);
+expectMatch('held still, back to the post', h.pose, /^(sit|idle)\/0$/);
+expectEq('the stand-in faces south', h.facing, 'S');
 await page.screenshot({ path: join(OUT, '02a-sitting-at-the-post.png') });
 console.log(`  02a-sitting-at-the-post.png (${h.pose})`);
 const asleep = await untilTrue(sleeping, 'the sleep screen', 50, 50);
@@ -345,6 +347,20 @@ expectEq('its kind', h.toasts.kinds[h.toasts.lines.indexOf('Mining 2.')], 'skill
 console.log(`  "Mining 2." after ${Math.round((Date.now() - t0) / 1000)} s`);
 await shot('06-level-up-toast', 100);
 await untilTrue(async () => (await toasts()).lines.length === 0, 'the toast gone after its hold', 300, 100);
+
+// 6b. GAME DESIGN's 20 minutes: the tab closed across a level-up (holding:away 0.33 moves the outcrop's clocks back 20 min,
+// enough 6 s cycles for Mining 3), reopened under 30 min: no card, and "Mining 3." on landing from the levels remembered.
+cli('holding:away', '0.33');
+h = await land();
+expectEq('no card under 30 min', h.away, null);
+h = await until((x) => x.toasts.lines.includes('Mining 3.'), 'the level toast on landing');
+expectEq('Mining 3 on the wire', h.response.skills.mining.level, 3);
+expectEq('no card', h.away, null);
+await shot('06b-level-toast-on-landing', 100);
+await untilTrue(async () => (await toasts()).lines.length === 0, 'the toast gone', 300, 100);
+await land();
+await sleep(1500);
+expectEq('told once: not again after a reload', (await toasts()).lines.length, 0);
 
 // 7. "Store: twisted logs full." under "Your Writ has about a day left.": two stacked, the newest at the bottom.
 r = await api('/api/inventory');

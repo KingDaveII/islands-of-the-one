@@ -68,8 +68,10 @@ import {
 import { REFUSAL_LIFE_MS, refusalVisible } from '../game/inventoryView.js';
 import {
   defaultToastStorage,
+  LevelMemory,
   levelUps,
   packFullToast,
+  skillLevels,
   skillLevelToast,
   storeFullToast,
   WritToastMemory,
@@ -82,7 +84,14 @@ import {
   type TalkContext,
   type TalkFlow,
 } from '../game/keshTalk.js';
-import { cyclesLanded, namedPlotIds, onSignpost, plotAtWorld, plotOf, type Picked } from '../game/plotView.js';
+import {
+  cyclesLanded,
+  namedPlotIds,
+  onSignpost,
+  plotAtWorld,
+  plotOf,
+  type Picked,
+} from '../game/plotView.js';
 import { derive, hudName, writChip } from '../game/writView.js';
 import { keyboardKeys, keyCodeFor } from '../game/keyboard.js';
 import { RoamSession } from '../game/roamSession.js';
@@ -293,6 +302,7 @@ export class HoldingScene extends Phaser.Scene {
   private awayDismissedTo: string | null = null;
   /** Which drain each Writ toast was shown for, per Kindled, in localStorage. */
   private readonly writMemory = new WritToastMemory(defaultToastStorage());
+  private readonly levelMemory = new LevelMemory(defaultToastStorage());
   /** The last error a request answered (playtests). */
   lastError = '';
   /** Between create and shutdown: answers that arrive after the scene is gone are dropped. */
@@ -377,7 +387,14 @@ export class HoldingScene extends Phaser.Scene {
     this.world.sitting = null;
     this.plots = new PlotsLayer(this, this.worldLayer, layout, () => tuningStore.get().plots);
     this.plots.setSheet(this.letterSheet);
-    this.pieces = new PiecesLayer(this, this.worldLayer, this.hudLayer, layout, () => tuningStore.get().plots, (x, y) => this.worldToUi(x, y));
+    this.pieces = new PiecesLayer(
+      this,
+      this.worldLayer,
+      this.hudLayer,
+      layout,
+      () => tuningStore.get().plots,
+      (x, y) => this.worldToUi(x, y),
+    );
     this.hud = new HoldingHud(
       this,
       this.hudLayer,
@@ -616,7 +633,6 @@ export class HoldingScene extends Phaser.Scene {
       this.lastError = res.message;
       return false;
     }
-    const prev = this.response;
     this.response = res.value;
     this.offset = clockOffset(res.value.now, Date.now());
     this.lastCycles = res.value.activity ? cyclesDone(res.value.activity, this.serverNow()) : -1;
@@ -635,12 +651,15 @@ export class HoldingScene extends Phaser.Scene {
     this.syncPlotPanel();
     this.syncBuild();
     this.syncAway();
-    // A skill's level higher than in the previous answer of this session is a toast (M2 Task 7); the first answer
-    // never toasts: levels gained while away belong to the card.
-    for (const up of levelUps(prev, res.value)) {
+    // A skill's level above the last this account saw is a toast (M2 Task 7; GAME DESIGN: an absence under 30 min
+    // shows no card, but its toasts show on return); none on an answer carrying the card, which says it, and none
+    // with nothing remembered (a new browser). The levels seen are written on every answer.
+    const who = this.who();
+    for (const up of levelUps(this.levelMemory.read(who), res.value)) {
       const toast = skillLevelToast(up.skill, up.level);
       toastStore.post('skill-level', toast.text, toast.glyph);
     }
+    this.levelMemory.write(who, skillLevels(res.value));
     return true;
   }
 
@@ -968,7 +987,12 @@ export class HoldingScene extends Phaser.Scene {
     this.session.held = true;
     const p = this.session.position();
     const post = this.session.layout.stations.find((s) => s.kind === 'post')?.parts[0];
-    const at = post ? { x: (post.rect.col + post.rect.cols / 2) * TILE_SIZE_PX, y: (post.rect.row + post.rect.rows) * TILE_SIZE_PX } : p;
+    const at = post
+      ? {
+          x: (post.rect.col + post.rect.cols / 2) * TILE_SIZE_PX,
+          y: (post.rect.row + post.rect.rows) * TILE_SIZE_PX,
+        }
+      : p;
     // The facing in the sim's 1/4096 turn, 0 east, screen y down.
     const angle = Math.round((Math.atan2(at.y - p.y, at.x - p.x) / (2 * Math.PI)) * 4096) & 4095;
     this.world.sitting = { angle };
@@ -992,14 +1016,31 @@ export class HoldingScene extends Phaser.Scene {
   private syncAway(): void {
     const card = this.response?.away ?? null;
     if (!card || this.away) return;
-    if (this.nameScreen || this.talkBox || this.writPanel || this.plotPanel || this.build || this.panel) return;
+    if (
+      this.nameScreen ||
+      this.talkBox ||
+      this.writPanel ||
+      this.plotPanel ||
+      this.build ||
+      this.panel
+    )
+      return;
     if (card.to === this.awayDismissedTo) return;
     this.awayCard = card;
     this.awayDismiss = false;
     const writ = this.response?.writ;
     if (!writ) return;
-    const lines = awayLines(card, this.session.layout, this.response?.plots ?? [], writ, this.serverNow());
-    this.away = new AwayCardPanel({ scene: this, layer: this.hudLayer, frame: () => this.frame }, lines);
+    const lines = awayLines(
+      card,
+      this.session.layout,
+      this.response?.plots ?? [],
+      writ,
+      this.serverNow(),
+    );
+    this.away = new AwayCardPanel(
+      { scene: this, layer: this.hudLayer, frame: () => this.frame },
+      lines,
+    );
     // The Kindled stands still; the toasts wait.
     this.session.held = true;
     toastStore.paused = true;
@@ -1026,7 +1067,13 @@ export class HoldingScene extends Phaser.Scene {
     const card = this.awayCard;
     if (!this.away || !card) return;
     this.dropAway();
-    this.session.held = this.panel !== null || this.writPanel !== null || this.nameScreen !== null || this.plotPanel !== null || this.build !== null || this.talkBox !== null;
+    this.session.held =
+      this.panel !== null ||
+      this.writPanel !== null ||
+      this.nameScreen !== null ||
+      this.plotPanel !== null ||
+      this.build !== null ||
+      this.talkBox !== null;
     this.awayDismissedTo = card.to;
     void api.awaySeen({ to: card.to }).then((res) => {
       if (!res.ok && this.alive && this.awayDismissedTo === card.to) this.awayDismissedTo = null;
@@ -1214,7 +1261,11 @@ export class HoldingScene extends Phaser.Scene {
     this.selectedPiece = null;
     this.tapTile = null;
     this.pieces.setBuildPlot(null);
-    this.session.held = this.panel !== null || this.writPanel !== null || this.nameScreen !== null || this.plotPanel !== null;
+    this.session.held =
+      this.panel !== null ||
+      this.writPanel !== null ||
+      this.nameScreen !== null ||
+      this.plotPanel !== null;
   }
 
   /** The side list from the latest answers: the plot's kind, its pieces against the limit, the store's holdings, the Writ's lines. */
@@ -1224,15 +1275,21 @@ export class HoldingScene extends Phaser.Scene {
     const r = this.response;
     if (!b || !plot || !r) return;
     const view = plotOf(r, plot.id);
-    const kind = view?.kind === null || view?.kind === undefined ? undefined : plotKindDef(view.kind);
+    const kind =
+      view?.kind === null || view?.kind === undefined ? undefined : plotKindDef(view.kind);
     // The plot lost its name (or faded) under us: build mode closes.
     if (!view || !kind || view.state === 'faded') {
       this.closeBuild();
       return;
     }
-    if (this.selectedPiece && !view.pieces.some((p) => p.pieceId === this.selectedPiece)) this.selectedPiece = null;
+    if (this.selectedPiece && !view.pieces.some((p) => p.pieceId === this.selectedPiece))
+      this.selectedPiece = null;
     // The header names the plot by its label (LORE: "Old field, level 2"; M2 Task 7).
-    b.sync(buildHeader(view, plotLabel(view, r.plots), r.writ.lineCount), pieceRows(kind.id, view, this.inventory, r.writ.lineCount, r.skills), this.selectedPiece);
+    b.sync(
+      buildHeader(view, plotLabel(view, r.plots), r.writ.lineCount),
+      pieceRows(kind.id, view, this.inventory, r.writ.lineCount, r.skills),
+      this.selectedPiece,
+    );
   }
 
   /** A row of the list picked: its ghost follows the pointer (or the cursor) from here on. */
@@ -1259,7 +1316,8 @@ export class HoldingScene extends Phaser.Scene {
   private moveSelected(): void {
     const plot = this.buildPlot;
     const id = this.selectedPiece;
-    const standing = plot && id ? this.pieces.piecesIn(plot.id).find((p) => p.pieceId === id) : undefined;
+    const standing =
+      plot && id ? this.pieces.piecesIn(plot.id).find((p) => p.pieceId === id) : undefined;
     if (!standing) return;
     this.ghost = { ...standing, moving: true };
     this.tapTile = null;
@@ -1299,9 +1357,20 @@ export class HoldingScene extends Phaser.Scene {
       const moved = ghostAt(this.ghost, this.ghostTile());
       this.ghost = { ...moved, rotation: this.ghost.rotation };
       const kindled = this.session.position();
-      const fit = ghostFit(this.session.layout, plot, this.pieces.piecesIn(plot.id), this.ghost, tileOfSim(kindled.x, kindled.y));
+      const fit = ghostFit(
+        this.session.layout,
+        plot,
+        this.pieces.piecesIn(plot.id),
+        this.ghost,
+        tileOfSim(kindled.x, kindled.y),
+      );
       this.pieces.setGhost(this.ghost, fit.fits);
-      const rect = pieceWorldRect({ pieceId: this.ghost.pieceId, col: this.ghost.col, row: this.ghost.row, rotation: this.ghost.rotation });
+      const rect = pieceWorldRect({
+        pieceId: this.ghost.pieceId,
+        col: this.ghost.col,
+        row: this.ghost.row,
+        rotation: this.ghost.rotation,
+      });
       this.build.setGhostUi(rect ? this.worldToUi(rect.x + rect.w, rect.y - 10) : null);
     } else {
       this.pieces.setGhost(null);
@@ -1314,7 +1383,13 @@ export class HoldingScene extends Phaser.Scene {
     const ghost = this.ghost;
     const plot = this.buildPlot;
     if (!ghost || !plot || this.busy) return;
-    const args = { plotId: plot.id, pieceId: ghost.pieceId, col: ghost.col, row: ghost.row, rotation: ghost.rotation };
+    const args = {
+      plotId: plot.id,
+      pieceId: ghost.pieceId,
+      col: ghost.col,
+      row: ghost.row,
+      rotation: ghost.rotation,
+    };
     const moving = ghost.moving;
     this.request(
       () => (moving ? api.plotsMove(args) : api.plotsBuild(args)),
@@ -1379,7 +1454,8 @@ export class HoldingScene extends Phaser.Scene {
     const tile = tileOfWorld(w.x, w.y);
     if (this.ghost) {
       if (p.wasTouch) {
-        const same = this.tapTile !== null && this.tapTile.col === tile.col && this.tapTile.row === tile.row;
+        const same =
+          this.tapTile !== null && this.tapTile.col === tile.col && this.tapTile.row === tile.row;
         this.tapTile = tile;
         this.ghost = ghostAt(this.ghost, tile);
         if (!same) {
@@ -1409,8 +1485,18 @@ export class HoldingScene extends Phaser.Scene {
     const pushedX = sx !== 0 && sx !== this.stick.x ? sx : 0;
     const pushedY = sy !== 0 && sy !== this.stick.y ? sy : 0;
     this.stick = { x: sx, y: sy };
-    const dx = edges.includes(MENU_BUTTONS.right) || pushedX > 0 ? 1 : edges.includes(MENU_BUTTONS.left) || pushedX < 0 ? -1 : 0;
-    const dy = edges.includes(MENU_BUTTONS.down) || pushedY > 0 ? 1 : edges.includes(MENU_BUTTONS.up) || pushedY < 0 ? -1 : 0;
+    const dx =
+      edges.includes(MENU_BUTTONS.right) || pushedX > 0
+        ? 1
+        : edges.includes(MENU_BUTTONS.left) || pushedX < 0
+          ? -1
+          : 0;
+    const dy =
+      edges.includes(MENU_BUTTONS.down) || pushedY > 0
+        ? 1
+        : edges.includes(MENU_BUTTONS.up) || pushedY < 0
+          ? -1
+          : 0;
     if (edges.includes(MENU_BUTTONS.tabNext) || edges.includes(MENU_BUTTONS.tabPrev)) {
       this.turnGhost(edges.includes(MENU_BUTTONS.tabNext) ? 1 : -1);
       return;
@@ -1847,7 +1933,10 @@ export class HoldingScene extends Phaser.Scene {
     const s = this.session.state;
     // In build mode the camera stays on the plot (its centre), not the Kindled.
     const target = this.buildPlot
-      ? { x: (this.buildPlot.rect.col + this.buildPlot.rect.cols / 2) * TILE_SIZE_PX, y: (this.buildPlot.rect.row + this.buildPlot.rect.rows / 2) * TILE_SIZE_PX }
+      ? {
+          x: (this.buildPlot.rect.col + this.buildPlot.rect.cols / 2) * TILE_SIZE_PX,
+          y: (this.buildPlot.rect.row + this.buildPlot.rect.rows / 2) * TILE_SIZE_PX,
+        }
       : p;
     const tx = worldPx(target.x) - view.w / 2;
     const ty = worldPx(target.y) - view.h / 2;
@@ -1925,7 +2014,11 @@ export class HoldingScene extends Phaser.Scene {
    * A float: "+1" as a cycle completes and "+3" as a take-all moves a basket, over the station's part nearest the
    * Kindled (a plot's signpost); "+1" where Kesh's sliver lands. `at` gives the place (sim px) each frame.
    */
-  private float(text: string, at: string | (() => { x: number; y: number } | null), below = 0): void {
+  private float(
+    text: string,
+    at: string | (() => { x: number; y: number } | null),
+    below = 0,
+  ): void {
     this.addFloater(shadowed(label(this, 0, 0, text, Palette.spark)), at, below);
   }
 
@@ -2017,6 +2110,8 @@ export class HoldingScene extends Phaser.Scene {
   snapshot(): {
     state: ReturnType<RoamSession['position']> & { gait: string; facing: number; tick: number };
     pose: string;
+    /** The pose's sheet facing (S, E, …): the sleep stand-in's is S, its back to the post. */
+    facing: string;
     response: HoldingResponse | null;
     panel: string | null;
     /** The station panel's lines as shown. */
@@ -2065,6 +2160,7 @@ export class HoldingScene extends Phaser.Scene {
     return {
       state: { ...this.session.position(), gait: s.gait, facing: s.facing, tick: s.tick },
       pose: this.world.pose ? `${this.world.pose.name}/${this.world.pose.frame}` : '',
+      facing: this.world.pose?.facing ?? '',
       response: this.response,
       panel: this.panel?.id ?? null,
       panelLines: this.panel?.lines ?? null,

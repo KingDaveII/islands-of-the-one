@@ -1,9 +1,21 @@
-import { HOUR_MS, pressedWrit, TOAST_MAX, TOAST_MS, TOAST_TEXT, toWritView, type HoldingResponse, type WritView } from '@iot/shared';
+import {
+  HOUR_MS,
+  pressedWrit,
+  TOAST_MAX,
+  TOAST_MS,
+  TOAST_TEXT,
+  toWritView,
+  type HoldingResponse,
+  type WritView,
+} from '@iot/shared';
 import { describe, expect, it } from 'vitest';
 import {
   defaultToastStorage,
+  LevelMemory,
+  levelsKey,
   levelUps,
   packFullToast,
+  skillLevels,
   skillLevelToast,
   storeFullToast,
   ToastQueue,
@@ -17,31 +29,71 @@ import {
 /**
  * The toasts' logic (docs/design/holding.md "Sleep, the away card and
  * toasts", M2 Task 7): the queue (hold, drop in one frame, push up, two at
- * most, the same text restarting), each trigger (the skill level never on a
- * session's first answer, the Writ low and dark, the full store, the full
- * pack) and the Writ-low memory with and without storage.
+ * most, the same text restarting), each trigger (the skill level against
+ * the levels remembered, never with a card or with nothing remembered, the
+ * Writ low and dark, the full store, the full pack), GAME DESIGN's 20-minute
+ * case, and the memories with and without storage.
  */
 const T0 = Date.parse('2026-10-17T12:00:00.000Z');
 
-function answer(levels: Partial<Record<'woodcutting' | 'mining' | 'farming', number>>): HoldingResponse {
+function answer(
+  levels: Partial<Record<'woodcutting' | 'mining' | 'farming', number>>,
+  away: HoldingResponse['away'] = null,
+): HoldingResponse {
   const skill = (level: number) => ({ xp: 0, level, into: 0, toNext: 40 });
   return {
     layoutId: 'first-holding',
     baskets: {},
     activity: null,
     now: new Date(T0).toISOString(),
-    skills: { woodcutting: skill(levels.woodcutting ?? 1), mining: skill(levels.mining ?? 1), farming: skill(levels.farming ?? 1) },
+    skills: {
+      woodcutting: skill(levels.woodcutting ?? 1),
+      mining: skill(levels.mining ?? 1),
+      farming: skill(levels.farming ?? 1),
+    },
     writ: toWritView(pressedWrit(T0), T0),
-    kesh: { firstGiven: true, due: null, nextTideAt: new Date(T0).toISOString(), wordDue: false, seedsDue: false },
+    kesh: {
+      firstGiven: true,
+      due: null,
+      nextTideAt: new Date(T0).toISOString(),
+      wordDue: false,
+      seedsDue: false,
+    },
     words: [],
     plots: [],
     cycles: {},
-    away: null,
+    away,
   };
 }
 
+const CARD: HoldingResponse['away'] = {
+  from: new Date(T0 - 20 * 60_000).toISOString(),
+  to: new Date(T0).toISOString(),
+  made: {},
+  levels: { woodcutting: { from: 2, to: 3 } },
+};
+
+const fakeStorage = (): ToastStorage & { data: Record<string, string> } => {
+  const data: Record<string, string> = {};
+  return {
+    data,
+    getItem: (k) => data[k] ?? null,
+    setItem: (k, v) => {
+      data[k] = v;
+    },
+  };
+};
+
 function writ(chargeMs: number, named = true): WritView {
-  return toWritView({ ...pressedWrit(T0), emptyAt: T0 + chargeMs, name: named ? 'Rock' : null, letters: named ? 'רק' : null }, T0);
+  return toWritView(
+    {
+      ...pressedWrit(T0),
+      emptyAt: T0 + chargeMs,
+      name: named ? 'Rock' : null,
+      letters: named ? 'רק' : null,
+    },
+    T0,
+  );
 }
 
 describe('the queue', () => {
@@ -116,21 +168,63 @@ describe('the glyphs (ART, #109)', () => {
 });
 
 describe('the triggers', () => {
-  it('a skill level: higher than in the previous answer; never on the first answer of a session', () => {
+  it('a skill level: above the last seen; nothing with nothing seen, or on an answer carrying the card', () => {
     expect(levelUps(null, answer({ woodcutting: 9 }))).toEqual([]);
-    expect(levelUps(answer({}), answer({}))).toEqual([]);
-    expect(levelUps(answer({ woodcutting: 2 }), answer({ woodcutting: 3, farming: 2 }))).toEqual([
+    expect(levelUps(skillLevels(answer({})), answer({}))).toEqual([]);
+    expect(
+      levelUps(skillLevels(answer({ woodcutting: 2 })), answer({ woodcutting: 3, farming: 2 })),
+    ).toEqual([
       { skill: 'woodcutting', level: 3 },
       { skill: 'farming', level: 2 },
     ]);
-    // A level that fell (nothing does in M2) is no toast.
-    expect(levelUps(answer({ mining: 4 }), answer({ mining: 3 }))).toEqual([]);
-    expect(skillLevelToast('woodcutting', 2)).toEqual({ text: 'Woodcutting 2.', glyph: { name: 'skill-woodcutting' } });
+    // A level that fell (nothing does in M2) is no toast; a skill the memory lacks is none either.
+    expect(levelUps(skillLevels(answer({ mining: 4 })), answer({ mining: 3 }))).toEqual([]);
+    expect(levelUps({ mining: 1 }, answer({ woodcutting: 5, mining: 1 }))).toEqual([]);
+    // The card says it.
+    expect(
+      levelUps(skillLevels(answer({ woodcutting: 2 })), answer({ woodcutting: 3 }, CARD)),
+    ).toEqual([]);
+    expect(skillLevelToast('woodcutting', 2)).toEqual({
+      text: 'Woodcutting 2.',
+      glyph: { name: 'skill-woodcutting' },
+    });
+    expect(skillLevels(answer({ mining: 4 }))).toEqual({ woodcutting: 1, mining: 4, farming: 1 });
+  });
+
+  it("GAME DESIGN's 20 minutes: closed across a level-up, reopened under 30 min, the level toast shows with no card", () => {
+    // The last session's answers stored Woodcutting 2; the tab closed; the trees made Woodcutting 3 meanwhile.
+    const storage = fakeStorage();
+    const memory = new LevelMemory(storage);
+    memory.write('ash', skillLevels(answer({ woodcutting: 2 })));
+    expect(storage.data).toEqual({
+      'iot.toast.levels.ash': '{"woodcutting":2,"mining":1,"farming":1}',
+    });
+    // Reopened 20 min later: the first answer carries no card and Woodcutting 3, so one toast.
+    expect(levelUps(memory.read('ash'), answer({ woodcutting: 3 }))).toEqual([
+      { skill: 'woodcutting', level: 3 },
+    ]);
+    // Reopened after 30 min or more: the answer carries the card, which says it, so none.
+    expect(levelUps(memory.read('ash'), answer({ woodcutting: 3 }, CARD))).toEqual([]);
+    // A new browser has nothing stored: none.
+    expect(levelUps(memory.read('tide'), answer({ woodcutting: 3 }))).toEqual([]);
+    expect(levelsKey('ash')).toBe('iot.toast.levels.ash');
   });
 
   it("store full: the take-all's left-overs, the item's own icon; nothing when all moved", () => {
-    expect(storeFullToast({ stationId: 'twisted-trees', moved: [{ itemId: 'twisted-log', quantity: 3 }], left: [] })).toBeNull();
-    expect(storeFullToast({ stationId: 'twisted-trees', moved: [], left: [{ itemId: 'twisted-log', quantity: 4 }] })).toEqual({
+    expect(
+      storeFullToast({
+        stationId: 'twisted-trees',
+        moved: [{ itemId: 'twisted-log', quantity: 3 }],
+        left: [],
+      }),
+    ).toBeNull();
+    expect(
+      storeFullToast({
+        stationId: 'twisted-trees',
+        moved: [],
+        left: [{ itemId: 'twisted-log', quantity: 4 }],
+      }),
+    ).toEqual({
       text: 'Store: twisted logs full.',
       glyph: { name: 'store-full' },
     });
@@ -141,27 +235,59 @@ describe('the triggers', () => {
   });
 
   it('the Writ: low while under a day with charge, dark once it has none, keyed by the drain; lit is neither', () => {
-    expect(writToastsDue(writ(30 * HOUR_MS), T0)).toEqual({ low: false, dark: false, emptyAt: new Date(T0 + 30 * HOUR_MS).toISOString() });
+    expect(writToastsDue(writ(30 * HOUR_MS), T0)).toEqual({
+      low: false,
+      dark: false,
+      emptyAt: new Date(T0 + 30 * HOUR_MS).toISOString(),
+    });
     expect(writToastsDue(writ(20 * HOUR_MS), T0)).toMatchObject({ low: true, dark: false });
     // Read at the client's clock: the same Writ crosses under a day 6 h later.
-    expect(writToastsDue(writ(30 * HOUR_MS), T0 + 7 * HOUR_MS)).toMatchObject({ low: true, dark: false });
+    expect(writToastsDue(writ(30 * HOUR_MS), T0 + 7 * HOUR_MS)).toMatchObject({
+      low: true,
+      dark: false,
+    });
     expect(writToastsDue(writ(-HOUR_MS), T0)).toMatchObject({ low: false, dark: true });
     expect(writToastsDue(writ(-50 * HOUR_MS), T0)).toMatchObject({ low: false, dark: true });
     expect(writToastsDue(writ(20 * HOUR_MS, false), T0)).toMatchObject({ low: true });
   });
 });
 
-describe('the Writ-low memory', () => {
-  const fake = (): ToastStorage & { data: Record<string, string> } => {
-    const data: Record<string, string> = {};
-    return {
-      data,
-      getItem: (k) => data[k] ?? null,
-      setItem: (k, v) => {
-        data[k] = v;
+describe('the levels memory', () => {
+  it('reads what it wrote, per account; a malformed or partial record reads as what it can', () => {
+    const storage = fakeStorage();
+    const m = new LevelMemory(storage);
+    expect(m.read('ash')).toBeNull();
+    m.write('ash', { woodcutting: 7, mining: 2, farming: 4 });
+    expect(m.read('ash')).toEqual({ woodcutting: 7, mining: 2, farming: 4 });
+    expect(m.read('tide')).toBeNull();
+    storage.data['iot.toast.levels.tide'] = 'not json';
+    expect(m.read('tide')).toBeNull();
+    storage.data['iot.toast.levels.tide'] =
+      '{"woodcutting":"7","mining":2.5,"farming":4,"smithing":9}';
+    expect(m.read('tide')).toEqual({ farming: 4 });
+  });
+
+  it('without storage nothing is remembered (the next landing toasts nothing), and a failing store is no error', () => {
+    const none = new LevelMemory(null);
+    none.write('ash', { woodcutting: 7, mining: 2, farming: 4 });
+    expect(none.read('ash')).toBeNull();
+    const broken = new LevelMemory({
+      getItem: () => {
+        throw new Error('blocked');
       },
-    };
-  };
+      setItem: () => {
+        throw new Error('blocked');
+      },
+    });
+    expect(() => {
+      broken.write('ash', { woodcutting: 7, mining: 2, farming: 4 });
+    }).not.toThrow();
+    expect(broken.read('ash')).toBeNull();
+  });
+});
+
+describe('the Writ-low memory', () => {
+  const fake = fakeStorage;
 
   it('remembers the drain each toast was shown for, per Kindled, under its key', () => {
     const storage = fake();

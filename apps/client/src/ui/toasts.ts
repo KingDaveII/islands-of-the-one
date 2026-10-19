@@ -1,6 +1,17 @@
 import Phaser from 'phaser';
 import type { ToastKind } from '@iot/shared';
-import { HUD_INSET, HUD_PAD, TOAST_GAP, TOAST_GLYPH, TOAST_ROW, toastStripBottom, toastTextWidth, type UiRect } from '../game/holdingView.js';
+import {
+  HUD_INSET,
+  HUD_PAD,
+  TOAST_GAP,
+  TOAST_GLYPH,
+  TOAST_PITCH,
+  TOAST_ROW,
+  toastStripBottom,
+  toastStripHeight,
+  toastTextWidth,
+  type UiRect,
+} from '../game/holdingView.js';
 import { ToastQueue, type ToastGlyph } from '../game/toastView.js';
 import { tuningStore } from '../game/tuningStore.js';
 import { fitUi, fitWorldView, viewInUi, type Rect as ViewRect } from '../game/view.js';
@@ -24,7 +35,8 @@ import { panel } from '../render/ui.js';
  * while the away card is open; and it draws dithered while the HUD finds a
  * body behind it, like the other panels. The glyphs are ART's toast glyph
  * sheet (#109): 12 px, drawn untinted at 1 UI px per px, vertically centred
- * on a line as tall as the glyph, one HUD gap before the text; מת in the
+ * on a line as tall as the glyph, the lines 14 px apart (a 2 px gap), one
+ * HUD gap before the text and 4 UI px of padding on every side; מת in the
  * Writ-dark toast is drawn from the letter sheet, as on the HUD chip. The
  * panel is the existing style until ART's M2 UI kit.
  */
@@ -39,7 +51,11 @@ const OLD_LETTERS = /[א-ת]+/;
 export function splitLetters(text: string): { before: string; letters: string; after: string } {
   const m = OLD_LETTERS.exec(text);
   if (!m) return { before: text, letters: '', after: '' };
-  return { before: text.slice(0, m.index), letters: m[0], after: text.slice(m.index + m[0].length) };
+  return {
+    before: text.slice(0, m.index),
+    letters: m[0],
+    after: text.slice(m.index + m[0].length),
+  };
 }
 
 /** What the scenes post into and the strip draws from. */
@@ -55,7 +71,13 @@ export const toastStore = {
     this.queue.push(kind, text, glyph);
   },
   /** What the playtests read: the toasts showing, oldest first (the newest is the bottom line). */
-  snapshot(): { lines: string[]; kinds: ToastKind[]; lives: number[]; paused: boolean; rect: UiRect } {
+  snapshot(): {
+    lines: string[];
+    kinds: ToastKind[];
+    lives: number[];
+    paused: boolean;
+    rect: UiRect;
+  } {
     return {
       lines: this.queue.lines(),
       kinds: this.queue.toasts.map((t) => t.kind),
@@ -165,10 +187,12 @@ export class ToastScene extends Phaser.Scene {
       if (row.before.text !== p.before) row.before.setText(p.before);
       if (row.after.text !== p.after) row.after.setText(p.after);
       const lettersW = p.letters === '' ? 0 : p.letters.length * 8 + 1;
-      return Math.round(row.before.width) + lettersW + (p.after === '' ? 0 : Math.round(row.after.width));
+      return (
+        Math.round(row.before.width) + lettersW + (p.after === '' ? 0 : Math.round(row.after.width))
+      );
     });
     const w = HUD_PAD + TOAST_GLYPH + TOAST_GAP + Math.max(...widths) + HUD_PAD;
-    const h = HUD_PAD + toasts.length * TOAST_ROW + HUD_PAD;
+    const h = toastStripHeight(toasts.length);
     const x = this.frame.x + HUD_INSET;
     const y = toastStripBottom(this.frame, MAX_W) - h;
     toastStore.rect = { x, y, w, h };
@@ -176,11 +200,17 @@ export class ToastScene extends Phaser.Scene {
     toasts.forEach((t, i) => {
       const row = this.row(i);
       const p = parts[i] ?? { before: '', letters: '', after: '' };
-      const ry = y + HUD_PAD + i * TOAST_ROW;
+      const ry = y + HUD_PAD + i * TOAST_PITCH;
       const gx = x + HUD_PAD;
       // The glyph: ART's cell for the kind, at 1 UI px per px; a square of the muted ink only if the sheet lacks it.
-      if (this.textures.exists(TOAST_GLYPH_TEXTURE) && this.textures.get(TOAST_GLYPH_TEXTURE).has(t.glyph.name)) {
-        row.icon.setFrame(t.glyph.name).setPosition(gx, ry).setVisible(true);
+      if (
+        this.textures.exists(TOAST_GLYPH_TEXTURE) &&
+        this.textures.get(TOAST_GLYPH_TEXTURE).has(t.glyph.name)
+      ) {
+        row.icon
+          .setFrame(t.glyph.name)
+          .setPosition(gx, ry + (TOAST_ROW - TOAST_GLYPH) / 2)
+          .setVisible(true);
       } else {
         this.g.fillStyle(Palette.uiInkMuted, 1).fillRect(gx + 2, ry + 2, 8, 8);
       }

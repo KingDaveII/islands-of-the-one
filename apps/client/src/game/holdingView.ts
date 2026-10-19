@@ -80,7 +80,10 @@ export function xpFraction(view: SkillView): number {
 }
 
 /** The icon placeholder for a station until ART draws icons: its name's initials ("Twisted trees" → "TT"; a field "F"). */
-export function stationInitials(stationId: string, r: Pick<HoldingResponse, 'plots'> | null = null): string {
+export function stationInitials(
+  stationId: string,
+  r: Pick<HoldingResponse, 'plots'> | null = null,
+): string {
   const name = workplaceDef(stationId, r)?.name ?? stationId.replaceAll('-', ' ');
   return displayable(
     name
@@ -109,9 +112,15 @@ export interface ChipState {
 export function workplaceDef(
   stationId: string,
   r: Pick<HoldingResponse, 'plots'> | null,
-): { name: string; action: StationAction | null; cycle: StationCycle | null; plot: ReturnType<typeof plotOf> } | null {
+): {
+  name: string;
+  action: StationAction | null;
+  cycle: StationCycle | null;
+  plot: ReturnType<typeof plotOf>;
+} | null {
   const station = stationDef(stationId);
-  if (station) return { name: station.name, action: station.action, cycle: station.cycle, plot: undefined };
+  if (station)
+    return { name: station.name, action: station.action, cycle: station.cycle, plot: undefined };
   const plot = plotOf(r, stationId);
   const kind = plot?.kind === null || plot?.kind === undefined ? undefined : plotKindDef(plot.kind);
   if (!plot || !kind) return null;
@@ -189,7 +198,11 @@ export interface StationLines {
 export const BY_ITSELF: string = BUILD_TEXT.BY_ITSELF;
 export const BY_HAND: string = BUILD_TEXT.BY_HAND;
 
-export function stationLines(stationId: string, r: HoldingResponse | null, serverMs: number = r ? Date.parse(r.now) : 0): StationLines | null {
+export function stationLines(
+  stationId: string,
+  r: HoldingResponse | null,
+  serverMs: number = r ? Date.parse(r.now) : 0,
+): StationLines | null {
   const place = workplaceDef(stationId, r);
   const action = place?.action;
   if (!place || !action) return null;
@@ -202,20 +215,44 @@ export function stationLines(stationId: string, r: HoldingResponse | null, serve
   const title = displayable((plot ? plotLabel(plot, r?.plots ?? []) : place.name).toUpperCase());
   const letters = plot ? sentenceLetters(plot.ground, plot.virtue) : null;
   const level = plot ? `${PLOT_TEXT.LEVEL}${plotLevel(plot.pieces)}` : null;
-  const basketLine = basket.length ? `Basket: ${basket.map((e) => countOf(e.itemId, e.quantity)).join(', ')}` : 'Basket: empty';
-  const skill = view ? `${SKILL_NAMES[action.skill]} ${view.level} · ${view.toNext} XP to next` : SKILL_NAMES[action.skill];
-  const base = { title, letters, level, work: working ? 'STOP WORKING' : 'WORK HERE', take: 'TAKE ALL', working } as const;
-  const empty = { rate: null, cycle: null, bonus: null, basket: null, next: null, you: null, skill: null };
+  const basketLine = basket.length
+    ? `Basket: ${basket.map((e) => countOf(e.itemId, e.quantity)).join(', ')}`
+    : 'Basket: empty';
+  const skill = view
+    ? `${SKILL_NAMES[action.skill]} ${view.level} · ${view.toNext} XP to next`
+    : SKILL_NAMES[action.skill];
+  const base = {
+    title,
+    letters,
+    level,
+    work: working ? 'STOP WORKING' : 'WORK HERE',
+    take: 'TAKE ALL',
+    working,
+  } as const;
+  const empty = {
+    rate: null,
+    cycle: null,
+    bonus: null,
+    basket: null,
+    next: null,
+    you: null,
+    skill: null,
+  };
   // A faded plot: frozen with its basket, the one line, no buttons.
-  if (plot?.state === 'faded') return { ...base, ...empty, basket: basketLine, note: PLOT_TEXT.FADED_PANEL, buttons: [] };
+  if (plot?.state === 'faded')
+    return { ...base, ...empty, basket: basketLine, note: PLOT_TEXT.FADED_PANEL, buttons: [] };
   // A field not sown yet: only the note and SOW (GAME DESIGN).
   const kind = plot?.kind === null || plot?.kind === undefined ? undefined : plotKindDef(plot.kind);
-  if (plot && kind?.sow && plot.sownAt === null) return { ...base, ...empty, note: PLOT_TEXT.NOT_SOWN, buttons: ['sow'] };
+  if (plot && kind?.sow && plot.sownAt === null)
+    return { ...base, ...empty, note: PLOT_TEXT.NOT_SOWN, buttons: ['sow'] };
   const clock = r?.cycles[stationId];
   const dark = r !== null && r.writ.chargeMs === 0;
-  const next = place.cycle && clock ? (dark ? PLOT_TEXT.RESTING : nextInLine(clock, serverMs)) : null;
+  const next =
+    place.cycle && clock ? (dark ? PLOT_TEXT.RESTING : nextInLine(clock, serverMs)) : null;
   // A plot's cycle runs at the speed its pieces give (M2 Task 6): the real length, from the clock when it is known.
-  const realCycle = place.cycle ? { ...place.cycle, cycleMs: clock?.cycleMs ?? cycleLengthMs(place.cycle, plot?.pieces ?? []) } : null;
+  const realCycle = place.cycle
+    ? { ...place.cycle, cycleMs: clock?.cycleMs ?? cycleLengthMs(place.cycle, plot?.pieces ?? []) }
+    : null;
   const cycleLine = realCycle ? cycleRateLine(realCycle) : null;
   return {
     ...base,
@@ -294,12 +331,19 @@ export function nearestStationPart(
     if (station.reserved) continue;
     for (const part of station.parts) consider({ id: station.id, station, plot: null, part });
   }
-  if (plots) for (const plot of layout.plots) consider({ id: plot.id, station: null, plot, part: plot.station });
+  if (plots)
+    for (const plot of layout.plots)
+      consider({ id: plot.id, station: null, plot, part: plot.station });
   return found.best ? found.best.near : null;
 }
 
 /** The station to prompt for (`nearestStationPart`'s station), or null (a plot counts as none here). */
-export function nearestStation(x: number, y: number, rangePx: number, layout: HoldingLayout = holdingLayout()): LayoutStation | null {
+export function nearestStation(
+  x: number,
+  y: number,
+  rangePx: number,
+  layout: HoldingLayout = holdingLayout(),
+): LayoutStation | null {
   return nearestStationPart(x, y, rangePx, layout)?.station ?? null;
 }
 
@@ -329,7 +373,8 @@ export function propBase(part: Pick<StationPart, 'rect'>): { x: number; y: numbe
  */
 export function standsOnGround(template: TileTemplate, rect: TileRect): boolean {
   const row = rect.row + rect.rows - 1;
-  for (let c = rect.col; c < rect.col + rect.cols; c++) if (isShoreGround(template, c, row)) return true;
+  for (let c = rect.col; c < rect.col + rect.cols; c++)
+    if (isShoreGround(template, c, row)) return true;
   return false;
 }
 
@@ -353,7 +398,10 @@ export const USE_LABEL = 'USE';
 
 /** The Talk spot's centre (sim px): where Talk across the water stands. */
 export function talkSpot(layout: HoldingLayout = holdingLayout()): { x: number; y: number } {
-  return { x: (layout.kesh.talk.col + 0.5) * TILE_SIZE_PX, y: (layout.kesh.talk.row + 0.5) * TILE_SIZE_PX };
+  return {
+    x: (layout.kesh.talk.col + 0.5) * TILE_SIZE_PX,
+    y: (layout.kesh.talk.row + 0.5) * TILE_SIZE_PX,
+  };
 }
 
 /**
@@ -361,7 +409,12 @@ export function talkSpot(layout: HoldingLayout = holdingLayout()): { x: number; 
  * reach the stations use (M2 Task 4b): the prompt shows TALK and Use opens
  * the talk box. A station part nearer than the spot keeps its prompt.
  */
-export function nearKesh(x: number, y: number, rangePx: number, layout: HoldingLayout = holdingLayout()): boolean {
+export function nearKesh(
+  x: number,
+  y: number,
+  rangePx: number,
+  layout: HoldingLayout = holdingLayout(),
+): boolean {
   const spot = talkSpot(layout);
   const d = Math.hypot(spot.x - x, spot.y - y);
   if (d > rangePx) return false;
@@ -387,8 +440,15 @@ export const HUD_CHIP_H = 26;
 /** A toast's glyph box and line (UI px): ART's 12 px glyphs at 1 UI px per px, a line as tall as the glyph (M2 Task 7, #109). */
 export const TOAST_GLYPH = TOAST_GLYPH_PX;
 export const TOAST_ROW = TOAST_GLYPH_PX;
-/** Between a toast's glyph and its text: one HUD gap (ART). */
+/** The strip's line pitch (ART, 2026-10-19): 14, a 2 px gap between two lines, the glyph centred on its 12 px line. */
+export const TOAST_PITCH = 14;
+/** Between a toast's glyph and its text: one HUD gap (ART). The panel's padding is `HUD_PAD` on every side. */
 export const TOAST_GAP = HUD_PAD;
+
+/** The strip's height (UI px) for `lines` toasts: the padding, the lines at the pitch, the padding; the last line has no gap after it. */
+export function toastStripHeight(lines: number): number {
+  return HUD_PAD + Math.max(0, lines - 1) * TOAST_PITCH + (lines > 0 ? TOAST_ROW : 0) + HUD_PAD;
+}
 
 /** The widest toast text of M2 (UI px, the body font): what the toast strip's rectangle is sized for. */
 export function toastTextWidth(): number {
@@ -397,7 +457,9 @@ export function toastTextWidth(): number {
     TOAST_TEXT.WRIT_DARK,
     TOAST_TEXT.PACK_FULL,
     ...SKILLS.map((s) => TOAST_TEXT.skillLevel(s, 200)),
-    ...['twisted-log', 'black-stone', 'streaked-stone', 'pale-grain', 'grey-seeds'].map((id) => TOAST_TEXT.storeFull(id)),
+    ...['twisted-log', 'black-stone', 'streaked-stone', 'pale-grain', 'grey-seeds'].map((id) =>
+      TOAST_TEXT.storeFull(id),
+    ),
   ];
   return Math.max(...texts.map((t) => measureText(tiny5Font, t)));
 }
@@ -415,7 +477,10 @@ export interface HudWidths {
 }
 
 /** The HUD's panels' rectangles for a view frame (UI px): the Writ block, the purse, the action chip, the pack button and the toast strip. Pure. */
-export function hudRects(frame: UiRect, widths: HudWidths): { writ: UiRect; purse: UiRect; chip: UiRect; pack: UiRect; toasts: UiRect } {
+export function hudRects(
+  frame: UiRect,
+  widths: HudWidths,
+): { writ: UiRect; purse: UiRect; chip: UiRect; pack: UiRect; toasts: UiRect } {
   const L = frame.x;
   const T = frame.y;
   const R = frame.x + frame.w;
@@ -429,7 +494,7 @@ export function hudRects(frame: UiRect, widths: HudWidths): { writ: UiRect; purs
   const cx = Math.round(L + frame.w / 2);
   // The toast strip (Task 7): bottom left, sized for `toastMax` lines at the widest text; the newest toast at the bottom.
   const toastsW = HUD_PAD + TOAST_GLYPH + TOAST_GAP + widths.toast + HUD_PAD;
-  const toastsH = HUD_PAD + TOAST_MAX * TOAST_ROW + HUD_PAD;
+  const toastsH = toastStripHeight(TOAST_MAX);
   const toastsBottom = toastStripBottom(frame, toastsW);
   return {
     writ: { x: L + HUD_INSET, y: T + HUD_INSET, w: writW, h: writH },
@@ -466,7 +531,10 @@ export type HudPanel = 'writ' | 'purse' | 'chip' | 'pack' | 'toasts';
  * against the panels drawn last frame. Props alone never count, Kesh's rock
  * included. An empty rectangle (a panel not drawn) never does.
  */
-export function panelsBehind(rects: Readonly<Record<HudPanel, UiRect>>, bodies: readonly UiRect[]): HudPanel[] {
+export function panelsBehind(
+  rects: Readonly<Record<HudPanel, UiRect>>,
+  bodies: readonly UiRect[],
+): HudPanel[] {
   return (Object.keys(rects) as HudPanel[]).filter((k) => {
     const r = rects[k];
     return r.w > 0 && r.h > 0 && bodies.some((b) => rectsOverlap(b, r));
