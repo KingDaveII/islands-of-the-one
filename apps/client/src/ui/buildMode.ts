@@ -28,6 +28,8 @@ export interface BuildModeHost {
   showFocus(): boolean;
   /** A piece's row pressed: it becomes the ghost. */
   pick(pieceId: string): void;
+  /** A standing piece's row pressed: it is selected and highlighted in the world (GAME DESIGN 2026-10-19). */
+  select(pieceId: string): void;
   /** MOVE on the selected standing piece: it becomes the ghost. */
   move(): void;
   /** TAKE DOWN on the selected standing piece. */
@@ -213,7 +215,7 @@ export class BuildMode {
     this.placed = '';
   }
 
-  /** Enter or Cross: a row picks its piece (not a locked or standing one); a button presses. */
+  /** Enter or Cross: a row picks its piece (a standing one is selected instead; a locked one does nothing); a button presses. */
   press(): void {
     if ('row' in this.focus) this.pressRow(this.focus.row);
     else if (this.focus.button === 'move') this.host.move();
@@ -222,8 +224,9 @@ export class BuildMode {
 
   private pressRow(i: number): void {
     const l = this.lines[i];
-    if (!l || l.locked || l.built) return;
-    this.host.pick(l.pieceId);
+    if (!l) return;
+    if (l.built) this.host.select(l.pieceId);
+    else if (!l.locked) this.host.pick(l.pieceId);
   }
 
   /** Whether the focus is on a row (the pad's Up/Down move it; with a ghost they move the cursor instead). */

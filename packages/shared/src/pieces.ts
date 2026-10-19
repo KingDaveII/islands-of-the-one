@@ -474,10 +474,10 @@ export function pluralItemName(itemId: string): string {
 
 /** Placeholder words for each placement reason (MAIN's, until LORE answers), after LORE's "That doesn't fit there.". */
 export const PLACEMENT_WORDS: Readonly<Record<PlacementProblem, string>> = {
-  outside: 'It must stand inside the plot.',
-  'on-signpost': 'It is over the signpost.',
-  overlaps: 'It is over another piece.',
-  'blocks-signpost': 'It would wall the signpost off.',
+  outside: "It has to stand inside the plot's ring.",
+  'on-signpost': "It's on top of the signpost.",
+  overlaps: "It's on top of another piece.",
+  'blocks-signpost': 'It would block the way to the signpost.',
 };
 
 /**
@@ -507,24 +507,30 @@ export const BUILD_TEXT = {
   EFFECT_SPEED: (percent: number): string => `+${percent}% work speed`,
   MOVE: 'MOVE',
   TAKE_DOWN: 'TAKE DOWN',
-  /** The turn button beside the ghost on touch (MAIN's placeholder word). */
+  /** The turn button beside the ghost on touch (LORE). */
   TURN: 'TURN',
+  /** The side list's line for a piece already standing in this plot, in place of its cost (GAME DESIGN 2026-10-19). */
+  STANDING: 'Standing',
+  /** Touch: after the first tap places the ghost, the footer says how to build it (GAME DESIGN 2026-10-19). */
+  TAP_AGAIN: 'Tap again to build',
+  /** A take-down's refund, one float per item by its display name (LORE: "+300 Twisted log", never a bare total). */
+  REFUND: (quantity: number, name: string): string => `+${quantity} ${name}`,
   // The refusals (LORE's lines, the server's messages).
   INSUFFICIENT: 'Not enough in the store.',
   BLOCKED: "That doesn't fit there.",
-  /** `blocked`: LORE's line, then the first reason (MAIN's placeholder words). */
+  /** `blocked`: LORE's line, then the first reason (LORE's words, `PLACEMENT_WORDS`). */
   BLOCKED_BECAUSE: (reason: PlacementProblem): string => `That doesn't fit there. ${PLACEMENT_WORDS[reason]}`,
   LIMIT: 'This plot can take no more pieces until your Writ has another line.',
   NEEDS_LINE_REFUSAL: (line: number): string => `Needs Writ line ${line}.`,
   NEEDS_SKILL_REFUSAL: (skillName: string, level: number): string => `Needs ${skillName} ${level}.`,
   /** `store-full`: the take-all's line (GAME DESIGN: "Store: twisted logs full."). */
   STORE_FULL: (itemId: string): string => `Store: ${pluralItemName(itemId)} full.`,
-  /** `unknown-piece` (placeholder). */
-  UNKNOWN_PIECE: 'No such piece.',
-  /** `already-built` (placeholder). */
-  ALREADY_BUILT: 'That piece already stands here.',
-  /** `not-built` (placeholder). */
-  NOT_BUILT: 'No such piece stands here.',
+  /** `unknown-piece` (LORE 2026-10-19). */
+  UNKNOWN_PIECE: "This station doesn't take that piece.",
+  /** `already-built` (LORE). */
+  ALREADY_BUILT: 'One of those already stands in this plot.',
+  /** `not-built` (LORE). */
+  NOT_BUILT: "That piece isn't standing here.",
 } as const;
 
 /** The skill line a piece needs, by its display name: "Needs Farming 5". */

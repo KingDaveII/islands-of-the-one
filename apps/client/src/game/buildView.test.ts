@@ -16,7 +16,7 @@ import {
   piecesLine,
   pieceWorldRect,
   plotPieceTiles,
-  refundFloat,
+  refundFloats,
   rotateGhost,
   stepCursor,
   tileOfSim,
@@ -74,7 +74,8 @@ describe('the side list', () => {
     expect(rows[2]).toMatchObject({ name: 'Threshing floor', needs: 'Needs Writ line 2', locked: true, built: false, footprint: { cols: 3, rows: 3 } });
     expect(pieceRows('field', field([]), store(1000, 1000, 100), 2, skills)[2]).toMatchObject({ needs: null, locked: false, affordable: true });
     // A standing piece's row is built: each kind once.
-    expect(pieceRows('field', field([channel]), null, 1, skills)[0]).toMatchObject({ built: true, locked: false, affordable: false, materials: [{ text: 'Twisted log 0/300', short: true }, { text: 'Black stone 0/150', short: true }] });
+    // A piece already standing shows "Standing" in place of its cost (GAME DESIGN 2026-10-19).
+    expect(pieceRows('field', field([channel]), null, 1, skills)[0]).toMatchObject({ built: true, locked: false, needs: null, materials: [{ text: 'Standing', short: false }] });
     // Nothing for a kind without pieces yet.
     expect(pieceRows('lumber-camp', field([]), null, 1, skills)).toEqual([]);
     expect(inStore(store(5, 0, 0), 'twisted-log')).toBe(5);
@@ -97,9 +98,9 @@ describe('the side list', () => {
     expect(piecesLine([])).toBe('Pieces: none yet');
     expect(piecesLine([channel])).toBe('Pieces: Clay channel');
     expect(piecesLine([channel, jars])).toBe('Pieces: Clay channel, Seed jars');
-    expect(refundFloat('clay-channel')).toBe('+450');
-    expect(refundFloat('seed-jars')).toBe('+240');
-    expect(refundFloat('anvil')).toBeNull();
+    expect(refundFloats('clay-channel')).toEqual(['+300 Twisted log', '+150 Black stone']);
+    expect(refundFloats('seed-jars')).toEqual(['+200 Twisted log', '+40 Pale grain']);
+    expect(refundFloats('anvil')).toEqual([]);
   });
 });
 
@@ -118,6 +119,9 @@ describe('the ghost', () => {
     expect(ghostAt({ ...ghost, pieceId: 'anvil' }, { col: 9, row: 9 })).toMatchObject({ col: 9, row: 9 });
     expect(rotateGhost(ghost).rotation).toBe(90);
     expect(rotateGhost({ ...ghost, rotation: 270 }).rotation).toBe(0);
+    // L1 turns it back (GAME DESIGN 2026-10-19).
+    expect(rotateGhost(ghost, -1).rotation).toBe(270);
+    expect(rotateGhost({ ...ghost, rotation: 90 }, -1).rotation).toBe(0);
     expect(ghostRect(rotateGhost(ghost))).toEqual({ col: 7, row: 7, cols: 4, rows: 1 });
     // Fits; red over the signpost (the shared reason); red over the Kindled's own tile, which only the client knows.
     expect(ghostFit(layout, plot1, [], ghost, null)).toEqual({ fits: true, problems: [], onKindled: false });
