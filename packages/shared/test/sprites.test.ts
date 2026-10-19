@@ -54,6 +54,7 @@ import {
   SPRITE_FACINGS,
   SPRITE_SHEET_NAMES,
   OPTIONAL_SPRITE_SHEETS,
+  REMEMBRANCE_SHEATHED_SHEETS,
   PIECE_SHADOWS,
   PIECE_SHEETS,
   pieceAnim,
@@ -287,7 +288,13 @@ describe('the Sparkglass pickup fixture sheet (test/fixtures/prop-sparkglass)', 
   it('is a v2 prop sheet without a table: idle alone, 2 frames (the glint) at the recipe rate, the chip 9 × 11 on the prop cell', () => {
     expect(sheet.meta.version).toBe(SPRITE_SHEET_VERSION);
     expect(SPARKGLASS_SHEET).toBe('prop-sparkglass');
-    expect(OPTIONAL_SPRITE_SHEETS).toEqual([SPARKGLASS_SHEET, 'prop-twisted-tree-2', ...Object.values(PIECE_SHEETS), RACK_SHEET]);
+    expect(OPTIONAL_SPRITE_SHEETS).toEqual([
+      SPARKGLASS_SHEET,
+      'prop-twisted-tree-2',
+      ...Object.values(PIECE_SHEETS),
+      RACK_SHEET,
+      ...REMEMBRANCE_SHEATHED_SHEETS,
+    ]);
     expect(SPRITE_SHEET_NAMES).not.toContain(SPARKGLASS_SHEET);
     expect(spriteSheetSpec(SPARKGLASS_SHEET).anims).toBeNull();
     expect(propTable(SPARKGLASS_SHEET, sheet)).toEqual([propIdleSpec(2, 2)]);
@@ -1167,3 +1174,29 @@ function propTable(name: string, sheet: SpriteSheet): SpriteAnimSpec[] | null {
     return def ? { frames: def.frames.length, fps: def.frameRate } : undefined;
   });
 }
+
+describe("the other Remembrances' sheathed sheets (M2 Task 9; ART's job #114)", () => {
+  it('are optional Kindled sheathed sheets, checked against the sheathed table with a palette like Ash\'s', () => {
+    expect(REMEMBRANCE_SHEATHED_SHEETS).toEqual(['kindled-clay-sheathed', 'kindled-tide-sheathed', 'kindled-wing-sheathed']);
+    for (const name of REMEMBRANCE_SHEATHED_SHEETS) {
+      expect(OPTIONAL_SPRITE_SHEETS, name).toContain(name);
+      expect(SPRITE_SHEET_NAMES as readonly string[], name).not.toContain(name);
+      const spec = spriteSheetSpec(name);
+      expect(spec.anims, name).toBe(KINDLED_SHEATHED_ANIMS);
+      expect(spec.cell, name).toBe(SPRITE_CELLS.kindled);
+      expect(spec.palette, name).toBe(true);
+    }
+    // Ash's is the required one, loaded with the characters.
+    expect(SPRITE_SHEET_NAMES).toContain('kindled-ash-sheathed');
+  });
+
+  it('are refused without their skin mask, never drawn untinted', () => {
+    const sheet: SpriteSheet = fixtureSheet;
+    const png = decodePng(readFileSync(fixtureUrl(sheet.meta.image)));
+    const mask = decodePng(readFileSync(fixtureUrl(sheet.palette?.mask ?? '')));
+    if (!sheet.palette) throw new Error('the fixture has no palette');
+    const named: SpriteSheet = { ...sheet, palette: { ...sheet.palette, mask: 'kindled-clay-sheathed.skin.png' } };
+    expect(v2Problems('kindled-clay-sheathed', named, png, mask)).toEqual([]);
+    expect(v2Problems('kindled-clay-sheathed', named, png, null)).toEqual(['no skin mask']);
+  });
+});

@@ -1,29 +1,12 @@
-import creation from '../data/creation.json' with { type: 'json' };
-import { silkscreenFont, tiny5Font } from './fonts.js';
+import { creationData as creation, KINDLED_NAME_REFUSED } from './creation.js';
+import { isDrawable } from './fonts.js';
 import { isSafe, NAME_REFUSED } from './safe-letters.js';
-import type { ClayTone } from './sprites.js';
 
 /**
  * Accounts and Kindled creation rules (docs/design/accounts.md), shared by the
  * server (the authority) and the client (instant feedback). Pure functions,
  * no runtime dependencies: Intl.Segmenter is built into Node and browsers.
  */
-
-/** Kindled creation data (data/creation.json): the Remembrances, the clay tones, the name rules. */
-export const creationData = creation;
-export type Remembrance = keyof typeof creation.remembrances;
-export const REMEMBRANCES = Object.keys(creation.remembrances) as Remembrance[];
-/** Clay tone ids in display order (the same ids as palette.json's clay.tones; a test checks). */
-export const CREATION_CLAY_TONES = Object.keys(creation.clayTones) as ClayTone[];
-export const DEFAULT_CLAY_TONE = creation.defaultClayTone as ClayTone;
-
-export function isRemembrance(value: unknown): value is Remembrance {
-  return typeof value === 'string' && Object.hasOwn(creation.remembrances, value);
-}
-
-export function isClayTone(value: unknown): value is ClayTone {
-  return typeof value === 'string' && Object.hasOwn(creation.clayTones, value);
-}
 
 export const USERNAME_MIN = 3;
 export const USERNAME_MAX = 20;
@@ -100,25 +83,13 @@ export function normalizeKindledName(input: string): string {
   return input.normalize('NFC').replace(/\s+/gu, ' ').trim();
 }
 
-/**
- * The characters the game can draw: those both pixel fonts have a glyph for
- * (printable ASCII and the Latin-1 Supplement, tools/bitmap-fonts.py). A
- * Kindled name may only use these until the atlases grow more scripts.
- */
-export const DRAWABLE_CHARS: ReadonlySet<string> = new Set(
-  silkscreenFont.chars.map((g) => g.ch).filter((ch) => tiny5Font.chars.some((g) => g.ch === ch)),
-);
-
-export function isDrawable(text: string): boolean {
-  for (const ch of text) if (!DRAWABLE_CHARS.has(ch)) return false;
-  return true;
-}
+export { DRAWABLE_CHARS, isDrawable } from './fonts.js';
 
 /** The refusal for a name the pixel fonts can't draw. */
 export const NAME_NOT_DRAWABLE =
   'Use letters the game can draw for now: A–Z and accented Latin letters.';
 
-/** Why a typed name was refused (NAME_NOT_DRAWABLE for 'not-drawable', NAME_REFUSED otherwise). */
+/** Why a typed name was refused (NAME_NOT_DRAWABLE for 'not-drawable', else NAME_REFUSED, or KINDLED_NAME_REFUSED for a Kindled's). */
 export type TypedNameRejection =
   'not-text' | 'length' | 'characters' | 'not-drawable' | 'no-letter' | 'unsafe';
 export type KindledNameRejection = TypedNameRejection;
@@ -163,5 +134,13 @@ export function validateTypedName(input: unknown): TypedNameValidation {
   return { ok: true, name };
 }
 
-/** A Kindled name: the typed-name rules above. */
-export const validateKindledName: (input: unknown) => KindledNameValidation = validateTypedName;
+/**
+ * A Kindled name: the typed-name rules above, refused with LORE's line
+ * (`KINDLED_NAME_REFUSED`, creation.json) instead of the Writ's; a name the
+ * fonts can't draw keeps `NAME_NOT_DRAWABLE`.
+ */
+export function validateKindledName(input: unknown): KindledNameValidation {
+  const typed = validateTypedName(input);
+  if (typed.ok || typed.reason === 'not-drawable') return typed;
+  return { ok: false, reason: typed.reason, message: KINDLED_NAME_REFUSED };
+}

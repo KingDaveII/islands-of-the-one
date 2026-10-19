@@ -10,9 +10,9 @@ import {
   isCreateKindledRequest,
   isCredentialsRequest,
   isMeResponse,
+  KINDLED_NAME_REFUSED,
   lettersFromPositions,
   NAME_NOT_DRAWABLE,
-  NAME_REFUSED,
   normalizeKindledName,
   paletteData,
   REMEMBRANCES,
@@ -32,12 +32,13 @@ const HEBREW_BANNED = lettersFromPositions([9, 4, 5, 4]);
 const TITLE_BANNED = lettersFromPositions([0, 3, 13, 9]);
 
 describe('creation data', () => {
-  it('lists the four Remembrances in glossary order, each with a name and an outfit', () => {
+  it('lists the four Remembrances in glossary order, each with a name, an image line and its clothing', () => {
     expect(REMEMBRANCES).toEqual(['clay', 'ash', 'tide', 'wing']);
     for (const id of REMEMBRANCES) {
       const r = creationData.remembrances[id];
       expect(r.name.toLowerCase()).toBe(id);
-      expect(r.outfit.length).toBeGreaterThan(0);
+      expect(r.image.length).toBeGreaterThan(0);
+      expect(r.clothing.length).toBeGreaterThan(0);
     }
     expect(Object.keys(paletteData.remembranceOutfit).sort()).toEqual([...REMEMBRANCES].sort());
     // The client draws the outfit colours: they must be palette tokens.
@@ -111,7 +112,7 @@ describe('validateKindledName', () => {
     expect(validateKindledName(input), JSON.stringify(input)).toEqual({
       ok: false,
       reason,
-      message: reason === 'not-drawable' ? NAME_NOT_DRAWABLE : NAME_REFUSED,
+      message: reason === 'not-drawable' ? NAME_NOT_DRAWABLE : KINDLED_NAME_REFUSED,
     });
   };
 

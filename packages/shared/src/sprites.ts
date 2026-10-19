@@ -10,6 +10,7 @@ import propKeshRock from '../assets/sprites/prop-kesh-rock.json' with { type: 'j
 import propStoneOutcrop from '../assets/sprites/prop-stone-outcrop.json' with { type: 'json' };
 import propTwistedTree from '../assets/sprites/prop-twisted-tree.json' with { type: 'json' };
 import propWritPost from '../assets/sprites/prop-writ-post.json' with { type: 'json' };
+import { REMEMBRANCES } from './creation.js';
 import { TILE_DOOR_ANIMS, TILE_WORLD_PX } from './tiles.js';
 
 /**
@@ -679,6 +680,21 @@ export const CHEST_SHEET: SpriteSheetName = 'prop-chest';
 export const SPARKGLASS_SHEET = 'prop-sparkglass';
 
 /**
+ * The sheathed sheets of the Remembrances other than Ash (M2 Task 9; ART's
+ * job #114 draws `kindled-clay-sheathed`, `kindled-tide-sheathed` and
+ * `kindled-wing-sheathed`, one at a time): `kindled-<remembrance>-sheathed`
+ * for every Remembrance whose sheet is not a required one. Optional
+ * (`OPTIONAL_SPRITE_SHEETS`): each is checked against `KINDLED_SHEATHED_ANIMS`
+ * like Ash's once on disk, its skin mask loads with it, and the client draws
+ * Ash's sheet in its place until it lands (`sheathedSheetFor` in the client's
+ * render/characters.ts). Encounters keep `kindled-ash`: the other
+ * Remembrances' combat sheets wait for M3.
+ */
+export const REMEMBRANCE_SHEATHED_SHEETS: readonly string[] = REMEMBRANCES.map((r) =>
+  sheathedSheetName(`kindled-${r}`),
+).filter((name) => !(SPRITE_SHEET_NAMES as readonly string[]).includes(name));
+
+/**
  * Sheets the client loads when they are on disk and does without otherwise
  * (each with its fallback in the engine). The sheet test checks one like any
  * other sheet once it lands.
@@ -692,6 +708,8 @@ export const OPTIONAL_SPRITE_SHEETS: readonly string[] = [
   'prop-threshing-floor',
   // The weapon rack (`RACK_SHEET`, M2 Task 8): a placeholder box until ART's sheet lands.
   RACK_SHEET,
+  // The other Remembrances' sheathed sheets (`REMEMBRANCE_SHEATHED_SHEETS`, M2 Task 9): Ash's until each lands.
+  ...REMEMBRANCE_SHEATHED_SHEETS,
 ];
 
 /**

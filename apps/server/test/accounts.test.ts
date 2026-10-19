@@ -3,6 +3,7 @@ import {
   isMeResponse,
   lettersFromPositions,
   NAME_NOT_DRAWABLE,
+  KINDLED_NAME_REFUSED,
   NAME_REFUSED,
   SESSION_COOKIE,
   WRONG_CREDENTIALS,
@@ -354,6 +355,19 @@ describe('accounts API', () => {
       }
     });
 
+    it("refuses a name with LORE's line (code name-refused), not the Writ's, and makes nothing", async () => {
+      const cookie = sessionFrom(await register(app, 'lorename'));
+      const res = await create(cookie, { name: 'A', remembrance: 'tide', clayTone: 'clay-red' });
+      expect(res.statusCode).toBe(400);
+      expect(res.json()).toEqual({ error: 'name-refused', message: "That name won't hold. Try another." });
+      expect(KINDLED_NAME_REFUSED).toBe("That name won't hold. Try another.");
+      expect(KINDLED_NAME_REFUSED).not.toBe(NAME_REFUSED);
+      // The account still has no Kindled: the next good name makes it.
+      const ok = await create(cookie, { name: 'Iltani', remembrance: 'tide', clayTone: 'clay-red' });
+      expect(ok.statusCode).toBe(201);
+      expect(ok.json()).toMatchObject({ kindled: { name: 'Iltani', remembrance: 'tide', clayTone: 'clay-red' } });
+    });
+
     it('validates the name: length, combining characters, control characters, drawable letters, the filter', async () => {
       const refused = [
         'M',
@@ -377,7 +391,7 @@ describe('accounts API', () => {
       ];
       const cookie = sessionFrom(await register(app, 'namer'));
       for (const [names, message] of [
-        [refused, NAME_REFUSED],
+        [refused, KINDLED_NAME_REFUSED],
         [notDrawable, NAME_NOT_DRAWABLE],
       ] as const) {
         for (const name of names) {

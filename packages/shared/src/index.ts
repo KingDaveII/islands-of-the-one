@@ -7,6 +7,7 @@ export * from './sprites.js';
 export * from './tiles.js';
 export * from './controls.js';
 export * from './fonts.js';
+export * from './creation.js';
 export * from './accounts.js';
 export * from './api.js';
 export * from './weapons.js';
