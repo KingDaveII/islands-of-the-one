@@ -1,0 +1,466 @@
+{
+ "job": "remembrance-sheathed (clay)",
+ "date": "2026-10-19",
+ "purpose": "Raw material for kindled-clay-sheathed: the Ash Kindled (SS-01 character) in the Clay Remembrance's starting clothes, hands empty, 8 facings: rotations, idle, walk, run. No recipe, no art:build, nothing retouched.",
+ "images_passed_as": "none: every call works on the existing PixelLab character, so no image was uploaded and no inline base64 was sent",
+ "seed": "1234 on create_character_state; animate_character takes no seed. No retakes, so 1235 was never used.",
+ "source_character": {
+  "tool": "get_character (free)",
+  "character_id": "507ec529-642d-4b0e-999b-731be937ba15",
+  "name": "kindled-ash (ss01)",
+  "group": "e0868b3e-1785-4fe7-9030-6499546ffa6a",
+  "exists": true,
+  "states_before": [
+   {
+    "state_name": "Idle",
+    "character_id": "507ec529-642d-4b0e-999b-731be937ba15"
+   }
+  ],
+  "animation_groups_before": [
+   "run_back",
+   "run",
+   "death",
+   "hit",
+   "haul_slide",
+   "haul_pull",
+   "heavy (retake N)",
+   "haul",
+   "heavy",
+   "light_3",
+   "light_2",
+   "dodge (retake)",
+   "light_1",
+   "dodge",
+   "walk",
+   "idle"
+  ],
+  "templates_from_get_character": [
+   "backflip",
+   "breathing-idle",
+   "cross-punch",
+   "crouched-walking",
+   "crouching",
+   "drinking",
+   "falling-back-death",
+   "fight-stance-idle-8-frames",
+   "fireball",
+   "flying-kick",
+   "front-flip",
+   "getting-up",
+   "high-kick",
+   "hurricane-kick",
+   "jumping-1",
+   "jumping-2",
+   "lead-jab",
+   "leg-sweep",
+   "picking-up",
+   "pull-heavy-object",
+   "pushing",
+   "roundhouse-kick",
+   "running-4-frames",
+   "running-6-frames",
+   "running-8-frames",
+   "running-jump",
+   "running-slide",
+   "sad-walk",
+   "scary-walk",
+   "surprise-uppercut",
+   "taking-punch",
+   "throw-object",
+   "two-footed-jump",
+   "walk",
+   "walk-1",
+   "walk-2",
+   "walking",
+   "walking-10",
+   "walking-2",
+   "walking-3",
+   "walking-4",
+   "walking-4-frames",
+   "walking-5",
+   "walking-6",
+   "walking-6-frames",
+   "walking-7",
+   "walking-8",
+   "walking-8-frames",
+   "walking-9"
+  ],
+  "templates_needed": {
+   "walking-6-frames": true,
+   "running-8-frames": true
+  }
+ },
+ "balance": {
+  "before": 1174.7,
+  "after_state": 1164.7,
+  "after_idle": 1156.7,
+  "after_walk": 1132.7,
+  "after_run": 1108.7,
+  "spent": 66.0,
+  "budget": "about 70, hard cap 100",
+  "how": "get_balance before the first call and after each step; each step's jobs had all finished before its reading (skeleton-v3 jobs were charged on completion)"
+ },
+ "state": {
+  "tool": "create_character_state",
+  "arguments": {
+   "character_id": "507ec529-642d-4b0e-999b-731be937ba15",
+   "state_name": "Clay",
+   "seed": 1234,
+   "edit_description": "Wearing the Clay Remembrance instead of the hooded cloak: a potter's wrap of coarse undyed cloth bound round the body and a stiff apron caked with dried reddish-brown clay over it, the sleeves rolled to the elbow, dark trousers and wrapped feet; no cloak and no hood, short dark hair. The same small clay figure with grey-ochre clay skin, the same face and three amber freckles, the same build. Both hands empty: no blade, no weapon, nothing held."
+  },
+  "character_id": "172b04ab-ba59-4c9b-9dd7-78ea8d6cf9a9",
+  "job_id": "48420ae4-481a-4fc3-a2b6-71703d273329",
+  "quoted": "~10-25 generations",
+  "generations": 10,
+  "retakes": 0,
+  "size": "64x64",
+  "check": "hands empty in all 8; no cloak or hood; grey-ochre clay skin; height 45 (S) and 46 (the other 7) against Ash's 45; freckles kept as three marks in the same place but drawn in the cloth colour #BFB5A0, not amber; no hard failure, so no retake"
+ },
+ "animations": {
+  "idle": {
+   "tool": "animate_character",
+   "mode": "v3",
+   "arguments": {
+    "character_id": "172b04ab-ba59-4c9b-9dd7-78ea8d6cf9a9",
+    "mode": "v3",
+    "action_description": "stands at rest, breathing slowly, arms relaxed and empty at the sides; a calm loop",
+    "frame_count": 4,
+    "animation_name": "idle",
+    "directions": [
+     "south",
+     "south-east",
+     "east",
+     "north-east",
+     "north",
+     "north-west",
+     "west",
+     "south-west"
+    ]
+   },
+   "group": "54acb888-46f7-4589-aa1d-da258eb1ac3a",
+   "calls": [
+    {
+     "directions": [
+      "south",
+      "south-east",
+      "east",
+      "north-east",
+      "north",
+      "north-west",
+      "west",
+      "south-west"
+     ],
+     "cost": "8 generations (1/dir x 8)",
+     "job_ids": {
+      "south": "9a2a181c-437a-4c5d-bd96-67371ad92187",
+      "south-east": "713161a0-6f95-461e-a82e-4f624b3eee87",
+      "east": "7351762c-c2d0-48ae-94b2-d4337c2c3209",
+      "north-east": "a0e70ba0-099d-4be7-8059-badd4da21fa6",
+      "north": "b4f17a35-998e-4092-8ee1-d2bfc1f34ca5",
+      "north-west": "f0b49f10-140b-4016-aaac-b1cadc2ad228",
+      "west": "73c94bab-04bc-4b85-b7ff-b10c740c20c1",
+      "south-west": "e4e8b0dd-d308-44a0-90d8-e21c5647ca30"
+     }
+    }
+   ],
+   "generations": 8,
+   "retakes": 0,
+   "frames": "5 per facing (frame 0 = the rotation, 1-4 animated), stored on a 68x68 canvas"
+  },
+  "walk": {
+   "tool": "animate_character",
+   "mode": "skeleton-v3",
+   "arguments": {
+    "character_id": "172b04ab-ba59-4c9b-9dd7-78ea8d6cf9a9",
+    "mode": "skeleton-v3",
+    "template_animation_id": "walking-6-frames",
+    "animation_name": "walk",
+    "directions": "see calls (all 8, in batches to keep at most 8 jobs running)"
+   },
+   "group": "eb1247e3-09d0-4625-b77b-e4d6153e3347",
+   "calls": [
+    {
+     "directions": [
+      "south-west",
+      "north"
+     ],
+     "cost": "6 generations (3/dir x 2)",
+     "job_ids": {
+      "south-west": "14fe071a-22b2-4e65-88cf-88f96787ac3d",
+      "north": "3e643fce-fe2c-4879-a0d5-9f51ba2e7c3b"
+     }
+    },
+    {
+     "directions": [
+      "south",
+      "north-east"
+     ],
+     "animation_group_id": "eb1247e3-09d0-4625-b77b-e4d6153e3347",
+     "cost": "6 generations (3/dir x 2)",
+     "job_ids": {
+      "south": "fdf1cf28-8d83-4a57-bd8c-db3454d9deb1",
+      "north-east": "05024b72-64f3-4b05-8395-8236c0aa96ae"
+     }
+    },
+    {
+     "directions": [
+      "south-east",
+      "east",
+      "west"
+     ],
+     "animation_group_id": "eb1247e3-09d0-4625-b77b-e4d6153e3347",
+     "cost": "9 generations (3/dir x 3)",
+     "job_ids": {
+      "south-east": "3a11414a-07af-47fb-9783-bf740897b5b7",
+      "east": "2dea6243-c023-4f95-8799-beb4547ecff4",
+      "west": "dab3cabf-8c64-4854-867c-3ceed8c149d6"
+     }
+    },
+    {
+     "directions": [
+      "north-west"
+     ],
+     "animation_group_id": "eb1247e3-09d0-4625-b77b-e4d6153e3347",
+     "cost": "3 generations (3/dir x 1)",
+     "job_ids": {
+      "north-west": "2bca4962-d883-4ec8-852d-d9884473211b"
+     }
+    }
+   ],
+   "generations": 24,
+   "retakes": 0,
+   "frames": "6 per facing, no rotation frame, 80x80 canvas"
+  },
+  "run": {
+   "tool": "animate_character",
+   "mode": "skeleton-v3",
+   "arguments": {
+    "character_id": "172b04ab-ba59-4c9b-9dd7-78ea8d6cf9a9",
+    "mode": "skeleton-v3",
+    "template_animation_id": "running-8-frames",
+    "animation_name": "run",
+    "directions": "see calls (all 8, in batches)"
+   },
+   "group": "94a68806-443f-42b2-bce9-18d1ecdb3642",
+   "calls": [
+    {
+     "directions": [
+      "south",
+      "north",
+      "south-west"
+     ],
+     "cost": "9 generations (3/dir x 3)",
+     "job_ids": {
+      "south": "5ce24b9d-605a-470b-876a-744be33edc1f",
+      "north": "66e236ae-eade-4dbb-9446-332bea076181",
+      "south-west": "8b675c6c-d23e-437b-a2a1-48d0ce0ff8f1"
+     }
+    },
+    {
+     "directions": [
+      "east"
+     ],
+     "animation_group_id": "94a68806-443f-42b2-bce9-18d1ecdb3642",
+     "cost": "3 generations (3/dir x 1)",
+     "job_ids": {
+      "east": "a3e1221d-aa88-4d4f-9b12-1af380a8bd83"
+     }
+    },
+    {
+     "directions": [
+      "west",
+      "south-east"
+     ],
+     "animation_group_id": "94a68806-443f-42b2-bce9-18d1ecdb3642",
+     "cost": "6 generations (3/dir x 2)",
+     "job_ids": {
+      "west": "a8395a7d-c016-4f14-aa6b-a828b68c9ad3",
+      "south-east": "551bd8dd-aff2-451b-b99a-fb3b6d78ac1c"
+     }
+    },
+    {
+     "directions": [
+      "north-east",
+      "north-west"
+     ],
+     "animation_group_id": "94a68806-443f-42b2-bce9-18d1ecdb3642",
+     "cost": "6 generations (3/dir x 2)",
+     "job_ids": {
+      "north-east": "8789e63f-ccd7-49ad-bf85-38b4aa167cae",
+      "north-west": "cb8e5e46-c624-4956-b8a8-d7ce71d413c2"
+     }
+    }
+   ],
+   "generations": 24,
+   "retakes": 0,
+   "frames": "8 per facing, no rotation frame, 80x80 canvas"
+  }
+ },
+ "retakes": "none",
+ "downloads": "every frame from its backblaze URL as returned by get_character, then checked byte-for-byte against the character zip (https://api.pixellab.ai/mcp/characters/172b04ab-ba59-4c9b-9dd7-78ea8d6cf9a9/download): 0 differences in 8 rotations + 144 frames. character-metadata.json is the zip's metadata.json (both states of the group).",
+ "files": {
+  "character-metadata.json": "3f4b858c9ce0ef428efe4f0b7143ec1eea00dc215a7f22d6575d1f71806350df",
+  "contact.png": "a5c80c66fcc625da3922ccb457dc26b6b9e6fcf86077c16bd77df62bf89e6498",
+  "idle/east/frame-0.png": "0e01088409d57cd6e2108544bff5fc7a38b3238e8cdfcee41c0dd10aba55b6f6",
+  "idle/east/frame-1.png": "b691ac9e13c96b6975b796a3cb6b81cdd7d7d4ceed9827653be9ca03d7d64d0a",
+  "idle/east/frame-2.png": "d373575d5adf3bbcc1803d33ed83ff1e35d0bff24c4e7771a5aaa11b9fef92da",
+  "idle/east/frame-3.png": "9f9be0f1833c1366ee6908bc88103de875adc48f8b6a1cd8770b0f3015ca199e",
+  "idle/east/frame-4.png": "23c1d1f2fbdb5da9915384cbb8f7ec87217515770832a728874e722a7b1f0ead",
+  "idle/north-east/frame-0.png": "3d959d48efbd9136348a63d9eadf8d06fc12ab422a63dba2900dc67532534bc1",
+  "idle/north-east/frame-1.png": "92938368ce1549c9e27eab3bd0ade65434f696dcb9464ac82c78382ef251f6d4",
+  "idle/north-east/frame-2.png": "3bd355e628d201d966c4d86ffb193918338c428ea81145e2a8a52b4c2fa2a6cd",
+  "idle/north-east/frame-3.png": "d344c456a81a1b9dd9d2204c07bf7a7df78dd726a6520f1e0a6e662456dfa067",
+  "idle/north-east/frame-4.png": "7c021ce7366a659ebfa2b7d740bae214fd752e272cba3a76d778918c5659731e",
+  "idle/north-west/frame-0.png": "44e329e9a60e4c5c6b9bc0ed5d6e7024c9076a08ffb99ae1bd446ee67e71b689",
+  "idle/north-west/frame-1.png": "360b3cd3994482b42a9808e8020f240d81aa009e83323ddf46cbc608b6977118",
+  "idle/north-west/frame-2.png": "e642f35f90acca61a2333cc08e95bb684ca70b6a26a3fc2438e784f7441c4cab",
+  "idle/north-west/frame-3.png": "65adf89160ecc8fd1bca2ef52b9c5b542354c7bc38a63281346389678db4ee1d",
+  "idle/north-west/frame-4.png": "c92736cfedf91fe314728b2206bafe3af01ec9483c44520e15f30ab0d44cedd0",
+  "idle/north/frame-0.png": "8f1331d44e042865d2b46557e72dec5cb2255e88916d2211144c8f82d5c637ab",
+  "idle/north/frame-1.png": "f95d0bb3c50ba94ca5e3540723e621ea932c40af4333be62dc43154705021279",
+  "idle/north/frame-2.png": "61c99def6df26aa97acbee7015f18f769b1eb03e61f6748f16c7aa14b2ea7590",
+  "idle/north/frame-3.png": "7575b5eb2c79af7c5927f5f30a1409a6c7fbc6ebb75ebf73db9de71b278f77bf",
+  "idle/north/frame-4.png": "a8d9e8c8c9d1a1d7308c60a06630ec867cc7f84df351152788cca0d64cb82e64",
+  "idle/south-east/frame-0.png": "c382a44c7ecf5b890a79a6e21add4ee1de0f9fd10588f9396796d48333416211",
+  "idle/south-east/frame-1.png": "6284599ba12aedea194f53ec2dd181153bf454711c3dce98b7c67a450358aba0",
+  "idle/south-east/frame-2.png": "7d13de8aea028635fadc01e0dbc7085c784606d2b3ae10c51c9c17f6f9f641f4",
+  "idle/south-east/frame-3.png": "74af8c454731bbff221b598a08e19b04d46b9479903cd52e9e148ad08c493986",
+  "idle/south-east/frame-4.png": "df39e260c8c79e040388b14166101c20249b7828e2551558d5a0362a7d6df1eb",
+  "idle/south-west/frame-0.png": "1c5dabe27ea18250ad188cc41f436be515117a89965b43d6ccb5c29809734797",
+  "idle/south-west/frame-1.png": "83929916b3026227d85660a8403a6394b102d6739062945054eadebc5c240556",
+  "idle/south-west/frame-2.png": "6cb5cba8eb1cde7ddaf75d6d1e57e8e496a40252044038a3f554f0ea5ecbb106",
+  "idle/south-west/frame-3.png": "a18170a1432507d3b19d1bef10cbdfd918c0e3fb7bb844112ea4963e85ac8404",
+  "idle/south-west/frame-4.png": "d91d52961c6741c5517884149e5c6b603d79966ae355bd38b525aaeaab9c5da8",
+  "idle/south/frame-0.png": "366f30905008ed8c624bf6405fddabf7c030a3efa57549867064ef50032d66c0",
+  "idle/south/frame-1.png": "4a4d663953cf9384dbd2847af89d5857f3d38d2ae8c7dc39d170b3ca458db3fd",
+  "idle/south/frame-2.png": "ac5d0675ea00956c57734e1568c0cebcf25689f82d0fa8a77038e191cc458e13",
+  "idle/south/frame-3.png": "338dee52829cf8642e5b535599ad86cc1fb3f3f86f934223263e4384e7d90e52",
+  "idle/south/frame-4.png": "602f6d0eb9dba8c49e82a16505434d055428def76fca1472b1bbf5cd2f088950",
+  "idle/west/frame-0.png": "3746fcd73192d8e796ee236b007b6455346f0eb38d744fe95bae6ef9fbae7aca",
+  "idle/west/frame-1.png": "73f7b068ffa94c86ac49a104da77af9b6b79f8c05895b54f6c15a336a4c780c8",
+  "idle/west/frame-2.png": "7c51abef76323378dcfb15b582fa9095d7b460099421b4bdecaade858aca452f",
+  "idle/west/frame-3.png": "d6aa45aac43233ab8ec1f00edf1e3cf1fe371127f34bca4217b9f8d31b9de745",
+  "idle/west/frame-4.png": "a0179be2bbba9527084334f6e7a3bdf28c4086fde4959ea4057126cc63b4f48d",
+  "rotations/east.png": "d0541b04c04139bf802e240ea61ce344c49e13a8eee71dd1f22e1bd7ebe79125",
+  "rotations/north-east.png": "c46186ac40b1f5e17d2126619e36d1805886aee5a1f27b0df6265ec78e9a6b83",
+  "rotations/north-west.png": "c99bd03085404f7ad3139361738ac81c235f5ccd6fd671dc091c55d04bf50dfa",
+  "rotations/north.png": "6cc00807bb10b4a1ad5d256d68a071b4d4d5797034ae6a20a35e1db4f1d63888",
+  "rotations/south-east.png": "877dfa89b7d8926c691aa4969e33ad053abfc283ac78592dd8995f4a6f780310",
+  "rotations/south-west.png": "bfe82601ea30f20e80b0f9bdba8885fdcfa14fa7202e99c3e8176668a21e8a5c",
+  "rotations/south.png": "656fd95464edcce136983d3bc9c99cca87bc613e665e55e44c1d1251ed4c1979",
+  "rotations/west.png": "ac9ad48142cc60a03895b29fdf72a389a5320f1309ab808fc808a8545d8833e2",
+  "run/east/frame-0.png": "9c6694c14926ed43a1354e203d387d0b3c45f9d51886c40891bc3d6b34b6a987",
+  "run/east/frame-1.png": "2a85502e2b3012b32828d1abf2905245708f27cb015b1fd1e3b6d28885c6f17d",
+  "run/east/frame-2.png": "277b6c54bb912393a01b10110e13f7f05393cbda6efc091f492472e1ce751fc4",
+  "run/east/frame-3.png": "1555c9b92ade15b07691a3e3d38423bfe852800f7a21198245350304f6f791e8",
+  "run/east/frame-4.png": "16e51d120ec20f8b03b8992acf999544b60eb30ab38266c56e2c3a83fe353bf9",
+  "run/east/frame-5.png": "6e4a6c818a494f21a8d309bca9e2e3ace58ca129f54151fa35f031767fb14d1b",
+  "run/east/frame-6.png": "ec469ad4f208ea33cde6f1b53f5b77e997745578bf807d9bba5e9df77912972f",
+  "run/east/frame-7.png": "f50f16e900ad626d561c03294ade7e6a59f34eca1fe4a88330627fb512e82a50",
+  "run/north-east/frame-0.png": "fd1b60d539c2be56aff0ac52e1b06b7ab2b52676916028882dcc58b896a846e2",
+  "run/north-east/frame-1.png": "51d05643b390e0e4025bbfb7e9e4b6190b5776b518cf22979a2c9764db2f7cab",
+  "run/north-east/frame-2.png": "48820dbfca4ff8c538923bda97c01a52b5a2eee9da0456872b605552be048ece",
+  "run/north-east/frame-3.png": "6263e7cd125623299a20c97d2c5a12573970369c2a7f6958fb7bf1c635bd0487",
+  "run/north-east/frame-4.png": "6a19aafd4f4d26eb4a192b1d280e9fa8b72e183a74795dbf3060cbb31ff5acbe",
+  "run/north-east/frame-5.png": "206e7e779d89426fe3ba170db23e7c5674067e644d10b304b5f738860c566ef9",
+  "run/north-east/frame-6.png": "1ee2d755c6e1380a0ebe41a3169828f60ea495ba59b092f77498eeda8c02c265",
+  "run/north-east/frame-7.png": "e38ac9d008af058c6119634b6471da7668a2674fe3a0f30cee1372069ab6c8b8",
+  "run/north-west/frame-0.png": "c787c5337c5a14337b12dba993fd5db964a8fbb0f3a5c268a5264b272f9c5549",
+  "run/north-west/frame-1.png": "3aa4e8f5a32900133e209c45343f966721685e7f28859fdbb971cb8d613e26a9",
+  "run/north-west/frame-2.png": "f1b63c81605b3baf921349ce939cb6ba7b6d36b7c7fea34af18aed811dbbb968",
+  "run/north-west/frame-3.png": "f0476c0f9cb6d424f5ee5aaac8e03ac4cad00f94533e984cab4a72dc08e1e769",
+  "run/north-west/frame-4.png": "dde069088ce38c459146c002e5b0e3e4a5b5a07136f9e4c20957ca08e8d5e8d6",
+  "run/north-west/frame-5.png": "5158230ae8dd34ea57f94b01f5f2cf1de9e5b4e77891404c0856fe481c7f54f9",
+  "run/north-west/frame-6.png": "ecc2e8e16957398fbc2ddf007078a91f64df859205bcaab9fbe51622e2f37681",
+  "run/north-west/frame-7.png": "ab59e9afd31645a1af399e8cef31e767ae649b1ad40c29bc20164b38cec77b48",
+  "run/north/frame-0.png": "8d9ab8efb93cd5c377639570824237c8550d5e7c1d89ed4dab4f81cdfad578f6",
+  "run/north/frame-1.png": "7b8ba260caf3fe5bbd46951e776583c700b6ed8523597e1ff5169836733f69fb",
+  "run/north/frame-2.png": "402161e9655ebab0252454a9f9b33d183108a8fe0eccca3bda1a7ec0c368438d",
+  "run/north/frame-3.png": "752e4a07cbf5783f3f1db1919c10da69a9c9bbec1a2c339d23826b1998bb46ab",
+  "run/north/frame-4.png": "42394073f4e84f027d6741153ccae7bafa527fb347d258fe46b1f74c7336cee4",
+  "run/north/frame-5.png": "0af9ebbb70be68ebc1262cceddfdfc5c8850b8bb4c78c6a74bd23b3962b2ca52",
+  "run/north/frame-6.png": "ab55d4432d87b8c90f1fe6ae920fc1598eee6aaf85fd0ded66588912c290334d",
+  "run/north/frame-7.png": "871bf61fff06611370548f419cc78b2681c082349a6084b091260c69b24508e6",
+  "run/south-east/frame-0.png": "0499d4df8fd215f30db1429122a619333b3a9f27faa271bc075bc1903a78ba9a",
+  "run/south-east/frame-1.png": "027ea724b6d9c788172e1082797105a2bc0725f239ea2a377c778369830ca847",
+  "run/south-east/frame-2.png": "97b7c5bb15e2666fa12890d92b0c31afc9092eec5d88b096da46adcdacef5c3c",
+  "run/south-east/frame-3.png": "a41efefe1e660e1bc37aa17dd9dc21031aa9e8f73fc07195b3c4b68616c46ec2",
+  "run/south-east/frame-4.png": "b875d91ed1edc284d34124fecd343fc5e1957d4b09f6dc595742ddf4559b681f",
+  "run/south-east/frame-5.png": "5a0d7785235accb7e447d2d839b780e4db086abd31666b1b18eb65a9a193c237",
+  "run/south-east/frame-6.png": "b83f7b699ae3b1720831e0affebbcca58e2558f9944e33a8b06ee69eaef44497",
+  "run/south-east/frame-7.png": "71e89194dfd62f933b044fe65c43d06f4dad3d0b4f5ebcba27c7932709b8e664",
+  "run/south-west/frame-0.png": "3154424a35be220db49946d20a9ff5ec3afaaa9ec4895d52a983fd9704c7fda8",
+  "run/south-west/frame-1.png": "b18b7989272e56bb55b3944a26752c1ca6f5a96e14031b4f5842bd37f745a9db",
+  "run/south-west/frame-2.png": "a92a943fc4d9df2905367a092a5146992368d9eed60bf23fd8f386c69efbb1ab",
+  "run/south-west/frame-3.png": "7f6a0603799eec92f3547ebd7d39a87c2e6220aa709cc13fc644c71c1d971644",
+  "run/south-west/frame-4.png": "12a476a3761a169560f40f044c24e5510fe6583c851165d4382ffb8980ae6ed8",
+  "run/south-west/frame-5.png": "38be996b47c945103bc269051175d464e7d43e11f3288e2d351bf1d0b86c31be",
+  "run/south-west/frame-6.png": "a686d18f77cfd713206cd64abf304ad904614ab9189f7bb95553bd0704100c35",
+  "run/south-west/frame-7.png": "567ddea9e622bcca9f4140848245669702e2bc9a5f2ef8257b90556d778a9274",
+  "run/south/frame-0.png": "2a0ca64f66b60725714145f0b46a3c1b9c7dc757dbbd02a36e79ab4df22dfde0",
+  "run/south/frame-1.png": "a467afcc09f550e705069f749ebb73b815993495edb84b5276babf7dd6e51736",
+  "run/south/frame-2.png": "01760aded2047c8f03749edcf53fa28d911af6e9ecb54175d4230cd1150c8b5e",
+  "run/south/frame-3.png": "7bf701511472f399a1c4f5f6840c3f5a87f4f600b70ee1a778d0213d58806229",
+  "run/south/frame-4.png": "3c00d423c19771d768051f784438508d1fb52d821ca3ed3c4bc4fa390ea7f626",
+  "run/south/frame-5.png": "b02868be1703e07d7e655b5b059baae648751bab099285b320a1600a566b339d",
+  "run/south/frame-6.png": "43b4a48d7b334cf3cf49d0c285e68b74c1b5431901d243b082392b3882f81989",
+  "run/south/frame-7.png": "9f896c7ec89140d66c2757a63cc2fd52b8858e529e8923d416a035f27110c8b1",
+  "run/west/frame-0.png": "c5bcbe1933a1a675b0b55f02e7494716486a4cfef377e69199cead78035a7c7a",
+  "run/west/frame-1.png": "d72a08a8a6d0c63016dccb4d904668901f63bf5e9359a9d050360a6b0e8e8b67",
+  "run/west/frame-2.png": "f01f9da7e51a17056c205ddbb6252d4f40b656e61139bcf4eafd1dca64d6dfad",
+  "run/west/frame-3.png": "2ef0f345e0f613cb396af9aeb445c50418d8175ed8a050571c98c8e084ba3ffb",
+  "run/west/frame-4.png": "b679fe2ec987bfc90760c32b5f017349e39f7658196d741f9d8a89766779c67f",
+  "run/west/frame-5.png": "ea5d6792a85146a72e8c117792f2a5268d75dfaed7364573e3770ab6d8bb670c",
+  "run/west/frame-6.png": "3b0c85ae9ce661065cc77c411add77c7502ff1c2577068fe306eeae70d0facc4",
+  "run/west/frame-7.png": "6ebd88f9f82ee4f0008fed3b9a44ae411e2eb7e2679fc7a58c9f8d84d25165ef",
+  "walk/east/frame-0.png": "3c534246c9879094f659136e9f33faa60f5d7d81463ef8e233d1c611706c11ec",
+  "walk/east/frame-1.png": "5c1eb9e2bc0d234d07b226f699c727977726ed5f9431b3d2ae92be074c6ed7bd",
+  "walk/east/frame-2.png": "3e74c863e82fa928f89ce0528832758063d735a79163d1b1439ccd1698ed111f",
+  "walk/east/frame-3.png": "b4b67dd8f91bbdafaef08ffb32aa411743f8098174edc14699e352d585196b27",
+  "walk/east/frame-4.png": "4cf399090c178772c6bbcb2943b3190cdc044ce231fcec76c8af341177c9fcc2",
+  "walk/east/frame-5.png": "3780f12c60c1d53a62ca544d6d0837daa7f299e994a82120c8078d9be2aeef09",
+  "walk/north-east/frame-0.png": "9721e893dc39f498c0517a7c94c41a1de1b75f1bff25643453ee0d828ea45e64",
+  "walk/north-east/frame-1.png": "9420b008238a8c19b8b643958659c9d4fd5270936fa319b51361a3df4d68b3b8",
+  "walk/north-east/frame-2.png": "0b7380a3ced50c5ae6d6c3e3c7f4cbcd1bbf4ae91430d6f62bdee72ffa3a622a",
+  "walk/north-east/frame-3.png": "e54a9493bc371816f57f329e8570496433f9143ebfbe9bde950060a318a44ed5",
+  "walk/north-east/frame-4.png": "4dcafd7ef917b552163a1c1b4d86f5d982990ce4be748903f63c2788abd5e398",
+  "walk/north-east/frame-5.png": "3a178b117ed30e5ca5bd5eb5274cfe1f6a4f563cc4c429d567381278044bcfc8",
+  "walk/north-west/frame-0.png": "900a06a1704a62cd2b9eadb593af590d17e9ddd05d22624c15ca5ae9742e559f",
+  "walk/north-west/frame-1.png": "a6434d9872bb9f32d9c1dcf30f82365ad2fe84e387caf64f3720c5f1994c6a9c",
+  "walk/north-west/frame-2.png": "7aa7930d499961e981e50059e85eee3085b04c8b9ae049db95f6e3b3b2c1baa5",
+  "walk/north-west/frame-3.png": "e7d2c5b580ffe094d5149c2564b75c3a7eb5d995b573b1122674960d32a59556",
+  "walk/north-west/frame-4.png": "1cc2b9099209d3aaeb00de76a705684a5109ea0a7c93725cb36084b2d363dd27",
+  "walk/north-west/frame-5.png": "63721610267f7881289f809b73123bfe46f016ebfa75bdecce00c084f0198119",
+  "walk/north/frame-0.png": "4ec61299cce0860bf789983ded80d1e49685b3460646ad988273974b50e7a0af",
+  "walk/north/frame-1.png": "cece6a1383c1f20c8d9e227243675373920a47ec98c605d0cb56aa4773fc1da6",
+  "walk/north/frame-2.png": "2779ba1c65fb44487926e6d1e2b77b1043b5ec2027501ace5bb5b163f555e0b7",
+  "walk/north/frame-3.png": "c034ae5e8e98336cc913224349596ee88130d3cd07d962b7b9f4c5358a717582",
+  "walk/north/frame-4.png": "968937e487fb47e90ce81c5d9918908d92cec64f654d0f71fdcfd0828037799c",
+  "walk/north/frame-5.png": "dc8d7bcb828078e25287151e1b2c9a9c7c28db2292f5d5919b7ff8ec7a4bef2d",
+  "walk/south-east/frame-0.png": "162c13ea7db9401fde29318a5026ceca41555f6703179ad7d204b072e9df7483",
+  "walk/south-east/frame-1.png": "9930cd4217fb53262ad5b9591500439e27a4579e758f0f5fbb39d3b0c84e9d25",
+  "walk/south-east/frame-2.png": "7f426d1cfa2b58837de8d208f38762a6b03f526cc8204d45d6f6564520e4fb2b",
+  "walk/south-east/frame-3.png": "126044e9247b10390580718b5270f7b6c5237569f71cea66f9d98cf9aa6f13d8",
+  "walk/south-east/frame-4.png": "f4d45cb809398f842c4820abb0ceaf99b9426aa049e2f6da05811b3db93b4a35",
+  "walk/south-east/frame-5.png": "41550ecea326b89efd717a97c0fabc2791f4e61166a34a2454c15dbc75bbb7fe",
+  "walk/south-west/frame-0.png": "7196c456ed502960a29a5018bca88cab5901903a68e0abb0959f3432bf8263a5",
+  "walk/south-west/frame-1.png": "77e2db39bcf1a589874291a598e3613d79117b4253181df693ab53a3fe7d87a3",
+  "walk/south-west/frame-2.png": "fb55a4d2bcb932e870c76b2d4a95fb574fe964c15e8f8963a12881f1eeee66b9",
+  "walk/south-west/frame-3.png": "7b3b68c4374288bf5286a56c7dda112ea0f4642eb0ec778eaa97561aa2010183",
+  "walk/south-west/frame-4.png": "88c611fe76812f0ad9dff880f6589cbcaee005ea00b4fcf5a346a51d58f2fd92",
+  "walk/south-west/frame-5.png": "a3a0e1a8692bd3d2e0ab1a6925f6687bec2442d9e65b721a21549634a3a7ec0f",
+  "walk/south/frame-0.png": "cbcb6ee19d5326bb4dd6d853126f63f8b0e6dd58d03c7d2813f5fc074a377099",
+  "walk/south/frame-1.png": "3ba7056111117cd3b51fb4c4818314766452c0bda7681607be273fb78011cf3d",
+  "walk/south/frame-2.png": "1d9bcfa47b5f38765359f7c3bed76c8207aa87584e0a42036ae14a4baa316d42",
+  "walk/south/frame-3.png": "12815b01a7daa7f4bd46a94cee93797f8af10ed759434dca6c7848a6b24df925",
+  "walk/south/frame-4.png": "6d42a4ecc700045565423787beb818470678a0c067954090a779514da388e9e6",
+  "walk/south/frame-5.png": "f51cf61013c54dfebefa7346b1acf4382d7f6a43a022e91894acd5c511593ebb",
+  "walk/west/frame-0.png": "47e55fbe215d20ec721c9998966da4a2f050b0eea48e03cdd91318f775d9bc70",
+  "walk/west/frame-1.png": "0d862cfc09abe71b170690cd0a3a2015f9efcc2014675dc259ff60f7a561dd5d",
+  "walk/west/frame-2.png": "573777b34ff9ce0b773222adcdd3ad5d79097cd7c8037bdf2f294aeef6421a24",
+  "walk/west/frame-3.png": "368f874345a024431b048d3fe519e04c247944b7edbf5b33aaf3b24e4664bd4f",
+  "walk/west/frame-4.png": "3070e926b7775ee775949b04bdc5326e65c83ca1fce25603b69a415b2d7254ca",
+  "walk/west/frame-5.png": "06ba289ab93f89f533912d4606dbdc9388099975641a4a00f45a924045d177ff"
+ },
+ "contact": "contact.png: 4x on hollow-deep. Row 1: the 8 rotations (S..SW) trimmed and sole-aligned, with Ash's sheathed idle_S_0 cut from packages/shared/assets/sprites/kindled-ash-sheathed.png; row 2: the same on art/clean/tiles-holding/floor_0.png tiled; then idle, walk, run, one row per facing, frames in output order."
+}
