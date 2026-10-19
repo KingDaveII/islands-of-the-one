@@ -1,4 +1,5 @@
 import {
+  AWAY_CARD_MIN_MS,
   basketPlace,
   feedPreview,
   FILL_ITEM,
@@ -28,6 +29,7 @@ import {
 } from '@iot/shared';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type { Database, Transaction } from '../db/client.js';
+import { awayCardOf, awayCardView, clearAway, isAbsence, levelsGained, readXp, recordAway, sumMade, type AwayCredit } from './away-card.js';
 import {
   basketCycles,
   holdingActivity,
@@ -183,17 +185,21 @@ export interface Holding {
   takeDownPiece(kindledId: string, args: PlotTakeDownRequest, now: Date): Promise<HoldingResult>;
   /** Settle, then take every piece of a plot down with its refund, which may overfill the store (the playtest CLI). */
   clearPieces(kindledId: string, plotId: string, now: Date): Promise<ClearResult>;
-  /** Settle alone (tests and the API's inventory routes). */
+  /** Settle alone (tests and the API's inventory routes, so every route sees the same absence). */
   settle(kindledId: string, now: Date): Promise<void>;
+  /** Dismiss the away card drawn with this `to` (M2 Task 7): the row goes only while it still ends there. Whether one went. */
+  awaySeen(kindledId: string, to: Date): Promise<boolean>;
 }
 
 /** What `plots:pieces --clear` did: the refund given, per item. */
 export type ClearResult = { ok: true; value: { refund: InventoryEntry[] } } | { ok: false; error: HoldingError; message: string };
 
-/** What a settle credited: the cycles paid this time, and whether the clock restarted after a capped stretch. */
+/** What a settle credited: the cycles paid this time, whether the clock restarted after a capped stretch, and what landed where (the away card). */
 export interface Settlement {
   credited: number;
   restarted: boolean;
+  /** The place, item and count the due cycles put in the basket, or null when nothing was due. */
+  credit: AwayCredit | null;
 }
 
 /**
@@ -269,13 +275,13 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
    */
   async function settleIn(tx: Transaction, k: KindledRow, w: WritRow, rows: readonly PlotRow[], now: Date): Promise<Settlement> {
     const [row] = await tx.select().from(holdingActivity).where(eq(holdingActivity.kindledId, k.id)).for('update');
-    if (!row) return { credited: 0, restarted: false };
+    if (!row) return { credited: 0, restarted: false, credit: null };
     const place = workplace(row.stationId, rows, w, now);
     const action = 'refused' in place ? null : place.action;
     const workable = !('refused' in place) && (place.plot === null || place.plot.row.sownAt !== null);
     if (!action || !workable) {
       await tx.delete(holdingActivity).where(eq(holdingActivity.kindledId, k.id));
-      return { credited: 0, restarted: true };
+      return { credited: 0, restarted: true, credit: null };
     }
     const horizon = offlineHorizonMs(writStored(w), row.lastSeenAt, now);
     const { cycles, due, lost } = settleMath(row, action.cycleMs, now, horizon);
@@ -305,20 +311,33 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
           : { creditedCycles: cycles, lastSeenAt: now },
       )
       .where(eq(holdingActivity.kindledId, k.id));
-    return { credited: due, restarted: lost };
+    return { credited: due, restarted: lost, credit: due > 0 ? { place: place.id, itemId: action.itemId, quantity: due * action.quantity } : null };
   }
 
   /**
    * Everything a holding request settles, under the Kindled's lock: the Writ
    * row and the plot rows locked, the active action, then the basket cycles
-   * from the holding-wide last heartbeat, which is then refreshed.
+   * from the holding-wide last heartbeat, which is then refreshed. The
+   * absence is `now − last_seen_at` before the refresh: at `awayCardMinMs`
+   * or more the stretch is summed up in the away card (M2 Task 7): what the
+   * action and the cycles credited per place, and the skills whose level
+   * rose over it.
    */
   async function settleAll(tx: Transaction, k: KindledRow, now: Date): Promise<{ w: WritRow; plots: PlotRow[]; pieces: PlotPieceRow[] }> {
     const w = await lockWrit(tx, k.id, now);
     const rows = await lockPlots(tx, k.id);
     const pieces = await lockPieces(tx, k.id);
-    await settleIn(tx, k, w, rows, now);
-    await settleCycles(tx, inventory, k.id, layout, writStored(w), rows, w.lastSeenAt, now, pieces);
+    const absence = isAbsence(w.lastSeenAt, now, AWAY_CARD_MIN_MS);
+    const xpBefore = absence ? await readXp(tx, k.id) : null;
+    const action = await settleIn(tx, k, w, rows, now);
+    const cycles = await settleCycles(tx, inventory, k.id, layout, writStored(w), rows, w.lastSeenAt, now, pieces);
+    if (absence && w.lastSeenAt && xpBefore) {
+      const credits: AwayCredit[] = [
+        ...(action.credit ? [action.credit] : []),
+        ...Object.entries(cycles).map(([place, c]) => ({ place, itemId: c.itemId, quantity: c.quantity })),
+      ];
+      await recordAway(tx, k.id, { fromAt: w.lastSeenAt, toAt: now, made: sumMade(credits), levels: levelsGained(xpBefore, await readXp(tx, k.id)) });
+    }
     await tx.update(writs).set({ lastSeenAt: now }).where(eq(writs.kindledId, k.id));
     return { w, plots: rows, pieces };
   }
@@ -373,7 +392,11 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
       words: await knownWordIds(tx, k.id),
       plots: plotViews(layout, rows, pieceRows, stored, now.getTime()),
       cycles,
+      away: null,
     };
+    // The away card waiting to be seen (M2 Task 7); its Writ line reads the answer's `writ`.
+    const card = await awayCardOf(tx, k.id);
+    if (card) out.away = awayCardView(card);
     if (take) out.take = take;
     return out;
   }
@@ -587,5 +610,9 @@ export function createHolding(db: Database, inventory: Inventory): Holding {
         await settleAll(tx, k, now);
       });
     },
+
+    // The dismissal is one conditional delete: a card whose `to` moved on (an absence merged in after it was drawn)
+    // stays, and comes back with the next answer.
+    awaySeen: (kindledId, to) => clearAway(db, kindledId, to),
   };
 }

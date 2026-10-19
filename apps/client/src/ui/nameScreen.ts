@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import { creationData, shapeLetters, validateIslandName } from '@iot/shared';
+import { creationData, shapeLetters, SLEEP_TEXT, validateIslandName } from '@iot/shared';
 import type { Rect as ViewRect } from '../game/view.js';
 import {
   EMET,
@@ -19,7 +19,7 @@ import { DEPTH } from '../render/depth.js';
 import { FIELD_H, FieldFrame } from '../render/field.js';
 import { plotLetters, type LetterSheet, type LetterState } from '../render/letters.js';
 import { body, label, place, type Text } from '../render/text.js';
-import { panel } from '../render/ui.js';
+import { divider, panel } from '../render/ui.js';
 import { createForm, type DomForm, type UiToCss } from './formFields.js';
 
 /** The screen's panel (UI px). */
@@ -41,6 +41,8 @@ export interface NameScreenHost {
   /** How the UI grid maps to CSS px, for the DOM input. */
   cssMap(): UiToCss;
   sheet(): LetterSheet | null;
+  /** SLEEP: lie down by the Writ (M2 Task 7); the button is here too, so sleep is reachable before the island is named. */
+  sleep(): void;
   /** The player confirmed a Name: send it; the server's answer decides. */
   submit(name: string): void;
 }
@@ -64,6 +66,8 @@ export class NameScreen {
   private readonly tipG: Phaser.GameObjects.Graphics;
   private readonly tabletZone: Phaser.GameObjects.Zone;
   private readonly confirm: Button;
+  private readonly sleep: Button;
+  private readonly sleepHint: Text;
   private readonly form: DomForm;
   private field: FieldFrame | null = null;
   private placed = '';
@@ -98,6 +102,10 @@ export class NameScreen {
     this.confirm = button(scene, 0, 0, NAME_CONFIRM, true, () => {
       this.form.submit();
     });
+    this.sleep = button(scene, 0, 0, SLEEP_TEXT.SLEEP, false, () => {
+      host.sleep();
+    });
+    this.sleepHint = body(scene, 0, 0, SLEEP_TEXT.HINT, Palette.uiInkMuted, INNER);
     this.form = createForm(
       [
         {
@@ -115,7 +123,7 @@ export class NameScreen {
       },
       () => undefined,
     );
-    const objects = [this.g, this.tablet, this.title, this.bodyText, this.error, this.tabletZone, this.confirm.container, this.tipG, this.tip];
+    const objects = [this.g, this.tablet, this.title, this.bodyText, this.error, this.tabletZone, this.confirm.container, this.sleep.container, this.sleepHint, this.tipG, this.tip];
     layer.add(objects);
     for (const o of objects) o.setDepth(DEPTH.prompt);
     this.tipG.setDepth(DEPTH.cursor - 1);
@@ -164,7 +172,8 @@ export class NameScreen {
   private layout(): void {
     const frame = this.host.frame();
     const bodyH = Math.round(this.bodyText.height);
-    const h = PAD + 18 + 4 + bodyH + 6 + TABLET_H + 8 + FIELD_H + 4 + 11 + 6 + 15 + PAD;
+    const hintH = Math.round(this.sleepHint.height);
+    const h = PAD + 18 + 4 + bodyH + 6 + TABLET_H + 8 + FIELD_H + 4 + 11 + 6 + 15 + 4 + 1 + 4 + 15 + 3 + hintH + PAD;
     const x = Math.round(frame.x + frame.w / 2 - W / 2);
     const y = Math.round(frame.y + frame.h / 2 - h / 2);
     const key = `${x},${y},${h}`;
@@ -190,6 +199,13 @@ export class NameScreen {
     place(this.error, x + PAD, ly);
     ly += 11 + 6;
     this.confirm.container.setPosition(x + W - PAD - this.confirm.width, ly);
+    // The foot: SLEEP and its hint (M2 Task 7), as on the Writ panel.
+    ly += 15 + 4;
+    divider(this.g, x + PAD, ly, W - 2 * PAD);
+    ly += 1 + 4;
+    this.sleep.container.setPosition(x + PAD, ly);
+    ly += 15 + 3;
+    place(this.sleepHint, x + PAD, ly);
     this.placeTip();
   }
 
@@ -259,7 +275,8 @@ export class NameScreen {
   destroy(): void {
     this.form.destroy();
     this.field?.destroy();
-    for (const o of [this.g, this.tablet, this.title, this.bodyText, this.error, this.tabletZone, this.tipG, this.tip]) o.destroy();
+    for (const o of [this.g, this.tablet, this.title, this.bodyText, this.error, this.tabletZone, this.tipG, this.tip, this.sleepHint]) o.destroy();
     this.confirm.container.destroy(true);
+    this.sleep.container.destroy(true);
   }
 }

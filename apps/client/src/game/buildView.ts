@@ -88,26 +88,41 @@ export interface PieceRowLines {
 }
 
 /** What the store holds of an item. */
-export function inStore(inventory: Pick<InventoryResponse, 'store'> | null, itemId: string): number {
+export function inStore(
+  inventory: Pick<InventoryResponse, 'store'> | null,
+  itemId: string,
+): number {
   return inventory?.store.find((e) => e.itemId === itemId)?.quantity ?? 0;
 }
 
 /** The materials lines of a piece against the store, by the item's display name (LORE). */
-export function materialLines(def: AvailablePieceDef, inventory: Pick<InventoryResponse, 'store'> | null): MaterialLine[] {
+export function materialLines(
+  def: AvailablePieceDef,
+  inventory: Pick<InventoryResponse, 'store'> | null,
+): MaterialLine[] {
   return def.cost.map((c) => {
     const have = inStore(inventory, c.itemId);
     return {
       itemId: c.itemId,
-      text: BUILD_TEXT.MATERIAL(displayable(itemDef(c.itemId)?.name ?? c.itemId.replaceAll('-', ' ')), have, c.quantity),
+      text: BUILD_TEXT.MATERIAL(
+        displayable(itemDef(c.itemId)?.name ?? c.itemId.replaceAll('-', ' ')),
+        have,
+        c.quantity,
+      ),
       short: have < c.quantity,
     };
   });
 }
 
 /** What a piece needs that the Kindled lacks: the Writ line first, then the skill level; null when nothing. */
-export function needsLine(def: AvailablePieceDef, writLines: number, skills: Partial<Record<Skill, Pick<SkillView, 'level'>>>): string | null {
+export function needsLine(
+  def: AvailablePieceDef,
+  writLines: number,
+  skills: Partial<Record<Skill, Pick<SkillView, 'level'>>>,
+): string | null {
   if (def.writLine > writLines) return BUILD_TEXT.NEEDS_LINE(def.writLine);
-  if (def.skill && (skills[def.skill.skill]?.level ?? 1) < def.skill.level) return needsSkillLine(def.skill);
+  if (def.skill && (skills[def.skill.skill]?.level ?? 1) < def.skill.level)
+    return needsSkillLine(def.skill);
   return null;
 }
 
@@ -122,7 +137,9 @@ export function pieceRows(
   return piecesFor(kindId).map((def) => {
     const built = plot.pieces.some((p) => p.pieceId === def.id);
     // A piece already standing shows "Standing" in place of its cost (GAME DESIGN 2026-10-19).
-    const materials = built ? [{ itemId: '', text: BUILD_TEXT.STANDING, short: false }] : materialLines(def, inventory);
+    const materials = built
+      ? [{ itemId: '', text: BUILD_TEXT.STANDING, short: false }]
+      : materialLines(def, inventory);
     const needs = built ? null : needsLine(def, writLines, skills);
     return {
       pieceId: def.id,
@@ -141,7 +158,11 @@ export function pieceRows(
 }
 
 /** Build mode's header: "Field, level 2" and "Pieces 1/2". */
-export function buildHeader(plot: Pick<PlotView, 'pieces'>, kindName: string, writLines: number): { title: string; count: string } {
+export function buildHeader(
+  plot: Pick<PlotView, 'pieces'>,
+  kindName: string,
+  writLines: number,
+): { title: string; count: string } {
   return {
     title: BUILD_TEXT.HEADER(displayable(kindName), plotLevel(plot.pieces)),
     count: BUILD_TEXT.PIECES_COUNT(plot.pieces.length, pieceLimit(writLines)),
@@ -151,7 +172,9 @@ export function buildHeader(plot: Pick<PlotView, 'pieces'>, kindName: string, wr
 /** The plot sentence panel's pieces line: the standing pieces' names, or "Pieces: none yet" (LORE). */
 export function piecesLine(pieces: readonly Pick<StandingPiece, 'pieceId'>[]): string {
   if (pieces.length === 0) return BUILD_TEXT.PIECES_NONE_YET;
-  return BUILD_TEXT.PIECES_LIST(pieces.map((p) => displayable(pieceDef(p.pieceId)?.name ?? p.pieceId)));
+  return BUILD_TEXT.PIECES_LIST(
+    pieces.map((p) => displayable(pieceDef(p.pieceId)?.name ?? p.pieceId)),
+  );
 }
 
 // --- The ghost --------------------------------------------------------------------
@@ -176,21 +199,35 @@ export function tileOfWorld(x: number, y: number): TilePoint {
 }
 
 /** The ghost's footprint rectangle, or null for a piece this build can't build. */
-export function ghostRect(ghost: Pick<Ghost, 'pieceId' | 'col' | 'row' | 'rotation'>): TileRect | null {
+export function ghostRect(
+  ghost: Pick<Ghost, 'pieceId' | 'col' | 'row' | 'rotation'>,
+): TileRect | null {
   const def = pieceDef(ghost.pieceId);
-  return isAvailablePiece(def) ? pieceRect(def.footprint, ghost.col, ghost.row, ghost.rotation) : null;
+  return isAvailablePiece(def)
+    ? pieceRect(def.footprint, ghost.col, ghost.row, ghost.rotation)
+    : null;
 }
 
 /** The ghost placed under a tile: its footprint centred on it (the top-left tile of an even side is the one nearer the pointer). */
 export function ghostAt(ghost: Ghost, tile: TilePoint): Ghost {
   const rect = ghostRect(ghost);
   if (!rect) return { ...ghost, col: tile.col, row: tile.row };
-  return { ...ghost, col: tile.col - Math.floor((rect.cols - 1) / 2), row: tile.row - Math.floor((rect.rows - 1) / 2) };
+  return {
+    ...ghost,
+    col: tile.col - Math.floor((rect.cols - 1) / 2),
+    row: tile.row - Math.floor((rect.rows - 1) / 2),
+  };
 }
 
 /** The ghost turned a step about the same top-left tile: clockwise (R, R1, TURN), or back with -1 (L1; GAME DESIGN 2026-10-19). */
 export function rotateGhost(ghost: Ghost, step: 1 | -1 = 1): Ghost {
-  return { ...ghost, rotation: step === 1 ? nextRotation(ghost.rotation) : nextRotation(nextRotation(nextRotation(ghost.rotation))) };
+  return {
+    ...ghost,
+    rotation:
+      step === 1
+        ? nextRotation(ghost.rotation)
+        : nextRotation(nextRotation(nextRotation(ghost.rotation))),
+  };
 }
 
 /** What the ghost's colour comes from: the shared placement reasons, plus the Kindled's own tile (positions are the client's). */
@@ -236,10 +273,19 @@ export function stepCursor(cursor: TilePoint, dc: number, dr: number, plot: Layo
 }
 
 /** The standing piece under a tile, if any (clicking it, or the cursor on it, selects it). */
-export function pieceAt(pieces: readonly StandingPiece[], tile: TilePoint): StandingPiece | undefined {
+export function pieceAt(
+  pieces: readonly StandingPiece[],
+  tile: TilePoint,
+): StandingPiece | undefined {
   return pieces.find((p) => {
     const r = standingRect(p);
-    return r !== null && tile.col >= r.col && tile.col < r.col + r.cols && tile.row >= r.row && tile.row < r.row + r.rows;
+    return (
+      r !== null &&
+      tile.col >= r.col &&
+      tile.col < r.col + r.cols &&
+      tile.row >= r.row &&
+      tile.row < r.row + r.rows
+    );
   });
 }
 
@@ -247,7 +293,12 @@ export function pieceAt(pieces: readonly StandingPiece[], tile: TilePoint): Stan
 
 /** A tile rectangle in world px. */
 export function tileRectWorld(rect: TileRect): WorldRect {
-  return { x: rect.col * TILE_WORLD_PX, y: rect.row * TILE_WORLD_PX, w: rect.cols * TILE_WORLD_PX, h: rect.rows * TILE_WORLD_PX };
+  return {
+    x: rect.col * TILE_WORLD_PX,
+    y: rect.row * TILE_WORLD_PX,
+    w: rect.cols * TILE_WORLD_PX,
+    h: rect.rows * TILE_WORLD_PX,
+  };
 }
 
 /** A standing piece's box in world px, or null for a piece this build doesn't know. */
@@ -261,11 +312,11 @@ export function plotPieceTiles(plots: readonly Pick<PlotView, 'ground' | 'pieces
   return plots.filter((p) => p.ground !== null).flatMap((p) => standingTiles(p.pieces));
 }
 
-/** What floats over the signpost after a take-down: one float per item by its display name, "+300 Twisted log" then "+150 Black stone" (LORE); none for an unknown piece. */
+/** What floats over the signpost after a take-down: one float per item with its count and plural, "+300 twisted logs" then "+150 black stone" (LORE §16.8); none for an unknown piece. */
 export function refundFloats(pieceId: string): string[] {
   const def = pieceDef(pieceId);
   if (!def?.cost) return [];
-  return def.cost.map((c) => BUILD_TEXT.REFUND(c.quantity, displayable(itemDef(c.itemId)?.name ?? c.itemId.replaceAll('-', ' '))));
+  return def.cost.map((c) => displayable(BUILD_TEXT.REFUND(c.itemId, c.quantity)));
 }
 
 // --- The building moment -----------------------------------------------------------------
@@ -281,7 +332,11 @@ export interface BuildPhase {
   done: boolean;
 }
 
-export function buildPhase(t: Pick<PlotsTuning, 'buildMs'>, elapsedMs: number, rows: number): BuildPhase {
+export function buildPhase(
+  t: Pick<PlotsTuning, 'buildMs'>,
+  elapsedMs: number,
+  rows: number,
+): BuildPhase {
   const total = Math.max(1, t.buildMs);
   const e = Math.max(0, elapsedMs);
   if (e >= t.buildMs) return { dust: false, risen: rows, done: true };

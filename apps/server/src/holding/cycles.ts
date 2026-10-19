@@ -109,8 +109,8 @@ export async function lockCycle(tx: Transaction, kindledId: string, stationId: s
   return row;
 }
 
-/** What a settle of the cycles credited, by station (tests and the away card later). */
-export type CycleSettlement = Record<string, number>;
+/** What a settle of the cycles credited, by station: the item and how many landed in the basket (the away card, M2 Task 7). */
+export type CycleSettlement = Record<string, { itemId: string; quantity: number }>;
 
 /** Settles every cycling station of a Kindled (see the module comment). Call under the Kindled's, the Writ's and the plots' locks. */
 export async function settleCycles(
@@ -146,7 +146,7 @@ export async function settleCycles(
         );
         // A basket has no limit, so the one refusal left is a Kindled that is gone; the settle has nothing to credit then.
         if (!result.ok) throw new Error(`harvest: ${result.message}`);
-        if (!result.duplicate) credited[station.stationId] = credit.credited;
+        if (!result.duplicate) credited[station.stationId] = { itemId: station.cycle.itemId, quantity: credit.credited };
       }
     }
     if (next !== from || carry !== clock.carryPermille)

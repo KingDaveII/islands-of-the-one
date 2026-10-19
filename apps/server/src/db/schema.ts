@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { bigint, boolean, index, integer, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { bigint, boolean, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 /**
  * Retired: no code reads or writes this table any more (accounts and kindled
@@ -242,6 +242,29 @@ export const plotPieces = pgTable(
   (t) => [primaryKey({ columns: [t.kindledId, t.plotId, t.pieceId] })],
 );
 
+/**
+ * The While you were away card (docs/design/holding.md "Sleep, the away
+ * card and toasts", M2 Task 7): one row per Kindled, written only by the
+ * settle (holding.ts) when it finds an absence of `awayCardMinMs` or more
+ * between the holding-wide last heartbeat and now: `from_at` the last
+ * heartbeat before the absence, `to_at` the settle's now, `made` what each
+ * place credited into its basket meanwhile (jsonb: station or plot id to
+ * { itemId, quantity }) and `levels` the skills whose level rose (jsonb:
+ * skill to { from, to }). It moves no items (inventory.apply is not
+ * involved). An absence recorded while a row waits merges into it; POST
+ * /api/holding/away/seen deletes it when its `to_at` still matches.
+ * Migration 0009, expand-only.
+ */
+export const awayCards = pgTable('away_cards', {
+  kindledId: uuid('kindled_id')
+    .primaryKey()
+    .references(() => kindled.id, { onDelete: 'cascade' }),
+  fromAt: timestamp('from_at', { withTimezone: true }).notNull(),
+  toAt: timestamp('to_at', { withTimezone: true }).notNull(),
+  made: jsonb('made').$type<Record<string, { itemId: string; quantity: number }>>().notNull(),
+  levels: jsonb('levels').$type<Record<string, { from: number; to: number }>>().notNull(),
+});
+
 export type Account = typeof accounts.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type KindledRow = typeof kindled.$inferSelect;
@@ -253,3 +276,4 @@ export type KnownWordRow = typeof knownWords.$inferSelect;
 export type PlotRow = typeof plots.$inferSelect;
 export type BasketCycleRow = typeof basketCycles.$inferSelect;
 export type PlotPieceRow = typeof plotPieces.$inferSelect;
+export type AwayCardRow = typeof awayCards.$inferSelect;

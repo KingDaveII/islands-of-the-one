@@ -1,7 +1,8 @@
 import { validateUsername } from '@iot/shared';
 import { eq, sql } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
-import { accounts, basketCycles, holdingActivity, kindled, writs } from '../db/schema.js';
+import { accounts, basketCycles, holdingActivity, kindled, writs, type AwayCardRow } from '../db/schema.js';
+import { awayCardOf } from './away-card.js';
 
 /**
  * The playtest "away" hook (docs/design/holding.md): moves a Kindled's clocks
@@ -39,6 +40,8 @@ export type AwayResult =
       lastSeenAt: Date | null;
       /** The basket cycle clocks moved, by station. */
       cycles: Record<string, Date>;
+      /** The away card waiting to be seen, if one exists (M2 Task 7); the hook never writes it, the next settle does. */
+      card: AwayCardRow | null;
     }
   | { ok: false; message: string };
 
@@ -74,6 +77,7 @@ export async function moveAway(db: Database, { username, hours }: AwayArgs): Pro
       activity: activity ? { stationId: activity.stationId, startedAt: activity.startedAt, lastSeenAt: activity.lastSeenAt } : null,
       lastSeenAt: writ?.lastSeenAt ?? null,
       cycles: Object.fromEntries(clocks.map((c) => [c.stationId, c.cycledUntil])),
+      card: (await awayCardOf(tx, row.kindledId)) ?? null,
     };
   });
 }

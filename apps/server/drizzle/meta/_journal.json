@@ -64,6 +64,13 @@
       "when": 1792352581012,
       "tag": "0008_plot_pieces",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792376545750,
+      "tag": "0009_away_cards",
+      "breakpoints": true
     }
   ]
 }

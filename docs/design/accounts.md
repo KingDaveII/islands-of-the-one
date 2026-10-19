@@ -20,7 +20,7 @@ code. Routes are under `/api` (Caddy routes it to the server in staging; Vite pr
 | `POST /api/kindled`        | `{ name, remembrance, clayTone? }` (needs a session) | `201` `{ kindled }` · `400` name-refused/bad-request · `409` kindled-exists                                  |
 | `GET /api/inventory`       |                                                      | `200` `{ purse, pack, store, baskets }` · `401` not-signed-in · `404` no-kindled ([inventory](inventory.md)) |
 | `POST /api/inventory/move` | `{ itemId, from, to, quantity }` (needs a session)   | `200` the new inventory · `400`/`409` ([inventory](inventory.md))                                            |
-| `GET /api/holding` and `POST /api/holding/*` | ([holding](holding.md) §5)         | the holding, settled                                                                                         |
+| `GET /api/holding` and `POST /api/holding/*` | ([holding](holding.md) §5)         | the holding, settled (the inventory routes settle it first too, §13)                                        |
 | `POST /api/writ/name`      | `{ name }` (needs a session)                         | `200` the holding · `400` name-refused · `409` already-named ([holding](holding.md) §9)                     |
 | `POST /api/writ/feed`      | `{ itemId, count }` or `{ fill: true }`              | `200` the holding · `400` not-sparkglass · `409` unnamed / insufficient / full / too-much ([holding](holding.md) §9) |
 | `POST /api/kesh/sliver`    | `{}` (needs a session)                               | `200` the holding · `409` not-due / pack-full ([holding](holding.md) §10)                                   |
@@ -31,6 +31,7 @@ code. Routes are under `/api` (Caddy routes it to the server in staging; Vite pr
 | `POST /api/plots/build`    | `{ plotId, pieceId, col, row, rotation }` (needs a session) | `200` the holding · `400` unknown-plot / unknown-piece / blocked · `409` unnamed-plot / faded / already-built / needs-line / needs-skill / limit / insufficient ([holding](holding.md) §12) |
 | `POST /api/plots/move`     | `{ plotId, pieceId, col, row, rotation }` (needs a session) | `200` the holding · `400` unknown-plot / blocked · `409` unnamed-plot / faded / not-built ([holding](holding.md) §12) |
 | `POST /api/plots/take-down` | `{ plotId, pieceId }` (needs a session)             | `200` the holding · `400` unknown-plot · `409` unnamed-plot / faded / not-built / store-full ([holding](holding.md) §12) |
+| `POST /api/holding/away/seen` | `{ to }` (ISO 8601; needs a session)             | `204`, the away card dismissed while its `to` still matches ([holding](holding.md) §13)                                |
 
 Errors are `{ error, message }`: `error` a code from `ApiErrorCode`, `message` the player-facing
 line. Every body goes through a shared guard (unknown fields refused), then the validators; malformed

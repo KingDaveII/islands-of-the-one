@@ -3,14 +3,21 @@ import {
   cycleLengthMs,
   holdingLayout,
   isShoreGround,
-  itemDef,
+  itemCount,
+  measureText,
   PACK_SLOTS,
   PLOT_TEXT,
   plotKindDef,
+  plotLabel,
   plotLevel,
   SKILL_NAMES,
+  SKILLS,
   stationDef,
   TILE_SIZE_PX,
+  tiny5Font,
+  TOAST_GLYPH_PX,
+  TOAST_MAX,
+  TOAST_TEXT,
   type HoldingActivity,
   type HoldingLayout,
   type HoldingResponse,
@@ -73,7 +80,10 @@ export function xpFraction(view: SkillView): number {
 }
 
 /** The icon placeholder for a station until ART draws icons: its name's initials ("Twisted trees" → "TT"; a field "F"). */
-export function stationInitials(stationId: string, r: Pick<HoldingResponse, 'plots'> | null = null): string {
+export function stationInitials(
+  stationId: string,
+  r: Pick<HoldingResponse, 'plots'> | null = null,
+): string {
   const name = workplaceDef(stationId, r)?.name ?? stationId.replaceAll('-', ' ');
   return displayable(
     name
@@ -102,9 +112,15 @@ export interface ChipState {
 export function workplaceDef(
   stationId: string,
   r: Pick<HoldingResponse, 'plots'> | null,
-): { name: string; action: StationAction | null; cycle: StationCycle | null; plot: ReturnType<typeof plotOf> } | null {
+): {
+  name: string;
+  action: StationAction | null;
+  cycle: StationCycle | null;
+  plot: ReturnType<typeof plotOf>;
+} | null {
   const station = stationDef(stationId);
-  if (station) return { name: station.name, action: station.action, cycle: station.cycle, plot: undefined };
+  if (station)
+    return { name: station.name, action: station.action, cycle: station.cycle, plot: undefined };
   const plot = plotOf(r, stationId);
   const kind = plot?.kind === null || plot?.kind === undefined ? undefined : plotKindDef(plot.kind);
   if (!plot || !kind) return null;
@@ -126,10 +142,9 @@ export function chipState(r: HoldingResponse | null, serverMs: number): ChipStat
   };
 }
 
-/** An item's name in a count: "1 twisted log", "3 twisted logs". */
+/** An item's name in a count, from items.json's `plural` (shared `itemCount`): "1 twisted log", "3 twisted logs", "12 black stone". */
 export function countOf(itemId: string, quantity: number): string {
-  const name = displayable((itemDef(itemId)?.name ?? itemId.replaceAll('-', ' ')).toLowerCase());
-  return `${quantity} ${name}${quantity === 1 ? '' : 's'}`;
+  return displayable(itemCount(itemId, quantity));
 }
 
 /** The station panel's buttons, in order. */
@@ -183,7 +198,11 @@ export interface StationLines {
 export const BY_ITSELF: string = BUILD_TEXT.BY_ITSELF;
 export const BY_HAND: string = BUILD_TEXT.BY_HAND;
 
-export function stationLines(stationId: string, r: HoldingResponse | null, serverMs: number = r ? Date.parse(r.now) : 0): StationLines | null {
+export function stationLines(
+  stationId: string,
+  r: HoldingResponse | null,
+  serverMs: number = r ? Date.parse(r.now) : 0,
+): StationLines | null {
   const place = workplaceDef(stationId, r);
   const action = place?.action;
   if (!place || !action) return null;
@@ -192,23 +211,48 @@ export function stationLines(stationId: string, r: HoldingResponse | null, serve
   const working = r?.activity?.stationId === stationId;
   const view = r?.skills[action.skill];
   const rate = `${countOf(action.itemId, action.quantity)} every ${action.cycleMs / 1000} s`;
-  const title = displayable(place.name.toUpperCase());
+  // A plot is called by its label (LORE: the Virtue's epithet and the kind, "Old field"; M2 Task 7), a station by its name.
+  const title = displayable((plot ? plotLabel(plot, r?.plots ?? []) : place.name).toUpperCase());
   const letters = plot ? sentenceLetters(plot.ground, plot.virtue) : null;
   const level = plot ? `${PLOT_TEXT.LEVEL}${plotLevel(plot.pieces)}` : null;
-  const basketLine = basket.length ? `Basket: ${basket.map((e) => countOf(e.itemId, e.quantity)).join(', ')}` : 'Basket: empty';
-  const skill = view ? `${SKILL_NAMES[action.skill]} ${view.level} · ${view.toNext} XP to next` : SKILL_NAMES[action.skill];
-  const base = { title, letters, level, work: working ? 'STOP WORKING' : 'WORK HERE', take: 'TAKE ALL', working } as const;
-  const empty = { rate: null, cycle: null, bonus: null, basket: null, next: null, you: null, skill: null };
+  const basketLine = basket.length
+    ? `Basket: ${basket.map((e) => countOf(e.itemId, e.quantity)).join(', ')}`
+    : 'Basket: empty';
+  const skill = view
+    ? `${SKILL_NAMES[action.skill]} ${view.level} · ${view.toNext} XP to next`
+    : SKILL_NAMES[action.skill];
+  const base = {
+    title,
+    letters,
+    level,
+    work: working ? 'STOP WORKING' : 'WORK HERE',
+    take: 'TAKE ALL',
+    working,
+  } as const;
+  const empty = {
+    rate: null,
+    cycle: null,
+    bonus: null,
+    basket: null,
+    next: null,
+    you: null,
+    skill: null,
+  };
   // A faded plot: frozen with its basket, the one line, no buttons.
-  if (plot?.state === 'faded') return { ...base, ...empty, basket: basketLine, note: PLOT_TEXT.FADED_PANEL, buttons: [] };
+  if (plot?.state === 'faded')
+    return { ...base, ...empty, basket: basketLine, note: PLOT_TEXT.FADED_PANEL, buttons: [] };
   // A field not sown yet: only the note and SOW (GAME DESIGN).
   const kind = plot?.kind === null || plot?.kind === undefined ? undefined : plotKindDef(plot.kind);
-  if (plot && kind?.sow && plot.sownAt === null) return { ...base, ...empty, note: PLOT_TEXT.NOT_SOWN, buttons: ['sow'] };
+  if (plot && kind?.sow && plot.sownAt === null)
+    return { ...base, ...empty, note: PLOT_TEXT.NOT_SOWN, buttons: ['sow'] };
   const clock = r?.cycles[stationId];
   const dark = r !== null && r.writ.chargeMs === 0;
-  const next = place.cycle && clock ? (dark ? PLOT_TEXT.RESTING : nextInLine(clock, serverMs)) : null;
+  const next =
+    place.cycle && clock ? (dark ? PLOT_TEXT.RESTING : nextInLine(clock, serverMs)) : null;
   // A plot's cycle runs at the speed its pieces give (M2 Task 6): the real length, from the clock when it is known.
-  const realCycle = place.cycle ? { ...place.cycle, cycleMs: clock?.cycleMs ?? cycleLengthMs(place.cycle, plot?.pieces ?? []) } : null;
+  const realCycle = place.cycle
+    ? { ...place.cycle, cycleMs: clock?.cycleMs ?? cycleLengthMs(place.cycle, plot?.pieces ?? []) }
+    : null;
   const cycleLine = realCycle ? cycleRateLine(realCycle) : null;
   return {
     ...base,
@@ -224,21 +268,17 @@ export function stationLines(stationId: string, r: HoldingResponse | null, serve
   };
 }
 
-/** The plural display name of an item, lowercase: "twisted logs". */
-export function pluralName(itemId: string): string {
-  return `${displayable((itemDef(itemId)?.name ?? itemId.replaceAll('-', ' ')).toLowerCase())}s`;
-}
-
 /**
- * The one panel line after a take-all (GAME DESIGN 2026-10-17, 2026-10-18):
- * "Store: twisted logs full." when something stayed because the store's
- * stack is full (the one line until toasts arrive in Task 7); otherwise
- * none: what was taken floats over the station (`takeFloat`), and an empty
- * basket's panel already reads "Basket: empty".
+ * The line after a take-all (GAME DESIGN 2026-10-17, 2026-10-18): "Store:
+ * twisted logs full." when something stayed because the store's stack is
+ * full, a toast since Task 7 (game/toastView.ts `storeFullToast` carries
+ * it with its glyph); otherwise none: what was taken floats over the
+ * station (`takeFloat`), and an empty basket's panel already reads "Basket:
+ * empty".
  */
 export function takeResultLine(take: HoldingTake): string | null {
   const stuck = take.left[0];
-  return stuck ? `Store: ${pluralName(stuck.itemId)} full.` : null;
+  return stuck ? displayable(TOAST_TEXT.storeFull(stuck.itemId)) : null;
 }
 
 /** What floats over the station after a take-all, the same float the cycles use: "+3" for what moved, null when nothing did. */
@@ -291,12 +331,19 @@ export function nearestStationPart(
     if (station.reserved) continue;
     for (const part of station.parts) consider({ id: station.id, station, plot: null, part });
   }
-  if (plots) for (const plot of layout.plots) consider({ id: plot.id, station: null, plot, part: plot.station });
+  if (plots)
+    for (const plot of layout.plots)
+      consider({ id: plot.id, station: null, plot, part: plot.station });
   return found.best ? found.best.near : null;
 }
 
 /** The station to prompt for (`nearestStationPart`'s station), or null (a plot counts as none here). */
-export function nearestStation(x: number, y: number, rangePx: number, layout: HoldingLayout = holdingLayout()): LayoutStation | null {
+export function nearestStation(
+  x: number,
+  y: number,
+  rangePx: number,
+  layout: HoldingLayout = holdingLayout(),
+): LayoutStation | null {
   return nearestStationPart(x, y, rangePx, layout)?.station ?? null;
 }
 
@@ -326,7 +373,8 @@ export function propBase(part: Pick<StationPart, 'rect'>): { x: number; y: numbe
  */
 export function standsOnGround(template: TileTemplate, rect: TileRect): boolean {
   const row = rect.row + rect.rows - 1;
-  for (let c = rect.col; c < rect.col + rect.cols; c++) if (isShoreGround(template, c, row)) return true;
+  for (let c = rect.col; c < rect.col + rect.cols; c++)
+    if (isShoreGround(template, c, row)) return true;
   return false;
 }
 
@@ -350,7 +398,10 @@ export const USE_LABEL = 'USE';
 
 /** The Talk spot's centre (sim px): where Talk across the water stands. */
 export function talkSpot(layout: HoldingLayout = holdingLayout()): { x: number; y: number } {
-  return { x: (layout.kesh.talk.col + 0.5) * TILE_SIZE_PX, y: (layout.kesh.talk.row + 0.5) * TILE_SIZE_PX };
+  return {
+    x: (layout.kesh.talk.col + 0.5) * TILE_SIZE_PX,
+    y: (layout.kesh.talk.row + 0.5) * TILE_SIZE_PX,
+  };
 }
 
 /**
@@ -358,7 +409,12 @@ export function talkSpot(layout: HoldingLayout = holdingLayout()): { x: number; 
  * reach the stations use (M2 Task 4b): the prompt shows TALK and Use opens
  * the talk box. A station part nearer than the spot keeps its prompt.
  */
-export function nearKesh(x: number, y: number, rangePx: number, layout: HoldingLayout = holdingLayout()): boolean {
+export function nearKesh(
+  x: number,
+  y: number,
+  rangePx: number,
+  layout: HoldingLayout = holdingLayout(),
+): boolean {
   const spot = talkSpot(layout);
   const d = Math.hypot(spot.x - x, spot.y - y);
   if (d > rangePx) return false;
@@ -381,8 +437,34 @@ export const HUD_INSET = 8;
 export const HUD_PAD = 4;
 export const HUD_CHIP_W = 122;
 export const HUD_CHIP_H = 26;
+/** A toast's glyph box and line (UI px): ART's 12 px glyphs at 1 UI px per px, a line as tall as the glyph (M2 Task 7, #109). */
+export const TOAST_GLYPH = TOAST_GLYPH_PX;
+export const TOAST_ROW = TOAST_GLYPH_PX;
+/** The strip's line pitch (ART, 2026-10-19): 14, a 2 px gap between two lines, the glyph centred on its 12 px line. */
+export const TOAST_PITCH = 14;
+/** Between a toast's glyph and its text: one HUD gap (ART). The panel's padding is `HUD_PAD` on every side. */
+export const TOAST_GAP = HUD_PAD;
 
-/** The measured widths (UI px) of the HUD's texts: the purse's number, the pack's label, and the Writ block's Name, letters and chip words. */
+/** The strip's height (UI px) for `lines` toasts: the padding, the lines at the pitch, the padding; the last line has no gap after it. */
+export function toastStripHeight(lines: number): number {
+  return HUD_PAD + Math.max(0, lines - 1) * TOAST_PITCH + (lines > 0 ? TOAST_ROW : 0) + HUD_PAD;
+}
+
+/** The widest toast text of M2 (UI px, the body font): what the toast strip's rectangle is sized for. */
+export function toastTextWidth(): number {
+  const texts = [
+    TOAST_TEXT.WRIT_LOW,
+    TOAST_TEXT.WRIT_DARK,
+    TOAST_TEXT.PACK_FULL,
+    ...SKILLS.map((s) => TOAST_TEXT.skillLevel(s, 200)),
+    ...['twisted-log', 'black-stone', 'streaked-stone', 'pale-grain', 'grey-seeds'].map((id) =>
+      TOAST_TEXT.storeFull(id),
+    ),
+  ];
+  return Math.max(...texts.map((t) => measureText(tiny5Font, t)));
+}
+
+/** The measured widths (UI px) of the HUD's texts: the purse's number, the pack's label, the Writ block's Name, letters and chip words, and the widest toast. */
 export interface HudWidths {
   gin: number;
   pack: number;
@@ -390,10 +472,15 @@ export interface HudWidths {
   name: number | null;
   letters: number;
   chip: number;
+  /** The widest toast text (`toastTextWidth`); the strip's rectangle is sized for two lines of it. */
+  toast: number;
 }
 
-/** The HUD's four panels' rectangles for a view frame (UI px): the Writ block, the purse, the action chip and the pack button. Pure. */
-export function hudRects(frame: UiRect, widths: HudWidths): { writ: UiRect; purse: UiRect; chip: UiRect; pack: UiRect } {
+/** The HUD's panels' rectangles for a view frame (UI px): the Writ block, the purse, the action chip, the pack button and the toast strip. Pure. */
+export function hudRects(
+  frame: UiRect,
+  widths: HudWidths,
+): { writ: UiRect; purse: UiRect; chip: UiRect; pack: UiRect; toasts: UiRect } {
   const L = frame.x;
   const T = frame.y;
   const R = frame.x + frame.w;
@@ -405,12 +492,29 @@ export function hudRects(frame: UiRect, widths: HudWidths): { writ: UiRect; purs
   const packW = HUD_PAD + widths.pack + HUD_PAD;
   const packH = HUD_PAD + 8 + HUD_PAD;
   const cx = Math.round(L + frame.w / 2);
+  // The toast strip (Task 7): bottom left, sized for `toastMax` lines at the widest text; the newest toast at the bottom.
+  const toastsW = HUD_PAD + TOAST_GLYPH + TOAST_GAP + widths.toast + HUD_PAD;
+  const toastsH = toastStripHeight(TOAST_MAX);
+  const toastsBottom = toastStripBottom(frame, toastsW);
   return {
     writ: { x: L + HUD_INSET, y: T + HUD_INSET, w: writW, h: writH },
     purse: { x: R - HUD_INSET - purseW, y: T + HUD_INSET, w: purseW, h: purseH },
     chip: { x: cx - HUD_CHIP_W / 2, y: B - HUD_INSET - HUD_CHIP_H, w: HUD_CHIP_W, h: HUD_CHIP_H },
     pack: { x: R - HUD_INSET - packW, y: B - HUD_INSET - packH, w: packW, h: packH },
+    toasts: { x: L + HUD_INSET, y: toastsBottom - toastsH, w: toastsW, h: toastsH },
   };
+}
+
+/**
+ * Where the toast strip's bottom edge sits (UI px): at the inset from the
+ * view's bottom, like the chip, or above the chip's band when the frame is
+ * too narrow for the strip beside the chip (a 320 px frame at 1440 × 810),
+ * so the two never meet. The strip (ui/toasts.ts) anchors to it.
+ */
+export function toastStripBottom(frame: UiRect, toastsW: number): number {
+  const chipX = Math.round(frame.x + frame.w / 2) - HUD_CHIP_W / 2;
+  const bottom = frame.y + frame.h - HUD_INSET;
+  return frame.x + HUD_INSET + toastsW > chipX ? bottom - HUD_CHIP_H - 2 : bottom;
 }
 
 /** Whether two rectangles overlap (touching edges don't count). */
@@ -418,8 +522,8 @@ export function rectsOverlap(a: UiRect, b: UiRect): boolean {
   return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 }
 
-/** The HUD panels by name (`hudRects`'s keys). */
-export type HudPanel = 'writ' | 'purse' | 'chip' | 'pack';
+/** The HUD panels by name (`hudRects`'s keys); the toast strip counts like the others (Task 7). */
+export type HudPanel = 'writ' | 'purse' | 'chip' | 'pack' | 'toasts';
 
 /**
  * The HUD panels a body is behind (readability.md "The HUD never hides the
@@ -427,7 +531,10 @@ export type HudPanel = 'writ' | 'purse' | 'chip' | 'pack';
  * against the panels drawn last frame. Props alone never count, Kesh's rock
  * included. An empty rectangle (a panel not drawn) never does.
  */
-export function panelsBehind(rects: Readonly<Record<HudPanel, UiRect>>, bodies: readonly UiRect[]): HudPanel[] {
+export function panelsBehind(
+  rects: Readonly<Record<HudPanel, UiRect>>,
+  bodies: readonly UiRect[],
+): HudPanel[] {
   return (Object.keys(rects) as HudPanel[]).filter((k) => {
     const r = rects[k];
     return r.w > 0 && r.h > 0 && bodies.some((b) => rectsOverlap(b, r));

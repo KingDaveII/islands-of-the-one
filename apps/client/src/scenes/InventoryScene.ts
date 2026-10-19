@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
-import { PACK_SLOTS, type InventoryResponse, type Place } from '@iot/shared';
+import { ApiErrorCode, PACK_SLOTS, type InventoryResponse, type Place } from '@iot/shared';
 import { api } from '../api.js';
+import { packFullToast } from '../game/toastView.js';
+import { toastStore } from '../ui/toasts.js';
 import { deviceStore } from '../game/activeDevice.js';
 import { controlsStore } from '../game/controlsStore.js';
 import {
@@ -472,7 +474,12 @@ export class InventoryScene extends Phaser.Scene {
         if (!this.scene.isActive()) return;
         this.busy = false;
         if (res.ok) this.inventory = res.value;
-        else this.refusal = { pane: refusalPane(to), text: res.message, at: this.time.now };
+        // Over the holding "Pack full." is a toast (M2 Task 7); other refusals keep the header line, and so does a
+        // full pack on the start screen's inventory, which has no toast strip.
+        else if (res.error === ApiErrorCode.PackFull && this.backTo === 'holding') {
+          const toast = packFullToast();
+          toastStore.post('pack-full', toast.text, toast.glyph);
+        } else this.refusal = { pane: refusalPane(to), text: res.message, at: this.time.now };
         this.sync();
       });
   }

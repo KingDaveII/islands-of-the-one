@@ -35,6 +35,7 @@ describe('words.json', () => {
       card: '"Tilled ground." Ground that\'s ready to be worked. Earth.',
       builds: 'field',
       effect: null,
+      epithet: null,
     });
     expect(wordDef('yashan')).toEqual({
       id: 'yashan',
@@ -46,6 +47,7 @@ describe('words.json', () => {
       card: '"Old." A Virtue. Things that keep their name a long time grow richer. Earth.',
       builds: null,
       effect: { kind: 'yield-per-day', permillePerDay: 10, maxPermille: 200 },
+      epithet: 'Old',
     });
     expect(isWordId('adamah')).toBe(true);
     expect(isWordId('field')).toBe(false);
@@ -70,7 +72,7 @@ describe('words.json', () => {
 
   it('every text uses only characters the fonts can draw, and no banned name', () => {
     for (const w of WORDS)
-      for (const text of [w.say, w.meaning, w.card]) {
+      for (const text of [w.say, w.meaning, w.card, ...(w.epithet === null ? [] : [w.epithet])]) {
         expect(Array.from(text).filter((ch) => !DRAWABLE_CHARS.has(ch)), text).toEqual([]);
         expect(BANNED.test(text), text).toBe(false);
       }
@@ -98,6 +100,14 @@ describe('words.json', () => {
       'words[0] (adamah): element must be one of earth, water, fire, air',
     ]);
     expect(problems({ words: [{ ...adamah, builds: 'mill' }] })).toEqual(['words[0] (adamah): a Ground builds a plot kind of stations.json (field)']);
+    // The epithet (LORE, Lore §14.22): every Virtue has one the game can draw, no Ground does.
+    const noEpithet: Record<string, unknown> = { ...yashan };
+    delete noEpithet.epithet;
+    expect(problems({ words: [noEpithet] })).toEqual(['words[0] (yashan): a Virtue needs an epithet the game can draw']);
+    expect(problems({ words: [{ ...yashan, epithet: '' }] })).toEqual(['words[0] (yashan): a Virtue needs an epithet the game can draw']);
+    expect(problems({ words: [{ ...yashan, epithet: 'Old ✦' }] })).toEqual(['words[0] (yashan): a Virtue needs an epithet the game can draw']);
+    expect(problems({ words: [{ ...adamah, epithet: 'Tilled' }] })).toEqual(['words[0] (adamah): a Ground has no epithet']);
+    expect(WORDS.find((w) => w.id === 'yashan')?.epithet).toBe('Old');
     expect(problems({ words: [{ ...adamah, effect: yashan.effect }] })).toEqual(['words[0] (adamah): a Ground has no effect']);
     const noEffect = { ...yashan };
     delete noEffect.effect;

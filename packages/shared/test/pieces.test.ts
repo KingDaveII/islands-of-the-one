@@ -55,7 +55,11 @@ describe('pieces.json', () => {
   it("validates, with the field's three available and LORE's nine for the stations to come", () => {
     expect(validatePiecesData(piecesJson, PLOT_KINDS)).toEqual({ ok: true, data: piecesData });
     expect(PIECES_PER_LINE).toBe(2);
-    expect(piecesFor('field').map((p) => p.id)).toEqual(['clay-channel', 'seed-jars', 'threshing-floor']);
+    expect(piecesFor('field').map((p) => p.id)).toEqual([
+      'clay-channel',
+      'seed-jars',
+      'threshing-floor',
+    ]);
     expect(PIECES.filter((p) => !p.available).map((p) => [p.stationKind, p.id])).toEqual([
       ['lumber-camp', 'chopping-block'],
       ['lumber-camp', 'drying-rack'],
@@ -110,7 +114,12 @@ describe('pieces.json', () => {
       footprint: { cols: 3, rows: 3 },
       writLine: 2,
     });
-    expect(pieceDef('anvil')).toMatchObject({ available: false, cost: null, footprint: null, stationKind: 'forge' });
+    expect(pieceDef('anvil')).toMatchObject({
+      available: false,
+      cost: null,
+      footprint: null,
+      stationKind: 'forge',
+    });
     // No field piece needs a skill level in M2.
     for (const p of PIECES) expect(p.skill, p.id).toBeNull();
   });
@@ -127,31 +136,64 @@ describe('pieces.json', () => {
     expect(BUILD_TEXT.MATERIAL('Twisted log', 340, 300)).toBe('Twisted log 340/300');
     expect(BUILD_TEXT.EFFECT_SPEED(25)).toBe('+25% work speed');
     expect(BUILD_TEXT.PIECES_NONE_YET).toBe('Pieces: none yet');
-    expect(BUILD_TEXT.LIMIT).toBe('This plot can take no more pieces until your Writ has another line.');
+    expect(BUILD_TEXT.LIMIT).toBe(
+      'This plot can take no more pieces until your Writ has another line.',
+    );
     expect(BUILD_TEXT.STORE_FULL('twisted-log')).toBe('Store: twisted logs full.');
-    expect(BUILD_TEXT.BLOCKED_BECAUSE('outside')).toBe("That doesn't fit there. It has to stand inside the plot's ring.");
-    expect(BUILD_TEXT.BLOCKED_BECAUSE('blocks-signpost')).toBe("That doesn't fit there. It would block the way to the signpost.");
+    // A take-down's floats (LORE §16.8): the count and items.json's plural, lowercase; singular at one; a mass noun stays.
+    expect(BUILD_TEXT.REFUND('twisted-log', 300)).toBe('+300 twisted logs');
+    expect(BUILD_TEXT.REFUND('twisted-log', 1)).toBe('+1 twisted log');
+    expect(BUILD_TEXT.REFUND('black-stone', 150)).toBe('+150 black stone');
+    expect(BUILD_TEXT.BLOCKED_BECAUSE('outside')).toBe(
+      "That doesn't fit there. It has to stand inside the plot's ring.",
+    );
+    expect(BUILD_TEXT.BLOCKED_BECAUSE('blocks-signpost')).toBe(
+      "That doesn't fit there. It would block the way to the signpost.",
+    );
     expect([BUILD_TEXT.UNKNOWN_PIECE, BUILD_TEXT.ALREADY_BUILT, BUILD_TEXT.NOT_BUILT]).toEqual([
       "This station doesn't take that piece.",
       'One of those already stands in this plot.',
       "That piece isn't standing here.",
     ]);
     expect(needsSkillLine({ skill: 'farming', level: 5 })).toBe('Needs Farming 5');
-    expect(pluralItemName('black-stone')).toBe('black stones');
+    expect(pluralItemName('black-stone')).toBe('black stone');
   });
 
   it('lists every problem', () => {
     const good = pieceDef('clay-channel');
     const base = { piecesPerLine: 2, pieces: [good] };
-    expect(validatePiecesData(null, PLOT_KINDS)).toEqual({ ok: false, problems: ['expected { piecesPerLine, pieces: [...] }'] });
+    expect(validatePiecesData(null, PLOT_KINDS)).toEqual({
+      ok: false,
+      problems: ['expected { piecesPerLine, pieces: [...] }'],
+    });
     const bad = validatePiecesData(
       {
         ...base,
         extra: 1,
         piecesPerLine: 0,
         pieces: [
-          { ...good, available: 'yes', stationKind: 'Field', name: '', card: 'A ✦ star', cost: [], footprint: { cols: 7, rows: 1 }, skill: { skill: 'cooking', level: 0 }, writLine: 0, effect: { kind: 'speed' }, more: 1 },
-          { ...good, cost: [{ itemId: 'twisted-log', quantity: 1 }, { itemId: 'twisted-log', quantity: 2, more: 1 }, { itemId: 'gold', quantity: 0 }], footprint: { cols: 1 } },
+          {
+            ...good,
+            available: 'yes',
+            stationKind: 'Field',
+            name: '',
+            card: 'A ✦ star',
+            cost: [],
+            footprint: { cols: 7, rows: 1 },
+            skill: { skill: 'cooking', level: 0 },
+            writLine: 0,
+            effect: { kind: 'speed' },
+            more: 1,
+          },
+          {
+            ...good,
+            cost: [
+              { itemId: 'twisted-log', quantity: 1 },
+              { itemId: 'twisted-log', quantity: 2, more: 1 },
+              { itemId: 'gold', quantity: 0 },
+            ],
+            footprint: { cols: 1 },
+          },
           { ...good, id: 'anvil', available: false },
           { ...good, available: false, cost: undefined, footprint: undefined },
           { ...good, id: 'Clay Channel' },
@@ -173,7 +215,7 @@ describe('pieces.json', () => {
         'pieces[0] (clay-channel): name must be non-empty text',
         'pieces[0] (clay-channel): the fonts can\'t draw "✦" in card (don\'t change the text; flag it)',
         'pieces[0] (clay-channel): cost must be a non-empty list of { itemId, quantity }',
-        'pieces[0] (clay-channel): footprint 7 x 1 doesn\'t fit a 6 x 6 plot',
+        "pieces[0] (clay-channel): footprint 7 x 1 doesn't fit a 6 x 6 plot",
         'pieces[0] (clay-channel): skill.skill must be a skill',
         'pieces[0] (clay-channel): skill.level must be a positive integer',
         'pieces[0] (clay-channel): writLine must be a positive integer',
@@ -189,12 +231,30 @@ describe('pieces.json', () => {
         'pieces[4]: id must be kebab-case (it is stored)',
         'pieces[5]: not an object',
         'pieces[6] (needs-skill): skill must be { skill, level } or null',
-        'pieces[6] (needs-skill): an available piece\'s stationKind must be a plot kind of stations.json (field)',
+        "pieces[6] (needs-skill): an available piece's stationKind must be a plot kind of stations.json (field)",
       ]),
     );
     // An unavailable piece of a station to come: no cost, no footprint, any kebab-case kind.
-    const later = validatePiecesData({ piecesPerLine: 2, pieces: [{ ...good, id: 'x', available: false, cost: undefined, footprint: undefined, stationKind: 'forge' }] }, PLOT_KINDS);
-    expect(later).toMatchObject({ ok: true, data: { pieces: [{ id: 'x', available: false, cost: null, footprint: null }] } });
+    const later = validatePiecesData(
+      {
+        piecesPerLine: 2,
+        pieces: [
+          {
+            ...good,
+            id: 'x',
+            available: false,
+            cost: undefined,
+            footprint: undefined,
+            stationKind: 'forge',
+          },
+        ],
+      },
+      PLOT_KINDS,
+    );
+    expect(later).toMatchObject({
+      ok: true,
+      data: { pieces: [{ id: 'x', available: false, cost: null, footprint: null }] },
+    });
   });
 });
 
@@ -249,7 +309,8 @@ describe('footprints', () => {
 });
 
 describe('placement', () => {
-  const problems = (candidate: StandingPiece, pieces: StandingPiece[] = []) => placementProblems(layout, plot, pieces, candidate);
+  const problems = (candidate: StandingPiece, pieces: StandingPiece[] = []) =>
+    placementProblems(layout, plot, pieces, candidate);
 
   it('fits inside the plot, off the signpost and its interact tile, off other pieces, with a way in', () => {
     expect(problems(channel)).toEqual([]);
@@ -348,7 +409,9 @@ describe('the wire', () => {
     expect(isPlotView(named)).toBe(true);
     expect(isPlotView({ ...named, pieces: [] })).toBe(true);
     expect(isPlotView({ ...named, ground: null, kind: null, namedAt: null, level: 1 })).toBe(false);
-    expect(isPlotView({ ...named, ground: null, kind: null, namedAt: null, level: 1, pieces: [] })).toBe(true);
+    expect(
+      isPlotView({ ...named, ground: null, kind: null, namedAt: null, level: 1, pieces: [] }),
+    ).toBe(true);
     const { pieces: _pieces, ...noPieces } = named;
     expect(_pieces).toHaveLength(1);
     expect(isPlotView(noPieces)).toBe(false);
@@ -360,6 +423,8 @@ describe('the wire', () => {
     expect(isPlotPieceRequest({ plotId: 'plot-1', pieceId: 'clay-channel' })).toBe(false);
     expect(isPlotTakeDownRequest({ plotId: 'plot-1', pieceId: 'clay-channel' })).toBe(true);
     expect(isPlotTakeDownRequest({ plotId: 'plot-1' })).toBe(false);
-    expect(isPlotTakeDownRequest({ plotId: 'plot-1', pieceId: 'clay-channel', col: 1 })).toBe(false);
+    expect(isPlotTakeDownRequest({ plotId: 'plot-1', pieceId: 'clay-channel', col: 1 })).toBe(
+      false,
+    );
   });
 });

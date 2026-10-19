@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { shapeLetters } from '@iot/shared';
 import type { Rect as ViewRect } from '../game/view.js';
-import { HUD_CHIP_H, HUD_CHIP_W, HUD_PAD, hudRects, panelsBehind, type ChipState, type HudPanel, type UiRect } from '../game/holdingView.js';
+import { HUD_CHIP_H, HUD_CHIP_W, HUD_PAD, hudRects, panelsBehind, toastTextWidth, type ChipState, type HudPanel, type UiRect } from '../game/holdingView.js';
 import type { WritChip } from '../game/writView.js';
 import { Palette } from '../palette.js';
 import { plotLetters, type LetterSheet } from './letters.js';
@@ -21,6 +21,8 @@ const CHIP_H = HUD_CHIP_H;
 const RING_R = 7;
 const XP_W = 66;
 const XP_H = 2;
+/** The widest toast text, measured once: the toast strip's rectangle is sized for it (Task 7). */
+const TOAST_W = toastTextWidth();
 
 /** A zone's hit area follows its size (Phaser types the hit area as any; a zone's is the rectangle it was made with). */
 function hitRect(zone: Phaser.GameObjects.Zone, w: number, h: number): void {
@@ -44,7 +46,9 @@ export interface WritHud {
  * and level, a progress ring for the current cycle, a thin XP bar; empty
  * while idle; clicking it stops), bottom right the pack button with its fill
  * (opens the inventory with the store pane), top right the gin purse. On the
- * UI grid at the edges of the world view, like the run's HUD.
+ * UI grid at the edges of the world view, like the run's HUD. The toast strip
+ * (ui/toasts.ts, M2 Task 7) is drawn elsewhere, but its rectangle counts
+ * here like the other panels: a body behind it dithers it too.
  */
 export class HoldingHud {
   private readonly g: Phaser.GameObjects.Graphics;
@@ -65,9 +69,12 @@ export class HoldingHud {
     purse: { x: 0, y: 0, w: 0, h: 0 },
     chip: { x: 0, y: 0, w: 0, h: 0 },
     pack: { x: 0, y: 0, w: 0, h: 0 },
+    toasts: { x: 0, y: 0, w: 0, h: 0 },
   };
   /** Until when (the HUD's own clock, ms) each panel is drawn dithered. */
-  private behindUntil: Record<HudPanel, number> = { writ: 0, purse: 0, chip: 0, pack: 0 };
+  private behindUntil: Record<HudPanel, number> = { writ: 0, purse: 0, chip: 0, pack: 0, toasts: 0 };
+  /** Whether the toast strip (drawn by ui/toasts.ts) is to be dithered this frame: a body is behind it. */
+  toastsDithered = false;
   private now = 0;
   /** The chip's rectangle last frame (UI px), empty while idle. */
   chipRect: ViewRect = { x: 0, y: 0, w: 0, h: 0 };
@@ -124,7 +131,11 @@ export class HoldingHud {
     this.frame = { ...frame };
   }
 
-  /** Draw the HUD: the chip from its state (null while idle), the pack's fill, the purse, and the Writ block (null until the holding answered). */
+  /**
+   * Draw the HUD: the chip from its state (null while idle), the pack's fill, the purse, and the Writ block (null until
+   * the holding answered); `toasts` is the strip's drawn rectangle this frame (empty while none shows), counted among
+   * the panels a body may be behind.
+   */
   draw(
     chip: ChipState | null,
     packFill: string,
@@ -133,6 +144,7 @@ export class HoldingHud {
     sheet: LetterSheet | null,
     bodies: readonly UiRect[] = [],
     dtMs = 0,
+    toasts: UiRect = EMPTY,
   ): void {
     const g = this.g;
     g.clear();
@@ -153,10 +165,12 @@ export class HoldingHud {
       name: writ?.name ? Math.round(this.name.width) : null,
       letters: writ?.name ? shapeLetters(writ.name.letters).width : 0,
       chip: writ ? (writ.chip.text !== null ? Math.round(this.writWords.width) : shapeLetters(writ.chip.letters ?? '').width) : 0,
+      toast: TOAST_W,
     });
 
     // Top right: the purse.
-    this.lastRects = { writ: writ ? rects.writ : EMPTY, purse: rects.purse, chip: chip ? rects.chip : EMPTY, pack: rects.pack };
+    this.lastRects = { writ: writ ? rects.writ : EMPTY, purse: rects.purse, chip: chip ? rects.chip : EMPTY, pack: rects.pack, toasts };
+    this.toastsDithered = dither('toasts');
     const purse = rects.purse;
     panel(g, purse.x, purse.y, purse.w, purse.h, { plain: true, dither: dither('purse') });
     icon(g, 'spark', purse.x + PAD, purse.y + PAD, 10, Palette.spark);

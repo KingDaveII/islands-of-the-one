@@ -2,6 +2,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
   itemIconsSheet,
+  SKILLS,
+  TOAST_GLYPH_PX,
+  toastGlyphsSheet,
   ITEMS,
   controllerGlyphsSheet,
   ENGINE_SHEET_DEFAULTS,
@@ -35,6 +38,7 @@ const SHEETS: [string, CellSheet & { meta?: { tinted?: boolean } }, (image: stri
   ],
   ['hookblade-fx', hookbladeFxSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
   ['item-icons', itemIconsSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
+  ['toast-glyphs', toastGlyphsSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
   ['hookblade-fixture', fixtureSheet, (image) => new URL(`./fixtures/${image}`, import.meta.url)],
 ];
 
@@ -213,6 +217,16 @@ describe('engine sheet meta (sprites.md "Engine sheets")', () => {
         'telegraph colours (only Husk telegraph frames may use them): #e0457b',
       ]);
     });
+  });
+});
+
+describe('the toast glyphs (ART, #109; M2 Task 7)', () => {
+  it('has one 12 px cell per toast kind, a skill level per skill, drawn in colour', () => {
+    expect(toastGlyphsSheet.cells.map((c) => c.name).sort()).toEqual(
+      [...SKILLS.map((s) => `skill-${s}`), 'writ-low', 'writ-dark', 'store-full', 'pack-full'].sort(),
+    );
+    for (const c of toastGlyphsSheet.cells) expect([c.name, c.w, c.h]).toEqual([c.name, TOAST_GLYPH_PX, TOAST_GLYPH_PX]);
+    expect(engineSheetMeta(toastGlyphsSheet).tinted).toBe(false);
   });
 });
 

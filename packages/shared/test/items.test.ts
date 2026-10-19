@@ -13,6 +13,8 @@ import {
   RETIRED_WORDS,
   SKILL_NAMES,
   validateItemsData,
+  pluralItemName,
+  itemCount,
 } from '../src/index.js';
 import { BANNED } from './banned.js';
 
@@ -26,6 +28,7 @@ const KEBAB = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 const good = {
   id: 'black-stone',
   name: 'Black stone',
+  plural: 'black stone',
   kind: 'material',
   stackLimit: 9999,
   description: '',
@@ -99,6 +102,33 @@ describe('items.json', () => {
     for (const skill of ITEM_SKILLS) expect(SKILL_NAMES[skill]).toMatch(/^[A-Z][a-z]+$/);
   });
 
+  it("has every item's plural as data: count nouns take an s, mass nouns stay, grey seeds stay grey seeds", () => {
+    expect(Object.fromEntries(ITEMS.map((i) => [i.id, i.plural]))).toEqual({
+      'sealed-gin': 'sealed gin',
+      'wild-sliver': 'wild slivers',
+      'glass-chip': 'humming glass',
+      'deep-glass': 'deep glass',
+      'twisted-log': 'twisted logs',
+      'black-stone': 'black stone',
+      'streaked-stone': 'streaked stone',
+      'grey-seeds': 'grey seeds',
+      'pale-grain': 'pale grain',
+    });
+    for (const item of ITEMS) {
+      expect(item.plural, item.id).toBe(item.plural.toLowerCase());
+      expect(Array.from(item.plural).filter((ch) => !DRAWABLE_CHARS.has(ch)), item.id).toEqual([]);
+      expect(BANNED.test(item.plural), item.id).toBe(false);
+    }
+    expect(pluralItemName('twisted-log')).toBe('twisted logs');
+    expect(pluralItemName('black-stone')).toBe('black stone');
+    expect(pluralItemName('grey-seeds')).toBe('grey seeds');
+    expect(pluralItemName('no-such')).toBe('no such');
+    expect(itemCount('twisted-log', 1)).toBe('1 twisted log');
+    expect(itemCount('twisted-log', 18)).toBe('18 twisted logs');
+    expect(itemCount('black-stone', 40)).toBe('40 black stone');
+    expect(itemCount('grey-seeds', 4)).toBe('4 grey seeds');
+  });
+
   it('looks items up by id', () => {
     expect(isItemId('pale-grain')).toBe(true);
     expect(isItemId('pale-grains')).toBe(false);
@@ -128,6 +158,13 @@ describe('validateItemsData', () => {
     expect(problemsOf([{ ...good, name: '' }])).toHaveLength(1);
     expect(problemsOf([{ ...good, name: 'Stone א' }])).toHaveLength(1);
     expect(problemsOf([{ ...good, kind: 'weapon' }])).toHaveLength(1);
+    // The plural is data (MAIN 2026-10-19): required, lowercase, drawable.
+    const noPlural: Record<string, unknown> = { ...good };
+    delete noPlural.plural;
+    expect(problemsOf([noPlural])).toEqual(['items[0] (black-stone): plural must be non-empty lowercase text the game can draw']);
+    expect(problemsOf([{ ...good, plural: 'Black stone' }])).toHaveLength(1);
+    expect(problemsOf([{ ...good, plural: 'stone \u05d0' }])).toHaveLength(1);
+    expect(problemsOf([{ ...good, plural: 'void stone' }])[0]).toContain('retired word "void"');
     for (const stackLimit of [0, -1, 1.5, 'lots', null, 2 ** 60])
       expect(problemsOf([{ ...good, stackLimit }]), String(stackLimit)).toHaveLength(1);
     expect(problemsOf([{ ...good, description: 7 }])).toHaveLength(1);

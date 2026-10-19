@@ -21,8 +21,10 @@ import { GateScene } from './scenes/GateScene.js';
 import { HoldingScene } from './scenes/HoldingScene.js';
 import { InventoryScene } from './scenes/InventoryScene.js';
 import { ResultsScene } from './scenes/ResultsScene.js';
+import { SleepScene } from './scenes/SleepScene.js';
 import { StartScene } from './scenes/StartScene.js';
 import { TestScene } from './scenes/TestScene.js';
+import { ToastScene, toastStore } from './ui/toasts.js';
 import { buildStore } from './game/build.js';
 import { tuningStore } from './game/tuningStore.js';
 import { debugFlags } from './ui/debugFlags.js';
@@ -68,6 +70,9 @@ function startGame(): void {
       ResultsScene,
       ControlsScene,
       InventoryScene,
+      SleepScene,
+      // Last, so the toast strip draws above everything, the inventory included (M2 Task 7).
+      ToastScene,
     ],
   });
   // Also fires when the browser zoom (and so the device pixel ratio) changes.
@@ -210,6 +215,15 @@ function startGame(): void {
     /** The roam state's hash on the holding (the same inputs give the same hash). */
     roamHash(): number | null {
       return activeHolding()?.session.hash() ?? null;
+    },
+    /** The toasts showing (M2 Task 7), oldest first: the newest is the bottom line. */
+    toasts() {
+      return toastStore.snapshot();
+    },
+    /** The sleep screen while it shows (M2 Task 7): its line; null otherwise. */
+    sleeping(): { line: string } | null {
+      const scene = game.scene.getScene('sleep') as SleepScene | null;
+      return scene && game.scene.isActive('sleep') ? { line: scene.line } : null;
     },
     /** The active device the hints and the reticle follow. */
     device(): Device {

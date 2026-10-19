@@ -13,6 +13,7 @@ on load (`validateItemsData`; a bad file throws, and `packages/shared/test/items
 | ------------- | --------------------------------------------------------------------------------------------------------- |
 | `id`          | kebab-case, unique, glossary terms only; stored in the ledger, so never renamed                           |
 | `name`        | display name, only characters the game can draw                                                           |
+| `plural`      | the name in a count past 1, lowercase: "twisted logs", and a mass noun as it is, "black stone" (MAIN 2026-10-19: the plural is data, read by `pluralItemName` alone) |
 | `kind`        | `currency`, `sparkglass`, `material`, `consumable` or `lore` (`ITEM_KINDS`)                               |
 | `stackLimit`  | the most of the item one place holds (a positive integer), or `"unlimited"`; see "Places" for which apply |
 | `description` | LORE's card text, word for word, only characters the game can draw                                        |
@@ -239,7 +240,8 @@ initials for an item the sheet lacks.
   keyboard, the arrows or WASD move the focus, Enter moves the stack, Tab switches tabs. Every move is
   a `POST /api/inventory/move`; the screen redraws from the answer, never optimistically, and takes no
   other move while one is in flight. A refusal shows its reason in one line, right-aligned in the
-  header row of the pane the move went to (`PACK 20/20 … Pack full.`; the store's limit in the store's
+  header row of the pane the move went to (the store's limit in the store's header; over the holding a full pack is
+  the "Pack full." toast instead, [holding.md](holding.md) §13; the start screen's inventory keeps the line in the pack's
   header): it blinks twice, holds for 2 s, then disappears in one frame, never a fade
   (`refusalVisible` in `inventoryView.ts`, on `blinkOut()`'s rule).
 - **Focus.** Only the pane the keys or the pad act on has the lit (`ui-focus`) rim; the other keeps

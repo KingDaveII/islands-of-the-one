@@ -15,6 +15,22 @@ export {
 } from './holding.js';
 export { moveAway, parseAwayArgs, type AwayArgs, type AwayResult } from './away.js';
 export {
+  awayCardOf,
+  awayCardView,
+  clearAway,
+  isAbsence,
+  levelsGained,
+  mergeAway,
+  readXp,
+  recordAway,
+  recordOf,
+  sumMade,
+  type AwayCredit,
+  type AwayLevels,
+  type AwayMade,
+  type AwayRecord,
+} from './away-card.js';
+export {
   cycleEnd,
   cycleMath,
   cycleRef,

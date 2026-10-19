@@ -2,7 +2,7 @@ import {
   durationWords,
   exactTime,
   holdingLayout,
-  itemDef,
+  itemCount,
   nextCycleInMs,
   PLOT_TEXT,
   plotKindDef,
@@ -167,9 +167,7 @@ export function cyclesLanded(cycle: Pick<StationCycleView, 'cycleMs' | 'cycledUn
 
 /** The cycle's rate: "1 pale grain every 15 min", "1 twisted log every 20 min" (a basket fills one item at a time; GAME DESIGN 2026-10-18). */
 export function cycleRateLine(cycle: StationCycle): string {
-  const n = cycle.quantity;
-  const name = displayable((itemDef(cycle.itemId)?.name ?? cycle.itemId.replaceAll('-', ' ')).toLowerCase());
-  return `${n} ${name}${n === 1 ? '' : 's'} every ${durationWords(cycle.cycleMs)}`;
+  return `${displayable(itemCount(cycle.itemId, cycle.quantity))} every ${durationWords(cycle.cycleMs)}`;
 }
 
 /** "+3% for keeping its name": the bonus so far, whole percent; null at 0 (no Virtue, or no day kept yet). */

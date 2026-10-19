@@ -13,7 +13,7 @@
  * header reads "Pieces 2/2". Every piece draws from ART's sheets (#107);
  * the jars, selected, are outlined round their silhouette, then moved and
  * turned (their turned row), and the channel is
- * taken down ("+300 Twisted log" and "+150 Black stone" float over the signpost). `writ:set` fades the plot:
+ * taken down ("+300 twisted logs" and "+150 black stone" float over the signpost). `writ:set` fades the plot:
  * its pieces draw dim. Every state is checked through the API and the
  * scene's snapshot. Shots are whole-page screenshots at 1280 × 720.
  *
@@ -434,13 +434,13 @@ expectEq('turned on the server', h.response.plots[0].pieces.find((p) => p.pieceI
 r = await api('/api/inventory');
 expectEq('a move is free', r.body.store.find((e) => e.itemId === 'twisted-log')?.quantity, 500);
 
-// 11. Taking the channel down: "+300 Twisted log" then "+150 Black stone" over the signpost, the materials back.
+// 11. Taking the channel down: "+300 twisted logs" then "+150 black stone" over the signpost, the materials back.
 console.log('taking down:');
 at = await tileToPage(plot.rect.col, plot.rect.row + 2);
 await page.mouse.click(at.x, at.y);
 await until((x) => x.build?.selected === 'clay-channel', 'the channel selected');
 await clickButton('TAKE DOWN');
-h = await until((x) => x.floats.includes("+300 Twisted log"), "the \"+300 Twisted log\"", 100, 30);
+h = await until((x) => x.floats.includes("+300 twisted logs"), "the \"+300 twisted logs\"", 100, 30);
 expectEq('one piece left', h.response.plots[0].pieces.map((p) => p.pieceId).join(), 'seed-jars');
 expectEq('the count', h.build.count, 'Pieces 1/2');
 await page.screenshot({ path: join(OUT, '11-take-down.png') });

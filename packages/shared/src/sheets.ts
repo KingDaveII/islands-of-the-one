@@ -1,6 +1,7 @@
 import controllerGlyphs from '../assets/controller-glyphs.json' with { type: 'json' };
 import hookbladeFx from '../assets/hookblade-fx.json' with { type: 'json' };
 import itemIcons from '../assets/item-icons.json' with { type: 'json' };
+import toastGlyphs from '../assets/toast-glyphs.json' with { type: 'json' };
 
 /**
  * Cell sheets: a 1× PNG plus a JSON contract listing named rectangles
@@ -67,6 +68,15 @@ export interface ItemIconsSheet extends CellSheet {
 
 /** The M2 item icons (ART, #77): every item in items.json has a cell named by its id. */
 export const itemIconsSheet: ItemIconsSheet = itemIcons;
+
+/** The toast glyph sheet (ART, #109; M2 Task 7): one 12 px cell per toast kind (`skill-<skill>` per skill), drawn in colour, untinted. */
+export interface ToastGlyphsSheet extends CellSheet {
+  meta?: Partial<EngineSheetMeta>;
+}
+
+export const toastGlyphsSheet: ToastGlyphsSheet = toastGlyphs;
+/** A toast glyph's size (UI px): drawn at 1 UI px per px, vertically centred on its line. */
+export const TOAST_GLYPH_PX = 12;
 
 /** The cell called `name`, or undefined. */
 export function sheetCellNamed(sheet: CellSheet, name: string): SheetCell | undefined {

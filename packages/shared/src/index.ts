@@ -25,3 +25,4 @@ export * from './writ.js';
 export * from './kesh.js';
 export * from './scaffold.js';
 export * from './tide.js';
+export * from './away.js';

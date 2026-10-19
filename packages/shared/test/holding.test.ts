@@ -431,6 +431,11 @@ describe('holding.json', () => {
         offlineCapHours: 48,
         heartbeatMs: 30000,
         cameraMarginTiles: 6,
+        awayCardMinMs: 1800000,
+        toastMs: 3000,
+        toastMax: 2,
+        sleepSitMs: 600,
+        sleepMs: 1500,
         layouts: [
           {
             ...shipped,
@@ -452,9 +457,16 @@ describe('holding.json', () => {
       const r = validateHoldingData(data, stations);
       return r.ok ? [] : r.problems;
     };
-    const base = { offlineCapHours: 48, heartbeatMs: 30000, cameraMarginTiles: 6, layouts: [shipped] };
+    const base = { offlineCapHours: 48, heartbeatMs: 30000, cameraMarginTiles: 6, awayCardMinMs: 1800000, toastMs: 3000, toastMax: 2, sleepSitMs: 600, sleepMs: 1500, layouts: [shipped] };
     expect(problems(base)).toEqual([]);
     expect(problems({ ...base, offlineCapHours: 0 })).toEqual(['offlineCapHours must be a positive integer']);
+    expect(problems({ ...base, awayCardMinMs: 0.5 })).toEqual(['awayCardMinMs must be a positive integer']);
+    expect(problems({ ...base, toastMs: 0, toastMax: -1, sleepSitMs: 0, sleepMs: 'soon' })).toEqual([
+      'toastMs must be a positive integer',
+      'toastMax must be a positive integer',
+      'sleepSitMs must be a positive integer',
+      'sleepMs must be a positive integer',
+    ]);
     expect(problems({ ...base, cameraMarginTiles: 0 })).toEqual(['cameraMarginTiles must be a positive integer']);
     expect(problems({ ...base, layouts: [] })).toEqual(['layouts must be a non-empty list']);
     expect(problems({ ...base, layouts: [shipped, shipped] })).toEqual(['layouts[1]: duplicate id first-holding']);
@@ -532,6 +544,7 @@ describe('the holding API guards', () => {
     words: [],
     plots: shipped.plots.map((p) => ({ id: p.id, ground: null, virtue: null, namedAt: null, virtueSetAt: null, sownAt: null, kind: null, pieces: [], level: 1, state: 'lit' as const })),
     cycles: {},
+    away: null,
   };
 
   it('accept the holding answer, with or without a take, and refuse unknown fields, stations and skills', () => {
@@ -545,6 +558,17 @@ describe('the holding API guards', () => {
     expect(isHoldingResponse({ ...response, activity: { ...response.activity, cycleMs: 0 } })).toBe(false);
     expect(isHoldingResponse({ ...response, now: 'soon' })).toBe(false);
     expect(isHoldingResponse({ ...response, extra: 1 })).toBe(false);
+    // The away card (Task 7): null, or a card; a missing `away` is refused.
+    const withoutAway: Record<string, unknown> = { ...response };
+    delete withoutAway.away;
+    expect(isHoldingResponse(withoutAway)).toBe(false);
+    const card = { from: '2026-10-17T06:00:00.000Z', to: response.now, made: { 'twisted-trees': { itemId: 'twisted-log', quantity: 18 } }, levels: { woodcutting: { from: 1, to: 2 } } };
+    expect(isHoldingResponse({ ...response, away: card })).toBe(true);
+    expect(isHoldingResponse({ ...response, away: { ...card, made: { field: { itemId: 'twisted-log', quantity: 1 } } } })).toBe(false);
+    expect(isHoldingResponse({ ...response, away: { ...card, levels: { cooking: { from: 1, to: 2 } } } })).toBe(false);
+    expect(isHoldingResponse({ ...response, away: { ...card, levels: { woodcutting: { from: 2, to: 2 } } } })).toBe(false);
+    expect(isHoldingResponse({ ...response, away: { ...card, to: card.from } })).toBe(false);
+    expect(isHoldingResponse({ ...response, away: { ...card, extra: 1 } })).toBe(false);
     // Kesh (4b): firstGiven a boolean, due one of first, tide or null, nextTideAt a time.
     expect(isHoldingResponse({ ...response, kesh: { ...response.kesh, due: null } })).toBe(true);
     expect(isHoldingResponse({ ...response, kesh: { ...response.kesh, due: 'tide' } })).toBe(true);

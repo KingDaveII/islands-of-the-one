@@ -1,9 +1,10 @@
 {
-  "$comment": "Items (docs/design/inventory.md). id: kebab-case, glossary terms only, never changed once shipped (the ledger stores it); name: display name; kind: currency | sparkglass | material | consumable | lore; stackLimit: the most of the item one place holds, or \"unlimited\"; description: LORE's card text; skill (optional): the gathering skill the tooltip's kind line names. Listed in display order.",
+  "$comment": "Items (docs/design/inventory.md). id: kebab-case, glossary terms only, never changed once shipped (the ledger stores it); name: display name; plural: the name in a count past 1, lowercase (MAIN 2026-10-19: the plural is data, a mass noun stays, \"40 black stone\"); kind: currency | sparkglass | material | consumable | lore; stackLimit: the most of the item one place holds, or \"unlimited\"; description: LORE's card text; skill (optional): the gathering skill the tooltip's kind line names. Listed in display order.",
   "items": [
     {
       "id": "sealed-gin",
       "name": "Sealed gin",
+      "plural": "sealed gin",
       "kind": "currency",
       "stackLimit": "unlimited",
       "description": "A bead of Sparkglass cut to the Concord's weight and rolled with its seal: tower, bowls, hands, ring. Good at every counter in every city."
@@ -11,6 +12,7 @@
     {
       "id": "wild-sliver",
       "name": "Wild sliver",
+      "plural": "wild slivers",
       "kind": "sparkglass",
       "stackLimit": "unlimited",
       "description": "A sliver of hardened light, brittle and warm. It burns in a Writ. Concord counters weigh it short."
@@ -18,6 +20,7 @@
     {
       "id": "glass-chip",
       "name": "Humming glass",
+      "plural": "humming glass",
       "kind": "sparkglass",
       "stackLimit": "unlimited",
       "description": "A thumb-sized piece of fallen light, brighter than a sliver. Hold it to your ear and it hums."
@@ -25,6 +28,7 @@
     {
       "id": "deep-glass",
       "name": "Deep glass",
+      "plural": "deep glass",
       "kind": "sparkglass",
       "stackLimit": "unlimited",
       "description": "Dark at the edges, bright at the heart, and heavier than glass should be."
@@ -32,6 +36,7 @@
     {
       "id": "twisted-log",
       "name": "Twisted log",
+      "plural": "twisted logs",
       "kind": "material",
       "stackLimit": 9999,
       "skill": "woodcutting",
@@ -40,6 +45,7 @@
     {
       "id": "black-stone",
       "name": "Black stone",
+      "plural": "black stone",
       "kind": "material",
       "stackLimit": 9999,
       "skill": "mining",
@@ -48,6 +54,7 @@
     {
       "id": "streaked-stone",
       "name": "Streaked stone",
+      "plural": "streaked stone",
       "kind": "material",
       "stackLimit": 9999,
       "skill": "mining",
@@ -56,6 +63,7 @@
     {
       "id": "grey-seeds",
       "name": "Grey seeds",
+      "plural": "grey seeds",
       "kind": "material",
       "stackLimit": 9999,
       "skill": "farming",
@@ -64,6 +72,7 @@
     {
       "id": "pale-grain",
       "name": "Pale grain",
+      "plural": "pale grain",
       "kind": "material",
       "stackLimit": 9999,
       "skill": "farming",

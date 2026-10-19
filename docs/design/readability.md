@@ -197,6 +197,17 @@ inwards), 8 UI px in from its edge, and never over the center where the fight ha
 - **No alpha fades on text.** An alpha fade blends the ink off-palette. Floaters and banners
   stay solid and leave in whole steps: a 2-blink pop over the last 200 ms of a floater's life
   and the last 300 ms of a banner's (`blinkOut` in `text.ts`), the same timing the fades had.
+- **Toasts and the away card** ([`holding.md`](holding.md) §13, M2 Task 7). A toast is one body
+  line on a plain panel bottom left of the view, ART's 12 px glyph for its kind before it (the
+  toast glyph sheet, drawn untinted at 1 UI px per px, vertically centred on a line as tall as
+  the glyph, one HUD gap before the text), the newest at the bottom, two at most; it holds 3 s
+  and then goes in one frame: no blink pattern and no alpha (the decision log, 2026-10-15). The
+  strip draws over everything on the UI camera and takes no input; a body behind it dithers it
+  like any HUD panel. The While you were away card is a menu panel centred on the view: a
+  Silkscreen title, the lines in Tiny5 (the skills line with the "→" glyph, in both atlases since
+  #109), and under a divider the muted "Press anything to wake." (the one "press X" line allowed,
+  since any input closes it); it appears and goes in one frame. מת in the Writ-dark toast is
+  drawn from the letter sheet, as on the HUD chip, never from the fonts.
 - **Rarity** also shows as tier pips, never by color alone.
 
 ## 5. Start screen
