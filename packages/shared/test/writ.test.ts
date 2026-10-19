@@ -350,6 +350,7 @@ describe('the wire', () => {
       words: [],
       plots: [],
       cycles: {},
+      away: null,
     };
     expect(isHoldingResponse(response)).toBe(true);
     expect(isHoldingResponse({ ...response, writ: undefined })).toBe(false);
