@@ -215,8 +215,8 @@ A row's frame count and rate can come from the recipe within a range, like `idle
 
 #### The upgrade pieces (`prop-<piece id>`, M2 Task 6; ART on #102)
 
-Each of the field's upgrade pieces has a sheet named for its id (`PIECE_SHEETS`), optional until ART's sheets land
-(`OPTIONAL_SPRITE_SHEETS`; build mode draws its placeholders until then), and a cell of its own in `PROP_CELLS`
+Each of the field's upgrade pieces has a sheet named for its id (`PIECE_SHEETS`; ART's #107), optional
+(`OPTIONAL_SPRITE_SHEETS`; without its sheet a piece draws its placeholder box), and a cell of its own in `PROP_CELLS`
 holding both facings, the origin at the bottom centre of the piece's footprint, as the holding's props stand on
 theirs:
 
@@ -230,7 +230,9 @@ theirs:
 `PROP_IDLE_TURNED`). A piece turned 90° or 270° shows `idle_turned` when its sheet has it, 0° and 180° show `idle`
 (`pieceAnim`): the pieces are symmetric and the light stays top left, so a turned piece is never mirrored.
 `PIECE_SHADOWS` says which cast the grounding shadow. A piece stands on the bottom centre of its footprint's tile
-rectangle as it lies (turned or not).
+rectangle as it lies (turned or not). The engine (`apps/client/src/render/pieces.ts`, the pixel work in
+`pieceArt.ts`) draws the ghost, the faded dim and the selection outline from each frame's opaque pixels, never as an
+alpha fade ([holding.md](holding.md) §12).
 
 #### The Sparkglass pickup (`prop-sparkglass`, M1 polish)
 
