@@ -178,6 +178,14 @@ export const ACTIONLESS_KINDS: readonly StationKind[] = ['post', 'store', 'rack'
 export interface HoldingData {
   offlineCapHours: number;
   heartbeatMs: number;
+  /** An absence at least this long (between two heartbeats) is summed up in the away card (M2 Task 7). */
+  awayCardMinMs: number;
+  /** How long a toast holds before it blinks out in one frame. */
+  toastMs: number;
+  /** How many toasts stack at most. */
+  toastMax: number;
+  /** How long the sleep screen holds before the log-out lands on the start screen. */
+  sleepMs: number;
   /** How far past every edge of the layout the camera may scroll into the void (tiles), so the HUD never covers the shore or Kesh's rock. */
   cameraMarginTiles: number;
   layouts: HoldingLayout[];
@@ -627,11 +635,17 @@ export function validateHoldingData(
 ): { ok: true; data: HoldingData } | { ok: false; problems: string[] } {
   if (!isObject(data)) return { ok: false, problems: ['expected an object'] };
   const problems: string[] = [];
-  const extra = Object.keys(data).filter((k) => !['$comment', 'offlineCapHours', 'heartbeatMs', 'cameraMarginTiles', 'layouts'].includes(k));
+  const extra = Object.keys(data).filter(
+    (k) => !['$comment', 'offlineCapHours', 'heartbeatMs', 'cameraMarginTiles', 'awayCardMinMs', 'toastMs', 'toastMax', 'sleepMs', 'layouts'].includes(k),
+  );
   if (extra.length > 0) problems.push(`unknown field(s) ${extra.join(', ')}`);
   if (!isCount(data.offlineCapHours)) problems.push('offlineCapHours must be a positive integer');
   if (!isCount(data.heartbeatMs)) problems.push('heartbeatMs must be a positive integer');
   if (!isCount(data.cameraMarginTiles)) problems.push('cameraMarginTiles must be a positive integer');
+  if (!isCount(data.awayCardMinMs)) problems.push('awayCardMinMs must be a positive integer');
+  if (!isCount(data.toastMs)) problems.push('toastMs must be a positive integer');
+  if (!isCount(data.toastMax)) problems.push('toastMax must be a positive integer');
+  if (!isCount(data.sleepMs)) problems.push('sleepMs must be a positive integer');
   const layouts: HoldingLayout[] = [];
   if (!Array.isArray(data.layouts) || data.layouts.length === 0) problems.push('layouts must be a non-empty list');
   else {
@@ -743,6 +757,10 @@ export function validateHoldingData(
     data: {
       offlineCapHours: data.offlineCapHours as number,
       heartbeatMs: data.heartbeatMs as number,
+      awayCardMinMs: data.awayCardMinMs as number,
+      toastMs: data.toastMs as number,
+      toastMax: data.toastMax as number,
+      sleepMs: data.sleepMs as number,
       cameraMarginTiles: data.cameraMarginTiles as number,
       layouts,
     },
@@ -800,6 +818,14 @@ export const OFFLINE_CAP_MS: number = holdingData.offlineCapHours * 60 * 60 * 10
 export const HOLDING_HEARTBEAT_MS: number = holdingData.heartbeatMs;
 /** How far past the layout's edges the camera may scroll (tiles), on every side (M2 Task 4b: the HUD never covers Kesh's rock). */
 export const HOLDING_CAMERA_MARGIN_TILES: number = holdingData.cameraMarginTiles;
+/** An absence at least this long is summed up in the While you were away card (M2 Task 7). */
+export const AWAY_CARD_MIN_MS: number = holdingData.awayCardMinMs;
+/** How long a toast holds before it blinks out in one frame. */
+export const TOAST_MS: number = holdingData.toastMs;
+/** How many toasts stack at most. */
+export const TOAST_MAX: number = holdingData.toastMax;
+/** How long the sleep screen holds before the log-out lands on the start screen. */
+export const SLEEP_MS: number = holdingData.sleepMs;
 /** Every Kindled's holding today: the one layout. */
 export const HOLDING_LAYOUT_ID: string = holdingData.layouts[0]?.id ?? 'first-holding';
 

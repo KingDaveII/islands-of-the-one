@@ -25,6 +25,7 @@ export const ApiRoute = {
   HoldingWork: '/api/holding/work',
   HoldingStop: '/api/holding/stop',
   HoldingTake: '/api/holding/take',
+  HoldingAwaySeen: '/api/holding/away/seen',
   WritName: '/api/writ/name',
   WritFeed: '/api/writ/feed',
   KeshSliver: '/api/kesh/sliver',
@@ -316,13 +317,44 @@ export interface StationCycleView {
   bonusPermille: number;
 }
 
+/** A skill's level before an absence and after it (M2 Task 7); only skills whose level changed are listed. */
+export interface AwayLevel {
+  from: number;
+  to: number;
+}
+
+/**
+ * The While you were away card (docs/design/holding.md "Sleep, the away
+ * card and toasts", M2 Task 7), written by the server when a settle finds an
+ * absence of `awayCardMinMs` or more between two heartbeats: the absence
+ * (`from` the last heartbeat before it, `to` the settle's now; ISO 8601),
+ * what each place made into its basket meanwhile (by station or plot id),
+ * the skills whose level rose (by skill), and the Writ as it stands at the
+ * answer, so the card's Writ line reads the Writ now. The card stays in the
+ * answer until POST /api/holding/away/seen with its `to` dismisses it; an
+ * absence recorded while it waits merges into it.
+ */
+export interface AwayCard {
+  from: string;
+  to: string;
+  made: Record<string, InventoryEntry>;
+  levels: Partial<Record<Skill, AwayLevel>>;
+  writ: WritView;
+}
+
+/** POST /api/holding/away/seen: the card's `to` as drawn; the row goes only if it still ends there. */
+export interface AwaySeenRequest {
+  to: string;
+}
+
 /**
  * GET /api/holding, and the answer to work, stop, take, name, feed and
  * Kesh's sliver: the layout, every station's basket (by station id, every
  * station listed), the active action or null, the server's clock, the
  * skills, the Writ and Kesh. The server settles the action before
  * answering, so the counts are true as of `now`. A take-all answer adds
- * `take`.
+ * `take`. `away` is the While you were away card waiting to be seen, or
+ * null (M2 Task 7).
  */
 export interface HoldingResponse {
   layoutId: string;
@@ -339,6 +371,8 @@ export interface HoldingResponse {
   plots: PlotView[];
   /** The basket cycles, by station id, for every station with a cycle (Task 5). */
   cycles: Record<string, StationCycleView>;
+  /** The away card waiting to be dismissed, or null (Task 7). */
+  away: AwayCard | null;
   take?: HoldingTake;
 }
 
@@ -676,10 +710,35 @@ export function isStationCycleView(value: unknown): value is StationCycleView {
   );
 }
 
+export function isAwayLevel(value: unknown): value is AwayLevel {
+  return isObject(value) && hasOnly(value, ['from', 'to']) && isPositiveInt(value.from) && isPositiveInt(value.to) && value.to > value.from;
+}
+
+/** The away card on the wire: an absence that ends after it begins, counts per station or plot, levels per skill, and the Writ now. */
+export function isAwayCard(value: unknown): value is AwayCard {
+  return (
+    isObject(value) &&
+    hasOnly(value, ['from', 'to', 'made', 'levels', 'writ']) &&
+    isIsoDate(value.from) &&
+    isIsoDate(value.to) &&
+    Date.parse(value.to) > Date.parse(value.from) &&
+    isObject(value.made) &&
+    Object.entries(value.made).every(([k, v]) => isHoldingStationId(k) && isInventoryEntry(v)) &&
+    isObject(value.levels) &&
+    Object.entries(value.levels).every(([k, v]) => isSkill(k) && isAwayLevel(v)) &&
+    isWritView(value.writ)
+  );
+}
+
+/** The body of POST /api/holding/away/seen: exactly { to }, an ISO 8601 time. */
+export function isAwaySeenRequest(value: unknown): value is AwaySeenRequest {
+  return isObject(value) && hasOnly(value, ['to']) && isIsoDate(value.to);
+}
+
 export function isHoldingResponse(value: unknown): value is HoldingResponse {
   return (
     isObject(value) &&
-    hasOnly(value, ['layoutId', 'baskets', 'activity', 'now', 'skills', 'writ', 'kesh', 'words', 'plots', 'cycles', 'take']) &&
+    hasOnly(value, ['layoutId', 'baskets', 'activity', 'now', 'skills', 'writ', 'kesh', 'words', 'plots', 'cycles', 'away', 'take']) &&
     typeof value.layoutId === 'string' &&
     isObject(value.baskets) &&
     Object.entries(value.baskets).every(([k, v]) => isHoldingStationId(k) && isEntryList(v)) &&
@@ -695,6 +754,7 @@ export function isHoldingResponse(value: unknown): value is HoldingResponse {
     value.plots.every(isPlotView) &&
     isObject(value.cycles) &&
     Object.entries(value.cycles).every(([k, v]) => isHoldingStationId(k) && isStationCycleView(v)) &&
+    (value.away === null || isAwayCard(value.away)) &&
     (value.take === undefined || isHoldingTake(value.take))
   );
 }
