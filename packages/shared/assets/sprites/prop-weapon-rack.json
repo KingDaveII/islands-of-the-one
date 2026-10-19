@@ -1,0 +1,72 @@
+{
+  "frames": {
+    "idle_0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 72
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.8888888888888888
+      },
+      "points": {
+        "peg_0": [
+          27,
+          24
+        ],
+        "peg_1": [
+          37,
+          24
+        ],
+        "peg_2": [
+          45,
+          23
+        ]
+      }
+    }
+  },
+  "meta": {
+    "image": "prop-weapon-rack.png",
+    "size": {
+      "w": 64,
+      "h": 72
+    },
+    "scale": "1",
+    "format": "RGBA8888",
+    "app": "iot-art-pipeline",
+    "version": "2",
+    "cell": {
+      "w": 64,
+      "h": 72
+    },
+    "origin": {
+      "x": 32,
+      "y": 64
+    },
+    "pixelScale": 1
+  },
+  "anims": {
+    "idle": {
+      "frames": [
+        "idle_0"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "hold": true
+    }
+  }
+}

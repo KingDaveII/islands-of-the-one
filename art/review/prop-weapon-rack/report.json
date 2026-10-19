@@ -1,0 +1,105 @@
+{
+  "sheet": "prop-weapon-rack",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "cell": {
+    "w": 64,
+    "h": 72
+  },
+  "origin": {
+    "x": 32,
+    "y": 64
+  },
+  "rows": [
+    "idle"
+  ],
+  "totals": {
+    "frames": 1,
+    "offPalette": 0,
+    "maxDeltaE": 0,
+    "outlineGaps": 8
+  },
+  "flags": {
+    "seam": [],
+    "bob": [],
+    "held": [],
+    "colours": []
+  },
+  "missing": [],
+  "optional": [],
+  "skinProblems": [],
+  "missingPoints": [],
+  "remap": [],
+  "staleRemap": [],
+  "snappedColours": 0,
+  "snapped": [],
+  "anims": [
+    {
+      "key": "idle",
+      "frames": 1,
+      "held": [],
+      "bob": {
+        "tops": [
+          43
+        ],
+        "range": 0,
+        "flag": false
+      }
+    }
+  ],
+  "frames": [
+    {
+      "name": "idle_0",
+      "source": "art/clean/prop-weapon-rack/idle 0",
+      "offPalette": 0,
+      "maxDeltaE": 0,
+      "dx": 0,
+      "dy": 0,
+      "shift": -6,
+      "outlineGaps": 8,
+      "colours": 5,
+      "interiorDreamNight": 0,
+      "points": {
+        "peg_0": {
+          "at": [
+            27,
+            24
+          ],
+          "source": [
+            27,
+            24
+          ]
+        },
+        "peg_1": {
+          "at": [
+            37,
+            24
+          ],
+          "source": [
+            37,
+            24
+          ]
+        },
+        "peg_2": {
+          "at": [
+            45,
+            23
+          ],
+          "source": [
+            45,
+            23
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": [
+    "art/review/prop-weapon-rack/contact.png",
+    "art/review/prop-weapon-rack/points.png",
+    "art/review/prop-weapon-rack/report.json",
+    "art/review/prop-weapon-rack/report.md",
+    "packages/shared/assets/sprites/prop-weapon-rack.json",
+    "packages/shared/assets/sprites/prop-weapon-rack.png"
+  ]
+}

@@ -11,7 +11,11 @@ sources the prop recipes read (art/clean/prop-<name>/idle/frame-<n>.png). Whole-
 - kesh-rock: 7 whole rows taken out of the shaft; its dark side lifted to hollow-below so it reads on the
   Hollow; its foot dithered out into the void over 8 rows, so it rises from nothing; its tip cut down to a
   perch capped a little wider than the needle for Kesh to sit on (Task 4b; art/clean/npc-kesh/kesh.py seats him on it);
-- stone-outcrop, holding-store: the placed picks, recoloured.
+- stone-outcrop, holding-store: the placed picks, recoloured;
+- weapon-rack (M2 Task 8): the weapon-rack job's pick (art/raw/weapon-rack/, PR #112), 9 whole rows taken out of
+  its posts between the crossbars so it stands below the player's height, the outline to hollow-deep and the
+  wood's tar shade to wheel-brass-dark, on its 64 x 72 cell (origin (32, 64)) with its lowest row on the soles
+  row; its three peg tips go to art/clean/prop-weapon-rack/pegs.json for the recipe's peg_0..peg_2.
 
     python3 art/clean/holding/props.py
 """
@@ -155,7 +159,28 @@ def perch(po, w):
             po[x, 29] = DEEP
 
 
+RACK_CELL, RACK_SOLE = (64, 72), 63
+RACK_DROP = list(range(31, 40))               # the posts between the crossbars: whole rows, so they stay straight
+RACK_PEGS = [(27, 10), (37, 10), (45, 9)]      # the pegs' tips on the top crossbar, in the pick's pixels
+
+
+def weapon_rack():
+    im = Image.open(ROOT / "art/raw/weapon-rack/pick.png").convert("RGBA")
+    im = recolour(im, {DN: DEEP, TAR: rgb("wheel-brass-dark")})
+    im = drop_rows(im, RACK_DROP)               # everything above the cut moves down 9 rows
+    box = im.getbbox()
+    dx = RACK_CELL[0] // 2 - (box[0] + box[2]) // 2
+    dy = RACK_SOLE - (box[3] - 1)
+    out = Image.new("RGBA", RACK_CELL, (0, 0, 0, 0))
+    out.alpha_composite(im.crop(box), (box[0] + dx, box[1] + dy))
+    pegs = {f"peg_{i}": [x + dx, y + len(RACK_DROP) + dy] for i, (x, y) in enumerate(RACK_PEGS)}
+    return [out], pegs
+
+
 def main():
+    rack, pegs = weapon_rack()
+    save("weapon-rack", rack)
+    (ROOT / "art/clean/prop-weapon-rack/pegs.json").write_text(json.dumps(pegs, indent=1) + "\n")
     for name, frames in [("writ-post", writ_post()), ("twisted-tree", twisted_tree()), ("twisted-tree-2", twisted_tree_2()),
                          ("stone-outcrop", stone_outcrop()), ("holding-store", holding_store()),
                          ("kesh-rock", kesh_rock())]:
