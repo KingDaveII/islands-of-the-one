@@ -208,6 +208,12 @@ inwards), 8 UI px in from its edge, and never over the center where the fight ha
   #109), and under a divider the muted "Press anything to wake." (the one "press X" line allowed,
   since any input closes it); it appears and goes in one frame. מת in the Writ-dark toast is
   drawn from the letter sheet, as on the HUD chip, never from the fonts.
+- **The Narrator** (creation, M2 Task 9; ART: "That's the Narrator's voice everywhere, and the UI kit will keep
+  it"): one Tiny5 line at the foot of the screen, centred, in muted ink (`hollow-dusk`), with no speaker label and
+  no panel (the menu background, or the black screen of creation's opening and closing, `dream-night`, is under
+  it). A line longer than the width wraps centred to two rows (16 UI px margins), never to a smaller font; a test
+  holds every Narrator line in `creation.json` to two rows. It shows only the line the moment calls for
+  ([`accounts.md`](accounts.md), Creation) and changes in one frame.
 - **Rarity** also shows as tier pips, never by color alone.
 
 ## 5. Start screen
