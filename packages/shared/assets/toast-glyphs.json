@@ -1,0 +1,61 @@
+{
+  "image": "toast-glyphs-12px.png",
+  "cell": 12,
+  "meta": {
+    "version": "2",
+    "pixelScale": 1,
+    "tinted": false
+  },
+  "cells": [
+    {
+      "name": "skill-woodcutting",
+      "x": 0,
+      "y": 0,
+      "w": 12,
+      "h": 12
+    },
+    {
+      "name": "skill-mining",
+      "x": 12,
+      "y": 0,
+      "w": 12,
+      "h": 12
+    },
+    {
+      "name": "skill-farming",
+      "x": 24,
+      "y": 0,
+      "w": 12,
+      "h": 12
+    },
+    {
+      "name": "writ-low",
+      "x": 36,
+      "y": 0,
+      "w": 12,
+      "h": 12
+    },
+    {
+      "name": "writ-dark",
+      "x": 48,
+      "y": 0,
+      "w": 12,
+      "h": 12
+    },
+    {
+      "name": "store-full",
+      "x": 60,
+      "y": 0,
+      "w": 12,
+      "h": 12
+    },
+    {
+      "name": "pack-full",
+      "x": 72,
+      "y": 0,
+      "w": 12,
+      "h": 12
+    }
+  ],
+  "notes": "ART's M2 toast glyphs (M2 Task 7), 12 x 12 UI px, drawn in colour (never tinted): one before each toast's line, at 1 UI px per px, vertically centred on the line. skill-<skill> for a skill level (the skill's tool), writ-low, writ-dark, store-full, pack-full."
+}
