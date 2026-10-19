@@ -173,11 +173,14 @@ const postUse = centre(layout.stations.find((s) => s.id === 'writ-post').parts[0
 
 /** Open the Writ panel (or the Name screen) with Use at the post, fresh from the server. */
 async function openPost(expectPanel = true) {
-  const h = await holding();
-  if (h.writPanel) {
+  // Escape closes a talk box first (since Task 4b the first feed plays Kesh's line over the panel), then the panel.
+  for (let i = 0; i < 4; i++) {
+    const h = await holding();
+    if (!h.writPanel && !h.talk) break;
     await page.keyboard.press('Escape');
-    await until((x) => x.writPanel === null, 'the panel closed');
+    await sleep(200);
   }
+  await until((x) => x.writPanel === null && x.talk === null, 'the panel closed');
   await walkTo(postUse.x, postUse.y);
   await until((x) => x.prompt, 'the USE prompt at the post');
   await page.keyboard.press('KeyE');
