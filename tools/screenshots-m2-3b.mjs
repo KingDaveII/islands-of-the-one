@@ -315,8 +315,9 @@ await shot('13-away-basket');
 const inv = await api('/api/inventory');
 cli('inv:grant', 'twisted-log', String(9999 - (inv.store.find((e) => e.itemId === 'twisted-log')?.quantity ?? 0)));
 await clickButton('holding', 'TAKE ALL');
-h = await until((x) => x.result.startsWith('Store:'), 'the store-full line');
-console.log(`  take all with a full store: "${h.result}"`);
+// "Store: twisted logs full." is a toast since Task 7, no longer the panel's line.
+h = await until((x) => x.toasts?.lines.some((l) => l.startsWith('Store:')), 'the store-full toast');
+console.log(`  take all with a full store: "${h.toasts.lines.find((l) => l.startsWith('Store:'))}"`);
 await shot('14-store-full');
 r = await api('/api/inventory');
 expectEq('store full', r.store.find((e) => e.itemId === 'twisted-log')?.quantity, 9999);
