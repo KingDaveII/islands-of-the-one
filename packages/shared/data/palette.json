@@ -1,5 +1,5 @@
 {
-  "source": "tokens: the design system's 32 raw colours, copied from its tokens.json (color block; role tokens like ui-ink are aliases and stay out). They change only through an art/ PR. clay: the four clay tones of the Kindled (sprites.md section 5); remembranceOutfit: placeholder outfit colours.",
+  "source": "tokens: the design system's 32 raw colours, copied from its tokens.json (color block; role tokens like ui-ink are aliases and stay out). They change only through an art/ PR. clay: the four clay tones of the Kindled (sprites.md section 5); remembranceOutfit: placeholder outfit colours; elements: each element's seal colour, its ring, corner knots and sigil line (ART, the seal kit).",
   "tokens": {
     "hollow-light": "#f4efe6",
     "hollow-lavender": "#d9d2e9",
@@ -67,5 +67,11 @@
     "ash": "#5b5478",
     "tide": "#a99fc4",
     "wing": "#c79a3e"
+  },
+  "elements": {
+    "earth": "#9c5b4a",
+    "water": "#3e5c7a",
+    "fire": "#b5402e",
+    "air": "#7d8794"
   }
 }
