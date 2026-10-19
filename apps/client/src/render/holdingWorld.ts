@@ -8,6 +8,7 @@ import {
   STATION_SHEETS,
   type AnimTuning,
   type ClayTone,
+  type Remembrance,
   type HoldingLayout,
   type KeshTuning,
   SPRITE_FACINGS,
@@ -25,7 +26,7 @@ import {
   standsOnGround,
 } from '../game/holdingView.js';
 import { RoamGaitClock, roamPose, sheetFacing, type KindledPose } from './animState.js';
-import { PLAYER_SHEATHED_SHEET } from './characters.js';
+import { PLAYER_SHEATHED_SHEET, sheathedSheetFor } from './characters.js';
 import { DEPTH } from './depth.js';
 import { bodyDepth, PLAYER_FEET } from './feet.js';
 import { tossPoint, tossReleaseFrame, tossReleasePoint } from './keshToss.js';
@@ -36,7 +37,7 @@ import { HOLDING_SHEET, TileRoom } from './roomTiles.js';
 import { ITEM_ICON_TEXTURE } from './sheets.js';
 import { Palette } from '../palette.js';
 import { snapToArt } from './scale.js';
-import { animKey, optionalSheet, texturePixels, toneTextureKey } from './spriteSheets.js';
+import { animKey, optionalSheet, sheetNamed, texturePixels, toneTextureKey } from './spriteSheets.js';
 import { StrideMeter } from './stride.js';
 
 type G = Phaser.GameObjects.Graphics;
@@ -117,8 +118,9 @@ export class HoldingWorld {
   private readonly stride = new StrideMeter();
   private readonly gait = new RoamGaitClock();
   private shadows = new Map<string, Map<string, ShadowSize>>();
-  /** The Kindled on the holding: its sheathed sheet, no blade in hand outside combat. */
-  readonly playerSheet: SpriteSheet = spriteSheets[PLAYER_SHEATHED_SHEET];
+  /** The Kindled on the holding: its Remembrance's sheathed sheet (`sheathedSheetFor`), no blade in hand outside combat. */
+  readonly playerSheetName: string;
+  readonly playerSheet: SpriteSheet;
   /** The pose shown this frame (playtests). */
   pose: KindledPose | null = null;
   /** Sleep (M2 Task 7): the Kindled sits against the post facing `angle` (the `sit` row when the sheet has it, else `idle`), still. */
@@ -143,7 +145,10 @@ export class HoldingWorld {
     private readonly anim: () => AnimTuning,
     private tone: ClayTone,
     private readonly keshTuning: () => KeshTuning,
+    remembrance: Remembrance,
   ) {
+    this.playerSheetName = sheathedSheetFor(remembrance);
+    this.playerSheet = sheetNamed(this.playerSheetName) ?? spriteSheets[PLAYER_SHEATHED_SHEET];
     this.floor = scene.add.graphics().setDepth(DEPTH.floor);
     layer.add(this.floor);
     this.tiles = new TileRoom(scene, layer, HOLDING_SHEET);
@@ -410,7 +415,7 @@ export class HoldingWorld {
   }
 
   private playerTexture(): string {
-    return toneTextureKey(this.scene, PLAYER_SHEATHED_SHEET, this.tone);
+    return toneTextureKey(this.scene, this.playerSheetName, this.tone);
   }
 
   setTone(tone: ClayTone): void {

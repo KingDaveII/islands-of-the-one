@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
 import {
+  isKindledSheet,
   OPTIONAL_SPRITE_SHEETS,
   SPRITE_SHEET_NAMES,
   spriteSheets,
@@ -21,9 +22,12 @@ import { swapTone } from './toneSwap.js';
  * contract; the sheet test holds `meta.pixelScale` at 1).
  *
  * Optional sheets (`OPTIONAL_SPRITE_SHEETS`: the Sparkglass pickup's
- * `prop-sparkglass`) are bundled the same way when their JSON is on disk at
- * build time (`optionalSheet`) and loaded with the others; absent, the
- * engine keeps its fallback drawing (pickupSprites.ts, world.ts).
+ * `prop-sparkglass`, the other Remembrances' sheathed sheets) are bundled the
+ * same way when their JSON is on disk at build time (`optionalSheet`) and
+ * loaded with the others; absent, the engine keeps its fallback drawing
+ * (pickupSprites.ts, world.ts) or Ash's sheet (`sheathedSheetFor` in
+ * characters.ts). An optional Kindled sheet loads with its skin mask, and
+ * without one it is not used at all: it could not take the clay tones.
  *
  * Clay tones are built lazily (`toneTextureKey`): the first time a tone is
  * used, its texture is the drawn sheet's pixels with `palette.swaps[tone]`
@@ -48,10 +52,13 @@ export function spritePngUrl(file: string): string | undefined {
   return PNG_URLS[file];
 }
 
-/** Every prop sheet JSON next to the sheets, by sheet name, as bundled at build time (the optional sheets are found here). */
-const PROP_JSON: Record<string, unknown> = Object.fromEntries(
+/** Every prop and Kindled sheathed sheet JSON next to the sheets, by sheet name, as bundled at build time (the optional sheets are found here). */
+const OPTIONAL_JSON: Record<string, unknown> = Object.fromEntries(
   Object.entries(
-    import.meta.glob<unknown>('../../../../packages/shared/assets/sprites/prop-*.json', { eager: true, import: 'default' }),
+    import.meta.glob<unknown>(
+      ['../../../../packages/shared/assets/sprites/prop-*.json', '../../../../packages/shared/assets/sprites/kindled-*-sheathed.json'],
+      { eager: true, import: 'default' },
+    ),
   ).map(([path, json]) => [path.slice(path.lastIndexOf('/') + 1, -'.json'.length), json]),
 );
 
@@ -63,28 +70,53 @@ function isSpriteSheet(v: unknown): v is SpriteSheet {
   return typeof o.frames === 'object' && typeof o.anims === 'object' && typeof meta?.image === 'string';
 }
 
+/** An optional sheet as bundled: its JSON contract, its PNG's URL and, for a Kindled sheet, its skin mask's. */
+export interface BundledSheet {
+  sheet: SpriteSheet;
+  png: string;
+  mask: string | null;
+}
+
+/**
+ * An optional sheet (`OPTIONAL_SPRITE_SHEETS`) from its bundled JSON and the
+ * PNGs on disk (`url`, by file name): undefined when it isn't optional, its
+ * JSON isn't a sheet, or its PNG is missing, and for a Kindled sheet when its
+ * skin mask is missing (it could not take the clay tones; the sheet test
+ * refuses it too).
+ */
+export function bundledSheet(name: string, json: unknown, url: (file: string) => string | undefined): BundledSheet | undefined {
+  if (!OPTIONAL_SPRITE_SHEETS.includes(name) || !isSpriteSheet(json)) return undefined;
+  const png = url(json.meta.image);
+  if (!png) return undefined;
+  if (!isKindledSheet(name)) return { sheet: json, png, mask: null };
+  const mask = json.palette ? url(json.palette.mask) : undefined;
+  return mask ? { sheet: json, png, mask } : undefined;
+}
+
 /**
  * An optional sheet (`OPTIONAL_SPRITE_SHEETS`) if it was on disk when the
- * client was built, with its PNG; undefined otherwise, when the engine draws
- * its fallback. Any other name is undefined.
+ * client was built, with its PNG (and its mask, a Kindled sheet's); undefined
+ * otherwise, when the engine draws its fallback. Any other name is undefined.
  */
 export function optionalSheet(name: string): SpriteSheet | undefined {
-  if (!OPTIONAL_SPRITE_SHEETS.includes(name)) return undefined;
-  const json = PROP_JSON[name];
-  if (!isSpriteSheet(json) || !spritePngUrl(json.meta.image)) return undefined;
-  return json;
+  return bundledSheet(name, OPTIONAL_JSON[name], spritePngUrl)?.sheet;
+}
+
+/** A loadable sheet by name: a required one (`spriteSheets`) or an optional one on disk. */
+export function sheetNamed(name: string): SpriteSheet | undefined {
+  return (SPRITE_SHEET_NAMES as readonly string[]).includes(name) ? spriteSheets[name as SpriteSheetName] : optionalSheet(name);
 }
 
 /** The optional sheets present at build time, by name. */
-function optionalSheets(): [string, SpriteSheet][] {
+function optionalSheets(): [string, BundledSheet][] {
   return OPTIONAL_SPRITE_SHEETS.flatMap((name) => {
-    const sheet = optionalSheet(name);
-    return sheet ? [[name, sheet]] : [];
+    const bundled = bundledSheet(name, OPTIONAL_JSON[name], spritePngUrl);
+    return bundled ? [[name, bundled]] : [];
   });
 }
 
 /** Texture key of a sheet's skin mask. */
-const maskKey = (name: SpriteSheetName): string => `${name}.skin`;
+const maskKey = (name: string): string => `${name}.skin`;
 
 /** Phaser animation key for a sheet animation: `<textureKey>/<anim>`. */
 export function animKey(textureKey: string, anim: string): string {
@@ -104,9 +136,9 @@ export function preloadSpriteSheets(scene: Phaser.Scene): void {
     if (!maskUrl) throw new Error(`no skin mask ${mask} for the ${name} sheet`);
     scene.load.image(maskKey(name), maskUrl);
   }
-  for (const [name, sheet] of optionalSheets()) {
-    const url = spritePngUrl(sheet.meta.image);
-    if (url && !scene.textures.exists(name)) scene.load.atlas(name, url, sheet);
+  for (const [name, { sheet, png, mask }] of optionalSheets()) {
+    if (!scene.textures.exists(name)) scene.load.atlas(name, png, sheet);
+    if (mask && !scene.textures.exists(maskKey(name))) scene.load.image(maskKey(name), mask);
   }
 }
 
@@ -114,7 +146,7 @@ export function registerSpriteSheets(scene: Phaser.Scene): void {
   for (const name of SPRITE_SHEET_NAMES) {
     if (scene.textures.exists(name)) createAnims(scene, name, spriteSheets[name]);
   }
-  for (const [name, sheet] of optionalSheets()) {
+  for (const [name, { sheet }] of optionalSheets()) {
     if (scene.textures.exists(name)) createAnims(scene, name, sheet);
   }
 }
@@ -124,10 +156,10 @@ export function registerSpriteSheets(scene: Phaser.Scene): void {
  * tone (or a sheet without tones), else `<name>@<tone>`, built on first use
  * and cached. Falls back to the drawn sheet when the tone can't be built.
  */
-export function toneTextureKey(scene: Phaser.Scene, name: SpriteSheetName, tone: ClayTone): string {
-  const sheet = spriteSheets[name];
-  const swaps = sheet.palette?.swaps[tone];
-  if (!sheet.palette || tone === sheet.palette.drawn || !swaps) return name;
+export function toneTextureKey(scene: Phaser.Scene, name: string, tone: ClayTone): string {
+  const sheet = sheetNamed(name);
+  const swaps = sheet?.palette?.swaps[tone];
+  if (!sheet?.palette || tone === sheet.palette.drawn || !swaps) return name;
   const key = `${name}@${tone}`;
   if (scene.textures.exists(key)) return key;
   if (!scene.textures.exists(name)) return name;

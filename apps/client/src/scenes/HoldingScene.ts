@@ -387,6 +387,7 @@ export class HoldingScene extends Phaser.Scene {
       () => tuningStore.get().anim,
       tone,
       () => tuningStore.get().kesh,
+      accountStore.current?.kindled?.remembrance ?? 'ash',
     );
     this.world.sitting = null;
     this.plots = new PlotsLayer(this, this.worldLayer, layout, () => tuningStore.get().plots);

@@ -97,6 +97,8 @@ export const Palette = {
   /** The 1 px drop shadow under coloured numbers and pickups drawn over the world (readability.md §4). */
   textShadow: T.dreamNight,
   uiFocus: T.sparkAmber,
+  /** The black screen creation opens and closes on (M2 Task 9): the darkest token. */
+  uiBlack: T.dreamNight,
   /** Refusals and errors in body text on a panel (choir-flame on ui-panel). */
   uiError: T.choirFlame,
   /** A hint line in the talk box (M2 Task 4b): no speaker, lit like a prompt, until ART's kit sets the hint style. */
