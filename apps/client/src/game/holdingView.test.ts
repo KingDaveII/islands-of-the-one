@@ -12,6 +12,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import {
   chipState,
+  liveSkill,
   clockOffset,
   countOf,
   cycleProgress,
@@ -210,6 +211,30 @@ describe('the active-action chip', () => {
     expect(xpFraction({ xp: 39, level: 1, into: 39, toNext: 1 })).toBe(0.975);
     expect(stationInitials('stone-outcrop')).toBe('SO');
     expect(stationInitials('writ-post')).toBe('WP');
+  });
+
+  it("moves the XP bar with each cycle completed since the answer, not only on the next heartbeat", () => {
+    // Answered at 13 s (3 cycles of 4 s credited); at 21 s two more have completed, 4 XP each.
+    expect(liveSkill(working, 'woodcutting', T0 + 13_000)).toEqual(working.skills.woodcutting);
+    expect(liveSkill(working, 'woodcutting', T0 + 15_999)).toEqual(working.skills.woodcutting);
+    expect(liveSkill(working, 'woodcutting', T0 + 21_000)).toEqual({ xp: 52, level: 2, into: 12, toNext: 1091 });
+    expect(chipState(working, T0 + 21_000)?.xp).toBe(12 / 1103);
+    // Another skill, an idle Kindled, a clock behind the answer: the answer's numbers.
+    expect(liveSkill(working, 'mining', T0 + 21_000)).toEqual(working.skills.mining);
+    expect(liveSkill(idle, 'woodcutting', T0 + 21_000)).toEqual(working.skills.woodcutting);
+    expect(liveSkill(working, 'woodcutting', T0 + 5_000)).toEqual(working.skills.woodcutting);
+    // Crossing a level shows the new level at once.
+    const nearly: HoldingResponse = {
+      ...working,
+      skills: { ...working.skills, woodcutting: { xp: 36, level: 1, into: 36, toNext: 4 } },
+    };
+    expect(liveSkill(nearly, 'woodcutting', T0 + 16_000)).toEqual({ xp: 40, level: 2, into: 0, toNext: 1103 });
+    expect(chipState(nearly, T0 + 16_000)?.skill).toBe('WOODCUTTING 2');
+  });
+
+  it("gives the station panel's skill line the live XP", () => {
+    expect(stationLines('twisted-trees', working, T0 + 13_000)?.skill).toBe('Woodcutting 2 · 1099 XP to next');
+    expect(stationLines('twisted-trees', working, T0 + 21_000)?.skill).toBe('Woodcutting 2 · 1091 XP to next');
   });
 });
 
