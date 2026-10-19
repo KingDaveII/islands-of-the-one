@@ -175,6 +175,9 @@ async function walkTo(x, y) {
   for (let i = 0; i < 300; i++) {
     const h = await holding();
     if (Math.hypot(h.state.x - x, h.state.y - y) < 4) break;
+    // The While you were away card (Task 7) holds the Kindled still; it can land with any heartbeat after the
+    // away hook. A key closes it.
+    if (h.away) await page.keyboard.press('KeyW');
     await sleep(50);
   }
   await page.evaluate(() => {
