@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   letterRoot,
   OLD_LETTERS,
+  paletteData,
   plotSentence,
   rootCell,
   SIGIL_STYLE_BY_ELEMENT,
@@ -10,6 +11,7 @@ import {
   sigilStyle,
   validateSigilData,
   wordDef,
+  WORD_ELEMENTS,
 } from '../src/index.js';
 import sigilJson from '../data/sigil.json' with { type: 'json' };
 
@@ -124,5 +126,14 @@ describe('sigilPath', () => {
   it('the line style follows the element: earth heavy and straight, water a wave, fire jagged, air thin and broken', () => {
     expect(SIGIL_STYLE_BY_ELEMENT).toEqual({ earth: 'heavy-straight', water: 'wave', fire: 'jagged', air: 'thin-broken' });
     expect(sigilStyle(adamah.element)).toBe('heavy-straight');
+  });
+});
+
+describe("the elements' seal colours and lines (ART's seal kit, #125)", () => {
+  it('gives every element a palette token and a line style', () => {
+    expect(Object.keys(paletteData.elements).sort()).toEqual([...WORD_ELEMENTS].sort());
+    const tokens = new Set(Object.values(paletteData.tokens));
+    for (const hex of Object.values(paletteData.elements)) expect(tokens).toContain(hex);
+    expect(WORD_ELEMENTS.map((e) => sigilStyle(e))).toEqual(['heavy-straight', 'wave', 'jagged', 'thin-broken']);
   });
 });

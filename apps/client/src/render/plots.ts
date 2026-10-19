@@ -2,11 +2,14 @@ import type Phaser from 'phaser';
 import {
   plotLine,
   sigilPath,
+  SIGNPOST_SHEETS,
+  WORD_ELEMENTS,
   type HoldingLayout,
   type LayoutPlot,
   type PlotsTuning,
   type PlotView,
   type SigilPath,
+  type SigilStyle,
   type WritView,
 } from '@iot/shared';
 import {
@@ -16,26 +19,25 @@ import {
   lettersBand,
   namedPlotIds,
   plotWorldRect,
+  ringKnots,
   ringPixels,
   ringRect,
   RING_WIDTH,
   sealDurationMs,
   sealPhase,
   sentenceLetters,
-  BOARD_SIZE,
+  sentenceStyle,
   SIGIL_CELL,
   sigilOrigin,
   sigilPoint,
   sigilSegmentsLeft,
+  sigilStroke,
   signpostBase,
-  signpostBoard,
   signpostTopY,
-  SIGNPOST_H,
-  SIGNPOST_W,
   WORLD_SCALE,
   type SealPhase,
 } from '../game/plotView.js';
-import { Palette } from '../palette.js';
+import { elementColor, Palette } from '../palette.js';
 import { FIELD_GROUND_TEXTURE } from './sheets.js';
 import { DEPTH } from './depth.js';
 import { bodyDepth } from './feet.js';
@@ -45,20 +47,23 @@ import { pixelLine, plot as plotPixels, ring as pixelRing, shadowEllipse } from 
 type G = Phaser.GameObjects.Graphics;
 
 /**
- * The plots in the world (docs/design/holding.md "Plots", M2 Task 5), all
- * placeholders in palette tokens until ART draws them: before the island has
+ * The plots in the world (docs/design/holding.md "Plots", M2 Task 5; ART's
+ * seal kit, #125, and field ground, #123): before the island has
  * a Name nothing; after it, an unnamed plot as a faint dotted outline; a
  * named plot with ART's field ground (#123: unsown, sown or faded, one
  * seamless 64 px cell tiled over the plot less the sheet's `inset`, the
  * headland of pale holding ground that keeps the ring and its letters
- * readable; under the props and the Kindled), its seal (the ring round the plot in
- * the Ground's element colour, the sentence's letters from the letter sheet
- * along the top with the divider between the words and at the ring's other
- * join) and its signpost at the centre (a solid 1 × 1 prop y-sorted with the
- * bodies) whose board carries the sigil over a faint 3 × 3 grid (LORE
- * 2026-10-18: the signpost has no words, only the sigil, and loses its line
- * segment by segment while the plot's line is dark, `sigilSegmentsLeft`); a
- * faded plot dim, its board blank.
+ * readable; under the props and the Kindled), its seal (the 2 px ring round the
+ * plot in the Ground's element colour, `elementColor`, with a 6 × 6 knot at
+ * each corner, the sentence's letters from the letter sheet in dark ink along
+ * the top with the divider between the words and at the ring's other join)
+ * and its signpost at the centre (ART's `prop-signpost`, a solid 1 × 1 prop
+ * y-sorted with the bodies) whose board carries the sigil over a faint 3 × 3
+ * grid, its line stroked by the element's style (`sigilStroke`: earth heavy
+ * and straight, water a wave, fire jagged, air broken) (LORE 2026-10-18: the
+ * signpost has no words, only the sigil, and loses its line segment by
+ * segment while the plot's line is dark, `sigilSegmentsLeft`); a faded plot
+ * in hollow-dusk, `prop-signpost-faded` with its board blank.
  * The seal scene on a naming: the ring draws itself round the plot, the
  * letters appear one by one, the sigil traces from its circle to its bar,
  * then the ground turns; whole frames, timed by tuning.json's `plots`, and
@@ -66,13 +71,10 @@ type G = Phaser.GameObjects.Graphics;
  * nothing fades its alpha.
  */
 
-/** The element's seal colour: earth today (ART's placeholder token). The other elements wait for ART. */
-export const ELEMENT_COLORS: Readonly<Record<ReturnType<typeof groundElement>, number>> = {
-  earth: Palette.sealEarth,
-  water: Palette.sealEarth,
-  fire: Palette.sealEarth,
-  air: Palette.sealEarth,
-};
+/** Each element's seal colour (palette.json `elements`, ART's seal kit #125). */
+export const ELEMENT_COLORS: Readonly<Record<ReturnType<typeof groundElement>, number>> = Object.fromEntries(
+  WORD_ELEMENTS.map((e) => [e, elementColor(e)]),
+) as Record<ReturnType<typeof groundElement>, number>;
 
 /** The ink of the letters on the band and the dividers: dark ink over the world (readability.md §4). */
 const LETTER_INK: number = Palette.worldInk;
@@ -82,6 +84,9 @@ interface DrawnPlot {
   seal: G;
   /** ART's field ground (#123), tiled over the plot less its headland; its frame is the plot's state. */
   ground: Phaser.GameObjects.TileSprite;
+  /** ART's signpost (#125), lit or faded, at the plot's centre. */
+  post: Phaser.GameObjects.Sprite;
+  /** The sigil on the post's board, drawn just above it. */
   signpost: G;
   view: PlotView | null;
   /** The seal scene's start (the scene clock), or -1. */
@@ -97,6 +102,8 @@ export interface PlotLook {
   letters: string;
   sigil: SigilPath;
   color: number;
+  /** The sigil's line, by the Ground's element. */
+  style: SigilStyle;
   state: PlotView['state'];
 }
 
@@ -106,6 +113,7 @@ export function plotLook(view: PlotView): PlotLook {
     letters,
     sigil: sigilPath(letters),
     color: ELEMENT_COLORS[groundElement(view.ground)],
+    style: sentenceStyle(view.ground),
     state: view.state,
   };
 }
@@ -136,13 +144,12 @@ export class PlotsLayer {
         .setDepth(DEPTH.roomDoors + 0.25)
         .setVisible(false);
       const base = signpostBase(plot);
-      const signpost = scene.add
-        .graphics()
-        .setPosition(base.x, base.y)
-        .setDepth(bodyDepth({ kind: 'prop' }, base.y / WORLD_SCALE))
-        .setVisible(false);
-      layer.add([seal, ground, signpost]);
-      this.drawn.push({ plot, seal, ground, signpost, view: null, sealStart: -1, drawn: '', index: this.drawn.length });
+      const depth = bodyDepth({ kind: 'prop' }, base.y / WORLD_SCALE);
+      // ART's signpost on its sheet's origin (the base of the post), y-sorted like any prop; the sigil just above it.
+      const post = scene.add.sprite(base.x, base.y, SIGNPOST_SHEETS.lit, 'idle_0').setDepth(depth).setVisible(false);
+      const signpost = scene.add.graphics().setPosition(base.x, base.y).setDepth(depth + 0.0001).setVisible(false);
+      layer.add([seal, ground, post, signpost]);
+      this.drawn.push({ plot, seal, ground, post, signpost, view: null, sealStart: -1, drawn: '', index: this.drawn.length });
     }
   }
 
@@ -216,7 +223,8 @@ export class PlotsLayer {
     const g = d.seal;
     g.clear();
     d.ground.setVisible(false);
-    d.signpost.setVisible(false);
+    d.post.setVisible(false);
+    d.signpost.clear().setVisible(false);
     if (!this.named) return;
     const rect = plotWorldRect(d.plot);
     if (!look) {
@@ -238,10 +246,13 @@ export class PlotsLayer {
     const inner = fieldGroundRect(d.plot);
     const groundShare = phase ? phase.ground : 1;
     d.ground.setSize(inner.w, Math.max(1, Math.round(inner.h * groundShare))).setVisible(groundShare > 0);
-    // The ring draws itself round the plot, clockwise from its top-left corner.
+    // The ring draws itself round the plot, clockwise from its top-left corner, each knot added as the band reaches
+    // its corner (ART's seal kit).
     const pixels = ringPixels(ringRect(d.plot), RING_WIDTH);
     const shown = phase ? Math.floor(pixels.length * phase.ring) : pixels.length;
     plotPixels(g, pixels.slice(0, shown), 0, 0, ringColor);
+    for (const knot of ringKnots(ringRect(d.plot), RING_WIDTH))
+      if (shown > knot.at) plotPixels(g, knot.pixels, 0, 0, ringColor);
     // The letters along the top of the ring, one by one, with the divider between the words; the ring's other join
     // carries a divider too (LORE), under the bottom band.
     if (this.sheet && look.letters !== '') {
@@ -316,18 +327,22 @@ export class PlotsLayer {
     if (!first) return;
     // The circle where the sentence begins (it stays while the line erodes from its far end).
     pixelRing(g, first.x, first.y, 2, color);
+    // The line in the element's style, one counter along the whole of it (ART's seal kit, `sigilStroke`).
+    let t = 0;
     for (let i = 0; i < segments; i++) {
       const a = points[i];
       const b = points[i + 1];
       if (!a || !b) break;
       const part = Math.max(0, Math.min(1, share - i));
       if (part <= 0) break;
+      if (a.x === b.x && a.y === b.y) continue;
       const end = {
         x: Math.round(a.x + (b.x - a.x) * part),
         y: Math.round(a.y + (b.y - a.y) * part),
       };
-      // Earth: heavy and straight, 2 px. (The other elements' lines wait for ART.)
-      if (a.x !== end.x || a.y !== end.y) pixelLine(g, a.x, a.y, end.x, end.y, color, 1, 2);
+      const stroke = sigilStroke(a, end, look.style, t, b);
+      plotPixels(g, stroke.pixels, 0, 0, color);
+      t = stroke.t;
     }
     // The loops and hooks at their steps, as the line reaches them.
     for (const mark of look.sigil.marks) {
@@ -350,21 +365,12 @@ export class PlotsLayer {
   }
 
   private drawSignpost(d: DrawnPlot, faded: boolean): void {
-    const g = d.signpost;
-    g.clear();
-    g.setVisible(true);
-    const post = faded ? Palette.plotFaded : Palette.signpostWood;
-    const plaque = faded ? Palette.plotFaded : Palette.signpostPlaque;
+    d.signpost.setVisible(true);
+    // ART's signpost (#125): its board sits on `signpostBoard`, where the sigil is drawn; faded, the grey one, blank.
+    const sheet = faded ? SIGNPOST_SHEETS.faded : SIGNPOST_SHEETS.lit;
+    if (d.post.texture.key !== sheet) d.post.setTexture(sheet, 'idle_0');
+    d.post.setVisible(true);
     const base = signpostBase(d.plot);
-    const x0 = -Math.floor(SIGNPOST_W / 2);
-    // The post, outlined, then the square board on top of it, outlined: the sigil is drawn onto the board.
-    g.fillStyle(Palette.playerOutline, 1).fillRect(x0 - 1, -SIGNPOST_H, SIGNPOST_W + 2, SIGNPOST_H);
-    g.fillStyle(post, 1).fillRect(x0, -SIGNPOST_H, SIGNPOST_W, SIGNPOST_H);
-    const board = signpostBoard(d.plot);
-    const bx = board.x - base.x;
-    const by = board.y - base.y;
-    g.fillStyle(Palette.playerOutline, 1).fillRect(bx - 1, by - 1, BOARD_SIZE + 2, BOARD_SIZE + 2);
-    g.fillStyle(plaque, 1).fillRect(bx, by, BOARD_SIZE, BOARD_SIZE);
     // The grounding shadow under it, by the prop rule's small case (3 high under 16 wide).
     shadowEllipse(d.seal, Math.round(base.x) - 6, Math.round(base.y) - 1, 12, 3);
   }
@@ -398,6 +404,7 @@ export class PlotsLayer {
     for (const d of this.drawn) {
       d.seal.destroy();
       d.ground.destroy();
+      d.post.destroy();
       d.signpost.destroy();
     }
   }

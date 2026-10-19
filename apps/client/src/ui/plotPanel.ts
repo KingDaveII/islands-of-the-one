@@ -5,6 +5,8 @@ import {
   groundElement,
   noWordsLine,
   plotPanelLines,
+  sentenceStyle,
+  sigilStroke,
   slotChoices,
   type Picked,
   type PlotChoice,
@@ -15,7 +17,7 @@ import { Palette } from '../palette.js';
 import { button, type Button } from '../render/button.js';
 import { DEPTH } from '../render/depth.js';
 import { plotLetters, type LetterSheet } from '../render/letters.js';
-import { pixelLine, ring as pixelRing } from '../render/pixels.js';
+import { pixelLine, plot as plotPixels, ring as pixelRing } from '../render/pixels.js';
 import { ELEMENT_COLORS } from '../render/plots.js';
 import { body, label, place, type Text } from '../render/text.js';
 import { divider, panel } from '../render/ui.js';
@@ -506,10 +508,16 @@ export class PlotPanel {
     const first = points[0];
     if (!first) return;
     pixelRing(g, first.x, first.y, 2, color);
+    // The line in the Ground's element style, as on the signpost (ART's seal kit, `sigilStroke`).
+    const style = sentenceStyle(this.picked.ground);
+    let t = 0;
     for (let i = 0; i + 1 < points.length; i++) {
       const a = points[i];
       const b = points[i + 1];
-      if (a && b && (a.x !== b.x || a.y !== b.y)) pixelLine(g, a.x, a.y, b.x, b.y, color, 1, 1);
+      if (!a || !b || (a.x === b.x && a.y === b.y)) continue;
+      const stroke = sigilStroke(a, b, style, t);
+      plotPixels(g, stroke.pixels, 0, 0, color);
+      t = stroke.t;
     }
     for (const mark of path.marks) {
       const p = points[mark.step];

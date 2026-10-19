@@ -101,7 +101,7 @@ The Kindled's home Shard ([`holding.md`](holding.md)).
 | Ground         | The word tile that decides what a plot builds (אדמה builds a field).                                      | slot `ground`, `builds`                      |
 | Virtue         | The word tile that asks something of the plot (ישן: it grows richer the longer it keeps its name).        | slot `virtue`, `effect`                      |
 | divider        | The dot between a plot sentence's words, and at the seal ring's joins; not a letter.                      | `PLOT_DIVIDER` (·)                           |
-| seal           | The ring round a named plot with its sentence along the top and its sigil at the centre.                  | `render/plots.ts`, `sealEarth`               |
+| seal           | The ring round a named plot with its sentence along the top and its sigil at the centre.                  | `render/plots.ts`, `elementColor`            |
 | sigil          | The sentence's letters as one line through the chambers of Saturn's square.                               | `sigilPath`, `sigil.json`                    |
 | field          | What אדמה builds: sown once with grey seeds, then farmed and trickling pale grain.                         | plot kind `field`                            |
 | signpost       | The 1 × 1 station at a plot's centre: its Use point, a pillar once named.                                  | `LayoutPlot.station`                         |

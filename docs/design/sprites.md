@@ -241,6 +241,14 @@ rectangle as it lies (turned or not). The engine (`apps/client/src/render/pieces
 `pieceArt.ts`) draws the ghost, the faded dim and the selection outline from each frame's opaque pixels, never as an
 alpha fade ([holding.md](holding.md) §12).
 
+#### The signpost (`prop-signpost`, `prop-signpost-faded`; ART's seal kit, #125)
+
+A named plot's signpost (`SIGNPOST_SHEETS`, required sheets): a twisted stake of the holding's wood lashed with
+sleeper-ochre rope under a framed board, on the default 64 × 64 prop cell, origin (32, 54); the faded one is the same
+wood gone grey with a blank hollow-lavender face. The board's face sits exactly on `signpostBoard` in
+`apps/client/src/game/plotView.ts` (cell x 17–46, y 6–35: the 30 px `BOARD_SIZE` on the 18 px `SIGNPOST_H`), where
+the client draws the sigil; `plotView.test.ts` holds it there. `idle` alone, one frame each, the prop rule's shadow.
+
 #### The weapon rack (`prop-weapon-rack`, M2 Task 8)
 
 MAIN's contract, confirmed by ART (2026-10-19; "lashed twisted logs in the twisted tree's bronze and brass-dark, bound

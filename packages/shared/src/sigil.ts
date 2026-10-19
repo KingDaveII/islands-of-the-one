@@ -127,7 +127,7 @@ export function sigilPath(letters: string, square: SigilSquare = sigilData.squar
   return { steps, marks };
 }
 
-/** How the line is drawn, by the Ground's element (LORE): earth heavy and straight, water a long wave, fire jagged, air thin and broken. Only earth is drawn in M2; the rest wait for ART. */
+/** How the line is drawn, by the Ground's element (LORE): earth heavy and straight, water a long wave, fire jagged, air thin and broken. ART's seal kit (#125) draws each: client plotView.ts `sigilStroke`. */
 export const SIGIL_STYLES = ['heavy-straight', 'wave', 'jagged', 'thin-broken'] as const;
 export type SigilStyle = (typeof SIGIL_STYLES)[number];
 

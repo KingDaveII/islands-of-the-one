@@ -1,4 +1,4 @@
-import { paletteData, type ClayTone, type PaletteToken, type Remembrance } from '@iot/shared';
+import { paletteData, type ClayTone, type PaletteToken, type Remembrance, type WordElement } from '@iot/shared';
 
 /**
  * Design-system color tokens (art direction, not balance data), read from
@@ -119,14 +119,11 @@ export const Palette = {
   writEmber: T.sparkEmber,
   /** A full Writ (GAME DESIGN's "clear gold"; ART 2026-10-18): choir-gold, apart from ember and the amber marks. */
   writGold: T.choirGold,
-  // The plots (M2 Task 5), placeholders until ART draws them: the seal ring in the Ground's element colour (earth:
-  // sleeper-ochre), the sigil's faint grid, an unnamed plot's dotted outline, a faded plot's dim seal, the signpost.
-  sealEarth: T.sleeperOchre,
+  // The plots (M2 Task 5; ART's seal kit, #125): the sigil's faint grid, an unnamed plot's dotted outline, a faded
+  // plot's dim seal. The ring and the sigil take the Ground's element colour (`elementColor`); the signpost is a sheet.
   plotGrid: T.hollowDusk,
   plotOutline: T.hollowDusk,
   plotFaded: T.hollowDusk,
-  signpostWood: T.hollowBelow,
-  signpostPlaque: T.sleeperSoil,
   // Build mode (M2 Task 6). The ghost's tints are ART's (#102): wheel-patina where the piece fits, choir-flame-deep where
   // it doesn't, drawn as a 50 % checkerboard over the piece's pixels and a 1 px outline round its tiles, never an alpha
   // fade; never the reserved signal colours. The pieces themselves are placeholders until ART draws them.
@@ -154,6 +151,11 @@ export function clayToneColors(tone: ClayTone): { skin: number; shade: number } 
 /** A Remembrance's placeholder outfit colour (palette.json remembranceOutfit, a palette token). */
 export function remembranceColor(remembrance: Remembrance): number {
   return parseInt(paletteData.remembranceOutfit[remembrance].slice(1), 16);
+}
+
+/** An element's seal colour (palette.json elements, ART's seal kit #125): the ring, its knots and the sigil's line. */
+export function elementColor(element: WordElement): number {
+  return parseInt(paletteData.elements[element].slice(1), 16);
 }
 
 export const css = (c: number): string => `#${c.toString(16).padStart(6, '0')}`;
