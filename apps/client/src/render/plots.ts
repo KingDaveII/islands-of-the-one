@@ -10,6 +10,8 @@ import {
   type WritView,
 } from '@iot/shared';
 import {
+  fieldGroundCell,
+  fieldGroundRect,
   groundElement,
   lettersBand,
   namedPlotIds,
@@ -33,7 +35,8 @@ import {
   WORLD_SCALE,
   type SealPhase,
 } from '../game/plotView.js';
-import { Palette, type Tokens } from '../palette.js';
+import { Palette } from '../palette.js';
+import { FIELD_GROUND_TEXTURE } from './sheets.js';
 import { DEPTH } from './depth.js';
 import { bodyDepth } from './feet.js';
 import { rasterize, type LetterSheet } from './letters.js';
@@ -45,8 +48,10 @@ type G = Phaser.GameObjects.Graphics;
  * The plots in the world (docs/design/holding.md "Plots", M2 Task 5), all
  * placeholders in palette tokens until ART draws them: before the island has
  * a Name nothing; after it, an unnamed plot as a faint dotted outline; a
- * named plot with its ground turned dark and crumbly (a whole-pixel dither
- * under the props and the Kindled), its seal (the ring round the plot in
+ * named plot with ART's field ground (#123: unsown, sown or faded, one
+ * seamless 64 px cell tiled over the plot less the sheet's `inset`, the
+ * headland of pale holding ground that keeps the ring and its letters
+ * readable; under the props and the Kindled), its seal (the ring round the plot in
  * the Ground's element colour, the sentence's letters from the letter sheet
  * along the top with the divider between the words and at the ring's other
  * join) and its signpost at the centre (a solid 1 × 1 prop y-sorted with the
@@ -69,17 +74,14 @@ export const ELEMENT_COLORS: Readonly<Record<ReturnType<typeof groundElement>, n
   air: Palette.sealEarth,
 };
 
-/** The ground's dither textures: one for a lit or dark plot, one dim for a faded one. */
-const GROUND_KEY = 'plot-ground';
-const GROUND_DIM_KEY = 'plot-ground-dim';
-
 /** The ink of the letters on the band and the dividers: dark ink over the world (readability.md §4). */
 const LETTER_INK: number = Palette.worldInk;
 
 interface DrawnPlot {
   plot: LayoutPlot;
   seal: G;
-  ground: Phaser.GameObjects.Image;
+  /** ART's field ground (#123), tiled over the plot less its headland; its frame is the plot's state. */
+  ground: Phaser.GameObjects.TileSprite;
   signpost: G;
   view: PlotView | null;
   /** The seal scene's start (the scene clock), or -1. */
@@ -108,24 +110,6 @@ export function plotLook(view: PlotView): PlotLook {
   };
 }
 
-/** The ground dither on a canvas: one pixel in four of the ink, the pattern fixed in the world (the texture is tiled from the plot's corner). */
-function groundTexture(
-  scene: Phaser.Scene,
-  key: string,
-  w: number,
-  h: number,
-  ink: keyof typeof Tokens,
-): void {
-  if (scene.textures.exists(key)) return;
-  const canvas = scene.textures.createCanvas(key, w, h);
-  const ctx = canvas?.getContext();
-  if (!canvas || !ctx) return;
-  ctx.fillStyle = `#${Palette[ink === 'hollowBelow' ? 'ground' : 'uiInkMuted'].toString(16).padStart(6, '0')}`;
-  for (let y = 0; y < h; y += 2)
-    for (let x = (y / 2) % 2 === 0 ? 0 : 2; x < w; x += 4) ctx.fillRect(x, y, 1, 1);
-  canvas.refresh();
-}
-
 export class PlotsLayer {
   private readonly drawn: DrawnPlot[] = [];
   private sheet: LetterSheet | null = null;
@@ -142,15 +126,12 @@ export class PlotsLayer {
     readonly layout: HoldingLayout,
     private readonly tuning: () => PlotsTuning,
   ) {
-    const first = layout.plots[0];
-    const size = first ? plotWorldRect(first) : { w: 192, h: 192 };
-    groundTexture(scene, GROUND_KEY, size.w, size.h, 'hollowBelow');
-    groundTexture(scene, GROUND_DIM_KEY, size.w, size.h, 'hollowDusk');
     for (const plot of layout.plots) {
-      const r = plotWorldRect(plot);
       const seal = scene.add.graphics().setDepth(DEPTH.floor + 0.1);
+      // ART's field ground (#123), tiled from the inner rect's corner over the plot less its headland.
+      const g = fieldGroundRect(plot);
       const ground = scene.add
-        .image(r.x, r.y, GROUND_KEY)
+        .tileSprite(g.x, g.y, g.w, g.h, FIELD_GROUND_TEXTURE, 'unsown')
         .setOrigin(0, 0)
         .setDepth(DEPTH.roomDoors + 0.25)
         .setVisible(false);
@@ -250,10 +231,13 @@ export class PlotsLayer {
     }
     const faded = look.state === 'faded';
     const ringColor = faded ? Palette.plotFaded : look.color;
-    // The ground, turned from the top as the scene ends (cropped to its share), whole, or dim once faded.
-    d.ground.setTexture(faded ? GROUND_DIM_KEY : GROUND_KEY).setVisible(true);
+    // The ground (ART's cell for the plot's state), turned from the top as the scene ends (only its top share shown),
+    // whole, or faded with its line.
+    const cell = fieldGroundCell({ state: look.state, sownAt: view?.sownAt ?? null });
+    if (d.ground.frame.name !== cell) d.ground.setFrame(cell);
+    const inner = fieldGroundRect(d.plot);
     const groundShare = phase ? phase.ground : 1;
-    d.ground.setCrop(0, 0, rect.w, Math.round(rect.h * groundShare));
+    d.ground.setSize(inner.w, Math.max(1, Math.round(inner.h * groundShare))).setVisible(groundShare > 0);
     // The ring draws itself round the plot, clockwise from its top-left corner.
     const pixels = ringPixels(ringRect(d.plot), RING_WIDTH);
     const shown = phase ? Math.floor(pixels.length * phase.ring) : pixels.length;

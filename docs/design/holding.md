@@ -701,8 +701,13 @@ is passed through; only earth is drawn in M2.
 **The client.** Plots draw on the world camera (`render/plots.ts`, placeholders in palette tokens until ART's
 kit; every look is listed under "Questions for ART" in the task's PR): nothing before the Name; an unnamed plot
 as a faint dotted outline (`plotOutline`) with the USE prompt at its interact point and LORE's tooltip "Ground,
-but not yet ground for anything. Give it a word."; a named plot with its ground inside (a whole-pixel dither,
-`plotGrid`, under the props and the Kindled), its **seal** (the ring round the plot in the Ground's element
+but not yet ground for anything. Give it a word."; a named plot with its ground inside (ART's
+field ground, #123: `field-ground-64px.png` + `field-ground.json`, one seamless 64 px cell per state, `unsown` until
+the field is sown, `sown`, and `faded` once its line has faded, sown or not (`fieldGroundCell`), drawn untinted and
+tiled from the inner corner of the plot's rect less the sheet's `inset` (`fieldGroundRect`; top 26, right 10,
+bottom 14, left 10 world px), a headland of pale holding ground that keeps the ring, its letters and the divider
+readable; under the props and the Kindled; the seal scene turns it from the top by showing only its top share),
+its **seal** (the ring round the plot in the Ground's element
 colour, `sealEarth`; the sentence's letters from the letter sheet along the top of the ring with the divider
 between the words and at the ring's other join) and, at its centre, its **signpost** (`signpostWood`,
 `signpostPlaque`; a pillar in the roam, `setSolidPlots`), which carries no words: its square board carries the

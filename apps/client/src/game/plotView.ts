@@ -1,5 +1,6 @@
 import {
   durationWords,
+  fieldGroundSheet,
   exactTime,
   holdingLayout,
   itemCount,
@@ -13,6 +14,8 @@ import {
   TILE_SIZE_PX,
   wordDef,
   wordsInSlot,
+  type FieldGroundCell,
+  type FieldGroundSheet,
   type HoldingLayout,
   type HoldingResponse,
   type LayoutPlot,
@@ -246,6 +249,23 @@ export const BOARD_SIZE = 3 * SIGIL_CELL + 2 * BOARD_PAD;
 export function plotWorldRect(plot: LayoutPlot): WorldRect {
   const px = TILE_SIZE_PX * WORLD_SCALE;
   return { x: plot.rect.col * px, y: plot.rect.row * px, w: plot.rect.cols * px, h: plot.rect.rows * px };
+}
+
+/** The field ground's cell for a named plot (ART, #123): faded once its line has faded (sown or not), else sown or unsown by `sownAt`. */
+export function fieldGroundCell(view: Pick<PlotView, 'state' | 'sownAt'>): FieldGroundCell {
+  if (view.state === 'faded') return 'faded';
+  return view.sownAt === null ? 'unsown' : 'sown';
+}
+
+/**
+ * Where the field ground tiles (world px): the plot's rect less the sheet's
+ * `inset`, the headland of plain holding ground under the ring, its letters
+ * and the divider. The tiling starts at this rect's top-left corner.
+ */
+export function fieldGroundRect(plot: LayoutPlot, sheet: Pick<FieldGroundSheet, 'inset'> = fieldGroundSheet): WorldRect {
+  const r = plotWorldRect(plot);
+  const { top, right, bottom, left } = sheet.inset;
+  return { x: r.x + left, y: r.y + top, w: Math.max(0, r.w - left - right), h: Math.max(0, r.h - top - bottom) };
 }
 
 /** The seal ring's outer rectangle. */

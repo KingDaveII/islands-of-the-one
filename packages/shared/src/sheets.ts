@@ -1,4 +1,5 @@
 import controllerGlyphs from '../assets/controller-glyphs.json' with { type: 'json' };
+import fieldGround from '../assets/field-ground.json' with { type: 'json' };
 import hookbladeFx from '../assets/hookblade-fx.json' with { type: 'json' };
 import itemIcons from '../assets/item-icons.json' with { type: 'json' };
 import toastGlyphs from '../assets/toast-glyphs.json' with { type: 'json' };
@@ -77,6 +78,25 @@ export interface ToastGlyphsSheet extends CellSheet {
 export const toastGlyphsSheet: ToastGlyphsSheet = toastGlyphs;
 /** A toast glyph's size (UI px): drawn at 1 UI px per px, vertically centred on its line. */
 export const TOAST_GLYPH_PX = 12;
+
+/** The field ground's cells (ART, #123): a named field before SOW, once sown, and faded (sown or not). */
+export const FIELD_GROUND_CELLS = ['unsown', 'sown', 'faded'] as const;
+export type FieldGroundCell = (typeof FIELD_GROUND_CELLS)[number];
+
+/**
+ * The field's ground (ART, #123; M2 Task 5's placeholder dither retired): one
+ * seamless `cell`-px pattern per state, drawn untinted, tiled over a named
+ * plot's rect less `inset` (world px, at 1 world px per sheet px) from that
+ * inner rect's top-left corner. The inset is the headland of plain holding
+ * ground that keeps the seal ring, its letters and the divider on pale earth.
+ */
+export interface FieldGroundSheet extends CellSheet {
+  cell: number;
+  meta?: Partial<EngineSheetMeta>;
+  inset: { top: number; right: number; bottom: number; left: number };
+}
+
+export const fieldGroundSheet: FieldGroundSheet = fieldGround;
 
 /** The cell called `name`, or undefined. */
 export function sheetCellNamed(sheet: CellSheet, name: string): SheetCell | undefined {
