@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FIELD_TEXT_INSET, inputBox } from './formFields.js';
+import { canvasPageBox, FIELD_TEXT_INSET, inputBox } from './formFields.js';
 
 describe('inputBox', () => {
   const field = { x: 124, y: 80, w: 232, h: 16 };
@@ -30,5 +30,16 @@ describe('inputBox', () => {
     expect(box.left).toBe((80 + 124 + FIELD_TEXT_INSET.x) * 3);
     expect(box.top).toBe((17 + 80 + FIELD_TEXT_INSET.y) * 3);
     expect(box.fontSize).toBe(24);
+  });
+});
+
+describe('canvasPageBox', () => {
+  it("places the inputs in page coordinates, so a phone keyboard's scroll moves them with the canvas", () => {
+    expect(canvasPageBox({ left: 0, top: 0 }, { x: 0, y: 0 })).toEqual({ left: 0, top: 0 });
+    // iOS scrolls the page 178 px to show the focused field: the canvas's viewport box moves up, the scroll down,
+    // and the inputs' page position stays where it was (David's playtest, 2026-10-20).
+    const before = canvasPageBox({ left: 12, top: 40 }, { x: 0, y: 0 });
+    const after = canvasPageBox({ left: 12, top: 40 - 178 }, { x: 0, y: 178 });
+    expect(after).toEqual(before);
   });
 });

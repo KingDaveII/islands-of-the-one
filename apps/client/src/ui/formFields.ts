@@ -11,6 +11,14 @@ import { css, Palette } from '../palette.js';
  * The menus centre their 480 × 270 layout in the UI area, so a field's box
  * (layout px) maps to CSS px through the layout's offset and zU / dpr CSS px
  * per UI px (render/cameras.ts `uiToCss`).
+ *
+ * The inputs are absolutely positioned in page coordinates (the canvas's box
+ * plus the page's scroll, `canvasPageBox`), never `position: fixed`: when a
+ * phone's keyboard opens, iOS Safari scrolls the page to show the focused
+ * field and treats fixed elements as if they were absolute, so viewport
+ * coordinates moved the typed text twice as far as the page (David's
+ * playtest, 2026-10-20). In page coordinates the inputs scroll with the
+ * canvas, whatever the browser does with its viewports.
  */
 
 /** A field's box in layout px (the menu's 480 × 270 UI layout): the panel's outer box. */
@@ -42,8 +50,19 @@ export interface UiToCss {
 }
 
 /**
+ * The canvas's top left in page coordinates: its viewport box (getBoundingClientRect) plus the page's scroll, which
+ * is what an absolutely positioned input needs. It stays put while the page scrolls.
+ */
+export function canvasPageBox(
+  rect: { left: number; top: number },
+  scroll: { x: number; y: number },
+): { left: number; top: number } {
+  return { left: rect.left + scroll.x, top: rect.top + scroll.y };
+}
+
+/**
  * Where an input goes on the page: its text line inside the field's panel,
- * from the canvas's page box and the UI → CSS mapping.
+ * from the canvas's page box (`canvasPageBox`) and the UI → CSS mapping.
  */
 export function inputBox(canvas: { left: number; top: number }, map: UiToCss, f: FieldBox): CssBox {
   const zoom = map.zoom;
@@ -135,7 +154,7 @@ export function createForm(
       return input;
     },
     layout(canvas, map) {
-      const rect = canvas.getBoundingClientRect();
+      const rect = canvasPageBox(canvas.getBoundingClientRect(), { x: window.scrollX, y: window.scrollY });
       const key = `${rect.left},${rect.top},${map.zoom},${map.x},${map.y}`;
       if (key === placed) return;
       placed = key;
