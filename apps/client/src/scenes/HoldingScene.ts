@@ -2147,7 +2147,11 @@ export class HoldingScene extends Phaser.Scene {
     const activity = this.response?.activity;
     if (activity) {
       const done = cyclesDone(activity, this.serverNow());
-      if (this.lastCycles >= 0 && done > this.lastCycles) this.float('+1', activity.stationId);
+      if (this.lastCycles >= 0 && done > this.lastCycles) {
+        this.float('+1', activity.stationId);
+        // The panel's "XP to next" follows the cycles (`liveSkill`), like the chip's bar.
+        this.syncPanel();
+      }
       this.lastCycles = done;
     }
     for (const [id, cycle] of Object.entries(this.response?.cycles ?? {})) {

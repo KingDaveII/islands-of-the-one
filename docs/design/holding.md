@@ -297,7 +297,9 @@ the Kindled and stops at the layout's edges.
 - **Bottom centre, the active-action chip:** the station's placeholder icon (its initials), the skill
   name and level, a progress ring for the current cycle drawn from `startedAt`, the cycle and the
   server's clock offset (`clockOffset`, `cycleProgress` in `game/holdingView.ts`), a thin XP bar to the
-  next level; empty while idle. Clicking or tapping it stops the action. **There is no stop binding**
+  next level; empty while idle. The bar, the level and the station panel's "XP to next" are live (`liveSkill`):
+  the answer's XP plus the action's XP for each cycle completed since the answer's `now`, predicted like the
+  "+1" floats, so they move with every cycle instead of every heartbeat; the next answer brings the settled numbers. Clicking or tapping it stops the action. **There is no stop binding**
   (GAME DESIGN 2026-10-18): stopping is on the chip and in each station's panel ("Stop working"), and
   walking to another station and working it switches; `stopAction` left `controls.json` and its glyph
   cell `key_x` the glyph sheet.

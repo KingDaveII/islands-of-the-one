@@ -12,6 +12,7 @@ import {
   plotLevel,
   SKILL_NAMES,
   SKILLS,
+  skillProgress,
   stationDef,
   TILE_SIZE_PX,
   tiny5Font,
@@ -25,6 +26,7 @@ import {
   type InventoryResponse,
   type LayoutPlot,
   type LayoutStation,
+  type Skill,
   type SkillView,
   type SpriteSheet,
   type StationAction,
@@ -71,6 +73,28 @@ export function cycleProgress(activity: HoldingActivity, serverMs: number): numb
   if (Number.isNaN(started) || activity.cycleMs <= 0) return 0;
   const into = (((serverMs - started) % activity.cycleMs) + activity.cycleMs) % activity.cycleMs;
   return into / activity.cycleMs;
+}
+
+/**
+ * A skill as it stands at the server time `serverMs`: the answer's view plus
+ * the XP of the active action's cycles completed since the answer (`r.now`),
+ * when the action trains that skill. Predicted from the clock, render only,
+ * like the "+1" floats; the next answer brings the settled numbers. Without
+ * it the chip's bar and the panel's "XP to next" stood still between
+ * heartbeats.
+ */
+export function liveSkill(r: HoldingResponse, skill: Skill, serverMs: number): SkillView {
+  const view = r.skills[skill];
+  const activity = r.activity;
+  if (!activity) return view;
+  const action = workplaceDef(activity.stationId, r)?.action;
+  if (!action || action.skill !== skill) return view;
+  const answeredAt = Date.parse(r.now);
+  if (Number.isNaN(answeredAt)) return view;
+  const extra = cyclesDone(activity, serverMs) - cyclesDone(activity, answeredAt);
+  if (extra <= 0) return view;
+  const p = skillProgress(view.xp + extra * action.xp);
+  return { xp: p.xp, level: p.level, into: p.into, toNext: p.toNext };
 }
 
 /** The share of the level done: XP into it over the level's whole span. */
@@ -132,7 +156,7 @@ export function chipState(r: HoldingResponse | null, serverMs: number): ChipStat
   if (!r || !activity) return null;
   const action = workplaceDef(activity.stationId, r)?.action;
   if (!action) return null;
-  const view = r.skills[action.skill];
+  const view = liveSkill(r, action.skill, serverMs);
   return {
     stationId: activity.stationId,
     initials: stationInitials(activity.stationId, r),
@@ -209,7 +233,7 @@ export function stationLines(
   const plot = place.plot;
   const basket = r?.baskets[stationId] ?? [];
   const working = r?.activity?.stationId === stationId;
-  const view = r?.skills[action.skill];
+  const view = r ? liveSkill(r, action.skill, serverMs) : undefined;
   const rate = `${countOf(action.itemId, action.quantity)} every ${action.cycleMs / 1000} s`;
   // A plot is called by its label (LORE: the Virtue's epithet and the kind, "Old field"; M2 Task 7), a station by its name.
   const title = displayable((plot ? plotLabel(plot, r?.plots ?? []) : place.name).toUpperCase());
