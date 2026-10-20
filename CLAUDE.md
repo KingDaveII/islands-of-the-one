@@ -138,6 +138,16 @@ dev/test/typecheck never need a prior build. Production builds compile each pack
   `.only` a test to get it green; fix the cause.
 - Small, focused commits with a message saying what changed and why.
 
+### Public repo
+
+- The repo is public, and so are its Actions logs, PRs and every branch. Nothing secret goes in
+  code, docs, PR text, commit messages or screenshots.
+- Workflows and scripts never print the staging domain, server addresses (in any form, the sslip.io
+  name included) or visitors' IPs: not in step names, `echo`s, error messages or an environment
+  `url:`. Server and Caddy logs stay on the VPS (`deploy.sh --logs`).
+- Hosts, domains and keys are Actions **secrets**, never variables (anyone can read a variable).
+  `docs/DEPLOY.md` lists them. Never attach a self-hosted runner to this repo.
+
 ## Environment notes
 
 - Claude Code on the web: `.claude/settings.json` runs `scripts/cloud-setup.sh` on startup/resume. It
