@@ -53,12 +53,13 @@
         image-rendering: pixelated;
       }
       /* Typed text: real inputs in a real form over the canvas (src/ui/formFields.ts places
-         them, sizes the face to 8 game px and sets the colours from palette.ts). */
+         them in page coordinates, sizes the face to 8 game px and sets the colours from palette.ts).
+         Absolute, not fixed: a phone keyboard scrolls the page, and the inputs scroll with the canvas. */
       .game-form {
         margin: 0;
       }
       .game-input {
-        position: fixed;
+        position: absolute;
         box-sizing: border-box;
         margin: 0;
         padding: 0;
