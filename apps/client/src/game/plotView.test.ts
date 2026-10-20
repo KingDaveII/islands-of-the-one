@@ -252,12 +252,17 @@ describe('the plots in the world', () => {
 describe("ART's seal kit (#125)", () => {
   const key = (px: [number, number][]): string[] => px.map(([x, y]) => `${x},${y}`).sort();
 
-  it('ties a 6 × 6 knot round each corner of the band, its middle left to the band, in ring order', () => {
+  it('ties a 6 × 6 knot round each corner of the band, its middle open, in ring order', () => {
     const rect = { x: 10, y: 20, w: 40, h: 30 };
     const knots = ringKnots(rect, 2);
     expect(KNOT_SIZE).toBe(6);
     expect(knots).toHaveLength(4);
     for (const k of knots) expect(k.pixels).toHaveLength(36 - 4);
+    // The middle is open: the band's own corner is the hole, cleared so the ground shows (ART on #129).
+    expect(key(knots[0]?.hole ?? [])).toEqual(key([[10, 20], [11, 20], [10, 21], [11, 21]]));
+    expect(key(knots[2]?.hole ?? [])).toEqual(key([[48, 48], [49, 48], [48, 49], [49, 49]]));
+    const band = new Set(key(ringPixels(rect, 2)));
+    for (const k of knots) for (const p of key(k.hole)) expect(band.has(p)).toBe(true);
     // Top left: x 8–13, y 18–23 less the band's own 2 × 2 corner (10–11, 20–21).
     const tl = knots[0]?.pixels ?? [];
     expect(Math.min(...tl.map(([x]) => x))).toBe(8);

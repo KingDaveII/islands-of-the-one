@@ -248,11 +248,13 @@ export class PlotsLayer {
     d.ground.setSize(inner.w, Math.max(1, Math.round(inner.h * groundShare))).setVisible(groundShare > 0);
     // The ring draws itself round the plot, clockwise from its top-left corner, each knot added as the band reaches
     // its corner (ART's seal kit).
+    // The knots' middles are open (the band's corners cleared), so the headland shows through: eyelets (ART).
     const pixels = ringPixels(ringRect(d.plot), RING_WIDTH);
+    const knots = ringKnots(ringRect(d.plot), RING_WIDTH);
+    const holes = new Set(knots.flatMap((k) => k.hole.map(([x, y]) => `${x},${y}`)));
     const shown = phase ? Math.floor(pixels.length * phase.ring) : pixels.length;
-    plotPixels(g, pixels.slice(0, shown), 0, 0, ringColor);
-    for (const knot of ringKnots(ringRect(d.plot), RING_WIDTH))
-      if (shown > knot.at) plotPixels(g, knot.pixels, 0, 0, ringColor);
+    plotPixels(g, pixels.slice(0, shown).filter(([x, y]) => !holes.has(`${x},${y}`)), 0, 0, ringColor);
+    for (const knot of knots) if (shown > knot.at) plotPixels(g, knot.pixels, 0, 0, ringColor);
     // The letters along the top of the ring, one by one, with the divider between the words; the ring's other join
     // carries a divider too (LORE), under the bottom band.
     if (this.sheet && look.letters !== '') {

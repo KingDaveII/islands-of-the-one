@@ -709,8 +709,9 @@ bottom 14, left 10 world px), a headland of pale holding ground that keeps the r
 readable; under the props and the Kindled; the seal scene turns it from the top by showing only its top share),
 its **seal** (the 2 px ring round the plot in the Ground's element
 colour, `elementColor` from palette.json `elements`: earth sleeper-ochre, water watcher-rain, fire
-choir-flame-deep, air watcher-stone; a 6 × 6 knot at each corner centred on the band's corner, `ringKnots`, added
-as the drawing ring reaches it; the sentence's letters from the letter sheet in dark ink along the top of the ring
+choir-flame-deep, air watcher-stone; a 6 × 6 knot at each corner centred on the band's corner, its middle 2 × 2 open
+(the band's corner cleared, so the headland shows through: an eyelet, ART), `ringKnots`, added as the drawing ring
+reaches it, lit or faded; the sentence's letters from the letter sheet in dark ink along the top of the ring
 with the divider between the words and at the ring's other join) and, at its centre, its **signpost** (ART's
 `prop-signpost`, `SIGNPOST_SHEETS`, drawn at `signpostBase` on the sheet's origin (32, 54) with the prop rule's
 shadow; a pillar in the roam, `setSolidPlots`), which carries no words: its board carries the

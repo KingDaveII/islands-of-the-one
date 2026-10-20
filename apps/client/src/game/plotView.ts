@@ -300,11 +300,15 @@ export const KNOT_SIZE = 6;
 
 /**
  * The ring's four corner knots (ART's seal kit, #125, `ring()` in art/clean/seal-kit/kit.py): a `KNOT_SIZE` square
- * centred on each corner of the band, its middle `width` × `width` (the band's own corner) left to the band. In
- * ring order: top left, top right, bottom right, bottom left, each with the index of the band's outer corner pixel
- * in `ringPixels`, so a ring drawing itself adds a knot as it reaches that corner.
+ * centred on each corner of the band, its middle `width` × `width` open: the band's own corner pixels there are
+ * cleared too (`hole`), so the ground shows through and the knot reads as an eyelet the cord passes through (ART on
+ * #129), lit or faded. In ring order: top left, top right, bottom right, bottom left, each with the index of the
+ * band's outer corner pixel in `ringPixels`, so a ring drawing itself adds a knot as it reaches that corner.
  */
-export function ringKnots(rect: WorldRect, width: number = RING_WIDTH): { at: number; pixels: [number, number][] }[] {
+export function ringKnots(
+  rect: WorldRect,
+  width: number = RING_WIDTH,
+): { at: number; pixels: [number, number][]; hole: [number, number][] }[] {
   const x1 = rect.x + rect.w - width;
   const y1 = rect.y + rect.h - width;
   const corners: [number, number][] = [
@@ -317,16 +321,17 @@ export function ringKnots(rect: WorldRect, width: number = RING_WIDTH): { at: nu
   const lo = -Math.floor((KNOT_SIZE - width) / 2);
   return corners.map(([cx, cy]) => {
     const pixels: [number, number][] = [];
+    const hole: [number, number][] = [];
     for (let dy = lo; dy < lo + KNOT_SIZE; dy++)
       for (let dx = lo; dx < lo + KNOT_SIZE; dx++) {
-        if (dx >= 0 && dx < width && dy >= 0 && dy < width) continue;
-        pixels.push([cx + dx, cy + dy]);
+        if (dx >= 0 && dx < width && dy >= 0 && dy < width) hole.push([cx + dx, cy + dy]);
+        else pixels.push([cx + dx, cy + dy]);
       }
     // The band's outermost pixel at this corner.
     const ox = cx === rect.x ? rect.x : rect.x + rect.w - 1;
     const oy = cy === rect.y ? rect.y : rect.y + rect.h - 1;
     const at = outer.findIndex(([x, y]) => x === ox && y === oy);
-    return { at: Math.max(0, at), pixels };
+    return { at: Math.max(0, at), pixels, hole };
   });
 }
 
