@@ -58,7 +58,7 @@
     "offPalette": 0,
     "maxDeltaE": 0,
     "outlineGaps": 942,
-    "masked": 15840
+    "masked": 15827
   },
   "flags": {
     "seam": [
@@ -303,8 +303,8 @@
       "frames": 6,
       "held": [],
       "seam": {
-        "lastToFirst": 164,
-        "meanInCycle": 343.6,
+        "lastToFirst": 163,
+        "meanInCycle": 343.2,
         "flag": false
       },
       "bob": {
@@ -988,7 +988,7 @@
       "shift": -1,
       "outlineGaps": 12,
       "colours": 9,
-      "masked": 62
+      "masked": 58
     },
     {
       "name": "walk_NE_1",
@@ -1048,7 +1048,7 @@
       "shift": -1,
       "outlineGaps": 10,
       "colours": 9,
-      "masked": 70
+      "masked": 65
     },
     {
       "name": "walk_N_0",
@@ -1132,7 +1132,7 @@
       "shift": -1,
       "outlineGaps": 1,
       "colours": 9,
-      "masked": 62
+      "masked": 58
     },
     {
       "name": "walk_NW_1",

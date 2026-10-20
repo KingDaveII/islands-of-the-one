@@ -46,14 +46,23 @@ def sleeve(m):
     """NE and NW: the generator drew the arm on the far side bare, shoulder to hand, in the skin colours; in
     every other facing it is the tunic's sleeve to the wrist (MAIN, after #121). A tall, narrow run of skin
     below the head is that arm: all but its last HAND rows become sleeve (hollow-dusk, its shade hollow-below);
-    the hand stays skin. The nape and the near hand are too short to be taken."""
+    the hand stays skin. The nape and the near hand are too short to be taken. A 1 px sliver of skin, 3 rows
+    or more, is the same arm seen edge on beside the body (walk NE 0 and 5, NW 0; MAIN on #128): all sleeve."""
     hair = min(components({p for p, k in m.items() if k == "i"}), key=lambda c: min(y for _, y in c))
-    hair_bottom = max(y for _, y in hair)
+    # the hair's last full row (a thin run of iron down the body's edge can join the blob; it isn't hair)
+    hair_bottom = max(y for y in {yy for _, yy in hair} if sum(1 for _, yy in hair if yy == y) >= 4)
     for comp in components({p for p, k in m.items() if k in "st"}):
         xs, ys = [x for x, _ in comp], [y for _, y in comp]
-        if max(ys) - min(ys) + 1 >= 7 and max(xs) - min(xs) + 1 <= 7 and min(ys) > hair_bottom:
+        tall, wide = max(ys) - min(ys) + 1, max(xs) - min(xs) + 1
+        if min(ys) > hair_bottom and wide == 1 and tall >= 3:
             for x, y in comp:
-                if y <= max(ys) - HAND:
+                m[x, y] = "L" if m[x, y] == "s" else "M"
+        elif tall >= 7 and wide <= 7 and min(ys) > hair_bottom:
+            # the hand is its last HAND rows, unless they are only a 1 px edge (the arm seen edge on, no hand)
+            low = [x for x, y in comp if y > max(ys) - HAND]
+            cut = max(ys) - HAND if max(low) - min(low) >= 1 else max(ys)
+            for x, y in comp:
+                if y <= cut:
                     m[x, y] = "L" if m[x, y] == "s" else "M"
     return m
 

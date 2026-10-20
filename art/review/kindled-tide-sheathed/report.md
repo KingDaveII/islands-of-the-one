@@ -8,7 +8,7 @@ Kind kindled, outline player, cell 96×80, origin (48, 64).
 - Frames: 160.
 - Off-palette pixels snapped: 0 (largest ΔE 0).
 - Outline gaps (edge pixels not in an outline colour): 942.
-- Masked skin pixels: 15840.
+- Masked skin pixels: 15827.
 - Loop seam flags (last → first above 1.5× the mean change): walk_N, run_NE.
 - Body bob flags (top row moves more than 2 px): walk_NW.
 - Held frames (identical neighbours): none.
@@ -38,7 +38,7 @@ Rows, top to bottom: idle_S, idle_SE, idle_E, idle_NE, idle_N, idle_NW, idle_W, 
 | walk_S | 6 | 136 / 389 | 44 45 44 44 45 44 (range 1) |  |
 | walk_SE | 6 | 183 / 331 | 45 44 44 45 45 45 (range 1) |  |
 | walk_E | 6 | 261 / 358.6 | 45 46 46 45 44 45 (range 2) |  |
-| walk_NE | 6 | 164 / 343.6 | 46 47 47 45 46 46 (range 2) |  |
+| walk_NE | 6 | 163 / 343.2 | 46 47 47 45 46 46 (range 2) |  |
 | walk_N | 6 | 362 / 228.2 **flag** | 46 47 46 46 47 47 (range 1) |  |
 | walk_NW | 6 | 267 / 413.2 | 45 46 45 46 48 45 (range 3) **flag** |  |
 | walk_W | 6 | 292 / 263.6 | 45 45 45 45 46 46 (range 1) |  |
@@ -108,19 +108,19 @@ Shift: rows the grounding moved the frame against its canvas's row 53 (positive 
 | walk_E_3 | `art/clean/kindled-tide-sheathed/walk/east 3` | 0 | 0 | -1 | 8, 1 | 0 | 8 | 99 |
 | walk_E_4 | `art/clean/kindled-tide-sheathed/walk/east 4` | 0 | 0 | 0 | 8, 2 | 4 | 10 | 94 |
 | walk_E_5 | `art/clean/kindled-tide-sheathed/walk/east 5` | 0 | 0 | -1 | 8, 1 | 5 | 10 | 100 |
-| walk_NE_0 | `art/clean/kindled-tide-sheathed/walk/north-east 0` | 0 | 0 | -1 | 8, 1 | 12 | 9 | 62 |
+| walk_NE_0 | `art/clean/kindled-tide-sheathed/walk/north-east 0` | 0 | 0 | -1 | 8, 1 | 12 | 9 | 58 |
 | walk_NE_1 | `art/clean/kindled-tide-sheathed/walk/north-east 1` | 0 | 0 | -3 | 8, -1 | 3 | 10 | 72 |
 | walk_NE_2 | `art/clean/kindled-tide-sheathed/walk/north-east 2` | 0 | 0 | -2 | 8, 0 | 5 | 9 | 69 |
 | walk_NE_3 | `art/clean/kindled-tide-sheathed/walk/north-east 3` | 0 | 0 | -1 | 8, 1 | 0 | 9 | 62 |
 | walk_NE_4 | `art/clean/kindled-tide-sheathed/walk/north-east 4` | 0 | 0 | -1 | 8, 1 | 0 | 9 | 59 |
-| walk_NE_5 | `art/clean/kindled-tide-sheathed/walk/north-east 5` | 0 | 0 | -1 | 8, 1 | 10 | 9 | 70 |
+| walk_NE_5 | `art/clean/kindled-tide-sheathed/walk/north-east 5` | 0 | 0 | -1 | 8, 1 | 10 | 9 | 65 |
 | walk_N_0 | `art/clean/kindled-tide-sheathed/walk/north 0` | 0 | 0 | -1 | 8, 1 | 9 | 6 | 33 |
 | walk_N_1 | `art/clean/kindled-tide-sheathed/walk/north 1` | 0 | 0 | -2 | 8, 0 | 10 | 8 | 48 |
 | walk_N_2 | `art/clean/kindled-tide-sheathed/walk/north 2` | 0 | 0 | -2 | 8, 0 | 3 | 8 | 42 |
 | walk_N_3 | `art/clean/kindled-tide-sheathed/walk/north 3` | 0 | 0 | -1 | 8, 1 | 4 | 8 | 48 |
 | walk_N_4 | `art/clean/kindled-tide-sheathed/walk/north 4` | 0 | 0 | -2 | 8, 0 | 5 | 8 | 51 |
 | walk_N_5 | `art/clean/kindled-tide-sheathed/walk/north 5` | 0 | 0 | -2 | 8, 0 | 6 | 8 | 48 |
-| walk_NW_0 | `art/clean/kindled-tide-sheathed/walk/north-west 0` | 0 | 0 | -1 | 8, 1 | 1 | 9 | 62 |
+| walk_NW_0 | `art/clean/kindled-tide-sheathed/walk/north-west 0` | 0 | 0 | -1 | 8, 1 | 1 | 9 | 58 |
 | walk_NW_1 | `art/clean/kindled-tide-sheathed/walk/north-west 1` | 0 | 0 | -1 | 8, 1 | 5 | 9 | 57 |
 | walk_NW_2 | `art/clean/kindled-tide-sheathed/walk/north-west 2` | 0 | 0 | -1 | 8, 1 | 8 | 9 | 63 |
 | walk_NW_3 | `art/clean/kindled-tide-sheathed/walk/north-west 3` | 0 | 0 | -2 | 8, 0 | 10 | 10 | 69 |
