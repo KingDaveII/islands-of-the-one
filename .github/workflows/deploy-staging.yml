@@ -89,15 +89,17 @@ jobs:
        (github.event_name == 'workflow_dispatch' && inputs.sha != '' && needs.build.result == 'skipped'))
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # No environment url: it would print the staging domain on every run page,
+    # and run logs are public once the repo is.
     environment:
       name: staging
-      url: https://${{ vars.STAGING_DOMAIN }}
     permissions:
       contents: read
       packages: write
     env:
       SHA: ${{ inputs.sha || needs.build.outputs.sha }}
-      STAGING_DOMAIN: ${{ vars.STAGING_DOMAIN }}
+      # A secret, so GitHub masks the domain wherever it shows up in a log.
+      STAGING_DOMAIN: ${{ secrets.STAGING_DOMAIN }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -108,7 +110,7 @@ jobs:
       - name: Resolve image names
         run: |
           [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::sha must be a full 40-char commit SHA, got '$SHA'"; exit 1; }
-          [[ -n "$STAGING_DOMAIN" ]] || { echo "::error::variable STAGING_DOMAIN is not set on the staging environment"; exit 1; }
+          [[ -n "$STAGING_DOMAIN" ]] || { echo "::error::secret STAGING_DOMAIN is not set on the staging environment"; exit 1; }
           prefix="ghcr.io/${GITHUB_REPOSITORY,,}"
           {
             echo "SERVER_IMAGE=${prefix}-server"
@@ -134,21 +136,24 @@ jobs:
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
-          # DEPLOY_USER is a variable: it isn't secret, and as a secret GitHub masks
-          # every "deploy" in the logs. DEPLOY_HOST is a variable when it is the
-          # public staging domain, and stays a secret when it is an IP address.
-          # The secret of the same name is the fallback for either.
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST || secrets.DEPLOY_HOST }}
-          DEPLOY_HOST_SOURCE: ${{ vars.DEPLOY_HOST != '' && 'variable' || 'secret' }}
+          # The SSH host is a secret like the domain (it is the domain, or an
+          # address). DEPLOY_USER is a variable: it isn't secret, and as a secret
+          # GitHub masks every "deploy" in the logs.
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ vars.DEPLOY_USER || secrets.DEPLOY_USER }}
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
         run: |
-          [[ -n "$DEPLOY_HOST" ]] || { echo "::error::set DEPLOY_HOST on the staging environment"; exit 1; }
+          [[ -n "$DEPLOY_HOST" ]] || { echo "::error::secret DEPLOY_HOST is not set on the staging environment"; exit 1; }
+          # A secret masks only its exact text. ssh and scp print the address a
+          # name resolves to on a dropped connection ("Connection closed by
+          # <ip> port ..."), so mask those addresses too, for the rest of the job.
+          while read -r ip; do
+            echo "::add-mask::$ip"
+          done < <({ getent ahosts "$STAGING_DOMAIN" "$DEPLOY_HOST" || true; } | awk 'NF { print $1 }' | sort -u)
           [[ -n "$DEPLOY_USER" ]] || { echo "::error::set the variable DEPLOY_USER on the staging environment"; exit 1; }
-          # Says where the SSH host came from and whether it is the staging
-          # domain, without printing it.
+          # Whether the SSH host is the staging domain, without printing either.
           if [[ "$DEPLOY_HOST" == "$STAGING_DOMAIN" ]]; then same=yes; else same=no; fi
-          echo "SSH host from the DEPLOY_HOST ${DEPLOY_HOST_SOURCE}; same as STAGING_DOMAIN: ${same}"
+          echo "SSH host is the staging domain: ${same}"
           install -d -m 700 ~/.ssh
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
@@ -166,6 +171,7 @@ jobs:
             BatchMode yes
             ConnectTimeout 20
             ServerAliveInterval 15
+            LogLevel ERROR
           CFG
           chmod 600 ~/.ssh/config
           # retry CMD...: run CMD, and run it again when ssh/scp reports a
@@ -196,6 +202,8 @@ jobs:
             echo "IMAGE_TAG=${SHA}"
             echo "STAGING_DOMAIN=${STAGING_DOMAIN}"
           } > deploy.env
+          # deploy.env goes only to the VPS (Caddy needs STAGING_DOMAIN); it is
+          # never printed to the log.
           # Never uploads .env: POSTGRES_PASSWORD stays host-managed.
           # shellcheck source=/dev/null
           source "$RUNNER_TEMP/ssh-retry.sh"
@@ -217,7 +225,7 @@ jobs:
           }
           retry deploy
 
-      - name: Wait for https://${{ vars.STAGING_DOMAIN }}/health
+      - name: Wait for /health on staging
         run: |
           url="https://${STAGING_DOMAIN}/health"
           # First deploy also waits for Caddy to obtain a certificate.
@@ -230,11 +238,14 @@ jobs:
             echo "attempt ${attempt}: ${body:-no response}"
             sleep 5
           done
-          echo "::error::$url did not report status ok for $SHA within 5 minutes"
+          echo "::error::/health on staging did not report status ok for $SHA within 5 minutes"
           exit 1
 
       - name: Diagnostics
         if: failure()
         run: |
+          # Service status only. Server and Caddy logs carry visitors' IP
+          # addresses and the domain, and run logs are public: read them on the
+          # VPS with deploy.sh --logs.
           # shellcheck disable=SC2029
-          ssh staging "bash '${DEPLOY_DIR}/deploy.sh' --status; bash '${DEPLOY_DIR}/deploy.sh' --logs 100" || true
+          ssh staging "bash '${DEPLOY_DIR}/deploy.sh' --status" || true
