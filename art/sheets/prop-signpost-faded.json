@@ -1,0 +1,16 @@
+{
+  "sheet": "prop-signpost-faded",
+  "kind": "prop",
+  "outline": "other",
+  "draft": false,
+  "notes": "A faded plot's signpost: the same post gone grey, its board blank (M2 Task 5; LORE 2026-10-18: no words, its board carries the plot's sigil) (the code draws no sigil on it), drawn by art/clean/seal-kit/kit.py: a twisted stake of the holding's wood lashed under a framed pale board. The board's face is where the code draws the sigil: the 30 x 30 board (BOARD_SIZE) on the 18 px post (SIGNPOST_H) of plotView.ts, cell x 17-46, y 6-35, the grid 3 px inside it. The frame is cell-sized and already placed; ground on frame 0 moves nothing.",
+  "anims": {
+    "idle": {
+      "src": "art/clean/prop-signpost-faded/idle",
+      "frames": [0],
+      "ground": {
+        "ref": 0
+      }
+    }
+  }
+}
