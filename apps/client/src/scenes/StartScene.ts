@@ -205,6 +205,8 @@ export class StartScene extends Phaser.Scene {
 
   /** The hint lines for the active device: its bindings, then the menu keys. */
   private hintLines(): HintItem[][] {
+    // On touch the key and pad lines hide: every action here is a button (M2 Task 10).
+    if (deviceStore.get() === 'touch') return [[], []];
     if (deviceStore.get() === 'gamepad') {
       const pad = controlsStore.get();
       const padKey = (action: ControlAction): HintItem[] =>
@@ -290,6 +292,10 @@ export class StartScene extends Phaser.Scene {
     });
     const w = Math.max(...this.hintRows.map((r) => r.width)) + 2 * HINT_PANEL_PAD;
     this.hintPanel.clear();
+    if (w <= 2 * HINT_PANEL_PAD) {
+      menuCursor(this);
+      return;
+    }
     panel(this.hintPanel, Math.round(cx - w / 2), HINT_PANEL_Y, w, 2 * HINT_PANEL_PAD + 26, {
       plain: true,
     });

@@ -25,6 +25,7 @@ import { SleepScene } from './scenes/SleepScene.js';
 import { StartScene } from './scenes/StartScene.js';
 import { TestScene } from './scenes/TestScene.js';
 import { ToastScene, toastStore } from './ui/toasts.js';
+import { askFullScreenOnFirstTouch, PortraitScene } from './ui/portrait.js';
 import { buildStore } from './game/build.js';
 import { tuningStore } from './game/tuningStore.js';
 import { debugFlags } from './ui/debugFlags.js';
@@ -56,7 +57,8 @@ function startGame(): void {
     backgroundColor: Palette.hollow,
     pixelArt: true,
     roundPixels: true,
-    input: { gamepad: false },
+    // Three touch pointers: two thumbs and one more (M2 Task 10, controls.md §6).
+    input: { gamepad: false, activePointers: 3 },
     scale: { mode: Phaser.Scale.NONE, width: device.w, height: device.h, zoom: 1 / device.dpr },
     // The gate asks the server who is signed in (GET /api/me) and opens the
     // account, creation or start screen.
@@ -73,8 +75,11 @@ function startGame(): void {
       SleepScene,
       // Last, so the toast strip draws above everything, the inventory included (M2 Task 7).
       ToastScene,
+      // Over all of them: the portrait line on a phone held upright (M2 Task 10).
+      PortraitScene,
     ],
   });
+  game.scene.start('portrait');
   // Also fires when the browser zoom (and so the device pixel ratio) changes.
   window.addEventListener('resize', () => {
     fitCanvasToWindow(game);
@@ -92,17 +97,27 @@ function startGame(): void {
   };
   watchRatio();
 
-  // The active device (keyboard+mouse or gamepad): any key or mouse button, mouse motion past a
-  // few px, any pad button or stick. Everything that shows bindings follows it live.
-  window.addEventListener('keydown', () => {
+  // The active device (keyboard+mouse, gamepad or touch): any key or mouse button, mouse motion past a
+  // few px, any pad button or stick, a finger on the screen. Everything that shows bindings follows it live.
+  // Pointer events, so the mouse events a browser makes up after a tap never count as the mouse.
+  // A key typed into a form input is the phone's own keyboard as often as a real one: it never changes the device.
+  window.addEventListener('keydown', (e) => {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     deviceStore.key();
   });
-  window.addEventListener('mousedown', () => {
-    deviceStore.key();
+  window.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (e.pointerType === 'touch') deviceStore.touch();
+      else if (e.pointerType === 'mouse') deviceStore.key();
+    },
+    true,
+  );
+  window.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'mouse') deviceStore.mouseMove(e.movementX, e.movementY);
   });
-  window.addEventListener('mousemove', (e) => {
-    deviceStore.mouseMove(e.movementX, e.movementY);
-  });
+  const parent = document.getElementById('game');
+  if (parent) askFullScreenOnFirstTouch(parent);
   game.events.on(Phaser.Core.Events.PRE_STEP, () => {
     deviceStore.pad(padSnapshot(connectedPad()));
   });

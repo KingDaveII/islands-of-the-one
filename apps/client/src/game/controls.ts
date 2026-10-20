@@ -16,20 +16,25 @@ import {
 } from './gamepad.js';
 import { KEYBOARD_ACTIONS, keyboardKeys, keyCodeFor, MOUSE_BUTTONS, mouseBindingFor, type MouseSide } from './keyboard.js';
 import { keyboardMove, quantizeAngle, quantizeMove } from './quantize.js';
+import { touchSample, type TouchInput, type TouchPress } from './touchInput.js';
+import { TOUCH } from './touchLayout.js';
 
-const STICK_DEADZONE = 0.2;
+/** The left stick's deadzone, the pad's and the touch stick's (controls.md §6). */
+export const STICK_DEADZONE = 0.2;
 const AIM_DEADZONE = 0.35;
 
-export type AimSource = 'mouse' | 'gamepad';
+export type AimSource = 'mouse' | 'gamepad' | 'touch';
 
 /**
  * Where the reticle goes: on the mouse pointer in mouse mode (null until the
  * mouse has moved; sim px, read through the world camera), or along the pad
- * aim in pad mode, on the soft-locked Husk when there is one (`targetId`).
+ * aim in pad and touch mode, on the soft-locked Husk when there is one
+ * (`targetId`); on touch, while a button is dragged, the aim line's length
+ * (`line`, world px; 0 for none).
  */
 export type Reticle =
   | { kind: 'mouse'; x: number; y: number }
-  | { kind: 'pad'; aim: number; targetId: number | null };
+  | { kind: 'pad'; aim: number; targetId: number | null; line?: number };
 
 /** Sim button a press of an action sets; heavy is a held state and the rest (chart peek, journal) have no sim button yet. */
 const PRESS_BUTTON: Partial<Record<ControlAction, number>> = {
@@ -43,6 +48,18 @@ const PRESS_BUTTON: Partial<Record<ControlAction, number>> = {
   interact: Button.Interact,
 };
 const PRESS_ACTIONS = Object.keys(PRESS_BUTTON) as ControlAction[];
+
+/** The sim button each touch press sets (USE is interact). */
+const TOUCH_BUTTON: Record<TouchPress, number> = {
+  light: Button.Light,
+  dodge: Button.Dodge,
+  ability1: Button.Ability1,
+  ability2: Button.Ability2,
+  ability3: Button.Ability3,
+  item1: Button.Item1,
+  item2: Button.Item2,
+  interact: Button.Interact,
+};
 
 /** Keys whose browser default (scrolling, moving focus) must not fire while a run is on. */
 const CAPTURED_KEYS: ReadonlySet<string> = new Set(['Space', 'Tab']);
@@ -91,6 +108,8 @@ export class Controls {
   private padId = '';
   lastInput: TickInput = { aim: 0, moveDir: 0, moveMag: 0, buttons: 0 };
   gamepadConnected = false;
+  /** The touch layer's input (ui/touchControls.ts), read like a pad while touch is the active device (M2 Task 10). */
+  touch: TouchInput | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -119,7 +138,9 @@ export class Controls {
     }
 
     scene.input.mouse?.disableContextMenu();
+    // A touch is the touch layer's (it reaches the sim through `touch`), never a mouse button.
     scene.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      if (p.wasTouch) return;
       const binding = mouseBindingFor(p.button);
       const side = binding ? MOUSE_BUTTONS[binding] : undefined;
       if (!binding || !side) return;
@@ -127,6 +148,7 @@ export class Controls {
       this.latchedKeys.add(binding);
     });
     scene.input.on('pointerup', (p: Phaser.Input.Pointer) => {
+      if (p.wasTouch) return;
       const binding = mouseBindingFor(p.button);
       const side = binding ? MOUSE_BUTTONS[binding] : undefined;
       if (side) this.mouseDown[side] = false;
@@ -140,8 +162,8 @@ export class Controls {
       canvas.addEventListener(type, swallowMiddle);
       this.domListeners.push([type, swallowMiddle]);
     }
-    scene.input.on('pointermove', () => {
-      this.pointerMoved = true;
+    scene.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (!p.wasTouch) this.pointerMoved = true;
     });
   }
 
@@ -158,9 +180,21 @@ export class Controls {
     return controlsStore.get();
   }
 
-  /** The aim follows the active device (docs/design/controls.md §5): the pad in pad mode, the mouse otherwise. */
+  /** The aim follows the active device (docs/design/controls.md §5): the pad in pad mode, the buttons on touch, the mouse otherwise. */
   get aimSource(): AimSource {
-    return deviceStore.get() === 'gamepad' && this.gamepadConnected ? 'gamepad' : 'mouse';
+    const device = deviceStore.get();
+    if (device === 'touch' && this.touch) return 'touch';
+    return device === 'gamepad' && this.gamepadConnected ? 'gamepad' : 'mouse';
+  }
+
+  /** Touch is the active device: the key and pad hints hide, the prompt shows its verb alone (controls.md §6). */
+  get touchMode(): boolean {
+    return deviceStore.get() === 'touch';
+  }
+
+  /** The soft lock's angle for the device in use: on touch the Left-stick preset's (GAME DESIGN), else the preset's. */
+  softLockDeg(soft: { angleDeg: number; leftStickAngleDeg: number }): number {
+    return this.aimSource === 'touch' || this.preset.aim === 'left-stick' ? soft.leftStickAngleDeg : soft.angleDeg;
   }
 
   /** Where hints come from: the pad preset (in the pad's glyph family) while the pad is the active device, else the keyboard. */
@@ -193,6 +227,13 @@ export class Controls {
   /** Where to draw the reticle this frame (see Reticle), or null before the mouse has moved. */
   reticle(): Reticle | null {
     if (this.aimSource === 'gamepad') return { kind: 'pad', aim: this.aim, targetId: this.lockTargetId >= 0 ? this.lockTargetId : null };
+    if (this.aimSource === 'touch')
+      return {
+        kind: 'pad',
+        aim: this.aim,
+        targetId: this.lockTargetId >= 0 ? this.lockTargetId : null,
+        line: this.touch?.dragAim() !== null ? TOUCH.aimLinePx : 0,
+      };
     if (!this.pointerMoved) return null;
     const p = this.pointerToSim(this.scene.input.activePointer);
     return { kind: 'mouse', x: p.x, y: p.y };
@@ -250,7 +291,24 @@ export class Controls {
       this.prevPadButtons = padButtons;
     }
 
-    if (!padMode) {
+    const touch = this.touch;
+    if (touch && this.aimSource === 'touch') {
+      // Touch, like the pad: the stick moves, the buttons press and hold, a dragged button aims (touchInput.ts).
+      const t = touchSample(touch, ctx.enemies, ctx.softLockDeg, STICK_DEADZONE, this.lockTargetId);
+      if (t.move) {
+        const stick = quantizeMove(t.move.x, t.move.y, STICK_DEADZONE);
+        if (stick.moveMag > 0) move = stick;
+      }
+      for (const p of t.presses) buttons |= TOUCH_BUTTON[p];
+      if (t.heavy) held = true;
+      if (t.aim !== null) this.aim = quantizeAngle(t.aim);
+      if (t.lockTarget !== undefined) this.lockTargetId = t.lockTarget;
+    } else if (touch) {
+      // Not the device: a touch layer's stray latches never fire later.
+      touch.take();
+    }
+
+    if (this.aimSource === 'mouse') {
       this.lockTargetId = -1;
       if (this.pointerMoved) {
         const p = this.pointerToSim(this.scene.input.activePointer);

@@ -24,7 +24,7 @@ import {
   type PlotView,
   type TilePoint,
 } from '@iot/shared';
-import { Button, TILE_PX } from '@iot/sim';
+import { Button, SUB, TILE_PX, type RoamState } from '@iot/sim';
 import { accountStore, api } from '../api.js';
 import { deviceStore } from '../game/activeDevice.js';
 import {
@@ -58,6 +58,7 @@ import {
   serverTime,
   stationLines,
   takeFloat,
+  talkSpot,
   USE_LABEL,
   workplaceDef,
   type NearStation,
@@ -94,6 +95,7 @@ import {
 } from '../game/plotView.js';
 import { derive, hudName, writChip } from '../game/writView.js';
 import { keyboardKeys, keyCodeFor } from '../game/keyboard.js';
+import { findPath, PathWalk, walkGoal, waypoints } from '../game/path.js';
 import { RoamSession } from '../game/roamSession.js';
 import { tuningStore } from '../game/tuningStore.js';
 import {
@@ -139,6 +141,7 @@ import { PlotPanel } from '../ui/plotPanel.js';
 import { TalkBox } from '../ui/talkBox.js';
 import { toastStore } from '../ui/toasts.js';
 import { RackPanel } from '../ui/rackPanel.js';
+import { TouchControls } from '../ui/touchControls.js';
 import { WritPanel } from '../ui/writPanel.js';
 import type { InventoryData } from './InventoryScene.js';
 
@@ -197,7 +200,14 @@ interface StationPanel {
   resultAt: number;
   /** The lines shown, from the latest answer (null until the station's data is known). */
   lines: StationLines | null;
+  /** Where it was last laid out (UI px): a tap outside it closes it (M2 Task 10). */
+  rect: ViewRect;
 }
+
+/** What Use (or a tap on it, M2 Task 10) works: Kesh across the water, or a station's part or a plot. */
+type UseTarget = { kind: 'kesh' } | { kind: 'part'; near: NearStation };
+
+const inside = (r: ViewRect, x: number, y: number): boolean => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
 
 /**
  * The holding (docs/design/holding.md, M2 Task 3b): the Kindled's home Shard,
@@ -310,6 +320,12 @@ export class HoldingScene extends Phaser.Scene {
   lastError = '';
   /** Between create and shutdown: answers that arrive after the scene is gone are dropped. */
   private alive = false;
+  /** The touch layer (M2 Task 10): the stick, USE alone above the pack button, the gear. */
+  touch!: TouchControls;
+  /** The tap walk (M2 Task 10): the path being walked and what to use on arrival (null: plain ground). */
+  private walk: { path: PathWalk; then: UseTarget | null } | null = null;
+  /** A walk that just ended, its thing used next frame if the Kindled is in reach. */
+  private arrived: UseTarget | null = null;
 
   constructor() {
     super('holding');
@@ -428,6 +444,33 @@ export class HoldingScene extends Phaser.Scene {
     this.fitCameras();
     menuCursor(this);
 
+    // The touch layer, before the scene's own pointer handler (it reads what is open before a tap changes it).
+    this.walk = null;
+    this.arrived = null;
+    this.touch = new TouchControls(this, {
+      mode: 'holding',
+      layer: this.hudLayer,
+      uiZoom: () => this.uiFit.zU,
+      avoid: () => [...this.hud.panelRects(), ...(this.build ? [this.build.rect()] : [])],
+      // USE whenever a prompt is up (ART's answer 3), the gear always.
+      showing: (id) => id !== 'use' || this.prompt.container.visible,
+      stickAllowed: () => !this.modalOpen(),
+      // The away card, the talk box, build mode and the Name screen keep their own touches; the gear still works over them.
+      claim: (_p, onControl) => !this.away && (onControl || (!this.talkBox && !this.build && !this.nameScreen)),
+      onTap: (x, y) => {
+        this.touchTap(x, y);
+      },
+      onControl: (id) => {
+        // The gear is the menu binding (Esc): it closes what is open, else leaves for the start screen.
+        if (id === 'gear') this.back();
+      },
+      onTouch: () => {
+        this.walk = null;
+      },
+    });
+    this.controls.touch = this.touch.input;
+    this.session.steer = (s, manual) => this.steerWalk(s, manual);
+
     // Keys from controls.json: the inventory opens the inventory, the menu key backs out (the panel first);
     // Enter presses the panel's focused button, the arrows and Tab move its focus.
     const kb = this.input.keyboard;
@@ -534,6 +577,8 @@ export class HoldingScene extends Phaser.Scene {
           this.awayDismiss = true;
           return;
         }
+        // A touch on the gear or USE is the touch layer's alone.
+        if (p.wasTouch && this.touch.hits(p)) return;
         if (this.talkBox) {
           if (over.length === 0 && this.talk.step.kind === 'line') this.talkAdvance();
           return;
@@ -542,7 +587,7 @@ export class HoldingScene extends Phaser.Scene {
           if (over.length === 0) this.buildPointer(p);
           return;
         }
-        if (p.wasTouch && over.length === 0) this.use();
+        // A tap on the world walks there and uses what it lands on: the touch layer's tap (touchTap).
       },
     );
     const offDevice = deviceStore.subscribe(() => {
@@ -562,6 +607,9 @@ export class HoldingScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.alive = false;
       offDevice();
+      this.touch.destroy();
+      this.session.steer = null;
+      this.walk = null;
       this.closeTalk();
       this.closeNameScreen();
       this.closeWritPanel();
@@ -634,6 +682,11 @@ export class HoldingScene extends Phaser.Scene {
   /** The world view in UI px (playtests). */
   viewFrame(): Readonly<ViewRect> {
     return this.frame;
+  }
+
+  /** The UI camera's zoom, device px per UI px (playtests map UI px to the page). */
+  uiZoom(): number {
+    return this.uiFit.zU;
   }
 
   /** The server's clock now, from the latest answer's offset. */
@@ -828,11 +881,21 @@ export class HoldingScene extends Phaser.Scene {
     }
     const p = this.session.position();
     if (nearKesh(p.x, p.y, tuningStore.get().juice.promptRangePx, this.session.layout)) {
-      this.openTalk('talk');
+      this.useTarget({ kind: 'kesh' });
       return;
     }
     const near = this.near();
-    if (!near) return;
+    if (near) this.useTarget({ kind: 'part', near });
+  }
+
+  /** Use one thing: Kesh's Talk, a plot (its sentence panel unnamed, else its station panel), or a station by its kind. */
+  private useTarget(target: UseTarget): void {
+    this.walk = null;
+    if (target.kind === 'kesh') {
+      this.openTalk('talk');
+      return;
+    }
+    const { near } = target;
     if (near.plot) {
       const view = plotOf(this.response, near.plot.id);
       if (!view) return;
@@ -846,6 +909,125 @@ export class HoldingScene extends Phaser.Scene {
     else if (station.kind === 'store') this.openInventory();
     else if (station.kind === 'rack') this.openRackPanel();
     else this.openPanel(station.id);
+  }
+
+  // --- Touch (M2 Task 10) ------------------------------------------------------
+
+  /** Whether something covers the holding: a panel, the talk box, build mode, the away card, the sleep or the seal scene. */
+  private modalOpen(): boolean {
+    return (
+      this.panel !== null ||
+      this.writPanel !== null ||
+      this.rackPanel !== null ||
+      this.nameScreen !== null ||
+      this.talkBox !== null ||
+      this.plotPanel !== null ||
+      this.build !== null ||
+      this.away !== null ||
+      this.world.sitting !== null ||
+      this.plots.sealing !== null
+    );
+  }
+
+  /** A UI point on the world, in world px (through the world camera). */
+  private uiToWorld(x: number, y: number): { x: number; y: number } {
+    const w = this.worldFit;
+    const z = this.uiFit.zU;
+    return { x: (x * z - w.x) / w.zW + this.scroll.x, y: (y * z - w.y) / w.zW + this.scroll.y };
+  }
+
+  /**
+   * A touch tap (UI px, on nothing the HUD or a panel takes): with a panel
+   * open, a tap outside it closes it (Circle's meaning); else tap to walk and
+   * use (holding.md §6).
+   */
+  private touchTap(x: number, y: number): void {
+    if (this.away || this.talkBox || this.build || this.nameScreen) return;
+    const open = this.panel?.rect ?? this.writPanel?.rect() ?? this.rackPanel?.rect() ?? this.plotPanel?.rect() ?? null;
+    if (open) {
+      if (!inside(open, x, y)) this.back();
+      return;
+    }
+    if (this.modalOpen()) return;
+    this.tapWorld(x, y);
+  }
+
+  /** What a tap on the world (world px) lands on: a station's prop, Kesh or his rock, a plot once the island is named; or nothing. */
+  private thingAt(wx: number, wy: number): UseTarget | null {
+    const layout = this.session.layout;
+    const prop = this.world.propAt(wx, wy);
+    if (prop) {
+      if (prop.stationId === null) return { kind: 'kesh' };
+      const station = layout.stations.find((st) => st.id === prop.stationId);
+      const r = prop.rect;
+      const part = station?.parts.find((pt) => pt.rect.col === r.col && pt.rect.row === r.row && pt.rect.cols === r.cols && pt.rect.rows === r.rows);
+      if (station && part && !station.reserved) return { kind: 'part', near: { id: station.id, station, plot: null, part } };
+    }
+    const k = this.world.keshBox();
+    if (k && inside(k, wx, wy)) return { kind: 'kesh' };
+    if (this.named) {
+      const plot = plotAtWorld(wx, wy, layout);
+      if (plot) return { kind: 'part', near: { id: plot.id, station: null, plot, part: plot.station } };
+    }
+    return null;
+  }
+
+  /** Where a thing is used from (sim px): the Talk spot, or the part's interact point. */
+  private targetSpot(target: UseTarget): { x: number; y: number } {
+    return target.kind === 'kesh' ? talkSpot(this.session.layout) : interactPoint(target.near.part);
+  }
+
+  private inReach(target: UseTarget): boolean {
+    const p = this.session.position();
+    const at = this.targetSpot(target);
+    return Math.hypot(at.x - p.x, at.y - p.y) <= tuningStore.get().juice.promptRangePx;
+  }
+
+  /**
+   * Tap to walk and use (GAME DESIGN 2026-10-20): on a thing in reach, Use it
+   * now; out of reach, walk to its interact point and Use it on arrival; on
+   * plain ground, walk there (the nearest walkable tile when it is solid or
+   * void). No path: no walk.
+   */
+  private tapWorld(x: number, y: number): void {
+    this.walk = null;
+    const w = this.uiToWorld(x, y);
+    const target = this.thingAt(w.x, w.y);
+    if (target) {
+      if (this.inReach(target)) {
+        this.useTarget(target);
+        return;
+      }
+      const at = this.targetSpot(target);
+      this.walkTo(tileOfSim(at.x, at.y), target);
+      return;
+    }
+    const goal = walkGoal(this.session.tiles, tileOfSim(simPx(w.x), simPx(w.y)));
+    if (goal) this.walkTo(goal, null);
+  }
+
+  private walkTo(goal: TilePoint, then: UseTarget | null): void {
+    const p = this.session.position();
+    const path = findPath(this.session.tiles, tileOfSim(p.x, p.y), goal);
+    if (!path) return;
+    const points = waypoints(path);
+    const centre = { x: (goal.col + 0.5) * TILE_SIZE_PX, y: (goal.row + 0.5) * TILE_SIZE_PX };
+    this.walk = { path: new PathWalk(points.length > 0 ? points : [centre]), then };
+  }
+
+  /** The roam's autopilot each tick while walking: any stick or key, or something opening, ends the walk. */
+  private steerWalk(s: RoamState, manual: boolean): { x: number; y: number } | null {
+    const walk = this.walk;
+    if (!walk) return null;
+    if (manual || this.modalOpen()) {
+      this.walk = null;
+      return null;
+    }
+    const v = walk.path.step(s.x / SUB, s.y / SUB);
+    if (v) return v;
+    this.walk = null;
+    this.arrived = walk.then;
+    return null;
   }
 
   // --- The Writ (M2 Task 4a) ----------------------------------------------------
@@ -1816,6 +1998,7 @@ export class HoldingScene extends Phaser.Scene {
       result,
       resultAt: -1,
       lines: null,
+      rect: { x: 0, y: 0, w: 0, h: 0 },
     };
     this.hudLayer.add([g, face, title, ...rows, result]);
     for (const o of [g, face, title, ...rows, result]) o.setDepth(DEPTH.prompt);
@@ -1948,6 +2131,7 @@ export class HoldingScene extends Phaser.Scene {
     const buttonsH = p.buttons.length > 0 ? 6 + 1 + 6 + 15 : 0;
     const h = PANEL_PAD + 10 + 2 + lettersH + rowsH + buttonsH + 4 + 11 + PANEL_PAD;
     const y = Math.round(this.frame.y + this.frame.h / 2 - h / 2);
+    p.rect = { x, y, w: PANEL_W, h: h + 1 };
     p.g.clear();
     p.face.clear();
     panel(p.g, x, y, PANEL_W, h);
@@ -2079,7 +2263,7 @@ export class HoldingScene extends Phaser.Scene {
     const ui = this.toUi(at.x, at.y);
     this.promptLabel = talk ? TALK_LABEL : USE_LABEL;
     this.prompt
-      .setItems([...hintItems(this.controls.hint('interact')), { text: this.promptLabel }])
+      .setItems([...(this.controls.touchMode ? [] : hintItems(this.controls.hint('interact'))), { text: this.promptLabel }])
       .place(ui.x, ui.y, 0.5, 1)
       .setVisible(true);
   }
@@ -2243,6 +2427,9 @@ export class HoldingScene extends Phaser.Scene {
     toasts: ReturnType<typeof toastStore.snapshot>;
     /** Sleep's moment at the post: the Kindled sitting (or standing, without a sit row) before the cut. */
     sitting: boolean;
+    /** Touch (M2 Task 10): a tap walk under way, and the touch layer as laid out and whether it shows. */
+    walking: boolean;
+    touch: { shown: boolean; controls: TouchControls['layout']['controls']; stickRadius: number };
   } {
     const s = this.session.state;
     return {
@@ -2281,6 +2468,8 @@ export class HoldingScene extends Phaser.Scene {
       awayRect: this.away?.rect() ?? null,
       toasts: toastStore.snapshot(),
       sitting: this.world.sitting !== null,
+      walking: this.walk !== null,
+      touch: { shown: this.touch.shown, controls: this.touch.layout.controls, stickRadius: this.touch.layout.stickRadius },
     };
   }
 
@@ -2290,6 +2479,12 @@ export class HoldingScene extends Phaser.Scene {
     if (this.away && this.awayDismiss) this.closeAway();
     this.session.update(delta);
     if (this.session.pressed & Button.Interact) this.use();
+    // A tap walk that ended: its thing is used if the Kindled is in reach of it.
+    if (this.arrived) {
+      const target = this.arrived;
+      this.arrived = null;
+      if (!this.modalOpen() && this.inReach(target)) this.useTarget(target);
+    }
     this.followCamera(refit || this.session.state.tick <= 1);
     this.world.setKeshTalking(this.talkBox !== null && keshSpeaking(this.talk.step));
     this.world.draw(this.session.state, this.session.position());
@@ -2312,6 +2507,7 @@ export class HoldingScene extends Phaser.Scene {
       toastStore.rect,
     );
     toastStore.dither = this.hud.toastsDithered;
+    this.touch.update(delta);
     this.updateWritToasts();
     this.updatePrompt();
     this.updatePlotTip();

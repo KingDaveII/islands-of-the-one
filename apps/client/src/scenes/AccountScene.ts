@@ -269,6 +269,8 @@ export class AccountScene extends Phaser.Scene {
   }
 
   private hintItems(): HintItem[] {
+    // On touch the key and pad hints hide: the tabs, the fields and the button are tapped (M2 Task 10).
+    if (deviceStore.get() === 'touch') return [];
     if (deviceStore.get() === 'gamepad') {
       const menu = (index: number): HintItem[] => glyphs([menuGlyph(index)], this.family);
       return [

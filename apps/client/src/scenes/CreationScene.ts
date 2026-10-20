@@ -463,6 +463,8 @@ export class CreationScene extends Phaser.Scene {
 
   private hintItems(): HintItem[] {
     if (!isStep(this.s.phase)) return [];
+    // On touch the hints hide: the cards, the swatches, BACK and NEXT are tapped, the figure dragged (M2 Task 10).
+    if (deviceStore.get() === 'touch') return [];
     const choose = this.s.focus === 'figure' ? 'turn' : 'choose';
     if (deviceStore.get() === 'gamepad') {
       const menu = (index: number): HintItem[] => glyphs([menuGlyph(index)], this.family);

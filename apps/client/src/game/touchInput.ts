@@ -118,6 +118,11 @@ export class TouchInput {
     return { kind: 'control', id: f.id };
   }
 
+  /** Interact from outside the buttons: a tap on the prompted thing (the scene decides what it landed on). */
+  pressInteract(): void {
+    this.latched.add('interact');
+  }
+
   /** A finger lost without a release (the browser cancelled it): it fires nothing. */
   cancel(id: number): void {
     this.fingers.delete(id);

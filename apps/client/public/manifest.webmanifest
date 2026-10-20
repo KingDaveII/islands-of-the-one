@@ -1,0 +1,11 @@
+{
+  "name": "Islands of the One",
+  "short_name": "Islands",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#2a2540",
+  "theme_color": "#2a2540",
+  "icons": []
+}

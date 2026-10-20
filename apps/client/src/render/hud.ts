@@ -187,14 +187,17 @@ export class Hud {
   /** Key hints follow the device in use (gamepad preset glyphs or keyboard keys) and the input context; rebuilt only when those change. */
   private syncHints(run: Run): void {
     const source = this.controls.hintSource();
+    // On touch the key and pad hints hide (controls.md §6): the buttons are on the screen.
+    const touch = this.controls.touchMode;
     const key =
-      (source === 'keyboard' ? 'keyboard' : `${source.family}:${source.preset.id}`) +
+      (touch ? 'touch' : source === 'keyboard' ? 'keyboard' : `${source.family}:${source.preset.id}`) +
       `:${this.controls.context}` +
       run.params.weapon.abilities.map((a) => (a.locked ? '-' : '+')).join('');
     if (key === this.hintKey) return;
     this.hintKey = key;
     const set = (row: HintRow | undefined, action: ControlAction): void => {
-      row?.setHint(this.controls.hint(action));
+      if (touch) row?.setItems([]);
+      else row?.setHint(this.controls.hint(action));
     };
     set(this.dodgeKey, 'dodge');
     set(this.keys[0], 'light');

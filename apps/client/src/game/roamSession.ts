@@ -2,6 +2,7 @@ import { holdingLayout, holdingRoomTiles, holdingStart, type HoldingLayout, type
 import {
   createRoam,
   decodeInput,
+  encodeInput,
   hashRoamState,
   NO_INPUT,
   roomFromTemplate,
@@ -13,6 +14,7 @@ import {
   type RoamState,
 } from '@iot/sim';
 import type { Controls } from './controls.js';
+import { quantizeMove } from './quantize.js';
 import { tuningStore } from './tuningStore.js';
 
 const TICK_MS = 1000 / TICK_HZ;
@@ -42,6 +44,14 @@ export class RoamSession {
   held = false;
   /** The named plots whose signposts are pillars in the room (M2 Task 5), as last set. */
   private solidPlots = '';
+  /** The room's rows as the sim walks it (`holdingRoomTiles` with the pillars), for the tap walk's path (M2 Task 10). */
+  tiles: string[];
+  /**
+   * The tap walk's autopilot (M2 Task 10): per tick, the stick a thumb would
+   * hold (length ≤ 1), or null to leave the controls' move alone. `manual`
+   * says the controls moved this tick (a stick or a key), which ends a walk.
+   */
+  steer: ((state: RoamState, manual: boolean) => { x: number; y: number } | null) | null = null;
 
   constructor(
     private readonly controls: Controls,
@@ -49,8 +59,9 @@ export class RoamSession {
   ) {
     const start = holdingStart(layout);
     const t = tuningStore.get();
+    this.tiles = holdingRoomTiles(layout);
     this.roam = createRoam({
-      template: { name: layout.id, tiles: holdingRoomTiles(layout) },
+      template: { name: layout.id, tiles: this.tiles },
       start: tileCentre(start.col, start.row),
       tuning: { player: t.player, roam: t.roam },
     });
@@ -71,7 +82,8 @@ export class RoamSession {
     const key = `${[...plotIds].sort().join(',')}|${pieceTiles.map((t) => `${t.col}:${t.row}`).sort().join(',')}`;
     if (key === this.solidPlots) return;
     this.solidPlots = key;
-    this.roam.state.room = roomFromTemplate(0, { name: this.layout.id, tiles: holdingRoomTiles(this.layout, plotIds, pieceTiles) });
+    this.tiles = holdingRoomTiles(this.layout, plotIds, pieceTiles);
+    this.roam.state.room = roomFromTemplate(0, { name: this.layout.id, tiles: this.tiles });
   }
 
   /** Advance by real time. Returns how many ticks ran. */
@@ -85,8 +97,12 @@ export class RoamSession {
       const sampled = this.inputSource
         ? this.inputSource(s)
         : this.controls.sample(s.x / SUB, s.y / SUB, { enemies: [], context: 'calm', softLockDeg: 0 });
-      this.pressed |= decodeInput(sampled).buttons;
-      stepRoam(this.roam, this.held ? NO_INPUT : sampled);
+      const decoded = decodeInput(sampled);
+      this.pressed |= decoded.buttons;
+      let input = sampled;
+      const steer = this.steer?.(s, decoded.moveMag > 0);
+      if (steer) input = encodeInput({ ...decoded, ...quantizeMove(steer.x, steer.y) });
+      stepRoam(this.roam, this.held ? NO_INPUT : input);
       this.acc -= TICK_MS;
       steps++;
     }

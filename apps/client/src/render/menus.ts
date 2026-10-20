@@ -7,6 +7,7 @@ import {
   padFamily,
   type PadFamily,
 } from '../game/gamepad.js';
+import { button, type Button } from './button.js';
 import { glyphs, word, type HintItem } from './hint.js';
 
 /**
@@ -33,9 +34,31 @@ export function menuGlyph(index: number): string {
   return Object.entries(GLYPH_BUTTON).find(([, i]) => i === index)?.[0] ?? '';
 }
 
-/** "Enter or click to continue" on the keyboard, "Cross continue" on the pad. */
+/** GAME DESIGN's touch line on the results screen (final, M2 Task 10). */
+export const TAP_TO_CONTINUE = 'Tap to continue';
+
+/** "Enter or click to continue" on the keyboard, "Cross continue" on the pad, "Tap to continue" on touch. */
 export function continueHint(device: Device, family: PadFamily): HintItem[] {
+  if (device === 'touch') return [word(TAP_TO_CONTINUE)];
   if (device === 'gamepad')
     return [...glyphs([menuGlyph(MENU_BUTTONS.confirm[0])], family), word('continue')];
   return [...glyphs(['Enter'], 'keyboard'), word('or click to continue')];
+}
+
+/**
+ * A menu's BACK button for touch (M2 Task 10): a finger has no Esc or Circle,
+ * so a screen whose only way back is a key gets this, at (x, y) of its
+ * layout, shown only while touch is the active device. Returns the button
+ * and a function that stops it following the device (call on shutdown).
+ */
+export function touchBackButton(scene: Phaser.Scene, x: number, y: number, onBack: () => void, text = 'BACK'): { button: Button; off: () => void } {
+  const b = button(scene, x, y, text, false, onBack);
+  const sync = (device: Device): void => {
+    const on = device === 'touch';
+    b.container.setVisible(on);
+    // A hidden button takes no presses either.
+    for (const o of b.container.list) if (o.input) o.input.enabled = on;
+  };
+  sync(deviceStore.get());
+  return { button: b, off: deviceStore.subscribe(sync) };
 }
