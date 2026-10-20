@@ -7,6 +7,9 @@ import {
   SKILLS,
   TOAST_GLYPH_PX,
   toastGlyphsSheet,
+  TOUCH_GLYPH_CELLS,
+  TOUCH_GLYPH_PX,
+  touchGlyphsSheet,
   ITEMS,
   controllerGlyphsSheet,
   ENGINE_SHEET_DEFAULTS,
@@ -41,6 +44,7 @@ const SHEETS: [string, CellSheet & { meta?: { tinted?: boolean } }, (image: stri
   ['hookblade-fx', hookbladeFxSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
   ['item-icons', itemIconsSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
   ['toast-glyphs', toastGlyphsSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
+  ['touch-glyphs', touchGlyphsSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
   ['field-ground', fieldGroundSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
   ['hookblade-fixture', fixtureSheet, (image) => new URL(`./fixtures/${image}`, import.meta.url)],
 ];
@@ -248,6 +252,14 @@ describe('the toast glyphs (ART, #109; M2 Task 7)', () => {
     );
     for (const c of toastGlyphsSheet.cells) expect([c.name, c.w, c.h]).toEqual([c.name, TOAST_GLYPH_PX, TOAST_GLYPH_PX]);
     expect(engineSheetMeta(toastGlyphsSheet).tinted).toBe(false);
+  });
+});
+
+describe('the touch glyphs (ART, #133; M2 Task 10)', () => {
+  it('has one 16 px cell per touch button, drawn in colour at 1 UI px per px', () => {
+    expect(touchGlyphsSheet.cells.map((c) => c.name)).toEqual([...TOUCH_GLYPH_CELLS]);
+    for (const c of touchGlyphsSheet.cells) expect([c.name, c.w, c.h]).toEqual([c.name, TOUCH_GLYPH_PX, TOUCH_GLYPH_PX]);
+    expect(engineSheetMeta(touchGlyphsSheet)).toEqual({ version: '2', pixelScale: 1, tinted: false });
   });
 });
 

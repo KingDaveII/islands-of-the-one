@@ -1,15 +1,16 @@
 /**
- * The one "active device" of the client: keyboard+mouse or gamepad. Every
- * binding shown anywhere (HUD, start, controls and results screens) and the
- * reticle follow it live (docs/design/controls.md §5). It switches on any
- * key or mouse button, on mouse movement past a few px, and on any pad
- * button or a stick deflected past its deadzone. Hysteresis so it never
+ * The one "active device" of the client: keyboard+mouse, gamepad or touch
+ * (M2 Task 10). Every binding shown anywhere (HUD, start, controls and
+ * results screens), the reticle and the touch layer follow it live
+ * (docs/design/controls.md §5, §6). It switches on any key or mouse button,
+ * on mouse movement past a few px, on any pad button or a stick deflected
+ * past its deadzone, and on a finger touching the screen. Hysteresis so it never
  * flickers: mouse motion only counts once it adds up to `MOUSE_SWITCH_PX`
  * since the last pad activity, and a stick that stays deflected (drift) is
  * one event, not one per frame. Pure, so it is tested in node; main.ts feeds
  * it from DOM events and a per-frame pad poll.
  */
-export type Device = 'keyboard' | 'gamepad';
+export type Device = 'keyboard' | 'gamepad' | 'touch';
 
 /** Screen (CSS) px of mouse motion that take the device back from the pad. */
 export const MOUSE_SWITCH_PX = 8;
@@ -40,7 +41,12 @@ export class DeviceTracker {
     return this.set('keyboard');
   }
 
-  /** The mouse moved by (dx, dy) screen px. Switches once the motion since the last pad activity passes the threshold. */
+  /** A finger touched the screen (a pointer down whose `pointerType` is touch). Returns true when the device changed. */
+  touch(): boolean {
+    return this.set('touch');
+  }
+
+  /** The mouse moved by (dx, dy) screen px. Switches once the motion since the last pad or touch activity passes the threshold. */
   mouseMove(dx: number, dy: number): boolean {
     if (this.device === 'keyboard') return false;
     this.mouseAcc += Math.abs(dx) + Math.abs(dy);
@@ -51,7 +57,7 @@ export class DeviceTracker {
   /**
    * One frame of the pad (null when none is connected). A button going down
    * or a stick leaving its deadzone switches to the pad; a pad going away
-   * switches back to the keyboard.
+   * while it is the device switches back to the keyboard (touch stays touch).
    */
   pad(pad: PadSnapshot | null): boolean {
     if (!pad) {
@@ -90,6 +96,9 @@ export const deviceStore = {
   },
   pad(pad: PadSnapshot | null): void {
     notify(tracker.pad(pad));
+  },
+  touch(): void {
+    notify(tracker.touch());
   },
   subscribe(l: Listener): () => void {
     listeners.push(l);

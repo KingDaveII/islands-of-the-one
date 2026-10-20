@@ -2,21 +2,21 @@ import type Phaser from 'phaser';
 import type { ControlAction } from '@iot/shared';
 import { TICK_HZ, type Run } from '@iot/sim';
 import type { Controls } from '../game/controls.js';
+import {
+  RUN_HUD_INSET as INSET,
+  RUN_HUD_PAD as PAD,
+  RUN_HUD_SLOT as SLOT,
+  RUN_HUD_SLOT_GAP as SLOT_GAP,
+  RUN_HUD_SMALL as SMALL,
+  runHudRects,
+} from '../game/runHud.js';
 import { Palette } from '../palette.js';
 import { chargeStage } from './charge.js';
-import { GLYPH_SIZE } from './glyphCells.js';
 import { HintRow } from './hint.js';
 import { label, place, type Text } from './text.js';
 import { abilitySlot, healthBar, icon, panel, tierPips, type IconKind } from './ui.js';
 
-/** HUD inset from the world view's edge and panel padding (UI px). */
-const INSET = 8;
-const PAD = 4;
-const SLOT = 20;
-const SMALL = 14;
-const SLOT_GAP = 4;
-/** Height of the key-hint row under the slots: a 1× controller glyph. */
-const HINT_H = GLYPH_SIZE;
+/** The inset, padding and slot sizes (UI px) are the pure layout's (game/runHud.ts `runHudRects`). */
 const READY_FLASH_MS = 200;
 
 const ABILITY_ICONS: Record<string, IconKind> = {
@@ -230,8 +230,6 @@ export class Hud {
     for (const c of CORNERS) this.g[c].clear();
     let g = this.g.tl;
     const { x: L, y: T } = this.frame;
-    const R = this.frame.x + this.frame.w;
-    const B = this.frame.y + this.frame.h;
 
     // --- Top left: HP + dodge + consumables ----------------------------
     if (this.lagHp < 0) this.lagHp = p.hp;
@@ -239,9 +237,18 @@ export class Hud {
     if (p.hitstop === 0) this.lagHp = Math.max(p.hp, this.lagHp - (dtMs / 1000) * 40);
     this.lagHp = Math.max(this.lagHp, p.hp);
     if (this.hpText.text !== String(p.hp)) this.hpText.setText(String(p.hp));
-    const tlW = PAD + 66 + 3 + Math.max(this.hpText.width, 18) + PAD;
-    const tlH = PAD + 8 + 3 + SMALL + 1 + HINT_H + PAD;
-    this.panelAt('tl', L + INSET, T + INSET, tlW, tlH);
+    const roomText = `ROOM ${s.roomIndex + 1}/${P.run.rooms.length}`;
+    if (this.room.text !== roomText) this.room.setText(roomText);
+    const sparkText = String(s.sparkglass);
+    if (this.spark.text !== sparkText) this.spark.setText(sparkText);
+    // The four panels from the measured texts: the same pure math the touch layout's tests run (game/runHud.ts).
+    const rects = runHudRects(this.frame, {
+      hp: this.hpText.width,
+      room: this.room.width,
+      spark: this.spark.width,
+      abilities: P.weapon.abilities.length,
+    });
+    this.panelAt('tl', rects.tl.x, rects.tl.y, rects.tl.w, rects.tl.h);
     healthBar(g, L + INSET + PAD, T + INSET + PAD, p.hp, P.player.maxHp, this.lagHp);
     place(this.hpText, L + INSET + PAD + 66 + 3, T + INSET + PAD);
     const rowY = T + INSET + PAD + 11;
@@ -286,20 +293,12 @@ export class Hud {
     });
 
     // --- Top right: room counter ----------------------------------------
-    const roomText = `ROOM ${s.roomIndex + 1}/${P.run.rooms.length}`;
-    if (this.room.text !== roomText) this.room.setText(roomText);
     g = this.g.tr;
-    const trW = PAD + this.room.width + PAD;
-    this.panelAt('tr', R - INSET - trW, T + INSET, trW, PAD + 8 + PAD);
-    place(this.room, R - INSET - trW + PAD, T + INSET + PAD);
+    this.panelAt('tr', rects.tr.x, rects.tr.y, rects.tr.w, rects.tr.h);
+    place(this.room, rects.tr.x + PAD, rects.tr.y + PAD);
 
     // --- Bottom right: Sparkglass ---------------------------------------
-    const sparkText = String(s.sparkglass);
-    if (this.spark.text !== sparkText) this.spark.setText(sparkText);
-    const brW = PAD + 10 + 3 + Math.max(this.spark.width, 8) + PAD;
-    const brH = PAD + 10 + PAD;
-    const brX = R - INSET - brW;
-    const brY = B - INSET - brH;
+    const { x: brX, y: brY, w: brW, h: brH } = rects.br;
     g = this.g.br;
     this.panelAt('br', brX, brY, brW, brH);
     icon(g, 'spark', brX + PAD, brY + PAD, 10, Palette.spark);
@@ -307,17 +306,7 @@ export class Hud {
 
     // --- Bottom left: weapon --------------------------------------------
     const abilities = P.weapon.abilities;
-    const blW =
-      PAD +
-      SLOT * 3 +
-      SLOT_GAP * 2 +
-      6 +
-      abilities.length * SLOT +
-      (abilities.length - 1) * SLOT_GAP +
-      PAD;
-    const blH = PAD + 10 + SLOT + 1 + HINT_H + PAD;
-    const blX = L + INSET;
-    const blY = B - INSET - blH;
+    const { x: blX, y: blY, w: blW, h: blH } = rects.bl;
     g = this.g.bl;
     this.panelAt('bl', blX, blY, blW, blH);
     place(this.weaponName, blX + PAD, blY + PAD);
