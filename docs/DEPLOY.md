@@ -78,9 +78,9 @@ Environment **`staging`** (Settings → Environments):
 | secret   | `DEPLOY_SSH_KEY`     | private key (OpenSSH format) for `DEPLOY_USER`                           |
 | secret   | `DEPLOY_KNOWN_HOSTS` | `ssh-keyscan -p <port> <host>` output; strict host checking is always on |
 
-**The repo is public, and so are its Actions logs.** The staging domain names the VPS address
+**Once the repo is public, so are its Actions logs.** The staging domain names the VPS address
 (sslip.io), so `STAGING_DOMAIN` and `DEPLOY_HOST` are secrets: GitHub masks them wherever they show
-up in a log, and the workflow keeps them out of step names, `echo`s and the environment URL. Never
+up in a log, and the workflow keeps them out of step names, `echo`s and the environment URL. A secret masks only its exact text, so "Configure SSH" also masks the addresses both names resolve to: ssh prints the bare address when a connection drops. Never
 add them as variables, which anyone can read. `deploy.env` carries the domain to the VPS for Caddy
 but is never printed. On a failed deploy the Diagnostics step shows `compose ps` only: server and
 Caddy logs contain visitors' IP addresses, so read them on the VPS (`deploy.sh --logs`).
