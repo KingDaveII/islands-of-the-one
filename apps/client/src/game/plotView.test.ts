@@ -1,5 +1,16 @@
-import { defaultTuning, holdingLayout, PLOT_TEXT, wordDef, type LayoutPlot, type WordDef } from '@iot/shared';
+import { readFileSync } from 'node:fs';
+import {
+  defaultTuning,
+  holdingLayout,
+  PLOT_TEXT,
+  SIGNPOST_SHEETS,
+  spriteSheets,
+  wordDef,
+  type LayoutPlot,
+  type WordDef,
+} from '@iot/shared';
 import { describe, expect, it } from 'vitest';
+import { decodePng } from '../../../../packages/shared/test/png.js';
 import {
   bonusLine,
   cycleRateLine,
@@ -8,7 +19,9 @@ import {
   fieldGroundCell,
   fieldGroundRect,
   groundElement,
+  KNOT_SIZE,
   lettersBand,
+  linePixels,
   namedPlotIds,
   nextInLine,
   nextInWords,
@@ -17,6 +30,7 @@ import {
   plotPanelLines,
   plotWorldRect,
   RING_WIDTH,
+  ringKnots,
   ringPixels,
   ringRect,
   sealDurationMs,
@@ -26,6 +40,7 @@ import {
   sentenceStyle,
   onSignpost,
   sigilSegmentsLeft,
+  sigilStroke,
   signpostBase,
   signpostBoard,
   signpostTopY,
@@ -231,5 +246,85 @@ describe('the plots in the world', () => {
     expect(plotAtWorld(0, 0)).toBeUndefined();
     expect(namedPlotIds({ plots: [{ id: 'plot-1', ground: 'adamah', virtue: null, namedAt: iso(0), virtueSetAt: null, sownAt: null, kind: 'field', pieces: [], level: 1, state: 'lit' }] })).toEqual(['plot-1']);
     expect(namedPlotIds(null)).toEqual([]);
+  });
+});
+
+describe("ART's seal kit (#125)", () => {
+  const key = (px: [number, number][]): string[] => px.map(([x, y]) => `${x},${y}`).sort();
+
+  it('ties a 6 × 6 knot round each corner of the band, its middle open, in ring order', () => {
+    const rect = { x: 10, y: 20, w: 40, h: 30 };
+    const knots = ringKnots(rect, 2);
+    expect(KNOT_SIZE).toBe(6);
+    expect(knots).toHaveLength(4);
+    for (const k of knots) expect(k.pixels).toHaveLength(36 - 4);
+    // The middle is open: the band's own corner is the hole, cleared so the ground shows (ART on #129).
+    expect(key(knots[0]?.hole ?? [])).toEqual(key([[10, 20], [11, 20], [10, 21], [11, 21]]));
+    expect(key(knots[2]?.hole ?? [])).toEqual(key([[48, 48], [49, 48], [48, 49], [49, 49]]));
+    const band = new Set(key(ringPixels(rect, 2)));
+    for (const k of knots) for (const p of key(k.hole)) expect(band.has(p)).toBe(true);
+    // Top left: x 8–13, y 18–23 less the band's own 2 × 2 corner (10–11, 20–21).
+    const tl = knots[0]?.pixels ?? [];
+    expect(Math.min(...tl.map(([x]) => x))).toBe(8);
+    expect(Math.max(...tl.map(([x]) => x))).toBe(13);
+    expect(Math.min(...tl.map(([, y]) => y))).toBe(18);
+    expect(key(tl)).not.toContain('10,20');
+    expect(key(tl)).not.toContain('11,21');
+    // Bottom right: centred on the band's corner (48–49, 48–49).
+    const br = knots[2]?.pixels ?? [];
+    expect(Math.min(...br.map(([x]) => x))).toBe(46);
+    expect(Math.max(...br.map(([y]) => y))).toBe(51);
+    // A drawing ring reaches them in order: the top left at once, then clockwise.
+    const ats = knots.map((k) => k.at);
+    expect(ats[0]).toBe(0);
+    expect(ats).toEqual([...ats].sort((a, b) => a - b));
+    const ring = ringPixels(rect, 2);
+    expect(ring[knots[1]?.at ?? -1]).toEqual([49, 20]);
+    expect(ring[knots[2]?.at ?? -1]).toEqual([49, 49]);
+    expect(ring[knots[3]?.at ?? -1]).toEqual([10, 49]);
+  });
+
+  it("strokes the sigil's line by element, one counter along the whole line", () => {
+    const a = { x: 0, y: 0 };
+    const across = { x: 7, y: 0 };
+    expect(linePixels(a, across)).toHaveLength(8);
+    // Earth: 2 px, straight (the second pixel below a horizontal segment, beside a vertical one).
+    const earth = sigilStroke(a, across, 'heavy-straight', 0);
+    expect(earth.pixels).toHaveLength(16);
+    expect(key(earth.pixels)).toContain('3,1');
+    expect(key(sigilStroke(a, { x: 0, y: 7 }, 'heavy-straight', 0).pixels)).toContain('1,3');
+    expect(earth.t).toBe(8);
+    // Water: 1 px, pushed 0 0 1 1 0 0 -1 -1 across the segment.
+    expect(sigilStroke(a, across, 'wave', 0).pixels.map(([, y]) => y)).toEqual([0, 0, 1, 1, 0, 0, -1, -1]);
+    expect(sigilStroke(a, { x: 0, y: 7 }, 'wave', 0).pixels.map(([x]) => x)).toEqual([0, 0, 1, 1, 0, 0, -1, -1]);
+    // Fire: out and back every 3 px; the counter runs on into the next segment.
+    expect(sigilStroke(a, { x: 5, y: 0 }, 'jagged', 0).pixels.map(([, y]) => y)).toEqual([0, 1, -1, 0, 1, -1]);
+    expect(sigilStroke(a, { x: 2, y: 0 }, 'jagged', 1).pixels.map(([, y]) => y)).toEqual([1, -1, 0]);
+    // Air: dashes of 2, gaps of 1.
+    expect(sigilStroke(a, across, 'thin-broken', 0).pixels.map(([x]) => x)).toEqual([0, 1, 3, 4, 6, 7]);
+    // A partial stroke (the seal scene tracing it) keeps the whole segment's direction.
+    expect(sigilStroke(a, { x: 1, y: 1 }, 'wave', 2, { x: 2, y: 8 }).pixels).toEqual([
+      [1, 0],
+      [2, 1],
+    ]);
+  });
+
+  it("puts the signpost sheet's board exactly on signpostBoard, its face opaque", () => {
+    const plot = holdingLayout().plots[0] as LayoutPlot;
+    const base = signpostBase(plot);
+    const board = signpostBoard(plot);
+    for (const name of [SIGNPOST_SHEETS.lit, SIGNPOST_SHEETS.faded]) {
+      const sheet = spriteSheets[name];
+      expect(sheet.meta.origin).toEqual({ x: 32, y: 54 });
+      const frame = sheet.frames.idle_0?.frame;
+      if (!frame) throw new Error(`${name} has no idle_0`);
+      const png = decodePng(readFileSync(new URL(`../../../../packages/shared/assets/sprites/${name}.png`, import.meta.url)));
+      const left = board.x - base.x + sheet.meta.origin.x;
+      const top = board.y - base.y + sheet.meta.origin.y;
+      expect([left, top]).toEqual([17, 6]);
+      for (let y = top; y < top + board.h; y++)
+        for (let x = left; x < left + board.w; x++)
+          expect(png.rgba[((frame.y + y) * png.width + frame.x + x) * 4 + 3], `${name} ${x},${y}`).toBe(255);
+    }
   });
 });

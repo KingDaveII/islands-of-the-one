@@ -235,11 +235,11 @@ export const WORLD_SCALE = 2;
 export const RING_INSET = 4;
 export const RING_WIDTH = 2;
 /**
- * The signpost (LORE 2026-10-18): no words; its board carries the plot's sigil, the seal's centre. Placeholder sizes
- * in world px until ART: the post this wide and tall over its tile's base, a square board on top of it, the sigil's
- * 3 × 3 grid of `SIGIL_CELL` cells inset `BOARD_PAD` inside the board.
+ * The signpost (LORE 2026-10-18): no words; its board carries the plot's sigil, the seal's centre. Sizes in world px,
+ * ART's `prop-signpost` (#125) drawn to them: the post this wide and tall over its tile's base, a square board on
+ * top of it, the sigil's 3 × 3 grid of `SIGIL_CELL` cells inset `BOARD_PAD` inside the board.
  */
-export const SIGNPOST_W = 4;
+export const SIGNPOST_W = 6;
 export const SIGNPOST_H = 18;
 export const SIGIL_CELL = 8;
 export const BOARD_PAD = 3;
@@ -293,6 +293,110 @@ export function ringPixels(rect: WorldRect, width: number = RING_WIDTH): [number
     out.push(...ring);
   }
   return out;
+}
+
+/** A corner knot's size (ART's seal kit, #125): a square of the ring's colour centred on the band's corner. */
+export const KNOT_SIZE = 6;
+
+/**
+ * The ring's four corner knots (ART's seal kit, #125, `ring()` in art/clean/seal-kit/kit.py): a `KNOT_SIZE` square
+ * centred on each corner of the band, its middle `width` × `width` open: the band's own corner pixels there are
+ * cleared too (`hole`), so the ground shows through and the knot reads as an eyelet the cord passes through (ART on
+ * #129), lit or faded. In ring order: top left, top right, bottom right, bottom left, each with the index of the
+ * band's outer corner pixel in `ringPixels`, so a ring drawing itself adds a knot as it reaches that corner.
+ */
+export function ringKnots(
+  rect: WorldRect,
+  width: number = RING_WIDTH,
+): { at: number; pixels: [number, number][]; hole: [number, number][] }[] {
+  const x1 = rect.x + rect.w - width;
+  const y1 = rect.y + rect.h - width;
+  const corners: [number, number][] = [
+    [rect.x, rect.y],
+    [x1, rect.y],
+    [x1, y1],
+    [rect.x, y1],
+  ];
+  const outer = ringPixels(rect, width);
+  const lo = -Math.floor((KNOT_SIZE - width) / 2);
+  return corners.map(([cx, cy]) => {
+    const pixels: [number, number][] = [];
+    const hole: [number, number][] = [];
+    for (let dy = lo; dy < lo + KNOT_SIZE; dy++)
+      for (let dx = lo; dx < lo + KNOT_SIZE; dx++) {
+        if (dx >= 0 && dx < width && dy >= 0 && dy < width) hole.push([cx + dx, cy + dy]);
+        else pixels.push([cx + dx, cy + dy]);
+      }
+    // The band's outermost pixel at this corner.
+    const ox = cx === rect.x ? rect.x : rect.x + rect.w - 1;
+    const oy = cy === rect.y ? rect.y : rect.y + rect.h - 1;
+    const at = outer.findIndex(([x, y]) => x === ox && y === oy);
+    return { at: Math.max(0, at), pixels, hole };
+  });
+}
+
+// --- The sigil's line by element (ART's seal kit, #125) -----------------------------------------------------------
+
+/** The wave's sideways offsets along the line, a step a pixel: 1 px either side over 8 px. */
+export const SIGIL_WAVE: readonly number[] = [0, 0, 1, 1, 0, 0, -1, -1];
+/** The jag's offsets: out and back every 3 px. */
+export const SIGIL_JAG: readonly number[] = [0, 1, -1];
+
+/** The pixels of a straight line from a to b, both ends included (Bresenham, the order walked). */
+export function linePixels(a: { x: number; y: number }, b: { x: number; y: number }): [number, number][] {
+  let x = Math.round(a.x);
+  let y = Math.round(a.y);
+  const xe = Math.round(b.x);
+  const ye = Math.round(b.y);
+  const dx = Math.abs(xe - x);
+  const dy = -Math.abs(ye - y);
+  const sx = x < xe ? 1 : -1;
+  const sy = y < ye ? 1 : -1;
+  let err = dx + dy;
+  const out: [number, number][] = [];
+  for (;;) {
+    out.push([x, y]);
+    if (x === xe && y === ye) return out;
+    const e2 = 2 * err;
+    if (e2 >= dy) {
+      err += dy;
+      x += sx;
+    }
+    if (e2 <= dx) {
+      err += dx;
+      y += sy;
+    }
+  }
+}
+
+/**
+ * One segment of the sigil's line in its element's style (ART's seal kit, `stroke()` in kit.py): earth
+ * `heavy-straight` 2 px; water `wave`, fire `jagged` (1 px, pushed across the segment by `SIGIL_WAVE` / `SIGIL_JAG`:
+ * sideways on a mostly vertical segment, up and down otherwise); air `thin-broken` (1 px, dashes of 2 with gaps of 1).
+ * `t` is the counter along the whole line, so the pattern runs on from one segment to the next; it returns the
+ * pixels and the counter after the segment. `full`, the segment's whole end, decides its direction while a partial
+ * stroke (the seal scene tracing it) stops at `b`.
+ */
+export function sigilStroke(
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+  style: SigilStyle,
+  t: number,
+  full: { x: number; y: number } = b,
+): { pixels: [number, number][]; t: number } {
+  const pts = linePixels(a, b);
+  const vertical = Math.abs(full.y - a.y) > Math.abs(full.x - a.x);
+  const pixels: [number, number][] = [];
+  pts.forEach(([x, y], i) => {
+    const step = t + i;
+    if (style === 'thin-broken' && step % 3 === 2) return;
+    const off =
+      style === 'wave' ? (SIGIL_WAVE[step % SIGIL_WAVE.length] ?? 0) : style === 'jagged' ? (SIGIL_JAG[step % SIGIL_JAG.length] ?? 0) : 0;
+    const p: [number, number] = vertical ? [x + off, y] : [x, y + off];
+    pixels.push(p);
+    if (style === 'heavy-straight') pixels.push(vertical ? [p[0] + 1, p[1]] : [p[0], p[1] + 1]);
+  });
+  return { pixels, t: t + pts.length };
 }
 
 /** Where the sentence's letters sit: centred on the ring's top edge, the band's thickness below the ring's top. */

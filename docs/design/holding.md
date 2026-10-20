@@ -700,8 +700,8 @@ both words in writing order, Ground then Virtue; the divider has no number and d
 style by element (`sigilStyle`: earth heavy and straight, water a long wave, fire jagged, air thin and broken)
 is passed through; only earth is drawn in M2.
 
-**The client.** Plots draw on the world camera (`render/plots.ts`, placeholders in palette tokens until ART's
-kit; every look is listed under "Questions for ART" in the task's PR): nothing before the Name; an unnamed plot
+**The client.** Plots draw on the world camera (`render/plots.ts`, with ART's seal kit, #125, and field ground,
+#123; the unnamed plot and the clay tile are still placeholders in palette tokens): nothing before the Name; an unnamed plot
 as a faint dotted outline (`plotOutline`) with the USE prompt at its interact point and LORE's tooltip "Ground,
 but not yet ground for anything. Give it a word."; a named plot with its ground inside (ART's
 field ground, #123: `field-ground-64px.png` + `field-ground.json`, one seamless 64 px cell per state, `unsown` until
@@ -709,13 +709,21 @@ the field is sown, `sown`, and `faded` once its line has faded, sown or not (`fi
 tiled from the inner corner of the plot's rect less the sheet's `inset` (`fieldGroundRect`; top 26, right 10,
 bottom 14, left 10 world px), a headland of pale holding ground that keeps the ring, its letters and the divider
 readable; under the props and the Kindled; the seal scene turns it from the top by showing only its top share),
-its **seal** (the ring round the plot in the Ground's element
-colour, `sealEarth`; the sentence's letters from the letter sheet along the top of the ring with the divider
-between the words and at the ring's other join) and, at its centre, its **signpost** (`signpostWood`,
-`signpostPlaque`; a pillar in the roam, `setSolidPlots`), which carries no words: its square board carries the
-plot's sigil over a faint 3 × 3 grid (LORE 2026-10-18; `signpostBoard`, `sigilOrigin`) and loses the line
+its **seal** (the 2 px ring round the plot in the Ground's element
+colour, `elementColor` from palette.json `elements`: earth sleeper-ochre, water watcher-rain, fire
+choir-flame-deep, air watcher-stone; a 6 × 6 knot at each corner centred on the band's corner, its middle 2 × 2 open
+(the band's corner cleared, so the headland shows through: an eyelet, ART), `ringKnots`, added as the drawing ring
+reaches it, lit or faded; the sentence's letters from the letter sheet in dark ink along the top of the ring
+with the divider between the words and at the ring's other join) and, at its centre, its **signpost** (ART's
+`prop-signpost`, `SIGNPOST_SHEETS`, drawn at `signpostBase` on the sheet's origin (32, 54) with the prop rule's
+shadow; a pillar in the roam, `setSolidPlots`), which carries no words: its board carries the
+plot's sigil over a faint 3 × 3 grid (LORE 2026-10-18; `signpostBoard`, `sigilOrigin`, the sheet's board face
+exactly there), its line stroked in the element's style (`sigilStroke`, one counter along the whole line: earth
+2 px straight, water a 1 px wave `[0,0,1,1,0,0,-1,-1]`, fire a 1 px jag `[0,1,-1]`, air 1 px dashes of 2 with gaps
+of 1, pushed across the segment), and loses the line
 segment by segment while the plot's Writ line is dark, from the moment the Writ went dark to the line's fade,
-the circle staying last (`sigilSegmentsLeft`); a faded plot dim, its board blank (`plotFaded`). Hovering a named
+the circle staying last (`sigilSegmentsLeft`); a faded plot in hollow-dusk (`plotFaded`: ring, knots, letters
+and divider), on `prop-signpost-faded` with its board blank. Hovering a named
 plot shows LORE's seal tooltip (§14.3; its two-word line once the plot has a Virtue), and hovering its signpost
 the signpost's, "The plot's two words, drawn as one line." (`onSignpost`). **The seal scene** plays from a naming's
 answer, never ahead of it (`startSeal`; `sealPhase` in `game/plotView.ts`, timed by `tuning.json` `plots`:

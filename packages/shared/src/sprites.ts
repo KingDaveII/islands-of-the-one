@@ -7,6 +7,8 @@ import npcKesh from '../assets/sprites/npc-kesh.json' with { type: 'json' };
 import propChest from '../assets/sprites/prop-chest.json' with { type: 'json' };
 import propHoldingStore from '../assets/sprites/prop-holding-store.json' with { type: 'json' };
 import propKeshRock from '../assets/sprites/prop-kesh-rock.json' with { type: 'json' };
+import propSignpost from '../assets/sprites/prop-signpost.json' with { type: 'json' };
+import propSignpostFaded from '../assets/sprites/prop-signpost-faded.json' with { type: 'json' };
 import propStoneOutcrop from '../assets/sprites/prop-stone-outcrop.json' with { type: 'json' };
 import propTwistedTree from '../assets/sprites/prop-twisted-tree.json' with { type: 'json' };
 import propWritPost from '../assets/sprites/prop-writ-post.json' with { type: 'json' };
@@ -197,7 +199,8 @@ export interface SpriteSheet {
  * sheet, the holding's), the two Husks, the chest
  * (`CHEST_SHEET`), the holding's station props (`STATION_SHEETS`, M2 Task
  * 3b and 3c), Kesh's needle of rock off its shore (`KESH_ROCK_SHEET`, 3c)
- * and Old Kesh himself on it (`KESH_SHEET`, 4b).
+ * and Old Kesh himself on it (`KESH_SHEET`, 4b), and a named plot's signpost,
+ * lit or faded (`SIGNPOST_SHEETS`, ART's seal kit #125).
  * The sheet test runs on every sheet on disk and checks that each name here
  * is one of them; a sheet on disk (an NPC's, say) joins this list when the
  * client starts using it. Tile sheets load apart (tiles.ts).
@@ -214,6 +217,8 @@ export const SPRITE_SHEET_NAMES = [
   'prop-holding-store',
   'prop-kesh-rock',
   'npc-kesh',
+  'prop-signpost',
+  'prop-signpost-faded',
 ] as const;
 export type SpriteSheetName = (typeof SPRITE_SHEET_NAMES)[number];
 
@@ -230,6 +235,20 @@ export const spriteSheets: Readonly<Record<SpriteSheetName, SpriteSheet>> = {
   'prop-holding-store': propHoldingStore,
   'prop-kesh-rock': propKeshRock,
   'npc-kesh': npcKesh,
+  'prop-signpost': propSignpost,
+  'prop-signpost-faded': propSignpostFaded,
+};
+
+/**
+ * A named plot's signpost (ART's seal kit, #125): a twisted stake lashed under
+ * a framed board, on the default 64 × 64 prop cell with its origin at (32, 54),
+ * the board's face exactly where the client puts the sigil (plotView.ts
+ * `signpostBoard`: cell x 17–46, y 6–35). The faded one is the same wood gone
+ * grey with a blank face. `idle` alone, one frame each.
+ */
+export const SIGNPOST_SHEETS: Readonly<Record<'lit' | 'faded', SpriteSheetName>> = {
+  lit: 'prop-signpost',
+  faded: 'prop-signpost-faded',
 };
 
 /**
