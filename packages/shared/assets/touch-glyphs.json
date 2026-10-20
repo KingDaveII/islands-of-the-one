@@ -1,0 +1,54 @@
+{
+  "image": "touch-glyphs-16px.png",
+  "cell": 16,
+  "meta": {
+    "version": "2",
+    "pixelScale": 1,
+    "tinted": false
+  },
+  "cells": [
+    {
+      "name": "light",
+      "x": 0,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    {
+      "name": "heavy",
+      "x": 16,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    {
+      "name": "dodge",
+      "x": 32,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    {
+      "name": "haul",
+      "x": 48,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    {
+      "name": "gear",
+      "x": 64,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    {
+      "name": "use",
+      "x": 80,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    }
+  ],
+  "notes": "The touch-control glyphs (ART, M2 Task 10): one 16 px cell per button, drawn in colour with its own dream-night outline, centred on its button at 1 UI px per px. Made by art/clean/touch-glyphs/glyphs.py."
+}
