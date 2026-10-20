@@ -175,6 +175,9 @@ async function walkTo(x, y) {
   for (let i = 0; i < 300; i++) {
     const h = await holding();
     if (Math.hypot(h.state.x - x, h.state.y - y) < 4) break;
+    // The While you were away card (Task 7) holds the Kindled still; it can land with any heartbeat after the
+    // away hook. A key closes it.
+    if (h.away) await page.keyboard.press('KeyW');
     await sleep(50);
   }
   await page.evaluate(() => {
@@ -413,7 +416,7 @@ await clickButton('SOW');
 h = await until((x) => x.panelLines?.next?.startsWith('Next in'), 'the cycle clock running');
 expectEq('the cycle', h.panelLines.cycle, 'By itself: 1 pale grain every 15 min');
 expectEq('the action', h.panelLines.rate, 'By hand: 1 pale grain every 20 s');
-expectEq('the buttons', h.panelLines.buttons.join(), 'work,take,rename');
+expectEq('the buttons', h.panelLines.buttons.join(), 'work,take,build,rename');
 r = await api('/api/inventory');
 expectEq('one seed spent', r.body.pack.find((e) => e.itemId === 'grey-seeds')?.quantity, 3);
 console.log(`  ${h.panelLines.next}`);
@@ -447,7 +450,7 @@ console.log(
     .join('; ')}`,
 );
 await useAt(plotUse, 'the field');
-await until((x) => x.panelLines?.basket === 'Basket: 192 pale grains', 'the basket line');
+await until((x) => x.panelLines?.basket === 'Basket: 192 pale grain', 'the basket line');
 await shot('10-away-48h-basket-192');
 await page.keyboard.press('Escape');
 await useAt(treeUse, 'a tree');
@@ -536,6 +539,15 @@ await page.evaluate(() => {
   window.__iot.holdingScene().refresh();
 });
 await until((x) => x.plots[0].drawn === 'faded', 'the plot drawn faded');
+// The stretch the Writ was dark in brings the While you were away card (Task 7) when there is one: a key closes it.
+for (let i = 0; i < 10; i++) {
+  if ((await holding()).away) {
+    await page.keyboard.press('KeyW');
+    await until((x) => x.away === null, 'the away card closed');
+    break;
+  }
+  await sleep(200);
+}
 await shot('14-faded-plot');
 await useAt(plotUse, 'the field');
 h = await until(

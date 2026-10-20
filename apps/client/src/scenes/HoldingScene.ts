@@ -688,6 +688,8 @@ export class HoldingScene extends Phaser.Scene {
       if (!this.alive || !res.ok) return;
       this.inventory = res.value;
       this.syncWritPanel();
+      // Build mode's list counts the store: the holding's answer may land first and sync it with the old counts.
+      this.syncBuild();
     });
   }
 

@@ -243,7 +243,7 @@ expectEq('the hint', h.talk.text, 'Touch Sparkglass to your Writ to feed it.');
 expectEq('no speaker on a hint', h.talk.speaker, null);
 await page.keyboard.press('KeyE');
 h = await until((x) => x.talk?.kind === 'menu', 'the menu');
-expectEq('the topics', h.talk.topics.join('|'), 'The Old Letters|Sparkglass|Where the crack points|Goodbye');
+expectEq('the topics', h.talk.topics.join('|'), 'The Old Letters|Sparkglass|Where the crack points|The rack|Goodbye');
 console.log('the menu:');
 await shot('03-menu');
 // 4. A topic: Kesh's line with `talk` playing.
@@ -281,7 +281,13 @@ h = await until((x) => x.talk?.who === 'narrator', 'the Narrator');
 expectEq('the Narrator', h.talk.text, kesh.afterNaming[1].text);
 await page.keyboard.press('KeyE');
 await until((x) => x.talk?.who === 'hint', 'the hint');
-await page.keyboard.press('KeyE');
+// Then the tile's toss (Task 5), however many lines LORE gives it; E steps through to the Writ panel.
+for (let i = 0; i < 12; i++) {
+  const x = await holding();
+  if (x.talk === null) break;
+  await page.keyboard.press('KeyE');
+  await sleep(250);
+}
 await until((x) => x.talk === null && x.writPanel !== null, 'the Writ panel after the lines');
 
 // 8. The first feeding: the sliver from Kesh, fed; LORE's line.

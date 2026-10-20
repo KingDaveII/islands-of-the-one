@@ -297,9 +297,13 @@ console.log('away:');
 cli('holding:away', '60');
 r = await api('/api/holding');
 const basket = r.baskets['twisted-trees'][0]?.quantity ?? 0;
-// The cap's worth of cycles (48 h of 4 s), plus the few seconds the stretch ran before the shift and what the
-// basket held; never the 60 h.
-const cap = (48 * 3600) / 4;
+// The cap's worth of cycles (48 h of 4 s) and of the trees' own trickle (Task 5: the station's `cycle`, 48 h of it),
+// plus the few seconds the stretch ran before the shift and what the basket held; never the 60 h.
+const treesDef = JSON.parse(readFileSync(join(ROOT, 'packages/shared/data/stations.json'), 'utf8')).stations.find(
+  (s) => s.id === 'twisted-trees',
+);
+const trickle = treesDef.cycle ? Math.floor((48 * 3600 * 1000) / treesDef.cycle.cycleMs) * treesDef.cycle.quantity : 0;
+const cap = (48 * 3600) / 4 + trickle;
 if (basket < cap || basket > cap + 20) throw new Error(`the basket after 60 h away: ${basket}, expected about ${cap}`);
 console.log(`  basket after 60 h away: ${basket} logs (the 48 h cap), xp ${r.skills.woodcutting.xp}, level ${r.skills.woodcutting.level}`);
 await walkTo(treeUse.x, treeUse.y);
@@ -311,8 +315,9 @@ await shot('13-away-basket');
 const inv = await api('/api/inventory');
 cli('inv:grant', 'twisted-log', String(9999 - (inv.store.find((e) => e.itemId === 'twisted-log')?.quantity ?? 0)));
 await clickButton('holding', 'TAKE ALL');
-h = await until((x) => x.result.startsWith('Store:'), 'the store-full line');
-console.log(`  take all with a full store: "${h.result}"`);
+// "Store: twisted logs full." is a toast since Task 7, no longer the panel's line.
+h = await until((x) => x.toasts?.lines.some((l) => l.startsWith('Store:')), 'the store-full toast');
+console.log(`  take all with a full store: "${h.toasts.lines.find((l) => l.startsWith('Store:'))}"`);
 await shot('14-store-full');
 r = await api('/api/inventory');
 expectEq('store full', r.store.find((e) => e.itemId === 'twisted-log')?.quantity, 9999);

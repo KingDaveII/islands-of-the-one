@@ -173,11 +173,14 @@ const postUse = centre(layout.stations.find((s) => s.id === 'writ-post').parts[0
 
 /** Open the Writ panel (or the Name screen) with Use at the post, fresh from the server. */
 async function openPost(expectPanel = true) {
-  const h = await holding();
-  if (h.writPanel) {
+  // Escape closes a talk box first (since Task 4b the first feed plays Kesh's line over the panel), then the panel.
+  for (let i = 0; i < 4; i++) {
+    const h = await holding();
+    if (!h.writPanel && !h.talk) break;
     await page.keyboard.press('Escape');
-    await until((x) => x.writPanel === null, 'the panel closed');
+    await sleep(200);
   }
+  await until((x) => x.writPanel === null && x.talk === null, 'the panel closed');
   await walkTo(postUse.x, postUse.y);
   await until((x) => x.prompt, 'the USE prompt at the post');
   await page.keyboard.press('KeyE');
@@ -229,7 +232,16 @@ await page.keyboard.press('Enter');
 await until((x) => x.nameScreen?.accepted !== null && x.nameScreen?.accepted !== undefined, 'the Name accepted (the flare)', 50);
 await page.screenshot({ path: join(OUT, '05-name-accepted-flare.png') });
 console.log('  05-name-accepted-flare.png');
-h = await until((x) => x.writPanel !== null, 'the Writ panel after the flare');
+// Since Task 4b, the accepted Name plays Kesh's after-naming lines first (the line, the Narrator, the hint, the
+// tile's toss); E steps through them, then the Writ panel opens.
+await until((x) => x.talk !== null, 'the after-naming lines', 100);
+for (let i = 0; i < 12; i++) {
+  const x = await holding();
+  if (x.talk === null) break;
+  await page.keyboard.press('KeyE');
+  await sleep(250);
+}
+h = await until((x) => x.talk === null && x.writPanel !== null, 'the Writ panel after the lines');
 let r = await api('/api/holding');
 expectEq('named', r.body.writ.name, 'Black Rock');
 expectEq('letters heard on the server', r.body.writ.letters, 'בלק רוק');
