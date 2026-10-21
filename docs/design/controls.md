@@ -197,17 +197,23 @@ change with the screen), converted to whole UI px at layout (`controlPx`): every
 its screen corner (`buttons`). The top right first (the gear, then the item slots in a row), then the cluster from
 LIGHT out: a control whose place is off the screen, over a HUD panel, over the top centre band (`topCentreClear`)
 or over a control placed before it (`gapCssPx` apart) moves to the nearest free place inwards from its corner. The
-controls don't widen the camera's safe margins. In a run: LIGHT, HEAVY, DODGE, the ability arc, USE (above DODGE,
+controls don't widen the camera's safe margins. In a run: LIGHT, HEAVY, DODGE, the ability arc (the unlocked abilities only: locked slots never show on touch, so
+M2's arc is the Haul alone and it grows as abilities unlock; GAME DESIGN, 2026-10-21), USE (above DODGE,
 only while a prompt is up), the item slots and the gear; on the holding: USE alone (`useAlone`, over the pack
 button) and the gear. ART's look (2026-10-20): the plain HUD panel as discs (the attacks, DODGE, the abilities,
 USE) and chamfered squares (the gear, the item slots), a 50 % checker dither of ui-panel for every fill (every
-other pixel shows the world), a solid dream-night outline, a hollow-below bevel top and left, a hard 1 px drop
-shadow; ART's touch-glyph sheet (`touch-glyphs-16px.png`, #133) centred on each at 1 UI px per px, the item slots
-the item's icon and count. Pressed: no shadow, the content 1 px down and right, the bevel bottom and right, never a
-colour flash. A cooldown is a solid dream-night sweep over the time left, clockwise from 12 o'clock, with whole
+other pixel shows the world), a solid dream-night outline, a 1 px bevel ring just inside it all the way round (hollow-dusk on the
+top-left half, `uiBevelLight`, hollow-below on the rest; ART on #134: it reads on the Hollow margin and on the pale
+floor alike), a hard 1 px drop shadow; ART's touch-glyph sheet (`touch-glyphs-16px.png`, #133) centred on each at 1
+UI px per px, LIGHT and HEAVY from the 24 px sheet (`touch-glyphs-24px.png`, #135) on a button at least
+`touch.glyphLargeMinUiPx` (48) across, the item slots
+the item's icon and count. Pressed: no shadow, the content 1 px down and right, the bevel's light bottom and right, never
+a colour flash. A cooldown is a solid dream-night sweep over the time left, clockwise from 12 o'clock, with whole
 seconds on top and the frame lit briefly when it is back; a locked slot shows the hollow-dusk lock. The stick
 (only while held): a 2 px ring (dream-night outside, hollow-below inside) the size of its travel with the dither
-inside, and a solid panel knob with the bevel. No alpha anywhere.
+inside, and a raised knob, 40 % of the travel: hollow-below, lighter than the base, lit top-left in
+hollow-dusk, with the dream-night outline (ART on #134). While the arc's second slot is hidden (locked), HEAVY takes
+its place, off the room's bottom-right edge. No alpha anywhere.
 
 **The aim you can see:** in touch mode the pad's reticle shows along the aim (§3), and while a button is dragged a
 short dotted aim line runs from the Kindled along it, `touch.aimLinePx` (56) world px, in the Haul guide's style.
@@ -219,7 +225,11 @@ continue" on the results screen (GAME DESIGN's), "tap  <  >  to switch" on the c
 "tap move · hold one · drag between panes · tap a tab". A screen whose only way back was a key gets a BACK button
 on touch (the inventory, the controls screen: `touchBackButton`, render/menus.ts). The controls screen has a third
 column, Touch, from the table above (the button's glyph, or a word). In a run the gear leaves for the start screen
-(a run has no pause yet).
+(a run has no pause yet), but only on a second tap within `touch.leaveConfirmMs` (2000): the first shows "Tap again
+to leave the run." on a plain panel on the gear's own row, its right edge against the gear (the ROOM readout
+hides for those 2 s and comes back on the same frame as the line leaves, never a control covered; centred on that row when it doesn't fit there; `notePlace`, ART on #136), and after the window the gear resets (GAME DESIGN, 2026-10-21; `TapAgain`,
+`game/tapAgain.ts`). Once deaths cost the pack, leaving a run will count as a death (GAME DESIGN's note; nothing in
+M2).
 
 **The page** (`apps/client/index.html`): no browser gestures over the game (`touch-action: none`,
 `overscroll-behavior: none`, no long-press callout or text selection, no tap flash), the form inputs opting back

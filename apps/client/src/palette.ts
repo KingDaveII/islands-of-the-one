@@ -87,6 +87,8 @@ export const Palette = {
   // UI
   uiPanel: T.hollowDeep,
   uiBevel: T.hollowBelow,
+  /** The touch controls' bevel light (ART on #134): the top-left half of the inner ring, and the knob's lit edge. */
+  uiBevelLight: T.hollowDusk,
   uiOutline: T.dreamNight,
   uiRim: T.sparkAmber,
   uiInk: T.hollowLight,

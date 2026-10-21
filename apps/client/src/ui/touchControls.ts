@@ -1,15 +1,16 @@
 import type Phaser from 'phaser';
+import { TOUCH_GLYPH_LARGE_CELLS } from '@iot/shared';
 import { deviceStore } from '../game/activeDevice.js';
 import { TouchInput, type TouchRelease } from '../game/touchInput.js';
-import { controlAt, touchLayout, touchScreen, type TouchControl, type TouchControlId, type TouchLayout, type TouchMode } from '../game/touchLayout.js';
+import { controlAt, notePlace, TOUCH, touchLayout, touchScreen, type AbilityControl, type TouchControl, type TouchControlId, type TouchLayout, type TouchMode } from '../game/touchLayout.js';
 import type { Rect } from '../game/view.js';
 import { Palette } from '../palette.js';
 import { DEPTH } from '../render/depth.js';
 import { checker, circlePixels, discPixels, pixelAngle, type Px } from '../render/pixelShapes.js';
 import { plot } from '../render/pixels.js';
-import { ITEM_ICON_TEXTURE, TOUCH_GLYPH_TEXTURE } from '../render/sheets.js';
-import { label, place, type Text } from '../render/text.js';
-import { ditherRect, icon } from '../render/ui.js';
+import { ITEM_ICON_TEXTURE, TOUCH_GLYPH_LARGE_TEXTURE, TOUCH_GLYPH_TEXTURE } from '../render/sheets.js';
+import { body, label, place, type Text } from '../render/text.js';
+import { ditherRect, icon, panel } from '../render/ui.js';
 
 /**
  * The touch layer (M2 Task 10, docs/design/controls.md §6): the floating left
@@ -51,8 +52,8 @@ export interface TouchControlsOptions {
   uiZoom: () => number;
   /** The HUD's panels this frame (UI px): no control covers them. */
   avoid: () => readonly Rect[];
-  /** The run weapon's ability slots (up to three show). */
-  abilities?: number;
+  /** The ability buttons that show: the run weapon's unlocked slots (GAME DESIGN: locked ones never show on touch). */
+  abilities?: readonly AbilityControl[];
   /** Whether a control shows now (USE only while a prompt is up). */
   showing?: (id: TouchControlId) => boolean;
   /** Whether a touch on the world may anchor the stick now (not while a panel is open). */
@@ -118,6 +119,10 @@ export class TouchControls {
   private readonly g: Phaser.GameObjects.Graphics;
   private readonly glyphs = new Map<TouchControlId, Phaser.GameObjects.Image>();
   private readonly texts = new Map<TouchControlId, Text>();
+  /** A short line beside a control (the gear's "Tap again to leave the run."), or null. */
+  private note: { id: TouchControlId; text: string } | null = null;
+  private noteText: Text | null = null;
+  private readonly noteG: Phaser.GameObjects.Graphics;
   private layoutKey = '';
   private visible = false;
   private now = 0;
@@ -133,7 +138,8 @@ export class TouchControls {
   ) {
     this.input = new TouchInput(this.computeLayout());
     this.g = scene.add.graphics().setDepth(DEPTH.touch);
-    opts.layer.add(this.g);
+    this.noteG = scene.add.graphics().setDepth(DEPTH.touch);
+    opts.layer.add([this.g, this.noteG]);
     this.visible = deviceStore.get() === 'touch';
     this.offDevice = deviceStore.subscribe((d) => {
       if (d !== 'touch') this.input.cancelAll();
@@ -202,7 +208,7 @@ export class TouchControls {
 
   private computeLayout(): TouchLayout {
     const s = touchScreen(this.scene.scale.width, this.scene.scale.height, window.devicePixelRatio);
-    return touchLayout(s, { mode: this.opts.mode, abilities: this.opts.abilities ?? 0, avoid: this.opts.avoid() });
+    return touchLayout(s, { mode: this.opts.mode, abilities: this.opts.abilities ?? [], avoid: this.opts.avoid() });
   }
 
   /** The layout as drawn (playtests and screenshots read it). */
@@ -223,6 +229,8 @@ export class TouchControls {
     this.sceneHandlers.length = 0;
     this.input.cancelAll();
     this.g.destroy();
+    this.noteG.destroy();
+    this.noteText?.destroy();
     for (const i of this.glyphs.values()) i.destroy();
     for (const t of this.texts.values()) t.destroy();
   }
@@ -241,9 +249,34 @@ export class TouchControls {
     g.clear();
     for (const i of this.glyphs.values()) i.setVisible(false);
     for (const t of this.texts.values()) t.setVisible(false);
+    this.noteG.clear();
+    this.noteText?.setVisible(false);
     if (!this.visible) return;
     for (const c of this.input.layout.controls) if (this.showing(c.id)) this.drawControl(c);
     this.drawStick();
+    this.drawNote();
+  }
+
+  /** Shows a short line beside a control until it is cleared (null): the gear's tap-again line in a run. */
+  setNote(id: TouchControlId, text: string | null): void {
+    this.note = text === null ? null : { id, text };
+  }
+
+  /** The note on a plain panel, on its control's row against it (`notePlace`, ART on #136); it leaves in one frame. */
+  private drawNote(): void {
+    const n = this.note;
+    const c = n && this.input.layout.controls.find((x) => x.id === n.id);
+    if (!n || !c) return;
+    if (!this.noteText) {
+      this.noteText = body(this.scene, 0, 0, n.text, Palette.uiInk).setDepth(DEPTH.touch);
+      this.opts.layer.add(this.noteText);
+    }
+    const t = this.noteText;
+    if (t.text !== n.text) t.setText(n.text);
+    const at = notePlace(this.input.layout, c.id, Math.round(t.width) + 8, 14);
+    if (!at) return;
+    panel(this.noteG, at.x, at.y, at.w, at.h, { plain: true });
+    place(t.setVisible(true), at.x + 4, at.y + 3);
   }
 
   private glyph(id: TouchControlId, texture: string, frame: string): Phaser.GameObjects.Image | null {
@@ -295,9 +328,12 @@ export class TouchControls {
       cx += off;
       cy += off;
       // The face: every other pixel, on the screen's own grid.
-      const face = checker(discOf(r - 1), (cx + cy) & 1);
+      const face = checker(discOf(r - 2), (cx + cy) & 1);
       plot(g, face, cx, cy, Palette.uiPanel);
-      plot(g, halfOf(ringOf(r - 1), !pressed), cx, cy, Palette.uiBevel);
+      // The bevel all the way round, just inside the outline (ART on #134: it reads on the Hollow margin and the pale
+      // floor alike): its lit half top-left, the rest hollow-below; pressed, the light moves to the bottom right.
+      plot(g, halfOf(ringOf(r - 1), !pressed), cx, cy, Palette.uiBevelLight);
+      plot(g, halfOf(ringOf(r - 1), pressed), cx, cy, Palette.uiBevel);
       plot(g, ring, cx, cy, frame);
       if (cooldown > 0 && !state.locked)
         plot(
@@ -323,14 +359,15 @@ export class TouchControls {
       fill(bx + 1, by + h - 1, w - 2, 1, frame);
       fill(bx, by + 1, 1, h - 2, frame);
       fill(bx + w - 1, by + 1, 1, h - 2, frame);
-      ditherRect(g, bx + 1, by + 1, w - 2, h - 2, Palette.uiPanel);
-      if (pressed) {
-        fill(bx + 1, by + h - 2, w - 2, 1, Palette.uiBevel);
-        fill(bx + w - 2, by + 1, 1, h - 2, Palette.uiBevel);
-      } else {
-        fill(bx + 1, by + 1, w - 2, 1, Palette.uiBevel);
-        fill(bx + 1, by + 1, 1, h - 2, Palette.uiBevel);
-      }
+      ditherRect(g, bx + 2, by + 2, w - 4, h - 4, Palette.uiPanel);
+      // The bevel all the way round, just inside the outline (ART on #134): lit top and left, hollow-below bottom and
+      // right; pressed, the light moves to the bottom and right.
+      const light = pressed ? Palette.uiBevel : Palette.uiBevelLight;
+      const shade = pressed ? Palette.uiBevelLight : Palette.uiBevel;
+      fill(bx + 1, by + h - 2, w - 2, 1, shade);
+      fill(bx + w - 2, by + 1, 1, h - 2, shade);
+      fill(bx + 1, by + 1, w - 2, 1, light);
+      fill(bx + 1, by + 1, 1, h - 2, light);
       cx = bx + Math.floor(w / 2);
       cy = by + Math.floor(h / 2);
     }
@@ -354,7 +391,10 @@ export class TouchControls {
       return;
     }
     const cell = glyphFor(c.id);
-    if (cell) this.glyph(c.id, TOUCH_GLYPH_TEXTURE, cell)?.setPosition(cx - G / 2, cy - G / 2);
+    // LIGHT and HEAVY on a big button draw ART's 24 px cell (#135); everything else the 16 px one.
+    const large = cell !== null && (TOUCH_GLYPH_LARGE_CELLS as readonly string[]).includes(cell) && c.size >= TOUCH.glyphLargeMinUiPx;
+    const gs = large ? 24 : G;
+    if (cell) this.glyph(c.id, large ? TOUCH_GLYPH_LARGE_TEXTURE : TOUCH_GLYPH_TEXTURE, cell)?.setPosition(cx - gs / 2, cy - gs / 2);
     if (cooldown > 0 && (state.seconds ?? 0) > 0) {
       const t = this.text(c.id, String(state.seconds));
       place(t, cx, cy - 3, 0.5);
@@ -375,8 +415,9 @@ export class TouchControls {
     const k = Math.max(6, Math.round(R * 0.4));
     const kx = Math.round(s.knob.x);
     const ky = Math.round(s.knob.y);
-    plot(g, discOf(k - 1), kx, ky, Palette.uiPanel);
-    plot(g, halfOf(ringOf(k - 1), true), kx, ky, Palette.uiBevel);
+    // The knob reads raised, a thumb cap (ART on #134): hollow-below, lighter than the base, lit top-left in hollow-dusk.
+    plot(g, discOf(k - 1), kx, ky, Palette.uiBevel);
+    plot(g, halfOf(ringOf(k - 1), true), kx, ky, Palette.uiBevelLight);
     plot(g, ringOf(k), kx, ky, Palette.uiOutline);
   }
 }

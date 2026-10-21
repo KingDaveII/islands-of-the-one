@@ -10,6 +10,9 @@ import {
   TOUCH_GLYPH_CELLS,
   TOUCH_GLYPH_PX,
   touchGlyphsSheet,
+  touchGlyphs24Sheet,
+  TOUCH_GLYPH_LARGE_CELLS,
+  TOUCH_GLYPH_LARGE_PX,
   ITEMS,
   controllerGlyphsSheet,
   ENGINE_SHEET_DEFAULTS,
@@ -45,6 +48,7 @@ const SHEETS: [string, CellSheet & { meta?: { tinted?: boolean } }, (image: stri
   ['item-icons', itemIconsSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
   ['toast-glyphs', toastGlyphsSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
   ['touch-glyphs', touchGlyphsSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
+  ['touch-glyphs-24', touchGlyphs24Sheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
   ['field-ground', fieldGroundSheet, (image) => new URL(`../assets/${image}`, import.meta.url)],
   ['hookblade-fixture', fixtureSheet, (image) => new URL(`./fixtures/${image}`, import.meta.url)],
 ];
@@ -260,6 +264,12 @@ describe('the touch glyphs (ART, #133; M2 Task 10)', () => {
     expect(touchGlyphsSheet.cells.map((c) => c.name)).toEqual([...TOUCH_GLYPH_CELLS]);
     for (const c of touchGlyphsSheet.cells) expect([c.name, c.w, c.h]).toEqual([c.name, TOUCH_GLYPH_PX, TOUCH_GLYPH_PX]);
     expect(engineSheetMeta(touchGlyphsSheet)).toEqual({ version: '2', pixelScale: 1, tinted: false });
+  });
+
+  it('has LIGHT and HEAVY again at 24 px for the big buttons (ART, #135)', () => {
+    expect(touchGlyphs24Sheet.cells.map((c) => c.name)).toEqual([...TOUCH_GLYPH_LARGE_CELLS]);
+    for (const c of touchGlyphs24Sheet.cells) expect([c.name, c.w, c.h]).toEqual([c.name, TOUCH_GLYPH_LARGE_PX, TOUCH_GLYPH_LARGE_PX]);
+    expect(engineSheetMeta(touchGlyphs24Sheet)).toEqual({ version: '2', pixelScale: 1, tinted: false });
   });
 });
 

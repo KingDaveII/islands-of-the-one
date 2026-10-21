@@ -1,12 +1,14 @@
-import { defaultTuning, measureText, silkscreenFont } from '@iot/shared';
+import { defaultTuning, measureText, silkscreenFont, tiny5Font } from '@iot/shared';
 import { MOVE_DIRS, MOVE_MAG_MAX } from '@iot/sim';
 import { describe, expect, it } from 'vitest';
 import { hudRects, toastTextWidth } from './holdingView.js';
 import { runHudRects } from './runHud.js';
 import {
+  ABILITY_CONTROLS,
   controlAt,
   controlPx,
   isTap,
+  notePlace,
   stickKnob,
   stickVector,
   TOUCH,
@@ -17,6 +19,7 @@ import {
   type TouchMode,
 } from './touchLayout.js';
 import { quantizeMove } from './quantize.js';
+import { LEAVE_RUN_AGAIN } from './tapAgain.js';
 import { deviceSize, fitUi, fitWorldView, viewInUi, type Rect } from './view.js';
 
 /** The four test screens (M2 Task 10): CSS size and device pixel ratio. */
@@ -52,9 +55,15 @@ function setup(w: number, h: number, dpr: number) {
   return { screen, avoid };
 }
 
-function layoutFor(mode: TouchMode, w: number, h: number, dpr: number): { layout: TouchLayout; avoid: Rect[] } {
+function layoutFor(
+  mode: TouchMode,
+  w: number,
+  h: number,
+  dpr: number,
+  abilities: readonly (typeof ABILITY_CONTROLS)[number][] = ABILITY_CONTROLS,
+): { layout: TouchLayout; avoid: Rect[] } {
   const { screen, avoid } = setup(w, h, dpr);
-  return { layout: touchLayout(screen, { mode, abilities: 3, avoid: avoid[mode] }), avoid: avoid[mode] };
+  return { layout: touchLayout(screen, { mode, abilities, avoid: avoid[mode] }), avoid: avoid[mode] };
 }
 
 describe('the touch block of controls.json', () => {
@@ -102,6 +111,23 @@ describe.each(SCREENS)('the touch layout on the %s', (_name, w, h, dpr) => {
     });
   }
 
+  it("run with M2's Haul alone: HEAVY moves up into the arc's freed second slot, still clear of everything (ART on #134)", () => {
+    const { layout, avoid } = layoutFor('run', w, h, dpr, ['ability1']);
+    const full = layoutFor('run', w, h, dpr).layout;
+    const { screen } = layout;
+    expect(layout.controls.map((c) => c.id)).toEqual(['gear', 'item2', 'item1', 'light', 'heavy', 'dodge', 'ability1', 'use']);
+    for (const c of layout.controls) {
+      expect(c.rect.x >= 0 && c.rect.y >= 0 && c.rect.x + c.rect.w <= screen.w && c.rect.y + c.rect.h <= screen.h, c.id).toBe(true);
+      expect(overlaps(c.rect, layout.topCentre), `${c.id} over the top centre`).toBe(false);
+      for (const a of avoid) expect(overlaps(c.rect, a), `${c.id} over a HUD panel`).toBe(false);
+      for (const o of layout.controls) if (o !== c) expect(overlaps(c.rect, o.rect), `${c.id} and ${o.id}`).toBe(false);
+    }
+    const heavy = layout.controls.find((c) => c.id === 'heavy');
+    const before = full.controls.find((c) => c.id === 'heavy');
+    if (!heavy || !before) throw new Error('no heavy');
+    expect(heavy.cy).toBeLessThan(before.cy);
+  });
+
   it('the holding: USE sits over the pack button (or past it, in the margin), clear of the chip', () => {
     const { layout, avoid } = layoutFor('holding', w, h, dpr);
     const use = layout.controls.find((c) => c.id === 'use');
@@ -130,9 +156,38 @@ describe('the sizes ART draws for (UI px on the four test screens)', () => {
   });
 });
 
+describe.each(SCREENS)("the gear's tap-again line on the %s (ART on #136)", (_name, w, h, dpr) => {
+  it("sits on the gear's row against it, or centred on that row, and never covers a control", () => {
+    const { layout } = layoutFor('run', w, h, dpr, ['ability1']);
+    const gear = layout.controls.find((c) => c.id === 'gear');
+    if (!gear) throw new Error('no gear');
+    const nw = measureText(tiny5Font, LEAVE_RUN_AGAIN) + 8;
+    const at = notePlace(layout, 'gear', nw, 14);
+    if (!at) throw new Error('no place');
+    expect(at.y).toBe(Math.round(gear.cy - 7));
+    expect(at.x >= 0 && at.x + at.w <= layout.screen.w).toBe(true);
+    for (const c of layout.controls) expect(overlaps(c.rect, at), c.id).toBe(false);
+    // Against the gear when it fits there.
+    if (gear.rect.x - nw >= 0 && !layout.controls.some((c) => c !== gear && overlaps(c.rect, { ...at, x: gear.rect.x - nw })))
+      expect(at.x + at.w).toBe(gear.rect.x);
+  });
+});
+
+describe('the ability arc on touch (GAME DESIGN, 2026-10-21)', () => {
+  it('shows only the unlocked abilities: the Haul alone in M2, growing as more unlock', () => {
+    const { screen } = setup(844, 390, 3);
+    const ids = (abilities: (typeof ABILITY_CONTROLS)[number][]): string[] =>
+      touchLayout(screen, { mode: 'run', abilities }).controls.map((c) => c.id).filter((id) => id.startsWith('ability'));
+    expect(ids(['ability1'])).toEqual(['ability1']);
+    expect(ids([])).toEqual([]);
+    expect(ids(['ability1', 'ability2'])).toEqual(['ability1', 'ability2']);
+    expect(ids(['ability1', 'ability3'])).toEqual(['ability1', 'ability3']);
+  });
+});
+
 describe('the zone of a touch', () => {
   const { screen } = setup(844, 390, 3);
-  const layout = touchLayout(screen, { mode: 'run', abilities: 3 });
+  const layout = touchLayout(screen, { mode: 'run', abilities: ABILITY_CONTROLS });
   const light = layout.controls.find((c) => c.id === 'light');
 
   it('is the control it lands on, else a HUD zone, else the stick on the left half and a tap on the right', () => {

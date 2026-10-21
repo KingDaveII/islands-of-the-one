@@ -29,6 +29,7 @@ export type TouchControlId = (typeof TOUCH_CONTROL_IDS)[number];
 
 /** The ability arc's buttons, in slot order. */
 export const ABILITY_CONTROLS = ['ability1', 'ability2', 'ability3'] as const;
+export type AbilityControl = (typeof ABILITY_CONTROLS)[number];
 
 /** Where the layer is: a run (the attack cluster, the item slots, the gear) or the holding (USE alone, the gear). */
 export type TouchMode = 'run' | 'holding';
@@ -66,8 +67,8 @@ export interface TouchLayout {
 
 export interface TouchLayoutOptions {
   mode: TouchMode;
-  /** How many ability slots the run's weapon has (the arc shows up to three). */
-  abilities?: number;
+  /** The ability buttons that show: the unlocked slots only (GAME DESIGN, 2026-10-21: the arc grows as abilities unlock). */
+  abilities?: readonly AbilityControl[];
   /** Rectangles no control may cover: the HUD's panels (UI px). */
   avoid?: readonly Rect[];
 }
@@ -84,7 +85,7 @@ export function controlPx(sizeCss: number, cssPerUi: number, minCss: number = TO
 }
 
 /** The controls a mode shows, with the data spec each is placed by. */
-function controlsFor(mode: TouchMode, abilities: number, data: TouchData): [TouchControlId, TouchButtonSpec][] {
+function controlsFor(mode: TouchMode, abilities: readonly AbilityControl[], data: TouchData): [TouchControlId, TouchButtonSpec][] {
   const b = data.buttons;
   if (mode === 'holding')
     return [
@@ -97,9 +98,10 @@ function controlsFor(mode: TouchMode, abilities: number, data: TouchData): [Touc
     ['item2', b.item2],
     ['item1', b.item1],
     ['light', b.light],
-    ['heavy', b.heavy],
+    // HEAVY moves up into the arc's second slot while that slot is hidden (locked), off the room's bottom-right edge (ART on #134).
+    ['heavy', abilities.includes('ability2') ? b.heavy : { ...b.heavy, dx: b.ability2.dx, dy: b.ability2.dy }],
     ['dodge', b.dodge],
-    ...ABILITY_CONTROLS.slice(0, Math.max(0, Math.min(3, abilities))).map((id): [TouchControlId, TouchButtonSpec] => [id, b[id]]),
+    ...ABILITY_CONTROLS.filter((id) => abilities.includes(id)).map((id): [TouchControlId, TouchButtonSpec] => [id, b[id]]),
     ['use', b.use],
   ];
 }
@@ -145,7 +147,7 @@ export function touchLayout(screen: TouchScreen, opts: TouchLayoutOptions, data:
   const reach = offsetsWithin(Math.ceil(Math.max(screen.w, screen.h) / 2));
   // How far a top corner's first control (the gear) had to move: the rest of its row start from there.
   const shift = new Map<string, { x: number; y: number }>();
-  for (const [id, spec] of controlsFor(opts.mode, opts.abilities ?? 0, data)) {
+  for (const [id, spec] of controlsFor(opts.mode, opts.abilities ?? [], data)) {
     const size = controlPx(spec.size, z, data.buttonMinCssPx);
     const right = spec.corner === 'br' || spec.corner === 'tr';
     const bottom = spec.corner === 'br' || spec.corner === 'bl';
@@ -176,6 +178,23 @@ export function touchLayout(screen: TouchScreen, opts: TouchLayoutOptions, data:
     tapMaxMs: data.tapMaxMs,
     topCentre,
   };
+}
+
+/**
+ * Where a control's transient line goes (ART on #136; the gear's "Tap again to leave the run."): on the control's own
+ * row, its right edge against the control's left edge, so it covers a readout (ROOM 1/3) and never something to tap.
+ * When that place would leave the screen or cover another control, it moves to the same row centred on the screen
+ * (the world view is centred), still clear of every control if it can be. `w` × `h` is the line's panel, UI px.
+ */
+export function notePlace(layout: TouchLayout, id: TouchControlId, w: number, h: number): Rect | null {
+  const c = layout.controls.find((x) => x.id === id);
+  if (!c) return null;
+  const y = Math.round(c.cy - h / 2);
+  const clear = (r: Rect): boolean =>
+    r.x >= 0 && r.x + r.w <= layout.screen.w && r.y >= 0 && r.y + r.h <= layout.screen.h && !layout.controls.some((o) => o !== c && overlaps(o.rect, r));
+  const beside = { x: c.rect.x - w, y, w, h };
+  if (clear(beside)) return beside;
+  return { x: Math.round((layout.screen.w - w) / 2), y, w, h };
 }
 
 /** The control a point (UI px) is on, among those showing: a disc by its radius, a square by its rectangle. */
