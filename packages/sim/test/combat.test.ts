@@ -422,3 +422,40 @@ describe('heavy and abilities', () => {
     expect(swings(events)).toHaveLength(1);
   });
 });
+
+describe('holding light (GAME DESIGN, 2026-10-21)', () => {
+  const swingTicks = (run: ReturnType<typeof arena>, ticks: number, buttonsAt: (i: number) => number) => {
+    const out: { tick: number; step: number }[] = [];
+    for (let i = 0; i < ticks; i++)
+      for (const e of step(run, buttonsAt(i))) if (e.type === 'swing' && e.attack === 'light') out.push({ tick: i, step: e.step });
+    return out;
+  };
+
+  it("keeps attacking at the chain's own pace, 1-2-3 then again, never faster than pressing at each chain point", () => {
+    const held = swingTicks(arena(), 400, () => Button.Light);
+    expect(held.map((s) => s.step).slice(0, 5)).toEqual([0, 1, 2, 0, 1]);
+    // Each next hit starts on its strike's chain point (combat.md §4), the earliest a press is taken, never sooner:
+    // exactly what a light pressed on every tick of the recovery gets.
+    const P = arena().params;
+    for (let k = 1; k < 5; k++) {
+      const prev = held[k - 1];
+      const here = held[k];
+      if (!prev || !here) throw new Error('missing swing');
+      const st = lightStrike(P, prev.step);
+      expect(here.tick - prev.tick, `hit ${k}`).toBe(st.startup + st.active + 1 + P.lightChainTicks);
+    }
+  });
+
+  it('never eats a dodge pressed while it is held, and starts again at hit 1 after the dodge', () => {
+    const run = arena();
+    const p = run.state.player;
+    step(run, Button.Light);
+    expect(p.action).toBe('light');
+    // Still in the hit's startup: the dodge waits in the buffer while light stays held.
+    step(run, Button.Light | Button.Dodge);
+    const events = stepUntil(run, () => p.action === 'dodge', 120, Button.Light);
+    expect(events.some((e) => e.type === 'dodge') || p.action === 'dodge').toBe(true);
+    stepUntil(run, () => p.action === 'light', 300, Button.Light);
+    expect(p.comboStep).toBe(0);
+  });
+});

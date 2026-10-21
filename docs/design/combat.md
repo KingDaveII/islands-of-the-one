@@ -31,6 +31,7 @@ renders state; it never decides an outcome.
   - aim angle: 1/4096 turn;
   - movement: direction in 1/256 turn plus magnitude 0–7;
   - buttons: Light, Dodge, Ability 1–3 and Item 1–2 are "pressed this tick", Heavy is "held".
+    Light is also sent every tick it is held (§4, holding light).
 
   The client does the float→integer quantization (`apps/client/src/game/quantize.ts`).
 
@@ -142,6 +143,14 @@ What may start, given what the player is doing:
     between the first recovery tick and the chain point, even when `lightChainMs` is longer than
     `bufferMs`.
   - Getting hit (without armor) clears the buffer.
+- **Holding light keeps attacking** (GAME DESIGN, 2026-10-21), on every scheme: the client sends
+  Light on every tick the light button is held (LMB, R1/the light binding, the touch LIGHT), so the
+  buffered light comes out at each chain point. The rate is the combo's own pace, never faster than
+  tapping: the first hit fires on the press, and the release only stops (no extra hit). A held
+  light never replaces another buffered press (`PlayerState.lightHeld`): a dodge, heavy or ability
+  pressed while light is held still comes out, and the chain then starts again by the usual rules
+  (at hit 1 after a dodge, at hit 3 within the Haul's combo window). Heavy (hold to charge) and the
+  abilities are unchanged.
 
 ## 5. Weapons and abilities
 

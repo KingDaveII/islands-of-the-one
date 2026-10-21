@@ -553,11 +553,18 @@ export function updatePlayer(ctx: Ctx, input: TickInput): void {
   const held = (input.buttons & Button.Heavy) !== 0;
   const heavyPressed = held && !p.heavyHeld;
   p.heavyHeld = held;
+  // Holding light keeps attacking (GAME DESIGN, 2026-10-21): the client sends Light on every tick it is held, so the
+  // chain comes out at its own pace, like tapping as fast as the buffer takes it. A light held since the last tick
+  // never replaces another buffered press (a dodge, an ability, a heavy), so holding light never eats them.
+  const light = (input.buttons & Button.Light) !== 0;
+  const lightHeld = light && p.lightHeld;
+  p.lightHeld = light;
   p.aim = input.aim;
   p.moveMag = input.moveMag;
   if (input.moveMag > 0) p.moveAngle = moveDirToAngle(input.moveDir);
   const pressed = pressedAction(input, heavyPressed);
-  if (pressed !== 'none') {
+  const heldOverOther = pressed === 'light' && lightHeld && p.buffer !== 'none' && p.buffer !== 'light';
+  if (pressed !== 'none' && !heldOverOther) {
     p.buffer = pressed;
     p.bufferAge = 0;
   }

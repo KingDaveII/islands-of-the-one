@@ -76,6 +76,8 @@ export interface PlayerState {
   /** Per ability slot. */
   cooldowns: number[];
   heavyHeld: boolean;
+  /** Light was held on the last tick: a held light keeps attacking but never replaces another buffered action (GAME DESIGN, 2026-10-21). */
+  lightHeld: boolean;
   buffer: BufferedAction;
   bufferAge: number;
   /** The Haul hook, while out. */

@@ -223,6 +223,17 @@ describe('Haul: combo step and miss refund', () => {
     expect([p.action, p.comboStep]).toEqual(['light', run.params.weapon.light.length - 1]);
   });
 
+  it('light held through the Haul comes out at combo hit 3 (holding light, GAME DESIGN 2026-10-21)', () => {
+    const run = arena();
+    still(run);
+    const p = run.state.player;
+    husk(run, 'peeling', 60, 0);
+    step(run, Button.Ability1 | Button.Light, 0);
+    expect(p.action).toBe('ability');
+    stepUntil(run, () => p.action === 'light', 300, Button.Light);
+    expect(p.comboStep).toBe(run.params.weapon.light.length - 1);
+  });
+
   it('after the window a light starts at hit 1 again', () => {
     const run = arena();
     still(run);

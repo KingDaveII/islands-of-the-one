@@ -253,6 +253,8 @@ export class Controls {
     // Keyboard and mouse presses, resolved to actions with this tick's context.
     let buttons = 0;
     for (const action of PRESS_ACTIONS) if (this.pressed(action)) buttons |= PRESS_BUTTON[action] ?? 0;
+    // Holding light keeps attacking (GAME DESIGN, 2026-10-21): the sim chains a held light at the combo's own pace.
+    if (this.held('light')) buttons |= Button.Light;
     this.latchedKeys.clear();
 
     const pad = connectedPad();
@@ -288,6 +290,7 @@ export class Controls {
       // A button bound per context (Cross: dodge in Combat, interact in Calm) resolves to this tick's context only.
       for (const action of PRESS_ACTIONS) if (edge(action)) buttons |= PRESS_BUTTON[action] ?? 0;
       if (down('heavy')) held = true;
+      if (down('light')) buttons |= Button.Light;
       this.prevPadButtons = padButtons;
     }
 

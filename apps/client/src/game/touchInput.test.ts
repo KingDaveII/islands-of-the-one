@@ -13,14 +13,21 @@ const world = { overHud: false, stick: true };
 const DEADZONE = 0.2;
 
 describe('touch input: when each button fires', () => {
-  it('LIGHT fires on release, not on press', () => {
+  it('LIGHT fires on press, is sent every tick while held, and its release fires nothing (GAME DESIGN, 2026-10-21)', () => {
     const t = new TouchInput(layout);
     const light = at('light');
     expect(t.down(1, light.cx, light.cy, 0, world)).toEqual({ kind: 'control', id: 'light' });
-    expect([...t.take().presses]).toEqual([]);
-    t.up(1, light.cx, light.cy, 80);
+    // The first hit on the press itself, then held: the sim keeps attacking at the chain's pace.
     expect([...t.take().presses]).toEqual(['light']);
-    // Consumed: the next tick has none.
+    expect([...t.take().presses]).toEqual(['light']);
+    expect([...t.take().presses]).toEqual(['light']);
+    t.up(1, light.cx, light.cy, 500);
+    // The release only stops.
+    expect([...t.take().presses]).toEqual([]);
+    // A quick tap between two ticks: one hit, on the next tick.
+    t.down(2, light.cx, light.cy, 600, world);
+    t.up(2, light.cx, light.cy, 610);
+    expect([...t.take().presses]).toEqual(['light']);
     expect([...t.take().presses]).toEqual([]);
   });
 
@@ -80,11 +87,13 @@ describe('touch input: when each button fires', () => {
     const t = new TouchInput(layout);
     const light = at('light');
     t.down(1, light.cx, light.cy, 0, world);
+    expect([...t.take().presses]).toEqual(['light']);
     expect(t.down(2, light.cx + 2, light.cy, 10, world).kind).toBe('hud');
     t.up(2, light.cx + 2, light.cy, 20);
-    expect([...t.take().presses]).toEqual([]);
-    t.up(1, light.cx, light.cy, 30);
+    // Still held by the first finger: the second one's lift stops nothing.
     expect([...t.take().presses]).toEqual(['light']);
+    t.up(1, light.cx, light.cy, 30);
+    expect([...t.take().presses]).toEqual([]);
   });
 });
 
@@ -111,7 +120,7 @@ describe('touch input: the aim', () => {
     expect(far.lockTarget).toBe(-1);
   });
 
-  it('a button dragged off aims in the drag direction while held, and fires there on release', () => {
+  it('LIGHT held and dragged off aims each next hit in the drag direction; the release only stops', () => {
     const t = new TouchInput(layout);
     t.down(1, 60, 200, 0, world);
     t.move(1, 100, 200);
@@ -119,19 +128,23 @@ describe('touch input: the aim', () => {
     t.down(2, light.cx, light.cy, 0, world);
     // Within aimDragCssPx of the centre: not a drag yet (the soft lock aims).
     t.move(2, light.cx - layout.aimDrag + 1, light.cy);
-    expect(touchSample(t, enemies, 20, DEADZONE).aim).toBeCloseTo(Math.atan2(20, 100));
-    // Past it, straight up: the aim is the drag's, the lock lets go.
+    const first = touchSample(t, enemies, 20, DEADZONE);
+    expect([...first.presses]).toEqual(['light']);
+    expect(first.aim).toBeCloseTo(Math.atan2(20, 100));
+    // Past it, straight up: the aim is the drag's, the lock lets go, and LIGHT is still held.
     t.move(2, light.cx, light.cy - 50);
     const held = touchSample(t, enemies, 20, DEADZONE);
     expect(held.aim).toBeCloseTo(-Math.PI / 2);
     expect(held.lockTarget).toBe(-1);
-    expect([...held.presses]).toEqual([]);
+    expect([...held.presses]).toEqual(['light']);
+    // Dragged round to the up-left: the next hit goes there.
+    t.move(2, light.cx - 50, light.cy - 50);
+    expect(touchSample(t, enemies, 20, DEADZONE).aim).toBeCloseTo((-3 * Math.PI) / 4);
     t.up(2, light.cx - 50, light.cy - 50, 400);
-    const fired = touchSample(t, enemies, 20, DEADZONE);
-    expect([...fired.presses]).toEqual(['light']);
-    expect(fired.aim).toBeCloseTo((-3 * Math.PI) / 4);
-    // Back to the soft lock after.
-    expect(touchSample(t, enemies, 20, DEADZONE).aim).toBeCloseTo(Math.atan2(20, 100));
+    // The release fires nothing and leaves no aim of its own: back to the soft lock.
+    const after = touchSample(t, enemies, 20, DEADZONE);
+    expect([...after.presses]).toEqual([]);
+    expect(after.aim).toBeCloseTo(Math.atan2(20, 100));
   });
 
   it('HEAVY pressed, dragged and released fires its thrust in the drag direction', () => {

@@ -8,11 +8,14 @@ import { isTap, stickKnob, stickVector, touchZone, type TouchControlId, type Tou
  * per tick through `touchSample`, as it reads a pad: one finger owns one
  * control until it lifts, presses are latched between ticks (controls.md §4).
  *
- * When each fires: LIGHT and an ability on **release** (aimed by the drag if
- * the finger left the button, else by the soft lock), HEAVY **held** from the
- * touch down to the release (the charge starts on press, the drag aims it,
- * the release fires it, like a held R2), DODGE and the item slots on
- * **press**, USE and the gear on a release still on the button.
+ * When each fires: LIGHT on **press** and held while the finger stays down
+ * (the sim keeps attacking at the chain's own pace; a drag aims each next
+ * hit; the release only stops, GAME DESIGN 2026-10-21), an ability on
+ * **release** (aimed by the drag if the finger left the button, else by the
+ * soft lock), HEAVY **held** from the touch down to the release (the charge
+ * starts on press, the drag aims it, the release fires it, like a held R2),
+ * DODGE and the item slots on **press**, USE and the gear on a release still
+ * on the button.
  */
 
 /** What a finger is doing. */
@@ -36,9 +39,9 @@ export type TouchPress = 'light' | 'dodge' | 'ability1' | 'ability2' | 'ability3
 /** The controls that aim: a drag off them aims, a tap fires at the soft lock. */
 const AIMING: ReadonlySet<TouchControlId> = new Set(['light', 'heavy', 'ability1', 'ability2', 'ability3']);
 /** Fired on release. */
-const ON_RELEASE: ReadonlySet<TouchControlId> = new Set(['light', 'ability1', 'ability2', 'ability3']);
-/** Fired on press. */
-const ON_PRESS: Partial<Record<TouchControlId, TouchPress>> = { dodge: 'dodge', item1: 'item1', item2: 'item2' };
+const ON_RELEASE: ReadonlySet<TouchControlId> = new Set(['ability1', 'ability2', 'ability3']);
+/** Fired on press (LIGHT is also sent every tick it is held, see `take`). */
+const ON_PRESS: Partial<Record<TouchControlId, TouchPress>> = { light: 'light', dodge: 'dodge', item1: 'item1', item2: 'item2' };
 
 /** What a finger's release came to, for the layer: a tap on the world, a control let go on itself, or nothing. */
 export type TouchRelease = { kind: 'tap'; x: number; y: number } | { kind: 'control'; id: TouchControlId } | { kind: 'none' };
@@ -107,7 +110,8 @@ export class TouchInput {
     const tap = (): boolean => f.kind !== 'none' && isTap(this.layout, f.down, { x, y, t }, f.travelled);
     if (f.kind === 'tap' || f.kind === 'stick') return tap() ? { kind: 'tap', x: f.down.x, y: f.down.y } : { kind: 'none' };
     if (f.kind !== 'control') return { kind: 'none' };
-    if (f.dragged) this.releaseAim = this.dragAngle(f);
+    // A release that fires (an ability, HEAVY) fires where the drag aimed; LIGHT's release only stops.
+    if (f.dragged && (ON_RELEASE.has(f.id) || f.id === 'heavy')) this.releaseAim = this.dragAngle(f);
     if (ON_RELEASE.has(f.id)) this.latched.add(f.id as TouchPress);
     if (f.id === 'use' || f.id === 'gear') {
       const c = this.layout.controls.find((k) => k.id === f.id);
@@ -169,12 +173,14 @@ export class TouchInput {
 
   /**
    * The latched part of one tick, consumed: the presses since the last
-   * sample, HEAVY held (or tapped since), and the aim a released drag left
-   * for this tick (else the drag in progress, else null).
+   * sample (with LIGHT while it is held), HEAVY held (or tapped since), and
+   * the aim a released drag left for this tick (else the drag in progress,
+   * else null).
    */
   take(): { presses: Set<TouchPress>; heavy: boolean; aim: number | null } {
     const presses = this.latched;
     this.latched = new Set();
+    if (this.held('light')) presses.add('light');
     const heavy = this.held('heavy') || this.heavyLatched;
     this.heavyLatched = false;
     const aim = this.releaseAim ?? this.dragAim();

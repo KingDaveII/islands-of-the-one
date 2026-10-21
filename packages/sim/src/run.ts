@@ -76,6 +76,7 @@ function newPlayer(P: Params, x: number, y: number): PlayerState {
     hitstop: 0,
     cooldowns: P.weapon.abilities.map(() => 0),
     heavyHeld: false,
+    lightHeld: false,
     buffer: 'none',
     bufferAge: 0,
     hook: null,

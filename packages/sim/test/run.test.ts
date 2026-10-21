@@ -187,7 +187,7 @@ describe('replay determinism', () => {
     const t: Tuning = golden;
     const run = createRun({ seed: 2024, tuning: t, rooms: roomTemplates, weapon: WEAPON });
     drive(run, 60 * 30);
-    expect(hashRunState(run.state)).toMatchInlineSnapshot(`93965018`);
+    expect(hashRunState(run.state)).toMatchInlineSnapshot(`2736177603`);
   });
 
   it('cloneTuning does not alias the data file', () => {
