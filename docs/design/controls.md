@@ -177,7 +177,9 @@ There is **no right stick** (GAME DESIGN: "the buttons are the aim"), no cancel 
 the stick's deflection goes through `quantizeMove` with the stick deadzone (0.2), so the roam's walk/run rule
 (`roam.walkStickMax`) applies unchanged; the buttons are presses and holds latched between ticks (§4); HEAVY is held
 from the touch down to the release (and for at least one tick, so a quick tap still charges and fires). With no
-button dragged the aim is the pad's centred-stick rule with `softlock.leftStickAngleDeg` (20°, `Controls.softLockDeg`);
+button dragged the aim is the stick's direction, or standing still the Kindled's facing (the stick's last direction,
+`TouchInput.facing`; David's playtest, 2026-10-21: a tap always attacks where the Kindled moves or faces, never at an
+aim a drag or a lock left behind), both snapped by `softlock.leftStickAngleDeg` (20°, `Controls.softLockDeg`);
 while a LIGHT, HEAVY or ability touch is dragged past `touch.aimDragCssPx` from the button's centre, the aim is the
 drag's direction, and the tick a dragged button lets go fires there. The input log records the same resolved
 actions; nothing under `packages/sim` changed.
@@ -209,7 +211,9 @@ UI px per px, LIGHT and HEAVY from the 24 px sheet (`touch-glyphs-24px.png`, #13
 `touch.glyphLargeMinUiPx` (48) across, the item slots
 the item's icon and count. Pressed: no shadow, the content 1 px down and right, the bevel's light bottom and right, never
 a colour flash. A cooldown is a solid dream-night sweep over the time left, clockwise from 12 o'clock, with whole
-seconds on top and the frame lit briefly when it is back; a locked slot shows the hollow-dusk lock. The stick
+seconds on top and the frame lit briefly when it is back; a locked slot shows the hollow-dusk lock. LIGHT, HEAVY and the abilities are little sticks
+(David's playtest, 2026-10-21): their glyph sits on a raised knob in the stick's knob look (about 56 % of the
+button), which follows a holding finger inside the button, so a drag to aim can be seen and found. The stick
 (only while held): a 2 px ring (dream-night outside, hollow-below inside) the size of its travel with the dither
 inside, and a raised knob, 40 % of the travel: hollow-below, lighter than the base, lit top-left in
 hollow-dusk, with the dream-night outline (ART on #134). While the arc's second slot is hidden (locked), HEAVY takes
