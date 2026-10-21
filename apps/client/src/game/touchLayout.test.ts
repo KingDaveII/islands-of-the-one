@@ -1,4 +1,4 @@
-import { defaultTuning, measureText, silkscreenFont } from '@iot/shared';
+import { defaultTuning, measureText, silkscreenFont, tiny5Font } from '@iot/shared';
 import { MOVE_DIRS, MOVE_MAG_MAX } from '@iot/sim';
 import { describe, expect, it } from 'vitest';
 import { hudRects, toastTextWidth } from './holdingView.js';
@@ -8,6 +8,7 @@ import {
   controlAt,
   controlPx,
   isTap,
+  notePlace,
   stickKnob,
   stickVector,
   TOUCH,
@@ -18,6 +19,7 @@ import {
   type TouchMode,
 } from './touchLayout.js';
 import { quantizeMove } from './quantize.js';
+import { LEAVE_RUN_AGAIN } from './tapAgain.js';
 import { deviceSize, fitUi, fitWorldView, viewInUi, type Rect } from './view.js';
 
 /** The four test screens (M2 Task 10): CSS size and device pixel ratio. */
@@ -151,6 +153,23 @@ describe('the sizes ART draws for (UI px on the four test screens)', () => {
       ['small phone 667×375 @ 2', 80, 64, 56, 56, 56, 48],
     ]);
     for (const row of table) expect(row[1]).toBeGreaterThan(row[2] as number);
+  });
+});
+
+describe.each(SCREENS)("the gear's tap-again line on the %s (ART on #136)", (_name, w, h, dpr) => {
+  it("sits on the gear's row against it, or centred on that row, and never covers a control", () => {
+    const { layout } = layoutFor('run', w, h, dpr, ['ability1']);
+    const gear = layout.controls.find((c) => c.id === 'gear');
+    if (!gear) throw new Error('no gear');
+    const nw = measureText(tiny5Font, LEAVE_RUN_AGAIN) + 8;
+    const at = notePlace(layout, 'gear', nw, 14);
+    if (!at) throw new Error('no place');
+    expect(at.y).toBe(Math.round(gear.cy - 7));
+    expect(at.x >= 0 && at.x + at.w <= layout.screen.w).toBe(true);
+    for (const c of layout.controls) expect(overlaps(c.rect, at), c.id).toBe(false);
+    // Against the gear when it fits there.
+    if (gear.rect.x - nw >= 0 && !layout.controls.some((c) => c !== gear && overlaps(c.rect, { ...at, x: gear.rect.x - nw })))
+      expect(at.x + at.w).toBe(gear.rect.x);
   });
 });
 

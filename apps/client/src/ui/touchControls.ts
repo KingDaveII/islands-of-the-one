@@ -2,7 +2,7 @@ import type Phaser from 'phaser';
 import { TOUCH_GLYPH_LARGE_CELLS } from '@iot/shared';
 import { deviceStore } from '../game/activeDevice.js';
 import { TouchInput, type TouchRelease } from '../game/touchInput.js';
-import { controlAt, TOUCH, touchLayout, touchScreen, type AbilityControl, type TouchControl, type TouchControlId, type TouchLayout, type TouchMode } from '../game/touchLayout.js';
+import { controlAt, notePlace, TOUCH, touchLayout, touchScreen, type AbilityControl, type TouchControl, type TouchControlId, type TouchLayout, type TouchMode } from '../game/touchLayout.js';
 import type { Rect } from '../game/view.js';
 import { Palette } from '../palette.js';
 import { DEPTH } from '../render/depth.js';
@@ -262,7 +262,7 @@ export class TouchControls {
     this.note = text === null ? null : { id, text };
   }
 
-  /** The note on a plain panel under its control, right-aligned with it (clear of the HUD's top-right panels), kept on the screen. */
+  /** The note on a plain panel, on its control's row against it (`notePlace`, ART on #136); it leaves in one frame. */
   private drawNote(): void {
     const n = this.note;
     const c = n && this.input.layout.controls.find((x) => x.id === n.id);
@@ -273,12 +273,10 @@ export class TouchControls {
     }
     const t = this.noteText;
     if (t.text !== n.text) t.setText(n.text);
-    const w = Math.round(t.width) + 8;
-    const h = 14;
-    const x = Math.max(0, c.rect.x + c.rect.w - w);
-    const y = Math.min(this.input.layout.screen.h - h, c.rect.y + c.rect.h + 4);
-    panel(this.noteG, x, y, w, h, { plain: true });
-    place(t.setVisible(true), x + 4, y + 3);
+    const at = notePlace(this.input.layout, c.id, Math.round(t.width) + 8, 14);
+    if (!at) return;
+    panel(this.noteG, at.x, at.y, at.w, at.h, { plain: true });
+    place(t.setVisible(true), at.x + 4, at.y + 3);
   }
 
   private glyph(id: TouchControlId, texture: string, frame: string): Phaser.GameObjects.Image | null {

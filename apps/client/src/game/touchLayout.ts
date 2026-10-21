@@ -180,6 +180,23 @@ export function touchLayout(screen: TouchScreen, opts: TouchLayoutOptions, data:
   };
 }
 
+/**
+ * Where a control's transient line goes (ART on #136; the gear's "Tap again to leave the run."): on the control's own
+ * row, its right edge against the control's left edge, so it covers a readout (ROOM 1/3) and never something to tap.
+ * When that place would leave the screen or cover another control, it moves to the same row centred on the screen
+ * (the world view is centred), still clear of every control if it can be. `w` × `h` is the line's panel, UI px.
+ */
+export function notePlace(layout: TouchLayout, id: TouchControlId, w: number, h: number): Rect | null {
+  const c = layout.controls.find((x) => x.id === id);
+  if (!c) return null;
+  const y = Math.round(c.cy - h / 2);
+  const clear = (r: Rect): boolean =>
+    r.x >= 0 && r.x + r.w <= layout.screen.w && r.y >= 0 && r.y + r.h <= layout.screen.h && !layout.controls.some((o) => o !== c && overlaps(o.rect, r));
+  const beside = { x: c.rect.x - w, y, w, h };
+  if (clear(beside)) return beside;
+  return { x: Math.round((layout.screen.w - w) / 2), y, w, h };
+}
+
 /** The control a point (UI px) is on, among those showing: a disc by its radius, a square by its rectangle. */
 export function controlAt(layout: TouchLayout, x: number, y: number, showing: (id: TouchControlId) => boolean = () => true): TouchControl | null {
   for (const c of layout.controls) {

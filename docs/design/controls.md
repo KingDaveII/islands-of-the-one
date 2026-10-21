@@ -226,7 +226,8 @@ continue" on the results screen (GAME DESIGN's), "tap  <  >  to switch" on the c
 on touch (the inventory, the controls screen: `touchBackButton`, render/menus.ts). The controls screen has a third
 column, Touch, from the table above (the button's glyph, or a word). In a run the gear leaves for the start screen
 (a run has no pause yet), but only on a second tap within `touch.leaveConfirmMs` (2000): the first shows "Tap again
-to leave the run." beside it, and after the window the gear resets (GAME DESIGN, 2026-10-21; `TapAgain`,
+to leave the run." on a plain panel on the gear's own row, its right edge against the gear (covering the ROOM
+readout for those 2 s, never a control; centred on that row when it doesn't fit there; `notePlace`, ART on #136), and after the window the gear resets (GAME DESIGN, 2026-10-21; `TapAgain`,
 `game/tapAgain.ts`). Once deaths cost the pack, leaving a run will count as a death (GAME DESIGN's note; nothing in
 M2).
 
