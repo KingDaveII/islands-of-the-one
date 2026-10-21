@@ -1,11 +1,12 @@
 import type Phaser from 'phaser';
-import { controllerGlyphsSheet, fieldGroundSheet, hookbladeFxSheet, itemIconsSheet, toastGlyphsSheet, touchGlyphsSheet, type CellSheet } from '@iot/shared';
+import { controllerGlyphsSheet, fieldGroundSheet, hookbladeFxSheet, itemIconsSheet, toastGlyphsSheet, touchGlyphs24Sheet, touchGlyphsSheet, type CellSheet } from '@iot/shared';
 import fieldGroundUrl from '@iot/shared/assets/field-ground-64px.png';
 import glyphsUrl from '@iot/shared/assets/controller-glyphs-12px.png';
 import hookbladeUrl from '@iot/shared/assets/hookblade-fx.png';
 import itemIconsUrl from '@iot/shared/assets/item-icons-16px.png';
 import toastGlyphsUrl from '@iot/shared/assets/toast-glyphs-12px.png';
 import touchGlyphsUrl from '@iot/shared/assets/touch-glyphs-16px.png';
+import touchGlyphs24Url from '@iot/shared/assets/touch-glyphs-24px.png';
 
 /**
  * The engine's cell sheets (packages/shared/assets, white on transparent)
@@ -21,6 +22,8 @@ export const ITEM_ICON_TEXTURE = 'item-icons';
 export const TOAST_GLYPH_TEXTURE = 'toast-glyphs';
 /** ART's touch-control glyphs (#133, M2 Task 10): a frame per touch button (light, heavy, dodge, haul, gear, use), 16 px, in their own colours. */
 export const TOUCH_GLYPH_TEXTURE = 'touch-glyphs';
+/** ART's large touch glyphs (#135): LIGHT and HEAVY at 24 px, for a button at least `touch.glyphLargeMinUiPx` across. */
+export const TOUCH_GLYPH_LARGE_TEXTURE = 'touch-glyphs-24';
 /** ART's field ground (#123): a seamless 64 px frame per state (unsown, sown, faded), tiled inside a named plot, untinted. */
 export const FIELD_GROUND_TEXTURE = 'field-ground';
 
@@ -30,6 +33,7 @@ const SHEETS: [string, string, CellSheet][] = [
   [ITEM_ICON_TEXTURE, itemIconsUrl, itemIconsSheet],
   [TOAST_GLYPH_TEXTURE, toastGlyphsUrl, toastGlyphsSheet],
   [TOUCH_GLYPH_TEXTURE, touchGlyphsUrl, touchGlyphsSheet],
+  [TOUCH_GLYPH_LARGE_TEXTURE, touchGlyphs24Url, touchGlyphs24Sheet],
   [FIELD_GROUND_TEXTURE, fieldGroundUrl, fieldGroundSheet],
 ];
 

@@ -202,13 +202,18 @@ M2's arc is the Haul alone and it grows as abilities unlock; GAME DESIGN, 2026-1
 only while a prompt is up), the item slots and the gear; on the holding: USE alone (`useAlone`, over the pack
 button) and the gear. ART's look (2026-10-20): the plain HUD panel as discs (the attacks, DODGE, the abilities,
 USE) and chamfered squares (the gear, the item slots), a 50 % checker dither of ui-panel for every fill (every
-other pixel shows the world), a solid dream-night outline, a hollow-below bevel top and left, a hard 1 px drop
-shadow; ART's touch-glyph sheet (`touch-glyphs-16px.png`, #133) centred on each at 1 UI px per px, the item slots
-the item's icon and count. Pressed: no shadow, the content 1 px down and right, the bevel bottom and right, never a
-colour flash. A cooldown is a solid dream-night sweep over the time left, clockwise from 12 o'clock, with whole
+other pixel shows the world), a solid dream-night outline, a 1 px bevel ring just inside it all the way round (hollow-dusk on the
+top-left half, `uiBevelLight`, hollow-below on the rest; ART on #134: it reads on the Hollow margin and on the pale
+floor alike), a hard 1 px drop shadow; ART's touch-glyph sheet (`touch-glyphs-16px.png`, #133) centred on each at 1
+UI px per px, LIGHT and HEAVY from the 24 px sheet (`touch-glyphs-24px.png`, #135) on a button at least
+`touch.glyphLargeMinUiPx` (48) across, the item slots
+the item's icon and count. Pressed: no shadow, the content 1 px down and right, the bevel's light bottom and right, never
+a colour flash. A cooldown is a solid dream-night sweep over the time left, clockwise from 12 o'clock, with whole
 seconds on top and the frame lit briefly when it is back; a locked slot shows the hollow-dusk lock. The stick
 (only while held): a 2 px ring (dream-night outside, hollow-below inside) the size of its travel with the dither
-inside, and a solid panel knob with the bevel. No alpha anywhere.
+inside, and a raised knob, 40 % of the travel: hollow-below, lighter than the base, lit top-left in
+hollow-dusk, with the dream-night outline (ART on #134). While the arc's second slot is hidden (locked), HEAVY takes
+its place, off the room's bottom-right edge. No alpha anywhere.
 
 **The aim you can see:** in touch mode the pad's reticle shows along the aim (§3), and while a button is dragged a
 short dotted aim line runs from the Kindled along it, `touch.aimLinePx` (56) world px, in the Haul guide's style.

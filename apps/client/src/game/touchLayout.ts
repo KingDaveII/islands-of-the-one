@@ -98,7 +98,8 @@ function controlsFor(mode: TouchMode, abilities: readonly AbilityControl[], data
     ['item2', b.item2],
     ['item1', b.item1],
     ['light', b.light],
-    ['heavy', b.heavy],
+    // HEAVY moves up into the arc's second slot while that slot is hidden (locked), off the room's bottom-right edge (ART on #134).
+    ['heavy', abilities.includes('ability2') ? b.heavy : { ...b.heavy, dx: b.ability2.dx, dy: b.ability2.dy }],
     ['dodge', b.dodge],
     ...ABILITY_CONTROLS.filter((id) => abilities.includes(id)).map((id): [TouchControlId, TouchButtonSpec] => [id, b[id]]),
     ['use', b.use],

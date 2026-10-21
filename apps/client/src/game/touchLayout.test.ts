@@ -53,9 +53,15 @@ function setup(w: number, h: number, dpr: number) {
   return { screen, avoid };
 }
 
-function layoutFor(mode: TouchMode, w: number, h: number, dpr: number): { layout: TouchLayout; avoid: Rect[] } {
+function layoutFor(
+  mode: TouchMode,
+  w: number,
+  h: number,
+  dpr: number,
+  abilities: readonly (typeof ABILITY_CONTROLS)[number][] = ABILITY_CONTROLS,
+): { layout: TouchLayout; avoid: Rect[] } {
   const { screen, avoid } = setup(w, h, dpr);
-  return { layout: touchLayout(screen, { mode, abilities: ABILITY_CONTROLS, avoid: avoid[mode] }), avoid: avoid[mode] };
+  return { layout: touchLayout(screen, { mode, abilities, avoid: avoid[mode] }), avoid: avoid[mode] };
 }
 
 describe('the touch block of controls.json', () => {
@@ -102,6 +108,23 @@ describe.each(SCREENS)('the touch layout on the %s', (_name, w, h, dpr) => {
       expect(layout.stickRadius).toBe(Math.round(48 / screen.cssPerUi));
     });
   }
+
+  it("run with M2's Haul alone: HEAVY moves up into the arc's freed second slot, still clear of everything (ART on #134)", () => {
+    const { layout, avoid } = layoutFor('run', w, h, dpr, ['ability1']);
+    const full = layoutFor('run', w, h, dpr).layout;
+    const { screen } = layout;
+    expect(layout.controls.map((c) => c.id)).toEqual(['gear', 'item2', 'item1', 'light', 'heavy', 'dodge', 'ability1', 'use']);
+    for (const c of layout.controls) {
+      expect(c.rect.x >= 0 && c.rect.y >= 0 && c.rect.x + c.rect.w <= screen.w && c.rect.y + c.rect.h <= screen.h, c.id).toBe(true);
+      expect(overlaps(c.rect, layout.topCentre), `${c.id} over the top centre`).toBe(false);
+      for (const a of avoid) expect(overlaps(c.rect, a), `${c.id} over a HUD panel`).toBe(false);
+      for (const o of layout.controls) if (o !== c) expect(overlaps(c.rect, o.rect), `${c.id} and ${o.id}`).toBe(false);
+    }
+    const heavy = layout.controls.find((c) => c.id === 'heavy');
+    const before = full.controls.find((c) => c.id === 'heavy');
+    if (!heavy || !before) throw new Error('no heavy');
+    expect(heavy.cy).toBeLessThan(before.cy);
+  });
 
   it('the holding: USE sits over the pack button (or past it, in the margin), clear of the chip', () => {
     const { layout, avoid } = layoutFor('holding', w, h, dpr);

@@ -4,6 +4,7 @@ import hookbladeFx from '../assets/hookblade-fx.json' with { type: 'json' };
 import itemIcons from '../assets/item-icons.json' with { type: 'json' };
 import toastGlyphs from '../assets/toast-glyphs.json' with { type: 'json' };
 import touchGlyphs from '../assets/touch-glyphs.json' with { type: 'json' };
+import touchGlyphs24 from '../assets/touch-glyphs-24.json' with { type: 'json' };
 
 /**
  * Cell sheets: a 1× PNG plus a JSON contract listing named rectangles
@@ -91,6 +92,11 @@ export interface TouchGlyphsSheet extends CellSheet {
 }
 
 export const touchGlyphsSheet: TouchGlyphsSheet = touchGlyphs;
+
+/** The large touch glyphs (ART, #135): LIGHT and HEAVY again at 24 px, for a button at least `touch.glyphLargeMinUiPx` across (the phones); smaller buttons keep the 16 px cells. */
+export const TOUCH_GLYPH_LARGE_CELLS = ['light', 'heavy'] as const;
+export const TOUCH_GLYPH_LARGE_PX = 24;
+export const touchGlyphs24Sheet: TouchGlyphsSheet = touchGlyphs24;
 
 /** The field ground's cells (ART, #123): a named field before SOW, once sown, and faded (sown or not). */
 export const FIELD_GROUND_CELLS = ['unsown', 'sown', 'faded'] as const;

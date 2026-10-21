@@ -117,7 +117,7 @@
     "debug": "F3"
   },
   "touch": {
-    "$comment": "Touch, the third input device (M2 Task 10, docs/design/controls.md §6). Sizes and positions in CSS px (a thumb's size doesn't change with the screen), converted to whole UI px at layout. Positions are button centres as offsets in from a screen corner (dx left from the right edge, dy up from the bottom or down from the top). buttons: each control's corner, offset and size; the ability arc holds up to three, in slot order. stickRadiusCssPx: the floating stick's travel. aimDragCssPx: how far a finger must leave an attack or ability button's centre before it aims. aimLinePx: the aim line's length while a button is dragged, world px. tapMaxMs / tapMaxCssPx: a tap is down and up within both. gapCssPx: the space kept between a control and a HUD panel when the layout moves a group clear of it. topCentreClear: the band at the top centre the controls never cover (shares of the screen). leaveConfirmMs: the gear in a run leaves only on a second tap within this long (GAME DESIGN, 2026-10-21: \"Tap again to leave the run.\").",
+    "$comment": "Touch, the third input device (M2 Task 10, docs/design/controls.md §6). Sizes and positions in CSS px (a thumb's size doesn't change with the screen), converted to whole UI px at layout. Positions are button centres as offsets in from a screen corner (dx left from the right edge, dy up from the bottom or down from the top). buttons: each control's corner, offset and size; the ability arc holds up to three, in slot order. stickRadiusCssPx: the floating stick's travel. aimDragCssPx: how far a finger must leave an attack or ability button's centre before it aims. aimLinePx: the aim line's length while a button is dragged, world px. tapMaxMs / tapMaxCssPx: a tap is down and up within both. gapCssPx: the space kept between a control and a HUD panel when the layout moves a group clear of it. topCentreClear: the band at the top centre the controls never cover (shares of the screen). glyphLargeMinUiPx: a button at least this many UI px across draws ART's 24 px glyph when the large sheet has one (LIGHT and HEAVY on the phones, #135). leaveConfirmMs: the gear in a run leaves only on a second tap within this long (GAME DESIGN, 2026-10-21: \"Tap again to leave the run.\").",
     "buttonMinCssPx": 56,
     "stickRadiusCssPx": 48,
     "aimDragCssPx": 20,
@@ -125,6 +125,7 @@
     "tapMaxMs": 300,
     "tapMaxCssPx": 12,
     "leaveConfirmMs": 2000,
+    "glyphLargeMinUiPx": 48,
     "gapCssPx": 6,
     "topCentreClear": {
       "widthShare": 0.4,

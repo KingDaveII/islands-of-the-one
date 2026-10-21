@@ -1,13 +1,14 @@
 import type Phaser from 'phaser';
+import { TOUCH_GLYPH_LARGE_CELLS } from '@iot/shared';
 import { deviceStore } from '../game/activeDevice.js';
 import { TouchInput, type TouchRelease } from '../game/touchInput.js';
-import { controlAt, touchLayout, touchScreen, type AbilityControl, type TouchControl, type TouchControlId, type TouchLayout, type TouchMode } from '../game/touchLayout.js';
+import { controlAt, TOUCH, touchLayout, touchScreen, type AbilityControl, type TouchControl, type TouchControlId, type TouchLayout, type TouchMode } from '../game/touchLayout.js';
 import type { Rect } from '../game/view.js';
 import { Palette } from '../palette.js';
 import { DEPTH } from '../render/depth.js';
 import { checker, circlePixels, discPixels, pixelAngle, type Px } from '../render/pixelShapes.js';
 import { plot } from '../render/pixels.js';
-import { ITEM_ICON_TEXTURE, TOUCH_GLYPH_TEXTURE } from '../render/sheets.js';
+import { ITEM_ICON_TEXTURE, TOUCH_GLYPH_LARGE_TEXTURE, TOUCH_GLYPH_TEXTURE } from '../render/sheets.js';
 import { body, label, place, type Text } from '../render/text.js';
 import { ditherRect, icon, panel } from '../render/ui.js';
 
@@ -329,9 +330,12 @@ export class TouchControls {
       cx += off;
       cy += off;
       // The face: every other pixel, on the screen's own grid.
-      const face = checker(discOf(r - 1), (cx + cy) & 1);
+      const face = checker(discOf(r - 2), (cx + cy) & 1);
       plot(g, face, cx, cy, Palette.uiPanel);
-      plot(g, halfOf(ringOf(r - 1), !pressed), cx, cy, Palette.uiBevel);
+      // The bevel all the way round, just inside the outline (ART on #134: it reads on the Hollow margin and the pale
+      // floor alike): its lit half top-left, the rest hollow-below; pressed, the light moves to the bottom right.
+      plot(g, halfOf(ringOf(r - 1), !pressed), cx, cy, Palette.uiBevelLight);
+      plot(g, halfOf(ringOf(r - 1), pressed), cx, cy, Palette.uiBevel);
       plot(g, ring, cx, cy, frame);
       if (cooldown > 0 && !state.locked)
         plot(
@@ -357,14 +361,15 @@ export class TouchControls {
       fill(bx + 1, by + h - 1, w - 2, 1, frame);
       fill(bx, by + 1, 1, h - 2, frame);
       fill(bx + w - 1, by + 1, 1, h - 2, frame);
-      ditherRect(g, bx + 1, by + 1, w - 2, h - 2, Palette.uiPanel);
-      if (pressed) {
-        fill(bx + 1, by + h - 2, w - 2, 1, Palette.uiBevel);
-        fill(bx + w - 2, by + 1, 1, h - 2, Palette.uiBevel);
-      } else {
-        fill(bx + 1, by + 1, w - 2, 1, Palette.uiBevel);
-        fill(bx + 1, by + 1, 1, h - 2, Palette.uiBevel);
-      }
+      ditherRect(g, bx + 2, by + 2, w - 4, h - 4, Palette.uiPanel);
+      // The bevel all the way round, just inside the outline (ART on #134): lit top and left, hollow-below bottom and
+      // right; pressed, the light moves to the bottom and right.
+      const light = pressed ? Palette.uiBevel : Palette.uiBevelLight;
+      const shade = pressed ? Palette.uiBevelLight : Palette.uiBevel;
+      fill(bx + 1, by + h - 2, w - 2, 1, shade);
+      fill(bx + w - 2, by + 1, 1, h - 2, shade);
+      fill(bx + 1, by + 1, w - 2, 1, light);
+      fill(bx + 1, by + 1, 1, h - 2, light);
       cx = bx + Math.floor(w / 2);
       cy = by + Math.floor(h / 2);
     }
@@ -388,7 +393,10 @@ export class TouchControls {
       return;
     }
     const cell = glyphFor(c.id);
-    if (cell) this.glyph(c.id, TOUCH_GLYPH_TEXTURE, cell)?.setPosition(cx - G / 2, cy - G / 2);
+    // LIGHT and HEAVY on a big button draw ART's 24 px cell (#135); everything else the 16 px one.
+    const large = cell !== null && (TOUCH_GLYPH_LARGE_CELLS as readonly string[]).includes(cell) && c.size >= TOUCH.glyphLargeMinUiPx;
+    const gs = large ? 24 : G;
+    if (cell) this.glyph(c.id, large ? TOUCH_GLYPH_LARGE_TEXTURE : TOUCH_GLYPH_TEXTURE, cell)?.setPosition(cx - gs / 2, cy - gs / 2);
     if (cooldown > 0 && (state.seconds ?? 0) > 0) {
       const t = this.text(c.id, String(state.seconds));
       place(t, cx, cy - 3, 0.5);
@@ -409,8 +417,9 @@ export class TouchControls {
     const k = Math.max(6, Math.round(R * 0.4));
     const kx = Math.round(s.knob.x);
     const ky = Math.round(s.knob.y);
-    plot(g, discOf(k - 1), kx, ky, Palette.uiPanel);
-    plot(g, halfOf(ringOf(k - 1), true), kx, ky, Palette.uiBevel);
+    // The knob reads raised, a thumb cap (ART on #134): hollow-below, lighter than the base, lit top-left in hollow-dusk.
+    plot(g, discOf(k - 1), kx, ky, Palette.uiBevel);
+    plot(g, halfOf(ringOf(k - 1), true), kx, ky, Palette.uiBevelLight);
     plot(g, ringOf(k), kx, ky, Palette.uiOutline);
   }
 }
