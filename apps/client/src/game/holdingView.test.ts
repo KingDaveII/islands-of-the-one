@@ -1,8 +1,11 @@
 import {
+  BUILD_TEXT,
   holdingLayout,
   holdingTemplate,
   measureText,
+  PLOT_TEXT,
   pressedWrit,
+  silkscreenFont,
   tiny5Font,
   TOAST_MAX,
   TOAST_TEXT,
@@ -12,6 +15,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import {
   chipState,
+  flowButtons,
   liveSkill,
   clockOffset,
   countOf,
@@ -717,5 +721,37 @@ describe("Kesh's stage directions read muted (ART on #95)", () => {
     expect(directionGlyphs(text, text)).toEqual([3, 4, 5, 6, 11, 12, 13, 14]);
     // Wrapped after "(cd)": the space at 7 became a break that isn't drawn.
     expect(directionGlyphs(text, 'ab (cd)\nef (gh)')).toEqual([3, 4, 5, 6, 10, 11, 12, 13]);
+  });
+});
+
+describe('station panel buttons', () => {
+  it('wrap onto a new row instead of crossing the panel edge', () => {
+    expect(flowButtons([50, 50, 50], 120, 6, 19)).toEqual({
+      at: [
+        { x: 0, y: 0 },
+        { x: 56, y: 0 },
+        { x: 0, y: 19 },
+      ],
+      rows: 2,
+    });
+    expect(flowButtons([], 120, 6, 19).rows).toBe(0);
+    // Wider than the row: alone on its own.
+    expect(flowButtons([200, 20], 120, 6, 19).at).toEqual([
+      { x: 0, y: 0 },
+      { x: 0, y: 19 },
+    ]);
+  });
+
+  it("a named plot's four buttons stay inside the panel, working or not (David's phone playtest, 2026-10-21)", () => {
+    // HoldingScene's panel: 176 wide, 8 padding; a button is its Silkscreen word plus 14.
+    const inner = 176 - 2 * 8;
+    for (const work of ['WORK HERE', 'STOP WORKING']) {
+      const widths = [work, 'TAKE ALL', BUILD_TEXT.BUILD_HERE, PLOT_TEXT.RENAME].map((w) => measureText(silkscreenFont, w) + 14);
+      const flow = flowButtons(widths, inner, 6, 19);
+      expect(flow.rows).toBe(2);
+      flow.at.forEach((a, i) => {
+        expect(a.x + (widths[i] ?? 0), work).toBeLessThanOrEqual(inner);
+      });
+    }
   });
 });
