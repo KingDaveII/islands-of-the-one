@@ -504,8 +504,11 @@ export class GameScene extends Phaser.Scene {
     this.fx.update(dtWorld, delta);
     this.updatePrompt();
     this.drawCursor();
+    // The gear's tap-again line covers the room counter's row: the counter hides meanwhile (ART on #136).
+    const leaving = this.leaveRun.armed(this.time.now);
+    this.hud.roomHidden = leaving;
     this.hud.draw(this.session.run, delta, this.bodyRects());
-    this.touch.setNote('gear', this.leaveRun.armed(this.time.now) ? LEAVE_RUN_AGAIN : null);
+    this.touch.setNote('gear', leaving ? LEAVE_RUN_AGAIN : null);
     this.touch.update(delta);
 
     if (this.bannerLife > 0) {

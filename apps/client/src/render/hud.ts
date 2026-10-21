@@ -81,6 +81,8 @@ export class Hud {
   private readonly itemKeys: HintRow[];
   private readonly itemCounts: Text[];
   private readonly room: Text;
+  /** The room counter hides while the gear's tap-again line covers its row (ART on #136); both leave on the same frame. */
+  roomHidden = false;
   private readonly spark: Text;
   private readonly weaponName: Text;
   private readonly keys: HintRow[];
@@ -297,8 +299,11 @@ export class Hud {
 
     // --- Top right: room counter ----------------------------------------
     g = this.g.tr;
-    this.panelAt('tr', rects.tr.x, rects.tr.y, rects.tr.w, rects.tr.h);
-    place(this.room, rects.tr.x + PAD, rects.tr.y + PAD);
+    this.room.setVisible(!this.roomHidden);
+    if (!this.roomHidden) {
+      this.panelAt('tr', rects.tr.x, rects.tr.y, rects.tr.w, rects.tr.h);
+      place(this.room, rects.tr.x + PAD, rects.tr.y + PAD);
+    }
 
     // --- Bottom right: Sparkglass ---------------------------------------
     const { x: brX, y: brY, w: brW, h: brH } = rects.br;
