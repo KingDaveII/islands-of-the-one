@@ -127,8 +127,10 @@ attacks on the right hand, the hook and the roll on the left. Faces is unchanged
 ## 4. Presses and ticks
 
 Button presses are latched between sim ticks so none are lost when a frame runs zero or several
-ticks; Heavy is a held state (triggers by value). Light, dodge and ability presses are buffered by
-the sim (`input.bufferMs`); item presses are not (they are instant and never queued).
+ticks; Heavy is a held state (triggers by value). Light is a press that is also sent on every tick
+its button is held, so holding light keeps attacking at the combo's pace on every device (GAME
+DESIGN, 2026-10-21; `combat.md` §4). Light, dodge and ability presses are buffered by the sim
+(`input.bufferMs`); item presses are not (they are instant and never queued).
 
 ## 5. The active device
 
@@ -161,8 +163,8 @@ alone, in landscape. The model is GAME DESIGN's touch column (Game design → Co
 | Action                        | Touch                                                                            |
 | ----------------------------- | -------------------------------------------------------------------------------- |
 | Move, dodge direction         | floating left stick, anchored where the thumb lands                              |
-| Aim                           | the attack and ability buttons: a tap fires at the move direction with the 20° soft lock; press, drag off the button and release fires in the drag direction |
-| Light                         | big button under the right thumb (fires on release)                              |
+| Aim                           | the attack and ability buttons: a tap fires at the move direction with the 20° soft lock; press, drag off the button and release fires HEAVY or an ability in the drag direction, and a held LIGHT dragged off aims each next hit |
+| Light                         | big button under the right thumb: fires on press, keeps attacking while held (a drag aims each next hit), the release only stops |
 | Heavy (hold to charge)        | second big button, left of LIGHT: press starts the charge, drag aims, release fires |
 | Dodge                         | button above LIGHT (fires on press; its direction is the stick's, never the aim) |
 | Ability (one slot in M1)      | an arc of up to three small buttons round LIGHT, aimed like LIGHT                |
@@ -175,13 +177,15 @@ There is **no right stick** (GAME DESIGN: "the buttons are the aim"), no cancel 
 
 **The sim never knows.** Touch feeds `Controls.sample` like the pad (`game/touchInput.ts`, pure, tested in node):
 the stick's deflection goes through `quantizeMove` with the stick deadzone (0.2), so the roam's walk/run rule
-(`roam.walkStickMax`) applies unchanged; the buttons are presses and holds latched between ticks (§4); HEAVY is held
+(`roam.walkStickMax`) applies unchanged; the buttons are presses and holds latched between ticks (§4); LIGHT is
+pressed on the touch down and sent every tick while the finger stays on it (a quick tap is one hit); HEAVY is held
 from the touch down to the release (and for at least one tick, so a quick tap still charges and fires). With no
 button dragged the aim is the stick's direction, or standing still the Kindled's facing (the stick's last direction,
 `TouchInput.facing`; David's playtest, 2026-10-21: a tap always attacks where the Kindled moves or faces, never at an
 aim a drag or a lock left behind), both snapped by `softlock.leftStickAngleDeg` (20°, `Controls.softLockDeg`);
 while a LIGHT, HEAVY or ability touch is dragged past `touch.aimDragCssPx` from the button's centre, the aim is the
-drag's direction, and the tick a dragged button lets go fires there. The input log records the same resolved
+drag's direction, and the tick a dragged HEAVY or ability lets go fires there (a held LIGHT aims each next hit by
+the drag; its release fires nothing). The input log records the same resolved
 actions; nothing under `packages/sim` changed.
 
 **The zones** (`touchZone`): a touch that starts on a showing control is that control's, and stays its while dragged

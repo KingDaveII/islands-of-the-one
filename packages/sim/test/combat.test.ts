@@ -73,13 +73,15 @@ describe('input buffering', () => {
     const st = lightStrike(P, 1);
     const recoveryStart = st.startup + st.active + 1;
     expect(recoveryStart - P.bufferTicks).toBeGreaterThanOrEqual(1);
-    stepUntil(run, () => p.t === recoveryStart - P.bufferTicks - 1);
-    step(run, Button.Light); // press: buffered (t becomes recoveryStart - bufferTicks)
+    // One tick later than the earliest buffered press: a press on the tick right after the one that started this
+    // hit would be a held light (GAME DESIGN, 2026-10-21), dropped when let go.
+    stepUntil(run, () => p.t === recoveryStart - P.bufferTicks);
+    step(run, Button.Light); // press: buffered (t becomes recoveryStart - bufferTicks + 1)
     expect([p.comboStep, p.buffer]).toEqual([1, 'light']);
-    steps(run, P.bufferTicks - 1);
+    steps(run, P.bufferTicks - 2);
     expect(p.comboStep).toBe(1);
     step(run); // first recovery tick: a light still waits for the chain point, without aging
-    expect([p.action, p.comboStep, p.t, p.buffer, p.bufferAge]).toEqual(['light', 1, recoveryStart, 'light', P.bufferTicks]);
+    expect([p.action, p.comboStep, p.t, p.buffer, p.bufferAge]).toEqual(['light', 1, recoveryStart, 'light', P.bufferTicks - 1]);
     steps(run, P.lightChainTicks); // the chain point: the buffered press fires
     expect([p.action, p.comboStep, p.t, p.buffer]).toEqual(['light', 2, 0, 'none']);
 
@@ -420,5 +422,55 @@ describe('heavy and abilities', () => {
     step(run, Button.Ability3);
     expect(p.action).toBe('idle');
     expect(swings(events)).toHaveLength(1);
+  });
+});
+
+describe('holding light (GAME DESIGN, 2026-10-21)', () => {
+  const swingTicks = (run: ReturnType<typeof arena>, ticks: number, buttonsAt: (i: number) => number) => {
+    const out: { tick: number; step: number }[] = [];
+    for (let i = 0; i < ticks; i++)
+      for (const e of step(run, buttonsAt(i))) if (e.type === 'swing' && e.attack === 'light') out.push({ tick: i, step: e.step });
+    return out;
+  };
+
+  it("keeps attacking at the chain's own pace, 1-2-3 then again, never faster than pressing at each chain point", () => {
+    const held = swingTicks(arena(), 400, () => Button.Light);
+    expect(held.map((s) => s.step).slice(0, 5)).toEqual([0, 1, 2, 0, 1]);
+    // Each next hit starts on its strike's chain point (combat.md §4), the earliest a press is taken, never sooner:
+    // exactly what a light pressed on every tick of the recovery gets.
+    const P = arena().params;
+    for (let k = 1; k < 5; k++) {
+      const prev = held[k - 1];
+      const here = held[k];
+      if (!prev || !here) throw new Error('missing swing');
+      const st = lightStrike(P, prev.step);
+      expect(here.tick - prev.tick, `hit ${k}`).toBe(st.startup + st.active + 1 + P.lightChainTicks);
+    }
+  });
+
+  it('a release mid-hit only stops: no further hit, however long the press was', () => {
+    const P = arena().params;
+    const s0 = lightStrike(P, 0);
+    // Hit 2 starts on the tick hit 1 reaches its chain point.
+    const chain = s0.startup + s0.active + 1 + P.lightChainTicks;
+    for (const ticks of [1, 2, 6, chain]) {
+      const swings = swingTicks(arena(), 300, (i) => (i < ticks ? Button.Light : 0));
+      expect(swings.length, `held ${ticks} ticks`).toBe(1);
+    }
+    // Held onto the chain point: the hit in progress there is hit 2, and nothing after it.
+    expect(swingTicks(arena(), 300, (i) => (i <= chain ? Button.Light : 0)).length).toBe(2);
+  });
+
+  it('never eats a dodge pressed while it is held, and starts again at hit 1 after the dodge', () => {
+    const run = arena();
+    const p = run.state.player;
+    step(run, Button.Light);
+    expect(p.action).toBe('light');
+    // Still in the hit's startup: the dodge waits in the buffer while light stays held.
+    step(run, Button.Light | Button.Dodge);
+    const events = stepUntil(run, () => p.action === 'dodge', 120, Button.Light);
+    expect(events.some((e) => e.type === 'dodge') || p.action === 'dodge').toBe(true);
+    stepUntil(run, () => p.action === 'light', 300, Button.Light);
+    expect(p.comboStep).toBe(0);
   });
 });
