@@ -206,6 +206,83 @@ def use():
     return g
 
 
+# The large cells (24 x 24) for the biggest buttons: on a phone LIGHT is 60-80 UI px and HEAVY 48-64 (MAIN, #134),
+# where a 16 px glyph reads small. Drawn again at the size, never scaled.
+L = 24
+
+
+def drawn24(rows):
+    im = Image.new("RGBA", (L, L))
+    px = {}
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch in KEY and 1 <= x < L - 1 and 1 <= y < L - 1:
+                px[x, y] = KEY[ch]
+    for p, c in px.items():
+        im.putpixel(p, c)
+    for y in range(L):
+        for x in range(L):
+            if (x, y) not in px and any((x + dx, y + dy) in px for dx in (-1, 0, 1) for dy in (-1, 0, 1)):
+                im.putpixel((x, y), OUTLINE)
+    return im
+
+
+LARGE = {
+    "light": [
+        "........................",
+        "........................",
+        "........................",
+        "........................",
+        "........................",
+        "..................LLL...",
+        "..............LLLLLLmd..",
+        "...........LLLLLmmmd....",
+        ".........LLLLmmmdd......",
+        "........LLLmmdd.........",
+        ".......LLmmdd...........",
+        "......LLmmd.............",
+        "......LLmd..............",
+        ".....LLmd...............",
+        ".....LLmd...............",
+        ".....Lmd................",
+        ".....Lmd................",
+        ".....Lmd................",
+        ".....Ld.................",
+        "......d.................",
+        "........................",
+        "........................",
+        "........................",
+        "........................",
+    ],
+    "heavy": [
+        "........................",
+        "........................",
+        "..................P..P..",
+        "...................P....",
+        ".................LL...P.",
+        "................LLLm....",
+        "...............LLLmmm...",
+        "..............LLLm.mm...",
+        ".............LLLm...d...",
+        "............LLLm........",
+        "...........LLLm.........",
+        "..........LLLm..........",
+        ".........LLLm...........",
+        "........LLLm............",
+        ".......LLLm.............",
+        "......gLLm..............",
+        ".....gGGm...............",
+        "....gGGG................",
+        "...gGG.G................",
+        "..gGG...................",
+        "..GG....................",
+        "........................",
+        "........................",
+        "........................",
+    ],
+}
+
+
 GLYPHS = {"light": light, "heavy": heavy, "dodge": dodge, "haul": haul, "gear": gear, "use": use}
 
 
@@ -226,6 +303,22 @@ def main():
                  "its own dream-night outline, centred on its button at 1 UI px per px. Made by "
                  "art/clean/touch-glyphs/glyphs.py.",
     }, indent=2) + "\n")
+    # the large sheet: touch-glyphs-24px.png + touch-glyphs-24.json, the same format, cells light and heavy
+    big = Image.new("RGBA", (L * len(LARGE), L))
+    big_cells = []
+    for i, name in enumerate(LARGE):
+        big.alpha_composite(drawn24(LARGE[name]), (i * L, 0))
+        big_cells.append({"name": name, "x": i * L, "y": 0, "w": L, "h": L})
+    big.save(OUT_PNG.with_name("touch-glyphs-24px.png"))
+    OUT_JSON.with_name("touch-glyphs-24.json").write_text(json.dumps({
+        "image": "touch-glyphs-24px.png",
+        "cell": L,
+        "meta": {"version": "2", "pixelScale": 1, "tinted": False},
+        "cells": big_cells,
+        "notes": "The large touch glyphs (ART, M2 Task 10, after #134): LIGHT and HEAVY again at 24 px for a "
+                 "button of 56 UI px or more (phones), the 16 px cells below that (the tablet). Made by "
+                 "art/clean/touch-glyphs/glyphs.py.",
+    }, indent=2) + "\n")
     # review: each glyph on a button face, the checker dither over the holding's earth, at 6x
     REVIEW.mkdir(parents=True, exist_ok=True)
     face, earth = rgb("hollow-deep"), rgb("sleeper-soil")
@@ -239,6 +332,17 @@ def main():
                     review.putpixel((ox + x, oy + y), face)
         review.alpha_composite(GLYPHS[name]().image(), (ox + (B - S) // 2, oy + (B - S) // 2))
     review.resize((review.width * 6, review.height * 6), Image.NEAREST).save(REVIEW / "buttons.png")
+    # the large ones on a 64 UI px disc face (HEAVY on the small phone, LIGHT on the iPhone is 60)
+    D = 64
+    rv = Image.new("RGBA", (2 * (D + 4) + 4, D + 8), earth)
+    for i, name in enumerate(LARGE):
+        ox, oy = 4 + i * (D + 4), 4
+        for y in range(D):
+            for x in range(D):
+                if (x - D / 2 + 0.5) ** 2 + (y - D / 2 + 0.5) ** 2 <= (D / 2) ** 2 and (x + y) % 2 == 0:
+                    rv.putpixel((ox + x, oy + y), face)
+        rv.alpha_composite(drawn24(LARGE[name]), (ox + (D - L) // 2, oy + (D - L) // 2))
+    rv.resize((rv.width * 4, rv.height * 4), Image.NEAREST).save(REVIEW / "buttons-24.png")
 
 
 if __name__ == "__main__":
