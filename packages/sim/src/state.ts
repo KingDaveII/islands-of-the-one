@@ -78,6 +78,8 @@ export interface PlayerState {
   heavyHeld: boolean;
   /** Light was held on the last tick: a held light keeps attacking but never replaces another buffered action (GAME DESIGN, 2026-10-21). */
   lightHeld: boolean;
+  /** The buffered light comes only from holding (no fresh press since): letting go of light drops it, so a release never adds a hit. */
+  bufferFromHold: boolean;
   buffer: BufferedAction;
   bufferAge: number;
   /** The Haul hook, while out. */

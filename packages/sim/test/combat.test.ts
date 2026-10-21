@@ -73,13 +73,15 @@ describe('input buffering', () => {
     const st = lightStrike(P, 1);
     const recoveryStart = st.startup + st.active + 1;
     expect(recoveryStart - P.bufferTicks).toBeGreaterThanOrEqual(1);
-    stepUntil(run, () => p.t === recoveryStart - P.bufferTicks - 1);
-    step(run, Button.Light); // press: buffered (t becomes recoveryStart - bufferTicks)
+    // One tick later than the earliest buffered press: a press on the tick right after the one that started this
+    // hit would be a held light (GAME DESIGN, 2026-10-21), dropped when let go.
+    stepUntil(run, () => p.t === recoveryStart - P.bufferTicks);
+    step(run, Button.Light); // press: buffered (t becomes recoveryStart - bufferTicks + 1)
     expect([p.comboStep, p.buffer]).toEqual([1, 'light']);
-    steps(run, P.bufferTicks - 1);
+    steps(run, P.bufferTicks - 2);
     expect(p.comboStep).toBe(1);
     step(run); // first recovery tick: a light still waits for the chain point, without aging
-    expect([p.action, p.comboStep, p.t, p.buffer, p.bufferAge]).toEqual(['light', 1, recoveryStart, 'light', P.bufferTicks]);
+    expect([p.action, p.comboStep, p.t, p.buffer, p.bufferAge]).toEqual(['light', 1, recoveryStart, 'light', P.bufferTicks - 1]);
     steps(run, P.lightChainTicks); // the chain point: the buffered press fires
     expect([p.action, p.comboStep, p.t, p.buffer]).toEqual(['light', 2, 0, 'none']);
 
@@ -444,6 +446,19 @@ describe('holding light (GAME DESIGN, 2026-10-21)', () => {
       const st = lightStrike(P, prev.step);
       expect(here.tick - prev.tick, `hit ${k}`).toBe(st.startup + st.active + 1 + P.lightChainTicks);
     }
+  });
+
+  it('a release mid-hit only stops: no further hit, however long the press was', () => {
+    const P = arena().params;
+    const s0 = lightStrike(P, 0);
+    // Hit 2 starts on the tick hit 1 reaches its chain point.
+    const chain = s0.startup + s0.active + 1 + P.lightChainTicks;
+    for (const ticks of [1, 2, 6, chain]) {
+      const swings = swingTicks(arena(), 300, (i) => (i < ticks ? Button.Light : 0));
+      expect(swings.length, `held ${ticks} ticks`).toBe(1);
+    }
+    // Held onto the chain point: the hit in progress there is hit 2, and nothing after it.
+    expect(swingTicks(arena(), 300, (i) => (i <= chain ? Button.Light : 0)).length).toBe(2);
   });
 
   it('never eats a dodge pressed while it is held, and starts again at hit 1 after the dodge', () => {

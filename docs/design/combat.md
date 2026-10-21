@@ -146,7 +146,10 @@ What may start, given what the player is doing:
 - **Holding light keeps attacking** (GAME DESIGN, 2026-10-21), on every scheme: the client sends
   Light on every tick the light button is held (LMB, R1/the light binding, the touch LIGHT), so the
   buffered light comes out at each chain point. The rate is the combo's own pace, never faster than
-  tapping: the first hit fires on the press, and the release only stops (no extra hit). A held
+  tapping: the first hit fires on the press, and the release only stops (no extra hit): a light
+  buffered by holding alone (no fresh press since, `PlayerState.bufferFromHold`) is dropped on the
+  tick light is let go, so a click that lasts a few ticks is one hit. Light on two ticks in a row is
+  a hold, never two presses. A held
   light never replaces another buffered press (`PlayerState.lightHeld`): a dodge, heavy or ability
   pressed while light is held still comes out, and the chain then starts again by the usual rules
   (at hit 1 after a dodge, at hit 3 within the Haul's combo window). Heavy (hold to charge) and the

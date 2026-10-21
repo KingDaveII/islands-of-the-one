@@ -77,6 +77,7 @@ function newPlayer(P: Params, x: number, y: number): PlayerState {
     cooldowns: P.weapon.abilities.map(() => 0),
     heavyHeld: false,
     lightHeld: false,
+    bufferFromHold: false,
     buffer: 'none',
     bufferAge: 0,
     hook: null,
