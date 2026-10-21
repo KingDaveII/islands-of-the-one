@@ -58,12 +58,14 @@
         user-select: none;
         -webkit-tap-highlight-color: transparent;
       }
+      /* The canvas is the window's size (render/cameras.ts) and sits at the top left, so a page box taller than the
+         window (a phone's browser bars) leaves its spare room below, never above the game. */
       #game {
         width: 100%;
         height: 100%;
         display: flex;
-        align-items: center;
-        justify-content: center;
+        align-items: flex-start;
+        justify-content: flex-start;
       }
       #game canvas {
         image-rendering: pixelated;

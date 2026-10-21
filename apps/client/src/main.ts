@@ -84,6 +84,12 @@ function startGame(): void {
   window.addEventListener('resize', () => {
     fitCanvasToWindow(game);
   });
+  // A phone turned sideways can fire its resize (or orientationchange) while the window still reports the old,
+  // upright size (iOS Safari), which left the canvas taller than the screen and the game pushed down (David's
+  // playtest, 2026-10-21). The window's size is checked again every frame; the fit only acts on a change.
+  game.events.on(Phaser.Core.Events.PRE_STEP, () => {
+    fitCanvasToWindow(game);
+  });
   // Moving the window to a display with another pixel ratio may not resize it: watch the ratio too.
   const watchRatio = (): void => {
     window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener(

@@ -51,6 +51,12 @@ export class TouchInput {
   private heavyLatched = false;
   /** The aim of a dragged button let go since the last sample: the tick it fires on aims there. */
   private releaseAim: number | null = null;
+  /**
+   * The Kindled's facing on touch: the stick's last direction (radians, screen axes), kept while standing still. A tap
+   * fires this way (soft-locked), never at a stale aim a dragged attack or a lock left behind (David's playtest,
+   * 2026-10-21). Null until the stick has moved.
+   */
+  facing: number | null = null;
 
   constructor(public layout: TouchLayout) {}
 
@@ -156,6 +162,26 @@ export class TouchInput {
     return false;
   }
 
+  /**
+   * Where an aiming button's knob sits while a finger holds it (UI px from the button's centre): toward the finger,
+   * clamped so the knob of radius `knobR` stays inside the button; null while it isn't held. The attack buttons read as
+   * little sticks (David's playtest, 2026-10-21).
+   */
+  knobOffset(id: TouchControlId, knobR: number): Pt | null {
+    if (!AIMING.has(id)) return null;
+    for (const f of this.fingers.values())
+      if (f.kind === 'control' && f.id === id) {
+        const c = this.layout.controls.find((k) => k.id === id);
+        if (!c) return null;
+        const dx = f.at.x - f.centre.x;
+        const dy = f.at.y - f.centre.y;
+        const max = Math.max(0, c.size / 2 - knobR - 1);
+        const d = Math.hypot(dx, dy);
+        return d <= max || d === 0 ? { x: dx, y: dy } : { x: (dx / d) * max, y: (dy / d) * max };
+      }
+    return null;
+  }
+
   /** The aim of a button being dragged off (radians, screen axes), or null. */
   dragAim(): number | null {
     for (const f of this.fingers.values()) if (f.kind === 'control' && f.dragged) return this.dragAngle(f);
@@ -198,9 +224,12 @@ export interface TouchTick {
 /**
  * Aim by button (GAME DESIGN, controls.md §6): a button dragged off aims in
  * the drag's direction (the sampler quantizes it like the pad's right stick);
- * with none dragged the aim is the pad's centred-stick rule, the stick's
- * direction snapped onto an enemy within `softLockDeg`; standing still keeps
- * the previous aim (null), a lock on a Husk that is gone lets go.
+ * with none dragged the aim is the stick's direction snapped onto an enemy
+ * within `softLockDeg`, and standing still the Kindled's facing (the stick's
+ * last direction, `TouchInput.facing`) snapped the same way, so a tap always
+ * attacks where the Kindled moves or faces, never at an aim a drag or a lock
+ * left behind (David's playtest, 2026-10-21). Before the stick has moved the
+ * previous aim is kept (null); a lock on a Husk that is gone lets go.
  */
 export function touchSample(
   input: TouchInput,
@@ -213,9 +242,12 @@ export function touchSample(
   const stick = input.stick();
   const move = stick ? stick.vector : null;
   const moving = move !== null && Math.hypot(move.x, move.y) > deadzone;
+  if (moving) input.facing = Math.atan2(move.y, move.x);
   if (aim !== null) return { move, presses, heavy, aim, lockTarget: -1 };
-  if (moving) {
-    const lock = softLockPick(Math.atan2(move.y, move.x), enemies, softLockDeg);
+  // No button dragged: the move direction, or standing still the facing (the stick's last direction), soft-locked.
+  const toward = moving ? Math.atan2(move.y, move.x) : input.facing;
+  if (toward !== null) {
+    const lock = softLockPick(toward, enemies, softLockDeg);
     return { move, presses, heavy, aim: lock.angle, lockTarget: lock.target?.id ?? -1 };
   }
   const gone = lockTargetId >= 0 && !enemies.some((e) => e.id === lockTargetId);
