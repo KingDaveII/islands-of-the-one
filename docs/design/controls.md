@@ -248,8 +248,12 @@ the canvas the page asks for full screen where the browser allows it (Android), 
 full screen allows it; a refusal is ignored. iOS Safari has none for pages: the web app manifest
 (`public/manifest.webmanifest`: `display: fullscreen`, `orientation: landscape`, the Hollow's background) and the
 `apple-mobile-web-app-capable` and status-bar meta tags make "Add to Home Screen" open the game full screen. The
-home-screen icons join the manifest when ART delivers them. The viewport stays the default (no `viewport-fit=cover`),
-so the browser keeps the game inside the safe area.
+home-screen icons join the manifest when ART delivers them. The page covers the whole screen (`viewport-fit=cover`,
+status bar `black-translucent`) and keeps the game inside the safe area itself: `#game` is padded by the
+`safe-area-inset-*` values and the canvas is sized to what is left (`safeWindow` in `render/cameras.ts`), the Hollow
+filling the notch, status-bar and home-indicator strips. (The M2 Task 10 default viewport with an opaque status bar
+left a blank status-bar-high band above the game once a home-screen app was turned upright and back: an iOS bug,
+David's playtest of 2026-10-21.)
 
 **Tests:** `activeDevice.test.ts` (touch), `touchLayout.test.ts` (the four test screens, 844 × 390 @ 3,
 915 × 412 @ 2.6, 1180 × 820 @ 2 and 667 × 375 @ 2, in both modes against the HUD's own panel rectangles,

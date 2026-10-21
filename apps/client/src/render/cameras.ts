@@ -8,9 +8,26 @@ import { deviceSize, fitUi, menuOrigin, type UiFit } from '../game/view.js';
  * device px per pixel, around its top left (origin 0).
  */
 
-/** The window in device px and the device pixel ratio, now. */
+/**
+ * The safe area of the window, CSS px: the window less #game's padding, which
+ * is the screen's safe-area insets (the notch, the status bar, the home
+ * indicator; index.html), 0 off phones.
+ */
+export function safeWindow(): { w: number; h: number } {
+  const el = document.getElementById('game');
+  if (!el) return { w: window.innerWidth, h: window.innerHeight };
+  const cs = getComputedStyle(el);
+  const px = (v: string): number => Number.parseFloat(v) || 0;
+  return {
+    w: window.innerWidth - px(cs.paddingLeft) - px(cs.paddingRight),
+    h: window.innerHeight - px(cs.paddingTop) - px(cs.paddingBottom),
+  };
+}
+
+/** The window's safe area in device px and the device pixel ratio, now. */
 export function deviceNow(): { w: number; h: number; dpr: number } {
-  return deviceSize(window.innerWidth, window.innerHeight, window.devicePixelRatio);
+  const safe = safeWindow();
+  return deviceSize(safe.w, safe.h, window.devicePixelRatio);
 }
 
 /**
