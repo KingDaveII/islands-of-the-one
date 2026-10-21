@@ -163,7 +163,7 @@ alone, in landscape. The model is GAME DESIGN's touch column (Game design → Co
 | Action                        | Touch                                                                            |
 | ----------------------------- | -------------------------------------------------------------------------------- |
 | Move, dodge direction         | floating left stick, anchored where the thumb lands                              |
-| Aim                           | the attack and ability buttons: a tap fires at the move direction with the 20° soft lock; press, drag off the button and release fires in the drag direction |
+| Aim                           | the attack and ability buttons: a tap fires at the move direction with the 20° soft lock; press, drag off the button and release fires HEAVY or an ability in the drag direction, and a held LIGHT dragged off aims each next hit |
 | Light                         | big button under the right thumb: fires on press, keeps attacking while held (a drag aims each next hit), the release only stops |
 | Heavy (hold to charge)        | second big button, left of LIGHT: press starts the charge, drag aims, release fires |
 | Dodge                         | button above LIGHT (fires on press; its direction is the stick's, never the aim) |

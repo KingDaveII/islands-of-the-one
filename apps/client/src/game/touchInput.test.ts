@@ -169,12 +169,13 @@ describe('touch input: the aim', () => {
     touchSample(t, [], 20, DEADZONE);
     t.up(1, 60, 160, 500);
     expect(t.facing).toBeCloseTo(Math.PI / 2);
-    // A dragged LIGHT up and to the left fires there...
+    // A held LIGHT dragged up and to the left attacks there...
     const light = at('light');
     t.down(2, light.cx, light.cy, 600, world);
     t.move(2, light.cx - 50, light.cy - 50);
-    t.up(2, light.cx - 50, light.cy - 50, 800);
     expect(touchSample(t, [], 20, DEADZONE).aim).toBeCloseTo((-3 * Math.PI) / 4);
+    t.up(2, light.cx - 50, light.cy - 50, 800);
+    touchSample(t, [], 20, DEADZONE);
     // ...and the next tap, standing still, goes the way the Kindled faces, soft-locked as ever.
     t.down(3, light.cx, light.cy, 1000, world);
     t.up(3, light.cx, light.cy, 1050);
