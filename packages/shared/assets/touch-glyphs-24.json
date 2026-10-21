@@ -1,0 +1,26 @@
+{
+  "image": "touch-glyphs-24px.png",
+  "cell": 24,
+  "meta": {
+    "version": "2",
+    "pixelScale": 1,
+    "tinted": false
+  },
+  "cells": [
+    {
+      "name": "light",
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 24
+    },
+    {
+      "name": "heavy",
+      "x": 24,
+      "y": 0,
+      "w": 24,
+      "h": 24
+    }
+  ],
+  "notes": "The large touch glyphs (ART, M2 Task 10, after #134): LIGHT and HEAVY again at 24 px for a button of 56 UI px or more (phones), the 16 px cells below that (the tablet). Made by art/clean/touch-glyphs/glyphs.py."
+}
