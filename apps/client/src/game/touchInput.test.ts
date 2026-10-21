@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { TouchInput, touchSample } from './touchInput.js';
-import { touchLayout, type TouchControl, type TouchLayout } from './touchLayout.js';
+import { ABILITY_CONTROLS, touchLayout, type TouchControl, type TouchLayout } from './touchLayout.js';
 
 /** The iPhone's UI grid (844 × 390 CSS @ 3: 633 × 292 UI px, 4/3 CSS px per UI px), the run's controls with no HUD in the way. */
-const layout: TouchLayout = touchLayout({ w: 633, h: 292, cssPerUi: 4 / 3 }, { mode: 'run', abilities: 3 });
+const layout: TouchLayout = touchLayout({ w: 633, h: 292, cssPerUi: 4 / 3 }, { mode: 'run', abilities: ABILITY_CONTROLS });
 const at = (id: string): TouchControl => {
   const c = layout.controls.find((k) => k.id === id);
   if (!c) throw new Error(id);

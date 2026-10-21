@@ -19,7 +19,8 @@ import { preloadSpriteSheets, registerSpriteSheets } from '../render/spriteSheet
 import { blinkOut, place, preloadFonts, registerFonts, worldWord, type Text } from '../render/text.js';
 import { drawReticle, rad, WorldRenderer } from '../render/world.js';
 import { TouchControls, type TouchButtonState } from '../ui/touchControls.js';
-import type { TouchControlId } from '../game/touchLayout.js';
+import { ABILITY_CONTROLS, TOUCH, type TouchControlId } from '../game/touchLayout.js';
+import { LEAVE_RUN_AGAIN, TapAgain } from '../game/tapAgain.js';
 
 const END_DELAY_MS = 1900;
 /** The room banner's line, UI px below the top of the world view (M1's 84 of 270). */
@@ -72,6 +73,8 @@ export class GameScene extends Phaser.Scene {
   private rooms: string[] | undefined;
   /** The touch layer (M2 Task 10): the stick, LIGHT, HEAVY, DODGE, the Haul's arc, the item slots, USE and the gear. */
   touch!: TouchControls;
+  /** The gear in a run: leaves on a second tap within `leaveConfirmMs` (GAME DESIGN, 2026-10-21). */
+  private readonly leaveRun = new TapAgain(TOUCH.leaveConfirmMs);
   private endAt = -1;
   private camX = 0;
   private camY = 0;
@@ -137,7 +140,11 @@ export class GameScene extends Phaser.Scene {
       layer: this.hudLayer,
       uiZoom: () => this.uiFit.zU,
       avoid: () => Object.values(this.hud.panelRects()),
-      abilities: this.session.run.params.weapon.abilities.length,
+      // Only the unlocked abilities show on touch; the arc grows as they unlock (GAME DESIGN, 2026-10-21).
+      abilities: ABILITY_CONTROLS.filter((_, i) => {
+        const a = this.session.run.params.weapon.abilities[i];
+        return a !== undefined && !a.locked;
+      }),
       // USE only while a prompt is up (Calm, a thing in reach).
       showing: (id) => id !== 'use' || this.prompt.container.visible,
       // A tap on a thing is Interact; on the ground of a run's room, nothing (tap to walk is the holding's).
@@ -145,8 +152,9 @@ export class GameScene extends Phaser.Scene {
         this.tapAt(x, y);
       },
       onControl: (id) => {
-        // The gear is the menu: a run has no pause yet, so it leaves for the start screen.
-        if (id === 'gear') this.scene.start('start');
+        // The gear is the menu: a run has no pause yet, so it leaves for the start screen, on a second tap within
+        // `leaveConfirmMs` (GAME DESIGN, 2026-10-21: a stray thumb never ends a run).
+        if (id === 'gear' && this.leaveRun.tap(this.time.now)) this.scene.start('start');
       },
       state: (id) => this.touchState(id),
     });
@@ -497,6 +505,7 @@ export class GameScene extends Phaser.Scene {
     this.updatePrompt();
     this.drawCursor();
     this.hud.draw(this.session.run, delta, this.bodyRects());
+    this.touch.setNote('gear', this.leaveRun.armed(this.time.now) ? LEAVE_RUN_AGAIN : null);
     this.touch.update(delta);
 
     if (this.bannerLife > 0) {

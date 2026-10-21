@@ -197,7 +197,8 @@ change with the screen), converted to whole UI px at layout (`controlPx`): every
 its screen corner (`buttons`). The top right first (the gear, then the item slots in a row), then the cluster from
 LIGHT out: a control whose place is off the screen, over a HUD panel, over the top centre band (`topCentreClear`)
 or over a control placed before it (`gapCssPx` apart) moves to the nearest free place inwards from its corner. The
-controls don't widen the camera's safe margins. In a run: LIGHT, HEAVY, DODGE, the ability arc, USE (above DODGE,
+controls don't widen the camera's safe margins. In a run: LIGHT, HEAVY, DODGE, the ability arc (the unlocked abilities only: locked slots never show on touch, so
+M2's arc is the Haul alone and it grows as abilities unlock; GAME DESIGN, 2026-10-21), USE (above DODGE,
 only while a prompt is up), the item slots and the gear; on the holding: USE alone (`useAlone`, over the pack
 button) and the gear. ART's look (2026-10-20): the plain HUD panel as discs (the attacks, DODGE, the abilities,
 USE) and chamfered squares (the gear, the item slots), a 50 % checker dither of ui-panel for every fill (every
@@ -219,7 +220,10 @@ continue" on the results screen (GAME DESIGN's), "tap  <  >  to switch" on the c
 "tap move · hold one · drag between panes · tap a tab". A screen whose only way back was a key gets a BACK button
 on touch (the inventory, the controls screen: `touchBackButton`, render/menus.ts). The controls screen has a third
 column, Touch, from the table above (the button's glyph, or a word). In a run the gear leaves for the start screen
-(a run has no pause yet).
+(a run has no pause yet), but only on a second tap within `touch.leaveConfirmMs` (2000): the first shows "Tap again
+to leave the run." beside it, and after the window the gear resets (GAME DESIGN, 2026-10-21; `TapAgain`,
+`game/tapAgain.ts`). Once deaths cost the pack, leaving a run will count as a death (GAME DESIGN's note; nothing in
+M2).
 
 **The page** (`apps/client/index.html`): no browser gestures over the game (`touch-action: none`,
 `overscroll-behavior: none`, no long-press callout or text selection, no tap flash), the form inputs opting back

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { hudRects, toastTextWidth } from './holdingView.js';
 import { runHudRects } from './runHud.js';
 import {
+  ABILITY_CONTROLS,
   controlAt,
   controlPx,
   isTap,
@@ -54,7 +55,7 @@ function setup(w: number, h: number, dpr: number) {
 
 function layoutFor(mode: TouchMode, w: number, h: number, dpr: number): { layout: TouchLayout; avoid: Rect[] } {
   const { screen, avoid } = setup(w, h, dpr);
-  return { layout: touchLayout(screen, { mode, abilities: 3, avoid: avoid[mode] }), avoid: avoid[mode] };
+  return { layout: touchLayout(screen, { mode, abilities: ABILITY_CONTROLS, avoid: avoid[mode] }), avoid: avoid[mode] };
 }
 
 describe('the touch block of controls.json', () => {
@@ -130,9 +131,21 @@ describe('the sizes ART draws for (UI px on the four test screens)', () => {
   });
 });
 
+describe('the ability arc on touch (GAME DESIGN, 2026-10-21)', () => {
+  it('shows only the unlocked abilities: the Haul alone in M2, growing as more unlock', () => {
+    const { screen } = setup(844, 390, 3);
+    const ids = (abilities: (typeof ABILITY_CONTROLS)[number][]): string[] =>
+      touchLayout(screen, { mode: 'run', abilities }).controls.map((c) => c.id).filter((id) => id.startsWith('ability'));
+    expect(ids(['ability1'])).toEqual(['ability1']);
+    expect(ids([])).toEqual([]);
+    expect(ids(['ability1', 'ability2'])).toEqual(['ability1', 'ability2']);
+    expect(ids(['ability1', 'ability3'])).toEqual(['ability1', 'ability3']);
+  });
+});
+
 describe('the zone of a touch', () => {
   const { screen } = setup(844, 390, 3);
-  const layout = touchLayout(screen, { mode: 'run', abilities: 3 });
+  const layout = touchLayout(screen, { mode: 'run', abilities: ABILITY_CONTROLS });
   const light = layout.controls.find((c) => c.id === 'light');
 
   it('is the control it lands on, else a HUD zone, else the stick on the left half and a tap on the right', () => {

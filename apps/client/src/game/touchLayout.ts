@@ -29,6 +29,7 @@ export type TouchControlId = (typeof TOUCH_CONTROL_IDS)[number];
 
 /** The ability arc's buttons, in slot order. */
 export const ABILITY_CONTROLS = ['ability1', 'ability2', 'ability3'] as const;
+export type AbilityControl = (typeof ABILITY_CONTROLS)[number];
 
 /** Where the layer is: a run (the attack cluster, the item slots, the gear) or the holding (USE alone, the gear). */
 export type TouchMode = 'run' | 'holding';
@@ -66,8 +67,8 @@ export interface TouchLayout {
 
 export interface TouchLayoutOptions {
   mode: TouchMode;
-  /** How many ability slots the run's weapon has (the arc shows up to three). */
-  abilities?: number;
+  /** The ability buttons that show: the unlocked slots only (GAME DESIGN, 2026-10-21: the arc grows as abilities unlock). */
+  abilities?: readonly AbilityControl[];
   /** Rectangles no control may cover: the HUD's panels (UI px). */
   avoid?: readonly Rect[];
 }
@@ -84,7 +85,7 @@ export function controlPx(sizeCss: number, cssPerUi: number, minCss: number = TO
 }
 
 /** The controls a mode shows, with the data spec each is placed by. */
-function controlsFor(mode: TouchMode, abilities: number, data: TouchData): [TouchControlId, TouchButtonSpec][] {
+function controlsFor(mode: TouchMode, abilities: readonly AbilityControl[], data: TouchData): [TouchControlId, TouchButtonSpec][] {
   const b = data.buttons;
   if (mode === 'holding')
     return [
@@ -99,7 +100,7 @@ function controlsFor(mode: TouchMode, abilities: number, data: TouchData): [Touc
     ['light', b.light],
     ['heavy', b.heavy],
     ['dodge', b.dodge],
-    ...ABILITY_CONTROLS.slice(0, Math.max(0, Math.min(3, abilities))).map((id): [TouchControlId, TouchButtonSpec] => [id, b[id]]),
+    ...ABILITY_CONTROLS.filter((id) => abilities.includes(id)).map((id): [TouchControlId, TouchButtonSpec] => [id, b[id]]),
     ['use', b.use],
   ];
 }
@@ -145,7 +146,7 @@ export function touchLayout(screen: TouchScreen, opts: TouchLayoutOptions, data:
   const reach = offsetsWithin(Math.ceil(Math.max(screen.w, screen.h) / 2));
   // How far a top corner's first control (the gear) had to move: the rest of its row start from there.
   const shift = new Map<string, { x: number; y: number }>();
-  for (const [id, spec] of controlsFor(opts.mode, opts.abilities ?? 0, data)) {
+  for (const [id, spec] of controlsFor(opts.mode, opts.abilities ?? [], data)) {
     const size = controlPx(spec.size, z, data.buttonMinCssPx);
     const right = spec.corner === 'br' || spec.corner === 'tr';
     const bottom = spec.corner === 'br' || spec.corner === 'bl';

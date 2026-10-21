@@ -496,5 +496,42 @@ const same = await page.evaluate(() => {
 });
 expect('the run replays to the same hash', same);
 
+// The arc shows the unlocked abilities only (the Haul alone in M2), and the gear leaves the run on a second tap within
+// 2 s (GAME DESIGN, 2026-10-21).
+console.log('the gear in a run:');
+const abilityIds = await page.evaluate(() =>
+  window.__iot.game.scene.getScene('game').touch.layout.controls.map((c) => c.id).filter((id) => id.startsWith('ability')),
+);
+expectEq('the Haul alone in the arc', abilityIds, ['ability1']);
+await page.evaluate(() => window.__iot.setSpeed(1));
+const gear = await controlAt('game', 'gear');
+// The shot: a slow headless frame can outlast the 2 s window, so the line is held longer for the picture only.
+await page.evaluate(() => {
+  window.__iot.game.scene.getScene('game').leaveRun.windowMs = 20000;
+});
+await tap(gear);
+await sleep(200);
+expect('one tap keeps the run', (await scenes()).includes('game'));
+expectEq(
+  'the line beside the gear',
+  await page.evaluate(() => window.__iot.game.scene.getScene('game').touch.note?.text ?? null),
+  'Tap again to leave the run.',
+);
+await shot('22-run-gear-tap-again', 600);
+// Then the real window: a second tap after 2 s only arms it again; two taps within it leave.
+await page.evaluate(() => {
+  const g = window.__iot.game.scene.getScene('game').leaveRun;
+  g.windowMs = 2000;
+  g.reset();
+});
+await tap(gear);
+await sleep(2300);
+await tap(gear);
+await sleep(200);
+expect('a second tap after 2 s only arms it again', (await scenes()).includes('game'));
+await tap(gear);
+await waitScene('start');
+console.log('  two taps left the run');
+
 console.log('done');
 await browser.close();
