@@ -6,6 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>Islands of the One</title>
     <link rel="icon" href="data:," />
+    <!-- "Add to Home Screen" opens the game full screen in landscape (iOS has no full-screen API for pages;
+         M2 Task 10). The home-screen icons join the manifest when ART delivers them. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Islands of the One" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="theme-color" content="#2a2540" />
     <link
       rel="preload"
       href="/fonts/Silkscreen-Regular.woff2"
@@ -41,6 +49,14 @@
         height: 100%;
         background: var(--hollow-deep);
         overflow: hidden;
+        /* No browser gestures over the game (M2 Task 10): no pan, pinch or double-tap zoom, no pull to
+           refresh, no long-press callout or text selection, no tap flash. The form inputs opt back in. */
+        touch-action: none;
+        overscroll-behavior: none;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
       }
       #game {
         width: 100%;
@@ -51,6 +67,11 @@
       }
       #game canvas {
         image-rendering: pixelated;
+        touch-action: none;
+      }
+      /* Held upright on a phone the game waits under the portrait line (ui/portrait.ts): its inputs too. */
+      .turn-sideways .game-input {
+        visibility: hidden;
       }
       /* Typed text: real inputs in a real form over the canvas (src/ui/formFields.ts places
          them in page coordinates, sizes the face to 8 game px and sets the colours from palette.ts).
@@ -69,6 +90,11 @@
         font-family: 'Tiny5', monospace;
         -webkit-font-smoothing: none;
         z-index: 5;
+        /* Typing, selecting and pasting work in the inputs, and a tap focuses them. */
+        touch-action: manipulation;
+        -webkit-user-select: text;
+        user-select: text;
+        -webkit-touch-callout: default;
       }
       .game-form-submit {
         position: fixed;

@@ -322,8 +322,26 @@ the Kindled and stops at the layout's edges.
   `hudRects` (`game/holdingView.ts`), that the HUD draws by and `render/keshFraming.test.ts` checks against the
   rock's and Kesh's drawn rects at 1280 × 720, 1440 × 810 and 960 × 540.
 
-**Interacting** (interact is E, Cross or a tap; I or the Touchpad opens the inventory; Esc or Circle
-backs out, all from `controls.json`): Use on the Writ post opens the Writ panel, or the Name screen first
+**Touch** (M2 Task 10, [controls.md](controls.md) §6): the left stick roams (walk, then run, as the pad). The
+action cluster holds the USE button alone, over the pack button, whenever a prompt is up (the prompt shows its verb
+alone on touch); the **gear**, top right, is the `menu` binding: it closes what is open, else leaves for the start
+screen, as `back()` does. **A tap outside an open panel closes it** (Circle's meaning: the station panel, the plot
+sentence panel, the Writ panel, the rack panel); the talk box advances on a tap, the away card closes on any touch,
+and build mode keeps its own touch rules (§12). **Tap to walk and use** (GAME DESIGN 2026-10-20: "On a phone,
+tapping a station from across the island is most of what idle play is"): a tap on the world that isn't a control
+lands on a thing (a station's prop, Kesh or his rock for Talk, a plot once the island is named) or on plain
+ground. A thing in reach (its interact point within `juice.promptRangePx`) is used at once; out of reach, the
+Kindled walks to its interact point and uses it on arrival. Plain ground walks there (`walkGoal`: the nearest
+walkable tile when the tile is solid or void, nothing far out in the void). The walk is a client autopilot
+(`game/path.ts`, tested in node): `findPath` over the roam's own room (`RoamSession.tiles`, `holdingRoomTiles` with
+the named plots' signposts and the pieces as `setSolidPlots` rebuilds it), 8 directions with no corner cutting, A*
+with the octile distance; `PathWalk` steers the roam (`RoamSession.steer`) toward each turning point at full
+deflection, so it walks, then runs, as the stick does, easing off over the last few px; a walk that stops making
+headway gives up. Any stick or key, a new tap or anything opening stops the walk. No path: no walk, and a thing in
+reach is still used. The server is never asked where the Kindled is.
+
+**Interacting** (interact is E, Cross, a tap on the thing or the USE button; I, the Touchpad or the pack button opens
+the inventory; Esc, Circle or the gear backs out, all from `controls.json`): Use on the Writ post opens the Writ panel, or the Name screen first
 while the island has no Name (§9); Use on the holding store opens the inventory with the store pane; Use on the
 weapon rack opens the rack panel (§14);
 Use on a tree or the outcrop opens a small station panel
@@ -855,7 +873,7 @@ piece's pixels and a 1 px outline round its tiles, never an alpha fade and never
 the keyboard (the `rotate` action of `controls.json`); on the pad build mode has its own buttons like a menu, the
 same on every preset (GAME DESIGN 2026-10-19): R1 turns the ghost clockwise and L1 back, Cross places, Circle leaves,
 nothing attacks or dodges ([controls.md](controls.md)); on touch a TURN button beside the ghost. **Confirm** (LMB, Enter, Cross;
-a second tap on the same tile) sends the route; **cancel** (RMB, Esc, Circle) drops the ghost, a second cancel leaves
+a second tap on the same tile) sends the route; **cancel** (RMB, Esc, Circle, the gear on touch) drops the ghost, a second cancel leaves
 build mode. When the answer lands, **the building moment** plays on the new piece, whole frames timed by
 `tuning.json` `plots.buildMs` (400): a few dust pixels round its base for the first quarter, then the piece's art
 rising from its base a tile (32 world px) at a time (`riseCrop` in `render/pieceArt.ts`); nothing draws before the
@@ -873,6 +891,9 @@ one float per item rises over the signpost with its count and items.json's `plur
 then "+150 black stone", "+1 twisted log" at one, never a bare total (LORE §16.8; `BUILD_TEXT.REFUND`, `itemCount`). A refusal is one line in the list's footer,
 with the inventory's blink-and-hold timing (not a toast: §7, §13). The field's panel shows the real level and
 the real cycle ("By itself: 1 pale grain every 12 min"); the plot sentence panel lists the pieces by name (§11).
+On touch (M2 Task 10) the gear is cancel, and a tap on the world is build mode's own (it places the ghost or selects a
+piece), so a tap outside the side list never leaves build mode the way a tap outside a panel closes it (§6); the
+touch layer keeps the gear clear of the side list.
 
 **Tests:** `packages/shared/test/pieces.test.ts` (the validator, LORE's cards, the level and the speed at 0, 1 and 2
 pieces, the limit, every placement reason at each rotation, a moved piece not blocking itself, two pieces walling

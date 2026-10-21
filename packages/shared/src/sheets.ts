@@ -3,6 +3,7 @@ import fieldGround from '../assets/field-ground.json' with { type: 'json' };
 import hookbladeFx from '../assets/hookblade-fx.json' with { type: 'json' };
 import itemIcons from '../assets/item-icons.json' with { type: 'json' };
 import toastGlyphs from '../assets/toast-glyphs.json' with { type: 'json' };
+import touchGlyphs from '../assets/touch-glyphs.json' with { type: 'json' };
 
 /**
  * Cell sheets: a 1× PNG plus a JSON contract listing named rectangles
@@ -78,6 +79,18 @@ export interface ToastGlyphsSheet extends CellSheet {
 export const toastGlyphsSheet: ToastGlyphsSheet = toastGlyphs;
 /** A toast glyph's size (UI px): drawn at 1 UI px per px, vertically centred on its line. */
 export const TOAST_GLYPH_PX = 12;
+
+/** The touch-control glyphs (ART, #133; M2 Task 10): one 16 px cell per touch button, drawn in colour with its own dream-night outline, untinted. */
+export const TOUCH_GLYPH_CELLS = ['light', 'heavy', 'dodge', 'haul', 'gear', 'use'] as const;
+export type TouchGlyphCell = (typeof TOUCH_GLYPH_CELLS)[number];
+/** A touch glyph's size (UI px): drawn centred on its button at 1 UI px per px. */
+export const TOUCH_GLYPH_PX = 16;
+
+export interface TouchGlyphsSheet extends CellSheet {
+  meta?: Partial<EngineSheetMeta>;
+}
+
+export const touchGlyphsSheet: TouchGlyphsSheet = touchGlyphs;
 
 /** The field ground's cells (ART, #123): a named field before SOW, once sown, and faded (sown or not). */
 export const FIELD_GROUND_CELLS = ['unsown', 'sown', 'faded'] as const;

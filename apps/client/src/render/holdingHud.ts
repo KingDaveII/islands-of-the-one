@@ -127,6 +127,11 @@ export class HoldingHud {
     ]);
   }
 
+  /** The panels drawn last frame (UI px; an empty one is not drawn): the touch layer keeps clear of them (M2 Task 10). */
+  panelRects(): UiRect[] {
+    return Object.values(this.lastRects).filter((r) => r.w > 0 && r.h > 0).map((r) => ({ ...r, h: r.h + 1 }));
+  }
+
   setFrame(frame: ViewRect): void {
     this.frame = { ...frame };
   }

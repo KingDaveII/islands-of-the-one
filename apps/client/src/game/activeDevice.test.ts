@@ -72,4 +72,38 @@ describe('active device', () => {
     expect(seen).toEqual(['gamepad', 'keyboard']);
     expect(deviceStore.get()).toBe('keyboard');
   });
+
+  it('a touch switches to touch; a key, a mouse button or mouse motion back to the keyboard, a pad to the pad', () => {
+    const t = new DeviceTracker();
+    expect(t.touch()).toBe(true);
+    expect(t.device).toBe('touch');
+    expect(t.touch()).toBe(false);
+    // A drifting pad that is only connected changes nothing; a press takes it.
+    expect(t.pad(pad())).toBe(false);
+    expect(t.device).toBe('touch');
+    expect(t.pad(pad([0]))).toBe(true);
+    expect(t.device).toBe('gamepad');
+    t.touch();
+    // A pad going away hands the keyboard nothing while touch is the device.
+    expect(t.pad(null)).toBe(false);
+    expect(t.device).toBe('touch');
+    // Mouse motion counts up from the last touch, as from the last pad activity.
+    expect(t.mouseMove(MOUSE_SWITCH_PX - 1, 0)).toBe(false);
+    expect(t.device).toBe('touch');
+    expect(t.mouseMove(1, 0)).toBe(true);
+    expect(t.device).toBe('keyboard');
+    t.touch();
+    expect(t.key()).toBe(true);
+    expect(t.device).toBe('keyboard');
+  });
+
+  it('the store notifies a touch once', () => {
+    const seen: string[] = [];
+    const off = deviceStore.subscribe((d) => seen.push(d));
+    deviceStore.touch();
+    deviceStore.touch();
+    deviceStore.key();
+    off();
+    expect(seen).toEqual(['touch', 'keyboard']);
+  });
 });

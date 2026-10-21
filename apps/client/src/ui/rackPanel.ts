@@ -135,6 +135,12 @@ export class RackPanel {
 
   // --- Drawing ---------------------------------------------------------------
 
+  /** The panel's rectangle as last laid out (UI px, its drop shadow included): a tap outside it closes it (M2 Task 10). */
+  private box: ViewRect = { x: 0, y: 0, w: 0, h: 0 };
+  rect(): ViewRect {
+    return { ...this.box };
+  }
+
   private layout(): void {
     const frame = this.host.frame();
     const tipH = Math.round(this.tooltip.height);
@@ -143,6 +149,7 @@ export class RackPanel {
     const h = PAD + 10 + 3 + tipH + 4 + 1 + 6 + rowsH + 2 + 1 + 4 + ROW + PAD;
     const x = Math.round(frame.x + frame.w / 2 - W / 2);
     const y = Math.round(frame.y + frame.h / 2 - h / 2);
+    this.box = { x, y, w: W, h: h + 1 };
     const key = `${x},${y},${h},${this.focus},${this.host.showFocus()},${this.rows.map((r) => r.row.state).join()}`;
     if (key === this.placed) return;
     this.placed = key;

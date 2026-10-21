@@ -254,6 +254,7 @@ export class WorldRenderer {
     this.drawChargeMeter(g, run, pw);
     if (reticle?.kind === 'pad') {
       this.drawHaulGuide(g, run, pw, reticle.aim);
+      if (reticle.line) this.drawAimLine(g, pw, reticle.aim, reticle.line);
       const at = this.padReticleAt(reticle, s, pw, huskW);
       drawReticle(g, at.x, at.y);
     }
@@ -725,6 +726,19 @@ export class WorldRenderer {
     const a = rad(reticle.aim);
     const d = worldPx(this.juice().padReticleDistPx);
     return { x: player.x + Math.cos(a) * d, y: player.y - lift + Math.sin(a) * d };
+  }
+
+  /**
+   * The aim line (touch, M2 Task 10): while an attack or ability button is
+   * dragged, a short dotted line from the Kindled along the aim, `length`
+   * world px (`touch.aimLinePx`), in the Haul guide's style.
+   */
+  private drawAimLine(g: G, player: Point, aim: number, length: number): void {
+    const a = rad(aim);
+    const x = player.x;
+    const y = player.y - worldPx(3);
+    const start = worldPx(GUIDE_START);
+    pixelLine(g, x + Math.cos(a) * start, y + Math.sin(a) * start, x + Math.cos(a) * (start + length), y + Math.sin(a) * (start + length), Palette.uiInkMuted, 4);
   }
 
   /**

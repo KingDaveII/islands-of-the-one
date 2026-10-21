@@ -25,6 +25,8 @@ export const DEPTH = {
   fx: 30,
   floaters: 31,
   prompt: 40,
+  /** The touch layer (M2 Task 10): its buttons and the stick, over the panels on the UI camera. */
+  touch: 45,
   /** The mouse reticle, over everything on the UI camera. */
   cursor: 50,
 } as const;

@@ -359,6 +359,12 @@ export class WritPanel {
 
   // --- Drawing ---------------------------------------------------------------
 
+  /** The panel's rectangle as last laid out (UI px, its drop shadow included): a tap outside it closes it (M2 Task 10). */
+  private box: ViewRect = { x: 0, y: 0, w: 0, h: 0 };
+  rect(): ViewRect {
+    return { ...this.box };
+  }
+
   private layout(): void {
     const frame = this.host.frame();
     const letters = this.view?.letters ?? '';
@@ -373,6 +379,7 @@ export class WritPanel {
     const h = PAD + FACE_H + 6 + (4 + chargeRows) * ROW + 4 + 1 + 4 + rows * ROW + 4 + ROW + 4 + 15 + 4 + ROW + 4 + 1 + 4 + 15 + 3 + hintH + PAD;
     const x = Math.round(frame.x + frame.w / 2 - w / 2);
     const y = Math.round(frame.y + frame.h / 2 - h / 2);
+    this.box = { x, y, w: w, h: h + 1 };
     const key = `${x},${y},${w},${h},${chargeRows},${this.feedLabel},${this.selected},${JSON.stringify(this.focus)},${this.host.showFocus()}`;
     if (key === this.placed) return;
     this.placed = key;

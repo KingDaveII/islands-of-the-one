@@ -315,6 +315,12 @@ export class PlotPanel {
 
   // --- Drawing ---------------------------------------------------------------
 
+  /** The panel's rectangle as last laid out (UI px, its drop shadow included): a tap outside it closes it (M2 Task 10). */
+  private box: ViewRect = { x: 0, y: 0, w: 0, h: 0 };
+  rect(): ViewRect {
+    return { ...this.box };
+  }
+
   private layout(): void {
     const frame = this.host.frame();
     const l = this.lines;
@@ -345,6 +351,7 @@ export class PlotPanel {
     const w = W;
     const x = Math.round(frame.x + frame.w / 2 - w / 2);
     const y = Math.round(frame.y + frame.h / 2 - h / 2);
+    this.box = { x, y, w: w, h: h + 1 };
     const key = `${x},${y},${h},${this.slot},${JSON.stringify(this.focus)},${this.host.showFocus()},${JSON.stringify(this.picked)},${this.choices.length},${this.tipOver ?? ''}`;
     if (key === this.placed) return;
     this.placed = key;

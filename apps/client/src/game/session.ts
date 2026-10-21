@@ -84,7 +84,7 @@ export class Session {
         .filter((h) => h.core > 0 && h.action !== 'spawn')
         .map((h) => ({ id: h.id, dx: (h.x - p.x) / SUB, dy: (h.y - p.y) / SUB })),
       context: s.context,
-      softLockDeg: this.controls.preset.aim === 'left-stick' ? soft.leftStickAngleDeg : soft.angleDeg,
+      softLockDeg: this.controls.softLockDeg(soft),
     };
   }
 

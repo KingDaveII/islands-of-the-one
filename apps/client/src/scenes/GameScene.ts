@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { roomTemplates } from '@iot/shared';
-import { huskParams, SUB, TILE_PX, type RunResults, type SimEvent, type Tuning } from '@iot/sim';
+import { huskParams, SUB, TICK_HZ, TILE_PX, type RunResults, type SimEvent, type Tuning } from '@iot/sim';
 import { Controls } from '../game/controls.js';
 import { promptTarget } from '../game/interact.js';
 import { Session } from '../game/session.js';
@@ -18,6 +18,8 @@ import { preloadTileSheet } from '../render/roomTiles.js';
 import { preloadSpriteSheets, registerSpriteSheets } from '../render/spriteSheets.js';
 import { blinkOut, place, preloadFonts, registerFonts, worldWord, type Text } from '../render/text.js';
 import { drawReticle, rad, WorldRenderer } from '../render/world.js';
+import { TouchControls, type TouchButtonState } from '../ui/touchControls.js';
+import type { TouchControlId } from '../game/touchLayout.js';
 
 const END_DELAY_MS = 1900;
 /** The room banner's line, UI px below the top of the world view (M1's 84 of 270). */
@@ -68,6 +70,8 @@ export class GameScene extends Phaser.Scene {
   private seed = 0;
   private weapon = 'hookblade';
   private rooms: string[] | undefined;
+  /** The touch layer (M2 Task 10): the stick, LIGHT, HEAVY, DODGE, the Haul's arc, the item slots, USE and the gear. */
+  touch!: TouchControls;
   private endAt = -1;
   private camX = 0;
   private camY = 0;
@@ -128,6 +132,25 @@ export class GameScene extends Phaser.Scene {
     this.hudLayer.add([this.banner, this.bannerSub]);
     this.cursor = this.add.graphics().setDepth(DEPTH.cursor);
     this.hudLayer.add(this.cursor);
+    this.touch = new TouchControls(this, {
+      mode: 'run',
+      layer: this.hudLayer,
+      uiZoom: () => this.uiFit.zU,
+      avoid: () => Object.values(this.hud.panelRects()),
+      abilities: this.session.run.params.weapon.abilities.length,
+      // USE only while a prompt is up (Calm, a thing in reach).
+      showing: (id) => id !== 'use' || this.prompt.container.visible,
+      // A tap on a thing is Interact; on the ground of a run's room, nothing (tap to walk is the holding's).
+      onTap: (x, y) => {
+        this.tapAt(x, y);
+      },
+      onControl: (id) => {
+        // The gear is the menu: a run has no pause yet, so it leaves for the start screen.
+        if (id === 'gear') this.scene.start('start');
+      },
+      state: (id) => this.touchState(id),
+    });
+    this.controls.touch = this.touch.input;
 
     // Two cameras on two grids (game/view.ts): the world's (main) at zW, the UI's over it at zU.
     this.uiCam = this.cameras.add(0, 0, this.scale.width, this.scale.height);
@@ -140,6 +163,7 @@ export class GameScene extends Phaser.Scene {
     this.input.setDefaultCursor('none');
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.touch.destroy();
       this.session.dispose();
       this.controls.dispose();
       this.input.setDefaultCursor('default');
@@ -313,6 +337,40 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /** What a touch button shows (M2 Task 10): a cooldown as the run HUD's slots (dodge, the abilities), a locked slot, an item and its count. */
+  private touchState(id: TouchControlId): TouchButtonState {
+    const s = this.session.state;
+    const p = s.player;
+    const P = this.session.run.params;
+    if (id === 'dodge') {
+      const cd = p.action === 'dodge' ? 0 : P.dodge.cooldown > 0 ? p.dodgeCooldown / P.dodge.cooldown : 0;
+      return { cooldown: cd, seconds: p.dodgeCooldown > 0 ? Math.ceil(p.dodgeCooldown / TICK_HZ) : 0 };
+    }
+    const slot = id === 'ability1' ? 0 : id === 'ability2' ? 1 : id === 'ability3' ? 2 : -1;
+    if (slot >= 0) {
+      const a = P.weapon.abilities[slot];
+      if (!a) return { locked: true };
+      const cd = p.cooldowns[slot] ?? 0;
+      return { locked: a.locked, cooldown: a.cooldown > 0 ? cd / a.cooldown : 0, seconds: cd > 0 ? Math.ceil(cd / TICK_HZ) : 0 };
+    }
+    if (id === 'item1' || id === 'item2') {
+      const item = p.items[id === 'item1' ? 0 : 1];
+      return { item: item ? { id: item.id, count: item.count } : null };
+    }
+    return {};
+  }
+
+  /** A tap on the world (UI px) in a run: Interact when it lands on the prompted thing (Calm); the ground does nothing. */
+  private tapAt(x: number, y: number): void {
+    const s = this.session.state;
+    if (s.context !== 'calm' || !this.prompt.container.visible) return;
+    const target = promptTarget(s, tuningStore.get().juice.promptRangePx * SUB);
+    if (!target) return;
+    const at = this.toUi(target.x / SUB, target.y / SUB);
+    const reach = this.touch.layout.tapMove + 16;
+    if (Math.hypot(at.x - x, at.y - y) <= reach) this.touch.input.pressInteract();
+  }
+
   /**
    * The interact prompt: the interact glyph and the target's word over the
    * nearest interactable within reach, in Calm only (docs/design/controls.md).
@@ -329,7 +387,7 @@ export class GameScene extends Phaser.Scene {
     }
     const at = this.toUi(target.x / SUB, target.y / SUB - 12);
     this.prompt
-      .setItems([...hintItems(this.controls.hint('interact')), { text: target.label }])
+      .setItems([...(this.controls.touchMode ? [] : hintItems(this.controls.hint('interact'))), { text: target.label }])
       .place(at.x, at.y, 0.5, 1)
       .setVisible(true);
   }
@@ -439,6 +497,7 @@ export class GameScene extends Phaser.Scene {
     this.updatePrompt();
     this.drawCursor();
     this.hud.draw(this.session.run, delta, this.bodyRects());
+    this.touch.update(delta);
 
     if (this.bannerLife > 0) {
       this.bannerLife -= delta;

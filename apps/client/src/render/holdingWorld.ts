@@ -459,6 +459,20 @@ export class HoldingWorld {
     return { x: p.image.x, y: p.image.y - p.image.height + 10 };
   }
 
+  /**
+   * The prop drawn at a world point (world px), the frontmost where two meet
+   * (by its base): its station and the part's tile rectangle; a null station
+   * is Kesh's rock. A tap on it walks there and uses it (M2 Task 10).
+   */
+  propAt(x: number, y: number): { stationId: string | null; rect: TileRect } | null {
+    let best: Prop | null = null;
+    for (const p of this.props) {
+      if (!p.image.getBounds().contains(x, y)) continue;
+      if (!best || p.image.y > best.image.y) best = p;
+    }
+    return best ? { stationId: best.stationId, rect: best.rect } : null;
+  }
+
   /** Every prop's sheet and frame, in layout order, Kesh's rock last (playtests). */
   propFrames(): {
     stationId: string | null;

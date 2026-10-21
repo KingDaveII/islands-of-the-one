@@ -52,7 +52,7 @@ import { keyboardBinding, keyCodeFor } from '../game/keyboard.js';
 import { Palette } from '../palette.js';
 import { glyphs, HintRow, word, type HintItem } from '../render/hint.js';
 import { loadLetterSheet, plotLetters, type LetterSheet } from '../render/letters.js';
-import { menuCursor, menuGlyph, padFamilyNow } from '../render/menus.js';
+import { menuCursor, menuGlyph, padFamilyNow, touchBackButton } from '../render/menus.js';
 import { ITEM_ICON_TEXTURE, preloadSheets, registerSheetFrames } from '../render/sheets.js';
 import { body, label, place, preloadFonts, registerFonts, type Text } from '../render/text.js';
 import { abilitySlot, divider, panel } from '../render/ui.js';
@@ -163,6 +163,9 @@ export class InventoryScene extends Phaser.Scene {
   private wordFocus = 0;
   private itemHints: HintRow[] = [];
   private footer!: HintRow;
+  /** The page counter's UP and DOWN on touch (the wheel and the keys do it otherwise). */
+  private pagerUp!: Phaser.GameObjects.Zone;
+  private pagerDown!: Phaser.GameObjects.Zone;
   private pad = { prev: [] as boolean[] };
   private family: PadFamily = 'ps';
   private inventory: InventoryResponse = EMPTY_INVENTORY;
@@ -249,6 +252,14 @@ export class InventoryScene extends Phaser.Scene {
     );
     this.refusalText = body(this, 0, 0, '', Palette.uiInk).setVisible(false);
     this.pager = new HintRow(this, { wordColor: Palette.uiInkMuted });
+    this.pagerUp = this.add.zone(0, 0, 1, 1).setOrigin(0, 0).setInteractive();
+    this.pagerDown = this.add.zone(0, 0, 1, 1).setOrigin(0, 0).setInteractive();
+    this.pagerUp.on('pointerdown', () => {
+      this.scroll(-1);
+    });
+    this.pagerDown.on('pointerdown', () => {
+      this.scroll(1);
+    });
 
     // Tabs: a row of labels, the active one lit; click to switch.
     this.tabTexts = INVENTORY_TABS.map((tab) => {
@@ -309,6 +320,10 @@ export class InventoryScene extends Phaser.Scene {
     });
 
     this.footer = new HintRow(this, { tint: Palette.uiInk, wordColor: Palette.uiInk });
+    // On touch there is no Esc, I or Circle: a BACK button, top left (M2 Task 10).
+    const touchBack = touchBackButton(this, 8, 6, () => {
+      this.back();
+    });
     const offDevice = deviceStore.subscribe(() => {
       this.syncHints();
       this.syncTip();
@@ -319,6 +334,7 @@ export class InventoryScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       offDevice();
       offPreset();
+      touchBack.off();
     });
 
     // Keys: Esc or I close; the arrows (or WASD) move the focus; Enter moves the stack; Tab switches tabs.
@@ -715,13 +731,28 @@ export class InventoryScene extends Phaser.Scene {
       const last = maxScrollRow + STORE_ROWS;
       const text = `${this.scrollRow + 1}-${Math.min(this.scrollRow + STORE_ROWS, last)} of ${last}`;
       const padMode = deviceStore.get() === 'gamepad';
+      const touch = deviceStore.get() === 'touch';
       const up = padMode ? menuGlyph(MENU_BUTTONS.up) : 'W';
       const down = padMode ? menuGlyph(MENU_BUTTONS.down) : 'S';
       const family = padMode ? this.family : 'keyboard';
+      // On touch the page words are tapped (M2 Task 10): UP and DOWN either side of the counter.
       this.pager
-        .setItems([...glyphs([up], family), word(text), ...glyphs([down], family)])
+        .setItems(
+          touch
+            ? [{ text: 'UP' }, word(text), { text: 'DOWN' }]
+            : [...glyphs([up], family), word(text), ...glyphs([down], family)],
+        )
         .place(STORE_X + STORE_W - PANE_PAD, HEADER_ROW_Y - 2, 1);
-    }
+      const { x, y } = this.pager.container;
+      const w = this.pager.width;
+      this.pagerUp.setPosition(x - 4, y - 4).setSize(w / 3 + 4, this.pager.height + 8).setVisible(touch);
+      this.pagerDown.setPosition(x + (2 * w) / 3, y - 4).setSize(w / 3 + 4, this.pager.height + 8).setVisible(touch);
+      for (const z of [this.pagerUp, this.pagerDown]) {
+        const area: unknown = z.input?.hitArea;
+        if (area instanceof Phaser.Geom.Rectangle) area.setSize(z.width, z.height);
+        if (z.input) z.input.enabled = touch;
+      }
+    } else for (const z of [this.pagerUp, this.pagerDown]) if (z.input) z.input.enabled = false;
     this.pager.setVisible(pages);
   }
 
@@ -790,7 +821,12 @@ export class InventoryScene extends Phaser.Scene {
         ?.setHint(hintFrom(source, action))
         .place(ITEM_SLOT_X + i * ITEM_SLOT_GAP + ITEM_SLOT / 2, ITEMS_Y + ITEM_SLOT + 1, 0.5);
     });
-    const items: HintItem[] = padMode
+    // On touch: what a finger does, and BACK is the button (M2 Task 10).
+    const touch = deviceStore.get() === 'touch';
+    if (touch) for (const h of this.itemHints) h.setItems([]);
+    const items: HintItem[] = touch
+      ? [word('tap  move  ·  hold  one  ·  drag between panes  ·  tap a tab')]
+      : padMode
       ? [
           ...glyphs([menuGlyph(MENU_BUTTONS.confirm[0])], this.family),
           word('move  ·'),

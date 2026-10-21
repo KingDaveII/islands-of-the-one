@@ -36,3 +36,9 @@ export type ControlsData = typeof controls;
 /** One gamepad preset: which glyph (standard-mapping button) fires each action, and how aim works. */
 export type ControlPreset = ControlsData['presets'][number];
 export type ControlAction = keyof ControlsData['keyboard'];
+/** The touch block (M2 Task 10, controls.md §6): the touch layer's sizes, positions and thresholds, in CSS px. */
+export type TouchData = ControlsData['touch'];
+/** A touch control by name: the attack, dodge and ability buttons, USE (alone on the holding), the gear and the two item slots. */
+export type TouchButtonId = keyof TouchData['buttons'];
+/** One touch control's place: its screen corner, its centre's offset in from it and its size across, CSS px. */
+export type TouchButtonSpec = TouchData['buttons'][TouchButtonId];
