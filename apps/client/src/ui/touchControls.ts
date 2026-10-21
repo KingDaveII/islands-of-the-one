@@ -85,6 +85,9 @@ function glyphFor(id: TouchControlId): string | null {
   }
 }
 
+/** The buttons drawn as little sticks: their glyph on a knob that follows a dragging finger (they aim by drag). */
+const STICK_BUTTONS: ReadonlySet<TouchControlId> = new Set(['light', 'heavy', 'ability1', 'ability2', 'ability3']);
+
 /** The disc pixel sets by radius, made once. */
 const discCache = new Map<number, Px[]>();
 const discOf = (r: number): Px[] => {
@@ -394,7 +397,20 @@ export class TouchControls {
     // LIGHT and HEAVY on a big button draw ART's 24 px cell (#135); everything else the 16 px one.
     const large = cell !== null && (TOUCH_GLYPH_LARGE_CELLS as readonly string[]).includes(cell) && c.size >= TOUCH.glyphLargeMinUiPx;
     const gs = large ? 24 : G;
-    if (cell) this.glyph(c.id, large ? TOUCH_GLYPH_LARGE_TEXTURE : TOUCH_GLYPH_TEXTURE, cell)?.setPosition(cx - gs / 2, cy - gs / 2);
+    // The attack and ability buttons are little sticks (David's playtest, 2026-10-21): their glyph sits on a raised
+    // knob, the stick's knob in look, that follows the finger while it is held, so a drag to aim can be seen and found.
+    let gx = cx;
+    let gy = cy;
+    if (STICK_BUTTONS.has(c.id)) {
+      const kr = Math.max(Math.ceil(gs / 2) + 3, Math.round(c.size * 0.28));
+      const off = this.input.knobOffset(c.id, kr) ?? { x: 0, y: 0 };
+      gx = cx + Math.round(off.x);
+      gy = cy + Math.round(off.y);
+      plot(g, discOf(kr - 1), gx, gy, Palette.uiBevel);
+      plot(g, halfOf(ringOf(kr - 1), true), gx, gy, Palette.uiBevelLight);
+      plot(g, ringOf(kr), gx, gy, Palette.uiOutline);
+    }
+    if (cell) this.glyph(c.id, large ? TOUCH_GLYPH_LARGE_TEXTURE : TOUCH_GLYPH_TEXTURE, cell)?.setPosition(gx - gs / 2, gy - gs / 2);
     if (cooldown > 0 && (state.seconds ?? 0) > 0) {
       const t = this.text(c.id, String(state.seconds));
       place(t, cx, cy - 3, 0.5);

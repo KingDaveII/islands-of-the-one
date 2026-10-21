@@ -161,7 +161,47 @@ describe('touch input: the aim', () => {
     expect(release.aim).toBeCloseTo(Math.PI / 2);
   });
 
-  it('standing still keeps the previous aim; a lock on a Husk that is gone lets go', () => {
+  it("standing still, a tap attacks where the Kindled faces (the stick's last direction), not at a dragged attack's aim (David, 2026-10-21)", () => {
+    const t = new TouchInput(layout);
+    // Walk down, then let go of the stick.
+    t.down(1, 60, 100, 0, world);
+    t.move(1, 60, 160);
+    touchSample(t, [], 20, DEADZONE);
+    t.up(1, 60, 160, 500);
+    expect(t.facing).toBeCloseTo(Math.PI / 2);
+    // A dragged LIGHT up and to the left fires there...
+    const light = at('light');
+    t.down(2, light.cx, light.cy, 600, world);
+    t.move(2, light.cx - 50, light.cy - 50);
+    t.up(2, light.cx - 50, light.cy - 50, 800);
+    expect(touchSample(t, [], 20, DEADZONE).aim).toBeCloseTo((-3 * Math.PI) / 4);
+    // ...and the next tap, standing still, goes the way the Kindled faces, soft-locked as ever.
+    t.down(3, light.cx, light.cy, 1000, world);
+    t.up(3, light.cx, light.cy, 1050);
+    const tap = touchSample(t, [], 20, DEADZONE);
+    expect([...tap.presses]).toEqual(['light']);
+    expect(tap.aim).toBeCloseTo(Math.PI / 2);
+    expect(touchSample(t, [{ id: 3, dx: 15, dy: 100 }], 20, DEADZONE).lockTarget).toBe(3);
+  });
+
+  it("the attack buttons' knob follows the finger inside the button, and rests when let go", () => {
+    const t = new TouchInput(layout);
+    const light = at('light');
+    expect(t.knobOffset('light', 10)).toBeNull();
+    t.down(1, light.cx, light.cy, 0, world);
+    expect(t.knobOffset('light', 10)).toEqual({ x: 0, y: 0 });
+    t.move(1, light.cx + 3, light.cy);
+    expect(t.knobOffset('light', 10)).toEqual({ x: 3, y: 0 });
+    t.move(1, light.cx, light.cy + 500);
+    const far = t.knobOffset('light', 10);
+    expect(far?.x).toBeCloseTo(0);
+    expect(far?.y).toBeCloseTo(light.size / 2 - 11);
+    expect(t.knobOffset('dodge', 10)).toBeNull();
+    t.up(1, light.cx, light.cy + 500, 300);
+    expect(t.knobOffset('light', 10)).toBeNull();
+  });
+
+  it('before the stick has moved, standing still keeps the previous aim; a lock on a Husk that is gone lets go', () => {
     const t = new TouchInput(layout);
     const still = touchSample(t, enemies, 20, DEADZONE, 7);
     expect(still.aim).toBeNull();
