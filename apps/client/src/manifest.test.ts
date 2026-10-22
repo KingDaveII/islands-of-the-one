@@ -15,11 +15,13 @@ describe('the web app manifest', () => {
     expect(manifest.icons).toEqual([]);
   });
 
-  it('is linked from the page with the home-screen meta tags, and keeps the default viewport (the notch stays outside)', () => {
+  it('is linked from the page with the home-screen meta tags, covers the screen and pads the game into the safe area', () => {
     expect(html).toContain('<link rel="manifest" href="/manifest.webmanifest" />');
     expect(html).toContain('<meta name="apple-mobile-web-app-capable" content="yes" />');
-    expect(html).toContain('apple-mobile-web-app-status-bar-style');
-    expect(html).not.toContain('viewport-fit=cover');
+    // An opaque status bar leaves a blank band above a home-screen app turned upright and back (iOS).
+    expect(html).toContain('<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />');
+    expect(html).toContain('viewport-fit=cover');
+    for (const side of ['top', 'right', 'bottom', 'left']) expect(html).toContain(`env(safe-area-inset-${side}, 0px)`);
     expect(html).toMatch(/touch-action: none/);
   });
 });

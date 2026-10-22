@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <!-- maximum-scale: iOS zooms the page into a focused input under 16 px; the game sizes itself. -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <!-- viewport-fit=cover: the page owns the whole screen and keeps out of the notch and the home indicator
+         itself (#game's safe-area padding), so iOS never adds bars of its own (see the status bar below). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
     <title>Islands of the One</title>
     <link rel="icon" href="data:," />
     <!-- "Add to Home Screen" opens the game full screen in landscape (iOS has no full-screen API for pages;
@@ -12,7 +14,10 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Islands of the One" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <!-- black-translucent, not black: with an opaque status bar, a home-screen app turned upright and back to
+         landscape keeps a blank bar the status bar's height above the page (an iOS bug; David's playtest,
+         2026-10-21). Translucent, the page sits under it and #game's safe-area padding keeps the game clear. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#2a2540" />
     <link
       rel="preload"
@@ -63,6 +68,11 @@
       #game {
         width: 100%;
         height: 100%;
+        box-sizing: border-box;
+        /* Clear of the notch, the status bar and the home indicator (0 everywhere else); the canvas fills what is
+           left (render/cameras.ts reads this padding) and the Hollow background fills the rest. */
+        padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px)
+          env(safe-area-inset-left, 0px);
         display: flex;
         align-items: flex-start;
         justify-content: flex-start;

@@ -50,6 +50,7 @@ import {
   chipState,
   clockOffset,
   cyclesDone,
+  flowButtons,
   interactPoint,
   nearestStationPart,
   nearKesh,
@@ -2128,7 +2129,14 @@ export class HoldingScene extends Phaser.Scene {
     // A row is 11 px, a wrapped note as tall as its lines.
     const rowH = (t: Text): number => Math.max(11, Math.round(t.height) + 3);
     const rowsH = rows.reduce((n, t) => n + rowH(t), 0);
-    const buttonsH = p.buttons.length > 0 ? 6 + 1 + 6 + 15 : 0;
+    // The buttons wrap onto as many rows as the panel's width needs, 15 px a row and 4 between.
+    const flow = flowButtons(
+      p.buttons.map((b) => b.button.width),
+      inner,
+      6,
+      15 + 4,
+    );
+    const buttonsH = flow.rows > 0 ? 6 + 1 + 6 + flow.rows * 15 + (flow.rows - 1) * 4 : 0;
     const h = PANEL_PAD + 10 + 2 + lettersH + rowsH + buttonsH + 4 + 11 + PANEL_PAD;
     const y = Math.round(this.frame.y + this.frame.h / 2 - h / 2);
     p.rect = { x, y, w: PANEL_W, h: h + 1 };
@@ -2151,13 +2159,12 @@ export class HoldingScene extends Phaser.Scene {
       ly += 6;
       divider(p.g, x + PANEL_PAD, ly, inner);
       ly += 1 + 6;
-      let bx = x + PANEL_PAD;
       p.buttons.forEach((b, i) => {
-        b.button.container.setPosition(bx, ly);
+        const at = flow.at[i] ?? { x: 0, y: 0 };
+        b.button.container.setPosition(x + PANEL_PAD + at.x, ly + at.y);
         b.button.setFocused(this.showFocus() && i === p.focus);
-        bx += b.button.width + 6;
       });
-      ly += 15;
+      ly += flow.rows * 15 + (flow.rows - 1) * 4;
     }
     ly += 4;
     place(p.result, x + PANEL_W - PANEL_PAD, ly, 1);

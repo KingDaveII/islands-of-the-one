@@ -293,6 +293,33 @@ export function stationLines(
 }
 
 /**
+ * Buttons laid left to right in rows no wider than `maxW` (a station panel's
+ * inner width): a button that would cross the edge starts the next row, so
+ * four buttons on a named plot never spill out of the panel (David's phone
+ * playtest, 2026-10-21). Returns each button's offset from the first's top
+ * left and the number of rows; a button wider than `maxW` sits alone on its row.
+ */
+export function flowButtons(
+  widths: readonly number[],
+  maxW: number,
+  gapX: number,
+  rowH: number,
+): { at: { x: number; y: number }[]; rows: number } {
+  const at: { x: number; y: number }[] = [];
+  let x = 0;
+  let row = 0;
+  for (const w of widths) {
+    if (x > 0 && x + w > maxW) {
+      row++;
+      x = 0;
+    }
+    at.push({ x, y: row * rowH });
+    x += w + gapX;
+  }
+  return { at, rows: widths.length > 0 ? row + 1 : 0 };
+}
+
+/**
  * The line after a take-all (GAME DESIGN 2026-10-17, 2026-10-18): "Store:
  * twisted logs full." when something stayed because the store's stack is
  * full, a toast since Task 7 (game/toastView.ts `storeFullToast` carries
