@@ -6,7 +6,7 @@ import { controlAt, notePlace, TOUCH, touchLayout, touchScreen, type AbilityCont
 import type { Rect } from '../game/view.js';
 import { Palette } from '../palette.js';
 import { DEPTH } from '../render/depth.js';
-import { checker, circlePixels, discPixels, pixelAngle, type Px } from '../render/pixelShapes.js';
+import { checker, circlePixels, discPixels, fromNoon, pixelAngle, stageArcs, type Px } from '../render/pixelShapes.js';
 import { plot } from '../render/pixels.js';
 import { ITEM_ICON_TEXTURE, TOUCH_GLYPH_LARGE_TEXTURE, TOUCH_GLYPH_TEXTURE } from '../render/sheets.js';
 import { body, label, place, type Text } from '../render/text.js';
@@ -43,6 +43,8 @@ export interface TouchButtonState {
   locked?: boolean;
   /** The item slots: the item's id (its item-icons cell) and how many are left. */
   item?: { id: string; count: number } | null;
+  /** HEAVY while charging: the charge stages reached (0-3, the HUD meter's), lit as arcs on the button's outer ring. */
+  charge?: number;
 }
 
 export interface TouchControlsOptions {
@@ -114,8 +116,6 @@ const halfOf = (ring: readonly Px[], topLeft: boolean): Px[] =>
     const tl = a > (3 * Math.PI) / 4 && a < (7 * Math.PI) / 4;
     return tl === topLeft;
   });
-/** A pixel's share of a turn clockwise from 12 o'clock (0..1). */
-const fromNoon = (p: Px): number => ((pixelAngle(p) + Math.PI / 2) % (Math.PI * 2)) / (Math.PI * 2);
 
 export class TouchControls {
   readonly input: TouchInput;
@@ -338,6 +338,8 @@ export class TouchControls {
       plot(g, halfOf(ringOf(r - 1), !pressed), cx, cy, Palette.uiBevelLight);
       plot(g, halfOf(ringOf(r - 1), pressed), cx, cy, Palette.uiBevel);
       plot(g, ring, cx, cy, frame);
+      // HEAVY's charge on the thumb's own button (ART on #137): three solid 120° arcs from 12 o'clock, one per stage.
+      if (state.charge) plot(g, stageArcs(ring, state.charge), cx, cy, Palette.uiFocus);
       if (cooldown > 0 && !state.locked)
         plot(
           g,

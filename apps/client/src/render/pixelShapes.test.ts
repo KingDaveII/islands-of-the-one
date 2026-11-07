@@ -11,6 +11,7 @@ import {
   outlinePixels,
   pixelAngle,
   plusPixels,
+  stageArcs,
   type Px,
 } from './pixelShapes.js';
 
@@ -184,5 +185,30 @@ describe('checkers, dashes, dithers and the plus', () => {
     expect(picture(plusPixels(), 2)).toEqual(['..#..', '..#..', '#####', '..#..', '..#..']);
     expect(plusPixels()).toHaveLength(9);
     expect(plusPixels(1)).toEqual([[0, 0]]);
+  });
+});
+
+describe("stageArcs: HEAVY's charge on its touch button (ART on #137)", () => {
+  const ring = circlePixels(20);
+  it('lights none, then one, two and three 120° arcs clockwise from 12 o\'clock, solid', () => {
+    expect(stageArcs(ring, 0)).toEqual([]);
+    expect(stageArcs(ring, 3)).toEqual(ring);
+    const one = stageArcs(ring, 1);
+    const two = stageArcs(ring, 2);
+    // The first arc runs from 12 o'clock to 4: the top pixel and the right side, never the left.
+    expect(one).toContainEqual([0, -20]);
+    expect(one).toContainEqual([20, 0]);
+    expect(one.every(([x]) => x >= 0)).toBe(true);
+    // Each stage keeps the last one's pixels and adds a third of the ring.
+    for (const p of one) expect(two).toContainEqual(p);
+    expect(two).toContainEqual([0, 20]);
+    expect(two.every(([x, y]) => x >= 0 || y > 0)).toBe(true);
+    for (const n of [one.length, two.length - one.length, ring.length - two.length])
+      expect(Math.abs(n - ring.length / 3)).toBeLessThanOrEqual(2);
+  });
+
+  it('clamps out-of-range stages', () => {
+    expect(stageArcs(ring, -1)).toEqual([]);
+    expect(stageArcs(ring, 5)).toEqual(ring);
   });
 });
