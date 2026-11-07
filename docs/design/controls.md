@@ -248,7 +248,10 @@ the canvas the page asks for full screen where the browser allows it (Android), 
 full screen allows it; a refusal is ignored. iOS Safari has none for pages: the web app manifest
 (`public/manifest.webmanifest`: `display: fullscreen`, `orientation: landscape`, the Hollow's background) and the
 `apple-mobile-web-app-capable` and status-bar meta tags make "Add to Home Screen" open the game full screen. The
-home-screen icons join the manifest when ART delivers them. The page covers the whole screen (`viewport-fit=cover`,
+home-screen icon is ART's (#140): the manifest lists `icons/icon-192.png` and `icon-512.png` (the 64 px drawing ×3 and
+×8, `any maskable`, the Kindled and the island's top inside the centre 80 % circle), and iOS takes
+`icons/apple-touch-icon-180.png` (the 60 px drawing ×3) from the `apple-touch-icon` link; the 1× sources are in
+`art/clean/app-icon/`. The page covers the whole screen (`viewport-fit=cover`,
 status bar `black-translucent`) and keeps the game inside the safe area itself: `#game` is padded by the
 `safe-area-inset-*` values and the canvas is sized to what is left (`safeWindow` in `render/cameras.ts`), the Hollow
 filling the notch, status-bar and home-indicator strips. (The M2 Task 10 default viewport with an opaque status bar
