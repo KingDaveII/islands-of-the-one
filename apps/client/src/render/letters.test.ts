@@ -1,7 +1,8 @@
-import { DIVIDER_CELL, DIVIDER_ROW, lettersFromPositions, oldLettersSheet as sheet, PLOT_DIVIDER, SHEET_CELLS, sheetCell } from '@iot/shared';
+import { DIVIDER_CELL, DIVIDER_ROW, DIVIDER_WIDTH, lettersFromPositions, oldLettersSheet as sheet, PLOT_DIVIDER, SHEET_CELLS, sheetCell } from '@iot/shared';
 import { describe, expect, it } from 'vitest';
 import { css } from '../palette.js';
 import {
+  dividerRaster,
   drawLetters,
   LETTER_STATES,
   rasterize,
@@ -131,5 +132,14 @@ describe('drawLetters', () => {
       w: w(mem) * 3,
       h: 3,
     });
+  });
+});
+
+describe('dividerRaster: the divider at the seal ring\'s bottom join', () => {
+  it("is ART's divider cell alone: its one dot on its row, lit", () => {
+    const r = dividerRaster(ink);
+    expect([r.width, r.height]).toEqual([DIVIDER_WIDTH, sheet.height]);
+    const inked = [...r.px.entries()].filter(([, v]) => v !== 0);
+    expect(inked).toEqual([[DIVIDER_ROW * DIVIDER_WIDTH, 1 + LETTER_STATES.indexOf('lit')]]);
   });
 });

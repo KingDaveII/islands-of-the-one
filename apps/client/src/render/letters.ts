@@ -1,4 +1,4 @@
-import { oldLettersSheet as sheet, shapeLetters, SHEET_CELLS, type ShapedLetters } from '@iot/shared';
+import { DIVIDER_CELL, DIVIDER_WIDTH, oldLettersSheet as sheet, shapeLetters, SHEET_CELLS, type ShapedLetters } from '@iot/shared';
 import sheetUrl from '@iot/shared/assets/old-letters-8px.png';
 import { css, Palette } from '../palette.js';
 
@@ -100,6 +100,22 @@ export function rasterize(
   }
   // A plot sentence's divider (ART's cell after the letters), in the letters' default state colour.
   for (const d of shape.dividers) stamp(d.cell, d.x, d.width, 1 + LETTER_STATES.indexOf(options.state ?? 'lit'));
+  return { width: shape.width, height: shape.height, px, shape };
+}
+
+/**
+ * The divider's glyph alone (ART's cell, `DIVIDER_CELL`): a raster
+ * `DIVIDER_WIDTH` wide and a line high, in the `lit` state, for the divider
+ * at the seal ring's bottom join (a divider that stands between no words).
+ */
+export function dividerRaster(ink: LetterSheet): LetterRaster {
+  const shape: ShapedLetters = { width: DIVIDER_WIDTH, height: sheet.height, glyphs: [], dividers: [{ x: 0, cell: DIVIDER_CELL, width: DIVIDER_WIDTH }] };
+  const px = new Uint8Array(shape.width * shape.height);
+  for (let y = 0; y < shape.height; y++) {
+    for (let x = 0; x < shape.width; x++) {
+      if (ink.ink[y * ink.width + DIVIDER_CELL * sheet.cell + x]) px[y * shape.width + x] = 1 + LETTER_STATES.indexOf('lit');
+    }
+  }
   return { width: shape.width, height: shape.height, px, shape };
 }
 

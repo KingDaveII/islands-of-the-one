@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
 import {
+  DIVIDER_ROW,
   plotLine,
   sigilPath,
   SIGNPOST_SHEETS,
@@ -41,7 +42,7 @@ import { elementColor, Palette } from '../palette.js';
 import { FIELD_GROUND_TEXTURE } from './sheets.js';
 import { DEPTH } from './depth.js';
 import { bodyDepth } from './feet.js';
-import { rasterize, type LetterSheet } from './letters.js';
+import { dividerRaster, rasterize, type LetterSheet } from './letters.js';
 import { pixelLine, plot as plotPixels, ring as pixelRing, shadowEllipse } from './pixels.js';
 
 type G = Phaser.GameObjects.Graphics;
@@ -265,10 +266,13 @@ export class PlotsLayer {
       const ink = faded ? Palette.plotFaded : LETTER_INK;
       plotRaster(g, r, band.x, band.y, WORLD_SCALE, lettersShown, ink);
       if (lettersShown === letterCount && r.shape.dividers.length > 0) {
+        // The divider's own glyph from the letter sheet (cell 27, as between the words), its dot centred under the
+        // bottom band where the drawn dot was.
         const ringR = ringRect(d.plot);
         const dx = Math.round(ringR.x + ringR.w / 2);
         const dy = ringR.y + ringR.h - RING_WIDTH - 2 - WORLD_SCALE * 2;
-        g.fillStyle(ink, 1).fillRect(dx - WORLD_SCALE / 2, dy, WORLD_SCALE, WORLD_SCALE);
+        const div = dividerRaster(this.sheet);
+        plotRaster(g, div, dx - WORLD_SCALE / 2, dy - DIVIDER_ROW * WORLD_SCALE, WORLD_SCALE, Infinity, ink);
       }
     }
     // The signpost at the centre, its board carrying the sigil over a faint grid, traced from its circle to its bar in
@@ -431,8 +435,9 @@ export function plotRaster(
     .filter((gl) => gl.index < shown)
     .map((gl) => [gl.x, gl.x + gl.width] as const);
   for (const d of r.shape.dividers) {
-    // A divider shows when the word after it (to its left) has started.
-    if (r.shape.glyphs.some((gl) => gl.index < shown && gl.x + gl.width <= d.x))
+    // A divider shows when the word after it (to its left) has started; one standing alone (`dividerRaster`, the
+    // ring's bottom join) always shows.
+    if (r.shape.glyphs.length === 0 || r.shape.glyphs.some((gl) => gl.index < shown && gl.x + gl.width <= d.x))
       ranges.push([d.x, d.x + d.width]);
   }
   const inShown = (col: number): boolean => ranges.some(([a, b]) => col >= a && col < b);

@@ -732,7 +732,8 @@ colour, `elementColor` from palette.json `elements`: earth sleeper-ochre, water 
 choir-flame-deep, air watcher-stone; a 6 × 6 knot at each corner centred on the band's corner, its middle 2 × 2 open
 (the band's corner cleared, so the headland shows through: an eyelet, ART), `ringKnots`, added as the drawing ring
 reaches it, lit or faded; the sentence's letters from the letter sheet in dark ink along the top of the ring
-with the divider between the words and at the ring's other join) and, at its centre, its **signpost** (ART's
+with the divider between the words and at the ring's other join, under the bottom band: the divider's own glyph
+from the letter sheet, cell 27, `dividerRaster`) and, at its centre, its **signpost** (ART's
 `prop-signpost`, `SIGNPOST_SHEETS`, drawn at `signpostBase` on the sheet's origin (32, 54) with the prop rule's
 shadow; a pillar in the roam, `setSolidPlots`), which carries no words: its board carries the
 plot's sigil over a faint 3 × 3 grid (LORE 2026-10-18; `signpostBoard`, `sigilOrigin`, the sheet's board face
