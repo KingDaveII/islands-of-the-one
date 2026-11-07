@@ -7,6 +7,7 @@ import { Session } from '../game/session.js';
 import { tuningStore } from '../game/tuningStore.js';
 import { fitUi, fitWorldView, viewInUi, type Rect as ViewRect, type UiFit, type WorldFit } from '../game/view.js';
 import { Palette } from '../palette.js';
+import { chargeStage } from '../render/charge.js';
 import { Fx } from '../render/fx.js';
 import { hintItems, HintRow } from '../render/hint.js';
 import { Hud, type BodyRect, type Corner, type Rect } from '../render/hud.js';
@@ -345,7 +346,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  /** What a touch button shows (M2 Task 10): a cooldown as the run HUD's slots (dodge, the abilities), a locked slot, an item and its count. */
+  /** What a touch button shows (M2 Task 10): a cooldown as the run HUD's slots (dodge, the abilities), a locked slot, an item and its count, HEAVY's charge stage. */
   private touchState(id: TouchControlId): TouchButtonState {
     const s = this.session.state;
     const p = s.player;
@@ -361,6 +362,7 @@ export class GameScene extends Phaser.Scene {
       const cd = p.cooldowns[slot] ?? 0;
       return { locked: a.locked, cooldown: a.cooldown > 0 ? cd / a.cooldown : 0, seconds: cd > 0 ? Math.ceil(cd / TICK_HZ) : 0 };
     }
+    if (id === 'heavy') return { charge: p.action === 'charge' ? chargeStage(p.charge, P.weapon.heavy) : 0 };
     if (id === 'item1' || id === 'item2') {
       const item = p.items[id === 'item1' ? 0 : 1];
       return { item: item ? { id: item.id, count: item.count } : null };

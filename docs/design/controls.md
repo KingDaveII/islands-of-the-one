@@ -217,7 +217,12 @@ the item's icon and count. Pressed: no shadow, the content 1 px down and right, 
 a colour flash. A cooldown is a solid dream-night sweep over the time left, clockwise from 12 o'clock, with whole
 seconds on top and the frame lit briefly when it is back; a locked slot shows the hollow-dusk lock. LIGHT, HEAVY and the abilities are little sticks
 (David's playtest, 2026-10-21): their glyph sits on a raised knob in the stick's knob look (about 56 % of the
-button), which follows a holding finger inside the button, so a drag to aim can be seen and found. The stick
+button), which follows a holding finger inside the button, so a drag to aim can be seen and found (ART on #137,
+approved: the glyph stays upright on the knob, never turned with the aim, and the knob snaps back in one frame on
+release; DODGE and the gear stay flat discs, since tap-only controls must not look draggable). While HEAVY charges, its
+outer ring lights in `uiFocus` as three solid 120° arcs clockwise from 12 o'clock, one per charge stage (the HUD
+meter's stages), so the thumb's own button shows the charge (ART on #137; `stageArcs` in `render/pixelShapes.ts`).
+ART's optional gate notches on the stick buttons wait for a playtester who misses the drag-to-aim. The stick
 (only while held): a 2 px ring (dream-night outside, hollow-below inside) the size of its travel with the dither
 inside, and a raised knob, 40 % of the travel: hollow-below, lighter than the base, lit top-left in
 hollow-dusk, with the dream-night outline (ART on #134). While the arc's second slot is hidden (locked), HEAVY takes

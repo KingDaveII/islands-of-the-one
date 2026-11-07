@@ -26,6 +26,19 @@ const wrap = (a: number): number => ((a % TAU) + TAU) % TAU;
 /** The angle of a pixel from the centre, in [0, 2π), clockwise from east on the screen (y down). */
 export const pixelAngle = (p: Px): number => wrap(Math.atan2(p[1], p[0]));
 
+/** A pixel's share of a turn clockwise from 12 o'clock, in [0, 1). */
+export const fromNoon = (p: Px): number => wrap(pixelAngle(p) + Math.PI / 2) / TAU;
+
+/**
+ * A ring lit in stages (ART on #137: HEAVY's charge on its button): the ring
+ * split into `stages` equal arcs clockwise from 12 o'clock, the first `lit`
+ * of them kept. Solid, whole arcs: 0 is none, `stages` the whole ring.
+ */
+export function stageArcs(ring: readonly Px[], lit: number, stages = 3): Px[] {
+  const n = Math.max(0, Math.min(stages, Math.floor(lit)));
+  return ring.filter((p) => Math.floor(fromNoon(p) * stages) < n);
+}
+
 /** The pixels of a filled disc of radius r. */
 export function discPixels(r: number): Px[] {
   const out: Px[] = [];

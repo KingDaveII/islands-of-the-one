@@ -9,7 +9,8 @@
  * it, a tap on a station in reach opening it at once, a tap on the ground
  * walking there; the inventory by the pack button; the gear back to the
  * start screen; a run with the left stick held while LIGHT is tapped (the
- * soft lock) and dragged (the aim line, fired on release), HEAVY pressed,
+ * soft lock) and held and dragged (the aim line, attacking where it aims;
+ * the release only stops), HEAVY pressed (its charge arcs on the button),
  * dragged and released, DODGE and the Haul. Every state is checked through
  * the scenes' snapshots and the sim's state; nothing under packages/sim is
  * touched (the replay of the run's record gives its hash).
@@ -428,7 +429,8 @@ await tap(await controlAt('game', 'light'));
 g = await until(run, (x) => x.player.action === 'light', 'LIGHT fires on the tap', 100, 30);
 expect('soft-locked onto the Husk', g.reticle.kind === 'pad' && g.reticle.targetId === nearest.id, JSON.stringify(g.reticle));
 await shot('16-run-light-tap-soft-lock', 0);
-// LIGHT dragged off its button: the aim line, the aim the drag's; fired on release.
+// LIGHT held and dragged off its button: it keeps attacking (GAME DESIGN, 2026-10-21), the aim line shows, each hit
+// goes where the drag aims; the release only stops.
 await until(run, (x) => x.player.action !== 'light', 'the swing over', 200, 30);
 const light = await controlAt('game', 'light');
 await down(2, light);
@@ -436,13 +438,12 @@ await move(2, { x: light.x - 60, y: light.y - 60 });
 await sleep(200);
 g = await run();
 expect('the aim line while dragged', g.reticle.line > 0, JSON.stringify(g.reticle));
-expect('not fired yet', g.player.action !== 'light');
+expect('attacking while held', g.player.action === 'light');
 const want = Math.round((((-3 * Math.PI) / 4 / (2 * Math.PI)) * 4096)) & 4095;
 expectEq('aimed by the drag', g.input.aim, want);
 await shot('17-run-light-drag-aim-line', 0);
 await up(2);
-g = await until(run, (x) => x.player.action === 'light', 'LIGHT fires on release', 100, 30);
-await until(run, (x) => x.player.action !== 'light', 'the swing over', 200, 30);
+await until(run, (x) => x.player.action !== 'light', 'the release only stops', 200, 30);
 // HEAVY: pressed (the charge), dragged (aimed), released (the thrust).
 const heavy = await controlAt('game', 'heavy');
 // A press while the Kindled is hurt starts nothing, and a hit while charging cancels the charge (the sim's rules, as
@@ -458,12 +459,27 @@ for (let attempt = 0; ; attempt++) {
     continue;
   }
   await move(3, { x: heavy.x + 70, y: heavy.y - 30 });
-  await sleep(300);
-  g = await run();
-  if (g.player.action !== 'charge') {
+  // Held to the second charge stage: two of the button's three arcs lit (ART on #137).
+  // The sim is held still the moment it gets there, so the shot can't catch the third stage instead.
+  const stage = () =>
+    page.evaluate(() => {
+      const c = window.__iot.scene().touchState('heavy').charge ?? 0;
+      if (c === 2) window.__iot.setSpeed(0);
+      return c;
+    });
+  try {
+    await until(stage, (c) => c >= 2, 'two charge arcs on HEAVY', 100, 20);
+  } catch {
     await up(3);
     continue;
   }
+  g = await run();
+  if (g.player.action !== 'charge' || (await stage()) !== 2) {
+    await page.evaluate(() => window.__iot.setSpeed(0.35));
+    await up(3);
+    continue;
+  }
+  expectEq('two arcs lit at the shot', await stage(), 2);
   await shot('18-run-heavy-charge-drag', 0);
   // Slower for the thrust's few frames, so the shot catches it.
   await page.evaluate(() => window.__iot.setSpeed(0.1));
